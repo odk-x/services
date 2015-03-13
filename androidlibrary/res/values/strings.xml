@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="app_name">ODK Library</string>
+	<string name="app_userLabel">OpenDataKit</string>
+	
+	<string name="webkit_permission_tree">Open Data Kit WebServer</string>
+	<string name="webkit_launch_permission">Launch WebServer</string>
+	<string name="database_launch_permission">Launch Database</string>
+	<string name="dbshim_launch_permission">Launch DbShim</string>
+    
+	<string name="added_on_date_at_time">\'Added on\' EEE, MMM dd, yyyy \'at\' HH:mm</string><!-- http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->
+	<string name="not_yet_sent">Never Uploaded</string>
+	<string name="sent_on_date_at_time">\'Sent on\' EEE, MMM dd, yyyy \'at\' HH:mm</string><!-- http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->
+	<string name="sending_failed_on_date_at_time">\'Sending failed on\' EEE, MMM dd, yyyy \'at\' HH:mm</string><!-- http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->
+	
+    <string name="default_sync_server_url">https://open-data-kit.appspot.com</string>
+	<string name="default_legacy_server_url">https://opendatakit-2.appspot.com</string>
+
+</resources>

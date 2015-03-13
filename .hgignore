@@ -1,0 +1,5 @@
+syntax: glob
+androidlibrary.test/bin/**
+androidlibrary.test/gen/**
+androidlibrary/bin/**
+androidlibrary/gen/**
