@@ -1,0 +1,5 @@
+syntax: glob
+core.test/bin/**
+core/bin/**
+core/gen/**
+core.test/gen/**
