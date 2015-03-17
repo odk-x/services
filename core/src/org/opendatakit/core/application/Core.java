@@ -14,10 +14,10 @@
 
 package org.opendatakit.core.application;
 
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.app.Application;
 import android.content.pm.PackageInfo;
@@ -92,6 +92,7 @@ public class Core extends Application {
     singleton = this;
     super.onCreate();
     Log.i(LOGTAG, "onCreate");
+    PropertiesSingleton.setStartCoreServices(this);
   }
 
   @Override
