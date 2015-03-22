@@ -1,13 +1,19 @@
 package org.opendatakit.core;
 
-import android.app.ActionBar;
+import org.opendatakit.common.android.utilities.WebLogger;
+
 import android.app.Activity;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends Activity {
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    WebLogger.closeAll();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {

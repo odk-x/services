@@ -4,11 +4,11 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.StaticStateManipulator;
-import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.opendatakit.database.service.OdkDbHandle;
 
 import android.test.AndroidTestCase;
 import android.test.RenamingDelegatingContext;
@@ -17,12 +17,12 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
 
   private static final String TEST_FILE_PREFIX = "test_";
 
-  private String uniqueKey;
-  SQLiteDatabase db = null;
+  private OdkDbHandle uniqueKey;
+  OdkDatabase db = null;
 
   private static class DatabaseInitializer {
 
-    public static void onCreate(SQLiteDatabase db) {
+    public static void onCreate(OdkDatabase db) {
       
     }
   }
@@ -38,7 +38,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
 
     StaticStateManipulator.get().reset();
 
-    uniqueKey = ODKDataUtils.genUUID();
+    uniqueKey = DatabaseFactory.get().generateInternalUseDbHandle();
 
     RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
         TEST_FILE_PREFIX);
@@ -56,7 +56,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
   }
 
   protected String getAppName() {
-    return "test-" + uniqueKey.substring(6);
+    return "test-" + uniqueKey.getDatabaseHandle().substring(6);
   }
   
   /*
@@ -88,7 +88,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
     boolean thrown = false;
 
     try {
-      ODKDatabaseImplUtils.get().query(db, false, tableId, null, null, null, null, null, null, null);
+      ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null, null, null);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();

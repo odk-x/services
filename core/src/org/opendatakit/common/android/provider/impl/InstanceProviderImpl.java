@@ -32,14 +32,15 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.core.application.Core;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.content.ContentProvider;
@@ -65,9 +66,9 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    String dbHandleName;
+    OdkDbHandle dbHandleName;
 
-    InvalidateMonitor(String appName, String dbHandleName) {
+    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -134,8 +135,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     String fullQuery;
     String filterArgs[];
     Cursor c = null;
@@ -147,7 +148,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
       try {
@@ -168,7 +169,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
                 + KeyValueStoreColumns.PARTITION + "=? AND " + KeyValueStoreColumns.ASPECT
                 + "=? AND " + KeyValueStoreColumns.KEY + "=?", new String[] { tableId,
                 KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
-                KeyValueStoreConstants.XML_INSTANCE_NAME }, null, null, null);
+                KeyValueStoreConstants.XML_INSTANCE_NAME }, null, null, null, null);
 
         if (c.getCount() == 1) {
           c.moveToFirst();
@@ -336,7 +337,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     fullQuery = b.toString();
 
-    dbHandleName = ODKDataUtils.genUUID();
+    dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
     db = null;
     boolean success = false;
     try {
@@ -416,12 +417,12 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
       try {
@@ -485,7 +486,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
           where = InstanceColumns.DATA_TABLE_TABLE_ID + "=?";
           whereArgs = new String[] { tableId };
           del = db.query(DatabaseConstants.UPLOADS_TABLE_NAME, null,
-              where, whereArgs, null, null, null);
+              where, whereArgs, null, null, null, null);
           del.moveToPosition(-1);
           while (del.moveToNext()) {
             String iId = ODKCursorUtils.getIndexAsString(del,
@@ -550,12 +551,12 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = segments.get(2);
 
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     int count = 0;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
       try {

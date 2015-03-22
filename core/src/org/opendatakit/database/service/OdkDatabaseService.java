@@ -1,9 +1,7 @@
 package org.opendatakit.database.service;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.app.Service;
 import android.content.Intent;
@@ -15,21 +13,6 @@ public class OdkDatabaseService extends Service {
   public static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 
   private OdkDatabaseServiceInterface servInterface;
-
-  private Map<String,SQLiteDatabase> dbHandles = new HashMap<String,SQLiteDatabase>();
-  
-  void addActiveDatabase(String appName, SQLiteDatabase db) {
-    dbHandles.put(appName, db);
-  }
-  
-  void removeActiveDatabase(String appName) {
-    dbHandles.remove(appName);
-  }
-  
-  SQLiteDatabase getActiveDatabase(String appName) {
-    SQLiteDatabase db = dbHandles.get(appName);
-    return db;
-  }
   
   @Override
   public void onCreate() {
@@ -43,27 +26,26 @@ public class OdkDatabaseService extends Service {
     return servInterface; 
   }
 
-  public synchronized void appNameDied(String appName) {
-    SQLiteDatabase db = getActiveDatabase(appName);
-    
-    if ( db != null ) {
-      db.close();
-    }
-    removeActiveDatabase(appName);
+  @Override
+  public boolean onUnbind(Intent intent) {
+    // TODO Auto-generated method stub
+    super.onUnbind(intent);
+    Log.i(LOGTAG, "onUnbind -- releasing interface.");
+    // release all non-group instances
+    DatabaseFactory.get().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
+    // this may be too aggressive, but ensures that WebLogger is released.
+    WebLogger.closeAll();
+    return false;
   }
   
   @Override
   public synchronized void onDestroy() {
     Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
-
-    // and release any transactions we are holding...
-    for (SQLiteDatabase db : dbHandles.values() ) {
-      db.close();
-    }
-    dbHandles.clear();
-    
-    Log.i(LOGTAG, "onDestroy - done");
     super.onDestroy();
+    // release all non-group instances
+    DatabaseFactory.get().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
+    // this may be too aggressive, but ensures that WebLogger is released.
+    WebLogger.closeAll();
   }
 
 }

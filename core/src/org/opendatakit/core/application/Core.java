@@ -37,6 +37,8 @@ public class Core extends Application {
    */
   private boolean debugService = false;
   
+  private int sessionCount = 0;
+  
   private static Core singleton = null;
 
   public static Core getInstance() {
@@ -46,7 +48,7 @@ public class Core extends Application {
   public boolean shouldWaitForDebugger() {
     return debugService;
   }
-
+  
   public String getVersionCodeString() {
     try {
       PackageInfo pinfo;

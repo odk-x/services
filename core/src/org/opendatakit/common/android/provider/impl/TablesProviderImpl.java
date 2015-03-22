@@ -21,12 +21,13 @@ import java.util.List;
 
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.content.ContentProvider;
@@ -42,9 +43,9 @@ public abstract class TablesProviderImpl extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    String dbHandleName;
+    OdkDbHandle dbHandleName;
     
-    InvalidateMonitor(String appName, String dbHandleName) {
+    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -124,14 +125,14 @@ public abstract class TablesProviderImpl extends ContentProvider {
     }
 
     // Get the database and run the query
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     boolean success = false;
     Cursor c = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
-          null, null, sortOrder);
+          null, null, sortOrder, null);
       success = true;
     } catch (Exception e) {
       log.w(t, "Unable to query database for appName: " + appName);
@@ -220,17 +221,17 @@ public abstract class TablesProviderImpl extends ContentProvider {
     int deleteCount = 0;
     
     // Get the database and run the query
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
       try {
         c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, 
             new String[] { TableDefinitionsColumns.TABLE_ID }, whereId, whereIdArgs,
-          null, null, null);
+          null, null, null, null);
         if ( c != null && c.moveToFirst() ) {
           int idxTableId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
           do {

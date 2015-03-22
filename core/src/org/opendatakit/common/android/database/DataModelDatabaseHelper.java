@@ -20,7 +20,6 @@ import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.SyncETagColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 
 /**
  * This class helps open, create, and upgrade the database file.
@@ -33,7 +32,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
     super(appName, APP_VERSION);
   }
 
-  private void commonTableDefn(SQLiteDatabase db) {
+  private void commonTableDefn(OdkDatabase db) {
     // db.execSQL(SurveyConfigurationColumns.getTableCreateSql(SURVEY_CONFIGURATION_TABLE_NAME));
     db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME));
     db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME));
@@ -52,7 +51,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
    *          The database.
    */
   @Override
-  protected void onCreate(SQLiteDatabase db) {
+  protected void onCreate(OdkDatabase db) {
     commonTableDefn(db);
   }
 
@@ -76,7 +75,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
    *          The new database version.
    */
   @Override
-  protected void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  protected void onUpgrade(OdkDatabase db, int oldVersion, int newVersion) {
     // for now, upgrade and creation use the same codepath...
     commonTableDefn(db);
   }

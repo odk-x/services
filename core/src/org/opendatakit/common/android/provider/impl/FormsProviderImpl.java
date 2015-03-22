@@ -31,13 +31,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -67,9 +69,9 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    String dbHandleName;
+    OdkDbHandle dbHandleName;
     
-    InvalidateMonitor(String appName, String dbHandleName) {
+    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -220,14 +222,14 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String[] selectionArgs = { formSpec.tableId, formSpec.formId };
     Cursor c = null;
     
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
-            null, null, null);
+            null, null, null, null);
         if (c == null) {
           throw new SQLException("FAILED Insert into " + uri
               + " -- unable to query for existing records. tableId=" + formSpec.tableId + " formId=" + formSpec.formId);
@@ -253,20 +255,19 @@ public abstract class FormsProviderImpl extends ContentProvider {
       }
 
       try {
-        long rowId = db.insert(DatabaseConstants.FORMS_TABLE_NAME, null, values);
+        long rowId = db.insertOrThrow(DatabaseConstants.FORMS_TABLE_NAME, null, values);
         db.setTransactionSuccessful();
-        if (rowId > 0) {
-          Uri formUri = Uri.withAppendedPath(
-              Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
-              values.getAsString(FormsColumns.FORM_ID));
-          getContext().getContentResolver().notifyChange(formUri, null);
-          Uri idUri = Uri.withAppendedPath(
-              Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
-              Long.toString(rowId));
-          getContext().getContentResolver().notifyChange(idUri, null);
+        // and notify listeners of the new row...
+        Uri formUri = Uri.withAppendedPath(
+            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
+            values.getAsString(FormsColumns.FORM_ID));
+        getContext().getContentResolver().notifyChange(formUri, null);
+        Uri idUri = Uri.withAppendedPath(
+            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
+            Long.toString(rowId));
+        getContext().getContentResolver().notifyChange(idUri, null);
 
-          return formUri;
-        }
+        return formUri;
       } catch (Exception e) {
         log.w(t, "FAILED Insert into " + uri + " -- insert of row failed: " + e.toString());
 
@@ -277,6 +278,11 @@ public abstract class FormsProviderImpl extends ContentProvider {
               + e.toString());
         }
       }
+    } catch (SQLException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: "
+          + e.toString());
     } finally {
       if ( db != null ) {
         db.endTransaction();
@@ -284,8 +290,6 @@ public abstract class FormsProviderImpl extends ContentProvider {
         DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
-
-    throw new SQLException("Failed to insert row into " + uri);
   }
 
   class PatchedFilter {
@@ -398,14 +402,14 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
 
     // Get the database and run the query
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     boolean success = false;
     Cursor c = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
-          null, null, sortOrder);
+          null, null, sortOrder, null);
       success = true;
     } catch (Exception e) {
       log.w(t, "Unable to query database");
@@ -448,8 +452,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
     HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
 
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     Cursor c = null;
     
     Integer idValue = null;
@@ -458,9 +462,9 @@ public abstract class FormsProviderImpl extends ContentProvider {
     try {
       // Get the database and run the query
       db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
-          null, null, null);
+          null, null, null, null);
 
       if (c == null) {
         throw new SQLException("FAILED Delete into " + uri
@@ -600,15 +604,15 @@ public abstract class FormsProviderImpl extends ContentProvider {
         
     HashMap<FormSpec, ContentValues> matchedValues = new HashMap<FormSpec, ContentValues>();
     
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
-      db.beginTransactionNonExclusive();
+      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       Cursor c = null;
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, null, pf.whereId, pf.whereIdArgs,
-            null, null, null);
+            null, null, null, null);
   
         if (c == null) {
           throw new SQLException("FAILED Update of " + uri

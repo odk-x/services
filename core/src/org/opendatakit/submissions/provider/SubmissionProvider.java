@@ -43,6 +43,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
@@ -53,12 +54,11 @@ import org.opendatakit.common.android.utilities.EncryptionUtils;
 import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
 import org.opendatakit.common.android.utilities.FileSet;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
-import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.opendatakit.database.service.OdkDbHandle;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -232,8 +232,8 @@ public class SubmissionProvider extends ContentProvider {
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
 
-    String dbHandleName = ODKDataUtils.genUUID();
-    SQLiteDatabase db = null;
+    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
 
@@ -271,7 +271,7 @@ public class SubmissionProvider extends ContentProvider {
               KeyValueStoreConstants.XML_ROOT_ELEMENT_NAME,
               KeyValueStoreConstants.XML_DEVICE_ID_PROPERTY_NAME,
               KeyValueStoreConstants.XML_USER_ID_PROPERTY_NAME,
-              KeyValueStoreConstants.XML_BASE64_RSA_PUBLIC_KEY }, null, null, null);
+              KeyValueStoreConstants.XML_BASE64_RSA_PUBLIC_KEY }, null, null, null, null);
           if (c.getCount() > 0) {
             c.moveToFirst();
             int idxKey = c.getColumnIndex(KeyValueStoreColumns.KEY);

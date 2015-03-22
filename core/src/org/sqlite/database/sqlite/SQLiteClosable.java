@@ -79,6 +79,10 @@ public abstract class SQLiteClosable implements Closeable {
         }
     }
 
+    public int getReferenceCount() {
+      return mReferenceCount;
+    }
+    
     /**
      * Releases a reference to the object that was owned by the container of the object,
      * closing the object if the last reference was released.

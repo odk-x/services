@@ -15,13 +15,12 @@
  */
 package org.opendatakit.common.android.utilities;
 
-import java.net.URI;
 import java.util.ArrayList;
 
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.provider.SyncETagColumns;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.database.Cursor;
 
@@ -40,7 +39,7 @@ public class SyncETagsUtils {
    * @param db
    * @param tableId
    */
-  public void deleteAllSyncETagsForTableId(SQLiteDatabase db, String tableId) {
+  public void deleteAllSyncETagsForTableId(OdkDatabase db, String tableId) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -66,7 +65,7 @@ public class SyncETagsUtils {
    * @param db
    * @param tableId
    */
-  public void deleteAllSyncETagsExceptForServer(SQLiteDatabase db, String serverUriPrefix) {
+  public void deleteAllSyncETagsExceptForServer(OdkDatabase db, String serverUriPrefix) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -99,7 +98,7 @@ public class SyncETagsUtils {
    * @param db
    * @param serverUriPrefix
    */
-  public void deleteAllSyncETagsUnderServer(SQLiteDatabase db, String serverUriPrefix) {
+  public void deleteAllSyncETagsUnderServer(OdkDatabase db, String serverUriPrefix) {
 
     if ( serverUriPrefix == null ) {
       throw new IllegalArgumentException("must specify a serverUriPrefix");
@@ -124,7 +123,7 @@ public class SyncETagsUtils {
     db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
   }
   
-  public String getManifestSyncETag(SQLiteDatabase db, String url, String tableId) {
+  public String getManifestSyncETag(OdkDatabase db, String url, String tableId) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -173,7 +172,7 @@ public class SyncETagsUtils {
     }
   }
 
-  public void updateManifestSyncETag(SQLiteDatabase db, String url, String tableId, String etag) {
+  public void updateManifestSyncETag(OdkDatabase db, String url, String tableId, String etag) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -196,7 +195,7 @@ public class SyncETagsUtils {
     boolean inTransaction = db.inTransaction();
     try {
       if ( !inTransaction ) {
-        db.beginTransactionNonExclusive();
+        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
       db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 
@@ -243,7 +242,7 @@ public class SyncETagsUtils {
    * @param modified
    * @return
    */
-  public String getFileSyncETag(SQLiteDatabase db, String url, String tableId, long modified) {
+  public String getFileSyncETag(OdkDatabase db, String url, String tableId, long modified) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -293,7 +292,7 @@ public class SyncETagsUtils {
     return null;
   }
 
-  public void updateFileSyncETag(SQLiteDatabase db, String url, String tableId, long modified, String etag) {
+  public void updateFileSyncETag(OdkDatabase db, String url, String tableId, long modified, String etag) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -316,7 +315,7 @@ public class SyncETagsUtils {
     boolean inTransaction = db.inTransaction();
     try {
       if ( !inTransaction ) {
-        db.beginTransactionNonExclusive();
+        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
       db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 

@@ -25,7 +25,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.database.OdkDatabase;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
@@ -39,32 +41,10 @@ import android.os.IBinder;
 import android.os.IBinder.DeathRecipient;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.SparseArray;
 
 public class OdkDbShimService extends Service {
 
   public static final String LOGTAG = OdkDbShimService.class.getSimpleName();
-
-  /**
-   * Open database transactions by appName and database generation.
-   */
-  private static class DbShimAppContext {
-    // for debugging
-    @SuppressWarnings("unused")
-    final String appName;
-    final String generation;
-    final SparseArray<SQLiteDatabase> transactions = new SparseArray<SQLiteDatabase>();
-    
-    DbShimAppContext( String appName, String generation ) {
-      this.appName = appName;
-      this.generation = generation;
-    }
-  }
-
-  /**
-   * Map of appName to open database transactions
-   */
-  private Map<String, DbShimAppContext> appContexts = new HashMap<String, DbShimAppContext>();
 
   /**
    * Type of action to be performed on an appName and open database
@@ -187,83 +167,38 @@ public class OdkDbShimService extends Service {
    * @param appName
    * @param thisGeneration
    * @param contextName
+   * @param callback
    * @return
+   * @throws RemoteException 
    */
-  private DbShimAppContext assertGeneration(String appName, String thisGeneration,
-      String contextName) {
-    WebLogger log = WebLogger.getLogger(appName);
+  private void assertGeneration(String appName, String thisGeneration, 
+      String contextName, DbShimCallback callback) throws RemoteException {
 
-    DbShimAppContext appContext = appContexts.get(appName);
-    if (appContext != null) {
-      if (!appContext.generation.equals(thisGeneration)) {
-        // copy out the outstanding transactions in the old generation...
-        String oldGeneration = appContext.generation;
-        ArrayList<SQLiteDatabase> thisTransactions = new ArrayList<SQLiteDatabase>();
-        for ( int i = 0 ; i < appContext.transactions.size(); ++i ) {
-          thisTransactions.add(appContext.transactions.valueAt(i));
-        }
-        
-        // and replace the old generation with a new object.
-        appContext = new DbShimAppContext(appName, thisGeneration);
-        appContexts.put(appName, appContext);
-        log.i(LOGTAG, contextName + " -- creating DbShimAppContext gen: " + thisGeneration);
-        appContext.transactions.clear();
-
-        // then go through the old transactions and end them (rolling them back)
-        for (SQLiteDatabase db : thisTransactions) {
-          try {
-            log.e(LOGTAG, contextName + " -- Wrong Generation! gen: " + thisGeneration
-                + " purging transaction!");
-            if ( db.inTransaction() ) {
-              db.endTransaction();
-            }
-            db.close();
-          } catch (Exception e) {
-            log.e(LOGTAG, contextName + " -- exception: " + e.toString());
-          }
-        }
-        
-        DatabaseFactory.get().releaseDatabase(getApplicationContext(), appName, oldGeneration);
-
-        log.i(LOGTAG, contextName + " -- updating DbShimAppContext gen: " + thisGeneration
-            + " prior gen: " + oldGeneration);
-      }
-    } else {
-      appContext = new DbShimAppContext(appName, thisGeneration);
-      appContexts.put(appName, appContext);
-      log.i(LOGTAG, contextName + " -- creating DbShimAppContext gen: " + thisGeneration);
+    boolean releasedSessions = DatabaseFactory.get().releaseDatabaseGroupInstances(
+        getApplicationContext(), appName, thisGeneration, true);
+    
+    if ( releasedSessions ) {
+      WebLogger log = WebLogger.getLogger(appName);
+      log.i(contextName, "calling dbshimCleanupCallback(\"" + thisGeneration + "\");");
+      
+      String fullCommand = "javascript:window.dbif.dbshimCleanupCallback(\"" + thisGeneration + "\");";
+      callback.fireCallback(fullCommand);
     }
-
-    return appContext;
   }
 
   /**
    * Called to clear any database connections for appName that do not match the
-   * generation.
+   * newGeneration.
    *
    * @param appName
-   * @param generation
+   * @param newGeneration
    * @param callback
    * @throws RemoteException
    */
-  private void initializeDatabaseConnections(String appName, String generation,
+  private void initializeDatabaseConnections(String appName, String newGeneration,
       DbShimCallback callback) throws RemoteException {
-    WebLogger log = WebLogger.getLogger(appName);
-    log.i(LOGTAG, "initializeDatabaseConnections -- gen: " + generation);
 
-    String oldGeneration = "-";
-    DbShimAppContext appContext = appContexts.get(appName);
-    if (appContext != null) {
-      oldGeneration = appContext.generation;
-      if (oldGeneration.equals(generation)) {
-        oldGeneration = "-";
-      }
-    }
-
-    appContext = assertGeneration(appName, generation, "initializeDatabaseConnections");
-
-    String fullCommand = "javascript:window.dbif.dbshimCleanupCallback(\"" + oldGeneration + "\");";
-    callback.fireCallback(fullCommand);
+    assertGeneration(appName, newGeneration, "initializeDatabaseConnections", callback);
   }
 
   /**
@@ -279,27 +214,25 @@ public class OdkDbShimService extends Service {
       DbShimCallback callback) throws RemoteException {
     WebLogger log = WebLogger.getLogger(appName);
 
-    DbShimAppContext appContext = assertGeneration(appName, thisGeneration, "runRollback");
+    assertGeneration(appName, thisGeneration, "runRollback", callback);
 
-    SQLiteDatabase db = appContext.transactions.get(thisTransactionGeneration);
+    OdkDatabase db = DatabaseFactory.get().getDatabaseGroupInstance(
+        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
+    
     if (db != null) {
       log.i(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
           + thisTransactionGeneration);
       try {
         db.endTransaction();
         db.close();
-        appContext.transactions.remove(thisTransactionGeneration);
+        DatabaseFactory.get().releaseDatabaseGroupInstance(
+            getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
       } catch (Exception e) {
         log.e(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
             + thisTransactionGeneration + " - exception: " + e.toString());
         try {
-          appContext.transactions.remove(thisTransactionGeneration);
-          if ( db.isOpen() ) {
-            if ( db.inTransaction() ) {
-              db.endTransaction();
-            }
-            db.close();
-          }
+          DatabaseFactory.get().releaseDatabaseGroupInstance(
+              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
         } catch ( Exception ex ) {
           // ignore
         }
@@ -331,27 +264,25 @@ public class OdkDbShimService extends Service {
       DbShimCallback callback) throws RemoteException {
     WebLogger log = WebLogger.getLogger(appName);
 
-    DbShimAppContext appContext = assertGeneration(appName, thisGeneration, "runCommit");
+    assertGeneration(appName, thisGeneration, "runCommit", callback);
 
-    SQLiteDatabase db = appContext.transactions.get(thisTransactionGeneration);
+    OdkDatabase db = DatabaseFactory.get().getDatabaseGroupInstance(
+        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
+
     if (db != null) {
       log.i(LOGTAG, "commit gen: " + thisGeneration + " transaction: " + thisTransactionGeneration);
       try {
         db.setTransactionSuccessful();
         db.endTransaction();
         db.close();
-        appContext.transactions.remove(thisTransactionGeneration);
+        DatabaseFactory.get().releaseDatabaseGroupInstance(
+            getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
       } catch (Exception e) {
         log.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
             + thisTransactionGeneration + " - exception: " + e.toString());
         try {
-          appContext.transactions.remove(thisTransactionGeneration);
-          if ( db.isOpen() ) {
-            if ( db.inTransaction() ) {
-              db.endTransaction();
-            }
-            db.close();
-          }
+          DatabaseFactory.get().releaseDatabaseGroupInstance(
+              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
         } catch ( Exception ex ) {
           // ignore
         }
@@ -390,7 +321,7 @@ public class OdkDbShimService extends Service {
     // doesn't matter...
     String sqlVerb = sqlStmt.substring(0, sqlStmt.indexOf(' ')).toUpperCase(Locale.US);
 
-    DbShimAppContext appContext = assertGeneration(appName, thisGeneration, "runStmt");
+    assertGeneration(appName, thisGeneration, "runStmt", callback);
 
     log.i(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
         + thisTransactionGeneration + " action: " + thisActionIdx + " sqlVerb: " + sqlVerb);
@@ -419,101 +350,92 @@ public class OdkDbShimService extends Service {
       return;
     }
 
-    SQLiteDatabase db = appContext.transactions.get(thisTransactionGeneration);
-    if (thisActionIdx == 0) {
-      if (db != null) {
-        log.e(LOGTAG,
-            "executeSqlStmt - unexpectedly matching transactionGen with actionIdx of zero!");
-        try {
-          appContext.transactions.remove(thisTransactionGeneration);
-          if ( db.isOpen() ) {
-            if ( db.inTransaction() ) {
-              db.endTransaction();
-            }
-            db.close();
-          }
-        } catch ( Exception ex ) {
-          // ignore
-        }
-        errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
-            "unexpectedly matching transactionGen with actionIdx of zero!", callback);
-        return;
-      }
+    OdkDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabaseGroupInstance(
+        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
 
-      db = DatabaseFactory.get().getDatabase(getApplicationContext(), appName, thisGeneration);
-      appContext.transactions.put(thisTransactionGeneration, db);
       if ( !db.inTransaction() ) {
-        db.beginTransactionNonExclusive();
+        // acquire a reference, as this is a new open database connection
+        db.acquireReference();
+        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
-    } else {
-      if (db == null) {
-        log.e(LOGTAG,
-            "executeSqlStmt - could not find matching transactionGen with non-zero actionIdx!");
-        errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
-            "could not find matching transactionGen with non-zero actionIdx!", callback);
-        return;
-      }
-    }
-
-    if (sqlVerb.equals("SELECT")) {
-      try {
-        Cursor c = db.rawQuery(sqlStmt, bindArray);
-        Map<String, Object> resultSet = new HashMap<String, Object>();
-        ArrayList<Map<String, Object>> rowSet = new ArrayList<Map<String, Object>>();
-        resultSet.put("rowsAffected", 0);
-        resultSet.put("rows", rowSet);
-
-        while (c.moveToNext()) {
-          Map<String, Object> row = new HashMap<String, Object>();
-          int nCols = c.getColumnCount();
-          for (int i = 0; i < nCols; ++i) {
-            String name = c.getColumnName(i);
-
-            Object v = ODKCursorUtils.getIndexAsType(c,
-                ODKCursorUtils.getIndexDataType(c, i), i);
-            row.put(name, v);
+  
+      if (sqlVerb.equals("SELECT")) {
+        Cursor c = null;
+        try {
+          c = db.rawQuery(sqlStmt, bindArray);
+          Map<String, Object> resultSet = new HashMap<String, Object>();
+          ArrayList<Map<String, Object>> rowSet = new ArrayList<Map<String, Object>>();
+          resultSet.put("rowsAffected", 0);
+          resultSet.put("rows", rowSet);
+  
+          while (c.moveToNext()) {
+            Map<String, Object> row = new HashMap<String, Object>();
+            int nCols = c.getColumnCount();
+            for (int i = 0; i < nCols; ++i) {
+              String name = c.getColumnName(i);
+  
+              Object v = ODKCursorUtils.getIndexAsType(c,
+                  ODKCursorUtils.getIndexDataType(c, i), i);
+              row.put(name, v);
+            }
+            rowSet.add(row);
           }
-          rowSet.add(row);
+          c.close();
+  
+          String resultString = ODKFileUtils.mapper.writeValueAsString(resultSet);
+          String quotedResultString = ODKFileUtils.mapper.writeValueAsString(resultString);
+          StringBuilder b = new StringBuilder();
+          b.append("javascript:window.dbif.dbshimCallback(\"").append(thisGeneration).append("\",")
+              .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
+              .append(quotedResultString).append(");");
+          String fullCommand = b.toString();
+          log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
+          //db.yieldIfContendedSafely();
+          callback.fireCallback(fullCommand);
+          return;
+        } catch (Exception e) {
+          log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
+          //db.yieldIfContendedSafely();
+          errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
+              "exception: " + e.toString(), callback);
+          return;
+        } finally {
+          if ( c != null && !c.isClosed() ) {
+            c.close();
+          }
         }
-
-        String resultString = ODKFileUtils.mapper.writeValueAsString(resultSet);
-        String quotedResultString = ODKFileUtils.mapper.writeValueAsString(resultString);
-        StringBuilder b = new StringBuilder();
-        b.append("javascript:window.dbif.dbshimCallback(\"").append(thisGeneration).append("\",")
-            .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
-            .append(quotedResultString).append(");");
-        String fullCommand = b.toString();
-        log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
-        //db.yieldIfContendedSafely();
-        callback.fireCallback(fullCommand);
-        return;
-      } catch (Exception e) {
-        log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
-        //db.yieldIfContendedSafely();
-        errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
-            "exception: " + e.toString(), callback);
-        return;
+      } else {
+        try {
+          db.execSQL(sqlStmt, bindArray);
+          Map<String, Object> resultSet = new HashMap<String, Object>();
+          String resultString = ODKFileUtils.mapper.writeValueAsString(resultSet);
+          String quotedResultString = ODKFileUtils.mapper.writeValueAsString(resultString);
+          StringBuilder b = new StringBuilder();
+          b.append("javascript:window.dbif.dbshimCallback(\"").append(thisGeneration).append("\",")
+              .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
+              .append(quotedResultString).append(");");
+          String fullCommand = b.toString();
+          log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
+          //db.yieldIfContendedSafely();
+          callback.fireCallback(fullCommand);
+        } catch (Exception e) {
+          log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
+          //db.yieldIfContendedSafely();
+          errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
+              "exception: " + e.toString(), callback);
+          return;
+        }
       }
-    } else {
-      try {
-        db.execSQL(sqlStmt, bindArray);
-        Map<String, Object> resultSet = new HashMap<String, Object>();
-        String resultString = ODKFileUtils.mapper.writeValueAsString(resultSet);
-        String quotedResultString = ODKFileUtils.mapper.writeValueAsString(resultString);
-        StringBuilder b = new StringBuilder();
-        b.append("javascript:window.dbif.dbshimCallback(\"").append(thisGeneration).append("\",")
-            .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
-            .append(quotedResultString).append(");");
-        String fullCommand = b.toString();
-        log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
-        //db.yieldIfContendedSafely();
-        callback.fireCallback(fullCommand);
-      } catch (Exception e) {
-        log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
-        //db.yieldIfContendedSafely();
-        errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
-            "exception: " + e.toString(), callback);
-        return;
+    } finally {
+      // this doesn't close the database --
+      // we are just decrementing the reference
+      // count. The extra aquireReference when 
+      // we began the transaction keeps the
+      // database connection open.
+      if ( db != null ) {
+        db.close();
       }
     }
   }
@@ -561,31 +483,18 @@ public class OdkDbShimService extends Service {
     return servInterface;
   }
 
+  @Override
+  public boolean onUnbind(Intent intent) {
+    super.onUnbind(intent);
+    Log.i(LOGTAG, "onUnbind -- releasing interface.");
+    DatabaseFactory.get().releaseAllDatabaseGroupInstances(getApplicationContext());
+    // this may be too aggressive, but ensures that WebLogger is released.
+    WebLogger.closeAll();
+    return false;
+  }
+
   public synchronized void appNameDied(String appName) {
-    DbShimAppContext appContext = appContexts.get(appName);
-    appContexts.remove(appName);
-    if (appContext != null) {
-      // copy out the outstanding transactions in the old generation...
-      String oldGeneration = appContext.generation;
-      ArrayList<SQLiteDatabase> thisTransactions = new ArrayList<SQLiteDatabase>();
-      for ( int i = 0 ; i < appContext.transactions.size(); ++i ) {
-        thisTransactions.add(appContext.transactions.valueAt(i));
-      }
-      
-      // then go through the old transactions and end them (rolling them back)
-      for (SQLiteDatabase db : thisTransactions) {
-        try {
-          WebLogger.getLogger(appName).e(LOGTAG, "appNameDied -- purging transaction!");
-          if ( db.inTransaction() ) {
-            db.endTransaction();
-          }
-          db.close();
-        } catch (Exception e) {
-          WebLogger.getLogger(appName).e(LOGTAG, "appNameDied -- exception: " + e.toString());
-        }
-      }
-      DatabaseFactory.get().releaseDatabase(getApplicationContext(), appContext.appName, appContext.generation);
-    }
+    DatabaseFactory.get().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
   }
   
   @Override
@@ -603,34 +512,9 @@ public class OdkDbShimService extends Service {
     worker = null;
 
     // and release any transactions we are holding...
-    String contextName = "onDestroy";
-    ArrayList<DbShimAppContext> tmpContexts = new ArrayList<DbShimAppContext>(appContexts.values());
-    appContexts.clear();
-    for (DbShimAppContext appContext : tmpContexts ) {
-      
-      // copy out the outstanding transactions...
-      ArrayList<SQLiteDatabase> thisTransactions = new ArrayList<SQLiteDatabase>();
-      for ( int i = 0 ; i < appContext.transactions.size(); ++i ) {
-        thisTransactions.add(appContext.transactions.valueAt(i));
-      }
-      appContext.transactions.clear();
-  
-      // then go through the old transactions and end them (rolling them back)
-      for (SQLiteDatabase db : thisTransactions) {
-        try {
-          WebLogger.getLogger(appContext.appName)
-          .e(LOGTAG, contextName + " -- purging transaction!");
-          if ( db.inTransaction() ) {
-            db.endTransaction();
-          }
-          db.close();
-        } catch (Exception e) {
-          WebLogger.getLogger(appContext.appName)
-          .e(LOGTAG, contextName + " -- exception: " + e.toString());
-        }
-      }
-      DatabaseFactory.get().releaseDatabase(getApplicationContext(), appContext.appName, appContext.generation);
-    }
+    DatabaseFactory.get().releaseAllDatabaseGroupInstances(getApplicationContext());
+    // this may be too aggressive, but ensures that WebLogger is released.
+    WebLogger.closeAll();
     Log.i(LOGTAG, "onDestroy - done");
     super.onDestroy();
   }
