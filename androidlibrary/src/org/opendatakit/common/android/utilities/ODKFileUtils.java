@@ -55,7 +55,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class ODKFileUtils {
-  private final static String t = "FileUtils";
+  private final static String t = "ODKFileUtils";
 
   // base path
   private static final String ODK_FOLDER_NAME = "opendatakit";

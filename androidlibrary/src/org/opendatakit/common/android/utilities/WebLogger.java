@@ -32,6 +32,7 @@ import java.util.Map;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 
+import android.os.FileObserver;
 import android.util.Log;
 
 /**
@@ -58,7 +59,7 @@ public class WebLogger {
 
   private static long lastStaleScan = 0L;
   private static Map<String, WebLogger> loggers = new HashMap<String, WebLogger>();
-  
+
   static {
     // register a state-reset manipulator for 'loggers' field.
     StaticStateManipulator.get().register(99, new IStaticFieldManipulator() {
@@ -67,7 +68,7 @@ public class WebLogger {
       public void reset() {
         closeAll();
       }
-      
+
     });
   }
 
@@ -84,32 +85,57 @@ public class WebLogger {
   // the last time we flushed our output stream
   private long lastFlush = 0L;
 
+  private class LoggingFileObserver extends FileObserver {
+
+    public LoggingFileObserver(String path) {
+      super(path, FileObserver.DELETE_SELF | FileObserver.MOVE_SELF);
+    }
+
+    @Override
+    public void onEvent(int event, String path) {
+      if (WebLogger.this.logFile != null) {
+        try {
+          if (event == FileObserver.MOVE_SELF) {
+            WebLogger.this.logFile.flush();
+          }
+          WebLogger.this.logFile.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+          Log.w("WebLogger", "detected delete or move of logging directory -- shutting down");          
+        }
+        WebLogger.this.logFile = null;
+      }
+    }
+  }
+
+  private LoggingFileObserver loggingObserver = null;
+
   private static class ThreadLogger extends ThreadLocal<String> {
 
     @Override
     protected String initialValue() {
       return null;
     }
-    
+
   }
-  
+
   private static ThreadLogger contextLogger = new ThreadLogger();
 
   public static synchronized void closeAll() {
-    for ( WebLogger l : loggers.values() ) {
+    for (WebLogger l : loggers.values()) {
       l.close();
     }
     loggers.clear();
   }
-  
+
   public static WebLogger getContextLogger() {
     String appNameOfThread = contextLogger.get();
-    if ( appNameOfThread != null ) {
+    if (appNameOfThread != null) {
       return getLogger(appNameOfThread);
     }
     return null;
   }
-  
+
   public synchronized static WebLogger getLogger(String appName) {
     WebLogger logger = loggers.get(appName);
     if (logger == null) {
@@ -118,7 +144,7 @@ public class WebLogger {
     }
 
     contextLogger.set(appName);
-    
+
     long now = System.currentTimeMillis();
     if (lastStaleScan + MILLISECONDS_DAY < now) {
       try {
@@ -172,7 +198,7 @@ public class WebLogger {
   }
 
   private synchronized void close() {
-    if ( logFile != null ) {
+    if (logFile != null) {
       OutputStreamWriter writer = logFile;
       logFile = null;
       String loggingPath = ODKFileUtils.getLoggingFolder(appName);
@@ -188,22 +214,21 @@ public class WebLogger {
         try {
           writer.flush();
           writer.close();
-        } catch ( IOException e ) {
+        } catch (IOException e) {
           Log.e("WebLogger", "Unable to flush and close " + appName + " WebLogger");
         }
       }
     }
   }
-  
+
   private synchronized void log(String logMsg) throws IOException {
-    String curDateStamp = (new SimpleDateFormat("yyyy-MM-dd_HH", Locale.ENGLISH)).format(new Date());
-    if  ( logFile == null ||
-          dateStamp == null ||
-          !curDateStamp.equals(dateStamp) ) {
+    String curDateStamp = (new SimpleDateFormat("yyyy-MM-dd_HH", Locale.ENGLISH))
+        .format(new Date());
+    if (logFile == null || dateStamp == null || !curDateStamp.equals(dateStamp)) {
       // the file we should log to has changed.
       // or has not yet been opened.
 
-      if ( logFile != null ) {
+      if (logFile != null) {
         // close existing writer...
         OutputStreamWriter writer = logFile;
         logFile = null;
@@ -231,6 +256,10 @@ public class WebLogger {
         return;
       }
 
+      if ( loggingObserver == null ) {
+        loggingObserver = new LoggingFileObserver(loggingDirectory.getAbsolutePath());
+      }
+
       File f = new File(loggingDirectory, curDateStamp + ".log");
       try {
         FileOutputStream fo = new FileOutputStream(f, true);
@@ -242,7 +271,7 @@ public class WebLogger {
         e.printStackTrace();
         Log.e("WebLogger", "Unexpected exception while opening logging file: " + e.toString());
         try {
-          if ( logFile != null ) {
+          if (logFile != null) {
             logFile.close();
           }
         } catch (Exception ex) {
@@ -253,12 +282,13 @@ public class WebLogger {
       }
     }
 
-    if ( logFile != null ) {
+    if (logFile != null) {
       logFile.write(logMsg + "\n");
     }
 
-    if ( lastFlush + WebLogger.FLUSH_INTERVAL < System.currentTimeMillis() ) {
-      // log when we are explicitly flushing, just to have a record of that in the log
+    if (lastFlush + WebLogger.FLUSH_INTERVAL < System.currentTimeMillis()) {
+      // log when we are explicitly flushing, just to have a record of that in
+      // the log
       logFile.write("---- flushing ----\n");
       logFile.flush();
       lastFlush = System.currentTimeMillis();
@@ -268,11 +298,11 @@ public class WebLogger {
   public void log(int severity, String t, String logMsg) {
     try {
       // do logcat logging...
-      if ( severity == ERROR ) {
+      if (severity == ERROR) {
         Log.e(t, logMsg);
-      } else if ( severity == WARN ) {
+      } else if (severity == WARN) {
         Log.w(t, logMsg);
-      } else if ( LOG_INFO_LEVEL >= severity ) {
+      } else if (LOG_INFO_LEVEL >= severity) {
         Log.i(t, logMsg);
       } else {
         Log.d(t, logMsg);
@@ -341,7 +371,7 @@ public class WebLogger {
   public void e(String t, String logMsg) {
     log(ERROR, t, logMsg);
   }
-  
+
   public void printStackTrace(Throwable e) {
     e.printStackTrace();
     ByteArrayOutputStream ba = new ByteArrayOutputStream();

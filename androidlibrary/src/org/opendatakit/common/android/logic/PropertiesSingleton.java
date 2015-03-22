@@ -99,15 +99,21 @@ public class PropertiesSingleton {
   }
 
   private static SharedPreferences getSharedPreferences(Context context) {
-    return context.getSharedPreferences(COMMON_SHARED_PREFERENCES, Context.MODE_PRIVATE
+    try {
+      return context.getSharedPreferences(COMMON_SHARED_PREFERENCES, Context.MODE_PRIVATE
         | Context.MODE_MULTI_PROCESS);
+    } catch ( Exception e ) {
+     Log.e("PropertiesSingleton", "Unable to access SharedPreferences!");
+     return null;
+    }
   }
 
   public boolean containsKey(String propertyName) {
     if (isSecureProperty(propertyName)) {
       // this needs to be stored in a protected area
       SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-      return sharedPreferences.contains(mAppName + "_" + propertyName);
+      return (sharedPreferences == null) ? false :
+        sharedPreferences.contains(mAppName + "_" + propertyName);
     } else {
       return mProps.containsKey(propertyName);
     }
@@ -124,7 +130,8 @@ public class PropertiesSingleton {
     if (isSecureProperty(propertyName)) {
       // this needs to be stored in a protected area
       SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-      return sharedPreferences.getString(mAppName + "_" + propertyName, null);
+      return (sharedPreferences == null) ? null : 
+        sharedPreferences.getString(mAppName + "_" + propertyName, null);
     } else {
       return mProps.getProperty(propertyName);
     }
@@ -197,7 +204,11 @@ public class PropertiesSingleton {
     if (isSecureProperty(propertyName)) {
       // this needs to be stored in a protected area
       SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-      sharedPreferences.edit().remove(mAppName + "_" + propertyName).commit();
+      if ( sharedPreferences != null ) {
+        sharedPreferences.edit().remove(mAppName + "_" + propertyName).commit();
+      } else {
+        throw new IllegalStateException("Unable to remove SharedPreferences");
+      }
     } else {
       mProps.remove(propertyName);
     }
@@ -214,7 +225,11 @@ public class PropertiesSingleton {
     if (isSecureProperty(propertyName)) {
       // this needs to be stored in a protected area
       SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-      sharedPreferences.edit().putString(mAppName + "_" + propertyName, value).commit();
+      if ( sharedPreferences != null ) {
+        sharedPreferences.edit().putString(mAppName + "_" + propertyName, value).commit();
+      } else {
+        throw new IllegalStateException("Unable to write SharedPreferences");
+      }
     } else {
       if (isModified()) {
         readProperties();
@@ -236,10 +251,14 @@ public class PropertiesSingleton {
   public static void setStartCoreServices(Context context) {
     // this needs to be stored in a protected area
     SharedPreferences sharedPreferences = getSharedPreferences(context);
-    sharedPreferences
+    if ( sharedPreferences != null ) {
+      sharedPreferences
         .edit()
         .putString(coreStartPropertyName(),
             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis())).commit();
+    } else {
+      throw new IllegalStateException("Unable to write SharedPreferences");
+    }
   }
 
   private String toolInitializationPropertyName(String toolName) {
@@ -257,7 +276,10 @@ public class PropertiesSingleton {
     Boolean booleanSetting = Boolean.TRUE;
     // this needs to be stored in a protected area
     SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-
+    if ( sharedPreferences == null ) {
+      throw new IllegalStateException("Unable to access SharedPreferences");
+    }
+    
     String value = sharedPreferences.getString(toolInitializationPropertyName(toolName), null);
     if (value == null || value.length() == 0) {
       return booleanSetting;
@@ -279,10 +301,14 @@ public class PropertiesSingleton {
   public void clearRunInitializationTask(String toolName) {
     // this needs to be stored in a protected area
     SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-    sharedPreferences
+    if ( sharedPreferences != null ) {
+      sharedPreferences
         .edit()
         .putString(toolInitializationPropertyName(toolName),
             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis())).commit();
+    } else {
+      throw new IllegalStateException("Unable to write SharedPreferences");
+    }
   }
 
   /**
@@ -294,7 +320,11 @@ public class PropertiesSingleton {
   public void setRunInitializationTask(String toolName) {
     // this needs to be stored in a protected area
     SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-    sharedPreferences.edit().remove(toolInitializationPropertyName(toolName)).commit();
+    if ( sharedPreferences != null ) {
+      sharedPreferences.edit().remove(toolInitializationPropertyName(toolName)).commit();
+    } else {
+      throw new IllegalStateException("Unable to remove SharedPreferences");
+    }
   }
 
   PropertiesSingleton(Context context, String appName, TreeMap<String, String> plainDefaults,
@@ -327,10 +357,15 @@ public class PropertiesSingleton {
         // NOTE: can't use the static methods because this object is not
         // yet fully created
         SharedPreferences sharedPreferences = getSharedPreferences(mBaseContext);
-        sharedPreferences.edit().putString(mAppName + "_" + entry.getKey(), entry.getValue())
+        if ( sharedPreferences != null ) {
+          sharedPreferences.edit()
+            .putString(mAppName + "_" + entry.getKey(), entry.getValue())
             .commit();
-        mProps.remove(entry.getKey());
-        dirtyProps = true;
+          mProps.remove(entry.getKey());
+          dirtyProps = true;
+        } else {
+          throw new IllegalStateException("Unable to access SharedPreferences");
+        }
       }
     }
 
@@ -342,13 +377,7 @@ public class PropertiesSingleton {
   private void verifyDirectories() {
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
-      File f = new File(ODKFileUtils.getOdkFolder());
-      if (!f.exists()) {
-        f.mkdir();
-      } else if (!f.isDirectory()) {
-        Log.e(t, f.getAbsolutePath() + " is not a directory!");
-        throw new IllegalArgumentException(f.getAbsolutePath() + " is not a directory!");
-      }
+      ODKFileUtils.assertDirectoryStructure(mAppName);
     } catch (Exception e) {
       Log.e(t, "External storage not available");
       throw new IllegalArgumentException("External storage not available");
