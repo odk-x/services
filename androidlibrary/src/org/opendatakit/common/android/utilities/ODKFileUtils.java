@@ -39,8 +39,9 @@ import java.util.TreeSet;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.CharEncoding;
-import org.kxml2.kdom.Node;
 import org.opendatakit.common.android.provider.FormsColumns;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -1044,7 +1045,8 @@ public class ODKFileUtils {
   }
 
   public static String getXMLText(Node n, boolean trim) {
-    return (n.getChildCount() == 0 ? null : getXMLText(n, 0, trim));
+    NodeList nl = n.getChildNodes();
+    return (nl.getLength() == 0 ? null : getXMLText(nl, 0, trim));
   }
 
   /**
@@ -1052,18 +1054,18 @@ public class ODKFileUtils {
    * because escape sequences are parsed into consecutive text nodes e.g.
    * "abc&amp;123" --> (abc)(&)(123)
    **/
-  public static String getXMLText(Node node, int i, boolean trim) {
+  private static String getXMLText(NodeList nl, int i, boolean trim) {
     StringBuffer strBuff = null;
 
-    String text = node.getText(i);
+    String text = nl.item(i).getTextContent();
     if (text == null)
       return null;
 
-    for (i++; i < node.getChildCount() && node.getType(i) == Node.TEXT; i++) {
+    for (i++; i < nl.getLength() && nl.item(i).getNodeType() == Node.TEXT_NODE; i++) {
       if (strBuff == null)
         strBuff = new StringBuffer(text);
 
-      strBuff.append(node.getText(i));
+      strBuff.append(nl.item(i).getTextContent());
     }
     if (strBuff != null)
       text = strBuff.toString();
