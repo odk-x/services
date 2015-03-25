@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -35,6 +34,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -43,17 +43,22 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.kxml2.io.KXmlSerializer;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
-import org.opendatakit.common.android.utilities.Base64Wrapper;
-import org.opendatakit.common.android.utilities.FileSet;
 import org.opendatakit.common.android.utilities.FileSet.MimeFile;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 /**
  * Utility class for encrypting submissions during the SaveToDiskTask.
@@ -542,61 +547,72 @@ public class EncryptionUtils {
   private static boolean writeSubmissionManifest(EncryptedFormInformation formInfo,
       File submissionXml, File submissionXmlEnc, List<MimeFile> mediaFiles) {
 
-    Document d = new Document();
-    d.setStandalone(true);
-    d.setEncoding(CharEncoding.UTF_8);
-    Element e = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, DATA);
-    e.setPrefix(null, XML_ENCRYPTED_TAG_NAMESPACE);
-    e.setAttribute(null, ID, formInfo.tableId);
-    e.setAttribute(null, ENCRYPTED, "yes");
-    d.addChild(0, Node.ELEMENT, e);
-
-    int idx = 0;
-    Element c;
-    c = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, BASE64_ENCRYPTED_KEY);
-    c.addChild(0, Node.TEXT, formInfo.base64RsaEncryptedSymmetricKey);
-    e.addChild(idx++, Node.ELEMENT, c);
-
-    c = d.createElement(XML_OPENROSA_NAMESPACE, META);
-    c.setPrefix("orx", XML_OPENROSA_NAMESPACE);
-    {
-      Element instanceTag = d.createElement(XML_OPENROSA_NAMESPACE, INSTANCE_ID);
-      instanceTag.addChild(0, Node.TEXT, formInfo.instanceId);
-      c.addChild(0, Node.ELEMENT, instanceTag);
-    }
-    e.addChild(idx++, Node.ELEMENT, c);
-    e.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
-
-    for (MimeFile file : mediaFiles) {
-      c = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, MEDIA);
-      Element fileTag = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, FILE);
-      fileTag.addChild(0, Node.TEXT, file.file.getName());
-      c.addChild(0, Node.ELEMENT, fileTag);
-      e.addChild(idx++, Node.ELEMENT, c);
-      e.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
-    }
-
-    c = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, ENCRYPTED_XML_FILE);
-    c.addChild(0, Node.TEXT, submissionXmlEnc.getName());
-    e.addChild(idx++, Node.ELEMENT, c);
-
-    c = d.createElement(XML_ENCRYPTED_TAG_NAMESPACE, BASE64_ENCRYPTED_ELEMENT_SIGNATURE);
-    c.addChild(0, Node.TEXT, formInfo.getBase64EncryptedElementSignature());
-    e.addChild(idx++, Node.ELEMENT, c);
-
-    FileOutputStream out;
+    FileOutputStream out = null;
     try {
-      out = new FileOutputStream(submissionXml);
-      OutputStreamWriter writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document d = db.newDocument();
+      d.setXmlStandalone(true);
+      Element e = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, DATA);
+      e.setPrefix(null);
+      e.setAttribute(ID, formInfo.tableId);
+      e.setAttribute(ENCRYPTED, "yes");
+      d.appendChild(e);
+  
+      Element c;
+      c = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, BASE64_ENCRYPTED_KEY);
+      Text txtNode;
+      txtNode = d.createTextNode(formInfo.base64RsaEncryptedSymmetricKey);
+      c.appendChild(txtNode);
+      e.appendChild(c);
+  
+      c = d.createElementNS(XML_OPENROSA_NAMESPACE, META);
+      c.setPrefix("orx");
+      {
+        Element instanceTag = d.createElementNS(XML_OPENROSA_NAMESPACE, INSTANCE_ID);
+        txtNode = d.createTextNode(formInfo.instanceId);
+        instanceTag.appendChild(txtNode);
+        c.appendChild(instanceTag);
+      }
+      e.appendChild(c);
+  
+      for (MimeFile file : mediaFiles) {
+        c = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, MEDIA);
+        Element fileTag = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, FILE);
+        txtNode = d.createTextNode(file.file.getName());
+        fileTag.appendChild(txtNode);
+        c.appendChild(fileTag);
+        e.appendChild(c);
+      }
+  
+      c = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, ENCRYPTED_XML_FILE);
+      txtNode = d.createTextNode(submissionXmlEnc.getName());
+      c.appendChild(txtNode);
+      e.appendChild(c);
+  
+      c = d.createElementNS(XML_ENCRYPTED_TAG_NAMESPACE, BASE64_ENCRYPTED_ELEMENT_SIGNATURE);
+      txtNode = d.createTextNode(formInfo.getBase64EncryptedElementSignature());
+      c.appendChild(txtNode);
+      e.appendChild(c);
 
-      KXmlSerializer serializer = new KXmlSerializer();
-      serializer.setOutput(writer);
-      // setting the response content type emits the xml header.
-      // just write the body here...
-      d.writeChildren(serializer);
-      serializer.flush();
-      writer.flush();
-      writer.close();
+      out = new FileOutputStream(submissionXml);
+
+      TransformerFactory factory = TransformerFactory.newInstance();
+      Transformer transformer = factory.newTransformer();
+      Properties outFormat = new Properties();
+      outFormat.setProperty( OutputKeys.INDENT, "no" );
+      outFormat.setProperty( OutputKeys.METHOD, "xml" );
+      outFormat.setProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+      outFormat.setProperty( OutputKeys.VERSION, "1.0" );
+      outFormat.setProperty( OutputKeys.ENCODING, "UTF-8" );
+      transformer.setOutputProperties( outFormat );
+
+      DOMSource domSource = new DOMSource( d.getDocumentElement() );
+      StreamResult result = new StreamResult( out );
+      transformer.transform( domSource, result );
+
+      out.flush();
+      out.close();
     } catch (FileNotFoundException ex) {
       WebLogger.getLogger(formInfo.appName).printStackTrace(ex);
       WebLogger.getLogger(formInfo.appName).e(t, "Error writing submission.xml for encrypted submission: "
@@ -612,6 +628,29 @@ public class EncryptionUtils {
       WebLogger.getLogger(formInfo.appName).e(t, "Error writing submission.xml for encrypted submission: "
           + submissionXml.getParentFile().getName());
       return false;
+    } catch (TransformerConfigurationException ex) {
+      WebLogger.getLogger(formInfo.appName).printStackTrace(ex);
+      WebLogger.getLogger(formInfo.appName).e(t, "Error writing submission.xml for encrypted submission: "
+          + submissionXml.getParentFile().getName());
+      return false;
+    } catch (TransformerException ex) {
+      WebLogger.getLogger(formInfo.appName).printStackTrace(ex);
+      WebLogger.getLogger(formInfo.appName).e(t, "Error writing submission.xml for encrypted submission: "
+          + submissionXml.getParentFile().getName());
+      return false;
+    } catch (ParserConfigurationException ex) {
+      WebLogger.getLogger(formInfo.appName).printStackTrace(ex);
+      WebLogger.getLogger(formInfo.appName).e(t, "Error writing submission.xml for encrypted submission: "
+          + submissionXml.getParentFile().getName());
+      return false;
+    } finally {
+      if ( out != null ) {
+        try {
+          out.close();
+        } catch ( IOException e) {
+          // ignore
+        }
+      }
     }
 
     return true;

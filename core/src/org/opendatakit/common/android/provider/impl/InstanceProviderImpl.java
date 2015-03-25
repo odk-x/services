@@ -41,7 +41,6 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -131,12 +130,39 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
     String tableId = segments.get(1);
-    String instanceName = null;
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
     OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    
+    Cursor c = internalQuery(dbHandleName, null, uri, 
+        appName, tableId, instanceId, 
+        projection, selection, selectionArgs, sortOrder);
+
+    if (c == null) {
+      return null;
+    }
+
+    // Tell the cursor what uri to watch, so it knows when its source data
+    // changes
+    c.setNotificationUri(getContext().getContentResolver(), uri);
+    c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
+    
+    return c;
+  }
+  
+  Cursor internalQuery(final OdkDbHandle dbHandleName, OdkDatabase db, 
+                    Uri uri, 
+                    String appName, String tableId, String instanceId,
+                    String[] projection, String selection, String[] selectionArgs,
+                    String sortOrder ) {
+    
+    if ( (dbHandleName != null && db != null) ||
+         (dbHandleName == null && db == null)) {
+      throw new IllegalArgumentException("exactly one of dbHandleName and db should be non-null");
+    }
+    
+    String instanceName = null;
     String fullQuery;
     String filterArgs[];
     Cursor c = null;
@@ -147,8 +173,10 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     StringBuilder b = new StringBuilder();
 
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      if ( dbHandleName != null ) {
+        db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      }
 
       boolean success = false;
       try {
@@ -211,12 +239,14 @@ public abstract class InstanceProviderImpl extends ContentProvider {
         throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);
       }
 
-      db.setTransactionSuccessful();
+      if ( dbHandleName != null ) {
+        db.setTransactionSuccessful();
+      }
     } finally {
       if (db != null) {
-        db.endTransaction();
-        db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        if ( dbHandleName != null ) {
+          db.endTransaction();
+        }
       }
     }
 
@@ -337,23 +367,19 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     fullQuery = b.toString();
 
-    dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    db = null;
     boolean success = false;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
       c = db.rawQuery(fullQuery, filterArgs);
-      // Tell the cursor what uri to watch, so it knows when its source data
-      // changes
-      c.setNotificationUri(getContext().getContentResolver(), uri);
-      c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
       success = true;
       return c;
     } finally {
+      // leave database open for cursor...
       if (db != null && !success) {
-        // leave database open for cursor...
-        db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        if ( dbHandleName != null ) {
+          db.close();
+          // we should release the database.
+          DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        }
       }
     }
   }
@@ -452,7 +478,10 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
         Cursor del = null;
         try {
-          del = this.query(uri, null, where, whereArgs, null);
+          del = internalQuery(null, db, 
+              uri, 
+              appName, tableId, instanceId,
+              null, where, whereArgs, null);
           del.moveToPosition(-1);
           while (del.moveToNext()) {
             String iId = ODKCursorUtils.getIndexAsString(del,
@@ -533,7 +562,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
+    if ( Core.getInstance().shouldWaitForDebugger() || true) {
       android.os.Debug.waitForDebugger();
     }
 
@@ -577,7 +606,10 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       try {
         // use this provider's query interface to get the set of ids that
         // match (if any)
-        ref = this.query(uri, null, where, whereArgs, null);
+        ref = internalQuery(null, db, 
+            uri, 
+            appName, tableId, instanceId,
+            null, where, whereArgs, null);
         if (ref.getCount() != 0) {
           ref.moveToFirst();
           do {

@@ -28,12 +28,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.kxml2.io.KXmlSerializer;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
 import org.opendatakit.ProviderConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
@@ -59,6 +66,9 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -85,7 +95,6 @@ public class SubmissionProvider extends ContentProvider {
   private static final String t = "SubmissionProvider";
 
   private static final String XML_OPENROSA_NAMESPACE = "http://openrosa.org/xforms";
-  private static final String XML_DEFAULT_NAMESPACE = null; // "http://opendatakit.org/xforms";
   // // any
   // arbitrary
   // namespace
@@ -140,18 +149,22 @@ public class SubmissionProvider extends ContentProvider {
       Map<String, Object> values, WebLogger log) {
     Object o = values.get(key);
 
-    Element e = d.createElement(XML_DEFAULT_NAMESPACE, key);
+    Element e = d.createElement(key);
 
     if (o == null) {
       log.e(t, "Unexpected null value");
     } else if (o instanceof Integer) {
-      e.addChild(0, Node.TEXT, ((Integer) o).toString());
+      Text txtNode = d.createTextNode(((Integer) o).toString());
+      e.appendChild(txtNode);
     } else if (o instanceof Double) {
-      e.addChild(0, Node.TEXT, ((Double) o).toString());
+      Text txtNode = d.createTextNode(((Double) o).toString());
+      e.appendChild(txtNode);
     } else if (o instanceof Boolean) {
-      e.addChild(0, Node.TEXT, ((Boolean) o).toString());
+      Text txtNode = d.createTextNode(((Boolean) o).toString());
+      e.appendChild(txtNode);
     } else if (o instanceof String) {
-      e.addChild(0, Node.TEXT, ((String) o));
+      Text txtNode = d.createTextNode(((String) o).toString());
+      e.appendChild(txtNode);
     } else if (o instanceof List) {
       StringBuilder b = new StringBuilder();
       List<Object> al = (List<Object>) o;
@@ -169,7 +182,8 @@ public class SubmissionProvider extends ContentProvider {
         }
         b.append(" ");
       }
-      e.addChild(0, Node.TEXT, b.toString().trim());
+      Text txtNode = d.createTextNode(b.toString().trim());
+      e.appendChild(txtNode);
     } else if (o instanceof Map) {
       // it is an object...
       Map<String, Object> m = (Map<String, Object>) o;
@@ -184,8 +198,7 @@ public class SubmissionProvider extends ContentProvider {
     } else {
       throw new IllegalArgumentException("Unexpected object type in XML submission serializer");
     }
-    data.addChild(idx++, Node.ELEMENT, e);
-    data.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+    data.appendChild(e);
     return idx;
   }
 
@@ -488,130 +501,131 @@ public class SubmissionProvider extends ContentProvider {
                   .format(new Date(TableConstants.milliSecondsFromNanos(savepointTimestamp)));
 
               // For XML, we traverse the map to serialize it
-              Document d = new Document();
-              d.setStandalone(true);
-              d.setEncoding(CharEncoding.UTF_8);
-              Element e = d.createElement(XML_DEFAULT_NAMESPACE,
+              DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+              DocumentBuilder docBuilder = dbf.newDocumentBuilder();
+              
+              Document d = docBuilder.newDocument();
+
+              d.setXmlStandalone(true);
+              
+              Element e = d.createElement(
                   (xmlRootElementName == null) ? "data" : xmlRootElementName);
-              e.setPrefix("jr", XML_OPENROSA_NAMESPACE);
-              e.setPrefix("", XML_DEFAULT_NAMESPACE);
-              d.addChild(0, Node.ELEMENT, e);
-              e.setAttribute("", "id", tableId);
+              d.appendChild(e);
+              e.setAttribute("id", tableId);
               DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
                   tableId, instanceId, username, userEmail);
 
               int idx = 0;
-              Element meta = d.createElement(XML_OPENROSA_NAMESPACE, "meta");
+              Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");
+              meta.setPrefix("jr");
 
-              Element v = d.createElement(XML_OPENROSA_NAMESPACE, "instanceID");
-              v.addChild(0, Node.TEXT, submissionInstanceId);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              Element v = d.createElementNS(XML_OPENROSA_NAMESPACE, "instanceID");
+              Text txtNode = d.createTextNode(submissionInstanceId);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               if (xmlDeviceIdPropertyName != null) {
                 String deviceId = propertyManager.getSingularProperty(xmlDeviceIdPropertyName, cb);
                 if (deviceId != null) {
-                  v = d.createElement(XML_OPENROSA_NAMESPACE, "deviceID");
-                  v.addChild(0, Node.TEXT, deviceId);
-                  meta.addChild(idx++, Node.ELEMENT, v);
-                  meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+                  v = d.createElementNS(XML_OPENROSA_NAMESPACE, "deviceID");
+                  txtNode = d.createTextNode(deviceId);
+                  v.appendChild(txtNode);
+                  meta.appendChild(v);
                 }
               }
               if (xmlUserIdPropertyName != null) {
                 String userId = propertyManager.getSingularProperty(xmlUserIdPropertyName, cb);
                 if (userId != null) {
-                  v = d.createElement(XML_OPENROSA_NAMESPACE, "userID");
-                  v.addChild(0, Node.TEXT, userId);
-                  meta.addChild(idx++, Node.ELEMENT, v);
-                  meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+                  v = d.createElementNS(XML_OPENROSA_NAMESPACE, "userID");
+                  txtNode = d.createTextNode(userId);
+                  v.appendChild(txtNode);
+                  meta.appendChild(v);
                 }
               }
-              v = d.createElement(XML_OPENROSA_NAMESPACE, "timeEnd");
-              v.addChild(0, Node.TEXT, datestamp);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElementNS(XML_OPENROSA_NAMESPACE, "timeEnd");
+              txtNode = d.createTextNode(datestamp);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // these are extra metadata tags...
               if (instanceName != null) {
-                v = d.createElement(XML_DEFAULT_NAMESPACE, "instanceName");
-                v.addChild(0, Node.TEXT, instanceName);
-                meta.addChild(idx++, Node.ELEMENT, v);
-                meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+                v = d.createElement("instanceName");
+                txtNode = d.createTextNode(instanceName);
+                v.appendChild(txtNode);
+                meta.appendChild(v);
               } else {
-                v = d.createElement(XML_DEFAULT_NAMESPACE, "instanceName");
-                v.addChild(0, Node.TEXT, savepointTimestamp);
-                meta.addChild(idx++, Node.ELEMENT, v);
-                meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+                v = d.createElement("instanceName");
+                txtNode = d.createTextNode(savepointTimestamp);
+                v.appendChild(txtNode);
+                meta.appendChild(v);
               }
 
               // these are extra metadata tags...
               // rowID
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "rowID");
-              v.addChild(0, Node.TEXT, instanceId);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElement("rowID");
+              txtNode = d.createTextNode(instanceId);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // rowETag
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "rowETag");
+              v = d.createElement("rowETag");
               if (rowETag != null) {
-                v.addChild(0, Node.TEXT, rowETag);
+                txtNode = d.createTextNode(rowETag);
+                v.appendChild(txtNode);
               }
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              meta.appendChild(v);
 
               // filterType
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "filterType");
+              v = d.createElement("filterType");
               if (filterType != null) {
-                v.addChild(0, Node.TEXT, filterType);
+                txtNode = d.createTextNode(filterType);
+                v.appendChild(txtNode);
               }
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              meta.appendChild(v);
 
               // filterValue
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "filterValue");
+              v = d.createElement("filterValue");
               if (filterValue != null) {
-                v.addChild(0, Node.TEXT, filterValue);
+                txtNode = d.createTextNode(filterValue);
+                v.appendChild(txtNode);
               }
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              meta.appendChild(v);
 
               // formID
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "formID");
-              v.addChild(0, Node.TEXT, formId);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElement("formID");
+              txtNode = d.createTextNode(formId);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // locale
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "locale");
-              v.addChild(0, Node.TEXT, locale);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElement("locale");
+              txtNode = d.createTextNode(locale);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // savepointType
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "savepointType");
-              v.addChild(0, Node.TEXT, savepointType);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElement("savepointType");
+              txtNode = d.createTextNode(savepointType);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // savepointCreator
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "savepointCreator");
+              v = d.createElement("savepointCreator");
               if (savepointCreator != null) {
-                v.addChild(0, Node.TEXT, savepointCreator);
+                txtNode = d.createTextNode(savepointCreator);
+                v.appendChild(txtNode);
               }
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              meta.appendChild(v);
 
               // savepointTimestamp
-              v = d.createElement(XML_DEFAULT_NAMESPACE, "savepointTimestamp");
-              v.addChild(0, Node.TEXT, savepointTimestamp);
-              meta.addChild(idx++, Node.ELEMENT, v);
-              meta.addChild(idx++, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              v = d.createElement("savepointTimestamp");
+              txtNode = d.createTextNode(savepointTimestamp);
+              v.appendChild(txtNode);
+              meta.appendChild(v);
 
               // and insert the meta block into the XML
 
-              e.addChild(0, Node.IGNORABLE_WHITESPACE, NEW_LINE);
-              e.addChild(1, Node.ELEMENT, meta);
-              e.addChild(2, Node.IGNORABLE_WHITESPACE, NEW_LINE);
+              e.appendChild(meta);
 
               idx = 3;
               ArrayList<String> entryNames = new ArrayList<String>();
@@ -621,18 +635,26 @@ public class SubmissionProvider extends ContentProvider {
                 idx = generateXmlHelper(d, e, idx, name, values, log);
               }
 
-              KXmlSerializer serializer = new KXmlSerializer();
+              TransformerFactory factory = TransformerFactory.newInstance();
+              Transformer transformer = factory.newTransformer();
+              Properties outFormat = new Properties();
+              outFormat.setProperty( OutputKeys.INDENT, "no" );
+              outFormat.setProperty( OutputKeys.METHOD, "xml" );
+              outFormat.setProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+              outFormat.setProperty( OutputKeys.VERSION, "1.0" );
+              outFormat.setProperty( OutputKeys.ENCODING, "UTF-8" );
+              transformer.setOutputProperties( outFormat );
 
-              ByteArrayOutputStream bo = new ByteArrayOutputStream();
-              serializer.setOutput(bo, CharEncoding.UTF_8);
-              // setting the response content type emits the
-              // xml header.
-              // just write the body here...
-              d.writeChildren(serializer);
-              serializer.flush();
-              bo.close();
+              ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-              b.append(bo.toString(CharEncoding.UTF_8));
+              DOMSource domSource = new DOMSource( d.getDocumentElement() );
+              StreamResult result = new StreamResult( out );
+              transformer.transform( domSource, result );
+
+              out.flush();
+              out.close();
+
+              b.append(out.toString(CharEncoding.UTF_8));
 
               // OK we have the document in the builder (b).
               String doc = b.toString();
@@ -742,6 +764,10 @@ public class SubmissionProvider extends ContentProvider {
           }
         }
 
+      } catch (ParserConfigurationException e) {
+        e.printStackTrace();
+      } catch (TransformerException e) {
+        e.printStackTrace();
       } catch (JsonParseException e) {
         e.printStackTrace();
       } catch (JsonMappingException e) {
