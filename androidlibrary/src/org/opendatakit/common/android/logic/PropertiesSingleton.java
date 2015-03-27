@@ -121,7 +121,7 @@ public class PropertiesSingleton {
 
   /**
    * Accesses the given propertyName. This may be stored in SharedPreferences or
-   * in the PROPERTIES_FILENAME in the assets directory.
+   * in the PROPERTIES_FILENAME in the config/assets directory.
    * 
    * @param propertyName
    * @return null or the string value
@@ -139,7 +139,7 @@ public class PropertiesSingleton {
 
   /**
    * Accesses the given propertyName. This may be stored in SharedPreferences or
-   * in the PROPERTIES_FILENAME in the assets directory.
+   * in the PROPERTIES_FILENAME in the config/assets directory.
    * 
    * If the value is not specified, null or an empty string, a null value is
    * returned. Boolean.TRUE is returned if the value is "true", otherwise
@@ -168,7 +168,7 @@ public class PropertiesSingleton {
 
   /**
    * Accesses the given propertyName. This may be stored in SharedPreferences or
-   * in the PROPERTIES_FILENAME in the assets directory.
+   * in the PROPERTIES_FILENAME in the config/assets directory.
    * 
    * If the value is not specified, null or an empty string, or if the value
    * cannot be parsed as an integer, then null is return. Otherwise, the integer

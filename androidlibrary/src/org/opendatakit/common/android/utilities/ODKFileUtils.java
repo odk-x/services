@@ -65,39 +65,63 @@ public class ODKFileUtils {
 
   // 2nd level -- directories
 
+  private static final String CONFIG_FOLDER_NAME = "config";
+  
+  private static final String DATA_FOLDER_NAME = "data";
+  
+  private static final String OUTPUT_FOLDER_NAME = "output";
+  
+  private static final String SYSTEM_FOLDER_NAME = "system";
+
+  // 3rd level -- directories
+
+  // under config
+  
   private static final String ASSETS_FOLDER_NAME = "assets";
 
+  // under config and data
+  
+  private static final String TABLES_FOLDER_NAME = "tables";
+
+  // under data
+  
+  private static final String WEB_DB_FOLDER_NAME = "webDb";
+
+  private static final String GEO_CACHE_FOLDER_NAME = "geoCache";
+
+  private static final String APP_CACHE_FOLDER_NAME = "appCache";
+
+  // under output and config/assets
+  
   private static final String CSV_FOLDER_NAME = "csv";
 
-  private static final String METADATA_FOLDER_NAME = "metadata";
-
-  private static final String OUTPUT_FOLDER_NAME = "output";
-
-  public static final String TABLES_FOLDER_NAME = "tables";
-
+  // under output
+  
   private static final String LOGGING_FOLDER_NAME = "logging";
 
-  public static final String FRAMEWORK_FOLDER_NAME = "framework";
+  /** The name of the folder where the debug objects are written. */
+  private static final String DEBUG_FOLDER_NAME = "debug";
 
+  // under system
+  
   private static final String STALE_TABLES_FOLDER_NAME = "tables.deleting";
 
   private static final String PENDING_TABLES_FOLDER_NAME = "tables.pending";
 
-  // under the tables directory...
-  public static final String FORMS_FOLDER_NAME = "forms";
-  public static final String INSTANCES_FOLDER_NAME = "instances";
-
-  // under the metadata directory...
-  private static final String WEB_DB_FOLDER_NAME = "webDb";
-  private static final String GEO_CACHE_FOLDER_NAME = "geoCache";
-  private static final String APP_CACHE_FOLDER_NAME = "appCache";
+  // 4th level 
   
+  // under the config/tables directory...
+  
+  private static final String FORMS_FOLDER_NAME = "forms";
+  
+  private static final String COLLECT_FORMS_FOLDER_NAME = "collect-forms";
+  
+  // under the data/tables directory...
+  // and under the output/csv/tableId.qual/ and config/assets/csv/tableId.qual/ directories
+  private static final String INSTANCES_FOLDER_NAME = "instances";
+
+  // under data/webDb
   private static final String DATABASE_NAME = "sqlite.db";
-
-  // under the output directory...
-
-  /** The name of the folder where the debug objects are written. */
-  private static final String DEBUG_FOLDER_NAME = "debug";
 
   /**
    * Miscellaneous well-known file names
@@ -112,20 +136,18 @@ public class ODKFileUtils {
       "index.html";
 
   /**
-   * Filename of the tables/tableId/properties.csv file
+   * Filename of the config/tables/tableId/properties.csv file
    * that holds all kvs properties for this tableId.
    */
   private static final String PROPERTIES_CSV = "properties.csv";
 
   /**
-   * Filename of the tables/tableId/definition.csv file
+   * Filename of the config/tables/tableId/definition.csv file
    * that holds the table schema for this tableId.
    */
   private static final String DEFINITION_CSV = "definition.csv";
 
-  private static final Set<String> topLevelExclusions;
-
-  private static final Set<String> topLevelPlusTablesExclusions;
+  private static final Set<String> topLevelSyncExclusions;
 
   /**
    * directories within an application that are inaccessible via the
@@ -137,74 +159,50 @@ public class ODKFileUtils {
     TreeSet<String> temp;
 
     temp = new TreeSet<String>();
-    temp.add(LOGGING_FOLDER_NAME);
-    temp.add(METADATA_FOLDER_NAME);
+    temp.add(SYSTEM_FOLDER_NAME);
     temp.add(OUTPUT_FOLDER_NAME);
-    temp.add(STALE_TABLES_FOLDER_NAME);
-    temp.add(PENDING_TABLES_FOLDER_NAME);
     topLevelWebServerExclusions = Collections.unmodifiableSet(temp);
 
     /**
-     * Going forward, we do not want to sync the framework directory
-     * or any of the stale, local or output directories.
-     *
-     * Only the assets directory should be sync'd.
+     * Going forward, only the config directory should be sync'd.
      */
 
     temp = new TreeSet<String>();
-    temp.add(FRAMEWORK_FOLDER_NAME);
-    temp.add(LOGGING_FOLDER_NAME);
-    temp.add(METADATA_FOLDER_NAME);
+    temp.add(SYSTEM_FOLDER_NAME);
     temp.add(OUTPUT_FOLDER_NAME);
-    temp.add(STALE_TABLES_FOLDER_NAME);
-    temp.add(PENDING_TABLES_FOLDER_NAME);
-    topLevelExclusions = Collections.unmodifiableSet(temp);
-
-    temp = new TreeSet<String>();
-    temp.add(FRAMEWORK_FOLDER_NAME);
-    temp.add(LOGGING_FOLDER_NAME);
-    temp.add(METADATA_FOLDER_NAME);
-    temp.add(OUTPUT_FOLDER_NAME);
-    temp.add(STALE_TABLES_FOLDER_NAME);
-    temp.add(PENDING_TABLES_FOLDER_NAME);
-    temp.add(TABLES_FOLDER_NAME);
-    topLevelPlusTablesExclusions = Collections.unmodifiableSet(temp);
+    topLevelSyncExclusions = Collections.unmodifiableSet(temp);
   }
 
   public static Set<String> getDirectoriesToExcludeFromWebServer() {
     return topLevelWebServerExclusions;
   }
 
-  public static Set<String> getDirectoriesToExcludeFromSync(boolean excludeTablesDirectory) {
-    if ( excludeTablesDirectory ) {
-      return topLevelPlusTablesExclusions;
-    } else {
-      return topLevelExclusions;
-    }
+  public static Set<String> getTopLevelDirectoriesToExcludeFromSync() {
+    return topLevelSyncExclusions;
   }
 
   /**
    * Get the name of the logging folder, without a path.
    * @return
    */
-  public static String getNameOfLoggingFolder() {
+  private static String getNameOfLoggingFolder() {
     return LOGGING_FOLDER_NAME;
   }
 
   /**
-   * Get the name of the metadata folder, without a path.
+   * Get the name of the data folder, without a path.
    * @return
    */
-  public static String getNameOfMetadataFolder() {
-    return METADATA_FOLDER_NAME;
+  private static String getNameOfDataFolder() {
+    return DATA_FOLDER_NAME;
   }
 
   /**
-   * Get the name of the framework folder, without a path.
+   * Get the name of the system folder, without a path.
    * @return
    */
-  public static String getNameOfFrameworkFolder() {
-    return FRAMEWORK_FOLDER_NAME;
+  private static String getNameOfSystemFolder() {
+    return SYSTEM_FOLDER_NAME;
   }
 
   /**
@@ -282,15 +280,26 @@ public class ODKFileUtils {
       int i=0;
       ++i;
     }
-    String[] dirs = { ODKFileUtils.getAppFolder(appName), ODKFileUtils.getAssetsFolder(appName),
-        ODKFileUtils.getTablesFolder(appName),
-        ODKFileUtils.getPendingDeletionTablesFolder(appName),
-        ODKFileUtils.getPendingInsertionTablesFolder(appName),
-        ODKFileUtils.getFrameworkFolder(appName),
-        ODKFileUtils.getLoggingFolder(appName),
-        ODKFileUtils.getMetadataFolder(appName), ODKFileUtils.getAppCacheFolder(appName),
-        ODKFileUtils.getGeoCacheFolder(appName), ODKFileUtils.getWebDbFolder(appName),
-        ODKFileUtils.getOutputFolder(appName), ODKFileUtils.getTablesDebugObjectFolder(appName)};
+    String[] dirs = { getAppFolder(appName),
+        getConfigFolder(appName),
+        getDataFolder(appName),
+        getOutputFolder(appName),
+        getSystemFolder(appName),
+        // under Config
+        getAssetsFolder(appName),
+        getTablesFolder(appName),
+        // under Data
+        getAppCacheFolder(appName),
+        getGeoCacheFolder(appName), 
+        getWebDbFolder(appName),
+        getTableDataFolder(appName),
+        // under Output
+        getLoggingFolder(appName),
+        getOutputCsvFolder(appName),
+        getTablesDebugObjectFolder(appName),
+        // under System
+        getPendingDeletionTablesFolder(appName),
+        getPendingInsertionTablesFolder(appName)};
 
     for (String dirName : dirs) {
       File dir = new File(dirName);
@@ -317,7 +326,7 @@ public class ODKFileUtils {
   }
 
   public static void assertConfiguredOdkApp(String appName, String odkAppVersionFile, String apkVersion) {
-    File versionFile = new File(getMetadataFolder(appName), odkAppVersionFile);
+    File versionFile = new File(getDataFolder(appName), odkAppVersionFile);
 
     if ( !versionFile.exists() ) {
       versionFile.getParentFile().mkdirs();
@@ -367,7 +376,7 @@ public class ODKFileUtils {
   }
 
   private static boolean isConfiguredOdkApp(String appName, String odkAppVersionFile, String apkVersion) {
-    File versionFile = new File(getMetadataFolder(appName), odkAppVersionFile);
+    File versionFile = new File(getDataFolder(appName), odkAppVersionFile);
 
     if ( !versionFile.exists() ) {
       return false;
@@ -473,21 +482,76 @@ public class ODKFileUtils {
     return path;
   }
 
+  public static String getAndroidObbFolder(String packageName) {
+    String path = Environment.getExternalStorageDirectory() + File.separator + "Android"
+        + File.separator + "obb" + File.separator + packageName;
+    return path;
+  }
+
+
+  // 1st level folders 
+  
+  public static String getConfigFolder(String appName) {
+    String path = getAppFolder(appName) + File.separator + CONFIG_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getDataFolder(String appName) {
+    String path = getAppFolder(appName) + File.separator + DATA_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getOutputFolder(String appName) {
+    String path = getAppFolder(appName) + File.separator + OUTPUT_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getSystemFolder(String appName) {
+    String path = getAppFolder(appName) + File.separator + SYSTEM_FOLDER_NAME;
+    return path;
+  }
+
+  //////////////////////////////////////////////////////////
+  // Everything under config folder
+  
+  public static String getAssetsFolder(String appName) {
+    String path = getConfigFolder(appName) + File.separator + ASSETS_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getAssetsCsvFolder(String appName) {
+    String appFolder = getAppFolder(appName);
+    String result = appFolder + File.separator + ASSETS_FOLDER_NAME + File.separator + CSV_FOLDER_NAME;
+    return result;
+  }
+  
+  /**
+   * Get the path to the tables initialization file for the given app.
+   * @param appName
+   * @return
+   */
+  public static String getTablesInitializationFile(String appName) {
+    String assetsFolder = getAssetsFolder(appName);
+    String result = assetsFolder + File.separator + ODK_TABLES_INIT_FILENAME;
+    return result;
+  }
+  
+  /**
+   * Get the path to the user-defined home screen file.
+   * @param appName
+   * @return
+   */
+  public static String getTablesHomeScreenFile(String appName) {
+    String assetsFolder = getAssetsFolder(appName);
+    String result = assetsFolder + File.separator + ODK_TABLES_HOME_SCREEN_FILE_NAME;
+    return result;
+  }
+  
   public static String getTablesFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + TABLES_FOLDER_NAME;
+    String path = getConfigFolder(appName) + File.separator + TABLES_FOLDER_NAME;
     return path;
   }
-
-  public static String getPendingDeletionTablesFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + STALE_TABLES_FOLDER_NAME;
-    return path;
-  }
-
-  public static String getPendingInsertionTablesFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + PENDING_TABLES_FOLDER_NAME;
-    return path;
-  }
-
+  
   public static String getTablesFolder(String appName, String tableId) {
     String path;
     if (tableId == null || tableId.length() == 0) {
@@ -508,27 +572,14 @@ public class ODKFileUtils {
     return f.getAbsolutePath();
   }
 
+  // files under that
+  
   public static String getTableDefinitionCsvFile(String appName, String tableId) {
     return getTablesFolder(appName, tableId) + File.separator + DEFINITION_CSV;
   }
 
   public static String getTablePropertiesCsvFile(String appName, String tableId) {
     return getTablesFolder(appName, tableId) + File.separator + PROPERTIES_CSV;
-  }
-
-  public static String getOutputTableCsvFile(String appName, String tableId, String fileQualifier) {
-    return ODKFileUtils.getOutputFolder(appName) + File.separator + CSV_FOLDER_NAME + File.separator + tableId +
-        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".csv";
-  }
-
-  public static String getOutputTableDefinitionCsvFile(String appName, String tableId, String fileQualifier) {
-    return ODKFileUtils.getOutputFolder(appName) + File.separator + CSV_FOLDER_NAME + File.separator + tableId +
-        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + "." + DEFINITION_CSV;
-  }
-
-  public static String getOutputTablePropertiesCsvFile(String appName, String tableId, String fileQualifier) {
-    return ODKFileUtils.getOutputFolder(appName) + File.separator + CSV_FOLDER_NAME + File.separator + tableId +
-        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + "." + PROPERTIES_CSV;
   }
 
   public static String getFormsFolder(String appName, String tableId) {
@@ -555,9 +606,38 @@ public class ODKFileUtils {
     }
   }
 
+  /////////////////////////////////////////////////////////
+  // Everything under data folder
+
+  public static String getTablesInitializationCompleteMarkerFile(String appName) {
+    String result = getDataFolder(appName) + File.separator + ODK_TABLES_INIT_FILENAME;
+    return result;
+  }
+
+  public static String getAppCacheFolder(String appName) {
+    String path = getDataFolder(appName) + File.separator + APP_CACHE_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getGeoCacheFolder(String appName) {
+    String path = getDataFolder(appName) + File.separator + GEO_CACHE_FOLDER_NAME;
+    return path;
+  }
+
+  public static String getWebDbFolder(String appName) {
+    String path = getDataFolder(appName) + File.separator + WEB_DB_FOLDER_NAME;
+    return path;
+  }
+
+  private static String getTableDataFolder(String appName) {
+    String path = getDataFolder(appName) + File.separator + TABLES_FOLDER_NAME;
+    return path;
+  }
+  
   public static String getInstancesFolder(String appName, String tableId) {
     String path;
-    path = getTablesFolder(appName, tableId) + File.separator + INSTANCES_FOLDER_NAME;
+    path = getDataFolder(appName) + File.separator + TABLES_FOLDER_NAME +
+        tableId + File.separator + INSTANCES_FOLDER_NAME;
 
     File f = new File(path);
     f.mkdirs();
@@ -571,7 +651,7 @@ public class ODKFileUtils {
     } else {
       String instanceFolder = instanceId.replaceAll("(\\p{P}|\\p{Z})", "_");
 
-      path = getTablesFolder(appName, tableId) + File.separator + INSTANCES_FOLDER_NAME + File.separator + instanceFolder;
+      path = getInstancesFolder(appName, tableId) + File.separator + instanceFolder;
     }
 
     File f = new File(path);
@@ -579,104 +659,62 @@ public class ODKFileUtils {
     return f.getAbsolutePath();
   }
 
-  /**
-   * Construct the path to the directory containing the default form (holding
-   * the Common Javascript Framework).
-   *
-   * @param appName
-   * @return
-   */
-  public static String getFrameworkFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + FRAMEWORK_FOLDER_NAME;
-    return path;
-  }
+  ///////////////////////////////////////////////
+  // Everything under output folder
 
   public static String getLoggingFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + LOGGING_FOLDER_NAME;
+    String path = getOutputFolder(appName) + File.separator + LOGGING_FOLDER_NAME;
     return path;
-  }
-
-  public static String getMetadataFolder(String appName) {
-    String path = getAppFolder(appName) + File.separator + METADATA_FOLDER_NAME;
-    return path;
-  }
-
-  public static String getOutputFolder(String appName) {
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String result = appFolder + File.separator + OUTPUT_FOLDER_NAME;
-    return result;
   }
 
   public static String getTablesDebugObjectFolder(String appName) {
-    String outputFolder = ODKFileUtils.getOutputFolder(appName);
+    String outputFolder = getOutputFolder(appName);
     String result = outputFolder + File.separator + DEBUG_FOLDER_NAME;
     return result;
   }
 
-  public static String getAssetsFolder(String appName) {
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String result = appFolder + File.separator + ASSETS_FOLDER_NAME;
+  public static String getOutputCsvFolder(String appName) {
+    String outputFolder = getOutputFolder(appName);
+    String result = outputFolder + File.separator + CSV_FOLDER_NAME;
     return result;
   }
-
-  public static String getAssetsCsvFolder(String appName) {
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String result = appFolder + File.separator + ASSETS_FOLDER_NAME + File.separator + CSV_FOLDER_NAME;
-    return result;
+  
+  public static String getOutputTableCsvFile(String appName, String tableId, String fileQualifier) {
+    return getOutputCsvFolder(appName) + File.separator + tableId +
+        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".csv";
   }
 
-  /**
-   * Get the path to the tables initialization file for the given app.
-   * @param appName
-   * @return
-   */
-  public static String getTablesInitializationFile(String appName) {
-    String assetsFolder = ODKFileUtils.getAssetsFolder(appName);
-    String result = assetsFolder + File.separator + ODK_TABLES_INIT_FILENAME;
-    return result;
+  public static String getOutputTableDefinitionCsvFile(String appName, String tableId, String fileQualifier) {
+    return getOutputCsvFolder(appName) + File.separator + tableId +
+        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + "." + DEFINITION_CSV;
   }
 
-  public static String getTablesInitializationCompleteMarkerFile(String appName) {
-    String metadataFolder = ODKFileUtils.getMetadataFolder(appName);
-    String result = metadataFolder + File.separator + ODK_TABLES_INIT_FILENAME;
-    return result;
+  public static String getOutputTablePropertiesCsvFile(String appName, String tableId, String fileQualifier) {
+    return getOutputCsvFolder(appName) + File.separator + tableId +
+        ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + "." + PROPERTIES_CSV;
   }
 
-  /**
-   * Get the path to the user-defined home screen file.
-   * @param appName
-   * @return
-   */
-  public static String getTablesHomeScreenFile(String appName) {
-    String assetsFolder = ODKFileUtils.getAssetsFolder(appName);
-    String result = assetsFolder + File.separator + ODK_TABLES_HOME_SCREEN_FILE_NAME;
-    return result;
-  }
 
-  public static String getAppCacheFolder(String appName) {
-    String path = getMetadataFolder(appName) + File.separator + APP_CACHE_FOLDER_NAME;
+  ////////////////////////////////////////
+  // Everything under system folder
+  
+  public static String getPendingDeletionTablesFolder(String appName) {
+    String path = getSystemFolder(appName) + File.separator + STALE_TABLES_FOLDER_NAME;
     return path;
   }
 
-  public static String getGeoCacheFolder(String appName) {
-    String path = getMetadataFolder(appName) + File.separator + GEO_CACHE_FOLDER_NAME;
+  public static String getPendingInsertionTablesFolder(String appName) {
+    String path = getSystemFolder(appName) + File.separator + PENDING_TABLES_FOLDER_NAME;
     return path;
   }
 
-  public static String getWebDbFolder(String appName) {
-    String path = getMetadataFolder(appName) + File.separator + WEB_DB_FOLDER_NAME;
-    return path;
-  }
+  // 4th level config tables tableId folder
 
-  public static String getAndroidObbFolder(String packageName) {
-    String path = Environment.getExternalStorageDirectory() + File.separator + "Android"
-        + File.separator + "obb" + File.separator + packageName;
-    return path;
-  }
+  // 3rd level output
 
   public static boolean isPathUnderAppName(String appName, File path) {
 
-    File parentDir = new File(ODKFileUtils.getAppFolder(appName));
+    File parentDir = new File(getAppFolder(appName));
 
     while (path != null && !path.equals(parentDir)) {
       path = path.getParentFile();
@@ -716,7 +754,7 @@ public class ODKFileUtils {
   public static String asRelativePath(String appName, File fileUnderAppName) {
     // convert fileUnderAppName to a relative path such that if
     // we just append it to the AppFolder, we have a full path.
-    File parentDir = new File(ODKFileUtils.getAppFolder(appName));
+    File parentDir = new File(getAppFolder(appName));
 
     ArrayList<String> pathElements = new ArrayList<String>();
 
@@ -779,7 +817,7 @@ public class ODKFileUtils {
           " application or subdirectory not specified.");
     }
 
-    File f = ODKFileUtils.fromAppPath(appName);
+    File f = fromAppPath(appName);
     if (f == null || !f.exists() || !f.isDirectory()) {
       throw new IllegalArgumentException("Not a valid uriFragment: " +
             appName + "/" + uriFragment + " invalid application.");
@@ -801,7 +839,7 @@ public class ODKFileUtils {
    * @return
    */
   public static File asAppFile(String appName, String relativePath) {
-    return new File(ODKFileUtils.getAppFolder(appName) + File.separator + relativePath);
+    return new File(getAppFolder(appName) + File.separator + relativePath);
   }
 
   /**
@@ -816,13 +854,21 @@ public class ODKFileUtils {
 
     // compute FORM_PATH...
     // we need to do this relative to the AppFolder, as the
-    // common javascript framework (default form) is no longer
-    // in the forms directory, but in the Framework folder.
+    // common index.html is under the ./system folder.
 
     String relativePath = asRelativePath(appName, formDefFile.getParentFile());
-    // adjust for relative path from ./framework...
+    // adjust for relative path from ./system...
     relativePath = ".." + File.separator + relativePath + File.separator;
     return relativePath;
+  }
+
+  /**
+   * Used as the baseUrl in the webserver.
+   * 
+   * @return e.g., ../system
+   */
+  public static String getRelativeSystemPath() {
+    return "../" + ODKFileUtils.SYSTEM_FOLDER_NAME;
   }
 
   public static byte[] getFileAsBytes(String appName, File file) {
