@@ -605,7 +605,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
     }
 
-    String assetsCsvDir = ODKFileUtils.getAssetsFolder(appName) + "/csv";
+    String assetsCsvDir = ODKFileUtils.getAssetsCsvFolder(appName);
     try {
       Collection<File> files = FileUtils.listFiles(new File(assetsCsvDir), new IOFileFilter() {
 

@@ -562,7 +562,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() || true) {
+    if ( Core.getInstance().shouldWaitForDebugger() ) {
       android.os.Debug.waitForDebugger();
     }
 
