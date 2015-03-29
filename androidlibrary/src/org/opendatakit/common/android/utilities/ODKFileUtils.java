@@ -520,15 +520,21 @@ public class ODKFileUtils {
   }
 
   public static String getAssetsCsvFolder(String appName) {
-    String appFolder = getAppFolder(appName);
-    String result = appFolder + File.separator + ASSETS_FOLDER_NAME + File.separator + CSV_FOLDER_NAME;
+    String assetsFolder = getAssetsFolder(appName);
+    String result = assetsFolder + File.separator + CSV_FOLDER_NAME;
     return result;
   }
   
-  public static String getAssetsCsvInstanceFolder(String appName, String tableId, String instanceId) {
+  public static String getAssetsCsvInstancesFolder(String appName, String tableId) {
     String assetsCsvFolder = getAssetsCsvFolder(appName);
     String result = assetsCsvFolder +
-        File.separator + tableId + File.separator + INSTANCES_FOLDER_NAME +
+        File.separator + tableId + File.separator + INSTANCES_FOLDER_NAME;
+    return result;
+  }
+
+  public static String getAssetsCsvInstanceFolder(String appName, String tableId, String instanceId) {
+    String assetsCsvInstancesFolder = getAssetsCsvInstancesFolder(appName, tableId);
+    String result = assetsCsvInstancesFolder +
         File.separator + safeInstanceIdFolderName(instanceId);
     return result;
   }
