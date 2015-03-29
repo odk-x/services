@@ -525,6 +525,14 @@ public class ODKFileUtils {
     return result;
   }
   
+  public static String getAssetsCsvInstanceFolder(String appName, String tableId, String instanceId) {
+    String assetsCsvFolder = getAssetsCsvFolder(appName);
+    String result = assetsCsvFolder +
+        File.separator + tableId + File.separator + INSTANCES_FOLDER_NAME +
+        File.separator + safeInstanceIdFolderName(instanceId);
+    return result;
+  }
+  
   /**
    * Get the path to the tables initialization file for the given app.
    * @param appName
@@ -644,15 +652,20 @@ public class ODKFileUtils {
     return f.getAbsolutePath();
   }
 
-  public static String getInstanceFolder(String appName, String tableId, String instanceId) {
-    String path;
+  private static String safeInstanceIdFolderName(String instanceId) {
     if (instanceId == null || instanceId.length() == 0) {
       throw new IllegalArgumentException("getInstanceFolder: instanceId is null or the empty string!");
     } else {
       String instanceFolder = instanceId.replaceAll("(\\p{P}|\\p{Z})", "_");
-
-      path = getInstancesFolder(appName, tableId) + File.separator + instanceFolder;
+      return instanceFolder;
     }
+  }
+  
+  public static String getInstanceFolder(String appName, String tableId, String instanceId) {
+    String path;
+    String instanceFolder = safeInstanceIdFolderName(instanceId);
+
+    path = getInstancesFolder(appName, tableId) + File.separator + instanceFolder;
 
     File f = new File(path);
     f.mkdirs();
@@ -679,6 +692,14 @@ public class ODKFileUtils {
     return result;
   }
   
+  public static String getOutputCsvInstanceFolder(String appName, String tableId, String instanceId) {
+    String csvOutputFolder = getOutputCsvFolder(appName);
+    String result = csvOutputFolder +
+        File.separator + tableId + File.separator + INSTANCES_FOLDER_NAME +
+        File.separator + safeInstanceIdFolderName(instanceId);
+    return result;
+  }
+
   public static String getOutputTableCsvFile(String appName, String tableId, String fileQualifier) {
     return getOutputCsvFolder(appName) + File.separator + tableId +
         ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".csv";
