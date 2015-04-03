@@ -2,5 +2,6 @@
 <resources>
 
 	<string name="app_name">ODK androidlibrary.test</string>
-
+	<string name="app_userLabel">OpenDataKit</string>
+	
 </resources>
