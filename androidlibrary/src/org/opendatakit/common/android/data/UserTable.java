@@ -58,17 +58,17 @@ public class UserTable implements Parcelable {
    * The {@link TableProperties} associated with this table. Included so that
    * more intelligent things can be done with regards to interpretation of type.
    */
-//  private final TableProperties mTp;
+  // private final TableProperties mTp;
   private final String mSqlWhereClause;
   private final String[] mSqlSelectionArgs;
   private final String[] mSqlGroupByArgs;
   private final String mSqlHavingClause;
   private final String mSqlOrderByElementKey;
   private final String mSqlOrderByDirection;
-  
+
   private final String[] mAdminColumnOrder;
 
-  private final Map<String,Integer> mElementKeyToIndex;
+  private final Map<String, Integer> mElementKeyToIndex;
   private final String[] mElementKeyForIndex;
 
   private final DataUtil du;
@@ -77,7 +77,7 @@ public class UserTable implements Parcelable {
     this.mColumnDefns = table.mColumnDefns;
     du = table.du;
     mRows = new ArrayList<Row>(indexes.size());
-    for (int i = 0 ; i < indexes.size(); ++i) {
+    for (int i = 0; i < indexes.size(); ++i) {
       Row r = table.getRowAtIndex(indexes.get(i));
       mRows.add(r);
     }
@@ -92,12 +92,10 @@ public class UserTable implements Parcelable {
     this.mElementKeyForIndex = table.mElementKeyForIndex;
   }
 
-  public UserTable(OrderedColumns columnDefns,
-      String sqlWhereClause, String[] sqlSelectionArgs,
-      String[] sqlGroupByArgs, String sqlHavingClause,
-      String sqlOrderByElementKey, String sqlOrderByDirection,
-      String[] adminColumnOrder, HashMap<String, Integer> elementKeyToIndex,
-      String[] elementKeyForIndex, Integer rowCount ) {
+  public UserTable(OrderedColumns columnDefns, String sqlWhereClause, String[] sqlSelectionArgs,
+      String[] sqlGroupByArgs, String sqlHavingClause, String sqlOrderByElementKey,
+      String sqlOrderByDirection, String[] adminColumnOrder,
+      HashMap<String, Integer> elementKeyToIndex, String[] elementKeyForIndex, Integer rowCount) {
     this.mColumnDefns = columnDefns;
     du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
@@ -110,13 +108,13 @@ public class UserTable implements Parcelable {
     this.mAdminColumnOrder = adminColumnOrder;
     this.mElementKeyToIndex = elementKeyToIndex;
     this.mElementKeyForIndex = elementKeyForIndex;
-    if ( rowCount != null ) {
+    if (rowCount != null) {
       mRows = new ArrayList<Row>(rowCount);
     } else {
       mRows = new ArrayList<Row>();
     }
   }
-  
+
   public void addRow(Row row) {
     mRows.add(row);
   }
@@ -124,15 +122,15 @@ public class UserTable implements Parcelable {
   public String getAppName() {
     return mColumnDefns.getAppName();
   }
-  
+
   public String getTableId() {
     return mColumnDefns.getTableId();
   }
-  
+
   public OrderedColumns getColumnDefinitions() {
     return mColumnDefns;
   }
-  
+
   public Row getRowAtIndex(int index) {
     return this.mRows.get(index);
   }
@@ -187,9 +185,9 @@ public class UserTable implements Parcelable {
   }
 
   public boolean hasCheckpointRows() {
-    for ( Row row : mRows ) {
+    for (Row row : mRows) {
       String type = row.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
-      if ( type == null || type.length() == 0 ) {
+      if (type == null || type.length() == 0) {
         return true;
       }
     }
@@ -197,14 +195,15 @@ public class UserTable implements Parcelable {
   }
 
   public boolean hasConflictRows() {
-    for ( Row row : mRows ) {
+    for (Row row : mRows) {
       String conflictType = row.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
-      if ( conflictType != null && conflictType.length() != 0 ) {
+      if (conflictType != null && conflictType.length() != 0) {
         return true;
       }
     }
     return false;
   }
+
   /**
    * Scan the rowIds to get the row number. As the rowIds are not sorted, this
    * is a potentially expensive operation, scanning the entire array, as well as
@@ -263,6 +262,7 @@ public class UserTable implements Parcelable {
 
     /**
      * Return the id of this row.
+     * 
      * @return
      */
     public String getRowId() {
@@ -284,8 +284,9 @@ public class UserTable implements Parcelable {
     public String getRawDataOrMetadataByElementKey(String elementKey) {
       String result;
       Integer cell = mUserTable.mElementKeyToIndex.get(elementKey);
-      if ( cell == null ) {
-        WebLogger.getLogger(mUserTable.mColumnDefns.getAppName()).e(TAG, "elementKey [" + elementKey + "] was not found in table");
+      if (cell == null) {
+        WebLogger.getLogger(mUserTable.mColumnDefns.getAppName()).e(TAG,
+            "elementKey [" + elementKey + "] was not found in table");
         return null;
       }
       result = this.mRowData[cell];
@@ -296,13 +297,14 @@ public class UserTable implements Parcelable {
     }
 
     /**
-     * Return the data stored in the cursor at the given index and given position
-     * (ie the given row which the cursor is currently on) as null OR whatever
-     * data type it is.
-     * <p>This does not actually convert data types from one type
-     * to the other. Instead, it safely preserves null values and returns boxed
-     * data values. If you specify ArrayList or HashMap, it JSON deserializes
-     * the value into one of those.
+     * Return the data stored in the cursor at the given index and given
+     * position (ie the given row which the cursor is currently on) as null OR
+     * whatever data type it is.
+     * <p>
+     * This does not actually convert data types from one type to the other.
+     * Instead, it safely preserves null values and returns boxed data values.
+     * If you specify ArrayList or HashMap, it JSON deserializes the value into
+     * one of those.
      *
      * @param c
      * @param clazz
@@ -317,23 +319,23 @@ public class UserTable implements Parcelable {
         if (value == null) {
           return null;
         }
-        if ( clazz == Long.class ) {
+        if (clazz == Long.class) {
           Long l = Long.parseLong(value);
           return (T) (Long) l;
-        } else if ( clazz == Integer.class ) {
+        } else if (clazz == Integer.class) {
           Integer l = Integer.parseInt(value);
           return (T) (Integer) l;
-        } else if ( clazz == Double.class ) {
+        } else if (clazz == Double.class) {
           Double d = Double.parseDouble(value);
           return (T) (Double) d;
-        } else if ( clazz == String.class ) {
+        } else if (clazz == String.class) {
           return (T) (String) value;
-        } else if ( clazz == Boolean.class ) {
+        } else if (clazz == Boolean.class) {
           return (T) (Boolean) Boolean.valueOf(value);
-        } else if ( clazz == ArrayList.class ) {
+        } else if (clazz == ArrayList.class) {
           // json deserialization of an array
           return (T) ODKFileUtils.mapper.readValue(value, ArrayList.class);
-        } else if ( clazz == HashMap.class ) {
+        } else if (clazz == HashMap.class) {
           // json deserialization of an object
           return (T) ODKFileUtils.mapper.readValue(value, HashMap.class);
         } else {
@@ -341,51 +343,55 @@ public class UserTable implements Parcelable {
         }
       } catch (ClassCastException e) {
         e.printStackTrace();
-        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " in SQLite table ");
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString()
+            + " in SQLite table ");
       } catch (JsonParseException e) {
         e.printStackTrace();
-        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString()
+            + " on SQLite table");
       } catch (JsonMappingException e) {
         e.printStackTrace();
-        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString()
+            + " on SQLite table");
       } catch (IOException e) {
         e.printStackTrace();
-        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString()
+            + " on SQLite table");
       }
     }
 
     public String getDisplayTextOfData(ElementType type, String elementKey) {
       // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
       String raw = getRawDataOrMetadataByElementKey(elementKey);
-      if ( raw == null ) {
+
+      if (raw == null) {
         return null;
+      } else if (raw.length() == 0) {
+        throw new IllegalArgumentException("unexpected zero-length string in database! "
+            + elementKey);
       }
-      if ( raw.length() == 0 ) {
-        throw new IllegalArgumentException("unexpected zero-length string in database! " + elementKey);
-      }
-      
-      if ( type == null ) {
+
+      if (type == null) {
         return raw;
-      }
-      if ( type.getDataType() == ElementDataType.rowpath ) {
-        File theFile = ODKFileUtils.getRowpathFile(mUserTable.getAppName(), mUserTable.getTableId(), mRowId, raw);
-        return theFile.getName();
-      } else if ( type.getDataType() == ElementDataType.configpath ) {
-        return raw;
-      } else if ( type.getDataType() == ElementDataType.number &&
-                  raw.indexOf('.') != -1 ) {
+      } else if (type.getDataType() == ElementDataType.number && raw.indexOf('.') != -1) {
         // trim trailing zeros on numbers (leaving the last one)
-        int lnz = raw.length()-1;
-        while ( lnz > 0 && raw.charAt(lnz) == '0' ) {
+        int lnz = raw.length() - 1;
+        while (lnz > 0 && raw.charAt(lnz) == '0') {
           lnz--;
         }
-        if ( lnz >= raw.length()-2 ) {
+        if (lnz >= raw.length() - 2) {
           // ended in non-zero or x0
           return raw;
         } else {
           // ended in 0...0
-          return raw.substring(0, lnz+2);
+          return raw.substring(0, lnz + 2);
         }
+      } else if (type.getDataType() == ElementDataType.rowpath) {
+        File theFile = ODKFileUtils.getRowpathFile(mUserTable.getAppName(),
+            mUserTable.getTableId(), mRowId, raw);
+        return theFile.getName();
+      } else if (type.getDataType() == ElementDataType.configpath) {
+        return raw;
       } else {
         return raw;
       }
@@ -400,7 +406,6 @@ public class UserTable implements Parcelable {
       return result;
     }
 
-
     @Override
     public int describeContents() {
       return 0;
@@ -409,7 +414,7 @@ public class UserTable implements Parcelable {
     @Override
     public void writeToParcel(Parcel out, int flags) {
       out.writeString(mRowId);
-      if ( mRowData == null ) {
+      if (mRowData == null) {
         out.writeInt(0);
         String[] emptyString = {};
         out.writeStringArray(emptyString);
@@ -418,7 +423,7 @@ public class UserTable implements Parcelable {
         out.writeStringArray(mRowData);
       }
     }
-    
+
     public Row(UserTable userTable, Parcel in) {
       this.mUserTable = userTable;
       this.mRowId = in.readString();
@@ -428,7 +433,6 @@ public class UserTable implements Parcelable {
       in.readStringArray(mRowData);
     }
   }
-  
 
   @Override
   public int describeContents() {
@@ -439,14 +443,14 @@ public class UserTable implements Parcelable {
   public void writeToParcel(Parcel out, int flags) {
     String[] emptyString = {};
     out.writeString(mSqlWhereClause);
-    if ( mSqlSelectionArgs == null ) {
+    if (mSqlSelectionArgs == null) {
       out.writeInt(0);
       out.writeStringArray(emptyString);
     } else {
       out.writeInt(mSqlSelectionArgs.length);
       out.writeStringArray(mSqlSelectionArgs);
     }
-    if ( mSqlGroupByArgs == null ) {
+    if (mSqlGroupByArgs == null) {
       out.writeInt(0);
       out.writeStringArray(emptyString);
     } else {
@@ -460,11 +464,11 @@ public class UserTable implements Parcelable {
     out.writeInt(mAdminColumnOrder.length);
     out.writeStringArray(mAdminColumnOrder);
     out.writeInt(mRows.size());
-    for ( Row r : mRows ) {
+    for (Row r : mRows) {
       r.writeToParcel(out, flags);
     }
   }
-  
+
   public UserTable(Parcel in) {
     this.mSqlWhereClause = in.readString();
     int count;
@@ -484,11 +488,11 @@ public class UserTable implements Parcelable {
     // count of rows...
     count = in.readInt();
     mRows = new ArrayList<Row>(count);
-    for ( int j = 0 ; j < count ; ++j ) {
+    for (int j = 0; j < count; ++j) {
       Row r = new Row(this, in);
       mRows.add(r);
     }
-    
+
     du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     // These maps will map the element key to the corresponding index in
@@ -499,7 +503,7 @@ public class UserTable implements Parcelable {
     // in metadataKeyToIndex of sync_state:7.
     mElementKeyToIndex = new HashMap<String, Integer>();
     List<String> userColumnOrder = mColumnDefns.getRetentionColumnNames();
-    mElementKeyForIndex = new String[userColumnOrder.size()+mAdminColumnOrder.length];
+    mElementKeyForIndex = new String[userColumnOrder.size() + mAdminColumnOrder.length];
     int i = 0;
     for (i = 0; i < userColumnOrder.size(); i++) {
       String elementKey = userColumnOrder.get(i);
@@ -511,21 +515,19 @@ public class UserTable implements Parcelable {
       // TODO: problem is here. unclear how to best get just the
       // metadata in here. hmm.
       String elementKey = mAdminColumnOrder[j];
-      mElementKeyForIndex[i+j] = elementKey;
-      mElementKeyToIndex.put(elementKey, i+j);
+      mElementKeyForIndex[i + j] = elementKey;
+      mElementKeyToIndex.put(elementKey, i + j);
     }
   }
 
-  public static final Parcelable.Creator<UserTable> CREATOR
-          = new Parcelable.Creator<UserTable>() {
-      public UserTable createFromParcel(Parcel in) {
-          return new UserTable(in);
-      }
+  public static final Parcelable.Creator<UserTable> CREATOR = new Parcelable.Creator<UserTable>() {
+    public UserTable createFromParcel(Parcel in) {
+      return new UserTable(in);
+    }
 
-      public UserTable[] newArray(int size) {
-          return new UserTable[size];
-      }
+    public UserTable[] newArray(int size) {
+      return new UserTable[size];
+    }
   };
-
 
 }
