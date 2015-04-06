@@ -43,13 +43,12 @@ public class UserTable implements Parcelable {
 
   static final String TAG = UserTable.class.getSimpleName();
 
-  final OrderedColumns mColumnDefns;
+  private final OrderedColumns mColumnDefns;
   private final ArrayList<Row> mRows;
   /**
    * The {@link TableProperties} associated with this table. Included so that
    * more intelligent things can be done with regards to interpretation of type.
    */
-  // private final TableProperties mTp;
   private final String mSqlWhereClause;
   private final String[] mSqlSelectionArgs;
   private final String[] mSqlGroupByArgs;
@@ -59,7 +58,7 @@ public class UserTable implements Parcelable {
 
   private final String[] mAdminColumnOrder;
 
-  final Map<String, Integer> mElementKeyToIndex;
+  private final Map<String, Integer> mElementKeyToIndex;
   private final String[] mElementKeyForIndex;
 
   private final DataUtil du;
@@ -251,24 +250,20 @@ public class UserTable implements Parcelable {
 
   public UserTable(Parcel in) {
     this.mSqlWhereClause = in.readString();
-    int count;
-    count = in.readInt();
-    this.mSqlSelectionArgs = new String[count];
+    this.mSqlSelectionArgs = new String[in.readInt()];
     in.readStringArray(mSqlSelectionArgs);
-    count = in.readInt();
-    this.mSqlGroupByArgs = new String[count];
+    this.mSqlGroupByArgs = new String[in.readInt()];
     in.readStringArray(mSqlGroupByArgs);
     this.mSqlHavingClause = in.readString();
     this.mSqlOrderByElementKey = in.readString();
     this.mSqlOrderByDirection = in.readString();
     this.mColumnDefns = new OrderedColumns(in);
-    count = in.readInt();
-    this.mAdminColumnOrder = new String[count];
+    this.mAdminColumnOrder = new String[in.readInt()];
     in.readStringArray(mAdminColumnOrder);
     // count of rows...
-    count = in.readInt();
-    mRows = new ArrayList<Row>(count);
-    for (int j = 0; j < count; ++j) {
+    int i = in.readInt();
+    mRows = new ArrayList<Row>(i);
+    for (; i > 0; --i) {
       Row r = new Row(this, in);
       mRows.add(r);
     }
@@ -284,7 +279,6 @@ public class UserTable implements Parcelable {
     mElementKeyToIndex = new HashMap<String, Integer>();
     List<String> userColumnOrder = mColumnDefns.getRetentionColumnNames();
     mElementKeyForIndex = new String[userColumnOrder.size() + mAdminColumnOrder.length];
-    int i = 0;
     for (i = 0; i < userColumnOrder.size(); i++) {
       String elementKey = userColumnOrder.get(i);
       mElementKeyForIndex[i] = elementKey;

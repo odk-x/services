@@ -91,9 +91,9 @@ public final class Row implements Parcelable {
    */
   public String getRawDataOrMetadataByElementKey(String elementKey) {
     String result;
-    Integer cell = mUserTable.mElementKeyToIndex.get(elementKey);
+    Integer cell = mUserTable.getColumnIndexOfElementKey(elementKey);
     if (cell == null) {
-      WebLogger.getLogger(mUserTable.mColumnDefns.getAppName()).e(UserTable.TAG,
+      WebLogger.getLogger(mUserTable.getAppName()).e(UserTable.TAG,
           "elementKey [" + elementKey + "] was not found in table");
       return null;
     }
