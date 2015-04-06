@@ -31,7 +31,6 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 
 import android.annotation.SuppressLint;
 import android.app.Service;

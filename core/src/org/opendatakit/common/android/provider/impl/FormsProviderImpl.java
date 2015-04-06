@@ -40,7 +40,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import android.content.ContentProvider;
