@@ -678,6 +678,42 @@ public class ODKFileUtils {
     return f.getAbsolutePath();
   }
 
+  public static File getRowpathFile( String appName, String tableId, String instanceId, String rowpathUri ) {
+    // clean up the value...
+    if ( rowpathUri.startsWith("/") ) {
+      rowpathUri = rowpathUri.substring(1);
+    }
+    String instanceFolder = 
+        ODKFileUtils.getInstanceFolder(appName, tableId, instanceId);
+    String instanceUri = ODKFileUtils.asUriFragment(appName, new File(instanceFolder));
+    String fileUri;
+    if ( rowpathUri.startsWith(instanceUri) ) {
+      // legacy construction
+      WebLogger.getLogger(appName).e(t,
+          "table [" + tableId + "] contains old-style rowpath constructs!");
+      fileUri = rowpathUri;
+    } else {
+      fileUri = instanceUri + "/" + rowpathUri;
+    }
+    File theFile = ODKFileUtils.getAsFile(appName, fileUri);
+    return theFile;
+  }
+  
+  public static String asRowpathUri( String appName, String tableId, String instanceId, File rowFile ) {
+    String instanceFolder = 
+        ODKFileUtils.getInstanceFolder(appName, tableId, instanceId);
+    String instanceUri = ODKFileUtils.asUriFragment(appName, new File(instanceFolder));
+    String rowpathUri = ODKFileUtils.asUriFragment(appName, rowFile);
+    if ( !rowpathUri.startsWith(instanceUri) ) {
+      throw new IllegalArgumentException("asRowpathUri -- rowFile is not in a valid rowpath location!");
+    }
+    String relativeUri = rowpathUri.substring(instanceUri.length());
+    if ( relativeUri.startsWith("/") ) {
+      relativeUri.substring(1);
+    }
+    return relativeUri;
+  }
+  
   ///////////////////////////////////////////////
   // Everything under output folder
 

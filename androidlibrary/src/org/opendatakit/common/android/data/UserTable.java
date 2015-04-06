@@ -368,8 +368,8 @@ public class UserTable implements Parcelable {
         return raw;
       }
       if ( type.getDataType() == ElementDataType.rowpath ) {
-        File f = ODKFileUtils.getAsFile(mUserTable.getAppName(), raw);
-        return f.getName();
+        File theFile = ODKFileUtils.getRowpathFile(mUserTable.getAppName(), mUserTable.getTableId(), mRowId, raw);
+        return theFile.getName();
       } else if ( type.getDataType() == ElementDataType.configpath ) {
         return raw;
       } else if ( type.getDataType() == ElementDataType.number &&
