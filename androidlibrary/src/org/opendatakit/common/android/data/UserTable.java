@@ -320,17 +320,17 @@ public class UserTable implements Parcelable {
         }
         if ( clazz == Long.class ) {
           Long l = Long.parseLong(value);
-          return (T) l;
+          return (T) (Long) l;
         } else if ( clazz == Integer.class ) {
           Integer l = Integer.parseInt(value);
-          return (T) l;
+          return (T) (Integer) l;
         } else if ( clazz == Double.class ) {
           Double d = Double.parseDouble(value);
-          return (T) d;
+          return (T) (Double) d;
         } else if ( clazz == String.class ) {
-          return (T) value;
+          return (T) (String) value;
         } else if ( clazz == Boolean.class ) {
-          return (T) Boolean.valueOf(value);
+          return (T) (Boolean) Boolean.valueOf(value);
         } else if ( clazz == ArrayList.class ) {
           // json deserialization of an array
           return (T) ODKFileUtils.mapper.readValue(value, ArrayList.class);
@@ -355,7 +355,8 @@ public class UserTable implements Parcelable {
       }
     }
 
-    public String getDisplayTextOfData(Context context, ElementType type, String elementKey, boolean showErrorText) {
+    public String getDisplayTextOfData(Context context, ElementType type, String elementKey,
+        boolean showErrorText) {
       // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
       String raw = getRawDataOrMetadataByElementKey(elementKey);
       if ( raw == null ) {
