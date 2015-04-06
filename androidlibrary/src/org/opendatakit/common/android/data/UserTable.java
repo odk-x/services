@@ -31,7 +31,6 @@ import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -355,8 +354,7 @@ public class UserTable implements Parcelable {
       }
     }
 
-    public String getDisplayTextOfData(Context context, ElementType type, String elementKey,
-        boolean showErrorText) {
+    public String getDisplayTextOfData(ElementType type, String elementKey) {
       // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
       String raw = getRawDataOrMetadataByElementKey(elementKey);
       if ( raw == null ) {
