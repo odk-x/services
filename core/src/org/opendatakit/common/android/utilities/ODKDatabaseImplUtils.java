@@ -41,7 +41,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.database.OdkDatabase;
@@ -164,12 +164,12 @@ public class ODKDatabaseImplUtils {
       db.beginTransactionNonExclusive();
       success = true;
     } finally {
-      if ( !success ) {
+      if (!success) {
         DatabaseFactory.get().dumpInfo();
       }
     }
   }
-  
+
   /**
    * Perform a raw query with bind parameters.
    * 
@@ -199,19 +199,18 @@ public class ODKDatabaseImplUtils {
    * @param limit
    * @return
    */
-  public Cursor queryDistinct(OdkDatabase db, String table, String[] columns,
-      String selection, String[] selectionArgs, String groupBy, String having, String orderBy,
-      String limit) throws SQLiteException {
-    Cursor c = db.queryDistinct(table, columns, selection, selectionArgs, groupBy, having,
-        orderBy, limit);
+  public Cursor queryDistinct(OdkDatabase db, String table, String[] columns, String selection,
+      String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
+      throws SQLiteException {
+    Cursor c = db.queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy,
+        limit);
     return c;
   }
 
-  public Cursor query(OdkDatabase db, String table, String[] columns,
-      String selection, String[] selectionArgs, String groupBy, String having, String orderBy,
-      String limit) throws SQLiteException {
-    Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having,
-        orderBy, limit);
+  public Cursor query(OdkDatabase db, String table, String[] columns, String selection,
+      String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
+      throws SQLiteException {
+    Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     return c;
   }
 
@@ -245,8 +244,8 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public UserTable rawSqlQuery(OdkDatabase db, String appName, String tableId,
-      OrderedColumns columnDefns, String whereClause, String[] selectionArgs,
-      String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
+      OrderedColumns columnDefns, String whereClause, String[] selectionArgs, String[] groupBy,
+      String having, String orderByElementKey, String orderByDirection) {
     Cursor c = null;
     try {
       StringBuilder s = new StringBuilder();
@@ -278,8 +277,8 @@ public class ODKDatabaseImplUtils {
       }
       String sqlQuery = s.toString();
       c = db.rawQuery(sqlQuery, selectionArgs);
-      UserTable table = buildUserTable(c, columnDefns, whereClause, selectionArgs,
-          groupBy, having, orderByElementKey, orderByDirection);
+      UserTable table = buildUserTable(c, columnDefns, whereClause, selectionArgs, groupBy, having,
+          orderByElementKey, orderByDirection);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -287,14 +286,13 @@ public class ODKDatabaseImplUtils {
       }
     }
   }
-  
-  private UserTable buildUserTable(Cursor c, OrderedColumns columnDefns,
-    String whereClause, String[] selectionArgs,
-    String[] groupBy, String having,
-    String orderByElementKey, String orderByDirection) {
-    
+
+  private UserTable buildUserTable(Cursor c, OrderedColumns columnDefns, String whereClause,
+      String[] selectionArgs, String[] groupBy, String having, String orderByElementKey,
+      String orderByDirection) {
+
     UserTable userTable = null;
-    
+
     int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
@@ -306,8 +304,8 @@ public class ODKDatabaseImplUtils {
     String[] mAdminColumnOrder = adminCols.toArray(new String[adminCols.size()]);
     HashMap<String, Integer> mElementKeyToIndex = new HashMap<String, Integer>();
     List<String> userColumnOrder = columnDefns.getRetentionColumnNames();
-    String[] mElementKeyForIndex = new String[userColumnOrder.size()+mAdminColumnOrder.length];
-    int[] cursorIndex = new int[userColumnOrder.size()+mAdminColumnOrder.length];
+    String[] mElementKeyForIndex = new String[userColumnOrder.size() + mAdminColumnOrder.length];
+    int[] cursorIndex = new int[userColumnOrder.size() + mAdminColumnOrder.length];
     int i = 0;
     for (i = 0; i < userColumnOrder.size(); i++) {
       String elementKey = userColumnOrder.get(i);
@@ -320,23 +318,22 @@ public class ODKDatabaseImplUtils {
       // TODO: problem is here. unclear how to best get just the
       // metadata in here. hmm.
       String elementKey = mAdminColumnOrder[j];
-      mElementKeyForIndex[i+j] = elementKey;
-      mElementKeyToIndex.put(elementKey, i+j);
-      cursorIndex[i+j] = c.getColumnIndex(elementKey);
+      mElementKeyForIndex[i + j] = elementKey;
+      mElementKeyToIndex.put(elementKey, i + j);
+      cursorIndex[i + j] = c.getColumnIndex(elementKey);
     }
 
     c.moveToFirst();
     int rowCount = c.getCount();
 
-    userTable = new UserTable(columnDefns, whereClause, selectionArgs,
-        groupBy, having, orderByElementKey, orderByDirection,
-        mAdminColumnOrder, mElementKeyToIndex,
+    userTable = new UserTable(columnDefns, whereClause, selectionArgs, groupBy, having,
+        orderByElementKey, orderByDirection, mAdminColumnOrder, mElementKeyToIndex,
         mElementKeyForIndex, rowCount);
 
-    String[] rowData = new String[userColumnOrder.size()+ mAdminColumnOrder.length];
+    String[] rowData = new String[userColumnOrder.size() + mAdminColumnOrder.length];
     if (c.moveToFirst()) {
       do {
-        if ( c.isNull(rowIdIndex)) {
+        if (c.isNull(rowIdIndex)) {
           throw new IllegalStateException("Unexpected null value for rowId");
         }
         String rowId = ODKCursorUtils.getIndexAsString(c, rowIdIndex);
@@ -365,8 +362,8 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @return
    */
-  public UserTable getDataInExistingDBTableWithId(OdkDatabase db, String appName,
-      String tableId, OrderedColumns orderedDefns, String rowId) {
+  public UserTable getDataInExistingDBTableWithId(OdkDatabase db, String appName, String tableId,
+      OrderedColumns orderedDefns, String rowId) {
 
     UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
         new String[] { rowId }, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
@@ -555,7 +552,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    */
   public void deleteDBTableAndAllData(OdkDatabase db, final String appName, final String tableId) {
-    
+
     SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -571,7 +568,7 @@ public class ODKDatabaseImplUtils {
 
       // Delete the server sync ETags associated with this table
       seu.deleteAllSyncETagsForTableId(db, tableId);
-      
+
       // Delete the table definition for the tableId
       int count = db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
 
@@ -674,11 +671,11 @@ public class ODKDatabaseImplUtils {
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
           TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
-      
+
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
-      
+
     } finally {
       if (!dbWithinTransaction) {
         db.endTransaction();
@@ -709,7 +706,7 @@ public class ODKDatabaseImplUtils {
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
           TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
-      
+
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
@@ -785,7 +782,7 @@ public class ODKDatabaseImplUtils {
         beginTransactionNonExclusive(db);
       }
       db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
-      
+
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
@@ -1430,8 +1427,8 @@ public class ODKDatabaseImplUtils {
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenDBTableWithColumns(OdkDatabase db,
-      String appName, String tableId, List<Column> columns) {
+  public OrderedColumns createOrOpenDBTableWithColumns(OdkDatabase db, String appName,
+      String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
     OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
@@ -1514,7 +1511,7 @@ public class ODKDatabaseImplUtils {
         Integer.toString(ConflictType.SERVER_UPDATED_UPDATED_VALUES) 
       };
     //@formatter:on
-    
+
     // update local delete conflicts to deletes
     b.setLength(0);
     //@formatter:off
