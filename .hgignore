@@ -3,3 +3,8 @@ core.test/bin/**
 core/bin/**
 core/gen/**
 core.test/gen/**
+build/**
+local.properties
+.idea/**
+.gradle/**
+*.iml
