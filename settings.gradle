@@ -1,0 +1,3 @@
+include ':core'
+include ':opendatakit.androidlibrary:androidlibrary'
+project(':opendatakit.androidlibrary:androidlibrary').setProjectDir(new File('../opendatakit.androidlibrary/androidlibrary'))
