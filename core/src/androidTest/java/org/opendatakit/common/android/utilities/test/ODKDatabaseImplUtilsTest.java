@@ -46,6 +46,7 @@ import android.test.AndroidTestCase;
 import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
+
 public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
 
   private static final String TAG = "ODKDatabaseImplUtilsTest";

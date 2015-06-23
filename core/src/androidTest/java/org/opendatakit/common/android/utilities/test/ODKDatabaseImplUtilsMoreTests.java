@@ -24,9 +24,16 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.database.service.OdkDbHandle;
 
+import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
 import android.test.RenamingDelegatingContext;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.After;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
 
   private static final String TEST_FILE_PREFIX = "test_";
@@ -46,7 +53,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
    * 
    * @see android.test.AndroidTestCase#setUp()
    */
-  @Override
+  @Before
   protected synchronized void setUp() throws Exception {
     super.setUp();
 
@@ -78,7 +85,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
    * 
    * @see android.test.AndroidTestCase#tearDown()
    */
-  @Override
+  @After
   protected void tearDown() throws Exception {
     super.tearDown();
 
@@ -97,6 +104,7 @@ public class ODKDatabaseImplUtilsMoreTests extends AndroidTestCase {
   /*
    * Test query when there is no data
    */
+  @Test
   public void testQueryWithNoData_ExpectFail() {
     String tableId = "badTable";
     boolean thrown = false;
