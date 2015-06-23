@@ -38,6 +38,7 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import android.content.ContentValues;
@@ -110,6 +111,8 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   protected synchronized void setUp() throws Exception {
     super.setUp();
 
+    StaticStateManipulator.get().reset();
+
     uniqueKey = DatabaseFactory.get().generateInternalUseDbHandle();
 
     RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
@@ -150,7 +153,6 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     DatabaseFactory.get().releaseAllDatabases(context);
     FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
   }
-
   /*
    * Check that the database is setup
    */

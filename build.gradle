@@ -14,8 +14,4 @@ allprojects {
         jcenter()
         mavenCentral()
     }
-    configurations.all {
-        resolutionStrategy.force 'com.android.support:support-annotations:22.2.0'
-        // Conflict with dependency 'com.android.support:support-annotations'. Resolved versions for app (20.0.0) and test app (22.2.0) differ.
-    }
 }
