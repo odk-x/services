@@ -111,7 +111,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   protected synchronized void setUp() throws Exception {
     super.setUp();
 
-    StaticStateManipulator.get().reset();
+    //StaticStateManipulator.get().reset();
 
     uniqueKey = DatabaseFactory.get().generateInternalUseDbHandle();
 
