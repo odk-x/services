@@ -19,6 +19,6 @@ android {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.android.support:support-v4:22.2.0' // updated from 20.0.0
     compile 'joda-time:joda-time:2.2'
 }
