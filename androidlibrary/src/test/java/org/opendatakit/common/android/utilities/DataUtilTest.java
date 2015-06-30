@@ -17,9 +17,9 @@ package org.opendatakit.common.android.utilities;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import android.test.AndroidTestCase;
+import junit.framework.TestCase;
 
-public class DataUtilTest extends AndroidTestCase {
+public class DataUtilTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
