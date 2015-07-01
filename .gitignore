@@ -7,3 +7,5 @@ local.properties
 .idea/tasks.xml
 .idea/libraries
 .idea/gradle.xml
+.idea/misc.xml
+.idea/vcs.xml
