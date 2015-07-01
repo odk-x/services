@@ -2,6 +2,6 @@ bin
 gen
 build
 local.properties
-.idea
 .gradle
-*.iml
+.idea/workspace.xml
+.idea/tasks.xml
