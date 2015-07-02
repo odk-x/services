@@ -14,6 +14,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
+    packagingOptions {
+        pickFirst 'META-INF/LICENSE'        /* File 1: jackson-core-2.4.1.jar
+                                               File 2: jackson-annotations-2.4.1.jar */
+
+        pickFirst 'META-INF/LICENSE.txt'    /* File 1: commons-io-2.4.jar
+                                               File 2: joda-time-2.2.jar */
+
+        pickFirst 'META-INF/NOTICE'         /* File 1: jackson-databind-2.4.1.3.jar
+                                               File 2: jackson-core-2.4.1.1.jar */
+
+        pickFirst 'META-INF/NOTICE.txt'     /* File 1: commons-io-2.4.jar
+                                               File 2: joda-time-2.2.jar */
+    }
 }
 
 dependencies {
