@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 16
 
-        testApplicationId "org.opendatakit.core.test"
+        //testApplicationId "org.opendatakit.common.android.utilities.test.ODKDatabaseImplUtilsTest"
         testInstrumentationRunner "android.test.InstrumentationTestRunner"
     }
 
@@ -44,4 +44,5 @@ dependencies {
     androidTestCompile 'com.android.support.test:rules:0.3'
     androidTestCompile 'com.android.support:support-annotations:22.2.0'
     androidTestCompile 'com.android.support:support-v13:22.2.0'
+    androidTestCompile 'junit:junit:4.12'
 }
