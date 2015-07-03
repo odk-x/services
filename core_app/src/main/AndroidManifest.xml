@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.opendatakit.core"
+    android:versionCode="125"
+    android:versionName="2.0"
+    android:sharedUserId="org.opendatakit"
+    android:sharedUserLabel="@string/app_userLabel" >
+
+    <uses-sdk
+        android:minSdkVersion="16"
+        android:targetSdkVersion="16" />
+    
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        
+    <permission-tree android:icon="@drawable/odk_core"
+                     android:label="@string/webkit_permission_tree"
+                     android:name="org.opendatakit.dbshim" />
+    
+    <permission-tree android:icon="@drawable/odk_core"
+                     android:label="@string/webkit_permission_tree"
+                     android:name="org.opendatakit.database" />
+    
+    <permission-tree android:icon="@drawable/odk_core"
+                     android:label="@string/webkit_permission_tree"
+                     android:name="org.opendatakit.webkitserver" />
+    
+    <permission android:name="org.opendatakit.webkitserver.RUN_WEBSERVER" 
+        android:label="@string/webkit_launch_permission" 
+        android:protectionLevel="signature"></permission>
+    
+    <permission android:name="org.opendatakit.database.RUN_DATABASE" 
+        android:label="@string/database_launch_permission" 
+        android:protectionLevel="signature"></permission>
+    
+    <permission android:name="org.opendatakit.dbshim.RUN_DBSHIM" 
+        android:label="@string/dbshim_launch_permission" 
+        android:protectionLevel="signature"></permission>
+    
+    <application
+        android:name="org.opendatakit.core.application.Core"
+        android:allowBackup="true"
+        android:largeHeap="true"
+        android:installLocation="auto"
+        android:icon="@drawable/odk_core"
+        android:logo="@drawable/odk_ab_core"
+        android:label="@string/app_name"
+        android:theme="@style/Opendatakit" >
+        <service android:name="org.opendatakit.webkitserver.service.OdkWebkitServerService" 
+            android:exported="true"
+            android:process=":webkitservice"
+            android:permission="org.opendatakit.webkitserver.RUN_WEBSERVER" >
+        </service>
+        <service android:name="org.opendatakit.database.service.OdkDatabaseService" 
+            android:exported="true"
+            android:process=":databaseservice"
+            android:permission="org.opendatakit.database.RUN_DATABASE" >
+        </service>
+        <service android:name="org.opendatakit.dbshim.service.OdkDbShimService" 
+            android:exported="true"
+            android:process=":dbshimservice"
+            android:permission="org.opendatakit.dbshim.RUN_DBSHIM" >
+        </service>
+        <provider
+            android:exported="true"
+	        android:syncable="false"
+	        android:initOrder="1"
+            android:authorities="org.opendatakit.common.android.provider.tables"
+            android:name="org.opendatakit.tables.provider.TablesProvider" />
+        <provider
+            android:exported="true"
+	        android:syncable="false"
+	        android:initOrder="2"
+            android:authorities="org.opendatakit.common.android.provider.forms"
+            android:name="org.opendatakit.forms.provider.FormsProvider" />
+        <provider
+            android:exported="true"
+	        android:syncable="false"
+	        android:initOrder="3"
+            android:authorities="org.opendatakit.common.android.provider.instances"
+            android:name="org.opendatakit.instances.provider.InstanceProvider" />
+        <provider
+            android:exported="true"
+	        android:syncable="false"
+	        android:initOrder="4"
+            android:authorities="org.opendatakit.common.android.provider.submission.xml;org.opendatakit.common.android.provider.submission.json"
+            android:name="org.opendatakit.submissions.provider.SubmissionProvider"
+            />
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
