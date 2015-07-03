@@ -1,1 +1,1 @@
-include ':androidlibrary'
+include ':androidlibrary_lib'
