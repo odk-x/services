@@ -13,9 +13,6 @@ android {
         applicationId "org.opendatakit.core"
         minSdkVersion 16
         targetSdkVersion 20
-
-        //testApplicationId "org.opendatakit.common.android.utilities.test.ODKDatabaseImplUtilsTest"
-        testInstrumentationRunner "android.test.InstrumentationTestRunner"
     }
 
     buildTypes {
