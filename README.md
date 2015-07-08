@@ -4,8 +4,6 @@ This project is __*actively maintained*__
 
 It is part of the ODK 2.0 Android tools suite.
 
-__ANDROID STUDIO NOTE:__ open the .iml file (otherwise you won't get the unit and android system tests)
-
 It is an APK that provides core services (database, content providers, local webserver) used by all the other ODK 2.0 tools.
 
 The developer [wiki](https://github.com/opendatakit/opendatakit/wiki) (including release notes) and
