@@ -69,7 +69,8 @@ task jacocoTestDebugReport(type:JacocoReport, dependsOn: ["jacocoMergeGen"]) {
                        '**/R$*.class',
                        '**/*$ViewInjector*.*',
                        '**/BuildConfig.*',
-                       '**/Manifest*.*']
+                       '**/Manifest*.*',
+                       '**/*Test*.class']
     )
 
     sourceDirectories = files("${buildDir.parent}/src/main/java") // Set src directories
