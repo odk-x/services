@@ -18,8 +18,8 @@ Install [Android Studio](http://developer.android.com/tools/studio/index.html) a
 
 Open the androidlibrary project directory in Android Studio.
 
-Now you should be ready to build, by selecting Build->Make Project.
+Now you should be ready to build, by selecting `Build->Make` Project.
 
 ## Running
 
-Note this project will **NOT** run on an Android device by itself, it is simply a library for use in other ODK projects.
+**NOTE** this project will NOT run on an Android device by itself, it is simply a library for use in other ODK projects.
