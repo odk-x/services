@@ -7,8 +7,7 @@ apply plugin: 'jacoco'  // Can't (yet) use integrated Android JaCoCo for UnitTes
 apply plugin: 'com.android.library'
 
 group = 'org.opendatakit'
-version = '127'
-status = 'development'
+version = 127
 
 android {
     compileSdkVersion 19
@@ -17,6 +16,8 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 16
+        versionCode version
+        versionName '2.0'
     }
 
     buildTypes {
