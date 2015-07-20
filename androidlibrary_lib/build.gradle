@@ -6,6 +6,10 @@ apply plugin: 'jacoco'  // Can't (yet) use integrated Android JaCoCo for UnitTes
                         // see: https://code.google.com/p/android/issues/detail?id=144664
 apply plugin: 'com.android.library'
 
+group = 'org.opendatakit'
+version = '127'
+status = 'development'
+
 android {
     compileSdkVersion 19
     buildToolsVersion "22.0.1"
