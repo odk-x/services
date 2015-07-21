@@ -108,7 +108,7 @@ task jacocoMergeGen(type: JacocoMerge, dependsOn: ["testDebug", "connectedAndroi
 }
 
 // Define the snapshot version to be the git hash
-task snapshotVersion(type: Exec) {
+task snapshotVersion() {
     def gitHash = new ByteArrayOutputStream()
     exec {
         commandLine 'git', 'rev-parse', '--short', 'HEAD'
