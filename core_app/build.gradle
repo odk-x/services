@@ -42,7 +42,13 @@ android {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile project(':androidlibrary:androidlibrary_lib')
+
+    def libraryProjectGradle = new File('../androidlibrary/androidlibrary_lib/build.gradle')
+    if (libraryProjectGradle.isFile()) {
+        compile project(':androidlibrary:androidlibrary_lib')
+    } else {
+        compile(group: 'org.opendatakit', name: 'androidlibrary_lib', version: '127', ext: 'aar')
+    }
 
     // Testing-only dependencies
     androidTestCompile 'com.android.support.test:runner:0.3'
