@@ -2,47 +2,36 @@
                                         GRADLE CONFIG
  *************************************************************************************************/
 
-apply plugin: 'jacoco'  // Can't (yet) use integrated Android JaCoCo for UnitTests,
-                        // see: https://code.google.com/p/android/issues/detail?id=144664
+apply from: 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/common.gradle'
+
 apply plugin: 'com.android.library'
 
-group = 'org.opendatakit'
-def androidVersionCode = 127
-version = androidVersionCode
-
 android {
-    compileSdkVersion 19
-    buildToolsVersion "22.0.1"
+    // The following are set in the common.gradle file
+    compileSdkVersion(compileVersion)
+    buildToolsVersion(buildTools)
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 16
-        versionCode androidVersionCode
-        versionName '2.0'
+        minSdkVersion(minVersion)
+        targetSdkVersion(targetVersion)
+        versionCode(releaseVersionCode)
+        versionName(versionCodeName)
     }
 
     buildTypes {
         debug {
-            testCoverageEnabled true // Allows AndroidTest JaCoCo reports to be generated
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
         release {
-            minifyEnabled false
+            minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
 
-    packagingOptions {
-        pickFirst 'META-INF/LICENSE'        /* File 1: jackson-core-2.4.1.jar
-                                               File 2: jackson-annotations-2.4.1.jar */
-
-        pickFirst 'META-INF/LICENSE.txt'    /* File 1: commons-io-2.4.jar
-                                               File 2: joda-time-2.2.jar */
-
-        pickFirst 'META-INF/NOTICE'         /* File 1: jackson-databind-2.4.1.3.jar
-                                               File 2: jackson-core-2.4.1.1.jar */
-
-        pickFirst 'META-INF/NOTICE.txt'     /* File 1: commons-io-2.4.jar
-                                               File 2: joda-time-2.2.jar */
+    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+        packageList.each {
+            pickFirst it
+        }
     }
 }
 
@@ -56,66 +45,13 @@ dependencies {
 }
 
 /**************************************************************************************************
-                                        CUSTOM TASKS
+                                            CUSTOM TASKS
  *************************************************************************************************/
 
-
-// Code to generate JaCoCo reports
-task jacocoTestDebugReport(type:JacocoReport, dependsOn: ["jacocoMergeGen"]) {
-    group = "Reporting"
-    description = "Generate a JaCoCo code-coverage report for debug tests"
-
-    classDirectories = fileTree( // Include relevant .class files
-            dir: "${buildDir}/intermediates/classes/debug",
-            excludes: ['**/R.class',
-                       '**/R$*.class',
-                       '**/*$ViewInjector*.*',
-                       '**/BuildConfig.*',
-                       '**/Manifest*.*']
-    )
-
-    sourceDirectories = files("${buildDir.parent}/src/main/java") // Set src directories
-    additionalSourceDirs = files([
-            "${buildDir}/generated/source/buildConfig/debug",
-            "${buildDir}/generated/source/r/debug"
-    ])
-
-    // Generate report from merged .exec file
-    executionData = files("${buildDir}/jacoco/jacocoMergeGen.exec")
-
-    reports { // Report output config
-        xml {
-            enabled = true
-            destination "${project.buildDir}/reports/jacoco/jacoco.xml"
-        }
-        html {
-            enabled = true
-            destination "${project.buildDir}/reports/jacoco"
-        }
-    }
+task setReleaseVersion << {
+    version = releaseVersionCode
 }
 
-// Code to merge JaCoCo .exec/.ec files
-// Outputs to ${buildDir}/jacoco/TASK_NAME.exec
-task jacocoMergeGen(type: JacocoMerge, dependsOn: ["testDebug", "connectedAndroidTestDebug"]) {
-    description = 'Merge test code coverage results from all different test types'
-
-    executionData = files([
-            // Add any additional .exec/.ec files here if additional flavors of test need to be included
-            "${buildDir}/jacoco/testDebug.exec", // UnitTest output
-            "${buildDir}/outputs/code-coverage/connected/coverage.ec" // AndroidTest output
-    ])
-}
-
-// Define the snapshot version to be the git hash
-task snapshotVersion() {
-    def gitHash = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = gitHash
-    }
-
-    doLast {
-        version = gitHash.toString().trim()
-    }
+task setSnapshotVersion(dependsOn: "generateSnapshotVersion") << {
+    version = snapshotVersionCode
 }
