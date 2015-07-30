@@ -2,7 +2,6 @@
 buildscript {
     repositories {
         jcenter()
-        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.2.3'
@@ -12,7 +11,9 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
-        mavenCentral()
+        maven {
+            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot'
+        }
         maven {
             url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot'
         }

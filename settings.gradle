@@ -1,7 +1,19 @@
-include ':core_app'
+gradle.ext.local = '../gradle-config/local.gradle'
+gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/remote.gradle'
 
-def libraryProjectGradle = new File('../androidlibrary/androidlibrary_lib/build.gradle')
-if (libraryProjectGradle.isFile()) { // check if local project is present
-    include ':androidlibrary:androidlibrary_lib'
-    project(':androidlibrary:androidlibrary_lib').setProjectDir(new File('../androidlibrary/androidlibrary_lib')) // set local location
+if ((new File(gradle.ext.local)).exists()) {
+    apply from: gradle.ext.local
+} else {
+    apply from: gradle.ext.remote
+}
+
+settingsScripts.each {
+    apply from: it
+}
+
+include(coreProjectChild)
+
+if (libraryProjectPath.exists()) { // check if local library project is present
+    include libraryProjectName
+    project(libraryProjectName).setProjectDir(libraryProjectPath) // set local location
 }
