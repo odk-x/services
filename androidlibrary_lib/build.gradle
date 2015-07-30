@@ -52,15 +52,3 @@ dependencies {
     // Testing dependencies
     testCompile 'junit:junit:4.12'
 }
-
-/**************************************************************************************************
-                                            CUSTOM TASKS
- *************************************************************************************************/
-
-task setReleaseVersion << {
-    version = releaseVersionCode
-}
-
-task setSnapshotVersion(dependsOn: "generateSnapshotVersion") << {
-    version = snapshotVersionCode
-}
