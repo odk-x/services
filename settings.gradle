@@ -1,1 +1,14 @@
-include ':androidlibrary_lib'
+gradle.ext.local = '../gradle-config/local.gradle'
+gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/remote.gradle'
+
+if ((new File(gradle.ext.local)).exists()) {
+    apply from: gradle.ext.local
+} else {
+    apply from: gradle.ext.remote
+}
+
+settingsScripts.each {
+    apply from: it
+}
+
+include(libraryProjectChild)
