@@ -28,12 +28,15 @@ android {
     }
 
     buildTypes {
-        debug {
-            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
-        }
         release {
             minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+        snapshot {
+            // Build type for snapshots
+        }
+        debug {
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
     }
 
