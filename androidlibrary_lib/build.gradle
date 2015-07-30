@@ -2,12 +2,6 @@
                                         GRADLE CONFIG
  *************************************************************************************************/
 
-gradle.ext {
-    local = '../gradle-config/local.gradle'
-    remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/remote.gradle'
-    useLocal = true // set to false to always build against remote artifacts
-}
-
 if ((new File(gradle.local)).exists()) { // TODO: This is very strange
     def localPath = '../' + gradle.local // Shouldn't need to append ../ not consistent
     apply from: localPath
