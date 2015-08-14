@@ -1,9 +1,11 @@
-gradle.ext.local = '../gradle-config/local.gradle'
-gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/remote.gradle'
+gradle.ext.local = '../gradle-config/remote.gradle'
+gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/1.0/remote.gradle'
 
 if ((new File(gradle.ext.local)).exists()) {
+    gradle.ext.useLocalPaths = true
     apply from: gradle.ext.local
 } else {
+    gradle.ext.useLocalPaths = false
     apply from: gradle.ext.remote
 }
 
