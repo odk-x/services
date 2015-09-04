@@ -74,7 +74,7 @@ public class OrderedColumns implements Parcelable {
       ElementType elementType = cd.getType();
       ElementDataType type = elementType.getDataType();
       if (type == ElementDataType.number || type == ElementDataType.integer) {
-        return true;
+        return (orderedDefns.size() > 1);
       }
     }
     return false;
