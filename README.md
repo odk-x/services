@@ -14,11 +14,13 @@ The Google group for software engineering questions is: [opendatakit-developers@
 
 ## Setting up your environment and building the project
 
+General instructions for setting up an ODK 2.0 environment can be found at our [DevEnv Setup wiki page](https://github.com/opendatakit/opendatakit/wiki/DevEnv-Setup)
+
 Install [Android Studio](http://developer.android.com/tools/studio/index.html) and the [SDK](http://developer.android.com/sdk/index.html#Other).
 
 Open the androidlibrary project directory in Android Studio.
 
-Now you should be ready to build, by selecting `Build->Make` Project.
+Now you should be ready to build, by selecting `Build->Make Project`.
 
 ## Running
 
