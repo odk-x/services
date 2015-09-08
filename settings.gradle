@@ -26,8 +26,6 @@ if ((new File(gradle.ext.local)).exists()) {
     apply from: gradle.ext.remote
 }
 
-gradle.ext.workspacePath = new File(".").getAbsolutePath();
-
 settingsScripts.each {
     apply from: it
 }
