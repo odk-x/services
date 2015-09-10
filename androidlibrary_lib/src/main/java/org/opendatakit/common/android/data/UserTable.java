@@ -129,6 +129,17 @@ public class UserTable implements Parcelable {
     return this.mElementKeyToIndex.get(elementKey);
   }
 
+  /**
+   * This is EXPENSIVE!!!  Used only for JS return value
+   * Do not use for anything else!!!!
+   *
+   * @return copy of the map. Used for JS return value
+   */
+  public Map<String, Integer> getElementKeyMap() {
+    HashMap<String, Integer> copyMap = new HashMap<String, Integer>(this.mElementKeyToIndex);
+    return copyMap;
+  }
+
   public String getElementKey(int colNum) {
     return this.mElementKeyForIndex[colNum];
   }
