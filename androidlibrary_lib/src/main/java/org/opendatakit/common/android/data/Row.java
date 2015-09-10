@@ -87,7 +87,7 @@ public final class Row implements Parcelable {
    * @param elementKey
    *          elementKey of data or metadata column
    * @return String representation of contents of column. Null values are
-   *         returned as null.
+   *         returned as null. Note that boolean values are reported as "1" or "0"
    */
   public String getRawDataOrMetadataByElementKey(String elementKey) {
     String result;
@@ -139,7 +139,8 @@ public final class Row implements Parcelable {
       } else if (clazz == String.class) {
         return (T) (String) value;
       } else if (clazz == Boolean.class) {
-        return (T) (Boolean) Boolean.valueOf(value);
+        // booleans are stored as integer 1 or 0 in user tables.
+        return (T) (Boolean) Boolean.valueOf(!value.equals("0"));
       } else if (clazz == ArrayList.class) {
         // json deserialization of an array
         return (T) ODKFileUtils.mapper.readValue(value, ArrayList.class);
