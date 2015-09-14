@@ -14,11 +14,11 @@
 
 package org.opendatakit.common.android.utilities.test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.test.AndroidTestCase;
+import android.test.RenamingDelegatingContext;
+import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -38,14 +38,13 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.test.AndroidTestCase;
-import android.test.RenamingDelegatingContext;
-import android.util.Log;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 
 public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
@@ -128,6 +127,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     db = DatabaseFactory.get().getDatabase(context, getAppName(), uniqueKey);
 
     DatabaseInitializer.onCreate(db);
+    verifyNoTablesExist();
   }
 
   protected String getAppName() {
@@ -141,23 +141,58 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
    */
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    verifyNoTablesExist();
 
     if (db != null) {
       db.close();
     }
-      
-    RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
-        TEST_FILE_PREFIX);
-    DatabaseFactory.get().releaseDatabase(context, getAppName(), uniqueKey);
-    DatabaseFactory.get().releaseAllDatabases(context);
-    FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+
+    super.tearDown();
+
+//    RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
+//    DatabaseFactory.get().releaseDatabase(context, getAppName(), uniqueKey);
+//    DatabaseFactory.get().releaseAllDatabases(context);
+  //  FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+
+
   }
   /*
    * Check that the database is setup
    */
   public void testPreConditions() {
     assertNotNull(db);
+  }
+
+  private void verifyNoTablesExist() {
+    List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+    assertTrue(tableIds.size() == 0);
+  }
+
+  /*
+ * Test creation of user defined database table when table doesn't exist
+ */
+  public void testCreateOrOpenDbTableWhenTableDoesNotExist_ExpectPass() {
+    verifyNoTablesExist();
+
+    // Create the database table
+    String tableName= testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.integer.name();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableName, columns);
+
+    // Check that the table exists
+    Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "'", null);
+    assertNotNull("Cursor is null", cursor);
+    assertEquals("Cursor should only have 1 row", cursor.getCount(), 1);
+    cursor.moveToFirst();
+    assertEquals("Name of user defined table does not match", cursor.getString(0), tableName);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableName);
+    verifyNoTablesExist();
   }
 
   /*
@@ -173,7 +208,6 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
       thrown = true;
       e.printStackTrace();
     }
-
     assertTrue(thrown);
   }
 
@@ -228,7 +262,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -300,7 +334,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -330,7 +364,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -362,7 +396,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -384,7 +418,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -413,7 +447,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -441,7 +475,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS  " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -467,7 +501,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -536,7 +570,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -566,7 +600,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -596,7 +630,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -626,7 +660,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -656,7 +690,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -686,7 +720,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -725,7 +759,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS  " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -764,7 +798,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -803,7 +837,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -846,7 +880,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointBadChildKey_ExpectFail() {
@@ -881,7 +915,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -920,7 +954,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE IF EXISTS " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -942,7 +976,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     String testColResType = ElementDataType.number.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
-        + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
+            + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
     columns.add(new Column(testColLng, lng, testColResType, "[]"));
     columns.add(new Column(testColAlt, alt, testColResType, "[]"));
@@ -980,7 +1014,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1077,7 +1111,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1102,7 +1136,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1141,7 +1175,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(cdref, cdalt);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1187,7 +1221,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1224,7 +1258,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1265,7 +1299,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1339,7 +1373,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1382,7 +1416,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1449,7 +1483,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal2);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1483,7 +1517,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1516,7 +1550,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
 
     ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
-        cvValues, uuid);
+            cvValues, uuid);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
@@ -1534,7 +1568,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1576,7 +1610,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1621,7 +1655,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1667,7 +1701,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1706,7 +1740,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1744,7 +1778,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1782,7 +1816,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1820,7 +1854,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1894,7 +1928,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(valAcc, pos_acc);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1932,7 +1966,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -1989,7 +2023,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(valContentType, testContentType);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -2027,7 +2061,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -2065,7 +2099,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
   /*
@@ -2088,10 +2122,10 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
       testVal = interMed.substring(pos + 1);
     } else {
       fail("The conversion of the date time string to time is incorrect");
-      Log.i(TAG, "Time string is " + interMed);
+     // Log.i(TAG, "Time string is " + interMed);
     }
 
-    Log.i(TAG, "Time string is " + testVal);
+   // Log.i(TAG, "Time string is " + testVal);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2114,11 +2148,8 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    db.execSQL("DROP TABLE " + tableId);
-  }
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
 
-  public void testFailureForCheckins() {
-    assertTrue(true);
   }
 
 }
