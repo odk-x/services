@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.test.ServiceTestCase;
 
+import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.database.service.OdkDatabaseService;
@@ -18,7 +19,7 @@ import java.util.List;
 
 public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> {
 
-    public static final String APPNAME = "unittest";
+    private static final String APPNAME = TestConsts.APPNAME;
     public static final String DB_TABLE_NAME = "testtable";
 
     public OdkDatabaseServiceTest() {
@@ -54,6 +55,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         return OdkDbInterface.Stub.asInterface(service);
     }
 
+    private boolean hasNoTablesInDb(OdkDbInterface serviceInterface, OdkDbHandle db) throws RemoteException {
+        List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
+        return (tableIds.size() == 0);
+    }
+
     public void testBinding() {
         OdkDbInterface serviceInterface = bindToDbService();
         assertNotNull(serviceInterface);
@@ -62,7 +68,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         // TODO: add a bind with bind_intent.setClassName instead
     }
 
-    public void testDbCreateTable() {
+    public void testDbCreateNDeleteTable() {
         OdkDbInterface serviceInterface = bindToDbService();
         try {
             ColumnList columnList = createColumnList();
@@ -73,15 +79,36 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
 
-            // verify only 1 table
+            // verify single table exists
             assertTrue(tableIds.size() == 1);
             assertTrue(tableIds.contains(DB_TABLE_NAME));
 
             serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_NAME);
 
-            tableIds = serviceInterface.getAllTableIds(APPNAME, db);
-            // verify no tables
-            assertTrue(tableIds.size() == 0);
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    public void testDbInsertDataIntoTable() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+            ColumnList columnList = createColumnList();
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_NAME, columnList);
+
+
+
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_NAME);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
         } catch (RemoteException e) {
             e.printStackTrace();
             fail();
