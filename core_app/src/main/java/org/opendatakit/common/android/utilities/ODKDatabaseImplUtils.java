@@ -190,8 +190,6 @@ public class ODKDatabaseImplUtils {
    * Perform a query with the given parameters.
    * 
    * @param db
-   * @param distinct
-   *          true if each returned row should be distinct (collapse duplicates)
    * @param table
    * @param columns
    * @param selection
@@ -206,7 +204,7 @@ public class ODKDatabaseImplUtils {
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy,
-        limit);
+            limit);
     return c;
   }
 
@@ -369,7 +367,7 @@ public class ODKDatabaseImplUtils {
       OrderedColumns orderedDefns, String rowId) {
 
     UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
-        new String[] { rowId }, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+            new String[]{rowId}, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
 
     return table;
   }
@@ -607,41 +605,44 @@ public class ODKDatabaseImplUtils {
 
     String assetsCsvDir = ODKFileUtils.getAssetsCsvFolder(appName);
     try {
-      Collection<File> files = FileUtils.listFiles(new File(assetsCsvDir), new IOFileFilter() {
+      File file = new File(assetsCsvDir);
+      if(file.exists()) {
+        Collection<File> files = FileUtils.listFiles(file, new IOFileFilter() {
 
-        @Override
-        public boolean accept(File file) {
-          String[] parts = file.getName().split("\\.");
-          return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
-              || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
-              .equals("properties"))));
+          @Override
+          public boolean accept(File file) {
+            String[] parts = file.getName().split("\\.");
+            return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
+                    || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
+                    .equals("properties"))));
+          }
+
+          @Override
+          public boolean accept(File dir, String name) {
+            String[] parts = name.split("\\.");
+            return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
+                    || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
+                    .equals("properties"))));
+          }
+        }, new IOFileFilter() {
+
+          // don't traverse into directories
+          @Override
+          public boolean accept(File arg0) {
+            return false;
+          }
+
+          // don't traverse into directories
+          @Override
+          public boolean accept(File arg0, String arg1) {
+            return false;
+          }
+        });
+
+        FileUtils.deleteDirectory(new File(tableDir));
+        for (File f : files) {
+          FileUtils.deleteQuietly(f);
         }
-
-        @Override
-        public boolean accept(File dir, String name) {
-          String[] parts = name.split("\\.");
-          return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
-              || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
-              .equals("properties"))));
-        }
-      }, new IOFileFilter() {
-
-        // don't traverse into directories
-        @Override
-        public boolean accept(File arg0) {
-          return false;
-        }
-
-        // don't traverse into directories
-        @Override
-        public boolean accept(File arg0, String arg1) {
-          return false;
-        }
-      });
-
-      FileUtils.deleteDirectory(new File(tableDir));
-      for (File f : files) {
-        FileUtils.deleteQuietly(f);
       }
     } catch (IOException e1) {
       e1.printStackTrace();
