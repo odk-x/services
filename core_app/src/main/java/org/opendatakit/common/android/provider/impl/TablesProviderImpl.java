@@ -15,20 +15,6 @@
  */
 package org.opendatakit.common.android.provider.impl;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-
-import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
-import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
-import org.opendatakit.database.service.OdkDbHandle;
-
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -36,6 +22,20 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.core.application.Core;
+import org.opendatakit.database.service.OdkDbHandle;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
 
 public abstract class TablesProviderImpl extends ContentProvider {
   private static final String t = "TablesProviderImpl";
@@ -52,7 +52,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     @Override
     public void onInvalidated() {
       super.onInvalidated();
-      DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -62,6 +62,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
   public boolean onCreate() {
 
     // IMPORTANT NOTE: the Application object is not yet created!
+    AndroidConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -124,12 +125,12 @@ public abstract class TablesProviderImpl extends ContentProvider {
     }
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
           null, null, sortOrder, null);
       success = true;
@@ -139,7 +140,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     } finally {
       if ( !success && db != null ) {
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
 
@@ -220,10 +221,10 @@ public abstract class TablesProviderImpl extends ContentProvider {
     int deleteCount = 0;
     
     // Get the database and run the query
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
@@ -253,7 +254,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
       if ( db != null ) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
     

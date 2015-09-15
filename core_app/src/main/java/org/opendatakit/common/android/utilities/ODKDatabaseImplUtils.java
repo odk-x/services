@@ -38,9 +38,10 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidOdkConnection;
 import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
@@ -158,14 +159,16 @@ public class ODKDatabaseImplUtils {
     return EXPORT_COLUMNS;
   }
 
-  public void beginTransactionNonExclusive(OdkDatabase db) {
+  public void beginTransactionNonExclusive(OdkConnectionInterface db) {
     boolean success = false;
     try {
       db.beginTransactionNonExclusive();
       success = true;
     } finally {
       if (!success) {
-        DatabaseFactory.get().dumpInfo();
+        // Used to ensure that the singleton has been initialized properly
+        AndroidConnectFactory.configure();
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().dumpInfo();
       }
     }
   }
@@ -178,7 +181,7 @@ public class ODKDatabaseImplUtils {
    * @param selectionArgs
    * @return
    */
-  public Cursor rawQuery(OdkDatabase db, String sql, String[] selectionArgs) {
+  public Cursor rawQuery(OdkConnectionInterface db, String sql, String[] selectionArgs) {
     Cursor c = db.rawQuery(sql, selectionArgs);
     return c;
   }
@@ -197,7 +200,7 @@ public class ODKDatabaseImplUtils {
    * @param limit
    * @return
    */
-  public Cursor queryDistinct(OdkDatabase db, String table, String[] columns, String selection,
+  public Cursor queryDistinct(OdkConnectionInterface db, String table, String[] columns, String selection,
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy,
@@ -205,7 +208,7 @@ public class ODKDatabaseImplUtils {
     return c;
   }
 
-  public Cursor query(OdkDatabase db, String table, String[] columns, String selection,
+  public Cursor query(OdkConnectionInterface db, String table, String[] columns, String selection,
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
@@ -241,7 +244,7 @@ public class ODKDatabaseImplUtils {
    *          either "ASC" or "DESC"
    * @return
    */
-  public UserTable rawSqlQuery(OdkDatabase db, String appName, String tableId,
+  public UserTable rawSqlQuery(OdkConnectionInterface db, String appName, String tableId,
       OrderedColumns columnDefns, String whereClause, String[] selectionArgs, String[] groupBy,
       String having, String orderByElementKey, String orderByDirection) {
     Cursor c = null;
@@ -360,7 +363,7 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @return
    */
-  public UserTable getDataInExistingDBTableWithId(OdkDatabase db, String appName, String tableId,
+  public UserTable getDataInExistingDBTableWithId(OdkConnectionInterface db, String appName, String tableId,
       OrderedColumns orderedDefns, String rowId) {
 
     UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
@@ -379,7 +382,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @return
    */
-  public String[] getAllColumnNames(OdkDatabase db, String tableId) {
+  public String[] getAllColumnNames(OdkConnectionInterface db, String tableId) {
     Cursor cursor = db.rawQuery("SELECT * FROM " + tableId + " LIMIT 1", null);
     String[] colNames = cursor.getColumnNames();
 
@@ -396,7 +399,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @return
    */
-  public OrderedColumns getUserDefinedColumns(OdkDatabase db, String appName, String tableId) {
+  public OrderedColumns getUserDefinedColumns(OdkConnectionInterface db, String appName, String tableId) {
     ArrayList<Column> userDefinedColumns = new ArrayList<Column>();
     String selection = ColumnDefinitionsColumns.TABLE_ID + "=?";
     String[] selectionArgs = { tableId };
@@ -442,7 +445,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @return true if table is listed in table definitions.
    */
-  public boolean hasTableId(OdkDatabase db, String tableId) {
+  public boolean hasTableId(OdkConnectionInterface db, String tableId) {
     Cursor c = null;
     try {
       //@formatter:off
@@ -477,7 +480,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @return
    */
-  public int getTableHealth(OdkDatabase db, String tableId) {
+  public int getTableHealth(OdkConnectionInterface db, String tableId) {
     StringBuilder b = new StringBuilder();
     b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
         .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
@@ -514,7 +517,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @return an ArrayList<String> of tableIds
    */
-  public ArrayList<String> getAllTableIds(OdkDatabase db) {
+  public ArrayList<String> getAllTableIds(OdkConnectionInterface db) {
     ArrayList<String> tableIds = new ArrayList<String>();
     Cursor c = null;
     try {
@@ -549,7 +552,7 @@ public class ODKDatabaseImplUtils {
    * @param appName
    * @param tableId
    */
-  public void deleteDBTableAndAllData(OdkDatabase db, final String appName, final String tableId) {
+  public void deleteDBTableAndAllData(OdkConnectionInterface db, final String appName, final String tableId) {
 
     SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
@@ -655,7 +658,7 @@ public class ODKDatabaseImplUtils {
    * @param schemaETag
    * @param lastDataETag
    */
-  public void updateDBTableETags(OdkDatabase db, String tableId, String schemaETag,
+  public void updateDBTableETags(OdkConnectionInterface db, String tableId, String schemaETag,
       String lastDataETag) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
@@ -691,7 +694,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void updateDBTableLastSyncTime(OdkDatabase db, String tableId) {
+  public void updateDBTableLastSyncTime(OdkConnectionInterface db, String tableId) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
@@ -727,7 +730,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @return
    */
-  public TableDefinitionEntry getTableDefinitionEntry(OdkDatabase db, String tableId) {
+  public TableDefinitionEntry getTableDefinitionEntry(OdkConnectionInterface db, String tableId) {
 
     TableDefinitionEntry e = null;
     Cursor c = null;
@@ -768,7 +771,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param entry
    */
-  public void replaceDBTableMetadata(OdkDatabase db, KeyValueStoreEntry entry) {
+  public void replaceDBTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
     values.put(KeyValueStoreColumns.TABLE_ID, entry.tableId);
     values.put(KeyValueStoreColumns.PARTITION, entry.partition);
@@ -807,7 +810,7 @@ public class ODKDatabaseImplUtils {
    *          if true then delete the existing set of values for this tableId
    *          before inserting the new ones.
    */
-  public void replaceDBTableMetadata(OdkDatabase db, String tableId,
+  public void replaceDBTableMetadata(OdkConnectionInterface db, String tableId,
       List<KeyValueStoreEntry> metadata, boolean clear) {
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -859,7 +862,7 @@ public class ODKDatabaseImplUtils {
    * @param aspect
    * @param key
    */
-  public void deleteDBTableMetadata(OdkDatabase db, String tableId, String partition,
+  public void deleteDBTableMetadata(OdkConnectionInterface db, String tableId, String partition,
       String aspect, String key) {
 
     StringBuilder b = new StringBuilder();
@@ -919,7 +922,7 @@ public class ODKDatabaseImplUtils {
    * @param key
    * @return
    */
-  public ArrayList<KeyValueStoreEntry> getDBTableMetadata(OdkDatabase db, String tableId,
+  public ArrayList<KeyValueStoreEntry> getDBTableMetadata(OdkConnectionInterface db, String tableId,
       String partition, String aspect, String key) {
 
     ArrayList<KeyValueStoreEntry> entries = new ArrayList<KeyValueStoreEntry>();
@@ -991,7 +994,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void enforceTypesDBTableMetadata(OdkDatabase db, String tableId) {
+  public void enforceTypesDBTableMetadata(OdkConnectionInterface db, String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -1086,7 +1089,7 @@ public class ODKDatabaseImplUtils {
    * Create a user defined database table metadata - table definiton and KVS
    * values
    */
-  private void createDBTableMetadata(OdkDatabase db, String tableId) {
+  private void createDBTableMetadata(OdkConnectionInterface db, String tableId) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
@@ -1250,7 +1253,7 @@ public class ODKDatabaseImplUtils {
    * Create a user defined database table metadata - table definiton and KVS
    * values
    */
-  private void createDBTableWithColumns(OdkDatabase db, String appName, String tableId,
+  private void createDBTableWithColumns(OdkConnectionInterface db, String appName, String tableId,
       OrderedColumns orderedDefs) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
@@ -1341,7 +1344,7 @@ public class ODKDatabaseImplUtils {
    * Create a new column metadata in the database - add column values to KVS and
    * column definitions
    */
-  private void createNewColumnMetadata(OdkDatabase db, String tableId, ColumnDefinition column) {
+  private void createNewColumnMetadata(OdkConnectionInterface db, String tableId, ColumnDefinition column) {
     String colName = column.getElementKey();
     ArrayList<ContentValues> cvColValKVS = new ArrayList<ContentValues>();
 
@@ -1428,7 +1431,7 @@ public class ODKDatabaseImplUtils {
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenDBTableWithColumns(OdkDatabase db, String appName,
+  public OrderedColumns createOrOpenDBTableWithColumns(OdkConnectionInterface db, String appName,
       String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -1494,7 +1497,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void changeDataRowsToNewRowState(OdkDatabase db, String tableId) {
+  public void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
 
     StringBuilder b = new StringBuilder();
 
@@ -1592,7 +1595,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteServerConflictRowWithId(OdkDatabase db, String tableId, String rowId) {
+  public void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId, String rowId) {
     // delete the old server-values in_conflict row if it exists
     String whereClause = String.format("%s = ? AND %s = ? AND %s IN " + "( ?, ? )",
         DataTableColumns.ID, DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
@@ -1629,7 +1632,7 @@ public class ODKDatabaseImplUtils {
    *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
    *          ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
    */
-  public void placeRowIntoConflict(OdkDatabase db, String tableId, String rowId, int conflictType) {
+  public void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId, int conflictType) {
 
     String whereClause = String.format("%s = ? AND %s IS NULL", DataTableColumns.ID,
         DataTableColumns.CONFLICT_TYPE);
@@ -1669,7 +1672,7 @@ public class ODKDatabaseImplUtils {
    * @param syncState
    * @param conflictType
    */
-  public void restoreRowFromConflict(OdkDatabase db, String tableId, String rowId,
+  public void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
       SyncState syncState, int conflictType) {
 
     String whereClause = String.format("%s = ? AND %s = ?", DataTableColumns.ID,
@@ -1706,7 +1709,7 @@ public class ODKDatabaseImplUtils {
    * @return the sync state of the row (see {@link SyncState}), or null if the
    *         row does not exist.
    */
-  public SyncState getSyncState(OdkDatabase db, String appName, String tableId, String rowId) {
+  public SyncState getSyncState(OdkConnectionInterface db, String appName, String tableId, String rowId) {
     Cursor c = null;
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID
@@ -1744,7 +1747,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteDataInExistingDBTableWithId(OdkDatabase db, String appName, String tableId,
+  public void deleteDataInExistingDBTableWithId(OdkConnectionInterface db, String appName, String tableId,
       String rowId) {
     SyncState syncState = getSyncState(db, appName, tableId, rowId);
 
@@ -1805,7 +1808,7 @@ public class ODKDatabaseImplUtils {
   /*
    * Internal method to execute a delete statement with the given where clause
    */
-  private void rawDeleteDataInDBTable(OdkDatabase db, String tableId, String whereClause,
+  private void rawDeleteDataInDBTable(OdkConnectionInterface db, String tableId, String whereClause,
       String[] whereArgs) {
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -1836,7 +1839,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteCheckpointRowsWithId(OdkDatabase db, String appName, String tableId,
+  public void deleteCheckpointRowsWithId(OdkConnectionInterface db, String appName, String tableId,
       String rowId) {
     rawDeleteDataInDBTable(db, tableId, DataTableColumns.ID + "=? AND "
         + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", new String[] { rowId });
@@ -1853,7 +1856,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(OdkDatabase db,
+  public void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(OdkConnectionInterface db,
       String tableId, String rowId) {
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -1891,7 +1894,7 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    */
-  public void updateDataInExistingDBTableWithId(OdkDatabase db, String tableId,
+  public void updateDataInExistingDBTableWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
     if (cvValues.size() <= 0) {
@@ -1919,7 +1922,7 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    */
-  public void insertDataIntoExistingDBTableWithId(OdkDatabase db, String tableId,
+  public void insertDataIntoExistingDBTableWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
     if (cvValues.size() <= 0) {
@@ -1938,7 +1941,7 @@ public class ODKDatabaseImplUtils {
    * 
    * TODO: This is broken w.r.t. updates of partial fields
    */
-  private void upsertDataIntoExistingDBTable(OdkDatabase db, String tableId,
+  private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate) {
     String rowId = null;
     String whereClause = null;
@@ -2140,7 +2143,7 @@ public class ODKDatabaseImplUtils {
    * @param rowETag
    * @param state
    */
-  public void updateRowETagAndSyncState(OdkDatabase db, String tableId, String rowId,
+  public void updateRowETagAndSyncState(OdkConnectionInterface db, String tableId, String rowId,
       String rowETag, SyncState state) {
 
     String whereClause = DataTableColumns.ID + " = ?";

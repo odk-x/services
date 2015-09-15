@@ -32,7 +32,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
     super(appName, APP_VERSION);
   }
 
-  private void commonTableDefn(OdkDatabase db) {
+  private void commonTableDefn(AndroidOdkConnection db) {
     // db.execSQL(SurveyConfigurationColumns.getTableCreateSql(SURVEY_CONFIGURATION_TABLE_NAME));
     db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME));
     db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME));
@@ -51,7 +51,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
    *          The database.
    */
   @Override
-  protected void onCreate(OdkDatabase db) {
+  protected void onCreate(AndroidOdkConnection db) {
     commonTableDefn(db);
   }
 
@@ -75,7 +75,7 @@ class DataModelDatabaseHelper extends ODKSQLiteOpenHelper {
    *          The new database version.
    */
   @Override
-  protected void onUpgrade(OdkDatabase db, int oldVersion, int newVersion) {
+  protected void onUpgrade(AndroidOdkConnection db, int oldVersion, int newVersion) {
     // for now, upgrade and creation use the same codepath...
     commonTableDefn(db);
   }

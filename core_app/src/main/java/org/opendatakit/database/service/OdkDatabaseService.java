@@ -14,13 +14,13 @@
 
 package org.opendatakit.database.service;
 
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.WebLogger;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
+
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 public class OdkDatabaseService extends Service {
 
@@ -32,6 +32,8 @@ public class OdkDatabaseService extends Service {
   public void onCreate() {
     super.onCreate();
     servInterface = new OdkDatabaseServiceInterface(this);
+    AndroidConnectFactory.configure();
+
   }
 
   @Override
@@ -46,7 +48,7 @@ public class OdkDatabaseService extends Service {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
     // release all non-group instances
-    DatabaseFactory.get().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
@@ -57,7 +59,7 @@ public class OdkDatabaseService extends Service {
     Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
     super.onDestroy();
     // release all non-group instances
-    DatabaseFactory.get().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseNonGroupNonInternalInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
   }

@@ -14,11 +14,8 @@
 
 package org.opendatakit.common.android.database;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
+import android.content.Context;
+import android.util.Log;
 
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -28,12 +25,15 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
-import android.content.Context;
-import android.util.Log;
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 
-public class DatabaseFactory {
+public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
 
-  private static DatabaseFactory databaseFactory = new DatabaseFactory();
+  private static OdkConnectionFactorySingleton connectionFactory = new AndroidConnectFactory();
 
   private static final String GROUP_TYPE_DIVIDER = "--";
   public static final String INTERNAL_TYPE_SUFFIX = "-internal";
@@ -43,31 +43,37 @@ public class DatabaseFactory {
     // loads our custom libsqliteX.so
     System.loadLibrary("sqliteX");
 
-    // register a state-reset manipulator for 'databaseFactory' field.
+    OdkConnectionFactorySingleton.set(new AndroidConnectFactory());
+
+    // register a state-reset manipulator for 'connectionFactory' field.
     StaticStateManipulator.get().register(50, new IStaticFieldManipulator() {
 
       @Override
       public void reset() {
-        databaseFactory = new DatabaseFactory();
+        connectionFactory = new AndroidConnectFactory();
       }
 
     });
   }
 
-  public static DatabaseFactory get() {
-    return databaseFactory;
+  public OdkConnectionFactorySingleton get() {
+    return connectionFactory;
+  }
+
+  public static void configure() {
+    // just to get the static initialization block (above) to run
   }
 
   /**
    * For mocking -- supply a mocked object.
    * 
-   * @param databaseFactory
+   * @param factory
    */
-  public static void set(DatabaseFactory factory) {
-    databaseFactory = factory;
+  public static void set(AndroidConnectFactory factory) {
+    connectionFactory = factory;
   }
 
-  protected DatabaseFactory() {
+  protected AndroidConnectFactory() {
   }
 
   // map of appName -TO-
@@ -84,7 +90,7 @@ public class DatabaseFactory {
    * @return
    */
   public OdkDbHandle generateInternalUseDbHandle() {
-    return new OdkDbHandle(ODKDataUtils.genUUID() + DatabaseFactory.INTERNAL_TYPE_SUFFIX);
+    return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
   }
 
   /**
@@ -136,7 +142,7 @@ public class DatabaseFactory {
     dbHelper = dbHelperSet.get(appName);
     if (dbHelper.isInitializing()) {
       throw new IllegalStateException(
-          "getDatabase called recursively during database initialization / upgrade");
+          "getConnection called recursively during database initialization / upgrade");
     }
 
     if (sessionQualifier == null) {
@@ -150,8 +156,8 @@ public class DatabaseFactory {
     return dbHelper;
   }
 
-  public OdkDatabase getDatabase(Context context, String appName, OdkDbHandle dbHandleName) {
-    return getDatabase(context, appName, dbHandleName.getDatabaseHandle());
+  public AndroidOdkConnection getConnection(Context context, String appName, OdkDbHandle dbHandleName) {
+    return getConnection(context, appName, dbHandleName.getDatabaseHandle());
   }
 
   public void releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName) {
@@ -165,7 +171,7 @@ public class DatabaseFactory {
       HashSet<String> sessionQualifiers = new HashSet<String>();
       sessionQualifiers.addAll(dbHelperSet.keySet());
       for (String sessionQualifier : sessionQualifiers) {
-        WebLogger.getLogger(appName).i("DatabaseFactory",
+        WebLogger.getLogger(appName).i("AndroidConnectFactory",
             "releaseAllDatabases: releasing " + sessionQualifier);
         DataModelDatabaseHelper dbHelper = dbHelperSet.get(sessionQualifier);
         dbHelperSet.remove(dbHelper);
@@ -199,10 +205,10 @@ public class DatabaseFactory {
     }
   }
 
-  public OdkDatabase getDatabaseGroupInstance(Context context, String appName,
+  public AndroidOdkConnection getDatabaseGroupInstance(Context context, String appName,
       String sessionGroupQualifier, int instanceQualifier) {
     String sessionQualifier = sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    return getDatabase(context, appName, sessionQualifier);
+    return getConnection(context, appName, sessionQualifier);
   }
 
   public void releaseDatabaseGroupInstance(Context context, String appName,
@@ -252,11 +258,11 @@ public class DatabaseFactory {
     File appLogger = new File(ODKFileUtils.getLoggingFolder(appName));
     for (String sessionQualifier : sessionQualifiers) {
       if ( appLogger.exists() && appLogger.isDirectory() ) {
-        WebLogger.getLogger(appName).i("DatabaseFactory",
+        WebLogger.getLogger(appName).i("AndroidConnectFactory",
             "releaseDatabaseGroupInstances: releasing " + appName + 
             " session " + sessionQualifier);
       } else {
-        Log.i("DatabaseFactory", 
+        Log.i("AndroidConnectFactory",
             "releaseDatabaseGroupInstances: releasing " + 
             appName + " session " + sessionQualifier);
       }
@@ -301,11 +307,11 @@ public class DatabaseFactory {
     File appLogger = new File(ODKFileUtils.getLoggingFolder(appName));
     for (String sessionQualifier : sessionQualifiers) {
       if ( appLogger.exists() && appLogger.isDirectory() ) {
-        WebLogger.getLogger(appName).i("DatabaseFactory",
+        WebLogger.getLogger(appName).i("AndroidConnectFactory",
             "releaseDatabaseNonGroupNonInternalInstances: releasing " + appName + 
             " session " + sessionQualifier);
       } else {
-        Log.i("DatabaseFactory", 
+        Log.i("AndroidConnectFactory",
             "releaseDatabaseNonGroupNonInternalInstances: releasing " + 
             appName + " session " + sessionQualifier);
       }
@@ -364,7 +370,7 @@ public class DatabaseFactory {
       Map<String, DataModelDatabaseHelper> dbHelperSet = dbHelperSetEntry.getValue();
       for (String sessionQualifier : dbHelperSet.keySet()) {
         DataModelDatabaseHelper dbHelper = dbHelperSet.get(sessionQualifier);
-        WebLogger.getLogger(appName).i("DatabaseFactory:dumpInfo", "appName " + appName + 
+        WebLogger.getLogger(appName).i("AndroidConnectFactory:dumpInfo", "appName " + appName +
             " sessionQualifier " + sessionQualifier + 
             " lastAction: " + dbHelper.getLastAction() );
         
@@ -372,8 +378,8 @@ public class DatabaseFactory {
     }
   }
 
-  private OdkDatabase getDatabase(Context context, String appName, String sessionQualifier) {
-    OdkDatabase db = null;
+  private AndroidOdkConnection getConnection(Context context, String appName, String sessionQualifier) {
+    AndroidOdkConnection db = null;
     int count = 1;
     for (; db == null; ++count) {
       try {
@@ -381,12 +387,12 @@ public class DatabaseFactory {
       } catch (SQLiteException e) {
         if (count == 201) {
           // give up after 200 * 20 + 180*50 = 13000 milliseconds...
-          WebLogger.getLogger(appName).e("DatabaseFactory",
+          WebLogger.getLogger(appName).e("AndroidConnectFactory",
               "database exception " + e.toString() + " -- abandoning attempt!");
           throw e;
         } else if (count % 10 != 0) {
           try {
-            WebLogger.getLogger(appName).i("DatabaseFactory",
+            WebLogger.getLogger(appName).i("AndroidConnectFactory",
                 "database exception " + e.toString() + " -- sleeping 50ms");
             Thread.sleep(50L);
           } catch (InterruptedException ex) {
@@ -394,7 +400,7 @@ public class DatabaseFactory {
           }
         } else {
           try {
-            WebLogger.getLogger(appName).w("DatabaseFactory",
+            WebLogger.getLogger(appName).w("AndroidConnectFactory",
                 "database exception " + e.toString() + " -- sleeping 200ms");
             Thread.sleep(200L);
           } catch (InterruptedException ex) {

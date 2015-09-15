@@ -27,7 +27,7 @@ This project depends on the ODK [androidlibrary](https://github.com/opendatakit/
             |-- androidlibrary
 
 
-  * Note that this only applies if you are modifying androidlibrary. If you use the maven dependencies (the default option), the project will not show up in your directory. 
+  * Note that this only applies if you are modifying androidlibrary. If you use the maven dependencies (the default option), the project will not show up in your directory.
 
 Now you should be ready to build.
 
@@ -59,6 +59,6 @@ Quick description of the content in the root folder:
                             |-- core
 
                                 |-- android     -- The most relevant Java code lives here
-                                
+
             |-- androidTest     -- Source tree for Android implementation tests
             |-- test            -- Source tree for Java JUnit tests
