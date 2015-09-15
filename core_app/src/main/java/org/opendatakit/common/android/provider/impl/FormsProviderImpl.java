@@ -17,21 +17,21 @@
 
 package org.opendatakit.common.android.provider.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map.Entry;
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.DataSetObserver;
+import android.database.SQLException;
+import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.androidlibrary.R;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
@@ -42,14 +42,14 @@ import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.DataSetObserver;
-import android.database.SQLException;
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
 
 /**
  * This provider supports two types of path references to identify a given row:
@@ -78,7 +78,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
     @Override
     public void onInvalidated() {
       super.onInvalidated();
-      DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+
+      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -93,6 +94,9 @@ public abstract class FormsProviderImpl extends ContentProvider {
   public boolean onCreate() {
     
     // IMPORTANT NOTE: the Application object is not yet created!
+
+    // Used to ensure that the singleton has been initialized properly
+    AndroidConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -220,11 +224,11 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String selection = FormsColumns.TABLE_ID + "=? AND " + FormsColumns.FORM_ID + "=?";
     String[] selectionArgs = { formSpec.tableId, formSpec.formId };
     Cursor c = null;
-    
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
@@ -286,7 +290,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       if ( db != null ) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
   }
@@ -401,12 +405,12 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, sortOrder, null);
       success = true;
@@ -416,7 +420,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     } finally {
       if ( !success && db != null ) {
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), pf.appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
       }
     }
 
@@ -451,8 +455,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
     HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     Cursor c = null;
     
     Integer idValue = null;
@@ -460,7 +464,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String formIdValue = null;
     try {
       // Get the database and run the query
-      db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
@@ -529,7 +533,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       if ( db != null ) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), pf.appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
       }
     }
 
@@ -603,10 +607,10 @@ public abstract class FormsProviderImpl extends ContentProvider {
         
     HashMap<FormSpec, ContentValues> matchedValues = new HashMap<FormSpec, ContentValues>();
     
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), pf.appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       Cursor c = null;
       try {
@@ -714,7 +718,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       if ( db != null ) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), pf.appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
       }
     }
 

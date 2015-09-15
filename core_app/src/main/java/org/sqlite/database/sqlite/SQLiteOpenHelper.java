@@ -205,7 +205,7 @@ public abstract class SQLiteOpenHelper {
         }
 
         if (mIsInitializing) {
-            throw new IllegalStateException("getDatabase called recursively");
+            throw new IllegalStateException("getConnection called recursively");
         }
 
         SQLiteDatabase db = mDatabase;

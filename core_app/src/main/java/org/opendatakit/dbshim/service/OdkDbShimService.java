@@ -15,23 +15,6 @@
  */
 package org.opendatakit.dbshim.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
-
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
@@ -40,6 +23,23 @@ import android.os.IBinder;
 import android.os.IBinder.DeathRecipient;
 import android.os.RemoteException;
 import android.util.Log;
+
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.core.application.Core;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class OdkDbShimService extends Service {
 
@@ -108,7 +108,6 @@ public class OdkDbShimService extends Service {
    *
    * @param generation
    * @param transactionGeneration
-   * @param actionIdx
    * @param code
    * @param message
    * @throws RemoteException
@@ -173,7 +172,7 @@ public class OdkDbShimService extends Service {
   private void assertGeneration(String appName, String thisGeneration, 
       String contextName, DbShimCallback callback) throws RemoteException {
 
-    boolean releasedSessions = DatabaseFactory.get().releaseDatabaseGroupInstances(
+    boolean releasedSessions = AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstances(
         getApplicationContext(), appName, thisGeneration, true);
     
     if ( releasedSessions ) {
@@ -215,7 +214,7 @@ public class OdkDbShimService extends Service {
 
     assertGeneration(appName, thisGeneration, "runRollback", callback);
 
-    OdkDatabase db = DatabaseFactory.get().getDatabaseGroupInstance(
+    OdkConnectionInterface db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
         getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
     
     if (db != null) {
@@ -224,13 +223,13 @@ public class OdkDbShimService extends Service {
       try {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabaseGroupInstance(
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
             getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
       } catch (Exception e) {
         log.e(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
             + thisTransactionGeneration + " - exception: " + e.toString());
         try {
-          DatabaseFactory.get().releaseDatabaseGroupInstance(
+          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
               getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
         } catch ( Exception ex ) {
           // ignore
@@ -265,7 +264,7 @@ public class OdkDbShimService extends Service {
 
     assertGeneration(appName, thisGeneration, "runCommit", callback);
 
-    OdkDatabase db = DatabaseFactory.get().getDatabaseGroupInstance(
+    OdkConnectionInterface db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
         getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
 
     if (db != null) {
@@ -274,13 +273,13 @@ public class OdkDbShimService extends Service {
         db.setTransactionSuccessful();
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabaseGroupInstance(
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
             getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
       } catch (Exception e) {
         log.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
             + thisTransactionGeneration + " - exception: " + e.toString());
         try {
-          DatabaseFactory.get().releaseDatabaseGroupInstance(
+          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
               getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
         } catch ( Exception ex ) {
           // ignore
@@ -349,9 +348,9 @@ public class OdkDbShimService extends Service {
       return;
     }
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabaseGroupInstance(
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
         getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
 
       if ( !db.inTransaction() ) {
@@ -471,6 +470,8 @@ public class OdkDbShimService extends Service {
 
     // start a new executor...
     worker = Executors.newSingleThreadExecutor();
+
+    AndroidConnectFactory.configure();
   }
 
   @Override
@@ -486,14 +487,14 @@ public class OdkDbShimService extends Service {
   public boolean onUnbind(Intent intent) {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
-    DatabaseFactory.get().releaseAllDatabaseGroupInstances(getApplicationContext());
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseGroupInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
   }
 
   public synchronized void appNameDied(String appName) {
-    DatabaseFactory.get().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
   }
   
   @Override
@@ -511,7 +512,7 @@ public class OdkDbShimService extends Service {
     worker = null;
 
     // and release any transactions we are holding...
-    DatabaseFactory.get().releaseAllDatabaseGroupInstances(getApplicationContext());
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseGroupInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     Log.i(LOGTAG, "onDestroy - done");

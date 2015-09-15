@@ -14,34 +14,34 @@
 
 package org.opendatakit.common.android.database;
 
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.sqlite.database.SQLException;
-import org.sqlite.database.sqlite.SQLiteDatabase;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.util.Log;
 
-public class OdkDatabase {
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.sqlite.database.SQLException;
+import org.sqlite.database.sqlite.SQLiteDatabase;
+
+public class AndroidOdkConnection implements OdkConnectionInterface{
   final SQLiteDatabase db;
   String sessionQualifier;
   String lastAction = "<new>";
   
   
-  public static OdkDatabase openDatabase(String appName, String dbFilePath, String sessionQualifier) {
+  public static AndroidOdkConnection openDatabase(String appName, String dbFilePath, String sessionQualifier) {
     SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFilePath, null, 
         SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING
         | SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY);
     
     if (!db.isWriteAheadLoggingEnabled()) {
-      WebLogger.getLogger(appName).i("OdkDatabase",
+      WebLogger.getLogger(appName).i("AndroidOdkConnection",
           "getWritableDatabase -- writeAheadLogging was disabled!");
       db.enableWriteAheadLogging();
     }
-    return new OdkDatabase(db, sessionQualifier);
+    return new AndroidOdkConnection(db, sessionQualifier);
   }
 
-  private OdkDatabase(SQLiteDatabase db, String sessionQualifier) {
+  private AndroidOdkConnection(SQLiteDatabase db, String sessionQualifier) {
     this.db = db;
     this.sessionQualifier = sessionQualifier;
   }

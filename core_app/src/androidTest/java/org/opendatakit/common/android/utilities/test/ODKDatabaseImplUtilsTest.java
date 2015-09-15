@@ -14,11 +14,11 @@
 
 package org.opendatakit.common.android.utilities.test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.test.AndroidTestCase;
+import android.test.RenamingDelegatingContext;
+import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -28,9 +28,9 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
@@ -38,19 +38,18 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.test.AndroidTestCase;
-import android.test.RenamingDelegatingContext;
-import android.util.Log;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 
 public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
 
-  private static final String TAG = "ODKDatabaseImplUtilsTest";
+  private static final String TAG = "ODKDatabaseImplUtilsTst";
 
   private static final String TEST_FILE_PREFIX = "test_";
 
@@ -63,11 +62,11 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   private static final String listChildElemKeys = "_list_child_element_keys";
 
   private OdkDbHandle uniqueKey;
-  private OdkDatabase db;
+  private OdkConnectionInterface db;
 
   private static class DatabaseInitializer {
 
-    public static void onCreate(OdkDatabase db) {
+    public static void onCreate(OdkConnectionInterface db) {
       String createColCmd = ColumnDefinitionsColumns
           .getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
 
@@ -113,19 +112,21 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
 
     //StaticStateManipulator.get().reset();
 
-    uniqueKey = DatabaseFactory.get().generateInternalUseDbHandle();
+    // Just to initialize this
+    AndroidConnectFactory.configure();
+    uniqueKey = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
 
     RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
         TEST_FILE_PREFIX);
 
-    DatabaseFactory.get().releaseAllDatabases(context);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabases(context);
     FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
     
     ODKFileUtils.verifyExternalStorageAvailability();
 
     ODKFileUtils.assertDirectoryStructure(getAppName());
     
-    db = DatabaseFactory.get().getDatabase(context, getAppName(), uniqueKey);
+    db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(context, getAppName(), uniqueKey);
 
     DatabaseInitializer.onCreate(db);
   }
@@ -149,8 +150,8 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
       
     RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
         TEST_FILE_PREFIX);
-    DatabaseFactory.get().releaseDatabase(context, getAppName(), uniqueKey);
-    DatabaseFactory.get().releaseAllDatabases(context);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(context, getAppName(), uniqueKey);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabases(context);
     FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
   }
   /*

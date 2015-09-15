@@ -14,6 +14,47 @@
 
 package org.opendatakit.submissions.provider;
 
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.ProviderConsts;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
+import org.opendatakit.common.android.logic.PropertyManager;
+import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.utilities.EncryptionUtils;
+import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
+import org.opendatakit.common.android.utilities.FileSet;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.core.application.Core;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,47 +80,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.ProviderConsts;
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
-import org.opendatakit.common.android.logic.CommonToolProperties;
-import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.logic.PropertyManager;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.utilities.EncryptionUtils;
-import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
-import org.opendatakit.common.android.utilities.FileSet;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
-
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.SQLException;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * The WebKit does better if there is a content provider vending files to it.
@@ -245,10 +245,10 @@ public class SubmissionProvider extends ContentProvider {
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
 
       boolean success = false;
       try {
@@ -779,7 +779,7 @@ public class SubmissionProvider extends ContentProvider {
     } finally {
       if (db != null) {
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
     return null;
@@ -789,7 +789,8 @@ public class SubmissionProvider extends ContentProvider {
    * This method actually writes the JSON appName-relative manifest to disk.
    *
    * @param payload
-   * @param path
+   * @param outputFilePath
+   * @param  log
    * @return
    */
   private static boolean exportFile(String payload, File outputFilePath, WebLogger log) {

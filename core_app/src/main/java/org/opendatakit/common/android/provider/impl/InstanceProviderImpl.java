@@ -15,14 +15,13 @@
 
 package org.opendatakit.common.android.provider.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.DataSetObserver;
+import android.database.SQLException;
+import android.net.Uri;
+import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -30,9 +29,9 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
@@ -42,13 +41,14 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.DataSetObserver;
-import android.database.SQLException;
-import android.net.Uri;
-import android.util.Log;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * TODO: convert to true app-scoped instance provider
@@ -75,7 +75,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     @Override
     public void onInvalidated() {
       super.onInvalidated();
-      DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+
+      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -95,6 +96,9 @@ public abstract class InstanceProviderImpl extends ContentProvider {
   public boolean onCreate() {
 
     // IMPORTANT NOTE: the Application object is not yet created!
+
+    // Used to ensure that the singleton has been initialized properly
+    AndroidConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -133,7 +137,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
     
     Cursor c = internalQuery(dbHandleName, null, uri, 
         appName, tableId, instanceId, 
@@ -151,7 +155,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     return c;
   }
   
-  Cursor internalQuery(final OdkDbHandle dbHandleName, OdkDatabase db, 
+  Cursor internalQuery(final OdkDbHandle dbHandleName, OdkConnectionInterface db,
                     Uri uri, 
                     String appName, String tableId, String instanceId,
                     String[] projection, String selection, String[] selectionArgs,
@@ -174,7 +178,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     try {
       if ( dbHandleName != null ) {
-        db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+        db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
         ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
 
@@ -378,7 +382,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
         if ( dbHandleName != null ) {
           db.close();
           // we should release the database.
-          DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
         }
       }
     }
@@ -443,11 +447,11 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
@@ -553,7 +557,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       if (db != null) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
     getContext().getContentResolver().notifyChange(uri, null);
@@ -580,11 +584,11 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = segments.get(2);
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateInternalUseDbHandle();
-    OdkDatabase db = null;
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkConnectionInterface db = null;
     int count = 0;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
@@ -649,7 +653,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       if (db != null) {
         db.endTransaction();
         db.close();
-        DatabaseFactory.get().releaseDatabase(getContext(), appName, dbHandleName);
+        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
       }
     }
     getContext().getContentResolver().notifyChange(uri, null);

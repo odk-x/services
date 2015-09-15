@@ -52,7 +52,7 @@ public abstract class ODKSQLiteOpenHelper {
   /** the version that the application expects */
   private final int mNewVersion;
 
-  private OdkDatabase mDatabase = null;
+  private AndroidOdkConnection mDatabase = null;
   private boolean mIsInitializing = false;
 
   /**
@@ -107,9 +107,9 @@ public abstract class ODKSQLiteOpenHelper {
     mIsInitializing = true;
     WebLogger.getLogger(mAppName).i(TAG, "initializeDatabase -- initializing database");
 
-    OdkDatabase db = null;
+    AndroidOdkConnection db = null;
     try {
-      db = OdkDatabase.openDatabase(mAppName, mDbFilePath, sessionQualifier);
+      db = AndroidOdkConnection.openDatabase(mAppName, mDbFilePath, sessionQualifier);
 
       int version = db.getVersion();
       if (version != mNewVersion) {
@@ -150,7 +150,7 @@ public abstract class ODKSQLiteOpenHelper {
    *           if the database cannot be opened for writing
    * @return a read/write database object valid until {@link #close} is called
    */
-  protected synchronized OdkDatabase getWritableDatabase(String sesionQualifier) {
+  protected synchronized AndroidOdkConnection getWritableDatabase(String sesionQualifier) {
     if (mDatabase != null && mDatabase.isOpen()) {
       mDatabase.acquireReference();
       WebLogger.getLogger(mAppName).i(TAG,
@@ -164,9 +164,9 @@ public abstract class ODKSQLiteOpenHelper {
 
     WebLogger.getLogger(mAppName).i(TAG, "getWritableDatabase -- opening database");
     boolean success = false;
-    OdkDatabase db = null;
+    AndroidOdkConnection db = null;
     try {
-      db = OdkDatabase.openDatabase(mAppName, mDbFilePath, sesionQualifier);
+      db = AndroidOdkConnection.openDatabase(mAppName, mDbFilePath, sesionQualifier);
       success = true;
       return db;
     } finally {
@@ -213,7 +213,7 @@ public abstract class ODKSQLiteOpenHelper {
    * @param db
    *          The database.
    */
-  protected abstract void onCreate(OdkDatabase db);
+  protected abstract void onCreate(AndroidOdkConnection db);
 
   /**
    * Called when the database needs to be upgraded. The implementation should
@@ -234,5 +234,5 @@ public abstract class ODKSQLiteOpenHelper {
    * @param newVersion
    *          The new database version.
    */
-  protected abstract void onUpgrade(OdkDatabase db, int oldVersion, int newVersion);
+  protected abstract void onUpgrade(AndroidOdkConnection db, int oldVersion, int newVersion);
 }

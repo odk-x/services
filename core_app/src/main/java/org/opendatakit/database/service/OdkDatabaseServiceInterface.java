@@ -22,8 +22,9 @@ import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.database.OdkDatabase;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidOdkConnection;
+import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.SyncETagsUtils;
@@ -56,11 +57,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       android.os.Debug.waitForDebugger();
     }
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
-    OdkDbHandle dbHandleName = DatabaseFactory.get().generateDatabaseServiceDbHandle();
+    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateDatabaseServiceDbHandle();
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( db.isOpen() ) {
         if ( beginTransaction ) {
           ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
@@ -82,10 +83,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public void beginTransaction(String appName, OdkDbHandle dbHandleName) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // Used to ensure that the singleton has been initialized properly
+      AndroidConnectFactory.configure();
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -108,10 +111,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public void closeDatabase(String appName, OdkDbHandle dbHandleName) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       db.close();
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -129,16 +132,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         db.close();
       }
     }
-    DatabaseFactory.get().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
   }
 
   @Override
   public void closeTransaction(String appName, OdkDbHandle dbHandleName, boolean successful) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
@@ -165,10 +168,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void closeTransactionAndDatabase(String appName, OdkDbHandle dbHandleName, boolean successful)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
@@ -190,17 +193,17 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         db.close();
       }
     }
-    DatabaseFactory.get().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
   }
 
   @Override
   public void changeDataRowsToNewRowState(String appName, OdkDbHandle dbHandleName, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().changeDataRowsToNewRowState(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -224,10 +227,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public OrderedColumns createOrOpenDBTableWithColumns(String appName, OdkDbHandle dbHandleName, String tableId,
       ColumnList columns) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, appName, tableId, columns.getColumns());
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -251,10 +254,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -277,10 +280,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public void deleteDBTableAndAllData(String appName, OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -304,10 +307,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteDBTableMetadata(String appName, OdkDbHandle dbHandleName, String tableId, String partition,
       String aspect, String key) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -331,10 +334,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteDataInExistingDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -358,10 +361,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteServerConflictRowWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -385,10 +388,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void enforceTypesDBTableMetadata(String appName, OdkDbHandle dbHandleName, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().enforceTypesDBTableMetadata(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -420,10 +423,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public String[] getAllColumnNames(String appName, OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -447,10 +450,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public List<String> getAllTableIds(String appName, OdkDbHandle dbHandleName) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllTableIds(db);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -474,10 +477,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public UserTable getDataInExistingDBTableWithId(String appName, OdkDbHandle dbHandleName,
       String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getDataInExistingDBTableWithId(db, appName, tableId, orderedDefns, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -501,11 +504,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public List<KeyValueStoreEntry> getDBTableMetadata(String appName, OdkDbHandle dbHandleName,
       String tableId, String partition, String aspect, String key) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     ArrayList<KeyValueStoreEntry> kvsEntries = null;
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       kvsEntries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -532,9 +535,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         "getTableHealthStatuses -- searching for conflicts and checkpoints ");
 
     ArrayList<TableHealthInfo> problems = new ArrayList<TableHealthInfo>();
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
 
       for (String tableId : tableIds) {
@@ -579,10 +582,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public String getSyncState(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, appName, tableId, rowId);
       return state.name();
     } catch (Exception e) {
@@ -604,10 +607,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public TableDefinitionEntry getTableDefinitionEntry(String appName, OdkDbHandle dbHandleName, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getTableDefinitionEntry(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -628,10 +631,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public OrderedColumns getUserDefinedColumns(String appName, OdkDbHandle dbHandleName, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -651,10 +654,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public boolean hasTableId(String appName, OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().hasTableId(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -675,10 +678,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void insertDataIntoExistingDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -699,10 +702,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void placeRowIntoConflict(String appName, OdkDbHandle dbHandleName, String tableId, String rowId, int conflictType)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().placeRowIntoConflict(db, tableId, rowId, conflictType);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -725,10 +728,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       String[] groupBy, String having, String orderByElementKey, String orderByDirection)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId,
           columnDefns, whereClause, selectionArgs,
           groupBy, having, orderByElementKey, orderByDirection);
@@ -751,10 +754,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void replaceDBTableMetadata(String appName, OdkDbHandle dbHandleName, KeyValueStoreEntry entry)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, entry);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -775,10 +778,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void replaceDBTableMetadataList(String appName, OdkDbHandle dbHandleName, String tableId,
       List<KeyValueStoreEntry> entries, boolean clear) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, entries, clear);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -799,10 +802,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void restoreRowFromConflict(String appName, OdkDbHandle dbHandleName, String tableId, String rowId,
       String syncState, int conflictType) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId,
           SyncState.valueOf(syncState), conflictType);
     } catch (Exception e) {
@@ -824,10 +827,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(String appName, OdkDbHandle dbHandleName,
       String tableId, String rowId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -849,10 +852,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       String lastDataETag)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableETags(db, tableId, schemaETag, lastDataETag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -873,10 +876,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void updateDBTableLastSyncTime(String appName, OdkDbHandle dbHandleName, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableLastSyncTime(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -897,10 +900,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void updateDataInExistingDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -921,10 +924,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void updateRowETagAndSyncState(String appName, OdkDbHandle dbHandleName, String tableId, String rowId,
       String rowETag, String syncState) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId, rowETag, SyncState.valueOf(syncState));
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -944,11 +947,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   @Override
   public void deleteAllSyncETagsForTableId(String appName, OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsForTableId(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -969,11 +972,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteAllSyncETagsExceptForServer(String appName, OdkDbHandle dbHandleName, String verifiedUri)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsExceptForServer(db, verifiedUri);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -994,11 +997,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void deleteAllSyncETagsUnderServer(String appName, OdkDbHandle dbHandleName, String verifiedUri)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsUnderServer(db, verifiedUri);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1019,11 +1022,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public String getFileSyncETag(String appName, OdkDbHandle dbHandleName, String verifiedUri, String tableId, long modificationTimestamp)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return seu.getFileSyncETag(db, verifiedUri, tableId, modificationTimestamp);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1044,11 +1047,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public String getManifestSyncETag(String appName, OdkDbHandle dbHandleName, String verifiedUri, String tableId)
       throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return seu.getManifestSyncETag(db, verifiedUri, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1069,11 +1072,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void updateFileSyncETag(String appName, OdkDbHandle dbHandleName, String verifiedUri, String tableId,
       long modificationTimestamp, String eTag) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.updateFileSyncETag(db, verifiedUri, tableId, modificationTimestamp, eTag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1094,11 +1097,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void updateManifestSyncETag(String appName, OdkDbHandle dbHandleName, String verifiedUri, String tableId,
       String eTag) throws RemoteException {
 
-    OdkDatabase db = null;
+    OdkConnectionInterface db = null;
 
     try {
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = DatabaseFactory.get().getDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.updateManifestSyncETag(db, verifiedUri, tableId, eTag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
