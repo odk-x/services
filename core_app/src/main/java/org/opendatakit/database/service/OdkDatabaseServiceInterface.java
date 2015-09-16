@@ -14,8 +14,8 @@
 
 package org.opendatakit.database.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.content.ContentValues;
+import android.os.RemoteException;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColumnList;
@@ -23,7 +23,6 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
-import org.opendatakit.common.android.database.AndroidOdkConnection;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -31,8 +30,8 @@ import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
 
-import android.content.ContentValues;
-import android.os.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   
@@ -44,7 +43,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   private final OdkDatabaseService odkDatabaseService;
 
   /**
-   * @param odkDbShimService
+   * @param odkDatabaseService
    */
   OdkDatabaseServiceInterface(OdkDatabaseService odkDatabaseService) {
     this.odkDatabaseService = odkDatabaseService;

@@ -16,15 +16,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 
 /**
  * Created by wrb on 9/14/2015.
  */
 public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerService> {
 
-    private static final String helloWorldHtmlTxt = "<HTML><BODY>Hello World!!!</BODY></HTML>";
+    private static final String HELLO_WORLD_HTML_TXT = "<HTML><BODY>Hello World!!!</BODY></HTML>";
     private static final String TEST_FILE_NAME = "Hello.html";
     private static final String TEST_DIR = "testfiles";
     private static final String SD_ODK = "/storage/sdcard/opendatakit/";
@@ -97,7 +97,7 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
                 directoryLocation.mkdirs();
             }
             writer = new PrintWriter(fileName, "UTF-8");
-            writer.println(helloWorldHtmlTxt);
+            writer.println(HELLO_WORLD_HTML_TXT);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,18 +111,34 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
             e.printStackTrace();
             fail("Problem with service restart");
         }
+
+        HttpURLConnection connection = null;
         try {
             String urlStr = "http://localhost:8635/" + directory + "/" + TEST_FILE_NAME;
-            URLConnection connection = new URL(urlStr).openConnection();
+            URL url = new URL(urlStr);
+            connection = (HttpURLConnection) url.openConnection();
+            if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                fail("Response code was NOT HTTP_OK");
+            }
             BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String responseStr = "";
-            while (br.ready()) {
-                responseStr = responseStr + br.readLine();
+            String segment = br.readLine();
+            while (segment != null) {
+                responseStr = responseStr + segment;
+                segment = br.readLine();
             }
-            assertTrue(helloWorldHtmlTxt.equals(responseStr));
+            br.close();
+            assertTrue("RECEIVED:" + responseStr, HELLO_WORLD_HTML_TXT.equals(responseStr));
         } catch(IOException e) {
             e.printStackTrace();
-            fail("GOT an IOException when trying to use the web server");
+            fail("GOT an IOException when trying to use the web server:" + e.getMessage());
+        } catch(Exception e) {
+            e.printStackTrace();
+            fail("Got an Exception when trying to use the web server:" + e.getMessage());
+        } finally {
+            if(connection != null){
+                connection.disconnect();
+            }
         }
     }
 
