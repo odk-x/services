@@ -17,10 +17,8 @@ package org.opendatakit.common.android.utilities.test;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.test.AndroidTestCase;
-import android.test.RenamingDelegatingContext;
-import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
+import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
@@ -31,16 +29,12 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,8 +43,9 @@ import java.util.UUID;
 
 public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
 
-  private static final String TAG = "ODKDatabaseImplUtilsTst";
+  private static final String TAG = "ODKDatabaseImplUtilsTest";
 
+  private static final String APPNAME = TestConsts.APPNAME;
   private static final String TEST_FILE_PREFIX = "test_";
 
   private static final String DATABASE_NAME = "test.db";
@@ -61,45 +56,8 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   private static final String elemName = "_element_name";
   private static final String listChildElemKeys = "_list_child_element_keys";
 
-  private OdkDbHandle uniqueKey;
+  private static final OdkDbHandle uniqueKey = new OdkDbHandle(ODKDatabaseImplUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
   private OdkConnectionInterface db;
-
-  private static class DatabaseInitializer {
-
-    public static void onCreate(OdkConnectionInterface db) {
-      String createColCmd = ColumnDefinitionsColumns
-          .getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
-
-      try {
-        db.execSQL(createColCmd);
-      } catch (Exception e) {
-        Log.e("test", "Error while creating table "
-            + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
-        e.printStackTrace();
-      }
-
-      String createTableDefCmd = TableDefinitionsColumns
-          .getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
-
-      try {
-        db.execSQL(createTableDefCmd);
-      } catch (Exception e) {
-        Log.e("test", "Error while creating table " + DatabaseConstants.TABLE_DEFS_TABLE_NAME);
-        e.printStackTrace();
-      }
-
-      String createKVSCmd = KeyValueStoreColumns
-          .getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-
-      try {
-        db.execSQL(createKVSCmd);
-      } catch (Exception e) {
-        Log.e("test", "Error while creating table "
-            + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-        e.printStackTrace();
-      }
-    }
-  }
 
   /*
    * Set up the database for the tests(non-Javadoc)
@@ -109,26 +67,9 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   @Override
   protected synchronized void setUp() throws Exception {
     super.setUp();
-
-    //StaticStateManipulator.get().reset();
-
-    // Just to initialize this
-    AndroidConnectFactory.configure();
-    uniqueKey = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
-
-    RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
-        TEST_FILE_PREFIX);
-
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabases(context);
-    FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
-    
     ODKFileUtils.verifyExternalStorageAvailability();
-
-    ODKFileUtils.assertDirectoryStructure(getAppName());
-    
-    db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(context, getAppName(), uniqueKey);
-
-    DatabaseInitializer.onCreate(db);
+    ODKFileUtils.assertDirectoryStructure(APPNAME);
+    db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), getAppName(), uniqueKey);
     verifyNoTablesExist();
   }
 
