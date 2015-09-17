@@ -61,6 +61,6 @@ public interface OdkConnectionInterface {
     public Cursor queryDistinct(String table, String[] columns, String selection,
                                    String[] selectionArgs, String groupBy, String having, String orderBy, String limit);
 
-    // Needed for Desktop implementation but not Android implementation
-    //public void releaseConnection();
+    // Added after taking out DataModelDatabaseHelper
+    public void releaseConnection();
 }

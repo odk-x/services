@@ -7,7 +7,6 @@ public abstract class OdkConnectionFactorySingleton implements OdkConnectionFact
 
     private static OdkConnectionFactorySingleton connectionFactorySingleton = null;
 
-    // CAL: This should probably be renamed once I get things working
     public static OdkConnectionFactorySingleton getOdkConnectionFactorySingleton() {
         if (connectionFactorySingleton == null) {
             throw new IllegalStateException("OdkConenctionFactorySingleton not yet initialized!  If this happens then configure must be called");

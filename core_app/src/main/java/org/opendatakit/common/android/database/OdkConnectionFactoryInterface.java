@@ -26,18 +26,12 @@ public interface OdkConnectionFactoryInterface {
      */
     public OdkDbHandle generateDatabaseServiceDbHandle();
 
-    // CAL: These will have to be changed once the database gets renamed to OdkConnectionInterface
-    // probably - I don't think that we will want any references to database at all
-    // once I am done
     public OdkConnectionInterface getConnection(Context context, String appName, OdkDbHandle dbHandleName);
 
     public void releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName);
 
     public void releaseAllDatabases(Context context);
 
-    // CAL: These will have to be changed once the database gets renamed to OdkConnectionInterface
-    // probably - I don't think that we will want any references to database at all
-    // once I am done
     public OdkConnectionInterface getDatabaseGroupInstance(Context context, String appName,
                                                            String sessionGroupQualifier, int instanceQualifier);
 

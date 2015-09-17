@@ -21,6 +21,7 @@ import android.util.Log;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteException;
 
 public class AndroidOdkConnection implements OdkConnectionInterface{
   final SQLiteDatabase db;
@@ -167,6 +168,18 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     log();
     return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy,
         limit);
+  }
+
+  public synchronized void releaseConnection() {
+    while (this.db != null && this.db.isOpen()) {
+      try {
+        if (this.db.inTransaction()) {
+          this.db.endTransaction();
+        }
+        this.db.close();
+      } catch (SQLiteException e) {
+      }
+    }
   }
 
 }
