@@ -70,7 +70,7 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(APPNAME);
     db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), getAppName(), uniqueKey);
-    verifyNoTablesExist();
+    verifyNoTablesExistNCleanAllTables();
   }
 
   protected String getAppName() {
@@ -84,21 +84,32 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
    */
   @Override
   protected void tearDown() throws Exception {
-    verifyNoTablesExist();
+    verifyNoTablesExistNCleanAllTables();
 
     if (db != null) {
       db.close();
     }
 
     super.tearDown();
-
-//    RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
-//    DatabaseFactory.get().releaseDatabase(context, getAppName(), uniqueKey);
-//    DatabaseFactory.get().releaseAllDatabases(context);
-  //  FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
-
-
   }
+
+
+  private void verifyNoTablesExistNCleanAllTables() {
+    /* NOTE: if there is a problem it might be the fault of the previous test if the assertion
+       failure is happening in the setUp function as opposed to the tearDown function */
+
+    List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+
+    boolean tablesGone = (tableIds.size() == 0);
+
+    // Drop any leftover table now that the test is done
+    for(String id : tableIds) {
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+    }
+
+    assertTrue(tablesGone);
+  }
+
   /*
    * Check that the database is setup
    */
