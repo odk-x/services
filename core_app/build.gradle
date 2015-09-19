@@ -63,6 +63,8 @@ dependencies {
         debugCompile(group: groupId, name: libraryArtifactName, version: librarySnapshot, ext: 'aar')
     }
 
+    compile 'joda-time:joda-time:2.2'
+
     // Testing-only dependencies
     androidTestCompile 'com.android.support.test:runner:0.3'
     androidTestCompile 'com.android.support.test:rules:0.3'
