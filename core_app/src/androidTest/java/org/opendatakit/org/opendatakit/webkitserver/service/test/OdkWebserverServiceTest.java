@@ -27,7 +27,7 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
     private static final String HELLO_WORLD_HTML_TXT = "<HTML><BODY>Hello World!!!</BODY></HTML>";
     private static final String TEST_FILE_NAME = "Hello.html";
     private static final String TEST_DIR = "testfiles";
-    private static final String SD_ODK = "/storage/sdcard/opendatakit/";
+    private static final String SD_ODK = "/sdcard/opendatakit/";
 
     public OdkWebserverServiceTest() {
         super(OdkWebkitServerService.class);
