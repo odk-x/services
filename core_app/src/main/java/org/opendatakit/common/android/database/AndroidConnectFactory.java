@@ -32,13 +32,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
+public final class AndroidConnectFactory extends OdkConnectionFactorySingleton{
 
   private static OdkConnectionFactorySingleton connectionFactory = new AndroidConnectFactory();
 
   private static final String GROUP_TYPE_DIVIDER = "--";
   public static final String INTERNAL_TYPE_SUFFIX = "-internal";
-
+  
   /** the version that the application expects */
   private final int mNewVersion = 1;
 
@@ -79,7 +79,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
     connectionFactory = factory;
   }
 
-  protected AndroidConnectFactory() {
+  private AndroidConnectFactory() {
   }
 
   // map of appName -TO-
@@ -88,7 +88,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
   // The dbHandleTag enables different sections of code to isolate themselves
   // from
   // the transactions that are in-progress in other sections of code.
-  private final Map<String, Map<String, OdkConnectionInterface>> dbHelpers = new HashMap<String, Map<String, OdkConnectionInterface>>();
+  private final Map<String, Map<String, OdkConnectionInterface>> appConnectionsMap = new HashMap<String, Map<String, OdkConnectionInterface>>();
 
   /**
    * This handle is suitable for non-service uses.
@@ -113,11 +113,15 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
    *
    * @param appName
    * @param sessionQualifier
-   * @return an entry in dbHelpers
+   * @return an entry in appConnectionsMap
    */
-  private synchronized OdkConnectionInterface getDbHelper(Context context, String appName,
-      String sessionQualifier) {
+  private synchronized OdkConnectionInterface getDbConnection(Context context, String appName,
+                                                              String sessionQualifier) {
     WebLogger log = null;
+
+    if (sessionQualifier == null) {
+      sessionQualifier = appName;
+    }
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -126,40 +130,30 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
     } catch (Exception e) {
       if (log != null) {
         log.e("AndroidConnectFactory",
-            "External storage not available -- purging dbHelpers");
+                "External storage not available -- purging appConnectionsMap");
       }
       releaseAllDatabases(context);
       return null;
     }
 
-    if (sessionQualifier == null) {
-      sessionQualifier = appName;
-    }
-
     OdkConnectionInterface dbConnection = null;
-    Map<String, OdkConnectionInterface> dbHelperSet = dbHelpers.get(appName);
-    if (dbHelperSet == null) {
-      dbHelperSet = new HashMap<String, OdkConnectionInterface>();
-      dbHelpers.put(appName, dbHelperSet);
+    Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
+    if (dbConnectionMap == null) {
+      dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
+      appConnectionsMap.put(appName, dbConnectionMap);
 
-      // If initialization takes a while, we may have a problem ...
       initializeDatabase(sessionQualifier, appName);
     }
 
-    // verify that the base database handle is not initializing
-    dbConnection = dbHelperSet.get(sessionQualifier);
+    dbConnection = dbConnectionMap.get(sessionQualifier);
     if (dbConnection != null && dbConnection.isOpen()) {
       dbConnection.acquireReference();
-      WebLogger.getLogger(appName).i("AndroidContentFactory",
-              "getDbHelper -- obtaining reference to already-open database");
+      WebLogger.getLogger(appName).i("AndroidConnect",
+              "getWritableDatabase -- obtaining reference to already-open database");
       return dbConnection; // The database is already open for business
     }
 
-    if (mIsInitializing) {
-      throw new IllegalStateException("getDbHelper called recursively");
-    }
-
-    WebLogger.getLogger(appName).i("AndroidContentFactory", "getDbHelper -- opening database");
+    WebLogger.getLogger(appName).i("AndroidConnect", "getWritableDatabase -- opening database");
     boolean success = false;
     AndroidOdkConnection db = null;
     try {
@@ -174,7 +168,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
           }
         }
         dbConnection = db;
-        dbConnection = dbHelperSet.put(sessionQualifier, dbConnection);
+        dbConnectionMap.put(sessionQualifier, dbConnection);
       } else {
         if (db != null)
           db.close();
@@ -184,12 +178,8 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
     return dbConnection;
   }
 
-  protected synchronized void initializeDatabase(String sessionQualifier, String appName) {
-    // Unnecessary until proven otherwise
-    //if (mDatabase != null) {
-    //  throw new IllegalStateException("initializeDatabase called multiple times!");
-    //}
 
+  protected synchronized void initializeDatabase(String sessionQualifier, String appName) {
     mIsInitializing = true;
     WebLogger.getLogger(appName).i("AndroidContentFactory", "initializeDatabase -- initializing database");
 
@@ -229,7 +219,6 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
     } else {
       return getConnectionImpl(context, appName, null);
     }
-
   }
 
   public void releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName) {
@@ -237,7 +226,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
   }
 
   public synchronized void releaseAllDatabases(Context context) {
-    for (Entry<String, Map<String, OdkConnectionInterface>> e : dbHelpers.entrySet()) {
+    for (Entry<String, Map<String, OdkConnectionInterface>> e : appConnectionsMap.entrySet()) {
       String appName = e.getKey();
       Map<String, OdkConnectionInterface> dbHelperSet = e.getValue();
       HashSet<String> sessionQualifiers = new HashSet<String>();
@@ -257,7 +246,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
   }
 
   private void releaseDatabase(Context context, String appName, String sessionQualifier) {
-    Map<String, OdkConnectionInterface> dbHelperSet = dbHelpers.get(appName);
+    Map<String, OdkConnectionInterface> dbHelperSet = appConnectionsMap.get(appName);
     if ( dbHelperSet == null ) {
       // no record of the appName
       return;
@@ -305,7 +294,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
    */
   public boolean releaseDatabaseGroupInstances(Context context, String appName,
       String sessionGroupQualifier, boolean releaseNonMatchingGroupsOnly) {
-    Map<String, OdkConnectionInterface> dbHelperSet = dbHelpers.get(appName);
+    Map<String, OdkConnectionInterface> dbHelperSet = appConnectionsMap.get(appName);
     if ( dbHelperSet == null ) {
       // no record of the appName
       return false;
@@ -363,7 +352,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
    * @return
    */
   private boolean releaseDatabaseNonGroupNonInternalInstances(Context context, String appName) {
-    Map<String, OdkConnectionInterface> dbHelperSet = dbHelpers.get(appName);
+    Map<String, OdkConnectionInterface> dbHelperSet = appConnectionsMap.get(appName);
     if ( dbHelperSet == null ) {
       // no record of the appName
       return false;
@@ -400,7 +389,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
 
   public boolean releaseAllDatabaseGroupInstances(Context context) {
     HashSet<String> appNames = new HashSet<String>();
-    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : dbHelpers.entrySet() ) {
+    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : appConnectionsMap.entrySet() ) {
       String appName = dbHelperSetEntry.getKey();
       Map<String, OdkConnectionInterface> dbHelperSet = dbHelperSetEntry.getValue();
       for (String sessionQualifier : dbHelperSet.keySet()) {
@@ -419,7 +408,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
 
   public boolean releaseAllDatabaseNonGroupNonInternalInstances(Context context) {
     HashSet<String> appNames = new HashSet<String>();
-    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : dbHelpers.entrySet() ) {
+    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : appConnectionsMap.entrySet() ) {
       String appName = dbHelperSetEntry.getKey();
       Map<String, OdkConnectionInterface> dbHelperSet = dbHelperSetEntry.getValue();
       for (String sessionQualifier : dbHelperSet.keySet()) {
@@ -437,7 +426,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
   }
 
   public void dumpInfo() {
-    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : dbHelpers.entrySet() ) {
+    for ( Entry<String, Map<String, OdkConnectionInterface>> dbHelperSetEntry : appConnectionsMap.entrySet() ) {
       String appName = dbHelperSetEntry.getKey();
       Map<String, OdkConnectionInterface> dbHelperSet = dbHelperSetEntry.getValue();
       for (String sessionQualifier : dbHelperSet.keySet()) {
@@ -455,7 +444,7 @@ public class AndroidConnectFactory extends OdkConnectionFactorySingleton{
     int count = 1;
     for (; db == null; ++count) {
       try {
-        db = getDbHelper(context, appName, sessionQualifier);
+        db = getDbConnection(context, appName, sessionQualifier);
       } catch (SQLiteException e) {
         if (count == 201) {
           // give up after 200 * 20 + 180*50 = 13000 milliseconds...

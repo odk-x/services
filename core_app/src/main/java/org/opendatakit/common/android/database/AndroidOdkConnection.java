@@ -178,6 +178,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
         }
         this.db.close();
       } catch (SQLiteException e) {
+        e.printStackTrace();
       }
     }
   }
