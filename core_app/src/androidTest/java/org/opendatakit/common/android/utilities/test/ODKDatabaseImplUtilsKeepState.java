@@ -1,0 +1,50 @@
+package org.opendatakit.common.android.utilities.test;
+
+import org.opendatakit.TestConsts;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.database.service.OdkDbHandle;
+
+/**
+ * Created by wrb on 9/21/2015.
+ */
+public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest {
+
+    private static final String APPNAME = TestConsts.APPNAME;
+    private static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+
+    @Override
+    protected String getAppName() {
+        return APPNAME;
+    }
+    /*
+ * Set up the database for the tests(non-Javadoc)
+ *
+ * @see android.test.AndroidTestCase#setUp()
+ */
+    @Override
+    protected synchronized void setUp() throws Exception {
+        super.setUp();
+        ODKFileUtils.verifyExternalStorageAvailability();
+        ODKFileUtils.assertDirectoryStructure(APPNAME);
+        db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), getAppName(), uniqueKey);
+        verifyNoTablesExistNCleanAllTables();
+    }
+
+
+    /*
+ * Destroy all test data once tests are done(non-Javadoc)
+ *
+ * @see android.test.AndroidTestCase#tearDown()
+ */
+    @Override
+    protected void tearDown() throws Exception {
+        verifyNoTablesExistNCleanAllTables();
+
+        if (db != null) {
+            db.close();
+        }
+
+        super.tearDown();
+    }
+}

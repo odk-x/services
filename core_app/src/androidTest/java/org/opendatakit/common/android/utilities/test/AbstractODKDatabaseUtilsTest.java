@@ -18,7 +18,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.test.AndroidTestCase;
 
-import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
@@ -26,14 +25,11 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.OdkDbHandle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,14 +37,9 @@ import java.util.List;
 import java.util.UUID;
 
 
-public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
+public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
-  private static final String TAG = "ODKDatabaseImplUtilsTest";
-
-  private static final String APPNAME = TestConsts.APPNAME;
-  private static final String TEST_FILE_PREFIX = "test_";
-
-  private static final String DATABASE_NAME = "test.db";
+  private static final String TAG = "AbstractODKDatabaseUtilsTest";
 
   private static final String testTable = "testTable";
 
@@ -56,45 +47,13 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
   private static final String elemName = "_element_name";
   private static final String listChildElemKeys = "_list_child_element_keys";
 
-  private static final OdkDbHandle uniqueKey = new OdkDbHandle(ODKDatabaseImplUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
-  private OdkConnectionInterface db;
+  protected OdkConnectionInterface db;
 
-  /*
-   * Set up the database for the tests(non-Javadoc)
-   * 
-   * @see android.test.AndroidTestCase#setUp()
-   */
-  @Override
-  protected synchronized void setUp() throws Exception {
-    super.setUp();
-    ODKFileUtils.verifyExternalStorageAvailability();
-    ODKFileUtils.assertDirectoryStructure(APPNAME);
-    db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), getAppName(), uniqueKey);
-    verifyNoTablesExistNCleanAllTables();
-  }
+  //protected abstract OdkDbHandle getUniqueKey();
 
-  protected String getAppName() {
-    return "test-" + uniqueKey.getDatabaseHandle().substring(6);
-  }
-  
-  /*
-   * Destroy all test data once tests are done(non-Javadoc)
-   * 
-   * @see android.test.AndroidTestCase#tearDown()
-   */
-  @Override
-  protected void tearDown() throws Exception {
-    verifyNoTablesExistNCleanAllTables();
+  protected abstract String getAppName();
 
-    if (db != null) {
-      db.close();
-    }
-
-    super.tearDown();
-  }
-
-
-  private void verifyNoTablesExistNCleanAllTables() {
+  protected void verifyNoTablesExistNCleanAllTables() {
     /* NOTE: if there is a problem it might be the fault of the previous test if the assertion
        failure is happening in the setUp function as opposed to the tearDown function */
 
@@ -110,6 +69,10 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertTrue(tablesGone);
   }
 
+  protected void verifyNoTablesExist() {
+    List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+    assertTrue(tableIds.size() == 0);
+  }
   /*
    * Check that the database is setup
    */
@@ -117,10 +80,6 @@ public class ODKDatabaseImplUtilsTest extends AndroidTestCase {
     assertNotNull(db);
   }
 
-  private void verifyNoTablesExist() {
-    List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
-    assertTrue(tableIds.size() == 0);
-  }
 
   /*
  * Test creation of user defined database table when table doesn't exist
