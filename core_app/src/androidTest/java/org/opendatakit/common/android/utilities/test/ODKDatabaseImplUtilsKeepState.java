@@ -7,6 +7,11 @@ import org.opendatakit.database.service.OdkDbHandle;
 
 /**
  * Created by wrb on 9/21/2015.
+ *
+ * Put the actual unit tests in the Abstract class as there are two setups.
+ *
+ * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
+ * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
  */
 public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest {
 

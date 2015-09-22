@@ -36,7 +36,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-
+/**
+ * Created by wrb on 9/21/2015.
+ *
+ * Put the actual unit tests in this Abstract class as there are two setups for running these tests
+ *
+ * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
+ * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
+ */
 public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
   private static final String TAG = "AbstractODKDatabaseUtilsTest";
@@ -48,8 +55,6 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   private static final String listChildElemKeys = "_list_child_element_keys";
 
   protected OdkConnectionInterface db;
-
-  //protected abstract OdkDbHandle getUniqueKey();
 
   protected abstract String getAppName();
 
