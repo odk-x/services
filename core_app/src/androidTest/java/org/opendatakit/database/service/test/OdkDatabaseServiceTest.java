@@ -168,6 +168,37 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         }
     }
 
+    public void testDbCreateNDeleteTableWTransactions() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+            ColumnList columnList = new ColumnList(createColumnList());
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            // TODO: why do we have a dbHandle and APPNAME?
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, columnList);
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
+            // verify single table exists
+            assertTrue(tableIds.size() == 1);
+            assertTrue(tableIds.contains(DB_TABLE_ID));
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
     public void testDbInsertSingleRowIntoTable() {
         OdkDbInterface serviceInterface = bindToDbService();
         try {
@@ -182,6 +213,83 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId =  UUID.randomUUID();
 
             serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+
+            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            Row row = table.getRowAtIndex(0);
+
+            verifyRowTestSet1(row);
+
+            // clean up
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+
+    public void testDbInsertSingleRowIntoTableWSingleTransaction() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId =  UUID.randomUUID();
+
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            Row row = table.getRowAtIndex(0);
+
+            verifyRowTestSet1(row);
+
+            // clean up
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    public void testDbInsertSingleRowIntoTableWTwoTransactions() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId =  UUID.randomUUID();
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -222,6 +330,88 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
                     assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(2, table.getNumberOfRows());
+
+            verifyRowTestSet1(table.getRowAtIndex(0));
+            verifyRowTestSet2(table.getRowAtIndex(1));
+
+            // clean up
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    public void testDbInsertTwoRowsIntoTableWSingleTransaction() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId1 = UUID.randomUUID();
+            UUID rowId2 = UUID.randomUUID();
+
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId1.toString());
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId2.toString());
+
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(2, table.getNumberOfRows());
+
+            verifyRowTestSet1(table.getRowAtIndex(0));
+            verifyRowTestSet2(table.getRowAtIndex(1));
+
+            // clean up
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    public void testDbInsertTwoRowsIntoTableWTwoTransactions() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId1 = UUID.randomUUID();
+            UUID rowId2 = UUID.randomUUID();
+
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId1.toString());
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId2.toString());
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
+            assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(2, table.getNumberOfRows());
 
             verifyRowTestSet1(table.getRowAtIndex(0));
@@ -339,6 +529,55 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             // clean up
             serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    public void testDbUpdateAllValuesWTransactions() {
+        OdkDbInterface serviceInterface = bindToDbService();
+        try {
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId =  UUID.randomUUID();
+
+            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null,null, null,null,null);
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+
+            verifyRowTestSet1(table.getRowAtIndex(0));
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.updateDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId.toString());
+
+            table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+
+            verifyRowTestSet2(table.getRowAtIndex(0));
+            serviceInterface.closeTransaction(APPNAME, db, true);
+
+            // clean up
+            serviceInterface.beginTransaction(APPNAME, db);
+            serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+            serviceInterface.closeTransaction(APPNAME, db, true);
 
             // verify no tables left
             assertTrue(hasNoTablesInDb(serviceInterface, db));
