@@ -650,7 +650,7 @@ public class ODKFileUtils {
   
   public static String getInstancesFolder(String appName, String tableId) {
     String path;
-    path = getDataFolder(appName) + File.separator + TABLES_FOLDER_NAME +
+    path = getTableDataFolder(appName) + File.separator +
         tableId + File.separator + INSTANCES_FOLDER_NAME;
 
     File f = new File(path);
