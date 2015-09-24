@@ -277,6 +277,33 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override
+  public void deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
+          throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if ( msg == null ) msg = e.getMessage();
+      if ( msg == null ) msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("deleteCheckpointRowsWithId", msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if ( db != null && db.isOpen() ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.close();
+      }
+    }
+  }
+
+  @Override
   public void deleteDBTableAndAllData(String appName, OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -673,6 +700,34 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
+
+  @Override
+  public void insertCheckpointRowIntoExistingDBTableWithId(String appName, OdkDbHandle dbHandleName,
+      String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if ( msg == null ) msg = e.getMessage();
+      if ( msg == null ) msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("deleteCheckpointRowsWithId", msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if ( db != null && db.isOpen() ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.close();
+      }
+    }
+  }
+
   @Override
   public void insertDataIntoExistingDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) throws RemoteException {
@@ -837,6 +892,30 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
       WebLogger.getLogger(appName).e("saveAsIncompleteMostRecentCheckpointDataInDBTableWithId", msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if ( db != null && db.isOpen() ) {
+        db.close();
+      }
+    }
+  }
+
+  @Override
+  public void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(String appName, OdkDbHandle dbHandleName,
+                                                                      String tableId, String rowId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      ODKDatabaseImplUtils.get().saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if ( msg == null ) msg = e.getMessage();
+      if ( msg == null ) msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("saveAsCompleteMostRecentCheckpointDataInDBTableWithId", msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
