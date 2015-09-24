@@ -178,8 +178,7 @@ public class SimpleWebServer extends NanoHTTPD {
 
         {
             if ( uri.startsWith("/") ) {
-              int nextSlash = uri.indexOf("/", 1);
-              String appName = uri.substring(1,nextSlash);
+              int nextSlash = uri.indexOf('/', 1);
 
               StringBuilder b = new StringBuilder();
               b.append(session.getMethod()).append(" '").append(uri).append("' \n");
@@ -194,6 +193,13 @@ public class SimpleWebServer extends NanoHTTPD {
                   String value = e.next();
                   b.append("  PRM: '").append(value).append("' = '").append(header.get(value)).append("'\n");
               }
+
+              if ( nextSlash == -1 ) {
+                // favicon.ico
+                WebLogger.getLogger("survey").w(t,b.toString());
+                return getInternalErrorResponse("invalid uri -- " + uri);
+              }
+              String appName = uri.substring(1,nextSlash);
               WebLogger.getLogger(appName).i(t,b.toString());
             }
         }
