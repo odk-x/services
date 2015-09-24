@@ -197,7 +197,7 @@ public class SimpleWebServer extends NanoHTTPD {
               if ( nextSlash == -1 ) {
                 // favicon.ico
                 WebLogger.getLogger("survey").w(t,b.toString());
-                return getInternalErrorResponse("invalid uri -- " + uri);
+                return getNotFoundResponse();
               }
               String appName = uri.substring(1,nextSlash);
               WebLogger.getLogger(appName).i(t,b.toString());
