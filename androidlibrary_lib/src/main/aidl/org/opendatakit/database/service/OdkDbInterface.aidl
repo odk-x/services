@@ -124,6 +124,20 @@ interface OdkDbInterface {
    */
   void deleteCheckpointRowsWithId(in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in String rowId);
+
+  /**
+   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void deleteLastCheckpointRowWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String rowId);
 		
  /**
    * Delete the specified rowId in this tableId. Deletion respects sync
@@ -320,7 +334,23 @@ interface OdkDbInterface {
    */
   boolean hasTableId(in String appName, in OdkDbHandle dbHandleName, 
       in String tableId);
-      
+
+  /**
+   * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   */
+  void insertCheckpointRowIntoExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
+
   /**
    * Insert the given rowId with the values in the cvValues. If certain metadata
    * values are not specified in the cvValues, then suitable default values may
@@ -447,6 +477,22 @@ interface OdkDbInterface {
    * @param rowId
    */
   void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(
+  	  in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String rowId);
+
+ /**
+   * Update all rows for the given rowId to SavepointType 'INCOMPLETE' and
+   * remove all but the most recent row. When used with a rowId that has
+   * checkpoints, this updates to the most recent checkpoint and removes any
+   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
+   * the general effect of resetting the rowId to an INCOMPLETE state.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(
   	  in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in String rowId);
 
