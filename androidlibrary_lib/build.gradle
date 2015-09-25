@@ -13,7 +13,7 @@ libraryScripts.each {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.github.dcendents.android-maven'
 
 group = groupId
 
@@ -54,7 +54,7 @@ android {
     }
 }
 
-task generatePom << {
+/*task generatePom << {
     pom {
         project {
             groupId "org.opendatakit"
@@ -66,7 +66,7 @@ task generatePom << {
             }
         }
     }.writeTo("$buildDir/pom.xml")
-}
+}*/
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
