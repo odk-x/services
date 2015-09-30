@@ -13,6 +13,7 @@ libraryScripts.each {
 }
 
 apply plugin: 'com.android.library'
+//apply plugin: 'com.github.dcendents.android-maven'
 
 group = groupId
 
@@ -52,6 +53,20 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
 }
+
+/*task generatePom << {
+    pom {
+        project {
+            groupId "org.opendatakit"
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                }
+            }
+        }
+    }.writeTo("$buildDir/pom.xml")
+}*/
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
