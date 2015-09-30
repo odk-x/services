@@ -17,6 +17,7 @@ package org.opendatakit.sync;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
@@ -78,7 +79,7 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     try {
       return sensorSvcProxy.getSyncStatus(appName);
     } catch (RemoteException rex) {
-      rex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;
     }
   }
@@ -90,7 +91,7 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     try {
       return sensorSvcProxy.push(appName);
     } catch (RemoteException rex) {
-      rex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;
     }
   }
@@ -102,7 +103,7 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     try {
       return sensorSvcProxy.synchronize(appName, deferInstanceAttachments);
     } catch (RemoteException rex) {
-      rex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;
     }
   }
@@ -118,7 +119,7 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     try {
       return sensorSvcProxy.getSyncProgress(appName);
     } catch (RemoteException rex) {
-      rex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;
     }
   }
@@ -130,7 +131,7 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     try {
       return sensorSvcProxy.getSyncUpdateMessage(appName);
     } catch (RemoteException rex) {
-      rex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;
     }
   }

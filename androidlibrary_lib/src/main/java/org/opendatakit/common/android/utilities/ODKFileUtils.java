@@ -342,27 +342,27 @@ public class ODKFileUtils {
       bw.write(apkVersion);
       bw.write("\n");
     } catch (IOException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     } finally {
       if ( bw != null ) {
         try {
           bw.flush();
           bw.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
         }
       }
       if ( w != null ) {
         try {
           w.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
         }
       }
       try {
         fs.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
       }
     }
   }
