@@ -42,6 +42,7 @@ public final class InstanceColumns implements BaseColumns {
   // in the javascript and ODK Tables.
   public static final String DATA_INSTANCE_ID = "_instanceId";
   public static final String DATA_TABLE_TABLE_ID = "_tableId";
+  public static final String DATA_INSTANCE_NAME = "_instanceName";
   public static final String SUBMISSION_INSTANCE_ID = "_submissionInstanceId";
   public static final String XML_PUBLISH_TIMESTAMP = "_xmlPublishTimestamp";
   public static final String XML_PUBLISH_STATUS = "_xmlPublishStatus";
@@ -59,6 +60,7 @@ public final class InstanceColumns implements BaseColumns {
         + _ID + " integer primary key, "
         + DATA_INSTANCE_ID + " text, "
         + DATA_TABLE_TABLE_ID + " text, "
+        + DATA_INSTANCE_NAME + " text, "
         + SUBMISSION_INSTANCE_ID + " text, "
         + XML_PUBLISH_TIMESTAMP + " text, "
         + XML_PUBLISH_STATUS + " text, "
