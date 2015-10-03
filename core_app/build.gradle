@@ -66,8 +66,6 @@ dependencies {
                 version: latestVersion, ext: 'aar')
     }
 
-    compile 'joda-time:joda-time:2.2'
-
     // Testing-only dependencies
     androidTestCompile 'com.android.support.test:runner:0.3'
     androidTestCompile 'com.android.support.test:rules:0.3'
