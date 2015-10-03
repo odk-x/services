@@ -411,9 +411,9 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
       TreeMap<String, Object> propertiesSchema = (TreeMap<String, Object>) jsonSchema
           .get(JSON_SCHEMA_PROPERTIES);
       for (ColumnDefinition ch : c.getChildren()) {
-        propertiesSchema.put(c.getElementName(), new TreeMap<String, Object>());
+        propertiesSchema.put(ch.getElementName(), new TreeMap<String, Object>());
         @SuppressWarnings("unchecked")
-        TreeMap<String, Object> itemSchema = (TreeMap<String, Object>) propertiesSchema.get(c
+        TreeMap<String, Object> itemSchema = (TreeMap<String, Object>) propertiesSchema.get(ch
             .getElementName());
         getDataModelHelper(itemSchema, ch); // recursion...
       }
