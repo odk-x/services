@@ -61,9 +61,9 @@ dependencies {
         releaseCompile(group: groupId, name: libraryArtifactName,
                 version: libraryRelease, ext: 'aar')
         snapshotCompile(group: groupId, name: libraryArtifactName,
-                version: latestVersion, ext: 'aar')
+                version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
         debugCompile(group: groupId, name: libraryArtifactName,
-                version: latestVersion, ext: 'aar')
+                version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
     }
 
     // Testing-only dependencies
