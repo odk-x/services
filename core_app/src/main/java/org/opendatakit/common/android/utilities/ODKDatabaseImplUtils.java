@@ -108,6 +108,9 @@ public class ODKDatabaseImplUtils {
     exportColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
     Collections.sort(exportColumns);
     EXPORT_COLUMNS = Collections.unmodifiableList(exportColumns);
+
+    // Used to ensure that the singleton has been initialized properly
+    AndroidConnectFactory.configure();
   }
 
   private static ODKDatabaseImplUtils databaseUtil = new ODKDatabaseImplUtils();
@@ -161,17 +164,7 @@ public class ODKDatabaseImplUtils {
   }
 
   public void beginTransactionNonExclusive(OdkConnectionInterface db) {
-    boolean success = false;
-    try {
-      db.beginTransactionNonExclusive();
-      success = true;
-    } finally {
-      if (!success) {
-        // Used to ensure that the singleton has been initialized properly
-        AndroidConnectFactory.configure();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().dumpInfo();
-      }
-    }
+    db.beginTransactionNonExclusive();
   }
 
   /**
@@ -2273,22 +2266,25 @@ public class ODKDatabaseImplUtils {
   }
 
   public static void initializeDatabase(OdkConnectionInterface db) {
-    try {
-      commonTableDefn(db);
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    commonTableDefn(db);
   }
 
-  private static void commonTableDefn(OdkConnectionInterface db) throws Exception {
-    // db.execSQL(SurveyConfigurationColumns.getTableCreateSql(SURVEY_CONFIGURATION_TABLE_NAME));
+  private static void commonTableDefn(OdkConnectionInterface db) {
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
     db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
     db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
     db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
     db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME);
     db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
     db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
     db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME));
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
   }
 }

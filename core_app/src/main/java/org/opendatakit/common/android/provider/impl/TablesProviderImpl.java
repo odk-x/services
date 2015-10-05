@@ -25,6 +25,7 @@ import android.util.Log;
 
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -52,7 +53,8 @@ public abstract class TablesProviderImpl extends ContentProvider {
     @Override
     public void onInvalidated() {
       super.onInvalidated();
-      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      // this releases the connection
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -84,9 +86,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
       String sortOrder) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -97,7 +97,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLogger logger = WebLogger.getLogger(appName);
 
     String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 
@@ -125,34 +125,42 @@ public abstract class TablesProviderImpl extends ContentProvider {
     }
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
           null, null, sortOrder, null);
+
+      if (c == null) {
+        logger.w(t, "Unable to query database for appName: " + appName);
+        return null;
+      }
+      // Tell the cursor what uri to watch, so it knows when its source data changes
+      c.setNotificationUri(getContext().getContentResolver(), uri);
+      c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
       success = true;
+      return c;
     } catch (Exception e) {
-      log.w(t, "Unable to query database for appName: " + appName);
+      logger.w(t, "Exception while querying database for appName: " + appName);
+      logger.printStackTrace(e);
       return null;
     } finally {
-      if ( !success && db != null ) {
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      if ( db != null ) {
+        try {
+          db.releaseReference();
+        } finally {
+          if ( !success ) {
+            // this closes the connection
+            // if it was successful, then the InvalidateMonitor will close the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
       }
     }
-
-    if (c == null) {
-      log.w(t, "Unable to query database for appName: " + appName);
-      return null;
-    }
-    // Tell the cursor what uri to watch, so it knows when its source data
-    // changes
-    c.setNotificationUri(getContext().getContentResolver(), uri);
-    c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
-    return c;
   }
 
   @Override
@@ -178,9 +186,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int delete(Uri uri, String selection, String[] selectionArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -221,10 +227,11 @@ public abstract class TablesProviderImpl extends ContentProvider {
     int deleteCount = 0;
     
     // Get the database and run the query
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
@@ -252,12 +259,21 @@ public abstract class TablesProviderImpl extends ContentProvider {
       db.setTransactionSuccessful();
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+        try {
+          if (db.inTransaction()) {
+            db.endTransaction();
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
       }
     }
-    
+
     return deleteCount;
   }
 

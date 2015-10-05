@@ -23,7 +23,6 @@ package org.sqlite.database.sqlite;
 import android.database.CursorWindow;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
-import android.util.Log;
 
 /**
  * Represents a query that reads the resulting rows into a {@link SQLiteQuery}.
@@ -71,7 +70,7 @@ public final class SQLiteQuery extends SQLiteProgram {
                 onCorruption();
                 throw ex;
             } catch (SQLiteException ex) {
-                Log.e(TAG, "exception: " + ex.getMessage() + "; query: " + getSql());
+              getDatabase().getLogger().e(TAG, "exception: " + ex.getMessage() + "; query: " + getSql());
                 throw ex;
             } finally {
                 window.releaseReference();

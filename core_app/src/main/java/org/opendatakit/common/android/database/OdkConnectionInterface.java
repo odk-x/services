@@ -2,6 +2,7 @@ package org.opendatakit.common.android.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Printer;
 import org.sqlite.database.SQLException;
 
 /**
@@ -15,13 +16,15 @@ public interface OdkConnectionInterface {
 
     public String getLastAction();
 
+    public String getAppName();
+
+    public String getSessionQualifier();
+
+    public void dumpDetail(Printer printer);
+
     public void acquireReference();
 
     public void releaseReference();
-
-    public boolean isWriteAheadLoggingEnabled();
-
-    public boolean enableWriteAheadLogging();
 
     public int getVersion();
 
@@ -29,6 +32,18 @@ public interface OdkConnectionInterface {
 
     public boolean isOpen();
 
+  /*
+   * close() is not implemented. Instead, users should call:
+   *
+   * {@link OdkConnectionFactoryInterface.releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName)}
+   *
+   * That method or one of its variants will ensure that this interface is removed from the set of active
+   * interfaces managed by the connection factory.
+   *
+   * To effect a close:
+   * (1) call releaseReference() (because the referenceCount is +1 when you obtain this interface)
+   * (2) then call the above method or one of its variants.
+   */
     public void close();
 
     public void beginTransactionNonExclusive();
@@ -60,7 +75,4 @@ public interface OdkConnectionInterface {
 
     public Cursor queryDistinct(String table, String[] columns, String selection,
                                    String[] selectionArgs, String groupBy, String having, String orderBy, String limit);
-
-    // Added after taking out DataModelDatabaseHelper
-    public void releaseConnection();
 }

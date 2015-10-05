@@ -25,6 +25,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -70,6 +71,10 @@ public class OdkDbShimService extends Service {
     public void binderDied() {
       isActive = false;
       OdkDbShimService.this.appNameDied(appName);
+    }
+
+    public String summaryString() {
+      return appName + " " + generation + "--" + transactionGeneration + " sql=" + sqlStmt;
     }
   };
 
@@ -172,12 +177,12 @@ public class OdkDbShimService extends Service {
   private void assertGeneration(String appName, String thisGeneration, 
       String contextName, DbShimCallback callback) throws RemoteException {
 
-    boolean releasedSessions = AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstances(
+    boolean releasedSessions = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstances(
         getApplicationContext(), appName, thisGeneration, true);
     
     if ( releasedSessions ) {
-      WebLogger log = WebLogger.getLogger(appName);
-      log.i(contextName, "calling dbshimCleanupCallback(\"" + thisGeneration + "\");");
+      WebLogger logger = WebLogger.getLogger(appName);
+      logger.i(contextName, "calling dbshimCleanupCallback(\"" + thisGeneration + "\");");
       
       String fullCommand = "javascript:window.dbif.dbshimCleanupCallback(\"" + thisGeneration + "\");";
       callback.fireCallback(fullCommand);
@@ -210,37 +215,57 @@ public class OdkDbShimService extends Service {
    */
   private void runRollback(String appName, String thisGeneration, int thisTransactionGeneration,
       DbShimCallback callback) throws RemoteException {
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLogger logger = WebLogger.getLogger(appName);
 
     assertGeneration(appName, thisGeneration, "runRollback", callback);
 
-    OdkConnectionInterface db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
-        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
-    
-    if (db != null) {
-      log.i(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
-          + thisTransactionGeneration);
-      try {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
-            getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
-      } catch (Exception e) {
-        log.e(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
-            + thisTransactionGeneration + " - exception: " + e.toString());
-        try {
-          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
-              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
-        } catch ( Exception ex ) {
-          // ignore
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
+              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+
+      if (db != null) {
+        logger.i(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
+                + thisTransactionGeneration);
+        if ( db.inTransaction() ) {
+          try {
+            db.endTransaction();
+          } catch (Exception e) {
+            logger.e(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
+                    + thisTransactionGeneration + " - exception: " + e.toString());
+            errorResult(thisGeneration, thisTransactionGeneration, 0,
+                    "rollback - exception: " + e.toString(), callback);
+            return;
+          }
+        } else {
+          logger.e(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " -no outstanding transaction!");
+          errorResult(thisGeneration, thisTransactionGeneration, 0,
+                  "rollback - no outstanding transaction!", callback);
+          return;
         }
+      } else {
+        logger.w(LOGTAG, "rollback -- Transaction Not Found! gen: " + thisGeneration + " transaction: "
+                + thisTransactionGeneration);
         errorResult(thisGeneration, thisTransactionGeneration, 0,
-            "rollback - exception: " + e.toString(), callback);
+                "rollback - no outstanding transaction!", callback);
         return;
       }
-    } else {
-      log.w(LOGTAG, "rollback -- Transaction Not Found! gen: " + thisGeneration + " transaction: "
-          + thisTransactionGeneration);
+    } finally {
+      if ( db != null ) {
+        try {
+          // release the reference...
+          // this does not necessarily close the db handle
+          // or terminate any pending transaction
+          db.releaseReference();
+        } finally {
+          // this will release the final reference and close the database
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstance(
+                  getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+        }
+      }
     }
 
     String fullCommand = "javascript:window.dbif.dbshimTransactionCallback(\"" + thisGeneration
@@ -260,37 +285,66 @@ public class OdkDbShimService extends Service {
    */
   private void runCommit(String appName, String thisGeneration, int thisTransactionGeneration,
       DbShimCallback callback) throws RemoteException {
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLogger logger = WebLogger.getLogger(appName);
 
     assertGeneration(appName, thisGeneration, "runCommit", callback);
 
-    OdkConnectionInterface db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
-        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
+    OdkConnectionInterface db = null;
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
+              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
 
-    if (db != null) {
-      log.i(LOGTAG, "commit gen: " + thisGeneration + " transaction: " + thisTransactionGeneration);
-      try {
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
-            getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
-      } catch (Exception e) {
-        log.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
-            + thisTransactionGeneration + " - exception: " + e.toString());
-        try {
-          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstance(
-              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
-        } catch ( Exception ex ) {
-          // ignore
+      if (db != null) {
+        logger.i(LOGTAG, "commit gen: " + thisGeneration + " transaction: " + thisTransactionGeneration);
+        // if we were destroyed and restored, then we won't have a transaction and should report failure
+        if ( db.inTransaction() ) {
+          try {
+            db.setTransactionSuccessful();
+          } catch (Exception e) {
+            logger.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
+                    + thisTransactionGeneration + " - exception: " + e.toString());
+            errorResult(thisGeneration, thisTransactionGeneration, 0,
+                    "commit - exception: " + e.toString(), callback);
+            return;
+          } finally {
+            try {
+              db.endTransaction();
+            } catch (Exception e) {
+              logger.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
+                      + thisTransactionGeneration + " - exception: " + e.toString());
+              errorResult(thisGeneration, thisTransactionGeneration, 0,
+                      "commit - exception: " + e.toString(), callback);
+              return;
+            }
+          }
+        } else {
+          logger.e(LOGTAG, "commit gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " -no outstanding transaction!");
+          errorResult(thisGeneration, thisTransactionGeneration, 0,
+                  "commit - no outstanding transaction!", callback);
+          return;
         }
+      } else {
+        logger.w(LOGTAG, "commit -- Transaction Not Found! gen: " + thisGeneration + " transaction: "
+                + thisTransactionGeneration);
         errorResult(thisGeneration, thisTransactionGeneration, 0,
-            "commit - exception: " + e.toString(), callback);
+                "commit - no outstanding transaction!", callback);
         return;
       }
-    } else {
-      log.w(LOGTAG, "commit -- Transaction Not Found! gen: " + thisGeneration + " transaction: "
-          + thisTransactionGeneration);
+    } finally {
+      if ( db != null ) {
+        try {
+          // release the reference...
+          // this does not necessarily close the db handle
+          // or terminate any pending transaction
+          db.releaseReference();
+        } finally {
+          // this will release the final reference and close the database
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstance(
+                  getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+        }
+      }
     }
 
     String fullCommand = "javascript:window.dbif.dbshimTransactionCallback(\"" + thisGeneration
@@ -313,7 +367,7 @@ public class OdkDbShimService extends Service {
   private void runStmt(String appName, String thisGeneration, int thisTransactionGeneration,
       int thisActionIdx, String sqlStmt, String strBinds, DbShimCallback callback)
       throws RemoteException {
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLogger logger = WebLogger.getLogger(appName);
 
     sqlStmt = sqlStmt.trim();
     // doesn't matter...
@@ -321,7 +375,7 @@ public class OdkDbShimService extends Service {
 
     assertGeneration(appName, thisGeneration, "runStmt", callback);
 
-    log.i(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+    logger.i(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
         + thisTransactionGeneration + " action: " + thisActionIdx + " sqlVerb: " + sqlVerb);
 
     String[] bindArray = null;
@@ -341,8 +395,9 @@ public class OdkDbShimService extends Service {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
-      log.e(LOGTAG, "executeSqlStmt - exception parsing binds: " + e.toString());
+      logger.e(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+              + thisTransactionGeneration + " action: " + thisActionIdx + " - exception parsing binds: " + e.toString());
+      logger.printStackTrace(e);
       errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
           "exception parsing binds!", callback);
       return;
@@ -350,12 +405,11 @@ public class OdkDbShimService extends Service {
 
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getDatabaseGroupInstance(
-        getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
+              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
 
       if ( !db.inTransaction() ) {
-        // acquire a reference, as this is a new open database connection
-        db.acquireReference();
         ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
   
@@ -389,15 +443,16 @@ public class OdkDbShimService extends Service {
               .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
               .append(quotedResultString).append(");");
           String fullCommand = b.toString();
-          log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
-          //db.yieldIfContendedSafely();
+          logger.i(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " action: " + thisActionIdx + " return sqlVerb: " + sqlVerb);
           callback.fireCallback(fullCommand);
           return;
         } catch (Exception e) {
-          log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
-          //db.yieldIfContendedSafely();
+          logger.e(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " action: " + thisActionIdx + " - exception: " + e.toString());
+          logger.printStackTrace(e);
           errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
-              "exception: " + e.toString(), callback);
+                  "exception: " + e.toString(), callback);
           return;
         } finally {
           if ( c != null && !c.isClosed() ) {
@@ -415,25 +470,24 @@ public class OdkDbShimService extends Service {
               .append(thisTransactionGeneration).append(",").append(thisActionIdx).append(",")
               .append(quotedResultString).append(");");
           String fullCommand = b.toString();
-          log.i(LOGTAG, "executeSqlStmt return sqlVerb: " + sqlVerb);
-          //db.yieldIfContendedSafely();
+          logger.i(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " action: " + thisActionIdx + " return sqlVerb: " + sqlVerb);
           callback.fireCallback(fullCommand);
         } catch (Exception e) {
-          log.e(LOGTAG, "executeSqlStmt - exception: " + e.toString());
-          //db.yieldIfContendedSafely();
+          logger.e(LOGTAG, "executeSqlStmt -- gen: " + thisGeneration + " transaction: "
+                  + thisTransactionGeneration + " action: " + thisActionIdx + " - exception: " + e.toString());
+          logger.printStackTrace(e);
           errorResult(thisGeneration, thisTransactionGeneration, thisActionIdx, 0,
               "exception: " + e.toString(), callback);
           return;
         }
       }
     } finally {
-      // this doesn't close the database --
-      // we are just decrementing the reference
-      // count. The extra aquireReference when 
-      // we began the transaction keeps the
-      // database connection open.
       if ( db != null ) {
-        db.close();
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -466,20 +520,19 @@ public class OdkDbShimService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    AndroidConnectFactory.configure();
+
     servInterface = new OdkDbShimServiceInterface(this);
 
     // start a new executor...
     worker = Executors.newSingleThreadExecutor();
-
-    AndroidConnectFactory.configure();
   }
 
   @Override
   public IBinder onBind(Intent intent) {
     Log.i(LOGTAG, "onBind -- returning interface.");
-    if (Core.getInstance().shouldWaitForDebugger()) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForDbShimServiceDebugger();
     return servInterface;
   }
 
@@ -487,14 +540,14 @@ public class OdkDbShimService extends Service {
   public boolean onUnbind(Intent intent) {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseGroupInstances(getApplicationContext());
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
   }
 
   public synchronized void appNameDied(String appName) {
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
   }
   
   @Override
@@ -512,7 +565,7 @@ public class OdkDbShimService extends Service {
     worker = null;
 
     // and release any transactions we are holding...
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseAllDatabaseGroupInstances(getApplicationContext());
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances(getApplicationContext());
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     Log.i(LOGTAG, "onDestroy - done");
@@ -520,6 +573,11 @@ public class OdkDbShimService extends Service {
   }
 
   public synchronized void queueAction(DbAction action) throws RemoteException {
+    if ( worker == null ) {
+      WebLogger.getLogger(action.appName).e(LOGTAG, "queueAction worker -- after onDestroy -- ignoring action: " + action.summaryString());
+      return;
+    }
+
     try {
       // throws exception if queue length would be exceeded
       actions.add(action);

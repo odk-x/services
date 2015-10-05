@@ -82,21 +82,21 @@ public final class SQLiteGlobal {
      * Gets the journal size limit in bytes.
      */
     public static int getJournalSizeLimit() {
-        return 10000;
+        return 3000000;
     }
 
     /**
      * Gets the default database synchronization mode when WAL is not in use.
      */
     public static String getDefaultSyncMode() {
-        return "normal";
+        return "full";
     }
 
     /**
      * Gets the database synchronization mode when in WAL mode.
      */
     public static String getWALSyncMode() {
-        return "normal";
+        return "full";
     }
 
     /**

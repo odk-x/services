@@ -64,9 +64,7 @@ public class OdkWebkitServerService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    if (Core.getInstance().shouldWaitForDebugger()) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForWebkitServerServiceDebugger();
     return servInterface;
   }
 

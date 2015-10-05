@@ -30,10 +30,12 @@ import org.apache.commons.lang3.CharEncoding;
  */
 public class Base64Wrapper {
 
+  private final String appName;
   private static final int FLAGS = 2;// NO_WRAP
   private Class<?> base64 = null;
 
-  public Base64Wrapper() throws ClassNotFoundException {
+  public Base64Wrapper(String appName) throws ClassNotFoundException {
+    this.appName = appName;
     base64 = this.getClass().getClassLoader().loadClass("android.util.Base64");
   }
 
@@ -50,16 +52,16 @@ public class Base64Wrapper {
       e.printStackTrace();
       throw new IllegalArgumentException(e.toString());
     } catch (NoSuchMethodException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (IllegalAccessException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (InvocationTargetException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     }
   }
@@ -72,16 +74,16 @@ public class Base64Wrapper {
       Object[] argList = new Object[] { base64String, FLAGS };
       o = m.invoke(null, argList);
     } catch (SecurityException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (NoSuchMethodException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (IllegalAccessException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (InvocationTargetException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     }
     return (byte[]) o;

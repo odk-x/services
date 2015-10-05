@@ -313,7 +313,7 @@ public class EncryptionUtils {
     // this constructor will throw an exception if we are not
     // running on version 8 or above (if Base64 is not found).
     try {
-      wrapper = new Base64Wrapper();
+      wrapper = new Base64Wrapper(appName);
     } catch (ClassNotFoundException e) {
       WebLogger.getLogger(appName).e(t, "Phone does not have Base64 class but API level is " + version);
       WebLogger.getLogger(appName).printStackTrace(e);
@@ -519,9 +519,10 @@ public class EncryptionUtils {
    *
    * Does not delete any of the original files.
    *
-   * @param instanceXml
+   * @parma fileSet
+   * @param submission
+   * @param submissionXml
    * @param submissionXmlEnc
-   * @param metadata
    * @param formInfo
    * @return
    */

@@ -23,9 +23,10 @@ package org.sqlite.database;
 import java.io.File;
 import java.util.List;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
 import org.sqlite.database.sqlite.SQLiteException;
-import android.util.Log;
 import android.util.Pair;
 
 /**
@@ -35,10 +36,8 @@ import android.util.Pair;
  * An application can specify an implementation of {@link DatabaseErrorHandler} on the
  * following:
  * <ul>
- *   <li>{@link SQLiteDatabase#openOrCreateDatabase(String,
- *      org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory, DatabaseErrorHandler)}</li>
- *   <li>{@link SQLiteDatabase#openDatabase(String,
- *      org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory, int, DatabaseErrorHandler)}</li>
+ *   <li>{@link SQLiteDatabase#openDatabase(SQLiteDatabaseConfiguration configuration,
+ *        org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory, DatabaseErrorHandler, String)}</li>
  * </ul>
  * The specified {@link DatabaseErrorHandler} is used to handle database corruption errors, if they
  * occur.
@@ -48,7 +47,7 @@ import android.util.Pair;
  */
 public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
 
-    private static final String TAG = "DefaultDatabaseErrorHandler";
+    private static final String TAG = "DefaultDbErrorHandler";
 
     /**
      * defines the default method to be invoked when database corruption is detected.
@@ -56,7 +55,7 @@ public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
      * is detected.
      */
     public void onCorruption(SQLiteDatabase dbObj) {
-        Log.e(TAG, "Corruption reported by sqlite on database: " + dbObj.getPath());
+      dbObj.getLogger().e(TAG, "Corruption reported by sqlite on database: " + dbObj.getPath());
 
 	// If this is a SEE build, do not delete any database files.
 	//
@@ -70,7 +69,7 @@ public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
             // make the application crash on database open operation. To avoid this problem,
             // the application should provide its own {@link DatabaseErrorHandler} impl class
             // to delete ALL files of the database (including the attached databases).
-            deleteDatabaseFile(dbObj.getPath());
+            deleteDatabaseFile(dbObj.getLogger(), dbObj.getPath());
             return;
         }
 
@@ -92,26 +91,26 @@ public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
             // Delete all files of this corrupt database and/or attached databases
             if (attachedDbs != null) {
                 for (Pair<String, String> p : attachedDbs) {
-                    deleteDatabaseFile(p.second);
+                    deleteDatabaseFile(dbObj.getLogger(), p.second);
                 }
             } else {
                 // attachedDbs = null is possible when the database is so corrupt that even
                 // "PRAGMA database_list;" also fails. delete the main database file
-                deleteDatabaseFile(dbObj.getPath());
+                deleteDatabaseFile(dbObj.getLogger(), dbObj.getPath());
             }
         }
     }
 
-    private void deleteDatabaseFile(String fileName) {
+    private void deleteDatabaseFile(WebLogger logger, String fileName) {
         if (fileName.equalsIgnoreCase(":memory:") || fileName.trim().length() == 0) {
             return;
         }
-        Log.e(TAG, "deleting the database file: " + fileName);
+      logger.e(TAG, "deleting the database file: " + fileName);
         try {
             SQLiteDatabase.deleteDatabase(new File(fileName));
         } catch (Exception e) {
             /* print warning and ignore exception */
-            Log.w(TAG, "delete failed: " + e.getMessage());
+          logger.w(TAG, "delete failed: " + e.getMessage());
         }
     }
 }

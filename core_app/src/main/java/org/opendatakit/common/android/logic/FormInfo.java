@@ -32,6 +32,7 @@ import android.database.Cursor;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 /**
  * Class to hold information about a form. This holds the data fields that are
@@ -166,11 +167,11 @@ public class FormInfo {
       try {
         om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
       } catch (JsonParseException e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
       } catch (JsonMappingException e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
       } catch (IOException e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
       }
       formDef = om;
       if (formDef == null) {
@@ -183,7 +184,7 @@ public class FormInfo {
 
   /**
    *
-   * @param context
+   * @param c
    * @param appName
    * @param formDefFile
    */
@@ -206,11 +207,11 @@ public class FormInfo {
     try {
       om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
     } catch (JsonParseException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (JsonMappingException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (IOException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
     formDef = om;
     if (formDef == null) {
@@ -242,7 +243,7 @@ public class FormInfo {
     try {
       this.settings = ODKFileUtils.mapper.writeValueAsString(settings);
     } catch (JsonProcessingException ex) {
-      ex.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(ex);
       throw new IllegalArgumentException("Settings could not be re-serialized!");
     }
     
@@ -302,7 +303,7 @@ public class FormInfo {
 	        // just get the one title string from the file...
 	        formTitle = (String) formDefStruct.get(defaultLocale);
 	      } catch (ClassCastException e) {
-	        e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
 	        throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
 	            + formDefFile.getAbsolutePath());
 	      }

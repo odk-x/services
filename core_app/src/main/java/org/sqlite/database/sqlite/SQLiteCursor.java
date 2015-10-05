@@ -73,26 +73,6 @@ public class SQLiteCursor extends AbstractWindowedCursor {
      * phone) would be in the projection argument and everything from
      * {@code FROM} onward would be in the params argument.
      *
-     * @param db a reference to a Database object that is already constructed
-     *     and opened. This param is not used any longer
-     * @param editTable the name of the table used for this query
-     * @param query the rest of the query terms
-     *     cursor is finalized
-     * @deprecated use {@link #SQLiteCursor(SQLiteCursorDriver, String, SQLiteQuery)} instead
-     */
-    @Deprecated
-    public SQLiteCursor(SQLiteDatabase db, SQLiteCursorDriver driver,
-            String editTable, SQLiteQuery query) {
-        this(driver, editTable, query);
-    }
-
-    /**
-     * Execute a query and provide access to its result set through a Cursor
-     * interface. For a query such as: {@code SELECT name, birth, phone FROM
-     * myTable WHERE ... LIMIT 1,20 ORDER BY...} the column names (name, birth,
-     * phone) would be in the projection argument and everything from
-     * {@code FROM} onward would be in the params argument.
-     *
      * @param editTable the name of the table used for this query
      * @param query the {@link SQLiteQuery} object associated with this cursor object.
      */
@@ -168,9 +148,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
                 int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos, 0);
                 mCount = mQuery.fillWindow(mWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "received count(*) from native_fill_window: " + mCount);
-                }
+                getDatabase().getLogger().d(TAG, "received count(*) from native_fill_window: " + mCount);
             } else {
                 int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);
@@ -203,7 +181,8 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         final int periodIndex = columnName.lastIndexOf('.');
         if (periodIndex != -1) {
             Exception e = new Exception();
-            Log.e(TAG, "requesting column name with table name -- " + columnName, e);
+            getDatabase().getLogger().e(TAG, "requesting column name with table name -- " + columnName);
+            getDatabase().getLogger().printStackTrace(e);
             columnName = columnName.substring(periodIndex + 1);
         }
 
@@ -259,7 +238,8 @@ public class SQLiteCursor extends AbstractWindowedCursor {
             return super.requery();
         } catch (IllegalStateException e) {
             // for backwards compatibility, just return false
-            Log.w(TAG, "requery() failed " + e.getMessage(), e);
+            getDatabase().getLogger().w(TAG, "requery() failed " + e.getMessage());
+            getDatabase().getLogger().printStackTrace(e);
             return false;
         }
     }

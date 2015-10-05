@@ -20,6 +20,7 @@
 
 package org.sqlite.database.sqlite;
 import android.util.Log;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 /**
  * CloseGuard is a mechanism for flagging implicit finalizer cleanup of
@@ -110,62 +111,20 @@ import android.util.Log;
 public final class CloseGuard {
 
     /**
-     * Instance used when CloseGuard is disabled to avoid allocation.
-     */
-    private static final CloseGuard NOOP = new CloseGuard();
-
-    /**
-     * Enabled by default so we can catch issues early in VM startup.
-     * Note, however, that Android disables this early in its startup,
-     * but enables it with DropBoxing for system apps on debug builds.
-     */
-    private static volatile boolean ENABLED = true;
-
-    /**
-     * Hook for customizing how CloseGuard issues are reported.
-     */
-    private static volatile Reporter REPORTER = new DefaultReporter();
-
-    /**
      * Returns a CloseGuard instance. If CloseGuard is enabled, {@code
      * #open(String)} can be used to set up the instance to warn on
      * failure to close. If CloseGuard is disabled, a non-null no-op
      * instance is returned.
      */
-    public static CloseGuard get() {
-        if (!ENABLED) {
-            return NOOP;
-        }
-        return new CloseGuard();
+    public static CloseGuard get(WebLogger logger) {
+        return new CloseGuard(logger);
     }
 
-    /**
-     * Used to enable or disable CloseGuard. Note that CloseGuard only
-     * warns if it is enabled for both allocation and finalization.
-     */
-    public static void setEnabled(boolean enabled) {
-        ENABLED = enabled;
-    }
+    private final WebLogger logger;
 
-    /**
-     * Used to replace default Reporter used to warn of CloseGuard
-     * violations. Must be non-null.
-     */
-    public static void setReporter(Reporter reporter) {
-        if (reporter == null) {
-            throw new NullPointerException("reporter == null");
-        }
-        REPORTER = reporter;
+    private CloseGuard(WebLogger logger) {
+      this.logger = logger;
     }
-
-    /**
-     * Returns non-null CloseGuard.Reporter.
-     */
-    public static Reporter getReporter() {
-        return REPORTER;
-    }
-
-    private CloseGuard() {}
 
     /**
      * If CloseGuard is enabled, {@code open} initializes the instance
@@ -182,9 +141,6 @@ public final class CloseGuard {
             throw new NullPointerException("closer == null");
         }
         // ...but avoid allocating an allocationSite if disabled
-        if (this == NOOP || !ENABLED) {
-            return;
-        }
         String message = "Explicit termination method '" + closer + "' not called";
         allocationSite = new Throwable(message);
     }
@@ -206,7 +162,7 @@ public final class CloseGuard {
      * performed.
      */
     public void warnIfOpen() {
-        if (allocationSite == null || !ENABLED) {
+        if (allocationSite == null) {
             return;
         }
 
@@ -214,22 +170,7 @@ public final class CloseGuard {
                 ("A resource was acquired at attached stack trace but never released. "
                  + "See java.io.Closeable for information on avoiding resource leaks.");
 
-        REPORTER.report(message, allocationSite);
-    }
-
-    /**
-     * Interface to allow customization of reporting behavior.
-     */
-    public static interface Reporter {
-        public void report (String message, Throwable allocationSite);
-    }
-
-    /**
-     * Default Reporter which reports CloseGuard violations to the log.
-     */
-    private static final class DefaultReporter implements Reporter {
-        @Override public void report (String message, Throwable allocationSite) {
-            Log.w(message, allocationSite);
-        }
+        logger.w("SQLite CloseGuard", message);
+        logger.printStackTrace(allocationSite);
     }
 }

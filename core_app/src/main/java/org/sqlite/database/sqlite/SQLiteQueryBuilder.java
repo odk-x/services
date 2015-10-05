@@ -26,7 +26,6 @@ import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -398,9 +397,8 @@ public class SQLiteQueryBuilder
                 projectionIn, selection, groupBy, having,
                 sortOrder, limit);
 
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Performing query: " + sql);
-        }
+        db.getLogger().d(TAG, "Performing query: " + sql);
+
         return db.rawQueryWithFactory(
                 mFactory, sql, selectionArgs,
                 SQLiteDatabase.findEditTable(mTables),
@@ -413,7 +411,7 @@ public class SQLiteQueryBuilder
      */
     private void validateQuerySql(SQLiteDatabase db, String sql,
             CancellationSignal cancellationSignal) {
-        db.getThreadSession().prepare(sql,
+        db.getSession().prepare(sql,
                 db.getThreadDefaultConnectionFlags(true /*readOnly*/), cancellationSignal, null);
     }
 
@@ -472,19 +470,6 @@ public class SQLiteQueryBuilder
         return buildQueryString(
                 mDistinct, mTables, projection, where.toString(),
                 groupBy, having, sortOrder, limit);
-    }
-
-    /**
-     * @deprecated This method's signature is misleading since no SQL parameter
-     * substitution is carried out.  The selection arguments parameter does not get
-     * used at all.  To avoid confusion, call
-     * {@link #buildQuery(String[], String, String, String, String, String)} instead.
-     */
-    @Deprecated
-    public String buildQuery(
-            String[] projectionIn, String selection, String[] selectionArgs,
-            String groupBy, String having, String sortOrder, String limit) {
-        return buildQuery(projectionIn, selection, groupBy, having, sortOrder, limit);
     }
 
     /**
@@ -555,30 +540,6 @@ public class SQLiteQueryBuilder
                 projectionIn, selection, groupBy, having,
                 null /* sortOrder */,
                 null /* limit */);
-    }
-
-    /**
-     * @deprecated This method's signature is misleading since no SQL parameter
-     * substitution is carried out.  The selection arguments parameter does not get
-     * used at all.  To avoid confusion, call
-     * {@link #buildUnionSubQuery}
-     * instead.
-     */
-    @Deprecated
-    public String buildUnionSubQuery(
-            String typeDiscriminatorColumn,
-            String[] unionColumns,
-            Set<String> columnsPresentInTable,
-            int computedColumnsOffset,
-            String typeDiscriminatorValue,
-            String selection,
-            String[] selectionArgs,
-            String groupBy,
-            String having) {
-        return buildUnionSubQuery(
-                typeDiscriminatorColumn, unionColumns, columnsPresentInTable,
-                computedColumnsOffset, typeDiscriminatorValue, selection,
-                groupBy, having);
     }
 
     /**

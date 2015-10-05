@@ -31,6 +31,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
@@ -38,6 +39,7 @@ import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 
@@ -76,7 +78,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -120,10 +122,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
       String sortOrder) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
-    
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
+
     List<String> segments = uri.getPathSegments();
 
     if (segments.size() < 2 || segments.size() > 3) {
@@ -137,56 +137,72 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
-    
-    Cursor c = internalQuery(dbHandleName, null, uri, 
-        appName, tableId, instanceId, 
-        projection, selection, selectionArgs, sortOrder);
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
 
-    if (c == null) {
-      return null;
+    boolean success = false;
+    OdkConnectionInterface db = null;
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+
+      internalUpdate(db, uri, appName, tableId);
+
+      Cursor c = internalQuery(db, uri,
+              appName, tableId, instanceId,
+              projection, selection, selectionArgs, sortOrder);
+
+      if (c == null) {
+        return null;
+      }
+
+      // Tell the cursor what uri to watch, so it knows when its source data
+      // changes
+      c.setNotificationUri(getContext().getContentResolver(), uri);
+      c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
+      success = true;
+      return c;
+    } finally {
+      if ( db != null ) {
+        try {
+          db.releaseReference();
+        } finally {
+          if ( !success ) {
+            // this closes the connection
+            // if it was successful, then the InvalidateMonitor will close the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
+      }
     }
-
-    // Tell the cursor what uri to watch, so it knows when its source data
-    // changes
-    c.setNotificationUri(getContext().getContentResolver(), uri);
-    c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
-    
-    return c;
   }
-  
-  Cursor internalQuery(final OdkDbHandle dbHandleName, OdkConnectionInterface db,
+
+  /**
+   * Update the status columns for the instance upload table
+   *
+   * @param db
+   * @param uri
+   * @param appName
+   * @param tableId
+   */
+  void internalUpdate(OdkConnectionInterface db,
                     Uri uri, 
-                    String appName, String tableId, String instanceId,
-                    String[] projection, String selection, String[] selectionArgs,
-                    String sortOrder ) {
-    
-    if ( (dbHandleName != null && db != null) ||
-         (dbHandleName == null && db == null)) {
-      throw new IllegalArgumentException("exactly one of dbHandleName and db should be non-null");
-    }
+                    String appName, String tableId ) {
     
     String instanceName = null;
-    String fullQuery;
-    String filterArgs[];
     Cursor c = null;
 
     String dbTableName;
-    OrderedColumns orderedDefns;
 
     StringBuilder b = new StringBuilder();
 
     try {
-      if ( dbHandleName != null ) {
-        db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
-        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
-      }
+      db.beginTransactionNonExclusive();
 
       boolean success = false;
       try {
         success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
       }
       if (!success) {
@@ -218,9 +234,9 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       //@formatter:off
       b.append("INSERT INTO ").append(DatabaseConstants.UPLOADS_TABLE_NAME).append("(")
           .append(InstanceColumns.DATA_INSTANCE_ID).append(",")
-          .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(") ").append("SELECT ")
+          .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(",").append("SELECT ")
           .append(InstanceColumns.DATA_INSTANCE_ID).append(",")
-          .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(" FROM (")
+          .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(",").append(" FROM (")
             .append("SELECT DISTINCT ").append(DATA_TABLE_ID_COLUMN).append(" as ")
             .append(InstanceColumns.DATA_INSTANCE_ID).append(",").append("? as ")
             .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(" FROM ")
@@ -230,28 +246,70 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             .append(DatabaseConstants.UPLOADS_TABLE_NAME).append(")");
       //@formatter:on
 
-      // TODO: should we collapse across FORM_ID or leave it this way?
       String[] args = { tableId };
       db.execSQL(b.toString(), args);
 
-      // Can't get away with dataTable.* because of collision with _ID column
-      // get map of (elementKey -> ColumnDefinition)
-      try {
-        orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
-      } catch (IllegalArgumentException e) {
-        e.printStackTrace();
-        throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);
+      //@formatter:off
+      b.append("WITH idname AS (SELECT t.")
+              .append(DATA_TABLE_ID_COLUMN).append(" as ").append(InstanceColumns.DATA_INSTANCE_ID).append(", t.");
+      if ( instanceName == null ) {
+        b.append(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      } else {
+        b.append(instanceName);
       }
-
-      if ( dbHandleName != null ) {
-        db.setTransactionSuccessful();
-      }
+      b.append(" as ").append(InstanceColumns.DATA_INSTANCE_NAME).append(" FROM ")
+              .append(tableId).append(" t WHERE t.").append(DataTableColumns.SAVEPOINT_TIMESTAMP).append("=")
+              .append("(select max(v.").append(DataTableColumns.SAVEPOINT_TIMESTAMP)
+                  .append(") from ").append(tableId).append(" as v where v._id=t._id)")
+              .append(") UPDATE ").append(DatabaseConstants.UPLOADS_TABLE_NAME).append(" SET ")
+                .append(InstanceColumns.DATA_INSTANCE_NAME).append("=idname.").append(InstanceColumns.DATA_INSTANCE_NAME)
+              .append(" WHERE ")
+          .append(InstanceColumns.DATA_TABLE_TABLE_ID).append("=? AND ")
+          .append(InstanceColumns.DATA_INSTANCE_ID).append("=idname.").append(InstanceColumns.DATA_INSTANCE_ID);
+      //@formatter:on
+      db.execSQL(b.toString(), args);
+      db.setTransactionSuccessful();
     } finally {
-      if (db != null) {
-        if ( dbHandleName != null ) {
-          db.endTransaction();
-        }
-      }
+      db.endTransaction();
+    }
+  }
+
+
+  Cursor internalQuery(OdkConnectionInterface db,
+                       Uri uri,
+                       String appName, String tableId, String instanceId,
+                       String[] projection, String selection, String[] selectionArgs,
+                       String sortOrder ) {
+
+    String fullQuery;
+    String filterArgs[];
+    Cursor c = null;
+
+    String dbTableName;
+    OrderedColumns orderedDefns;
+
+    StringBuilder b = new StringBuilder();
+
+    boolean success = false;
+    try {
+      success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
+    } catch (Exception e) {
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
+    }
+    if (!success) {
+      throw new SQLException("Unknown URI (missing data table for tableId) " + uri);
+    }
+
+    dbTableName = "\"" + tableId + "\"";
+
+    // Can't get away with dataTable.* because of collision with _ID column
+    // get map of (elementKey -> ColumnDefinition)
+    try {
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
+    } catch (IllegalArgumentException e) {
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);
     }
 
     // //////////////////////////////////////////////////////////////
@@ -317,11 +375,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
         .append(" > ").append(InstanceColumns.XML_PUBLISH_TIMESTAMP).append(" THEN null")
         .append(" ELSE ").append(InstanceColumns.DISPLAY_SUBTEXT).append(" END as ")
             .append(InstanceColumns.DISPLAY_SUBTEXT).append(",");
-    if ( instanceName == null ) {
-      b.append(DataTableColumns.SAVEPOINT_TIMESTAMP);
-    } else {
-      b.append(instanceName);
-    }
+    b.append(InstanceColumns.DATA_INSTANCE_NAME);
     b.append(" as ").append(InstanceColumns.DISPLAY_NAME);
     b.append(" FROM ");
     b.append("( SELECT * FROM ").append(dbTableName).append(" AS T WHERE T.")
@@ -342,7 +396,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     if (instanceId != null) {
       b.append(" AND ").append(DatabaseConstants.UPLOADS_TABLE_NAME).append(".")
-          .append(InstanceColumns._ID).append("=?");
+              .append(InstanceColumns._ID).append("=?");
       String tempArgs[] = { tableId, InstanceColumns.STATUS_COMPLETE, instanceId };
       filterArgs = tempArgs;
     } else {
@@ -371,21 +425,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
     fullQuery = b.toString();
 
-    boolean success = false;
-    try {
-      c = db.rawQuery(fullQuery, filterArgs);
-      success = true;
-      return c;
-    } finally {
-      // leave database open for cursor...
-      if (db != null && !success) {
-        if ( dbHandleName != null ) {
-          db.close();
-          // we should release the database.
-          AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
-        }
-      }
-    }
+    c = db.rawQuery(fullQuery, filterArgs);
+    return c;
   }
 
   @Override
@@ -430,9 +471,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
    */
   @Override
   public synchronized int delete(Uri uri, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -447,18 +486,19 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
       try {
         success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
       }
 
@@ -480,9 +520,11 @@ public abstract class InstanceProviderImpl extends ContentProvider {
           }
         }
 
+        internalUpdate(db, uri, appName, tableId );
+
         Cursor del = null;
         try {
-          del = internalQuery(null, db, 
+          del = internalQuery(db,
               uri, 
               appName, tableId, instanceId,
               null, where, whereArgs, null);
@@ -505,7 +547,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
           }
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
           throw new IllegalArgumentException("Unable to delete instance directory: " + e.toString());
         } finally {
           if (del != null) {
@@ -538,7 +580,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             }
           }
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
           throw new IllegalArgumentException("Unable to delete instance directory: " + e.toString());
         } finally {
           if (del != null) {
@@ -554,10 +596,19 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       }
       db.setTransactionSuccessful();
     } finally {
-      if (db != null) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      if ( db != null ) {
+        try {
+          if (db.inTransaction()) {
+            db.endTransaction();
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
       }
     }
     getContext().getContentResolver().notifyChange(uri, null);
@@ -566,9 +617,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -584,18 +633,19 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = segments.get(2);
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     int count = 0;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
 
       boolean success = false;
       try {
         success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
-        e.printStackTrace();
+        WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
       }
       if (!success) {
@@ -604,13 +654,15 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
       String dbTableName = "\"" + tableId + "\"";
 
+      internalUpdate(db, uri, appName, tableId );
+
       // run the query to get all the ids...
       List<IdStruct> idStructs = new ArrayList<IdStruct>();
       Cursor ref = null;
       try {
         // use this provider's query interface to get the set of ids that
         // match (if any)
-        ref = internalQuery(null, db, 
+        ref = internalQuery(db,
             uri, 
             appName, tableId, instanceId,
             null, where, whereArgs, null);
@@ -650,10 +702,19 @@ public abstract class InstanceProviderImpl extends ContentProvider {
       }
       db.setTransactionSuccessful();
     } finally {
-      if (db != null) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      if ( db != null ) {
+        try {
+          if (db.inTransaction()) {
+            db.endTransaction();
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
       }
     }
     getContext().getContentResolver().notifyChange(uri, null);

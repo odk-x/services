@@ -20,8 +20,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 
+import android.util.Log;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -35,6 +35,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
@@ -146,13 +147,13 @@ public class SubmissionProvider extends ContentProvider {
 
   @SuppressWarnings("unchecked")
   private static final int generateXmlHelper(Document d, Element data, int idx, String key,
-      Map<String, Object> values, WebLogger log) {
+      Map<String, Object> values, WebLogger logger) {
     Object o = values.get(key);
 
     Element e = d.createElement(key);
 
     if (o == null) {
-      log.e(t, "Unexpected null value");
+      logger.e(t, "Unexpected null value");
     } else if (o instanceof Integer) {
       Text txtNode = d.createTextNode(((Integer) o).toString());
       e.appendChild(txtNode);
@@ -193,7 +194,7 @@ public class SubmissionProvider extends ContentProvider {
       entryNames.addAll(m.keySet());
       Collections.sort(entryNames);
       for (String name : entryNames) {
-        nidx = generateXmlHelper(d, e, nidx, name, m, log);
+        nidx = generateXmlHelper(d, e, nidx, name, m, logger);
       }
     } else {
       throw new IllegalArgumentException("Unexpected object type in XML submission serializer");
@@ -212,9 +213,7 @@ public class SubmissionProvider extends ContentProvider {
   @Override
   public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
 
-    if (Core.getInstance().shouldWaitForDebugger()) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     final boolean asXml = uri.getAuthority().equalsIgnoreCase(ProviderConsts.XML_SUBMISSION_AUTHORITY);
 
@@ -235,7 +234,7 @@ public class SubmissionProvider extends ContentProvider {
     final String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLogger logger = WebLogger.getLogger(appName);
 
     final String tableId = segments.get(1);
     final String instanceId = segments.get(2);
@@ -245,16 +244,17 @@ public class SubmissionProvider extends ContentProvider {
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
 
       boolean success = false;
       try {
         success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
       }
       if (!success) {
@@ -366,7 +366,7 @@ public class SubmissionProvider extends ContentProvider {
                 ElementType type = defn.getType();
                 ElementDataType dataType = type.getDataType();
 
-                log.i(t, "element type: " + defn.getElementType());
+                logger.i(t, "element type: " + defn.getElementType());
                 if (dataType == ElementDataType.integer) {
                   Integer value = ODKCursorUtils.getIndexAsType(c, Integer.class, i);
                   putElementValue(values, defn, value);
@@ -632,7 +632,7 @@ public class SubmissionProvider extends ContentProvider {
               entryNames.addAll(values.keySet());
               Collections.sort(entryNames);
               for (String name : entryNames) {
-                idx = generateXmlHelper(d, e, idx, name, values, log);
+                idx = generateXmlHelper(d, e, idx, name, values, logger);
               }
 
               TransformerFactory factory = TransformerFactory.newInstance();
@@ -681,7 +681,7 @@ public class SubmissionProvider extends ContentProvider {
                 // been re-written with the encrypted media
                 // and xml files.
               } else {
-                exportFile(doc, submissionXml, log);
+                exportFile(doc, submissionXml, logger);
               }
 
             } else {
@@ -751,9 +751,9 @@ public class SubmissionProvider extends ContentProvider {
 
               // OK we have the document in the builder (b).
               String doc = b.toString();
-              exportFile(doc, submissionXml, log);
+              exportFile(doc, submissionXml, logger);
             }
-            exportFile(freturn.serializeUriFragmentList(getContext()), manifest, log);
+            exportFile(freturn.serializeUriFragmentList(getContext()), manifest, logger);
             return ParcelFileDescriptor.open(manifest, ParcelFileDescriptor.MODE_READ_ONLY);
 
           }
@@ -765,21 +765,28 @@ public class SubmissionProvider extends ContentProvider {
         }
 
       } catch (ParserConfigurationException e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
       } catch (TransformerException e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
       } catch (JsonParseException e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
       } catch (JsonMappingException e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
       } catch (IOException e) {
-        e.printStackTrace();
+        logger.printStackTrace(e);
       }
 
     } finally {
-      if (db != null) {
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      if ( db != null ) {
+        try {
+          // release the reference...
+          // this does not necessarily close the db handle
+          // or terminate any pending transaction
+          db.releaseReference();
+        } finally {
+          // this will release the final reference and close the database
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+        }
       }
     }
     return null;
@@ -790,10 +797,10 @@ public class SubmissionProvider extends ContentProvider {
    *
    * @param payload
    * @param outputFilePath
-   * @param  log
+   * @param  logger
    * @return
    */
-  private static boolean exportFile(String payload, File outputFilePath, WebLogger log) {
+  private static boolean exportFile(String payload, File outputFilePath, WebLogger logger) {
     // write xml file
     FileOutputStream os = null;
     OutputStreamWriter osw = null;
@@ -806,13 +813,13 @@ public class SubmissionProvider extends ContentProvider {
       return true;
 
     } catch (IOException e) {
-      log.e(t, "Error writing file");
-      e.printStackTrace();
+      logger.e(t, "Error writing file");
+      logger.printStackTrace(e);
       try {
         osw.close();
         os.close();
       } catch (IOException ex) {
-        ex.printStackTrace();
+        logger.printStackTrace(ex);
       }
       return false;
     }

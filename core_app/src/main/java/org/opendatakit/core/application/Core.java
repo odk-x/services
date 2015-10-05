@@ -27,16 +27,7 @@ import org.opendatakit.core.R;
 public class Core extends Application {
 
   public static final String LOGTAG = Core.class.getSimpleName();
-  
-  /**
-   * Set this to true if you want to attach a debugger to any or all 
-   * of the services. The debugger is attached in the onBind() call.
-   * This affects the OdkDbShimService, OdkWebkitServerService and
-   * Sync services.
-   * If true, then tables on server are dropped if not present on device.
-   */
-  private boolean debugService = false;
-  
+
   private int sessionCount = 0;
   
   private static Core singleton = null;
@@ -45,10 +36,46 @@ public class Core extends Application {
     return singleton;
   }
 
-  public boolean shouldWaitForDebugger() {
-    return debugService;
+  /**
+   * change to true expression if you want to debug the content providers
+   */
+  public void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      String version = getVersionedAppName();
+    }
   }
-  
+
+  /**
+   * change to true expression if you want to debug the webkit server service
+   */
+  public void possiblyWaitForWebkitServerServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      String version = getVersionedAppName();
+    }
+  }
+
+  /**
+   * change to true expression if you want to debug the dbShim service
+   */
+  public void possiblyWaitForDbShimServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      String version = getVersionedAppName();
+    }
+  }
+
+  /**
+   * change to true expression if you want to debug the database service
+   */
+  public void possiblyWaitForDatabaseServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      String version = getVersionedAppName();
+    }
+  }
+
   public String getVersionCodeString() {
     try {
       PackageInfo pinfo;

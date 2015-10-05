@@ -59,7 +59,7 @@ public abstract class SQLiteProgram extends SQLiteClosable {
             default:
                 boolean assumeReadOnly = (n == DatabaseUtils.STATEMENT_SELECT);
                 SQLiteStatementInfo info = new SQLiteStatementInfo();
-                db.getThreadSession().prepare(mSql,
+                db.getSession().prepare(mSql,
                         db.getThreadDefaultConnectionFlags(assumeReadOnly),
                         cancellationSignalForPrepare, info);
                 mReadOnly = info.readOnly;
@@ -102,7 +102,7 @@ public abstract class SQLiteProgram extends SQLiteClosable {
 
     /** @hide */
     protected final SQLiteSession getSession() {
-        return mDatabase.getThreadSession();
+        return mDatabase.getSession();
     }
 
     /** @hide */
@@ -113,15 +113,6 @@ public abstract class SQLiteProgram extends SQLiteClosable {
     /** @hide */
     protected final void onCorruption() {
         mDatabase.onCorruption();
-    }
-
-    /**
-     * Unimplemented.
-     * @deprecated This method is deprecated and must not be used.
-     */
-    @Deprecated
-    public final int getUniqueId() {
-        return -1;
     }
 
     /**
@@ -207,7 +198,7 @@ public abstract class SQLiteProgram extends SQLiteClosable {
     }
 
     @Override
-    protected void onAllReferencesReleased() {
+    protected void onAllReferencesReleased(boolean refCountBelowZero) {
         clearBindings();
     }
 

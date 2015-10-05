@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
@@ -79,7 +80,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
     }
   }
 
@@ -185,9 +186,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized Uri insert(Uri uri, ContentValues initialValues) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -225,10 +224,11 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String[] selectionArgs = { formSpec.tableId, formSpec.formId };
     Cursor c = null;
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
@@ -288,9 +288,18 @@ public abstract class FormsProviderImpl extends ContentProvider {
           + e.toString());
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), appName, dbHandleName);
+        try {
+          if (db.inTransaction()) {
+            db.endTransaction();
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          }
+        }
       }
     }
   }
@@ -394,9 +403,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
                       String sortOrder) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -405,34 +412,42 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, sortOrder, null);
+
+      if (c == null) {
+        log.w(t, "Unable to query database");
+        return null;
+      }
+      // Tell the cursor what uri to watch, so it knows when its source data changes
+      c.setNotificationUri(getContext().getContentResolver(), uri);
+      c.registerDataSetObserver(new InvalidateMonitor(pf.appName, dbHandleName));
       success = true;
+      return c;
     } catch (Exception e) {
-      log.w(t, "Unable to query database");
+      log.w(t, "Exception while querying database");
+      log.printStackTrace(e);
       return null;
     } finally {
-      if ( !success && db != null ) {
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
+      if ( db != null ) {
+        try {
+          db.releaseReference();
+        } finally {
+          if ( !success ) {
+            // this closes the connection
+            // if it was successful, then the InvalidateMonitor will close the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+          }
+        }
       }
     }
-
-    if (c == null) {
-      log.w(t, "Unable to query database");
-      return null;
-    }
-    // Tell the cursor what uri to watch, so it knows when its source data
-    // changes
-    c.setNotificationUri(getContext().getContentResolver(), uri);
-    c.registerDataSetObserver(new InvalidateMonitor(pf.appName, dbHandleName));
-    return c;
   }
 
   /**
@@ -442,20 +457,18 @@ public abstract class FormsProviderImpl extends ContentProvider {
    */
   @Override
   public synchronized int delete(Uri uri, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
-    WebLogger log = WebLogger.getLogger(pf.appName);
+    WebLogger logger = WebLogger.getLogger(pf.appName);
 
     String[] projection = { FormsColumns._ID, FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
 
     HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     Cursor c = null;
     
@@ -464,7 +477,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String formIdValue = null;
     try {
       // Get the database and run the query
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
@@ -509,8 +523,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
             fs.success = true;
           };
         } catch (IOException e) {
-          e.printStackTrace();
-          log.e(t, "Unable to move directory prior to deleting it: " + e.toString());
+          logger.e(t, "Unable to move directory prior to deleting it: " + e.toString());
+          logger.printStackTrace(e);
         }
       }
       
@@ -518,7 +532,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       db.setTransactionSuccessful();
       
     } catch (Exception e) {
-      log.w(t, "FAILED Delete from " + uri + " -- query for existing row failed: " + e.toString());
+      logger.w(t, "FAILED Delete from " + uri + " -- query for existing row failed: " + e.toString());
 
       if (e instanceof SQLException) {
         throw (SQLException) e;
@@ -527,13 +541,25 @@ public abstract class FormsProviderImpl extends ContentProvider {
             + e.toString());
       }
     } finally {
-      if (c != null && !c.isClosed()) {
-        c.close();
-      }
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
+        try {
+          try {
+            if (c != null && !c.isClosed()) {
+              c.close();
+            }
+          } finally {
+            if (db.inTransaction()) {
+              db.endTransaction();
+            }
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+          }
+        }
       }
     }
 
@@ -547,8 +573,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
       try {
         FileUtils.deleteDirectory(formIdDir);
       } catch (IOException e) {
-        e.printStackTrace();
-        log.e(t, "Unable to remove directory " + e.toString());
+        logger.e(t, "Unable to remove directory " + e.toString());
+        logger.printStackTrace(e);
       }
     }
 
@@ -582,14 +608,12 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    if ( Core.getInstance().shouldWaitForDebugger() ) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
-    WebLogger log = WebLogger.getLogger(pf.appName);
+    WebLogger logger = WebLogger.getLogger(pf.appName);
 
     /*
      * First, find out what records match this query. Replicate the 
@@ -607,10 +631,11 @@ public abstract class FormsProviderImpl extends ContentProvider {
         
     HashMap<FormSpec, ContentValues> matchedValues = new HashMap<FormSpec, ContentValues>();
     
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateInternalUseDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), pf.appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       Cursor c = null;
       try {
@@ -706,7 +731,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       db.setTransactionSuccessful();
       
     } catch (Exception e) {
-      log.w(t, "FAILED Update of " + uri + " -- query for existing row failed: " + e.toString());
+      logger.w(t, "FAILED Update of " + uri + " -- query for existing row failed: " + e.toString());
 
       if (e instanceof SQLException) {
         throw (SQLException) e;
@@ -716,12 +741,20 @@ public abstract class FormsProviderImpl extends ContentProvider {
       }
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
-        AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(getContext(), pf.appName, dbHandleName);
+        try {
+          if (db.inTransaction()) {
+            db.endTransaction();
+          }
+        } finally {
+          try {
+            db.releaseReference();
+          } finally {
+            // this closes the connection
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+          }
+        }
       }
     }
-
 
     int failureCount = 0;
     for ( FormSpec fs : matchedValues.keySet() ) {

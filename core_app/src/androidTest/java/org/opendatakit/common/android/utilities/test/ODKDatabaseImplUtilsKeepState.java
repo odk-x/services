@@ -2,6 +2,7 @@ package org.opendatakit.common.android.utilities.test;
 
 import org.opendatakit.TestConsts;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.database.service.OdkDbHandle;
 
@@ -27,7 +28,9 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
         super.setUp();
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(APPNAME);
-        db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(getContext(), getAppName(), uniqueKey);
+
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), getAppName(), uniqueKey);
         verifyNoTablesExistNCleanAllTables();
     }
 
@@ -39,12 +42,12 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
  */
     @Override
     protected void tearDown() throws Exception {
-        verifyNoTablesExistNCleanAllTables();
+      verifyNoTablesExistNCleanAllTables();
 
-        if (db != null) {
-            db.close();
-        }
+      if (db != null) {
+        db.releaseReference();
+      }
 
-        super.tearDown();
+      super.tearDown();
     }
 }

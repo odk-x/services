@@ -30,6 +30,8 @@ import android.util.Printer;
 /**
  * Provides debugging info about all SQLite databases running in the current process.
  *
+ * Accessed from C++, so we need to leave the public interfaces as-is.
+ *
  * {@hide}
  */
 public final class SQLiteDebug {

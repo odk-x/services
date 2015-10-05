@@ -28,13 +28,11 @@ import java.util.regex.Pattern;
  * Describes how to configure a database.
  * <p>
  * The purpose of this object is to keep track of all of the little
- * configuration settings that are applied to a database after it
- * is opened so that they can be applied to all connections in the
- * connection pool uniformly.
- * </p><p>
- * Each connection maintains its own copy of this object so it can
- * keep track of which settings have already been applied.
- * </p>
+ * configuration settings that are applied to a database before it
+ * is opened.</p><p>
+ * Some of these settings should be consistent across all
+ * connections opened to the database and in WAL access, should
+ * not be changed.</p>
  *
  * @hide
  */
@@ -48,6 +46,19 @@ public final class SQLiteDatabaseConfiguration {
      * Special path used by in-memory databases.
      */
     public static final String MEMORY_DB_PATH = ":memory:";
+
+  /**
+   * Absolute max value that can be set by {@link #setMaxSqlCacheSize(int)}.
+   *
+   * Each prepared-statement is between 1K - 6K, depending on the complexity of the
+   * SQL statement & schema.  A large SQL cache may use a significant amount of memory.
+   */
+  public static final int MAX_SQL_CACHE_SIZE = 100;
+
+  /**
+   * ODK appName
+   */
+    public final String appName;
 
     /**
      * The database path.
@@ -93,6 +104,15 @@ public final class SQLiteDatabaseConfiguration {
     public final ArrayList<SQLiteCustomFunction> customFunctions =
             new ArrayList<SQLiteCustomFunction>();
 
+  /**
+   * Creates a database configuration for a memory database with default values for all other parameters.
+   *
+   * @param openFlags Open flags for the database, such as {@link SQLiteDatabase#OPEN_READWRITE}.
+   */
+  public SQLiteDatabaseConfiguration(String appName, int openFlags) {
+    this(appName, MEMORY_DB_PATH, openFlags);
+  }
+
     /**
      * Creates a database configuration with the required parameters for opening a
      * database and default values for all other parameters.
@@ -100,11 +120,16 @@ public final class SQLiteDatabaseConfiguration {
      * @param path The database path.
      * @param openFlags Open flags for the database, such as {@link SQLiteDatabase#OPEN_READWRITE}.
      */
-    public SQLiteDatabaseConfiguration(String path, int openFlags) {
-        if (path == null) {
+    public SQLiteDatabaseConfiguration(String appName, String path, int openFlags) {
+      if (appName == null) {
+        throw new IllegalArgumentException("appName must not be null.");
+      }
+
+      if (path == null) {
             throw new IllegalArgumentException("path must not be null.");
         }
 
+      this.appName = appName;
         this.path = path;
         label = stripPathForLogs(path);
         this.openFlags = openFlags;
@@ -124,10 +149,91 @@ public final class SQLiteDatabaseConfiguration {
             throw new IllegalArgumentException("other must not be null.");
         }
 
+        this.appName = other.appName;
         this.path = other.path;
         this.label = other.label;
         updateParametersFrom(other);
     }
+
+  /**
+   * Sets whether foreign key constraints are enabled for the database.
+   * <p>
+   * By default, foreign key constraints are not enforced by the database.
+   * This method allows an application to enable foreign key constraints.
+   * It must be called before the database is opened to ensure that foreign
+   * key constraints are enabled for the session.
+   * </p><p>
+   * When foreign key constraints are disabled, the database does not check whether
+   * changes to the database will violate foreign key constraints.  Likewise, when
+   * foreign key constraints are disabled, the database will not execute cascade
+   * delete or update triggers.  As a result, it is possible for the database
+   * state to become inconsistent.  To perform a database integrity check,
+   * call SQLiteDatabase.isDatabaseIntegrityOk().
+   * </p><p>
+   * This method must not be called while a transaction is in progress.
+   * </p><p>
+   * See also <a href="http://sqlite.org/foreignkeys.html">SQLite Foreign Key Constraints</a>
+   * for more details about foreign key constraint support.
+   * </p>
+   *
+   * @param enable True to enable foreign key constraints, false to disable them.
+   *
+   * @throws IllegalStateException if the are transactions is in progress
+   * when this method is called.
+   */
+  public void setForeignKeyConstraintsEnabled(boolean enable) {
+    this.foreignKeyConstraintsEnabled = enable;
+  }
+
+  /**
+   * Sets the maximum size of the prepared-statement cache for this database.
+   * (size of the cache = number of compiled-sql-statements stored in the cache).
+   *<p>
+   * Maximum cache size can ONLY be increased from its current size (default = 10).
+   * If this method is called with smaller size than the current maximum value,
+   * then IllegalStateException is thrown.
+   *<p>
+   * This method is thread-safe.
+   *
+   * @param cacheSize the size of the cache. can be (0 to {@link #MAX_SQL_CACHE_SIZE})
+   * @throws IllegalStateException if input cacheSize > {@link #MAX_SQL_CACHE_SIZE}.
+   */
+  public void setMaxSqlCacheSize(int cacheSize) {
+    if (cacheSize > MAX_SQL_CACHE_SIZE || cacheSize < 0) {
+      throw new IllegalStateException(
+              "expected value between 0 and " + MAX_SQL_CACHE_SIZE);
+    }
+    this.maxSqlCacheSize = cacheSize;
+  }
+
+  /**
+   * Sets the locale for this database.  Does nothing if this database has
+   * the NO_LOCALIZED_COLLATORS flag set or was opened read only.
+   *
+   * @param locale The new locale.  Cannot be null.
+   */
+  public void setLocale(Locale locale) {
+    if (locale == null) {
+      throw new IllegalArgumentException("locale must not be null.");
+    }
+    this.locale = locale;
+  }
+
+  /**
+   * Registers a CustomFunction callback as a function that can be called from
+   * SQLite database triggers.
+   *
+   * @param name the name of the sqlite3 function
+   * @param numArgs the number of arguments for the function
+   * @param function callback to call when the function is executed
+   * @hide
+   */
+  public void addCustomFunction(String name, int numArgs, SQLiteDatabase.CustomFunction function) {
+    // Create wrapper (also validates arguments).
+    SQLiteCustomFunction wrapper = new SQLiteCustomFunction(name, numArgs, function);
+
+    this.customFunctions.add(wrapper);
+  }
 
     /**
      * Updates the non-immutable parameters of this configuration object

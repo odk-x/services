@@ -34,18 +34,7 @@ public abstract class SQLiteClosable implements Closeable {
      * Called when the last reference to the object was released by
      * a call to {@link #releaseReference()} or {@link #close()}.
      */
-    protected abstract void onAllReferencesReleased();
-
-    /**
-     * Called when the last reference to the object was released by
-     * a call to {@link #releaseReferenceFromContainer()}.
-     *
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    protected void onAllReferencesReleasedFromContainer() {
-        onAllReferencesReleased();
-    }
+    protected abstract void onAllReferencesReleased(boolean refCountBelowZero);
 
     /**
      * Acquires a reference to the object.
@@ -67,40 +56,27 @@ public abstract class SQLiteClosable implements Closeable {
      * Releases a reference to the object, closing the object if the last reference
      * was released.
      *
-     * @see #onAllReferencesReleased()
+     * @see #onAllReferencesReleased(boolean)
      */
     public void releaseReference() {
+        boolean refCountBelowZero = false;
         boolean refCountIsZero = false;
         synchronized(this) {
-            refCountIsZero = --mReferenceCount == 0;
+            --mReferenceCount;
+            refCountBelowZero = mReferenceCount < 0;
+            refCountIsZero = mReferenceCount == 0;
         }
-        if (refCountIsZero) {
-            onAllReferencesReleased();
+        if (refCountIsZero || refCountBelowZero) {
+            onAllReferencesReleased(refCountBelowZero);
         }
     }
 
     public int getReferenceCount() {
-      return mReferenceCount;
+      synchronized (this) {
+        return mReferenceCount;
+      }
     }
     
-    /**
-     * Releases a reference to the object that was owned by the container of the object,
-     * closing the object if the last reference was released.
-     *
-     * @see #onAllReferencesReleasedFromContainer()
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    public void releaseReferenceFromContainer() {
-        boolean refCountIsZero = false;
-        synchronized(this) {
-            refCountIsZero = --mReferenceCount == 0;
-        }
-        if (refCountIsZero) {
-            onAllReferencesReleasedFromContainer();
-        }
-    }
-
     /**
      * Releases a reference to the object, closing the object if the last reference
      * was released.
@@ -108,7 +84,7 @@ public abstract class SQLiteClosable implements Closeable {
      * Calling this method is equivalent to calling {@link #releaseReference}.
      *
      * @see #releaseReference()
-     * @see #onAllReferencesReleased()
+     * @see #onAllReferencesReleased(boolean)
      */
     public void close() {
         releaseReference();

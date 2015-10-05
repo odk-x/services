@@ -21,6 +21,7 @@
 package org.sqlite.database.sqlite;
 
 /* import dalvik.system.BlockGuard; */
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.sqlite.CloseGuard;
 
 import android.database.Cursor;
@@ -31,7 +32,6 @@ import org.sqlite.database.sqlite.SQLiteDebug.DbStats;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import android.util.LruCache;
 import android.util.Printer;
 
@@ -56,10 +56,7 @@ import java.util.regex.Pattern;
  *
  * <h2>Ownership and concurrency guarantees</h2>
  * <p>
- * Connection objects are not thread-safe.  They are acquired as needed to
- * perform a database operation and are then returned to the pool.  At any
- * given time, a connection is either owned and used by a {@link SQLiteSession}
- * object or the {@link SQLiteConnectionPool}.  Those classes are
+ * Connection objects are not thread-safe. Classes using connections are
  * responsible for serializing operations to guard against concurrent
  * use of a connection.
  * </p><p>
@@ -98,18 +95,17 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
 
     private static final Pattern TRIM_SQL_PATTERN = Pattern.compile("[\\s]*\\n+[\\s]*");
 
-    private final CloseGuard mCloseGuard = CloseGuard.get();
+    private final CloseGuard mCloseGuard;
 
-    private final SQLiteConnectionPool mPool;
     private final SQLiteDatabaseConfiguration mConfiguration;
-    private final int mConnectionId;
+    private final String mConnectionId;
     private final boolean mIsPrimaryConnection;
     private final boolean mIsReadOnlyConnection;
     private final PreparedStatementCache mPreparedStatementCache;
     private PreparedStatement mPreparedStatementPool;
 
     // The recent operations log.
-    private final OperationLog mRecentOperations = new OperationLog();
+    private final OperationLog mRecentOperations;
 
     // The native SQLiteConnection pointer.  (FOR INTERNAL USE ONLY)
     private long mConnectionPtr;
@@ -165,37 +161,65 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     private static native boolean nativeHasCodec();
     public static boolean hasCodec(){ return nativeHasCodec(); }
 
-    private SQLiteConnection(SQLiteConnectionPool pool,
-            SQLiteDatabaseConfiguration configuration,
-            int connectionId, boolean primaryConnection) {
-        mPool = pool;
+    private SQLiteConnection(SQLiteDatabaseConfiguration configuration,
+                             String connectionId, boolean primaryConnection) {
         mConfiguration = new SQLiteDatabaseConfiguration(configuration);
+        mCloseGuard = CloseGuard.get(getLogger());
+        mRecentOperations = new OperationLog(getLogger());
         mConnectionId = connectionId;
         mIsPrimaryConnection = primaryConnection;
-        mIsReadOnlyConnection = (configuration.openFlags & SQLiteDatabase.OPEN_READONLY) != 0;
+        mIsReadOnlyConnection = false;
         mPreparedStatementCache = new PreparedStatementCache(
                 mConfiguration.maxSqlCacheSize);
         mCloseGuard.open("close");
     }
 
+    private WebLogger getLogger() {
+    return WebLogger.getLogger(mConfiguration.appName);
+  }
+
     @Override
     protected void finalize() throws Throwable {
         try {
-            if (mPool != null && mConnectionPtr != 0) {
-                mPool.onConnectionLeaked();
-            }
+          if ( mConnectionPtr != 0L) {
+            // This code is running inside of the SQLiteConnection finalizer.
+            //
+            // We don't know whether it is just the connection that has been finalized (and leaked)
+            // or whether the connection pool has also been or is about to be finalized.
+            // Consequently, it would be a bad idea to try to grab any locks or to
+            // do any significant work here.  So we do the simplest possible thing and
+            // set a flag.  waitForConnection() periodically checks this flag (when it
+            // times out) so that it can recover from leaked connections and wake
+            // itself or other threads up if necessary.
+            //
+            // You might still wonder why we don't try to do more to wake up the waiters
+            // immediately.  First, as explained above, it would be hard to do safely
+            // unless we started an extra Thread to function as a reference queue.  Second,
+            // this is never supposed to happen in normal operation.  Third, there is no
+            // guarantee that the GC will actually detect the leak in a timely manner so
+            // it's not all that important that we recover from the leak in a timely manner
+            // either.  Fourth, if a badly behaved application finds itself hung waiting for
+            // several seconds while waiting for a leaked connection to be detected and recreated,
+            // then perhaps its authors will have added incentive to fix the problem!
 
-            dispose(true);
+            getLogger().w(TAG, "A SQLiteConnection object for database '"
+                    + mConfiguration.label + "' was leaked!  Please fix your application "
+                    + "to end transactions in progress properly and to close the database "
+                    + "when it is no longer needed.");
+
+          }
+
+          dispose(true);
         } finally {
-            super.finalize();
+          super.finalize();
         }
     }
 
-    // Called by SQLiteConnectionPool only.
-    static SQLiteConnection open(SQLiteConnectionPool pool,
+    // Called by SQLiteDatabase.openInner() only.
+    static SQLiteConnection open(
             SQLiteDatabaseConfiguration configuration,
-            int connectionId, boolean primaryConnection) {
-        SQLiteConnection connection = new SQLiteConnection(pool, configuration,
+            String connectionId, boolean primaryConnection) {
+      SQLiteConnection connection = new SQLiteConnection(configuration,
                 connectionId, primaryConnection);
         try {
             connection.open();
@@ -214,6 +238,10 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     }
 
     private void open() {
+      if ((mConfiguration.openFlags & SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING) == 0) {
+        throw new IllegalStateException("Only WAL mode is allowed");
+      }
+
         mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags,
                 mConfiguration.label,
                 SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
@@ -221,11 +249,12 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         setPageSize();
         setForeignKeyModeFromConfiguration();
         setJournalSizeLimit();
-	setAutoCheckpointInterval();
-	if( !nativeHasCodec() ){
-	  setWalModeFromConfiguration();
+	      setAutoCheckpointInterval();
+        setWalModeFromConfiguration();
+        setBusyTimeout();
+	      if( !nativeHasCodec() ){
           setLocaleFromConfiguration();
-	}
+	      }
 
         // Register custom functions.
         final int functionCount = mConfiguration.customFunctions.size();
@@ -246,11 +275,15 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         if (mConnectionPtr != 0) {
             final int cookie = mRecentOperations.beginOperation("close", null, null);
             try {
-                mPreparedStatementCache.evictAll();
-                nativeClose(mConnectionPtr);
-                mConnectionPtr = 0;
+              mPreparedStatementCache.evictAll();
+              nativeClose(mConnectionPtr);
+            } catch ( Throwable t) {
+              getLogger().e(TAG, "nativeClose throws and exception!");
+              getLogger().printStackTrace(t);
+              throw t;
             } finally {
-                mRecentOperations.endOperation(cookie);
+              mConnectionPtr = 0;
+              mRecentOperations.endOperation(cookie);
             }
         }
     }
@@ -264,6 +297,19 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
             }
         }
     }
+
+  private void setBusyTimeout() {
+    if (!mConfiguration.isInMemoryDb() && !mIsReadOnlyConnection) {
+      final long newValue = 5000L;
+      long value = executeForLong("PRAGMA busy_timeout", null, null);
+      if (value != newValue) {
+        getLogger().w(TAG,"busy_timeout is not " + newValue + " but " + value);
+        // sqlite code does a strcmp that only recognizes 'busy_timeout', making it
+        // impossible to update this value.
+        // execute("PRAGMA busy_timeout=" + newValue, null, null);
+      }
+    }
+  }
 
     private void setAutoCheckpointInterval() {
         if (!mConfiguration.isInMemoryDb() && !mIsReadOnlyConnection) {
@@ -296,8 +342,12 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     }
 
     private void setWalModeFromConfiguration() {
+      if (mIsReadOnlyConnection ) {
+        throw new IllegalStateException("Unexpected read-only status");
+      }
         if (!mConfiguration.isInMemoryDb() && !mIsReadOnlyConnection) {
             if ((mConfiguration.openFlags & SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING) != 0) {
+                setLockingMode("NORMAL");
                 setJournalMode("WAL");
                 setSyncMode(SQLiteGlobal.getWALSyncMode());
             } else {
@@ -326,38 +376,55 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         return value;
     }
 
+  private void setLockingMode(String newValue) {
+    String value = executeForString("PRAGMA locking_mode", null, null);
+    if (!value.equalsIgnoreCase(newValue)) {
+      try {
+        String result = executeForString("PRAGMA locking_mode=" + newValue, null, null);
+        if (result.equalsIgnoreCase(newValue)) {
+          return;
+        }
+        // PRAGMA locking_mode silently fails and returns the original journal
+        // mode in some cases if the locking mode could not be changed.
+      } catch (SQLiteDatabaseLockedException ex) {
+        // This error (SQLITE_BUSY) occurs if one connection has the database
+        // open.
+        getLogger().e(TAG, "Unable to set database locking mode of '"
+                + mConfiguration.label + "' from '" + value + "' to '" + newValue);
+        getLogger().printStackTrace(ex);
+      }
+      getLogger().e(TAG, "Could not change the database locking mode of '"
+              + mConfiguration.label + "' from '" + value + "' to '" + newValue);
+    }
+  }
+
     private void setJournalMode(String newValue) {
         String value = executeForString("PRAGMA journal_mode", null, null);
         if (!value.equalsIgnoreCase(newValue)) {
             try {
                 String result = executeForString("PRAGMA journal_mode=" + newValue, null, null);
-                if (result.equalsIgnoreCase(newValue)) {
-                    return;
-                }
-                // PRAGMA journal_mode silently fails and returns the original journal
-                // mode in some cases if the journal mode could not be changed.
+              if (result.equalsIgnoreCase(newValue)) {
+                return;
+              }
+              // PRAGMA journal_mode silently fails and returns the original journal
+              // mode in some cases if the journal mode could not be changed.
             } catch (SQLiteDatabaseLockedException ex) {
-                // This error (SQLITE_BUSY) occurs if one connection has the database
-                // open in WAL mode and another tries to change it to non-WAL.
+              // This error (SQLITE_BUSY) occurs if one connection has the database
+              // open in WAL mode and another tries to change it to non-WAL.
+              getLogger().e(TAG, "Unable to set database journal mode of '"
+                      + mConfiguration.label + "' from '" + value + "' to '" + newValue
+                      + "' because the database is locked.  This usually means that "
+                      + "there are other open connections to the database which prevents "
+                      + "the database from enabling or disabling write-ahead logging mode.  "
+                      + "Proceeding without changing the journal mode.");
+              getLogger().printStackTrace(ex);
             }
-            // Because we always disable WAL mode when a database is first opened
-            // (even if we intend to re-enable it), we can encounter problems if
-            // there is another open connection to the database somewhere.
-            // This can happen for a variety of reasons such as an application opening
-            // the same database in multiple processes at the same time or if there is a
-            // crashing content provider service that the ActivityManager has
-            // removed from its registry but whose process hasn't quite died yet
-            // by the time it is restarted in a new process.
-            //
-            // If we don't change the journal mode, nothing really bad happens.
-            // In the worst case, an application that enables WAL might not actually
-            // get it, although it can still use connection pooling.
-            Log.w(TAG, "Could not change the database journal mode of '"
-                    + mConfiguration.label + "' from '" + value + "' to '" + newValue
-                    + "' because the database is locked.  This usually means that "
-                    + "there are other open connections to the database which prevents "
-                    + "the database from enabling or disabling write-ahead logging mode.  "
-                    + "Proceeding without changing the journal mode.");
+          getLogger().e(TAG, "Could not change the database journal mode of '"
+                  + mConfiguration.label + "' from '" + value + "' to '" + newValue
+                  + "' because the database is locked.  This usually means that "
+                  + "there are other open connections to the database which prevents "
+                  + "the database from enabling or disabling write-ahead logging mode.  "
+                  + "Proceeding without changing the journal mode.");
         }
     }
 
@@ -412,48 +479,6 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     }
 
     // Called by SQLiteConnectionPool only.
-    void reconfigure(SQLiteDatabaseConfiguration configuration) {
-        mOnlyAllowReadOnlyOperations = false;
-
-        // Register custom functions.
-        final int functionCount = configuration.customFunctions.size();
-        for (int i = 0; i < functionCount; i++) {
-            SQLiteCustomFunction function = configuration.customFunctions.get(i);
-            if (!mConfiguration.customFunctions.contains(function)) {
-                nativeRegisterCustomFunction(mConnectionPtr, function);
-            }
-        }
-
-        // Remember what changed.
-        boolean foreignKeyModeChanged = configuration.foreignKeyConstraintsEnabled
-                != mConfiguration.foreignKeyConstraintsEnabled;
-        boolean walModeChanged = ((configuration.openFlags ^ mConfiguration.openFlags)
-                & SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING) != 0;
-        boolean localeChanged = !configuration.locale.equals(mConfiguration.locale);
-
-        // Update configuration parameters.
-        mConfiguration.updateParametersFrom(configuration);
-
-        // Update prepared statement cache size.
-        /* mPreparedStatementCache.resize(configuration.maxSqlCacheSize); */
-
-        // Update foreign key mode.
-        if (foreignKeyModeChanged) {
-            setForeignKeyModeFromConfiguration();
-        }
-
-        // Update WAL.
-        if (walModeChanged) {
-            setWalModeFromConfiguration();
-        }
-
-        // Update locale.
-        if (localeChanged) {
-            setLocaleFromConfiguration();
-        }
-    }
-
-    // Called by SQLiteConnectionPool only.
     // When set to true, executing write operations will throw SQLiteException.
     // Preparing statements that might write is ok, just don't execute them.
     void setOnlyAllowReadOnlyOperations(boolean readOnly) {
@@ -470,7 +495,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * Gets the unique id of this connection.
      * @return The connection id.
      */
-    public int getConnectionId() {
+    public String getConnectionId() {
         return mConnectionId;
     }
 
@@ -934,11 +959,10 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                 // When remove() is called, the cache will invoke its entryRemoved() callback,
                 // which will in turn call finalizePreparedStatement() to finalize and
                 // recycle the statement.
-                if (DEBUG) {
-                    Log.d(TAG, "Could not reset prepared statement due to an exception.  "
-                            + "Removing it from the cache.  SQL: "
-                            + trimSqlForDisplay(statement.mSql), ex);
-                }
+                getLogger().d(TAG, "Could not reset prepared statement due to an exception.  "
+                        + "Removing it from the cache.  SQL: "
+                        + trimSqlForDisplay(statement.mSql));
+                getLogger().printStackTrace(ex);
 
                 mPreparedStatementCache.remove(statement.mSql);
             }
@@ -1306,9 +1330,14 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         private static final int COOKIE_GENERATION_SHIFT = 8;
         private static final int COOKIE_INDEX_MASK = 0xff;
 
+        private final WebLogger mLogger;
         private final Operation[] mOperations = new Operation[MAX_RECENT_OPERATIONS];
         private int mIndex;
         private int mGeneration;
+
+      public OperationLog(WebLogger logger) {
+        this.mLogger = logger;
+      }
 
         public int beginOperation(String kind, String sql, Object[] bindArgs) {
             synchronized (mOperations) {
@@ -1396,7 +1425,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
             if (detail != null) {
                 msg.append(", ").append(detail);
             }
-            Log.d(TAG, msg.toString());
+            mLogger.d(TAG, msg.toString());
         }
 
         private int newOperationCookieLocked(int index) {

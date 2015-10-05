@@ -3,22 +3,20 @@ package org.opendatakit.common.android.database;
 /**
  * Created by clarice on 9/14/15.
  */
-public abstract class OdkConnectionFactorySingleton implements OdkConnectionFactoryInterface{
+public class OdkConnectionFactorySingleton {
 
-    private static OdkConnectionFactorySingleton connectionFactorySingleton = null;
+    private static OdkConnectionFactoryInterface connectionFactorySingleton = null;
 
-    public static OdkConnectionFactorySingleton getOdkConnectionFactorySingleton() {
+    public static final OdkConnectionFactoryInterface getOdkConnectionFactoryInterface() {
         if (connectionFactorySingleton == null) {
             throw new IllegalStateException("OdkConenctionFactorySingleton not yet initialized!  If this happens then configure must be called");
         }
 
-        return connectionFactorySingleton.get();
+        return connectionFactorySingleton;
     }
 
-    public static void set(OdkConnectionFactorySingleton factorySingleton) {
+    protected static final void set(OdkConnectionFactoryInterface factorySingleton) {
         connectionFactorySingleton = factorySingleton;
     }
-
-    public abstract OdkConnectionFactorySingleton get();
 
 }

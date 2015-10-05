@@ -23,6 +23,7 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -47,36 +48,41 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    */
   OdkDatabaseServiceInterface(OdkDatabaseService odkDatabaseService) {
     this.odkDatabaseService = odkDatabaseService;
+    // Used to ensure that the singleton has been initialized properly
+    AndroidConnectFactory.configure();
   }
 
   @Override
   public OdkDbHandle openDatabase(String appName, boolean beginTransaction) throws RemoteException {
 
-    if (Core.getInstance().shouldWaitForDebugger()) {
-      android.os.Debug.waitForDebugger();
-    }
+    Core.getInstance().possiblyWaitForDatabaseServiceDebugger();
 
     OdkConnectionInterface db = null;
 
-    OdkDbHandle dbHandleName = AndroidConnectFactory.getOdkConnectionFactorySingleton().generateDatabaseServiceDbHandle();
+    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateDatabaseServiceDbHandle();
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
-      if ( db.isOpen() ) {
-        if ( beginTransaction ) {
-          ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
-        }
-        return dbHandleName;
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      if ( beginTransaction ) {
+        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
       }
+      return dbHandleName;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("openDatabase", msg);
+      WebLogger.getLogger(appName).e("openDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
+    } finally {
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
     }
-    throw new RemoteException("Unable to open database");
   }
   
   @Override
@@ -85,24 +91,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      // Used to ensure that the singleton has been initialized properly
-      AndroidConnectFactory.configure();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("openDatabase", msg);
+      WebLogger.getLogger(appName).e("beginTransaction", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
         // this does not necessarily close the db handle 
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -113,25 +118,38 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
-      db.close();
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      boolean first = true;
+      while ( db != null && db.isOpen() && db.inTransaction()) {
+        if ( !first ) {
+          WebLogger.getLogger(appName).e("closeDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " aborting transaction!");
+        }
+        first = false;
+        // (presumably) abort the outstanding transaction
+        db.endTransaction();
+      }
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState", msg);
+      WebLogger.getLogger(appName).e("closeDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      while ( db != null && db.isOpen() ) {
-        // release the reference...
-        // this does not necessarily close the db handle 
-        // or terminate any pending transaction
-        db.close();
+      if ( db != null ) {
+        try {
+          // release the reference...
+          // this does not necessarily close the db handle
+          // or terminate any pending transaction
+          db.releaseReference();
+        } finally {
+          // this will trigger close...
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+        }
       }
     }
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
   }
 
   @Override
@@ -140,7 +158,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
@@ -150,15 +169,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState", msg);
+      WebLogger.getLogger(appName).e("closeTransaction", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -170,29 +189,42 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
       db.endTransaction();
-      db.close();
+      boolean first = true;
+      while ( db != null && db.isOpen() && db.inTransaction()) {
+        if ( !first ) {
+          WebLogger.getLogger(appName).e("closeTransactionAndDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " aborting transaction!");
+        }
+        first = false;
+        // (presumably) abort the outstanding transaction
+        db.endTransaction();
+      }
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState", msg);
+      WebLogger.getLogger(appName).e("closeTransactionAndDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      while ( db != null && db.isOpen() ) {
-        // release the reference...
-        // this does not necessarily close the db handle 
-        // or terminate any pending transaction
-        db.close();
+      if ( db != null ) {
+        try {
+          // release the reference...
+          // this does not necessarily close the db handle
+          // or terminate any pending transaction
+          db.releaseReference();
+        } finally {
+          // this will release the final reference and close the database
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+        }
       }
     }
-    AndroidConnectFactory.getOdkConnectionFactorySingleton().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
   }
 
   @Override
@@ -202,22 +234,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().changeDataRowsToNewRowState(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState", msg);
+      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -229,22 +262,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, appName, tableId, columns.getColumns());
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("createOrOpenDBTableWithColumns", msg);
+      WebLogger.getLogger(appName).e("createOrOpenDBTableWithColumns", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -256,24 +290,30 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteCheckpointRowsWithId", msg);
+      WebLogger.getLogger(appName).e("deleteCheckpointRowsWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
+  }
+
+  @Override
+  public void deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId) throws RemoteException {
+
   }
 
   @Override
@@ -282,22 +322,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteDBTableAndAllData", msg);
+      WebLogger.getLogger(appName).e("deleteDBTableAndAllDat", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -309,22 +350,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteDBTableMetadata", msg);
+      WebLogger.getLogger(appName).e("deleteDBTableMetadata", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -336,22 +378,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteDataInExistingDBTableWithId", msg);
+      WebLogger.getLogger(appName).e("deleteDataInExistingDBTableWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -363,22 +406,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteServerConflictRowWithId", msg);
+      WebLogger.getLogger(appName).e("deleteServerConflictRowWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -390,22 +434,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().enforceTypesDBTableMetadata(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("enforceTypesDBTableMetadata", msg);
+      WebLogger.getLogger(appName).e("enforceTypesDBTableMetadata", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
     
@@ -425,22 +470,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getAllColumnNames", msg);
+      WebLogger.getLogger(appName).e("getAllColumnNames", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
 
@@ -452,22 +498,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllTableIds(db);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getAllTableIds", msg);
+      WebLogger.getLogger(appName).e("getAllTableIds", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -479,22 +526,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getDataInExistingDBTableWithId(db, appName, tableId, orderedDefns, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getDataInExistingDBTableWithId", msg);
+      WebLogger.getLogger(appName).e("getDataInExistingDBTableWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
+      if ( db != null ) {
         // release the reference...
-        // this does not necessarily close the db handle 
+        // this does not necessarily close the db handle
         // or terminate any pending transaction
-        db.close();
+        db.releaseReference();
       }
     }
   }
@@ -507,19 +555,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     ArrayList<KeyValueStoreEntry> kvsEntries = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       kvsEntries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getDBTableMetadata", msg);
+      WebLogger.getLogger(appName).e("getDBTableMetadata", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
 
@@ -530,13 +582,14 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public List<TableHealthInfo> getTableHealthStatuses(String appName, OdkDbHandle dbHandleName) throws RemoteException {
 
     long now = System.currentTimeMillis();
-    WebLogger.getLogger(appName).i(LOGTAG,
-        "getTableHealthStatuses -- searching for conflicts and checkpoints ");
+    WebLogger.getLogger(appName).i("getTableHealthStatuses", appName + " " + dbHandleName.getDatabaseHandle() + " " +
+            "getTableHealthStatuses -- searching for conflicts and checkpoints ");
 
     ArrayList<TableHealthInfo> problems = new ArrayList<TableHealthInfo>();
     OdkConnectionInterface db = null;
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
 
       for (String tableId : tableIds) {
@@ -560,13 +613,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       }
 
       long elapsed = System.currentTimeMillis() - now;
-      WebLogger.getLogger(appName).i(LOGTAG,
-          "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed) + " ms");
+      WebLogger.getLogger(appName).i("getTableHealthStatuses", appName + " " + dbHandleName.getDatabaseHandle() + " " +
+              "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed) + " ms");
 
       return problems;
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -584,7 +640,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, appName, tableId, rowId);
       return state.name();
     } catch (Exception e) {
@@ -592,12 +649,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getSyncState", msg);
+      WebLogger.getLogger(appName).e("getSyncState", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -609,19 +669,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getTableDefinitionEntry(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getTableDefinitionEntry", msg);
+      WebLogger.getLogger(appName).e("getTableDefinitionEntry", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -633,19 +697,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getUserDefinedColumns", msg);
+      WebLogger.getLogger(appName).e("getUserDefinedColumns", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -656,21 +724,30 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().hasTableId(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("hasTableId", msg);
+      WebLogger.getLogger(appName).e("hasTableId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
+  }
+
+  @Override
+  public void insertCheckpointRowIntoExistingDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId) throws RemoteException {
+
   }
 
   @Override
@@ -680,19 +757,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("insertDataIntoExistingDBTableWithId", msg);
+      WebLogger.getLogger(appName).e("insertDataIntoExistingDBTableWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -704,19 +785,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().placeRowIntoConflict(db, tableId, rowId, conflictType);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("placeRowIntoConflict", msg);
+      WebLogger.getLogger(appName).e("placeRowIntoConflict", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -730,7 +815,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId,
           columnDefns, whereClause, selectionArgs,
           groupBy, having, orderByElementKey, orderByDirection);
@@ -739,12 +825,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("rawSqlQuery", msg);
+      WebLogger.getLogger(appName).e("rawSqlQuery", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -756,19 +845,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, entry);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("replaceDBTableMetadata", msg);
+      WebLogger.getLogger(appName).e("replaceDBTableMetadata", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -780,19 +873,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, entries, clear);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("replaceDBTableMetadataList", msg);
+      WebLogger.getLogger(appName).e("replaceDBTableMetadataList", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -804,7 +901,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId,
           SyncState.valueOf(syncState), conflictType);
     } catch (Exception e) {
@@ -812,12 +910,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("restoreRowFromConflict", msg);
+      WebLogger.getLogger(appName).e("restoreRowFromConflict", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -829,21 +930,30 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("saveAsIncompleteMostRecentCheckpointDataInDBTableWithId", msg);
+      WebLogger.getLogger(appName).e("saveAsIncompleteMostRecentCheckpointDataInDBTableWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
+  }
+
+  @Override
+  public void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId) throws RemoteException {
+
   }
 
   @Override
@@ -854,19 +964,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableETags(db, tableId, schemaETag, lastDataETag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("updateDBTableETags", msg);
+      WebLogger.getLogger(appName).e("updateDBTableETags", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -878,19 +992,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableLastSyncTime(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("updateDBTableLastSyncTime", msg);
+      WebLogger.getLogger(appName).e("updateDBTableLastSyncTime", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -902,19 +1020,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("updateDataInExistingDBTableWithId", msg);
+      WebLogger.getLogger(appName).e("updateDataInExistingDBTableWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -926,19 +1048,23 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId, rowETag, SyncState.valueOf(syncState));
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("updateRowETagAndSyncState", msg);
+      WebLogger.getLogger(appName).e("updateRowETagAndSyncState", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -949,20 +1075,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsForTableId(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("deleteAllSyncETagsForTableId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -974,20 +1104,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsExceptForServer(db, verifiedUri);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("deleteAllSyncETagsExceptForServer", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -999,20 +1133,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.deleteAllSyncETagsUnderServer(db, verifiedUri);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("deleteAllSyncETagsUnderServer", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -1024,20 +1162,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return seu.getFileSyncETag(db, verifiedUri, tableId, modificationTimestamp);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("getFileSyncETag", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -1049,20 +1191,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       return seu.getManifestSyncETag(db, verifiedUri, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("getManifestSyncETag", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -1074,20 +1220,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.updateFileSyncETag(db, verifiedUri, tableId, modificationTimestamp, eTag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("updateFileSyncETag", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
@@ -1099,20 +1249,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
-      db = AndroidConnectFactory.getOdkConnectionFactorySingleton().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       seu.updateManifestSyncETag(db, verifiedUri, tableId, eTag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
       if ( msg == null ) msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteAllSyncETags", msg);
+      WebLogger.getLogger(appName).e("updateManifestSyncETag", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
-      if ( db != null && db.isOpen() ) {
-        db.close();
+      if ( db != null ) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
