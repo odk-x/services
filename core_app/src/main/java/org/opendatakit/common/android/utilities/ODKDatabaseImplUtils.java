@@ -1827,16 +1827,33 @@ public class ODKDatabaseImplUtils {
    * rows are created by ODK Survey to hold intermediate values during the
    * filling-in of the form. They act as restore points in the Survey, should
    * the application die.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
    * @param rowId
    */
   public void deleteCheckpointRowsWithId(OdkConnectionInterface db, String appName, String tableId,
-      String rowId) {
+                                         String rowId) {
     rawDeleteDataInDBTable(db, tableId, DataTableColumns.ID + "=? AND "
-        + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", new String[] { rowId });
+            + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", new String[] { rowId });
+  }
+
+  /**
+   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *  @param db
+   * @param tableId
+   * @param rowId
+   */
+  public void deleteLastCheckpointRowWithId(OdkConnectionInterface db, String tableId,
+                                            String rowId) {
+    db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL "
+            + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
+            + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
+            + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId });
   }
 
   /**
@@ -1876,6 +1893,42 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
+   * Update all rows for the given rowId to SavepointType 'COMPLETE' and
+   * remove all but the most recent row. When used with a rowId that has
+   * checkpoints, this updates to the most recent checkpoint and removes any
+   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
+   * the general effect of resetting the rowId to an COMPLETE state.
+   *
+   * @param db
+   * @param tableId
+   * @param rowId
+   */
+  public void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(OdkConnectionInterface db,
+                                                                      String tableId, String rowId) {
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        beginTransactionNonExclusive(db);
+      }
+
+      db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
+                      + DataTableColumns.ID + "=?",
+              new String[] { SavepointTypeManipulator.complete(), rowId });
+      db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
+              + " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
+              + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId });
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
    * Update the given rowId with the values in the cvValues. If certain metadata
    * values are not specified in the cvValues, then suitable default values may
    * be supplied for them. Furthermore, if the cvValues do not specify certain
@@ -1900,6 +1953,142 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.putAll(cvValues);
 
     upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true);
+  }
+
+  /**
+   * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   */
+  public void insertCheckpointRowIntoExistingDBTableWithId(OdkConnectionInterface db, String tableId,
+                                                           OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
+
+    if (cvValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table for checkpoint" + tableId);
+    }
+
+    if (cvValues.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
+      throw new IllegalArgumentException(t + ": No user supplied savepoint timestamp can be included for a checkpoint");
+    }
+
+    if (cvValues.containsKey(DataTableColumns.SAVEPOINT_TYPE)) {
+      throw new IllegalArgumentException(t + ": No user supplied savepoint type can be included for a checkpoint");
+    }
+
+    if (cvValues.containsKey(DataTableColumns.CONFLICT_TYPE)) {
+      throw new IllegalArgumentException(t + ": No user supplied conflict type can be included for a checkpoint");
+    }
+
+    // If a rowId is specified, a cursor will be needed to
+    // get the current row to create a checkpoint with the relevant
+    // data
+    Cursor c = null;
+
+    // Allow the user to pass in no rowId if this is the first
+    // checkpoint row that the user is adding
+    if (rowId == null) {
+      String rowIdToUse = ODKDataUtils.genUUID();
+      ContentValues currValues = new ContentValues();
+      currValues.putAll(cvValues);
+      currValues.put(DataTableColumns._ID, rowIdToUse);
+      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+      return;
+    } else {
+      c = db.query(tableId, null, DataTableColumns.ID + "=?"
+                      + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
+                      + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
+                      + "\" WHERE " + DataTableColumns.ID + "=?)",
+              new String[]{rowId, rowId}, null, null, null, null);
+
+      if (c.getCount() > 1) {
+        throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
+      }
+    }
+
+    // Inserting a checkpoint for the first time
+    if (c.getCount() <= 0) {
+      cvValues.put(DataTableColumns._ID, rowId);
+      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues);
+      return;
+    } else {
+      // Make sure that the conflict_type of any existing row
+      // is null, otherwise throw an exception
+      c.moveToFirst();
+
+      int conflictIndex = c.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      if (!c.isNull(conflictIndex)) {
+        throw new IllegalStateException(t + ":  A checkpoint cannot be added for a row that is in conflict");
+      }
+
+      ContentValues currValues = new ContentValues();
+
+      currValues.putAll(cvValues);
+
+      // This is unnecessary
+      // We should only have one row at this point
+      //c.moveToFirst();
+
+      // Get the number of columns to iterate over and add
+      // those values to the content values
+      for (int i = 0; i < c.getColumnCount(); i++) {
+        String name = c.getColumnName(i);
+
+        if (currValues.containsKey(name)) {
+          continue;
+        }
+
+        if (c.isNull(i) || name.equals(DataTableColumns.SAVEPOINT_TIMESTAMP) ||
+            name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
+          currValues.putNull(name);
+          continue;
+        }
+
+        Class<?> theClass = ODKCursorUtils.getIndexDataType(c, i);
+        Object object = ODKCursorUtils.getIndexAsType(c, theClass, i);
+        insertValueIntoContentValues(currValues, theClass, name, object);
+      }
+
+      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+    }
+  }
+
+  private void insertValueIntoContentValues(ContentValues cv, Class<?> theClass, String name, Object obj) {
+
+    if (obj == null) {
+      cv.putNull(name);
+      return;
+    }
+
+    // Couldn't use the ODKCursorUtils.getIndexAsType
+    // because assigning the result to Object v
+    // would not work for the currValues.put function
+    if (theClass == Long.class) {
+      cv.put(name, (Long)obj);
+    } else if (theClass == Integer.class) {
+      cv.put(name, (Integer)obj);
+    } else if (theClass == Double.class) {
+      cv.put(name, (Double)obj);
+    } else if (theClass == String.class) {
+      cv.put(name, (String)obj);
+    } else if (theClass == Boolean.class) {
+      // stored as integers
+      Integer v = (Integer)obj;
+      cv.put(name, Boolean.valueOf(v != 0));
+    } else if (theClass == ArrayList.class) {
+      cv.put(name, (String)obj);
+    } else if (theClass == HashMap.class) {
+      // json deserialization of an object
+      cv.put(name, (String)obj);
+    } else {
+      throw new IllegalStateException("Unexpected data type in SQLite table " + theClass.toString());
+    }
   }
 
   /**
@@ -1928,6 +2117,105 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.putAll(cvValues);
 
     upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false);
+  }
+
+  /**
+   * Write checkpoint into the database
+   *
+   */
+  private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
+                                             OrderedColumns orderedColumns, ContentValues cvValues) {
+    String whereClause = null;
+    String[] whereArgs = new String[1];
+    String rowId = null;
+
+    if (cvValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    ContentValues cvDataTableVal = new ContentValues();
+    cvDataTableVal.putAll(cvValues);
+
+    if (cvDataTableVal.containsKey(DataTableColumns.ID)) {
+
+      rowId = cvDataTableVal.getAsString(DataTableColumns.ID);
+      if (rowId == null) {
+        throw new IllegalArgumentException(DataTableColumns.ID + ", if specified, cannot be null");
+      }
+    } else {
+      throw new IllegalArgumentException(t + ": rowId should not be null in insertCheckpointIntoExistingDBTable in the ContentValues");
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.ROW_ETAG)
+        || cvDataTableVal.get(DataTableColumns.ROW_ETAG) == null) {
+      cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
+        || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
+      cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
+      cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE)
+        || (cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
+      cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE)
+        || (cvDataTableVal.get(DataTableColumns.FILTER_VALUE) == null)) {
+      cvDataTableVal.put(DataTableColumns.FILTER_VALUE, DataTableColumns.DEFAULT_FILTER_VALUE);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
+      cvDataTableVal.putNull(DataTableColumns.FORM_ID);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+        || (cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+      cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+            || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+      cvDataTableVal.putNull(DataTableColumns.SAVEPOINT_TYPE);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
+            || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
+      String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
+    }
+
+    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+            || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+      cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR,
+              DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+    }
+
+
+    cleanUpValuesMap(orderedColumns, cvDataTableVal);
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        beginTransactionNonExclusive(db);
+      }
+
+      db.insertOrThrow(tableId, null, cvDataTableVal);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+
   }
 
   /*

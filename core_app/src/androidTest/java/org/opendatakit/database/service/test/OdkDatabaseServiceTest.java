@@ -684,4 +684,82 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             fail(e.getMessage());
         }
     }
+
+    public void testDbUpdateWTwoServiceConnections() {
+        OdkDbInterface serviceInterface1 = bindToDbService();
+        OdkDbInterface serviceInterface2 = bindToDbService();
+
+        try {
+            List<Column> columnList = createColumnList();
+            ColumnList colList = new ColumnList(columnList);
+            OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+            UUID rowId =  UUID.randomUUID();
+
+
+            OdkDbHandle db1 = serviceInterface1.openDatabase(APPNAME, false);
+            OdkDbHandle db2 = serviceInterface2.openDatabase(APPNAME, false);
+
+            serviceInterface1.beginTransaction(APPNAME, db1);
+            serviceInterface1.createOrOpenDBTableWithColumns(APPNAME, db1, DB_TABLE_ID, colList);
+            serviceInterface1.closeTransaction(APPNAME, db1, true);
+
+            serviceInterface1.beginTransaction(APPNAME, db1);
+            serviceInterface1.insertDataIntoExistingDBTableWithId(APPNAME, db1, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface1.closeTransaction(APPNAME, db1, true);
+
+            UserTable table;
+
+            // use service connection 1 to verify db is in correct state
+            serviceInterface1.beginTransaction(APPNAME, db1);
+            table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            verifyRowTestSet1(table.getRowAtIndex(0));
+            serviceInterface1.closeTransaction(APPNAME, db1, true);
+
+            // use service connection 2 to verify db is in correct state
+            serviceInterface2.beginTransaction(APPNAME, db2);
+            table = serviceInterface2.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            verifyRowTestSet1(table.getRowAtIndex(0));
+            serviceInterface2.closeTransaction(APPNAME, db2, true);
+
+            // use service connection 2 to update values
+            serviceInterface2.beginTransaction(APPNAME, db2);
+            serviceInterface2.updateDataInExistingDBTableWithId(APPNAME, db2, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId.toString());
+            serviceInterface2.closeTransaction(APPNAME, db2, true);
+
+
+            // use service connection 2 to verify db is in correct state
+            serviceInterface2.beginTransaction(APPNAME, db2);
+            table = serviceInterface1.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            verifyRowTestSet2(table.getRowAtIndex(0));
+            serviceInterface2.closeTransaction(APPNAME, db2, true);
+
+            // use service connection 1 to verify db is in correct state
+            serviceInterface1.beginTransaction(APPNAME, db1);
+            table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
+            assertEquals(DB_TABLE_ID, table.getTableId());
+            assertEquals(1, table.getNumberOfRows());
+            verifyRowTestSet2(table.getRowAtIndex(0));
+            serviceInterface1.closeTransaction(APPNAME, db1, true);
+
+            // clean up
+            serviceInterface1.beginTransaction(APPNAME, db1);
+            serviceInterface1.deleteDBTableAndAllData(APPNAME, db1, DB_TABLE_ID);
+            serviceInterface1.closeTransaction(APPNAME, db1, true);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface1, db1));
+            serviceInterface1.closeDatabase(APPNAME, db1);
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
 }

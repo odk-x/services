@@ -20,6 +20,7 @@ import android.test.AndroidTestCase;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -36,7 +37,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-
+/**
+ * Created by wrb on 9/21/2015.
+ *
+ * Put the actual unit tests in this Abstract class as there are two setups for running these tests
+ *
+ * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
+ * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
+ */
 public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
   private static final String TAG = "AbstractODKDatabaseUtilsTest";
@@ -48,8 +56,6 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   private static final String listChildElemKeys = "_list_child_element_keys";
 
   protected OdkConnectionInterface db;
-
-  //protected abstract OdkDbHandle getUniqueKey();
 
   protected abstract String getAppName();
 
@@ -2063,6 +2069,594 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
 
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowAlreadyExists_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String testVal2 = "test2";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+            cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+    }
+
+    assertEquals(val, testVal);
+
+    ContentValues updatedCvValues = new ContentValues();
+    updatedCvValues.put(testCol, testVal2);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, updatedCvValues, rowId);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 2);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    selArgs = new String[1];
+    selArgs[0] =  "" + testVal2;
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val2 = null;
+    String saveptType = null;
+    while (cursor.moveToNext()) {
+      // Get the actual value
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val2 = cursor.getString(ind);
+
+      // Get the savepoint_type
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      assertTrue(cursor.isNull(ind));
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val2, testVal2);
+
+    // Also make sure that the savepoint_type
+    // is empty
+    assertNotSame(saveptType, SavepointTypeManipulator.incomplete());
+    assertNotSame(saveptType, SavepointTypeManipulator.complete());
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowDoesNotExist_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      assertTrue(cursor.isNull(ind));
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val, testVal);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowIdNotProvided_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = null;
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    String saveptType = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      saveptType = cursor.getString(ind);
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val, testVal);
+
+    // Also make sure that the savepoint_type
+    // is empty
+    assertNotSame(saveptType, SavepointTypeManipulator.incomplete());
+    assertNotSame(saveptType, SavepointTypeManipulator.complete());
+
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowConflictType_ExpectFail() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+
+    boolean thrown = true;
+    try {
+      ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+    } catch (Exception e) {
+      thrown = true;
+      e.printStackTrace();
+    }
+
+    assertTrue(thrown);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowSavepointType_ExpectFail() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TYPE);
+
+    boolean thrown = true;
+    try {
+      ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+    } catch (Exception e) {
+      thrown = true;
+      e.printStackTrace();
+    }
+
+    assertTrue(thrown);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowSavepointTimestamp_ExpectFail() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TIMESTAMP);
+
+    boolean thrown = true;
+    try {
+      ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+    } catch (Exception e) {
+      thrown = true;
+      e.printStackTrace();
+    }
+
+    assertTrue(thrown);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test inserting a checkpoint row in the database
+   */
+  public void testInsertCheckpointRowIntoExistingDBTableWithIdAndNoData_ExpectFail() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+
+    boolean thrown = true;
+    try {
+      ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+    } catch (Exception e) {
+      thrown = true;
+      e.printStackTrace();
+    }
+
+    assertTrue(thrown);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test saving a checkpoint row in the database as complete
+   */
+  public void testSaveAsCompleteMostRecentCheckpointDataInDBTableWithId_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String testVal2 = "test2";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+            cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+    }
+
+    assertEquals(val, testVal);
+
+    ContentValues updatedCvValues = new ContentValues();
+    updatedCvValues.put(testCol, testVal2);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, updatedCvValues, rowId);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 2);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    selArgs = new String[1];
+    selArgs[0] =  "" + testVal2;
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val2 = null;
+    String saveptType = null;
+    while (cursor.moveToNext()) {
+      // Get the actual value
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val2 = cursor.getString(ind);
+
+      // Get the savepoint_timestamp
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      saveptType = cursor.getString(ind);
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val2, testVal2);
+
+    // Also make sure that the savepoint_type
+    // is empty
+    assertNotSame(saveptType, SavepointTypeManipulator.incomplete());
+    assertNotSame(saveptType, SavepointTypeManipulator.complete());
+
+    ODKDatabaseImplUtils.get().saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 1);
+
+    val2 = null;
+    saveptType = null;
+    while (cursor.moveToNext()) {
+      // Get the actual value
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val2 = cursor.getString(ind);
+
+      // Get the savepoint_timestamp
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      saveptType = cursor.getString(ind);
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val2, testVal2);
+    assertEquals(saveptType, SavepointTypeManipulator.complete());
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+   * Test saving a checkpoint row in the database as incomplete
+   */
+  public void testSaveAsIncompleteMostRecentCheckpointDataInDBTableWithId_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String testVal2 = "test2";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+            cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+    }
+
+    assertEquals(val, testVal);
+
+    ContentValues updatedCvValues = new ContentValues();
+    updatedCvValues.put(testCol, testVal2);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, updatedCvValues, rowId);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 2);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    selArgs = new String[1];
+    selArgs[0] =  "" + testVal2;
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val2 = null;
+    String saveptType = null;
+    while (cursor.moveToNext()) {
+      // Get the actual value
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val2 = cursor.getString(ind);
+
+      // Get the savepoint_timestamp
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      saveptType = cursor.getString(ind);
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val2, testVal2);
+
+    // Also make sure that the savepoint_type
+    // is empty
+    assertNotSame(saveptType, SavepointTypeManipulator.incomplete());
+    assertNotSame(saveptType, SavepointTypeManipulator.complete());
+
+    ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 1);
+
+    val2 = null;
+    saveptType = null;
+    while (cursor.moveToNext()) {
+      // Get the actual value
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val2 = cursor.getString(ind);
+
+      // Get the savepoint_timestamp
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      saveptType = cursor.getString(ind);
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val2, testVal2);
+    assertEquals(saveptType, SavepointTypeManipulator.incomplete());
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+  }
+
+  /*
+ * Test inserting a checkpoint row in the database
+ */
+  public void testDeleteLastCheckpointRowWithId_ExpectPass() {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.string.name();
+    String testVal = "test";
+    String rowId = ODKDataUtils.genUUID();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    String[] selArgs = { "" + testVal };
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    String val = null;
+    while (cursor.moveToNext()) {
+      int ind = cursor.getColumnIndex(testCol);
+      int type = cursor.getType(ind);
+      assertEquals(type, Cursor.FIELD_TYPE_STRING);
+      val = cursor.getString(ind);
+
+      ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      assertTrue(cursor.isNull(ind));
+
+      // Get the conflict_type and make sure that it is null
+      ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+      assertTrue(cursor.isNull(ind));
+    }
+
+    assertEquals(val, testVal);
+
+    ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
+    // Select everything out of the table
+    sel = "SELECT * FROM " + tableId;
+    selArgs = new String[0];
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+    assertEquals(cursor.getCount(), 0);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
 }
