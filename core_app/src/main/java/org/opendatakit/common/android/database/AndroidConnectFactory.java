@@ -106,6 +106,7 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
     }
 
     OdkConnectionInterface dbConnection = null;
+    OdkConnectionInterface dbConnectionExisting = null;
     logger.i("AndroidConnectFactory", "getDbConnection -- opening database");
 
     // this throws an exception if the db cannot be opened
@@ -113,12 +114,18 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
     if ( dbConnection != null ) {
       boolean success = false;
       try {
-        success = manipulator.put(sessionQualifier, dbConnection);
+        dbConnectionExisting = manipulator.put(sessionQualifier, dbConnection);
       } finally {
-        if ( !success ) {
+        if ( dbConnection != dbConnectionExisting ) {
           // we hold 1 reference count -- release it to destroy connection
           dbConnection.releaseReference();
-          throw new IllegalStateException("Unexpected contention when opening database for " + appName + " " + sessionQualifier);
+          if ( sessionQualifier.equals(appName) ) {
+            logger.w("AndroidConnectFactory", "Successfully resolved Contention when initially opening database for " + appName);
+            return dbConnectionExisting;
+          } else {
+            dbConnectionExisting.releaseReference();
+            throw new IllegalStateException("Unexpected contention when opening database for " + appName + " " + sessionQualifier);
+          }
         }
       }
     }
@@ -140,6 +147,8 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
             }
             dbConnection.setVersion(mNewVersion);
             dbConnection.setTransactionSuccessful();
+          } else {
+            dbConnection.setTransactionSuccessful();
           }
         } finally {
           dbConnection.endTransaction();
@@ -154,8 +163,12 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
             // we hold 1 reference count -- release it to destroy connection
             OdkConnectionInterface tmp = dbConnection;
             dbConnection = null;
+            // signal first -- releasing the reference may release this object...
+            tmp.signalInitializationComplete(false);
             tmp.releaseReference();
           }
+        } else {
+          dbConnection.signalInitializationComplete(true);
         }
       }
     }

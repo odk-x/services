@@ -16,6 +16,22 @@ public interface OdkConnectionInterface {
 
     public String getLastAction();
 
+  /**
+   * This should only be called for the main database initialization.
+   *
+   * @return true if initialization is successful.
+   */
+    public boolean waitForInitializationComplete();
+
+
+  /**
+   * Signal that initialization is complete with the given outcome
+   * @param outcome true if successful
+   */
+    public void signalInitializationComplete(boolean outcome);
+
+    public int getReferenceCount();
+
     public String getAppName();
 
     public String getSessionQualifier();

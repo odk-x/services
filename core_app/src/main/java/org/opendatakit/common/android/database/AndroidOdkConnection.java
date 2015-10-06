@@ -39,7 +39,10 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   final SQLiteDatabase db;
   final String sessionQualifier;
   String lastAction = "<new>";
-  
+  Object initializationMutex = new Object();
+  boolean initializationComplete = false;
+  boolean initializationStatus = false;
+
   
   public static AndroidOdkConnection openDatabase(Object mutex, String appName, String dbFilePath, String sessionQualifier) {
     SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
@@ -59,6 +62,33 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     this.appName = appName;
     this.db = db;
     this.sessionQualifier = sessionQualifier;
+  }
+
+  public boolean waitForInitializationComplete() {
+    for(;;) {
+      try {
+        synchronized (initializationMutex) {
+          if ( initializationComplete ) {
+            return initializationStatus;
+          }
+          initializationMutex.wait(100L);
+          if ( initializationComplete ) {
+            return initializationStatus;
+          }
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      WebLogger.getLogger(appName).i("AndroidOdkConnection", "waitForInitializationComplete - spin waiting " + Thread.currentThread().getId());
+    }
+  }
+
+  public void signalInitializationComplete(boolean outcome) {
+    synchronized (initializationMutex) {
+      initializationStatus = outcome;
+      initializationComplete = true;
+      initializationMutex.notifyAll();
+    }
   }
 
   public String getAppName() {

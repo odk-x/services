@@ -558,7 +558,7 @@ public class OdkDbShimService extends Service {
     // drain the active work queue
     worker.shutdown();
     try {
-      worker.awaitTermination(2000L, TimeUnit.MILLISECONDS);
+      worker.awaitTermination(3000L, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

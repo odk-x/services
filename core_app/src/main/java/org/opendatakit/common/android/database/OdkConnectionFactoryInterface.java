@@ -6,6 +6,7 @@ import android.content.Context;
 import android.util.StringBuilderPrinter;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import java.util.HashMap;
@@ -27,9 +28,9 @@ public abstract class OdkConnectionFactoryInterface {
      *
      * @param sessionQualifier
      * @param dbConnection
-     * @return  returns true if successful, false if this connection should be closed.
+     * @return  returns dbConnection if successful, existing connection if one already exists (race condition).
      */
-    boolean put(String sessionQualifier, OdkConnectionInterface dbConnection);
+    OdkConnectionInterface put(String sessionQualifier, OdkConnectionInterface dbConnection);
 
     /**
      * Remove the connection from the session map.
@@ -97,7 +98,7 @@ public abstract class OdkConnectionFactoryInterface {
         Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appNameToConnectionsMapEntry.getValue();
         for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
           OdkConnectionInterface dbConnection = sessionQualifierToConnectionMap.get(sessionQualifier);
-          b.append("dumpInfo: appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbConnection.getLastAction());
+          b.append("dumpInfo: refCount: " + dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbConnection.getLastAction());
           b.append("\n");
           StringBuilder bpb = new StringBuilder();
           StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
@@ -168,17 +169,106 @@ public abstract class OdkConnectionFactoryInterface {
       return getConnectionImpl(context, appName, dbHandleName.getDatabaseHandle());
     } else {
       throw new IllegalArgumentException("null sessionQualifier " + appName);
-      //      return getConnectionImpl(context, appName, null);
     }
   }
+
+  private final class AndroidSessionQualifierToConnectionMapManipulator
+          implements SessionQualifierToConnectionMapManipulator {
+
+    private String appName;
+
+    AndroidSessionQualifierToConnectionMapManipulator(String appName) {
+      this.appName = appName;
+    }
+
+    @Override
+    public OdkConnectionInterface put(String sessionQualifier, OdkConnectionInterface dbConnection) {
+      if (sessionQualifier == null || dbConnection == null) {
+        throw new IllegalArgumentException(
+                "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.add");
+      }
+      logInfo(appName,
+              "getDbConnection -- " + sessionQualifier + " -- opening new session on database");
+
+      for(;;) {
+        OdkConnectionInterface dbConnectionExisting = null;
+        synchronized (mutex) {
+          Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
+          if (dbConnectionMap == null) {
+            dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
+            appConnectionsMap.put(appName, dbConnectionMap);
+          }
+          dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
+
+          if (dbConnectionExisting == null) {
+            dbConnectionMap.put(sessionQualifier, dbConnection);
+            // this map now holds a reference
+            dbConnection.acquireReference();
+          } else {
+            // signal that getDbConnection() should release reference (do not call remove)
+            // +1 reference to retain this
+            dbConnectionExisting.acquireReference();
+          }
+        }
+
+        if (dbConnectionExisting == null ) {
+          return dbConnection;
+        }
+
+        boolean outcome = dbConnectionExisting.waitForInitializationComplete();
+        if ( outcome ) {
+          synchronized (mutex) {
+            // add the newly-created connection to the pending destruction list
+            pendingDestruction.put(dbConnection, System.currentTimeMillis());
+          }
+          return dbConnectionExisting;
+        } else {
+          // release the existing connection (because init failed)
+          dbConnectionExisting.releaseReference();
+          // give another thread time to process connection
+          try {
+            Thread.sleep(50L);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          // and loop, trying to insert our connection
+        }
+      }
+    }
+
+    @Override
+    public void remove(String sessionQualifier) {
+      if ( sessionQualifier == null ) {
+        throw new IllegalArgumentException(
+                "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.remove");
+      }
+      logInfo(appName,
+              "getDbConnection -- " + sessionQualifier + " -- removing session on database");
+      synchronized (mutex) {
+        Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
+        if (dbConnectionMap == null) {
+          return;
+        }
+        OdkConnectionInterface dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
+        if ( dbConnectionExisting != null ) {
+          // add the removed connection to the pending destruction list
+          pendingDestruction.put(dbConnectionExisting, System.currentTimeMillis());
+          dbConnectionMap.remove(sessionQualifier);
+        }
+      }
+    }
+  };
 
   private final OdkConnectionInterface getConnectionImpl(Context context, final String appName, String sessionQualifier) {
 
     if (sessionQualifier == null) {
-      sessionQualifier = appName;
+      throw new IllegalArgumentException("session qualifier cannot be null");
+    }
+    if (sessionQualifier.equals(appName)) {
+      throw new IllegalArgumentException("session qualifier cannot be the same as the appName");
     }
 
-    boolean shouldInitialize = false;
+    OdkConnectionInterface dbConnectionAppName = null;
     OdkConnectionInterface dbConnection = null;
     Object appNameMutex = null;
 
@@ -192,7 +282,12 @@ public abstract class OdkConnectionFactoryInterface {
       if (dbConnectionMap == null) {
         dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
         appConnectionsMap.put(appName, dbConnectionMap);
-        shouldInitialize = true;
+      }
+      dbConnectionAppName = dbConnectionMap.get(appName);
+      if ( dbConnectionAppName != null ) {
+        dbConnectionAppName.acquireReference();
+        logInfo(appName,
+                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to base database");
       }
       dbConnection = dbConnectionMap.get(sessionQualifier);
 
@@ -200,65 +295,41 @@ public abstract class OdkConnectionFactoryInterface {
         dbConnection.acquireReference();
         logInfo(appName,
                 "getDbConnection -- " + sessionQualifier + " -- obtaining reference to already-open database");
-        return dbConnection;
       }
     }
 
-    OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, sessionQualifier, shouldInitialize,
-            new SessionQualifierToConnectionMapManipulator() {
-              @Override
-              public boolean put(String sessionQualifier, OdkConnectionInterface dbConnection) {
-                if ( sessionQualifier == null || dbConnection == null ) {
-                  throw new IllegalArgumentException(
-                          "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.add");
-                }
-                logInfo(appName,
-                        "getDbConnection -- " + sessionQualifier + " -- opening new session on database");
-                synchronized (mutex) {
-                  Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
-                  if (dbConnectionMap == null) {
-                    dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
-                    appConnectionsMap.put(appName, dbConnectionMap);
-                  }
-                  OdkConnectionInterface dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
 
-                  if ( dbConnectionExisting == null ) {
-                    dbConnectionMap.put(sessionQualifier, dbConnection);
-                    // this map now holds a reference
-                    dbConnection.acquireReference();
-                    // signal that getDbConnection() should return this connection
-                    return true;
-                  } else {
-                    // add the newly-created connection to the pending destruction list
-                    pendingDestruction.put(dbConnection, System.currentTimeMillis());
-                    // signal that getDbConnection() should release reference (do not call remove)
-                    return false;
-                  }
-                }
-              }
+    AndroidSessionQualifierToConnectionMapManipulator manipulator =
+            new AndroidSessionQualifierToConnectionMapManipulator(appName);
 
-              @Override
-              public void remove(String sessionQualifier) {
-                if ( sessionQualifier == null ) {
-                  throw new IllegalArgumentException(
-                          "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.remove");
-                }
-                logInfo(appName,
-                        "getDbConnection -- " + sessionQualifier + " -- removing session on database");
-                synchronized (mutex) {
-                  Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
-                  if (dbConnectionMap == null) {
-                    return;
-                  }
-                  OdkConnectionInterface dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
-                  if ( dbConnectionExisting != null ) {
-                    // add the removed connection to the pending destruction list
-                    pendingDestruction.put(dbConnectionExisting, System.currentTimeMillis());
-                    dbConnectionMap.remove(sessionQualifier);
-                  }
-                }
-              }
-            });
+    boolean hasBeenInitialized = false;
+    if ( dbConnectionAppName != null ) {
+      hasBeenInitialized = dbConnectionAppName.waitForInitializationComplete();
+      dbConnectionAppName.releaseReference();
+    }
+
+    if ( !hasBeenInitialized && dbConnection == null ) {
+      logInfo(appName,
+              "getDbConnection -- " + sessionQualifier + " -- triggering initialization of base database");
+
+      // the "appName" database qualifier  is created once and left open
+      OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, appName, true,
+              manipulator);
+      // TODO: verify that we should release the reference here...
+      db.releaseReference();
+    }
+
+    if ( dbConnection != null ) {
+      logInfo(appName,
+              "getDbConnection -- " + sessionQualifier + " -- returning this existing session");
+      return dbConnection;
+    }
+
+    logInfo(appName,
+            "getDbConnection -- " + sessionQualifier + " -- creating this session now");
+    OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, sessionQualifier, false,
+            manipulator);
+
     return db;
   }
 
@@ -288,8 +359,13 @@ public abstract class OdkConnectionFactoryInterface {
         }
 
         if (sessionQualifier == null) {
-          sessionQualifier = appName;
+          throw new IllegalArgumentException("sessionQualifier cannot be null!");
         }
+
+        if (sessionQualifier.equals(appName) ) {
+          WebLogger.getLogger(appName).w("releaseDatabaseImpl", "releasing the base database handle");
+        }
+
         dbConnection = sessionQualifierToConnectionMap.get(sessionQualifier);
         if (dbConnection != null) {
           // add the removed connection to the pending destruction list
