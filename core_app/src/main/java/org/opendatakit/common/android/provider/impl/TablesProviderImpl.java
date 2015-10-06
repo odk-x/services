@@ -232,7 +232,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
       try {

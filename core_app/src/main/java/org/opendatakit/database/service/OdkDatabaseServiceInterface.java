@@ -64,7 +64,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
       if ( beginTransaction ) {
-        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       return dbHandleName;
     } catch (Exception e) {
@@ -93,7 +93,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();

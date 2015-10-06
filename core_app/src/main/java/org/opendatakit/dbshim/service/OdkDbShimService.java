@@ -410,7 +410,7 @@ public class OdkDbShimService extends Service {
               getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
 
       if ( !db.inTransaction() ) {
-        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
   
       if (sqlVerb.equals("SELECT")) {

@@ -122,7 +122,12 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = false;
 
     try {
-      ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null, null, null);
+      // this will not interact with the database if the
+      // query string is found in the PreparedStatement cache.
+      Cursor c = ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null, null, null);
+      // we must get the count of rows to actually interact
+      // with the database.
+      c.getCount();
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -193,7 +198,12 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = false;
 
     try {
-      ODKDatabaseImplUtils.get().rawQuery(db, query, null);
+      // this will not interact with the database if the
+      // query string is found in the PreparedStatement cache.
+      Cursor c = ODKDatabaseImplUtils.get().rawQuery(db, query, null);
+      // we must get the count of rows to actually interact
+      // with the database.
+      c.getCount();
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1066,7 +1076,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = false;
 
     try {
-      ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
+      String[] results = ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();

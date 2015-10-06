@@ -163,10 +163,6 @@ public class ODKDatabaseImplUtils {
     return EXPORT_COLUMNS;
   }
 
-  public void beginTransactionNonExclusive(OdkConnectionInterface db) {
-    db.beginTransactionNonExclusive();
-  }
-
   /**
    * Perform a raw query with bind parameters.
    * 
@@ -378,8 +374,17 @@ public class ODKDatabaseImplUtils {
    */
   public String[] getAllColumnNames(OdkConnectionInterface db, String tableId) {
     Cursor cursor = db.rawQuery("SELECT * FROM " + tableId + " LIMIT 1", null);
+    // If this query has been executed before, the cursor is created using the
+    // previously-constructed PreparedStatement for the query. There is no actual
+    // interaction with the database itself at the time the Cursor is constructed.
+    // The first database interaction is when the content of the cursor is fetched.
+    //
+    // This can be triggered by a call to getCount().
+    // At that time, if the table does not exist, it will throw an exception.
+    cursor.getCount();
+    // Otherwise, when cached, getting the column names doesn't call into the database
+    // and will not, itself, detect that the table has been dropped.
     String[] colNames = cursor.getColumnNames();
-
     return colNames;
   }
 
@@ -555,7 +560,7 @@ public class ODKDatabaseImplUtils {
       String[] whereArgs = { tableId };
 
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       // Drop the table used for the formId
@@ -665,7 +670,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
           TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
@@ -700,7 +705,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
           TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
@@ -777,7 +782,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
 
@@ -810,7 +815,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       if (clear) {
@@ -890,7 +895,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, b.toString(),
@@ -993,7 +998,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       StringBuilder b = new StringBuilder();
@@ -1432,7 +1437,7 @@ public class ODKDatabaseImplUtils {
     OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       if (!hasTableId(db, tableId)) {
         createDBTableWithColumns(db, appName, tableId, orderedDefs);
@@ -1563,7 +1568,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.execSQL(sqlConflictingServer, argsConflictingServer);
@@ -1600,7 +1605,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.delete(tableId, whereClause, whereArgs);
@@ -1639,7 +1644,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.update(tableId, cv, whereClause, whereArgs);
@@ -1679,7 +1684,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.update(tableId, cv, whereClause, whereArgs);
@@ -1752,7 +1757,7 @@ public class ODKDatabaseImplUtils {
 
       try {
         if (!dbWithinTransaction) {
-          beginTransactionNonExclusive(db);
+          db.beginTransactionNonExclusive();
         }
 
         db.delete(tableId, whereClause, whereArgs);
@@ -1783,7 +1788,7 @@ public class ODKDatabaseImplUtils {
           TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
       try {
         if (!dbWithinTransaction) {
-          beginTransactionNonExclusive(db);
+          db.beginTransactionNonExclusive();
         }
 
         db.update(tableId, values, DataTableColumns.ID + " = ?", whereArgs);
@@ -1807,7 +1812,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.delete(tableId, whereClause, whereArgs);
@@ -1850,10 +1855,11 @@ public class ODKDatabaseImplUtils {
    */
   public void deleteLastCheckpointRowWithId(OdkConnectionInterface db, String tableId,
                                             String rowId) {
-    db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL "
+    rawDeleteDataInDBTable(db, tableId, DataTableColumns.ID + "=? AND "
+            + DataTableColumns.SAVEPOINT_TYPE + " IS NULL "
             + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
             + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-            + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId });
+            + "\" WHERE " + DataTableColumns.ID + "=?)", new String[]{rowId, rowId});
   }
 
   /**
@@ -1872,7 +1878,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
@@ -1908,7 +1914,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
@@ -2202,7 +2208,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       db.insertOrThrow(tableId, null, cvDataTableVal);
@@ -2395,7 +2401,7 @@ public class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
-        beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
 
       if (update) {

@@ -229,7 +229,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
             null, null, null, null);
@@ -479,7 +479,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
       // Get the database and run the query
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
 
@@ -636,7 +636,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
       Cursor c = null;
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, null, pf.whereId, pf.whereIdArgs,

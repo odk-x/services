@@ -195,7 +195,7 @@ public class SyncETagsUtils {
     boolean inTransaction = db.inTransaction();
     try {
       if ( !inTransaction ) {
-        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 
@@ -315,7 +315,7 @@ public class SyncETagsUtils {
     boolean inTransaction = db.inTransaction();
     try {
       if ( !inTransaction ) {
-        ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+        db.beginTransactionNonExclusive();
       }
       db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 

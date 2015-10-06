@@ -492,7 +492,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
 
       boolean success = false;
       try {
@@ -639,7 +639,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
-      ODKDatabaseImplUtils.get().beginTransactionNonExclusive(db);
+      db.beginTransactionNonExclusive();
 
       boolean success = false;
       try {
