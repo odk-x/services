@@ -237,6 +237,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     } catch (Throwable t) {
       WebLogger.getLogger(appName).printStackTrace(t);
       WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo();
       StringBuilder b = new StringBuilder();
       StringBuilderPrinter p = new StringBuilderPrinter(b);
       SQLiteDatabase.dumpAll(p, true);

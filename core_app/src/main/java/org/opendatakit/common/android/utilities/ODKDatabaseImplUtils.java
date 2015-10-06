@@ -488,12 +488,17 @@ public class ODKDatabaseImplUtils {
     Cursor c = null;
     try {
       c = db.rawQuery(b.toString(), null);
-      int idxCheckpoints = c.getColumnIndex("checkpoints");
-      int idxConflicts = c.getColumnIndex("conflicts");
-      c.moveToFirst();
-      Integer checkpoints = ODKCursorUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
-      Integer conflicts = ODKCursorUtils.getIndexAsType(c, Integer.class, idxConflicts);
-      c.close();
+      Integer checkpoints = null;
+      Integer conflicts = null;
+      if ( c != null ) {
+        if (c.moveToFirst()) {
+          int idxCheckpoints = c.getColumnIndex("checkpoints");
+          int idxConflicts = c.getColumnIndex("conflicts");
+          checkpoints = ODKCursorUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
+          conflicts = ODKCursorUtils.getIndexAsType(c, Integer.class, idxConflicts);
+        }
+        c.close();
+      }
 
       int outcome = ODKCursorUtils.TABLE_HEALTH_IS_CLEAN;
       if (checkpoints != null && checkpoints != 0) {
@@ -512,7 +517,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Return all the tableIds in the database.
-   * 
+   *
    * @param db
    * @return an ArrayList<String> of tableIds
    */
@@ -546,7 +551,7 @@ public class ODKDatabaseImplUtils {
   /**
    * Drop the given tableId and remove all the files (both configuration and
    * data attachments) associated with that table.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
@@ -651,7 +656,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Update the schema and data-modification ETags of a given tableId.
-   * 
+   *
    * @param db
    * @param tableId
    * @param schemaETag
@@ -689,7 +694,7 @@ public class ODKDatabaseImplUtils {
   /**
    * Update the timestamp of the last entirely-successful synchronization
    * attempt of this table.
-   * 
+   *
    * @param db
    * @param tableId
    */
@@ -724,7 +729,7 @@ public class ODKDatabaseImplUtils {
    * Get the table definition entry for a tableId. This specifies the schema
    * ETag, the data-modification ETag, and the date-time of the last successful
    * sync of the table to the server.
-   * 
+   *
    * @param db
    * @param tableId
    * @return
@@ -766,7 +771,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Insert or update a single table-level metadata KVS entry.
-   * 
+   *
    * @param db
    * @param entry
    */
@@ -800,14 +805,12 @@ public class ODKDatabaseImplUtils {
    * Insert or update a list of table-level metadata KVS entries. If clear is
    * true, then delete the existing set of values for this tableId before
    * inserting the new values.
-   * 
+   *
    * @param db
    * @param tableId
-   * @param metadata
-   *          a List<KeyValueStoreEntry>
-   * @param clear
-   *          if true then delete the existing set of values for this tableId
-   *          before inserting the new ones.
+   * @param metadata a List<KeyValueStoreEntry>
+   * @param clear    if true then delete the existing set of values for this tableId
+   *                 before inserting the new ones.
    */
   public void replaceDBTableMetadata(OdkConnectionInterface db, String tableId,
       List<KeyValueStoreEntry> metadata, boolean clear) {
@@ -854,7 +857,7 @@ public class ODKDatabaseImplUtils {
   /**
    * The deletion filter includes all non-null arguments. If all arguments
    * (except the db) are null, then all properties are removed.
-   * 
+   *
    * @param db
    * @param tableId
    * @param partition
@@ -913,7 +916,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Filters results by all non-null field values.
-   * 
+   *
    * @param db
    * @param tableId
    * @param partition
@@ -989,7 +992,7 @@ public class ODKDatabaseImplUtils {
    * Clean up the KVS row data types. This simplifies the migration process by
    * enforcing the proper data types regardless of what the values are in the
    * imported CSV files.
-   * 
+   *
    * @param db
    * @param tableId
    */

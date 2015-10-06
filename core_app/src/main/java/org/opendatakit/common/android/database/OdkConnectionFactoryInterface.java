@@ -287,14 +287,14 @@ public abstract class OdkConnectionFactoryInterface {
       if ( dbConnectionAppName != null ) {
         dbConnectionAppName.acquireReference();
         logInfo(appName,
-                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to base database");
+                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to base database for " + appName + " when getting " + sessionQualifier);
       }
       dbConnection = dbConnectionMap.get(sessionQualifier);
 
       if (dbConnection != null) {
         dbConnection.acquireReference();
         logInfo(appName,
-                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to already-open database");
+                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to already-open database for " + appName + " when getting " + sessionQualifier);
       }
     }
 
@@ -310,7 +310,7 @@ public abstract class OdkConnectionFactoryInterface {
 
     if ( !hasBeenInitialized && dbConnection == null ) {
       logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- triggering initialization of base database");
+              "getDbConnection -- " + sessionQualifier + " -- triggering initialization of base database for " + appName + " when getting " + sessionQualifier);
 
       // the "appName" database qualifier  is created once and left open
       OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, appName, true,
@@ -321,12 +321,12 @@ public abstract class OdkConnectionFactoryInterface {
 
     if ( dbConnection != null ) {
       logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- returning this existing session");
+              "getDbConnection -- " + sessionQualifier + " -- returning this existing session for " + appName + " when getting " + sessionQualifier);
       return dbConnection;
     }
 
     logInfo(appName,
-            "getDbConnection -- " + sessionQualifier + " -- creating this session now");
+            "getDbConnection -- " + sessionQualifier + " -- creating this session now for " + appName + " when getting " + sessionQualifier);
     OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, sessionQualifier, false,
             manipulator);
 

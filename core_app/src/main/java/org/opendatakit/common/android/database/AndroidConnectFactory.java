@@ -99,15 +99,15 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
     } catch (Exception e) {
       if (logger != null) {
         logger.e("AndroidConnectFactory",
-                "External storage not available -- purging appConnectionsMap");
+                "External storage not available -- purging appConnectionsMap for " + appName + " " + sessionQualifier);
       }
-      releaseAllDatabases(context);
+      releaseDatabaseInstances(context, appName);
       return null;
     }
 
     OdkConnectionInterface dbConnection = null;
     OdkConnectionInterface dbConnectionExisting = null;
-    logger.i("AndroidConnectFactory", "getDbConnection -- opening database");
+    logger.i("AndroidConnectFactory", "getDbConnection -- opening database for " + appName + " " + sessionQualifier);
 
     // this throws an exception if the db cannot be opened
     dbConnection = AndroidOdkConnection.openDatabase(appNameMutex, appName, getDbFilePath(appName), sessionQualifier);
@@ -120,7 +120,7 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
           // we hold 1 reference count -- release it to destroy connection
           dbConnection.releaseReference();
           if ( sessionQualifier.equals(appName) ) {
-            logger.w("AndroidConnectFactory", "Successfully resolved Contention when initially opening database for " + appName);
+            logger.w("AndroidConnectFactory", "Successfully resolved Contention when initially opening database for " + appName + " " + sessionQualifier);
             return dbConnectionExisting;
           } else {
             dbConnectionExisting.releaseReference();
@@ -139,10 +139,10 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
           int version = dbConnection.getVersion();
           if (version != mNewVersion) {
             if (version == 0) {
-              logger.i("AndroidConnectionFactory","Invoking onCreate");
+              logger.i("AndroidConnectionFactory","Invoking onCreate for " + appName + " " + sessionQualifier);
               onCreate(dbConnection);
             } else {
-              logger.i("AndroidConnectionFactory","Invoking onUpgrade");
+              logger.i("AndroidConnectionFactory","Invoking onUpgrade for " + appName + " " + sessionQualifier);
               onUpgrade(dbConnection, version, mNewVersion);
             }
             dbConnection.setVersion(mNewVersion);
@@ -155,8 +155,8 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
         }
         initSuccessful = true;
       } finally {
+        dumpInfo();
         if ( !initSuccessful ) {
-          dumpInfo();
           try {
             manipulator.remove(sessionQualifier);
           } finally {
