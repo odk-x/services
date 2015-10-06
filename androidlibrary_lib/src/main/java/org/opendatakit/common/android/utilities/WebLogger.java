@@ -56,6 +56,7 @@ public class WebLogger {
   private static final int TIP = 8;
 
   private static final int LOG_INFO_LEVEL = 1;
+  private static final String DATE_FORMAT = "yyyy-MM-dd_HH";
 
   private static long lastStaleScan = 0L;
   private static Map<String, WebLogger> loggers = new HashMap<String, WebLogger>();
@@ -84,6 +85,9 @@ public class WebLogger {
   private OutputStreamWriter logFile = null;
   // the last time we flushed our output stream
   private long lastFlush = 0L;
+
+  // date formatter
+  private SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
 
   private class LoggingFileObserver extends FileObserver {
 
@@ -222,8 +226,7 @@ public class WebLogger {
   }
 
   private synchronized void log(String logMsg) throws IOException {
-    String curDateStamp = (new SimpleDateFormat("yyyy-MM-dd_HH", Locale.ENGLISH))
-        .format(new Date());
+    String curDateStamp = dateFormatter.format(new Date());
     if (logFile == null || dateStamp == null || !curDateStamp.equals(dateStamp)) {
       // the file we should log to has changed.
       // or has not yet been opened.
