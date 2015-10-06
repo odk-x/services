@@ -34,6 +34,8 @@ public interface OdkConnectionInterface {
 
     public String getAppName();
 
+    public long getLastThreadId();
+
     public String getSessionQualifier();
 
     public void dumpDetail(Printer printer);

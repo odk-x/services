@@ -617,18 +617,18 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       for (String tableId : tableIds) {
         int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-        if ( health != ODKCursorUtils.TABLE_HEALTH_IS_CLEAN ) {
+        if (health != ODKCursorUtils.TABLE_HEALTH_IS_CLEAN) {
           TableHealthStatus status = TableHealthStatus.TABLE_HEALTH_IS_CLEAN;
           switch (health) {
-          case ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS:
-            status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
-            break;
-          case ODKCursorUtils.TABLE_HEALTH_HAS_CONFLICTS:
-            status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
-            break;
-          case ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS:
-            status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
-            break;
+            case ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS:
+              status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
+              break;
+            case ODKCursorUtils.TABLE_HEALTH_HAS_CONFLICTS:
+              status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
+              break;
+            case ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS:
+              status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
+              break;
           }
           TableHealthInfo info = new TableHealthInfo(tableId, status);
           problems.add(info);
@@ -640,6 +640,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
               "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed) + " ms");
 
       return problems;
+    } catch (Throwable t) {
+      WebLogger.getLogger(appName).e("getTableHealthStatuses", "exception during processing");
+      WebLogger.getLogger(appName).printStackTrace(t);
+      throw t;
     } finally {
       if ( db != null ) {
         // release the reference...

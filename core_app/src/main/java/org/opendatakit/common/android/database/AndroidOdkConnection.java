@@ -39,6 +39,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   final SQLiteDatabase db;
   final String sessionQualifier;
   String lastAction = "<new>";
+  long threadId = -1L;
   Object initializationMutex = new Object();
   boolean initializationComplete = false;
   boolean initializationStatus = false;
@@ -62,6 +63,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     this.appName = appName;
     this.db = db;
     this.sessionQualifier = sessionQualifier;
+    this.threadId = Thread.currentThread().getId();
   }
 
   public boolean waitForInitializationComplete() {
@@ -93,6 +95,10 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public String getAppName() {
     return appName;
+  }
+
+  public long getLastThreadId() {
+    return threadId;
   }
 
   public String getSessionQualifier() {
@@ -149,6 +155,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public boolean isOpen() {
     synchronized (mutex) {
+      this.threadId = Thread.currentThread().getId();
       return db.isOpen();
     }
   }
@@ -175,6 +182,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     if ( isOpen() ) {
       try {
         boolean first = true;
+        threadId = Thread.currentThread().getId();
         while (inTransaction()) {
           if (!first) {
             lastAction = action + "...end transaction[unknown] (finalAction: " + lastAction + ")";
@@ -185,7 +193,12 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
           log();
           endTransaction();
         }
+      } catch ( Throwable t ) {
+        WebLogger.getLogger(appName).e("commonWrapUpConnection", "Yikes! threw an exception within connection cleanup routine");
+        WebLogger.getLogger(appName).printStackTrace(t);
+        throw t;
       } finally {
+        threadId = Thread.currentThread().getId();
         lastAction = action + "...close(finalAction: " + lastAction + ")";
         log();
         synchronized (mutex) {
@@ -196,6 +209,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public int getVersion() {
+    threadId = Thread.currentThread().getId();
     lastAction = "getVersion(finalAction: " + lastAction + ")";
     log();
     synchronized (mutex) {
@@ -204,6 +218,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void setVersion(int version) {
+    threadId = Thread.currentThread().getId();
     lastAction = "setVersion=" + version + "(finalAction: " + lastAction + ")";
     log();
     synchronized (mutex) {
@@ -212,6 +227,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void beginTransactionNonExclusive() {
+    threadId = Thread.currentThread().getId();
     lastAction = "beginTransactionNonExclusive(priorAction: " + lastAction + ")";
     log();
     try {
@@ -231,6 +247,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public boolean inTransaction() {
+    threadId = Thread.currentThread().getId();
     lastAction = "inTransaction(finalAction: " + lastAction + ")";
     log();
     synchronized (mutex) {
@@ -239,6 +256,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void setTransactionSuccessful() {
+    threadId = Thread.currentThread().getId();
     lastAction = "setTransactionSuccessful(finalAction: " + lastAction + ")";
     log();
     synchronized (mutex) {
@@ -247,6 +265,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void endTransaction() {
+    threadId = Thread.currentThread().getId();
     lastAction = "endTransaction(finalAction: " + lastAction + ")";
     log();
     synchronized (mutex) {
@@ -255,6 +274,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
+    threadId = Thread.currentThread().getId();
     lastAction = "update=" + table + " WHERE " + whereClause;
     log();
     synchronized (mutex) {
@@ -263,6 +283,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public int delete(String table, String whereClause, String[] whereArgs) {
+    threadId = Thread.currentThread().getId();
     lastAction = "delete=" + table + " WHERE " + whereClause;
     log();
     synchronized (mutex) {
@@ -272,6 +293,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
       throws SQLException {
+    threadId = Thread.currentThread().getId();
     lastAction = "replaceOrThrow=" + table;
     log();
     synchronized (mutex) {
@@ -281,6 +303,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
       throws SQLException {
+    threadId = Thread.currentThread().getId();
     lastAction = "insertOrThrow=" + table;
     log();
     synchronized (mutex) {
@@ -289,6 +312,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void execSQL(String sql, Object[] bindArgs) throws SQLException {
+    threadId = Thread.currentThread().getId();
     lastAction = "execSQL=" + sql;
     log();
     synchronized (mutex) {
@@ -297,6 +321,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public void execSQL(String sql) throws SQLException {
+    threadId = Thread.currentThread().getId();
     lastAction = "execSQL=" + sql;
     log();
     synchronized (mutex) {
@@ -305,6 +330,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public Cursor rawQuery(String sql, String[] selectionArgs) {
+    threadId = Thread.currentThread().getId();
     lastAction = "rawQuery=" + sql;
     log();
     synchronized (mutex) {
@@ -314,6 +340,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
       String groupBy, String having, String orderBy, String limit) {
+    threadId = Thread.currentThread().getId();
     lastAction = "query=" + table + " WHERE " + selection;
     log();
     synchronized (mutex) {
@@ -323,6 +350,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
 
   public Cursor queryDistinct(String table, String[] columns, String selection,
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+    threadId = Thread.currentThread().getId();
     lastAction = "queryDistinct=" + table + " WHERE " + selection;
     log();
     synchronized (mutex) {
