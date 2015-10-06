@@ -98,7 +98,7 @@ public abstract class OdkConnectionFactoryInterface {
         Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appNameToConnectionsMapEntry.getValue();
         for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
           OdkConnectionInterface dbConnection = sessionQualifierToConnectionMap.get(sessionQualifier);
-          b.append("dumpInfo: lastThreadId: " + Long.toString(dbConnection.getLastThreadId()) + " refCount: " + dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbConnection.getLastAction());
+          b.append("dumpInfo: lastThreadId: " + dbConnection.getLastThreadId() + " refCount: " + dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbConnection.getLastAction());
           b.append("\n");
           StringBuilder bpb = new StringBuilder();
           StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
