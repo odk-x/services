@@ -15,7 +15,7 @@ public class Base64WrapperTest extends TestCase {
     @Test(expected=ClassNotFoundException.class)
     public void testWrapperCreation() {
         try {
-            Base64Wrapper wrapper = new Base64Wrapper();
+            Base64Wrapper wrapper = new Base64Wrapper("unittestTMP");
         } catch (ClassNotFoundException e) {
 
         }
