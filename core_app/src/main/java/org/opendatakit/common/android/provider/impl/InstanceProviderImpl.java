@@ -78,7 +78,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
     }
   }
 
@@ -143,7 +143,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
 
       internalUpdate(db, uri, appName, tableId);
 
@@ -169,7 +169,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }
@@ -491,7 +491,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
 
       boolean success = false;
@@ -606,7 +606,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }
@@ -638,7 +638,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     int count = 0;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
 
       boolean success = false;
@@ -712,7 +712,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }

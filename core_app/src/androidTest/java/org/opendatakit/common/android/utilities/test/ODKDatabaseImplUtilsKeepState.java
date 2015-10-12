@@ -16,6 +16,7 @@ import org.opendatakit.database.service.OdkDbHandle;
  */
 public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest {
 
+   private static boolean initialized = false;
     private static final String APPNAME = TestConsts.APPNAME;
     private static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
 
@@ -34,8 +35,14 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(APPNAME);
 
+       if ( !initialized ) {
+          initialized = true;
+          // Used to ensure that the singleton has been initialized properly
+          AndroidConnectFactory.configure();
+       }
+
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), getAppName(), uniqueKey);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
         verifyNoTablesExistNCleanAllTables();
     }
 

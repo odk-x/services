@@ -248,7 +248,7 @@ public class SubmissionProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
 
       boolean success = false;
       try {
@@ -785,7 +785,7 @@ public class SubmissionProvider extends ContentProvider {
           db.releaseReference();
         } finally {
           // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
         }
       }
     }

@@ -53,7 +53,7 @@ public interface OdkConnectionInterface {
   /*
    * close() is not implemented. Instead, users should call:
    *
-   * {@link OdkConnectionFactoryInterface.releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName)}
+   * {@link OdkConnectionFactoryInterface.releaseDatabase(String appName, OdkDbHandle dbHandleName)}
    *
    * That method or one of its variants will ensure that this interface is removed from the set of active
    * interfaces managed by the connection factory.

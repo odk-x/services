@@ -85,7 +85,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
                 TEST_FILE_PREFIX);
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases(context);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases();
         FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
 
         ODKFileUtils.verifyExternalStorageAvailability();
@@ -93,7 +93,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         ODKFileUtils.assertDirectoryStructure(getAppName());
 
         // +1 referenceCount if db is returned (non-null)
-        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(context, getAppName(), uniqueKey);
+        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
 
         DatabaseInitializer.onCreate(db);
     }
@@ -106,8 +106,8 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         }
 
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
-        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(context, getAppName(), uniqueKey);
-        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases(context);
+        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getAppName(), uniqueKey);
+        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases();
         FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
 
         super.tearDown();

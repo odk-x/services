@@ -54,7 +54,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
       // this releases the connection
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
     }
   }
 
@@ -131,7 +131,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     Cursor c = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
           null, null, sortOrder, null);
 
@@ -156,7 +156,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }
@@ -231,7 +231,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
@@ -268,7 +268,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }

@@ -177,8 +177,8 @@ public class OdkDbShimService extends Service {
   private void assertGeneration(String appName, String thisGeneration, 
       String contextName, DbShimCallback callback) throws RemoteException {
 
-    boolean releasedSessions = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstances(
-        getApplicationContext(), appName, thisGeneration, true);
+    boolean releasedSessions = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .releaseDatabaseGroupInstances(appName, thisGeneration, true);
     
     if ( releasedSessions ) {
       WebLogger logger = WebLogger.getLogger(appName);
@@ -223,8 +223,8 @@ public class OdkDbShimService extends Service {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
-              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getDatabaseGroupInstance(appName, thisGeneration, thisTransactionGeneration);
 
       if (db != null) {
         logger.i(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
@@ -262,8 +262,8 @@ public class OdkDbShimService extends Service {
           db.releaseReference();
         } finally {
           // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstance(
-                  getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+              .releaseDatabaseGroupInstance(appName, thisGeneration, thisTransactionGeneration);
         }
       }
     }
@@ -292,8 +292,8 @@ public class OdkDbShimService extends Service {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
-              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getDatabaseGroupInstance(appName, thisGeneration, thisTransactionGeneration);
 
       if (db != null) {
         logger.i(LOGTAG, "commit gen: " + thisGeneration + " transaction: " + thisTransactionGeneration);
@@ -341,8 +341,8 @@ public class OdkDbShimService extends Service {
           db.releaseReference();
         } finally {
           // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstance(
-                  getApplicationContext(), appName, thisGeneration, thisTransactionGeneration);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+              .releaseDatabaseGroupInstance(appName, thisGeneration, thisTransactionGeneration);
         }
       }
     }
@@ -406,8 +406,8 @@ public class OdkDbShimService extends Service {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getDatabaseGroupInstance(
-              getApplicationContext(), appName, thisGeneration, thisTransactionGeneration );
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getDatabaseGroupInstance(appName, thisGeneration, thisTransactionGeneration );
 
       if ( !db.inTransaction() ) {
         db.beginTransactionNonExclusive();
@@ -540,14 +540,14 @@ public class OdkDbShimService extends Service {
   public boolean onUnbind(Intent intent) {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances(getApplicationContext());
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
   }
 
   public synchronized void appNameDied(String appName) {
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstances(getApplicationContext(), appName, null, true);
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabaseGroupInstances(appName, null, true);
   }
   
   @Override
@@ -565,7 +565,7 @@ public class OdkDbShimService extends Service {
     worker = null;
 
     // and release any transactions we are holding...
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances(getApplicationContext());
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseGroupInstances();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     Log.i(LOGTAG, "onDestroy - done");

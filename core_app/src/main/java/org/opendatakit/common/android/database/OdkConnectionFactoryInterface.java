@@ -1,595 +1,594 @@
 package org.opendatakit.common.android.database;
 
-// the Android Context is mocked on the desktop...
-import android.content.Context;
-
-import android.util.StringBuilderPrinter;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 /**
  * Created by clarice on 9/14/15.
  */
 public abstract class OdkConnectionFactoryInterface {
 
-  /** used by subclasses to modify the appConnectionsMap */
-  protected interface SessionQualifierToConnectionMapManipulator {
-    /**
-     * Insert the connection into the session map.
-     * The connection already has referenceCount == 1
-     * It should not be incremented inside this routine.
-     *
-     * @param sessionQualifier
-     * @param dbConnection
-     * @return  returns dbConnection if successful, existing connection if one already exists (race condition).
-     */
-    OdkConnectionInterface put(String sessionQualifier, OdkConnectionInterface dbConnection);
+   /** the version that the application expects */
+   private final int mNewVersion = 1;
 
-    /**
-     * Remove the connection from the session map.
-     * The connection referenceCount is not modified.
-     *
-     * @param sessionQualifier
-     */
-    void remove(String sessionQualifier);
-  }
+   public static final String GROUP_TYPE_DIVIDER = "--";
+   public static final String INTERNAL_TYPE_SUFFIX = "-internal";
 
-    public static final String GROUP_TYPE_DIVIDER = "--";
-    public static final String INTERNAL_TYPE_SUFFIX = "-internal";
+   /**
+    * object for guarding appNameSharedStateMap
+    * <p/>
+    * That map never has its contents removed, so once an AppNameSharedStateContainer
+    * is obtained, we can hold it and interact with it outside of this mutex. The
+    * mutex only ensures that the puts/gets are not corrupted in the TreeMap.
+    */
+   private final Object mutex = new Object();
 
-  /** object for guarding appNameMutexMap, appConnectionsMap, pendingDestruction */
-  private final Object mutex = new Object();
+   /**
+    * This map MUST BE ACCESSED AND UPDATED after gaining the above mutex.
+    * <p/>
+    * map of appName -TO- AppNameSharedStateContainer
+    * <p/>
+    * AppNameSharedStateContainer contains the shared state for the given appName.
+    * i.e., the appNameMutex and the sessionMutex generator, and the map of
+    * sessionQualifier to OdkDbHandles. Callers should obtain the sessionMutex
+    * once and save it for later use, as it is not recoverable.
+    * <p/>
+    * The AppNameSharedStateContainer does its own multithreaded access protection,
+    * and this map never removes items, so we can safely hold AppNameSharedStateContainer
+    * entries outside of this map.
+    */
+   private final Map<String, AppNameSharedStateContainer> appNameSharedStateMap = new TreeMap<String, AppNameSharedStateContainer>();
 
-  /**
-   * Holds the mutex that should be used for all access to the given
-   * appName's database.
-   */
-  private final HashMap<String,Object> appNameMutexMap = new HashMap<String, Object>();
-  /**
-   * This map MUST BE ACCESSED AND UPDATED after gaining the mutex.
-   *
-   * map of appName -TO-
-   * map of sessionQualifier -TO- dabase handle
-   *
-   * The sessionQualifier enables different sections of code to isolate themselves
-   * from the transactions that are in-progress in other sections of code.
-   */
-  private final Map<String, Map<String, OdkConnectionInterface>>
-          appConnectionsMap = new HashMap<String, Map<String, OdkConnectionInterface>>();
+   protected abstract void logInfo(String appName, String message);
 
-  /**
-   * holds connections that are in process of being destroyed.
-   */
-  private final WeakHashMap<OdkConnectionInterface, Long>
-          pendingDestruction = new WeakHashMap<OdkConnectionInterface, Long>();
+   protected abstract void logWarn(String appName, String message);
 
-  protected abstract void logInfo(String appName, String message);
+   protected abstract void logError(String appName, String message);
 
-  protected abstract void logWarn(String appName, String message);
+   protected abstract void printStackTrace(String appName, Throwable e);
 
-  protected abstract void logError(String appName, String message);
+   protected abstract OdkConnectionInterface openDatabase(Object sessionMutex, String appName, String sessionQualifier);
 
-  protected abstract void printStackTrace(String appName, Throwable e);
+   /**
+    * This handle is suitable for non-service uses.
+    *
+    * @return
+    */
+   public final OdkDbHandle generateInternalUseDbHandle() {
+      return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+   }
 
-  protected abstract OdkConnectionInterface getDbConnection(Context context, Object appNameMutex, String appName,
-                                                            String sessionQualifier,
-                                                            boolean shouldInitialize,
-                                                            SessionQualifierToConnectionMapManipulator mapManipulator);
+   /**
+    * This handle is suitable for database service use.
+    *
+    * @return
+    */
+   public final OdkDbHandle generateDatabaseServiceDbHandle() {
+      return new OdkDbHandle(ODKDataUtils.genUUID());
+   }
 
-  public final void dumpInfo() {
-    Map<String, StringBuilder> dumps = new HashMap<String, StringBuilder>();
-    synchronized (mutex) {
-      for (Map.Entry<String, Map<String, OdkConnectionInterface>>
-              appNameToConnectionsMapEntry : appConnectionsMap.entrySet()) {
-        String appName = appNameToConnectionsMapEntry.getKey();
-        StringBuilder b = dumps.get(appName);
-        if ( b == null ) {
-          b = new StringBuilder();
-          b.append("----------------" + appName + "-------------\n");
-          dumps.put(appName, b);
-        }
-        Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appNameToConnectionsMapEntry.getValue();
-        for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
-          OdkConnectionInterface dbConnection = sessionQualifierToConnectionMap.get(sessionQualifier);
-          b.append("dumpInfo: lastThreadId: " + dbConnection.getLastThreadId() + " refCount: " + dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbConnection.getLastAction());
-          b.append("\n");
-          StringBuilder bpb = new StringBuilder();
-          StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
-          dbConnection.dumpDetail(pb);
-          b.append(bpb.toString());
-          b.append("\n");
-        }
-      }
-
-      for ( StringBuilder b : dumps.values()) {
-        b.append("\n-----pendingDestruction------------\n");
-      }
-
-      for (WeakHashMap.Entry<OdkConnectionInterface, Long> dbconnectionPD : pendingDestruction.entrySet()) {
-        OdkConnectionInterface dbKey = dbconnectionPD.getKey();
-
-        if (dbKey != null) {
-          String appName = dbKey.getAppName();
-          StringBuilder b = dumps.get(appName);
-          if ( b == null ) {
-            b = new StringBuilder();
-            dumps.put(appName, b);
-          }
-
-          String sessionQualifier = dbKey.getSessionQualifier();
-          Long value = dbconnectionPD.getValue();
-
-          b.append("dumpInfo: appName " + appName + " sessionQualifier " + sessionQualifier + " lastAction " + dbKey.getLastAction());
-          b.append(" -- closed at " + value + "\n");
-          StringBuilder bpb = new StringBuilder();
-          StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
-          dbKey.dumpDetail(pb);
-          b.append(bpb.toString());
-          b.append("\n-------\n");
-        }
-      }
-
-      for ( StringBuilder b : dumps.values()) {
-        b.append("\n-----done------------\n");
-      }
-    }
-
-    for ( String appName : dumps.keySet()) {
-      logWarn(appName, dumps.get(appName).toString());
-    }
-  }
-
-  /**
-   * This handle is suitable for non-service uses.
-   *
-   * @return
-   */
-  public final OdkDbHandle generateInternalUseDbHandle() {
-    return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
-  }
-
-  /**
-   * This handle is suitable for database service use.
-   *
-   * @return
-   */
-  public final OdkDbHandle generateDatabaseServiceDbHandle() {
-    return new OdkDbHandle(ODKDataUtils.genUUID());
-  }
-
-  public final OdkConnectionInterface getConnection(Context context, String appName, OdkDbHandle dbHandleName) {
-    if (dbHandleName != null) {
-      return getConnectionImpl(context, appName, dbHandleName.getDatabaseHandle());
-    } else {
-      throw new IllegalArgumentException("null sessionQualifier " + appName);
-    }
-  }
-
-  private final class AndroidSessionQualifierToConnectionMapManipulator
-          implements SessionQualifierToConnectionMapManipulator {
-
-    private String appName;
-
-    AndroidSessionQualifierToConnectionMapManipulator(String appName) {
-      this.appName = appName;
-    }
-
-    @Override
-    public OdkConnectionInterface put(String sessionQualifier, OdkConnectionInterface dbConnection) {
-      if (sessionQualifier == null || dbConnection == null) {
-        throw new IllegalArgumentException(
-                "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.add");
-      }
-      logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- opening new session on database");
-
-      for(;;) {
-        OdkConnectionInterface dbConnectionExisting = null;
-        synchronized (mutex) {
-          Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
-          if (dbConnectionMap == null) {
-            dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
-            appConnectionsMap.put(appName, dbConnectionMap);
-          }
-          dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
-
-          if (dbConnectionExisting == null) {
-            dbConnectionMap.put(sessionQualifier, dbConnection);
-            // this map now holds a reference
-            dbConnection.acquireReference();
-          } else {
-            // signal that getDbConnection() should release reference (do not call remove)
-            // +1 reference to retain this
-            dbConnectionExisting.acquireReference();
-          }
-        }
-
-        if (dbConnectionExisting == null ) {
-          return dbConnection;
-        }
-
-        boolean outcome = dbConnectionExisting.waitForInitializationComplete();
-        if ( outcome ) {
-          synchronized (mutex) {
-            // add the newly-created connection to the pending destruction list
-            pendingDestruction.put(dbConnection, System.currentTimeMillis());
-          }
-          return dbConnectionExisting;
-        } else {
-          // release the existing connection (because init failed)
-          dbConnectionExisting.releaseReference();
-          // give another thread time to process connection
-          try {
-            Thread.sleep(50L);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-          // and loop, trying to insert our connection
-        }
-      }
-    }
-
-    @Override
-    public void remove(String sessionQualifier) {
-      if ( sessionQualifier == null ) {
-        throw new IllegalArgumentException(
-                "getConnectionInnerImpl: null arg to SessionQualifierToConnectionMapManipulator.remove");
-      }
-      logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- removing session on database");
+   /**
+    * Dump the state and history of the database layer.
+    * Useful for debugging and understanding
+    * cross-thread interactions.
+    */
+   public final void dumpInfo() {
+      ArrayList<AppNameSharedStateContainer> containers = new ArrayList<AppNameSharedStateContainer>();
       synchronized (mutex) {
-        Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
-        if (dbConnectionMap == null) {
-          return;
-        }
-        OdkConnectionInterface dbConnectionExisting = dbConnectionMap.get(sessionQualifier);
-        if ( dbConnectionExisting != null ) {
-          // add the removed connection to the pending destruction list
-          pendingDestruction.put(dbConnectionExisting, System.currentTimeMillis());
-          dbConnectionMap.remove(sessionQualifier);
-        }
+         for (String appName : appNameSharedStateMap.keySet()) {
+            containers.add(appNameSharedStateMap.get(appName));
+         }
       }
-    }
-  };
 
-  private final OdkConnectionInterface getConnectionImpl(Context context, final String appName, String sessionQualifier) {
-
-    if (sessionQualifier == null) {
-      throw new IllegalArgumentException("session qualifier cannot be null");
-    }
-    if (sessionQualifier.equals(appName)) {
-      throw new IllegalArgumentException("session qualifier cannot be the same as the appName");
-    }
-
-    OdkConnectionInterface dbConnectionAppName = null;
-    OdkConnectionInterface dbConnection = null;
-    Object appNameMutex = null;
-
-    synchronized (mutex) {
-      appNameMutex = appNameMutexMap.get(appName);
-      if ( appNameMutex == null ) {
-        appNameMutex = new Object();
-        appNameMutexMap.put(appName, appNameMutex);
+      for (AppNameSharedStateContainer container : containers) {
+         StringBuilder b = new StringBuilder();
+         container.dumpInfo(b);
+         logWarn(container.getAppName(), b.toString());
       }
-      Map<String, OdkConnectionInterface> dbConnectionMap = appConnectionsMap.get(appName);
-      if (dbConnectionMap == null) {
-        dbConnectionMap = new HashMap<String, OdkConnectionInterface>();
-        appConnectionsMap.put(appName, dbConnectionMap);
+   }
+
+   private final OdkConnectionInterface getConnectionDb(
+       AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier, boolean
+       shouldInitialize  ) {
+
+      if (sessionQualifier == null) {
+         throw new IllegalArgumentException(
+             "getConnectionDb: null sessionQualifier");
       }
-      dbConnectionAppName = dbConnectionMap.get(appName);
-      if ( dbConnectionAppName != null ) {
-        dbConnectionAppName.acquireReference();
-        logInfo(appName,
-                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to base database for " + appName + " when getting " + sessionQualifier);
+
+      String appName = appNameSharedStateContainer.getAppName();
+
+      OdkConnectionInterface dbConnection = null;
+      OdkConnectionInterface dbConnectionExisting = null;
+      logInfo(appName, "getDbConnection -- opening database for " +
+          appName + " " + sessionQualifier);
+
+      // this throws an exception if the db cannot be opened
+      dbConnection = openDatabase(appNameSharedStateContainer.getSessionMutex(), appName, sessionQualifier);
+      if ( dbConnection != null ) {
+         boolean success = false;
+         try {
+            logInfo(appName,
+                "getConnectionDb -- " + sessionQualifier + " -- opening new session on database");
+
+            for (;;) {
+               dbConnectionExisting = null;
+               // +1 of either dbConnectionExisting (!= null) or else of dbConnection
+               dbConnectionExisting = appNameSharedStateContainer
+                   .atomicSetOrGetExisting(sessionQualifier, dbConnection);
+
+               if (dbConnectionExisting == null) {
+                  // return this connection (no conflict)
+                  dbConnectionExisting = dbConnection;
+                  break;
+               }
+
+               // block waiting for the existing connection in the map to complete initialization.
+               boolean outcome = dbConnectionExisting.waitForInitializationComplete();
+               if (outcome) {
+                  // success -- release the dbConnection we opened
+                  // and return the existing connection
+                  boolean releaseTwice =
+                      appNameSharedStateContainer.moveIntoPendingDestruction(dbConnection);
+                  // by returning the other connection, caller knows to -1 dbConnection
+                  break;
+               } else {
+                  // release the existing connection (because init failed)
+                  dbConnectionExisting.releaseReference();
+                  // give another thread time to become aware that the connection
+                  // is bad and remove it.
+                  try {
+                     Thread.sleep(50L);
+                  } catch (InterruptedException e) {
+                     e.printStackTrace();
+                  }
+                  // and loop, trying to insert our connection
+               }
+            }
+         } finally {
+            if ( dbConnection != dbConnectionExisting ) {
+               // we hold 1 reference count -- release it to destroy connection
+               dbConnection.releaseReference();
+               if ( sessionQualifier.equals(appName) ) {
+                  logWarn(appName,
+                      "Successfully resolved Contention when " + "initially opening database for "
+                          + appName + " " + sessionQualifier);
+                  return dbConnectionExisting;
+               } else {
+                  dbConnectionExisting.releaseReference();
+                  throw new IllegalStateException("Unexpected contention when opening database for "
+                      + appName + " " + sessionQualifier);
+               }
+            }
+         }
       }
-      dbConnection = dbConnectionMap.get(sessionQualifier);
 
-      if (dbConnection != null) {
-        dbConnection.acquireReference();
-        logInfo(appName,
-                "getDbConnection -- " + sessionQualifier + " -- obtaining reference to already-open database for " + appName + " when getting " + sessionQualifier);
+      // upon success, we hold two references to the connection, one in map, one here on stack
+      if ( shouldInitialize ) {
+         boolean initSuccessful = false;
+         try {
+            dbConnection.beginTransactionNonExclusive();
+            try {
+               int version = dbConnection.getVersion();
+               if (version != mNewVersion) {
+                  if (version == 0) {
+                     logInfo(appName, "Invoking onCreate for " + appName + " " + sessionQualifier);
+                     onCreate(dbConnection);
+                  } else {
+                     logInfo(appName, "Invoking onUpgrade for " + appName + " " + sessionQualifier);
+                     onUpgrade(dbConnection, version, mNewVersion);
+                  }
+                  dbConnection.setVersion(mNewVersion);
+                  dbConnection.setTransactionSuccessful();
+               } else {
+                  dbConnection.setTransactionSuccessful();
+               }
+            } finally {
+               dbConnection.endTransaction();
+            }
+            initSuccessful = true;
+         } finally {
+            dumpInfo();
+            if ( !initSuccessful ) {
+               try {
+                  logInfo(appName,
+                      "getDbConnection -- " + sessionQualifier + " -- removing session on database");
+                  // -1 to let go of +1 from creation or retrieval via getExisting()
+                  dbConnection.releaseReference();
+               } finally {
+                  // and the connection map holds 1 reference count
+                  // release it to destroy connection
+                  OdkConnectionInterface tmp = dbConnection;
+                  dbConnection = null;
+                  // signal first -- releasing the reference may release this object...
+                  tmp.signalInitializationComplete(false);
+                  tmp.releaseReference();
+               }
+            } else {
+               dbConnection.signalInitializationComplete(true);
+            }
+         }
       }
-    }
-
-
-    AndroidSessionQualifierToConnectionMapManipulator manipulator =
-            new AndroidSessionQualifierToConnectionMapManipulator(appName);
-
-    boolean hasBeenInitialized = false;
-    if ( dbConnectionAppName != null ) {
-      hasBeenInitialized = dbConnectionAppName.waitForInitializationComplete();
-      dbConnectionAppName.releaseReference();
-    }
-
-    if ( !hasBeenInitialized && dbConnection == null ) {
-      logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- triggering initialization of base database for " + appName + " when getting " + sessionQualifier);
-
-      // the "appName" database qualifier  is created once and left open
-      OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, appName, true,
-              manipulator);
-      // TODO: verify that we should release the reference here...
-      db.releaseReference();
-    }
-
-    if ( dbConnection != null ) {
-      logInfo(appName,
-              "getDbConnection -- " + sessionQualifier + " -- returning this existing session for " + appName + " when getting " + sessionQualifier);
       return dbConnection;
-    }
+   }
 
-    logInfo(appName,
-            "getDbConnection -- " + sessionQualifier + " -- creating this session now for " + appName + " when getting " + sessionQualifier);
-    OdkConnectionInterface db = getDbConnection(context, appNameMutex, appName, sessionQualifier, false,
-            manipulator);
+   private final OdkConnectionInterface getConnectionImpl(final String appName,
+       String sessionQualifier) {
 
-    return db;
-  }
-
-  public final void releaseDatabase(Context context, String appName, OdkDbHandle dbHandleName) {
-    releaseDatabaseImpl(context, appName, dbHandleName.getDatabaseHandle());
-  }
-
-
-  /**
-   * Remove the indicated session from the session map and release the reference held on it
-   * by that map once we are outside of the map mutex.
-   *
-   * This will generally trigger closure of the connection.
-   *
-   * @param context
-   * @param appName
-   * @param sessionQualifier
-   */
-  private final void releaseDatabaseImpl(Context context, String appName, String sessionQualifier) {
-    OdkConnectionInterface dbConnection = null;
-    try {
-      synchronized (mutex) {
-        Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appConnectionsMap.get(appName);
-        if (sessionQualifierToConnectionMap == null) {
-          // no record of the appName
-          return;
-        }
-
-        if (sessionQualifier == null) {
-          throw new IllegalArgumentException("sessionQualifier cannot be null!");
-        }
-
-        if (sessionQualifier.equals(appName) ) {
-          WebLogger.getLogger(appName).w("releaseDatabaseImpl", "releasing the base database handle");
-        }
-
-        dbConnection = sessionQualifierToConnectionMap.get(sessionQualifier);
-        if (dbConnection != null) {
-          // add the removed connection to the pending destruction list
-          pendingDestruction.put(dbConnection, System.currentTimeMillis());
-          sessionQualifierToConnectionMap.remove(sessionQualifier);
-        }
+      if (sessionQualifier == null) {
+         throw new IllegalArgumentException("session qualifier cannot be null");
       }
-    } finally {
-      // after the dbConnection has been removed from map, we can release it
+      if (sessionQualifier.equals(appName)) {
+         throw new IllegalArgumentException("session qualifier cannot be the same as the appName");
+      }
+
+      OdkConnectionInterface dbConnection = null;
+
+      AppNameSharedStateContainer appNameSharedStateContainer = null;
+      boolean hasBeenInitialized = false;
+      {
+         OdkConnectionInterface dbConnectionAppName = null;
+         try {
+            synchronized (mutex) {
+               appNameSharedStateContainer = appNameSharedStateMap.get(appName);
+               if (appNameSharedStateContainer == null) {
+                  appNameSharedStateContainer = new AppNameSharedStateContainer(appName);
+                  appNameSharedStateMap.put(appName, appNameSharedStateContainer);
+               }
+            }
+            // +1 reference count (or null)
+            dbConnectionAppName = appNameSharedStateContainer.getExisting(appName);
+            // +1 reference count (or null)
+            dbConnection = appNameSharedStateContainer.getExisting(sessionQualifier);
+
+            if (dbConnectionAppName != null) {
+               logInfo(appName, "getDbConnection -- " + sessionQualifier +
+                   " -- obtaining reference to base database for " + appName +
+                   " when getting " + sessionQualifier);
+            }
+
+            if (dbConnection != null) {
+               logInfo(appName, "getDbConnection -- " + sessionQualifier +
+                   " -- obtaining reference to already-open database for " + appName +
+                   " when getting " + sessionQualifier);
+            }
+
+            if (dbConnectionAppName != null) {
+               hasBeenInitialized = dbConnectionAppName.waitForInitializationComplete();
+            }
+         } finally {
+            if (dbConnectionAppName != null) {
+               // -1 reference count
+               // dbConnectionAppName should not be used below this point...
+               dbConnectionAppName.releaseReference();
+            }
+         }
+      }
+
+      // see if the base database was successfully initialized.
+      //
+      // If it was not, and we don't have an existing connection for this
+      // sessionQualifier, then initialize the base database.
+      if (!hasBeenInitialized && dbConnection == null) {
+         logInfo(appName, "getDbConnection -- " + sessionQualifier +
+             " -- triggering initialization of base database for " + appName +
+             " when getting " + sessionQualifier);
+
+         // the "appName" database qualifier  is created once and left open
+         OdkConnectionInterface dbConnectionAppName = getConnectionDb(
+             appNameSharedStateContainer, appName, true);
+         // we aren't going to do anything with this, so we can release it.
+         dbConnectionAppName.releaseReference();
+      }
+
+      // and if we do have an existing connection,
+      // it already has +1 on it, so just return it.
       if (dbConnection != null) {
-        // release the reference count
-        dbConnection.releaseReference();
+         logInfo(appName, "getDbConnection -- " + sessionQualifier +
+             " -- returning an existing session for " + appName +
+             " when getting " + sessionQualifier);
+         return dbConnection;
       }
-    }
-  }
 
-  public final OdkConnectionInterface getDatabaseGroupInstance(Context context, String appName,
-                                                         String sessionGroupQualifier, int instanceQualifier) {
-    String sessionQualifier = sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    return getConnectionImpl(context, appName, sessionQualifier);
-  }
+      // otherwise, create a connection for the sessionQualifier and return that
+      logInfo(appName, "getDbConnection -- " + sessionQualifier +
+          " -- creating new connection for " + appName + " when getting " + sessionQualifier);
+      OdkConnectionInterface db = getConnectionDb(
+          appNameSharedStateContainer, sessionQualifier, false);
+      return db;
+   }
 
-  public final void releaseDatabaseGroupInstance(Context context, String appName,
-                                           String sessionGroupQualifier, int instanceQualifier) {
-    String sessionQualifier = sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    releaseDatabaseImpl(context, appName, sessionQualifier);
-  }
-
-  /**
-   * Release any database handles for groups that don't match or match the indicated
-   * session group qualifier (depending upon the value of releaseNonMatchingGroupsOnly).
-   *
-   * Database sessions are group sessions if they contain '--'. Everything up
-   * to the last occurrence of '--' in the sessionQualifier is considered the session
-   * group qualifier.
-   *
-   * @param context
-   * @param appName
-   * @param sessionGroupQualifier
-   * @param releaseNonMatchingGroupsOnly
-   * @return true if anything was released.
-   */
-  public final boolean releaseDatabaseGroupInstances(Context context, String appName,
-                                               String sessionGroupQualifier, boolean releaseNonMatchingGroupsOnly) {
-    HashSet<String> sessionQualifiers = new HashSet<String>();
-    synchronized (mutex) {
-      Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appConnectionsMap.get(appName);
-      if (sessionQualifierToConnectionMap == null) {
-        // no record of the appName
-        return false;
+   public final OdkConnectionInterface getConnection(String appName,
+       OdkDbHandle dbHandleName) {
+      if (dbHandleName != null) {
+         return getConnectionImpl(appName, dbHandleName.getDatabaseHandle());
+      } else {
+         throw new IllegalArgumentException("null dbHandleName " + appName);
       }
-      for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
-        int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
-        if (idx != -1) {
-          String sessionGroup = sessionQualifier.substring(0, idx);
-          if (releaseNonMatchingGroupsOnly) {
-            if (!sessionGroup.equals(sessionGroupQualifier)) {
-              sessionQualifiers.add(sessionQualifier);
+   }
+
+   public final void releaseDatabase(String appName, OdkDbHandle dbHandleName) {
+      releaseDatabaseImpl(appName, dbHandleName.getDatabaseHandle());
+   }
+
+   /**
+    * Remove the indicated session from the session map and release the reference held on it
+    * by that map once we are outside of the map mutex.
+    * <p/>
+    * This will generally trigger closure of the connection.
+    *
+    * @param appName
+    * @param sessionQualifier
+    */
+   private final void releaseDatabaseImpl(String appName,
+      String sessionQualifier) {
+      boolean releaseTwice = false;
+      OdkConnectionInterface dbConnection = null;
+      if (appName == null) {
+         throw new IllegalArgumentException("appName cannot be null!");
+      }
+      if (sessionQualifier == null) {
+         throw new IllegalArgumentException("sessionQualifier cannot be null!");
+      }
+      try {
+         AppNameSharedStateContainer appNameSharedStateContainer = null;
+         synchronized (mutex) {
+            appNameSharedStateContainer = appNameSharedStateMap.get(appName);
+         }
+         if (appNameSharedStateContainer == null) {
+            // nothing to do...
+            return;
+         }
+         // +1 reference count (or null)
+         dbConnection = appNameSharedStateContainer.getExisting(sessionQualifier);
+         if (dbConnection != null) {
+            // no change in reference count
+            releaseTwice = appNameSharedStateContainer.moveIntoPendingDestruction(dbConnection);
+         }
+      } finally {
+         if (dbConnection != null) {
+            // -1 for getExisting
+            dbConnection.releaseReference();
+            if (releaseTwice) {
+               // -1 for removal from sessionQualifierConnectionMap
+               dbConnection.releaseReference();
             }
-          } else {
-            if (sessionGroup.equals(sessionGroupQualifier)) {
-              sessionQualifiers.add(sessionQualifier);
+         }
+      }
+   }
+
+   public final OdkConnectionInterface getDatabaseGroupInstance(String appName,
+       String sessionGroupQualifier, int instanceQualifier) {
+      String sessionQualifier =
+          sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
+      return getConnectionImpl(appName, sessionQualifier);
+   }
+
+   public final void releaseDatabaseGroupInstance(String appName,
+       String sessionGroupQualifier, int instanceQualifier) {
+      String sessionQualifier =
+          sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
+      releaseDatabaseImpl(appName, sessionQualifier);
+   }
+
+   /**
+    * Release any database handles for groups that don't match or match the indicated
+    * session group qualifier (depending upon the value of releaseNonMatchingGroupsOnly).
+    * <p/>
+    * Database sessions are group sessions if they contain '--'. Everything up
+    * to the last occurrence of '--' in the sessionQualifier is considered the session
+    * group qualifier.
+    *
+    * @param appName
+    * @param sessionGroupQualifier
+    * @param releaseNonMatchingGroupsOnly
+    * @return true if anything was released. false otherwise.
+    */
+   public final boolean releaseDatabaseGroupInstances(String appName,
+       String sessionGroupQualifier, boolean releaseNonMatchingGroupsOnly) {
+      AppNameSharedStateContainer appNameSharedStateContainer = null;
+      synchronized (mutex) {
+         appNameSharedStateContainer = appNameSharedStateMap.get(appName);
+      }
+      if (appNameSharedStateContainer == null) {
+         // nothing to do...
+         return false;
+      }
+      TreeSet<String> allSessionQualifiers = appNameSharedStateContainer.getAllSessionQualifiers();
+      if ( allSessionQualifiers.isEmpty() ) {
+         // nothing to do...
+         return false;
+      }
+
+      TreeSet<String> sessionQualifiers = new TreeSet<String>();
+      for (String sessionQualifier : allSessionQualifiers) {
+         int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
+         if (idx != -1) {
+            String sessionGroup = sessionQualifier.substring(0, idx);
+            if (releaseNonMatchingGroupsOnly) {
+               if (!sessionGroup.equals(sessionGroupQualifier)) {
+                  sessionQualifiers.add(sessionQualifier);
+               }
+            } else {
+               if (sessionGroup.equals(sessionGroupQualifier)) {
+                  sessionQualifiers.add(sessionQualifier);
+               }
             }
-          }
-        }
+         }
       }
-    }
 
-    for (String sessionQualifier : sessionQualifiers) {
-      logInfo(appName, "releaseDatabaseGroupInstances " + sessionQualifier);
-      try {
-        releaseDatabaseImpl(context, appName, sessionQualifier);
-      } catch ( Exception e ) {
-        logError( appName, "releaseDatabaseGroupInstances when releasing " + sessionQualifier);
-        printStackTrace(appName, e);
+      for (String sessionQualifier : sessionQualifiers) {
+         logInfo(appName, "releaseDatabaseGroupInstances " + sessionQualifier);
+         try {
+            releaseDatabaseImpl(appName, sessionQualifier);
+         } catch (Exception e) {
+            logError(appName, "releaseDatabaseGroupInstances when releasing " + sessionQualifier);
+            printStackTrace(appName, e);
+         }
       }
-    }
-    return !sessionQualifiers.isEmpty();
-  }
+      return !sessionQualifiers.isEmpty();
+   }
 
-  /**
-   * Releases all database handles that are not created by the
-   * internal content providers or by the dbshim service.
-   *
-   * @param context
-   * @param appName
-   * @return
-   */
-  private final boolean releaseDatabaseNonGroupNonInternalInstances(Context context, String appName) {
-    HashSet<String> sessionQualifiers = new HashSet<String>();
-    synchronized (mutex) {
-      Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appConnectionsMap.get(appName);
-      if (sessionQualifierToConnectionMap == null) {
-        // no record of the appName
-        return false;
+   /**
+    * Releases all database handles that are not created by the
+    * internal content providers or by the dbshim service.
+    *
+    * @param appName
+    * @return true if we released something. false otherwise.
+    */
+   private final boolean releaseDatabaseNonGroupNonInternalInstances(String appName) {
+      AppNameSharedStateContainer appNameSharedStateContainer = null;
+      synchronized (mutex) {
+         appNameSharedStateContainer = appNameSharedStateMap.get(appName);
       }
-      for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
-        int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
-        if (idx == -1 && !sessionQualifier.endsWith(INTERNAL_TYPE_SUFFIX)) {
-          sessionQualifiers.add(sessionQualifier);
-        }
+      if (appNameSharedStateContainer == null) {
+         // nothing to do...
+         return false;
       }
-    }
-
-    for (String sessionQualifier : sessionQualifiers) {
-      logInfo(appName, "releaseDatabaseNonGroupNonInternalInstances " + sessionQualifier);
-      try {
-        releaseDatabaseImpl(context, appName, sessionQualifier);
-      } catch ( Exception e ) {
-        logError( appName, "releaseDatabaseNonGroupNonInternalInstances when releasing " + sessionQualifier);
-        printStackTrace(appName, e);
+      TreeSet<String> allSessionQualifiers = appNameSharedStateContainer.getAllSessionQualifiers();
+      if ( allSessionQualifiers.isEmpty() ) {
+         // nothing to do...
+         return false;
       }
-    }
-    return !sessionQualifiers.isEmpty();
-  }
 
-  public final boolean releaseDatabaseInstances(Context context, String appName) {
-    HashSet<String> sessionQualifiers = new HashSet<String>();
-    synchronized (mutex) {
-      Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appConnectionsMap.get(appName);
-      if (sessionQualifierToConnectionMap == null) {
-        // no record of appName
-        return false;
+      TreeSet<String> sessionQualifiers = new TreeSet<String>();
+      for (String sessionQualifier : allSessionQualifiers) {
+         // not a group (no group divider)
+         // not the base (appName) session
+         // not an internal session
+         if ((sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER) == -1) &&
+             !sessionQualifier.equals(appName) &&
+             !sessionQualifier.endsWith(INTERNAL_TYPE_SUFFIX)) {
+            sessionQualifiers.add(sessionQualifier);
+         }
       }
-      sessionQualifiers.addAll(sessionQualifierToConnectionMap.keySet());
-    }
 
-    for (String sessionQualifier : sessionQualifiers) {
-      logInfo(appName, "releaseDatabaseInstances " + sessionQualifier);
-      try {
-        releaseDatabaseImpl(context, appName, sessionQualifier);
-      } catch ( Exception e ) {
-        logError( appName, "releaseDatabaseInstances when releasing " + sessionQualifier);
-        printStackTrace(appName, e);
+      for (String sessionQualifier : sessionQualifiers) {
+         logInfo(appName, "releaseDatabaseNonGroupNonInternalInstances " + sessionQualifier);
+         try {
+            releaseDatabaseImpl(appName, sessionQualifier);
+         } catch (Exception e) {
+            logError(appName,
+                "releaseDatabaseNonGroupNonInternalInstances when releasing " + sessionQualifier);
+            printStackTrace(appName, e);
+         }
       }
-    }
-    return !sessionQualifiers.isEmpty();
-  }
+      return !sessionQualifiers.isEmpty();
+   }
 
-  public final boolean releaseAllDatabaseGroupInstances(Context context) {
-    HashSet<String> appNames = new HashSet<String>();
-    synchronized (mutex) {
-      for (Map.Entry<String, Map<String, OdkConnectionInterface>> appNameToConnectionsMapEntry : appConnectionsMap.entrySet()) {
-        String appName = appNameToConnectionsMapEntry.getKey();
-        Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appNameToConnectionsMapEntry.getValue();
-        for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
-          int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
-          if (idx != -1) {
-            appNames.add(appName);
-            break;
-          }
-        }
+   /**
+    * Release everything
+    *
+    * @param appName
+    * @return true if we released somethng. false otherwise.
+    */
+   public final boolean releaseDatabaseInstances(String appName) {
+      AppNameSharedStateContainer appNameSharedStateContainer = null;
+      synchronized (mutex) {
+         appNameSharedStateContainer = appNameSharedStateMap.get(appName);
       }
-    }
-    for ( String appName : appNames ) {
-      releaseDatabaseGroupInstances(context, appName, null, true);
-    }
-    return !appNames.isEmpty();
-  }
-
-  public final boolean releaseAllDatabaseNonGroupNonInternalInstances(Context context) {
-    HashSet<String> appNames = new HashSet<String>();
-    synchronized (mutex) {
-      for (Map.Entry<String, Map<String, OdkConnectionInterface>> appNameToConnectionsMapEntry : appConnectionsMap.entrySet()) {
-        String appName = appNameToConnectionsMapEntry.getKey();
-        Map<String, OdkConnectionInterface> sessionQualifierToConnectionMap = appNameToConnectionsMapEntry.getValue();
-        for (String sessionQualifier : sessionQualifierToConnectionMap.keySet()) {
-          int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
-          if (idx == -1 && !sessionQualifier.endsWith(INTERNAL_TYPE_SUFFIX)) {
-            appNames.add(appName);
-            break;
-          }
-        }
+      if (appNameSharedStateContainer == null) {
+         // nothing to do...
+         return false;
       }
-    }
-    for ( String appName : appNames ) {
-      releaseDatabaseNonGroupNonInternalInstances(context, appName);
-    }
-    return !appNames.isEmpty();
-  }
+      TreeSet<String> sessionQualifiers = appNameSharedStateContainer.getAllSessionQualifiers();
+      if ( sessionQualifiers.isEmpty() ) {
+         // nothing to do...
+         return false;
+      }
 
-  public final void releaseAllDatabases(Context context) {
-    HashSet<String> appNames = new HashSet<String>();
-    synchronized (mutex) {
-      appNames.addAll(appConnectionsMap.keySet());
-    }
-    for ( String appName : appNames ) {
-      releaseDatabaseInstances(context, appName);
-    }
-  }
+      boolean hasAppNameQualifier = false;
+      for (String sessionQualifier : sessionQualifiers) {
+         if (sessionQualifier.equals(appName)) {
+            // release the appName one last...
+            hasAppNameQualifier = true;
+            continue;
+         }
+         logInfo(appName, "releaseDatabaseInstances " + sessionQualifier);
+         try {
+            releaseDatabaseImpl(appName, sessionQualifier);
+         } catch (Exception e) {
+            logError(appName, "releaseDatabaseInstances when releasing " + sessionQualifier);
+            printStackTrace(appName, e);
+         }
+      }
 
-  /**
-   * Called when the database is created for the first time. This is where the
-   * creation of tables and the initial population of the tables should happen.
-   *
-   * @param db
-   *          The database.
-   */
-  protected final void onCreate(OdkConnectionInterface db) {
-    ODKDatabaseImplUtils.initializeDatabase(db);
-  }
+      if (hasAppNameQualifier) {
+         logInfo(appName, "releaseDatabaseInstances " + appName);
+         try {
+            releaseDatabaseImpl(appName, appName);
+         } catch (Exception e) {
+            logError(appName, "releaseDatabaseInstances when releasing " + appName);
+            printStackTrace(appName, e);
+         }
+      }
+      return !sessionQualifiers.isEmpty();
+   }
 
-  /**
-   * Called when the database needs to be upgraded. The implementation should
-   * use this method to drop tables, add tables, or do anything else it needs to
-   * upgrade to the new schema version.
-   * <p>
-   * The SQLite ALTER TABLE documentation can be found <a
-   * href="http://sqlite.org/lang_altertable.html">here</a>. If you add new
-   * columns you can use ALTER TABLE to insert them into a live table. If you
-   * rename or remove columns you can use ALTER TABLE to rename the old table,
-   * then create the new table and then populate the new table with the contents
-   * of the old table.
-   *
-   * @param db
-   *          The database.
-   * @param oldVersion
-   *          The old database version.
-   * @param newVersion
-   *          The new database version.
-   */
-  protected final void onUpgrade(OdkConnectionInterface db, int oldVersion, int newVersion) {
-    // for now, upgrade and creation use the same codepath...
-    ODKDatabaseImplUtils.initializeDatabase(db);
-  }
+   public final boolean releaseAllDatabaseGroupInstances() {
+      HashSet<String> appNames = new HashSet<String>();
+      synchronized (mutex) {
+         appNames.addAll(appNameSharedStateMap.keySet());
+      }
+      for (String appName : appNames) {
+         releaseDatabaseGroupInstances(appName, null, true);
+      }
+      return !appNames.isEmpty();
+   }
+
+   public final boolean releaseAllDatabaseNonGroupNonInternalInstances() {
+      HashSet<String> appNames = new HashSet<String>();
+      synchronized (mutex) {
+         appNames.addAll(appNameSharedStateMap.keySet());
+      }
+      for (String appName : appNames) {
+         releaseDatabaseNonGroupNonInternalInstances(appName);
+      }
+      return !appNames.isEmpty();
+   }
+
+   public final void releaseAllDatabases() {
+      HashSet<String> appNames = new HashSet<String>();
+      synchronized (mutex) {
+         appNames.addAll(appNameSharedStateMap.keySet());
+      }
+      for (String appName : appNames) {
+         releaseDatabaseInstances(appName);
+      }
+   }
+
+   /**
+    * Called when the database is created for the first time. This is where the
+    * creation of tables and the initial population of the tables should happen.
+    *
+    * @param db The database.
+    */
+   protected final void onCreate(OdkConnectionInterface db) {
+      ODKDatabaseImplUtils.initializeDatabase(db);
+   }
+
+   /**
+    * Called when the database needs to be upgraded. The implementation should
+    * use this method to drop tables, add tables, or do anything else it needs to
+    * upgrade to the new schema version.
+    * <p/>
+    * The SQLite ALTER TABLE documentation can be found <a
+    * href="http://sqlite.org/lang_altertable.html">here</a>. If you add new
+    * columns you can use ALTER TABLE to insert them into a live table. If you
+    * rename or remove columns you can use ALTER TABLE to rename the old table,
+    * then create the new table and then populate the new table with the contents
+    * of the old table.
+    *
+    * @param db         The database.
+    * @param oldVersion The old database version.
+    * @param newVersion The new database version.
+    */
+   protected final void onUpgrade(OdkConnectionInterface db, int oldVersion, int newVersion) {
+      // for now, upgrade and creation use the same codepath...
+      ODKDatabaseImplUtils.initializeDatabase(db);
+   }
 
 }

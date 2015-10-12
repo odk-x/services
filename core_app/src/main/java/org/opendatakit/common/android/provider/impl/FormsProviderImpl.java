@@ -80,7 +80,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
     }
   }
 
@@ -228,7 +228,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
@@ -297,7 +297,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
           }
         }
       }
@@ -418,7 +418,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     Cursor c = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, sortOrder, null);
 
@@ -443,7 +443,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
           }
         }
       }
@@ -478,7 +478,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     try {
       // Get the database and run the query
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
       db.beginTransactionNonExclusive();
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
@@ -557,7 +557,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
           }
         }
       }
@@ -635,7 +635,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getContext(), pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
       db.beginTransactionNonExclusive();
       Cursor c = null;
       try {
@@ -750,7 +750,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getContext(), pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
           }
         }
       }

@@ -62,7 +62,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateDatabaseServiceDbHandle();
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       if ( beginTransaction ) {
         db.beginTransactionNonExclusive();
       }
@@ -92,7 +92,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -119,7 +119,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       boolean first = true;
       while ( db != null && db.isOpen() && db.inTransaction()) {
         if ( !first ) {
@@ -146,7 +146,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           db.releaseReference();
         } finally {
           // this will trigger close...
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
         }
       }
     }
@@ -159,7 +159,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
@@ -190,7 +190,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       if ( successful ) {
         db.setTransactionSuccessful();
       }
@@ -221,7 +221,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           db.releaseReference();
         } finally {
           // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
         }
       }
     }
@@ -235,7 +235,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().changeDataRowsToNewRowState(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -263,7 +263,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, appName, tableId, columns.getColumns());
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -291,7 +291,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -319,7 +319,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -346,7 +346,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -374,7 +374,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -402,7 +402,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -430,7 +430,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -458,7 +458,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().enforceTypesDBTableMetadata(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -494,7 +494,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -522,7 +522,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getAllTableIds(db);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -550,7 +550,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getDataInExistingDBTableWithId(db, appName, tableId, orderedDefns, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -579,7 +579,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     ArrayList<KeyValueStoreEntry> kvsEntries = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       kvsEntries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -612,7 +612,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
 
       for (String tableId : tableIds) {
@@ -668,7 +668,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, appName, tableId, rowId);
       return state.name();
     } catch (Exception e) {
@@ -697,7 +697,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getTableDefinitionEntry(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -725,7 +725,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -752,7 +752,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().hasTableId(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -780,7 +780,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -808,7 +808,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -836,7 +836,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().placeRowIntoConflict(db, tableId, rowId, conflictType);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -866,7 +866,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId,
           columnDefns, whereClause, selectionArgs,
           groupBy, having, orderByElementKey, orderByDirection);
@@ -896,7 +896,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, entry);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -924,7 +924,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, entries, clear);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -952,7 +952,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId,
               SyncState.valueOf(syncState), conflictType);
     } catch (Exception e) {
@@ -981,7 +981,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1009,7 +1009,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1038,7 +1038,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableETags(db, tableId, schemaETag, lastDataETag);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1066,7 +1066,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDBTableLastSyncTime(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1094,7 +1094,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1122,7 +1122,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId, rowETag, SyncState.valueOf(syncState));
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1149,7 +1149,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       seu.deleteAllSyncETagsForTableId(db, tableId);
     } catch (Exception e) {
@@ -1178,7 +1178,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       seu.deleteAllSyncETagsExceptForServer(db, verifiedUri);
     } catch (Exception e) {
@@ -1207,7 +1207,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       seu.deleteAllSyncETagsUnderServer(db, verifiedUri);
     } catch (Exception e) {
@@ -1236,7 +1236,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       return seu.getFileSyncETag(db, verifiedUri, tableId, modificationTimestamp);
     } catch (Exception e) {
@@ -1265,7 +1265,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       return seu.getManifestSyncETag(db, verifiedUri, tableId);
     } catch (Exception e) {
@@ -1294,7 +1294,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       seu.updateFileSyncETag(db, verifiedUri, tableId, modificationTimestamp, eTag);
     } catch (Exception e) {
@@ -1323,7 +1323,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(odkDatabaseService.getApplicationContext(), appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       SyncETagsUtils seu = new SyncETagsUtils();
       seu.updateManifestSyncETag(db, verifiedUri, tableId, eTag);
     } catch (Exception e) {

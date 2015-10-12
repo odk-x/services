@@ -23,8 +23,6 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
-import org.sqlite.database.sqlite.SQLiteDatabaseLockedException;
-import org.sqlite.database.sqlite.SQLiteException;
 
 public class AndroidOdkConnection implements OdkConnectionInterface{
   final Object mutex;
