@@ -187,6 +187,10 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
   @SuppressWarnings("unchecked")
   static final ArrayList<ColumnDefinition> buildColumnDefinitions(String appName, String tableId, List<Column> columns) {
 
+    if ( columns == null ) {
+      columns = new ArrayList<Column>();
+    }
+
     WebLogger.getLogger(appName).d(TAG, "[buildColumnDefinitions] tableId: " + tableId + " size: " + columns.size() + " first column: " + 
         (columns.isEmpty() ? "<none>" : columns.get(0).getElementKey()));
     
