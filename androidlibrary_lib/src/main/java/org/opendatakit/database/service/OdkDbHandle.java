@@ -22,11 +22,17 @@ public class OdkDbHandle implements Parcelable {
   private final String databaseHandle;
 
   public OdkDbHandle(String databaseHandle) {
+    if ( databaseHandle == null ) {
+      throw new IllegalArgumentException("null databaseHandle");
+    }
     this.databaseHandle = databaseHandle;
   }
   
   public OdkDbHandle(Parcel in) {
     this.databaseHandle = in.readString();
+    if ( databaseHandle == null ) {
+      throw new IllegalArgumentException("null databaseHandle");
+    }
   }
   
   public String getDatabaseHandle() {
@@ -52,6 +58,4 @@ public class OdkDbHandle implements Parcelable {
       return new OdkDbHandle[size];
     }
   };
-
-
 }
