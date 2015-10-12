@@ -332,7 +332,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
    * Test creation of user defined database table with column when column is
    * null
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsNull_ExpectPass() {
+  public void testCreateOrOpenDbTableWithColumnWhenColumnIsNull_ExpectFail() {
     String tableId = testTable;
     boolean thrown = false;
     OrderedColumns orderedColumns = null;
@@ -350,6 +350,29 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
 
+   /*
+    * Test creation of user defined database table with column when column is
+    * null
+    */
+   public void testCreateOrOpenDbTableWithColumnWhenColumnIsEmpty_ExpectPass() {
+      String tableId = testTable;
+      List<Column> columns = new ArrayList<Column>();
+
+      boolean thrown = false;
+      OrderedColumns orderedColumns = null;
+
+      try {
+         orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      } catch (Exception e) {
+         thrown = true;
+         e.printStackTrace();
+      }
+
+      assertFalse(thrown);
+
+      // Drop the table now that the test is done
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+   }
   /*
    * Test creation of user defined database table with column when column is int
    */
