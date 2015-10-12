@@ -187,8 +187,16 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
   @SuppressWarnings("unchecked")
   static final ArrayList<ColumnDefinition> buildColumnDefinitions(String appName, String tableId, List<Column> columns) {
 
+     if ( appName == null || appName.length() == 0 ) {
+        throw new IllegalArgumentException("appName cannot be null or an empty string");
+     }
+
+     if ( tableId == null || tableId.length() == 0 ) {
+        throw new IllegalArgumentException("tableId cannot be null or an empty string");
+     }
+
     if ( columns == null ) {
-      columns = new ArrayList<Column>();
+       throw new IllegalArgumentException("columns cannot be null");
     }
 
     WebLogger.getLogger(appName).d(TAG, "[buildColumnDefinitions] tableId: " + tableId + " size: " + columns.size() + " first column: " + 
