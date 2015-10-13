@@ -45,7 +45,7 @@ public final class SQLiteStatement extends SQLiteProgram {
     public void execute() {
         acquireReference();
         try {
-            getSession().execute(getSql(), getBindArgs(), getConnectionFlags(), null);
+           getDatabase().execute(getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;
@@ -65,8 +65,8 @@ public final class SQLiteStatement extends SQLiteProgram {
     public int executeUpdateDelete() {
         acquireReference();
         try {
-            return getSession().executeForChangedRowCount(
-                    getSql(), getBindArgs(), getConnectionFlags(), null);
+            return getDatabase().executeForChangedRowCount(
+                    getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;
@@ -87,8 +87,8 @@ public final class SQLiteStatement extends SQLiteProgram {
     public long executeInsert() {
         acquireReference();
         try {
-            return getSession().executeForLastInsertedRowId(
-                    getSql(), getBindArgs(), getConnectionFlags(), null);
+            return getDatabase().executeForLastInsertedRowId(
+                    getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;
@@ -108,8 +108,8 @@ public final class SQLiteStatement extends SQLiteProgram {
     public long simpleQueryForLong() {
         acquireReference();
         try {
-            return getSession().executeForLong(
-                    getSql(), getBindArgs(), getConnectionFlags(), null);
+            return getDatabase().executeForLong(
+                    getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;
@@ -129,8 +129,8 @@ public final class SQLiteStatement extends SQLiteProgram {
     public String simpleQueryForString() {
         acquireReference();
         try {
-            return getSession().executeForString(
-                    getSql(), getBindArgs(), getConnectionFlags(), null);
+            return getDatabase().executeForString(
+                    getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;
@@ -150,8 +150,8 @@ public final class SQLiteStatement extends SQLiteProgram {
     public ParcelFileDescriptor simpleQueryForBlobFileDescriptor() {
         acquireReference();
         try {
-            return getSession().executeForBlobFileDescriptor(
-                    getSql(), getBindArgs(), getConnectionFlags(), null);
+            return getDatabase().executeForBlobFileDescriptor(
+                    getSql(), getBindArgs(), null);
         } catch (SQLiteDatabaseCorruptException ex) {
             onCorruption();
             throw ex;

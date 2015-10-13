@@ -22,7 +22,6 @@ package org.sqlite.database.sqlite;
 
 /* import dalvik.system.BlockGuard; */
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.sqlite.database.sqlite.CloseGuard;
 
 import android.database.Cursor;
 import android.database.CursorWindow;

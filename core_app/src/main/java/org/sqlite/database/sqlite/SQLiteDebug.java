@@ -22,8 +22,6 @@ package org.sqlite.database.sqlite;
 
 import java.util.ArrayList;
 
-import android.os.Build;
-/* import android.os.SystemProperties; */
 import android.util.Log;
 import android.util.Printer;
 

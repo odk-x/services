@@ -411,8 +411,7 @@ public class SQLiteQueryBuilder
      */
     private void validateQuerySql(SQLiteDatabase db, String sql,
             CancellationSignal cancellationSignal) {
-        db.getSession().prepare(sql,
-                db.getThreadDefaultConnectionFlags(true /*readOnly*/), cancellationSignal, null);
+        db.prepare(sql, cancellationSignal, null);
     }
 
     /**

@@ -21,7 +21,6 @@
 package org.sqlite.database;
 import android.database.Cursor;
 
-import android.database.CursorWindow;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteStatement;
 

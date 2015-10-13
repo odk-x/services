@@ -282,8 +282,9 @@ public class ODKDatabaseImplUtils {
       String[] selectionArgs, String[] groupBy, String having, String orderByElementKey,
       String orderByDirection) {
 
-    UserTable userTable = null;
+    int rowCount = c.getCount();
 
+    UserTable userTable = null;
     int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
@@ -313,9 +314,6 @@ public class ODKDatabaseImplUtils {
       mElementKeyToIndex.put(elementKey, i + j);
       cursorIndex[i + j] = c.getColumnIndex(elementKey);
     }
-
-    c.moveToFirst();
-    int rowCount = c.getCount();
 
     userTable = new UserTable(columnDefns, whereClause, selectionArgs, groupBy, having,
         orderByElementKey, orderByDirection, mAdminColumnOrder, mElementKeyToIndex,
@@ -452,18 +450,14 @@ public class ODKDatabaseImplUtils {
           TableDefinitionsColumns.TABLE_ID + "=?", 
           new String[] { tableId }, null, null, null, null);
       //@formatter:on
-
-      if (c.moveToFirst()) {
-        // we know about the table...
-        // tableId is the database table name...
-        return true;
-      }
+       // we know about the table...
+       // tableId is the database table name...
+      return (c != null) && (c.getCount() != 0);
     } finally {
       if (c != null && !c.isClosed()) {
         c.close();
       }
     }
-    return false;
   }
 
   /**

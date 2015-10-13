@@ -20,7 +20,6 @@
 
 package org.sqlite.database.sqlite;
 
-import android.content.res.Resources;
 import android.os.StatFs;
 /* import android.os.SystemProperties; */
 
