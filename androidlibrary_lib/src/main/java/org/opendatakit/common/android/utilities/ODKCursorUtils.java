@@ -61,10 +61,18 @@ public class ODKCursorUtils {
     switch (c.getType(i)) {
     case Cursor.FIELD_TYPE_STRING:
       return c.getString(i);
-    case Cursor.FIELD_TYPE_FLOAT:
-      return Double.toString(c.getDouble(i));
-    case Cursor.FIELD_TYPE_INTEGER:
-      return Long.toString(c.getLong(i));
+    case Cursor.FIELD_TYPE_FLOAT: {
+       // the static version of this seems to have problems...
+       Double d = c.getDouble(i);
+       String v = d.toString();
+       return v;
+    }
+    case Cursor.FIELD_TYPE_INTEGER: {
+       // the static version of this seems to have problems...
+       Long l = c.getLong(i);
+       String v = l.toString();
+       return v;
+    }
     case Cursor.FIELD_TYPE_NULL:
       return c.getString(i);
     default:
