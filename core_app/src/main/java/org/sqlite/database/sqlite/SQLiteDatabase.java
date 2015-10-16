@@ -506,8 +506,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return null;
       }
 
-      return mConnection.executeForBlobFileDescriptor(sql, bindArgs,
-          cancellationSignal); // might throw
+      return mConnection.executeForBlobFileDescriptorImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**

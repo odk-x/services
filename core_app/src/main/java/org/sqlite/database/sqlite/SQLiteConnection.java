@@ -585,8 +585,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * or invalid number of bind arguments.
      * @throws OperationCanceledException if the operation was canceled.
      */
-    public ParcelFileDescriptor executeForBlobFileDescriptor(String sql, Object[] bindArgs,
-            CancellationSignal cancellationSignal) {
+    public ParcelFileDescriptor executeForBlobFileDescriptorImpl(String sql, Object[] bindArgs,
+        CancellationSignal cancellationSignal) {
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -596,7 +596,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              throw new SQLiteException("connection closed");
           }
           final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForBlobFileDescriptor", sql, bindArgs);
+              .beginOperation(mSessionQualifier, "executeForBlobFileDescriptorImpl", sql, bindArgs);
           try {
              final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
              try {
