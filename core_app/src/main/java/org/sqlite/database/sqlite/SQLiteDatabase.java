@@ -452,7 +452,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return 0L;
       }
 
-      return mConnection.executeForLong(sql, bindArgs, cancellationSignal); // might throw
+      return mConnection.executeForLongImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**

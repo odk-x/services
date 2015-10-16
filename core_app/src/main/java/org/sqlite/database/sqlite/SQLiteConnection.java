@@ -238,7 +238,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
 
           {
              final long newValue = SQLiteGlobal.getDefaultPageSize();
-             long value = executeForLong("PRAGMA page_size", null, null);
+             long value = executeForLongImpl("PRAGMA page_size", null, null);
              if (value != newValue) {
                 executeImpl("PRAGMA page_size=" + newValue, null, null);
              }
@@ -246,7 +246,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
 
           {
              final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
-             long value = executeForLong("PRAGMA foreign_keys", null, null);
+             long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
              if (value != newValue) {
                 executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
              }
@@ -254,17 +254,17 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
 
           {
              final long newValue = SQLiteGlobal.getJournalSizeLimit();
-             long value = executeForLong("PRAGMA journal_size_limit", null, null);
+             long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
              if (value != newValue) {
-                executeForLong("PRAGMA journal_size_limit=" + newValue, null, null);
+                executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
              }
           }
 
           {
              final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
-             long value = executeForLong("PRAGMA wal_autocheckpoint", null, null);
+             long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
              if (value != newValue) {
-                executeForLong("PRAGMA wal_autocheckpoint=" + newValue, null, null);
+                executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
              }
           }
 
@@ -277,7 +277,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
 
    private void setBusyTimeout() {
       final long newValue = 5000L;
-      long value = executeForLong("PRAGMA busy_timeout", null, null);
+      long value = executeForLongImpl("PRAGMA busy_timeout", null, null);
       if (value != newValue) {
          getLogger().w(TAG,"busy_timeout is not " + newValue + " but " + value);
          // TODO: fix this when C++ code is updated.
@@ -489,8 +489,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * or invalid number of bind arguments.
      * @throws OperationCanceledException if the operation was canceled.
      */
-    public long executeForLong(String sql, Object[] bindArgs,
-            CancellationSignal cancellationSignal) {
+    public long executeForLongImpl(String sql, Object[] bindArgs,
+        CancellationSignal cancellationSignal) {
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -500,7 +500,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              throw new SQLiteException("connection closed");
           }
           final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForLong", sql, bindArgs);
+              .beginOperation(mSessionQualifier, "executeForLongImpl", sql, bindArgs);
           try {
              final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
              try {
