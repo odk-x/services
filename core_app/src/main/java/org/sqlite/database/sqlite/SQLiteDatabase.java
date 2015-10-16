@@ -532,8 +532,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return 0;
       }
 
-      return mConnection.executeForChangedRowCount(sql, bindArgs,
-          cancellationSignal); // might throw
+      return mConnection.executeForChangedRowCountImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**
