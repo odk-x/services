@@ -240,7 +240,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              final long newValue = SQLiteGlobal.getDefaultPageSize();
              long value = executeForLong("PRAGMA page_size", null, null);
              if (value != newValue) {
-                execute("PRAGMA page_size=" + newValue, null, null);
+                executeImpl("PRAGMA page_size=" + newValue, null, null);
              }
           }
 
@@ -248,7 +248,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
              long value = executeForLong("PRAGMA foreign_keys", null, null);
              if (value != newValue) {
-                execute("PRAGMA foreign_keys=" + newValue, null, null);
+                executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
              }
           }
 
@@ -283,7 +283,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
          // TODO: fix this when C++ code is updated.
          // sqlite code does a strcmp that only recognizes 'busy_timeout', making it
          // impossible to update this value.
-         // execute("PRAGMA busy_timeout=" + newValue, null, null);
+         // executeImpl("PRAGMA busy_timeout=" + newValue, null, null);
       }
    }
 
@@ -325,7 +325,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
       String value = executeForString("PRAGMA synchronous", null, null);
       if (!canonicalizeSyncMode(value).equalsIgnoreCase(
           canonicalizeSyncMode(newValue))) {
-         execute("PRAGMA synchronous=" + newValue, null, null);
+         executeImpl("PRAGMA synchronous=" + newValue, null, null);
       }
    }
 
@@ -443,8 +443,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * or invalid number of bind arguments.
      * @throws OperationCanceledException if the operation was canceled.
      */
-    public void execute(String sql, Object[] bindArgs,
-            CancellationSignal cancellationSignal) {
+    public void executeImpl(String sql, Object[] bindArgs, CancellationSignal cancellationSignal) {
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -454,7 +453,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              throw new SQLiteException("connection closed");
           }
           final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "execute", sql, bindArgs);
+              .beginOperation(mSessionQualifier, "executeImpl", sql, bindArgs);
           try {
              final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
              try {

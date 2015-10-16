@@ -426,7 +426,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return;
       }
 
-      mConnection.execute(sql, bindArgs, cancellationSignal); // might throw
+      mConnection.executeImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**
@@ -690,13 +690,13 @@ public final class SQLiteDatabase extends SQLiteClosable {
              // Execute SQL might throw a runtime exception.
              switch (transactionMode) {
              case SQLiteDatabase.TRANSACTION_MODE_IMMEDIATE:
-                mConnection.execute("BEGIN IMMEDIATE;", null, cancellationSignal); // might throw
+                mConnection.executeImpl("BEGIN IMMEDIATE;", null, cancellationSignal); // might throw
                 break;
              case SQLiteDatabase.TRANSACTION_MODE_EXCLUSIVE:
-                mConnection.execute("BEGIN EXCLUSIVE;", null, cancellationSignal); // might throw
+                mConnection.executeImpl("BEGIN EXCLUSIVE;", null, cancellationSignal); // might throw
                 break;
              default:
-                mConnection.execute("BEGIN;", null, cancellationSignal); // might throw
+                mConnection.executeImpl("BEGIN;", null, cancellationSignal); // might throw
                 break;
              }
              success = true;
@@ -1440,9 +1440,9 @@ public final class SQLiteDatabase extends SQLiteClosable {
          SQLiteTransactionManager.TransactionOutcome outcome = mTransactionManager.endTransaction();
          // do nothing on the no-action outcome
          if ( outcome == SQLiteTransactionManager.TransactionOutcome.COMMIT_ACTION ) {
-            mConnection.execute("COMMIT;", null, cancellationSignal); // might throw
+            mConnection.executeImpl("COMMIT;", null, cancellationSignal); // might throw
          } else if ( outcome == SQLiteTransactionManager.TransactionOutcome.ROLLBACK_ACTION ) {
-            mConnection.execute("ROLLBACK;", null, cancellationSignal); // might throw
+            mConnection.executeImpl("ROLLBACK;", null, cancellationSignal); // might throw
          }
       } finally {
          releaseReference();
