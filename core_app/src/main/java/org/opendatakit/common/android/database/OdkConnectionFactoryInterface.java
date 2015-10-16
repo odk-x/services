@@ -3,6 +3,7 @@ package org.opendatakit.common.android.database;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.sqlite.database.sqlite.SQLiteAbortException;
 
 import java.util.*;
 
@@ -50,7 +51,7 @@ public abstract class OdkConnectionFactoryInterface {
 
    protected abstract void printStackTrace(String appName, Throwable e);
 
-   protected abstract OdkConnectionInterface openDatabase(Object sessionMutex, String appName, String sessionQualifier);
+   protected abstract OdkConnectionInterface openDatabase(AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier);
 
    /**
     * This handle is suitable for non-service uses.
@@ -92,7 +93,7 @@ public abstract class OdkConnectionFactoryInterface {
 
    private final OdkConnectionInterface getConnectionDb(
        AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier, boolean
-       shouldInitialize  ) {
+       shouldInitialize  ) throws SQLiteAbortException {
 
       if (sessionQualifier == null) {
          throw new IllegalArgumentException(
@@ -107,7 +108,7 @@ public abstract class OdkConnectionFactoryInterface {
           appName + " " + sessionQualifier);
 
       // this throws an exception if the db cannot be opened
-      dbConnection = openDatabase(appNameSharedStateContainer.getSessionMutex(), appName, sessionQualifier);
+      dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier);
       if ( dbConnection != null ) {
          boolean success = false;
          try {

@@ -15,9 +15,11 @@
 package org.opendatakit.common.android.database;
 
 import android.util.StringBuilderPrinter;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Holds state shared across all open connections for a given appName
@@ -25,6 +27,13 @@ import java.util.*;
  * @author mitchellsundt@gmail.com
  */
 public class AppNameSharedStateContainer {
+
+   static final Pattern TRIM_SQL_PATTERN = Pattern.compile("[\\s]*\\n+[\\s]*");
+
+   public static String trimSqlForDisplay(String sql) {
+      return TRIM_SQL_PATTERN.matcher(sql).replaceAll(" ");
+   }
+
    private final String appName;
    private final Object appNameMutex = new Object();
    /**
@@ -42,11 +51,14 @@ public class AppNameSharedStateContainer {
    private final WeakHashMap<OdkConnectionInterface, Long>
        pendingDestruction = new WeakHashMap<OdkConnectionInterface, Long>();
 
+   private final OperationLog operationLog;
+
    private String beginTransactionSessionQualifier = null;
    private Long beginTransactionThreadId = null;
 
    AppNameSharedStateContainer(String appName) {
       this.appName = appName;
+      this.operationLog = new OperationLog(appName);
    }
 
    /**
@@ -145,6 +157,7 @@ public class AppNameSharedStateContainer {
    void dumpInfo(StringBuilder b) {
       synchronized (appNameMutex) {
          b.append("\n---------------- " + appName + " ---------------------\n\n");
+         operationLog.dump(b, true);
 
          b.append("beginTransactionSessionQualifier ")
              .append(beginTransactionSessionQualifier)
@@ -156,14 +169,7 @@ public class AppNameSharedStateContainer {
          for (String sessionQualifier : sessionQualifierConnectionMap.keySet()) {
             OdkConnectionInterface dbConnection = sessionQualifierConnectionMap
                 .get(sessionQualifier);
-            b.append("dumpInfo: lastThreadId: " + dbConnection.getLastThreadId() + " refCount: " +
-                dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier " +
-                sessionQualifier + " lastAction " + dbConnection.getLastAction());
-            b.append("\n");
-            StringBuilder bpb = new StringBuilder();
-            StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
-            dbConnection.dumpDetail(pb);
-            b.append(bpb.toString());
+            dbConnection.dumpDetail(b);
             b.append("\n-------\n");
          }
 
@@ -173,28 +179,25 @@ public class AppNameSharedStateContainer {
             OdkConnectionInterface dbConnection = dbconnectionPD.getKey();
 
             if (dbConnection != null) {
-               String sessionQualifier = dbConnection.getSessionQualifier();
                Long value = dbconnectionPD.getValue();
-
-               b.append("dumpInfo: lastThreadId: " + dbConnection.getLastThreadId() + " refCount: "
-                   + dbConnection.getReferenceCount() + " appName " + appName + " sessionQualifier "
-                   + sessionQualifier + " lastAction " + dbConnection.getLastAction());
-               b.append(" -- closed at " + value + "\n");
-               StringBuilder bpb = new StringBuilder();
-               StringBuilderPrinter pb = new StringBuilderPrinter(bpb);
-               dbConnection.dumpDetail(pb);
-               b.append(bpb.toString());
+               b.append("\n-----closed at " + value + "\n");
+               dbConnection.dumpDetail(b);
                b.append("\n-------\n");
             }
          }
 
          b.append("\n-------------------------------------\n\n");
+         WebLogger.getLogger(appName).e("AndroidOdkConnection", b.toString());
       }
    }
 
 
    Object getSessionMutex() {
-      return appNameMutex;
+      return new Object();
+   }
+
+   public OperationLog getOperationLog() {
+      return operationLog;
    }
 
    void setBeginTransactionSession(String sessionQualifier) {

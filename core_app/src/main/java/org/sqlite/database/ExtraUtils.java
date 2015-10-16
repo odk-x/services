@@ -21,9 +21,6 @@
 package org.sqlite.database;
 import android.database.Cursor;
 
-import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteStatement;
-
 /**
  * Static utility methods for dealing with databases and {@link Cursor}s.
  */
@@ -121,31 +118,5 @@ public class ExtraUtils {
         } else {
             return Cursor.FIELD_TYPE_STRING;
         }
-    }
-
-    /**
-     * Utility method to run the query on the db and return the value in the
-     * first column of the first row.
-     */
-    public static long longForQuery(
-        SQLiteDatabase db, String query, String[] selectionArgs
-    ) {
-        SQLiteStatement prog = db.compileStatement(query);
-        try {
-            return longForQuery(prog, selectionArgs);
-        } finally {
-            prog.close();
-        }
-    }
-
-    /**
-     * Utility method to run the pre-compiled query and return the value in the
-     * first column of the first row.
-     */
-    public static long longForQuery(
-        SQLiteStatement prog, String[] selectionArgs
-    ) {
-        prog.bindAllArgsAsStrings(selectionArgs);
-        return prog.simpleQueryForLong();
     }
 }

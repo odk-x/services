@@ -20,6 +20,8 @@
 
 package org.sqlite.database.sqlite;
 
+import android.os.CancellationSignal;
+import android.os.OperationCanceledException;
 import org.sqlite.database.ExtraUtils;
 
 import android.database.AbstractWindowedCursor;
@@ -39,17 +41,19 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     static final String TAG = "SQLiteCursor";
     static final int NO_COUNT = -1;
 
-    /** The name of the table to edit */
-    private final String mEditTable;
-
     /** The names of the columns in the rows */
     private final String[] mColumns;
 
-    /** The query object for the cursor */
-    private final SQLiteQuery mQuery;
+   private SQLiteDatabase mDatabase;
 
-    /** The compiled query this cursor came from */
-    private final SQLiteCursorDriver mDriver;
+   /** the sqlQuery to execute */
+   private final String mSqlQuery;
+
+   /** the bindArgs for that query */
+   private final Object[] mBindArgs;
+
+   /** the cancellation signal when managing cursor window */
+   private final CancellationSignal mCancellationSignal;
 
     /** The number of rows in the cursor */
     private int mCount = NO_COUNT;
@@ -63,32 +67,41 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     /** Used to find out where a cursor was allocated in case it never got released. */
     private final Throwable mStackTrace;
 
-    /**
-     * Execute a query and provide access to its result set through a Cursor
-     * interface. For a query such as: {@code SELECT name, birth, phone FROM
-     * myTable WHERE ... LIMIT 1,20 ORDER BY...} the column names (name, birth,
-     * phone) would be in the projection argument and everything from
-     * {@code FROM} onward would be in the params argument.
-     *
-     * @param editTable the name of the table used for this query
-     * @param query the {@link SQLiteQuery} object associated with this cursor object.
-     */
-    public SQLiteCursor(SQLiteCursorDriver driver, String editTable, SQLiteQuery query) {
-        if (query == null) {
-            throw new IllegalArgumentException("query object cannot be null");
+   /**
+    * Execute a query and provide access to its result set through a Cursor
+    * interface. For a query such as: {@code SELECT name, birth, phone FROM
+    * myTable WHERE ... LIMIT 1,20 ORDER BY...} the column names (name, birth,
+    * phone) would be in the projection argument and everything from
+    * {@code FROM} onward would be in the params argument.
+    *
+    *
+    * @param database
+    * @param columnNames
+    * @param sqlQuery
+    * @param bindArgs
+    * @param cancellationSignal
+    */
+    public SQLiteCursor(
+        SQLiteDatabase database, String[] columnNames,
+        String sqlQuery, Object[] bindArgs, CancellationSignal cancellationSignal) {
+        if (sqlQuery == null) {
+            throw new IllegalArgumentException("sqlQuery cannot be null");
         }
         if (/* StrictMode.vmSqliteObjectLeaksEnabled() */ false ) {
             mStackTrace = new DatabaseObjectNotClosedException().fillInStackTrace();
         } else {
             mStackTrace = null;
         }
-        mDriver = driver;
-        mEditTable = editTable;
-        mColumnNameMap = null;
-        mQuery = query;
 
-        mColumns = query.getColumnNames();
-        mRowIdColumnIndex = ExtraUtils.findRowIdColumnIndex(mColumns);
+       // we are going to hold onto the open database...
+       database.acquireReference();
+        mDatabase = database;
+        mColumnNameMap = null;
+        mSqlQuery = sqlQuery;
+        mBindArgs = bindArgs;
+        mCancellationSignal = cancellationSignal;
+
+        mColumns = columnNames;
     }
 
     /**
@@ -96,7 +109,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
      * @return the SQLiteDatabase that this cursor is associated with.
      */
     public SQLiteDatabase getDatabase() {
-        return mQuery.getDatabase();
+        return mDatabase;
     }
 
     @Override
@@ -143,13 +156,13 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         try {
             if (mCount == NO_COUNT) {
                 int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos, 0);
-                mCount = mQuery.fillWindow(mWindow, startPos, requiredPos, true);
+                mCount = fillWindow(mWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
                 getDatabase().getLogger().d(TAG, "received count(*) from native_fill_window: " + mCount);
             } else {
                 int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);
-                mQuery.fillWindow(mWindow, startPos, requiredPos, false);
+                fillWindow(mWindow, startPos, requiredPos, false);
             }
         } catch (RuntimeException ex) {
             // Close the cursor window if the query failed and therefore will
@@ -160,6 +173,36 @@ public class SQLiteCursor extends AbstractWindowedCursor {
             throw ex;
         }
     }
+
+   /**
+    * Reads rows into a buffer.
+    *
+    * @param window The window to fill into
+    * @param startPos The start position for filling the window.
+    * @param requiredPos The position of a row that MUST be in the window.
+    * If it won't fit, then the query should discard part of what it filled.
+    * @param countAllRows True to count all rows that the query would
+    * return regardless of whether they fit in the window.
+    * @return Number of rows that were enumerated.  Might not be all rows
+    * unless countAllRows is true.
+    *
+    * @throws SQLiteException if an error occurs.
+    * @throws OperationCanceledException if the operation was canceled.
+    */
+   int fillWindow(CursorWindow window, int startPos, int requiredPos, boolean countAllRows) {
+      window.acquireReference();
+      try {
+         int numRows = getDatabase().executeForCursorWindow(mSqlQuery, mBindArgs,
+             window, startPos, requiredPos, countAllRows,
+             mCancellationSignal);
+         return numRows;
+      } catch (SQLiteException ex) {
+         getDatabase().getLogger().e(TAG, "exception: " + ex.getMessage() + "; query: " + mSqlQuery);
+         throw ex;
+      } finally {
+         window.releaseReference();
+      }
+   }
 
     @Override
     public int getColumnIndex(String columnName) {
@@ -199,16 +242,20 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     @Override
     public void deactivate() {
         super.deactivate();
-        mDriver.cursorDeactivated();
     }
 
     @Override
     public void close() {
         super.close();
-        synchronized (this) {
-            mQuery.close();
-            mDriver.cursorClosed();
-        }
+
+       SQLiteDatabase db = null;
+       synchronized (this) {
+          db = mDatabase;
+          mDatabase = null;
+       }
+       if ( db != null ) {
+          db.releaseReference();
+       }
     }
 
     @Override
@@ -218,8 +265,8 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         }
 
         synchronized (this) {
-            if (!mQuery.getDatabase().isOpen()) {
-                return false;
+            if (!mDatabase.isOpen()) {
+               return false;
             }
 
             if (mWindow != null) {
@@ -227,8 +274,6 @@ public class SQLiteCursor extends AbstractWindowedCursor {
             }
             mPos = -1;
             mCount = NO_COUNT;
-
-            mDriver.cursorRequeried(this);
         }
 
         try {
@@ -245,13 +290,6 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     public void setWindow(CursorWindow window) {
         super.setWindow(window);
         mCount = NO_COUNT;
-    }
-
-    /**
-     * Changes the selection arguments. The new values take effect after a call to requery().
-     */
-    public void setSelectionArguments(String[] selectionArgs) {
-        mDriver.setBindArguments(selectionArgs);
     }
 
     /**

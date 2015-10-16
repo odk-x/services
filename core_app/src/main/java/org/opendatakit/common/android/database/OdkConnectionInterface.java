@@ -2,7 +2,6 @@ package org.opendatakit.common.android.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.util.Printer;
 import org.sqlite.database.SQLException;
 
 /**
@@ -13,8 +12,6 @@ public interface OdkConnectionInterface {
     // This should be static!!
     // Not allowed in Java
     //public OdkConnectionInterface openDatabase(String appName, String dbFilePath, String sessionQualifier);
-
-    public String getLastAction();
 
   /**
    * This should only be called for the main database initialization.
@@ -34,21 +31,19 @@ public interface OdkConnectionInterface {
 
     public String getAppName();
 
-    public long getLastThreadId();
-
     public String getSessionQualifier();
 
-    public void dumpDetail(Printer printer);
+    public void dumpDetail(StringBuilder b);
 
     public void acquireReference();
 
-    public void releaseReference();
+    public void releaseReference() throws SQLException;
 
-    public int getVersion();
+    public int getVersion() throws SQLException;
 
-    public void setVersion(int version);
+    public void setVersion(int version) throws SQLException;
 
-    public boolean isOpen();
+    public boolean isOpen() throws SQLException;
 
   /*
    * close() is not implemented. Instead, users should call:
@@ -64,17 +59,17 @@ public interface OdkConnectionInterface {
    */
     public void close();
 
-    public void beginTransactionNonExclusive();
+    public void beginTransactionNonExclusive() throws SQLException;
 
-    public boolean inTransaction();
+    public boolean inTransaction() throws SQLException;
 
-    public void setTransactionSuccessful();
+    public void setTransactionSuccessful() throws SQLException;
 
-    public void endTransaction();
+    public void endTransaction() throws SQLException;
 
-    public int update(String table, ContentValues values, String whereClause, String[] whereArgs);
+    public int update(String table, ContentValues values, String whereClause, String[] whereArgs) throws SQLException;
 
-    public int delete(String table, String whereClause, String[] whereArgs);
+    public int delete(String table, String whereClause, String[] whereArgs) throws SQLException;
 
     public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
             throws SQLException;
@@ -86,11 +81,11 @@ public interface OdkConnectionInterface {
 
     public void execSQL(String sql) throws SQLException;
 
-    public Cursor rawQuery(String sql, String[] selectionArgs);
+    public Cursor rawQuery(String sql, String[] selectionArgs) throws SQLException;
 
     public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
-                           String groupBy, String having, String orderBy, String limit);
+                           String groupBy, String having, String orderBy, String limit) throws SQLException;
 
     public Cursor queryDistinct(String table, String[] columns, String selection,
-                                   String[] selectionArgs, String groupBy, String having, String orderBy, String limit);
+                                   String[] selectionArgs, String groupBy, String having, String orderBy, String limit) throws SQLException;
 }

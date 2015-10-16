@@ -20,24 +20,19 @@
 
 package org.sqlite.database;
 
-import java.io.File;
-import java.util.List;
-
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.database.OperationLog;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
-import org.sqlite.database.sqlite.SQLiteException;
-import android.util.Pair;
 
 /**
  * Default class used to define the actions to take when the database corruption is reported
- * by sqlite.
+ * by sqlite.  This had destroyed the database. Changed to simply report the error.
  * <p>
  * An application can specify an implementation of {@link DatabaseErrorHandler} on the
  * following:
  * <ul>
- *   <li>{@link SQLiteDatabase#openDatabase(SQLiteDatabaseConfiguration configuration,
- *        org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory, DatabaseErrorHandler, String)}</li>
+ *   <li>{@link SQLiteDatabase#SQLiteDatabase(SQLiteDatabaseConfiguration,
+ *         OperationLog, DatabaseErrorHandler, String)}</li>
  * </ul>
  * The specified {@link DatabaseErrorHandler} is used to handle database corruption errors, if they
  * occur.
@@ -55,62 +50,7 @@ public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
      * is detected.
      */
     public void onCorruption(SQLiteDatabase dbObj) {
-      dbObj.getLogger().e(TAG, "Corruption reported by sqlite on database: " + dbObj.getPath());
-
-	// If this is a SEE build, do not delete any database files.
-	//
-	if( SQLiteDatabase.hasCodec() ) return;
-
-        // is the corruption detected even before database could be 'opened'?
-        if (!dbObj.isOpen()) {
-            // database files are not even openable. delete this database file.
-            // NOTE if the database has attached databases, then any of them could be corrupt.
-            // and not deleting all of them could cause corrupted database file to remain and 
-            // make the application crash on database open operation. To avoid this problem,
-            // the application should provide its own {@link DatabaseErrorHandler} impl class
-            // to delete ALL files of the database (including the attached databases).
-            deleteDatabaseFile(dbObj.getLogger(), dbObj.getPath());
-            return;
-        }
-
-        List<Pair<String, String>> attachedDbs = null;
-        try {
-            // Close the database, which will cause subsequent operations to fail.
-            // before that, get the attached database list first.
-            try {
-                attachedDbs = dbObj.getAttachedDbs();
-            } catch (SQLiteException e) {
-                /* ignore */
-            }
-            try {
-                dbObj.close();
-            } catch (SQLiteException e) {
-                /* ignore */
-            }
-        } finally {
-            // Delete all files of this corrupt database and/or attached databases
-            if (attachedDbs != null) {
-                for (Pair<String, String> p : attachedDbs) {
-                    deleteDatabaseFile(dbObj.getLogger(), p.second);
-                }
-            } else {
-                // attachedDbs = null is possible when the database is so corrupt that even
-                // "PRAGMA database_list;" also fails. delete the main database file
-                deleteDatabaseFile(dbObj.getLogger(), dbObj.getPath());
-            }
-        }
-    }
-
-    private void deleteDatabaseFile(WebLogger logger, String fileName) {
-        if (fileName.equalsIgnoreCase(":memory:") || fileName.trim().length() == 0) {
-            return;
-        }
-      logger.e(TAG, "deleting the database file: " + fileName);
-        try {
-            SQLiteDatabase.deleteDatabase(new File(fileName));
-        } catch (Exception e) {
-            /* print warning and ignore exception */
-          logger.w(TAG, "delete failed: " + e.getMessage());
-        }
+       dbObj.getLogger().e(TAG, "Corruption reported by sqlite on database: " + dbObj.getAppName());
+       throw new IllegalStateException("Corrupted database -- what do we do now?");
     }
 }

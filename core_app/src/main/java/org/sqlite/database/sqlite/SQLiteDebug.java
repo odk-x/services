@@ -89,6 +89,7 @@ public final class SQLiteDebug {
 
     /**
      * Contains statistics about the active pagers in the current process.
+     * Injected from C++ JNI code. DO NOT CHANGE!!!
      *
      * @see #nativeGetPagerStats(PagerStats)
      */
@@ -111,40 +112,6 @@ public final class SQLiteDebug {
          * documented at http://www.sqlite.org/c3ref/c_status_malloc_size.html
          */
         public int largestMemAlloc;
-
-        /** a list of {@link DbStats} - one for each main database opened by the applications
-         * running on the android device
-         */
-        public ArrayList<DbStats> dbStats;
-    }
-
-    /**
-     * contains statistics about a database
-     */
-    public static class DbStats {
-        /** name of the database */
-        public String dbName;
-
-        /** the page size for the database */
-        public long pageSize;
-
-        /** the database size */
-        public long dbSize;
-
-        /** documented here http://www.sqlite.org/c3ref/c_dbstatus_lookaside_used.html */
-        public int lookaside;
-
-        /** statement cache stats: hits/misses/cachesize */
-        public String cache;
-
-        public DbStats(String dbName, long pageCount, long pageSize, int lookaside,
-            int hits, int misses, int cachesize) {
-            this.dbName = dbName;
-            this.pageSize = pageSize / 1024;
-            dbSize = (pageCount * pageSize) / 1024;
-            this.lookaside = lookaside;
-            this.cache = hits + "/" + misses + "/" + cachesize;
-        }
     }
 
     /**
@@ -154,23 +121,6 @@ public final class SQLiteDebug {
     public static PagerStats getDatabaseInfo() {
         PagerStats stats = new PagerStats();
         nativeGetPagerStats(stats);
-        stats.dbStats = SQLiteDatabase.getDbStats();
         return stats;
-    }
-
-    /**
-     * Dumps detailed information about all databases used by the process.
-     * @param printer The printer for dumping database state.
-     * @param args Command-line arguments supplied to dumpsys dbinfo
-     */
-    public static void dump(Printer printer, String[] args) {
-        boolean verbose = false;
-        for (String arg : args) {
-            if (arg.equals("-v")) {
-                verbose = true;
-            }
-        }
-
-        SQLiteDatabase.dumpAll(printer, verbose);
     }
 }

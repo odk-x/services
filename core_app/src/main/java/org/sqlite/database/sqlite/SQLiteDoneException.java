@@ -22,9 +22,7 @@ package org.sqlite.database.sqlite;
 
 /**
  * An exception that indicates that the SQLite program is done.
- * Thrown when an operation that expects a row (such as {@link
- * SQLiteStatement#simpleQueryForString} or {@link
- * SQLiteStatement#simpleQueryForLong}) does not get one.
+ * Thrown when an operation that expects a row and does not get one.
  */
 public class SQLiteDoneException extends SQLiteException {
     public SQLiteDoneException() {}

@@ -14,12 +14,9 @@
 
 package org.opendatakit.common.android.database;
 
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.common.android.utilities.WebLogger;
-
-import java.io.File;
 
 public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface {
 
@@ -68,16 +65,10 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface 
     WebLogger.getLogger(appName).printStackTrace(e);
   }
 
-   protected OdkConnectionInterface openDatabase(Object sessionMutex, String appName, String
-       sessionQualifier) {
-      return AndroidOdkConnection.openDatabase(sessionMutex, appName, getDbFilePath(appName),
+   @Override
+   protected OdkConnectionInterface openDatabase(AppNameSharedStateContainer appNameSharedStateContainer,
+       String sessionQualifier) {
+      return AndroidOdkConnection.openDatabase(appNameSharedStateContainer,
           sessionQualifier);
    }
-
-  private String getDbFilePath(String appName) {
-    File dbFile = new File(ODKFileUtils.getWebDbFolder(appName),
-            ODKFileUtils.getNameOfSQLiteDatabase());
-    String dbFilePath = dbFile.getAbsolutePath();
-    return dbFilePath;
-  }
 }

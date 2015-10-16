@@ -17,12 +17,14 @@ package org.opendatakit.common.android.database;
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import android.util.Printer;
-import android.util.StringBuilderPrinter;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
+import org.sqlite.database.sqlite.SQLiteException;
+
+import java.io.File;
 
 public class AndroidOdkConnection implements OdkConnectionInterface{
   final Object mutex;
@@ -32,36 +34,64 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
    * One reference immediately held on stack after creation.
    * One reference will be added when we put this into the OdkConnectionFactoryInterface session map
    */
-  int referenceCount = 1;
+  final OperationLog operationLog;
   final String appName;
   final SQLiteDatabase db;
   final String sessionQualifier;
-  String lastAction = "<new>";
-  long threadId = -1L;
+  int referenceCount = 1;
   Object initializationMutex = new Object();
   boolean initializationComplete = false;
   boolean initializationStatus = false;
 
-  
-  public static AndroidOdkConnection openDatabase(Object mutex, String appName, String dbFilePath, String sessionQualifier) {
-    SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
+
+   private static String getDbFilePath(String appName) {
+      File dbFile = new File(ODKFileUtils.getWebDbFolder(appName),
+          ODKFileUtils.getNameOfSQLiteDatabase());
+      String dbFilePath = dbFile.getAbsolutePath();
+      return dbFilePath;
+   }
+
+  public static AndroidOdkConnection openDatabase(AppNameSharedStateContainer
+      appNameSharedStateContainer, String sessionQualifier) {
+
+     String appName = appNameSharedStateContainer.getAppName();
+     String dbFilePath = getDbFilePath(appName);
+
+     SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
             SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING |
                     SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY |
                     SQLiteDatabase.NO_LOCALIZED_COLLATORS );
 
-    // this might throw an exception
-    SQLiteDatabase db = SQLiteDatabase.openDatabase(configuration, null, null, sessionQualifier);
+     boolean success = false;
+     SQLiteDatabase db = null;
+     try {
+        db = new SQLiteDatabase(configuration, appNameSharedStateContainer.getOperationLog(),
+            null, sessionQualifier);
 
-    // this isn't going to throw an exception
-    return new AndroidOdkConnection(mutex, appName, db, sessionQualifier);
+        // this might throw an exception
+        db.open();
+
+        // this isn't going to throw an exception
+        AndroidOdkConnection connection =
+           new AndroidOdkConnection(appNameSharedStateContainer.getSessionMutex(), appName,
+                   appNameSharedStateContainer.getOperationLog(), db, sessionQualifier);
+        success = true;
+        return connection;
+     } finally {
+        if ( !success ) {
+           db.releaseReference();
+        }
+     }
   }
 
-  private AndroidOdkConnection(Object mutex, String appName, SQLiteDatabase db, String sessionQualifier) {
+  private AndroidOdkConnection(Object mutex, String appName, OperationLog operationLog,
+      SQLiteDatabase db, String
+      sessionQualifier) {
     this.mutex = mutex;
     this.appName = appName;
+    this.operationLog = operationLog;
     this.db = db;
     this.sessionQualifier = sessionQualifier;
-    this.threadId = Thread.currentThread().getId();
   }
 
   public boolean waitForInitializationComplete() {
@@ -95,30 +125,18 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     return appName;
   }
 
-  public long getLastThreadId() {
-    return threadId;
-  }
-
   public String getSessionQualifier() {
     return sessionQualifier;
   }
 
-  public void dumpDetail(Printer printer) {
-    db.dump(printer, true);
+  public void dumpDetail(StringBuilder b) {
+    db.dump(b, true);
   }
 
   private String getLogTag() {
     return "AndroidOdkConnection:" + appName + ":" + sessionQualifier;
   }
 
-  private final void log() {
-    WebLogger.getLogger(appName).i(getLogTag(), "ref(" + getReferenceCount() + ") sq: " + sessionQualifier + " action: " + lastAction);
-  }
-  
-  public String getLastAction() {
-    return lastAction;
-  }
-  
   public void acquireReference() {
     synchronized (mutex) {
       ++referenceCount;
@@ -146,19 +164,30 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public int getReferenceCount() {
-    synchronized (mutex) {
-      return referenceCount;
-    }
+     // don't log this -- used by dump()
+     synchronized (mutex) {
+        return referenceCount;
+     }
   }
 
   public boolean isOpen() {
-    synchronized (mutex) {
-      this.threadId = Thread.currentThread().getId();
-      return db.isOpen();
-    }
+     final int cookie = operationLog.beginOperation(sessionQualifier, "isOpen()",null, null);;
+     try {
+        synchronized (mutex) {
+           return db.isOpen();
+        }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
-  @Override
   protected void finalize() throws Throwable {
 
     try {
@@ -176,186 +205,465 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     throw new IllegalStateException("this method should not be called");
   }
 
-  private void commonWrapUpConnection(String action) {
-    if ( isOpen() ) {
-      try {
-        boolean first = true;
-        threadId = Thread.currentThread().getId();
-        while (inTransaction()) {
-          if (!first) {
-            lastAction = action + "...end transaction[unknown] (finalAction: " + lastAction + ")";
-          } else {
-            lastAction = action + "...end transaction[rollback] (finalAction: " + lastAction + ")";
-          }
-          first = false;
-          log();
-          endTransaction();
+  private void commonWrapUpConnection(String action) throws Throwable {
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         "commonWrapUpConnection(\"" + action + "\")",null, null);;
+     try {
+       if ( isOpen() ) {
+         try {
+           while (inTransaction()) {
+             endTransaction();
+           }
+         } finally {
+            final int innerCookie = operationLog.beginOperation(sessionQualifier,
+                "commonWrapUpConnection(\"" + action + "\") -- close",null, null);;
+            try {
+              synchronized (mutex) {
+                db.close();
+              }
+            } catch ( Throwable t ) {
+               operationLog.failOperation(innerCookie, t);
+               if ( t instanceof SQLiteException ) {
+                  throw t;
+               } else {
+                  throw new SQLiteException("unexpected", t);
+               }
+            } finally {
+               operationLog.endOperation(innerCookie);
+            }
+         }
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
         }
-      } catch ( Throwable t ) {
-        WebLogger.getLogger(appName).e("commonWrapUpConnection", "Yikes! threw an exception within connection cleanup routine");
-        WebLogger.getLogger(appName).printStackTrace(t);
-        throw t;
-      } finally {
-        threadId = Thread.currentThread().getId();
-        lastAction = action + "...close(finalAction: " + lastAction + ")";
-        log();
-        synchronized (mutex) {
-          db.close();
-        }
-      }
-    }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
-  public int getVersion() {
-    threadId = Thread.currentThread().getId();
-    lastAction = "getVersion(finalAction: " + lastAction + ")";
-    log();
-    synchronized (mutex) {
-      return db.getVersion();
-    }
-  }
-
-  public void setVersion(int version) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "setVersion=" + version + "(finalAction: " + lastAction + ")";
-    log();
-    synchronized (mutex) {
-      db.setVersion(version);
-    }
-  }
-
-  public void beginTransactionNonExclusive() {
-    threadId = Thread.currentThread().getId();
-    lastAction = "beginTransactionNonExclusive(priorAction: " + lastAction + ")";
-    log();
+  public int getVersion() throws SQLiteException {
+    final int cookie = operationLog.beginOperation(sessionQualifier, "getVersion()",null, null);;
     try {
-      synchronized (mutex) {
-        db.beginTransactionNonExclusive();
-      }
-    } catch (Throwable t) {
-      WebLogger.getLogger(appName).printStackTrace(t);
+       synchronized (mutex) {
+          return db.getVersion();
+       }
+    } catch ( Throwable t ) {
+       operationLog.failOperation(cookie, t);
+       if ( t instanceof SQLiteException ) {
+          throw t;
+       } else {
+          throw new SQLiteException("unexpected", t);
+       }
+    } finally {
+       operationLog.endOperation(cookie);
+    }
+  }
+
+  public void setVersion(int version) throws SQLiteException {
+    final int cookie = operationLog.beginOperation(sessionQualifier,
+        "setVersion(" + version + ")", null, null);;
+    try {
+       synchronized (mutex) {
+         db.setVersion(version);
+       }
+    } catch ( Throwable t ) {
+       operationLog.failOperation(cookie, t);
+       if ( t instanceof SQLiteException ) {
+          throw t;
+       } else {
+          throw new SQLiteException("unexpected", t);
+       }
+    } finally {
+       operationLog.endOperation(cookie);
+    }
+  }
+
+  public void beginTransactionNonExclusive() throws SQLException {
+     boolean success = false;
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         "beginTransactionNonExclusive()", null, null);;
+     try {
+        synchronized (mutex) {
+           db.beginTransactionNonExclusive();
+        }
+        success = true;
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
+     if ( !success ) {
       WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo();
-      StringBuilder b = new StringBuilder();
-      StringBuilderPrinter p = new StringBuilderPrinter(b);
-      SQLiteDatabase.dumpAll(p, true);
-      p.println("\n");
-      WebLogger.getLogger(appName).e("AndroidOdkConnection", b.toString());
-      throw t;
     }
   }
 
   public boolean inTransaction() {
-    threadId = Thread.currentThread().getId();
-    lastAction = "inTransaction(finalAction: " + lastAction + ")";
-    log();
-    synchronized (mutex) {
-      return db.inTransaction();
-    }
+      final int cookie = operationLog.beginOperation(sessionQualifier,
+          "inTransaction()", null, null);;
+      try {
+         synchronized (mutex) {
+            return db.inTransaction();
+         }
+      } catch ( Throwable t ) {
+         operationLog.failOperation(cookie, t);
+         if ( t instanceof SQLiteException ) {
+            throw t;
+         } else {
+            throw new SQLiteException("unexpected", t);
+         }
+      } finally {
+         operationLog.endOperation(cookie);
+      }
   }
 
   public void setTransactionSuccessful() {
-    threadId = Thread.currentThread().getId();
-    lastAction = "setTransactionSuccessful(finalAction: " + lastAction + ")";
-    log();
-    synchronized (mutex) {
-      db.setTransactionSuccessful();
-    }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         "setTransactionSuccessful()", null, null);;
+     try {
+       synchronized (mutex) {
+         db.setTransactionSuccessful();
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public void endTransaction() {
-    threadId = Thread.currentThread().getId();
-    lastAction = "endTransaction(finalAction: " + lastAction + ")";
-    log();
-    synchronized (mutex) {
-      db.endTransaction();
-    }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         "endTransaction()", null, null);;
+     try {
+       synchronized (mutex) {
+         db.endTransaction();
+       }
+     } catch ( Throwable t ) {
+         operationLog.failOperation(cookie, t);
+         if ( t instanceof SQLiteException ) {
+            throw t;
+         } else {
+            throw new SQLiteException("unexpected", t);
+         }
+      } finally {
+         operationLog.endOperation(cookie);
+      }
   }
 
   public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "update=" + table + " WHERE " + whereClause;
-    log();
-    synchronized (mutex) {
-      return db.update(table, values, whereClause, whereArgs);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("delete(\"").append(table).append("\",...,");
+     if ( whereClause == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(whereClause).append("\",");
+     }
+     if ( whereArgs == null ) {
+        b.append("null)");
+     } else {
+        b.append("...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.update(table, values, whereClause, whereArgs);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public int delete(String table, String whereClause, String[] whereArgs) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "delete=" + table + " WHERE " + whereClause;
-    log();
-    synchronized (mutex) {
-      return db.delete(table, whereClause, whereArgs);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("delete(\"").append(table).append("\",");
+     if ( whereClause == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(whereClause).append("\",");
+     }
+     if ( whereArgs == null ) {
+        b.append("null)");
+     } else {
+        b.append("...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.delete(table, whereClause, whereArgs);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
       throws SQLException {
-    threadId = Thread.currentThread().getId();
-    lastAction = "replaceOrThrow=" + table;
-    log();
-    synchronized (mutex) {
-      return db.replaceOrThrow(table, nullColumnHack, initialValues);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("replaceOrThrow(\"").append(table).append("\",");
+     if ( nullColumnHack == null ) {
+        b.append("null,...)");
+     } else {
+        b.append("\"").append(nullColumnHack).append("\",...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.replaceOrThrow(table, nullColumnHack, initialValues);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
       throws SQLException {
-    threadId = Thread.currentThread().getId();
-    lastAction = "insertOrThrow=" + table;
-    log();
-    synchronized (mutex) {
-      return db.insertOrThrow(table, nullColumnHack, values);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("insertOrThrow(\"").append(table).append("\",");
+     if ( nullColumnHack == null ) {
+        b.append("null,...)");
+     } else {
+        b.append("\"").append(nullColumnHack).append("\",...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.insertOrThrow(table, nullColumnHack, values);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public void execSQL(String sql, Object[] bindArgs) throws SQLException {
-    threadId = Thread.currentThread().getId();
-    lastAction = "execSQL=" + sql;
-    log();
-    synchronized (mutex) {
-      db.execSQL(sql, bindArgs);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("execSQL(\"").append(sql).append("\",");
+     if ( bindArgs == null ) {
+        b.append("null)");
+     } else {
+        b.append("...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         db.execSQL(sql, bindArgs);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public void execSQL(String sql) throws SQLException {
-    threadId = Thread.currentThread().getId();
-    lastAction = "execSQL=" + sql;
-    log();
-    synchronized (mutex) {
-      db.execSQL(sql);
-    }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         "execSQL(\"" + sql + "\")", null, null);;
+     try {
+       synchronized (mutex) {
+         db.execSQL(sql, null);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public Cursor rawQuery(String sql, String[] selectionArgs) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "rawQuery=" + sql;
-    log();
-    synchronized (mutex) {
-      return db.rawQuery(sql, selectionArgs);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("rawQuery(\"").append(sql).append("\",");
+     if ( selectionArgs == null ) {
+        b.append("null)");
+     } else {
+        b.append("...)");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.rawQuery(sql, selectionArgs);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
       String groupBy, String having, String orderBy, String limit) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "query=" + table + " WHERE " + selection;
-    log();
-    synchronized (mutex) {
-      return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("query(\"").append(table).append("\",");
+     if ( columns == null ) {
+        b.append("null,");
+     } else {
+        b.append("...,");
+     }
+     if ( selection == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(selection).append("\",");
+     }
+     if ( selectionArgs == null ) {
+        b.append("null,");
+     } else {
+        b.append("...,");
+     }
+     if ( groupBy == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(groupBy).append("\",");
+     }
+     if ( having == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(having).append("\",");
+     }
+     if ( orderBy == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(orderBy).append("\",");
+     }
+     if ( limit == null ) {
+        b.append("null)");
+     } else {
+        b.append("\"").append(limit).append("\")");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+         b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
   public Cursor queryDistinct(String table, String[] columns, String selection,
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
-    threadId = Thread.currentThread().getId();
-    lastAction = "queryDistinct=" + table + " WHERE " + selection;
-    log();
-    synchronized (mutex) {
-      return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy,
-              limit);
-    }
+     StringBuilder b = new StringBuilder();
+     b.append("queryDistinct(\"").append(table).append("\",");
+     if ( columns == null ) {
+        b.append("null,");
+     } else {
+        b.append("...,");
+     }
+     if ( selection == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(selection).append("\",");
+     }
+     if ( selectionArgs == null ) {
+        b.append("null,");
+     } else {
+        b.append("...,");
+     }
+     if ( groupBy == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(groupBy).append("\",");
+     }
+     if ( having == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(having).append("\",");
+     }
+     if ( orderBy == null ) {
+        b.append("null,");
+     } else {
+        b.append("\"").append(orderBy).append("\",");
+     }
+     if ( limit == null ) {
+        b.append("null)");
+     } else {
+        b.append("\"").append(limit).append("\")");
+     }
+     final int cookie = operationLog.beginOperation(sessionQualifier,
+          b.toString(), null, null);;
+     try {
+       synchronized (mutex) {
+         return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy,
+                 limit);
+       }
+     } catch ( Throwable t ) {
+        operationLog.failOperation(cookie, t);
+        if ( t instanceof SQLiteException ) {
+           throw t;
+        } else {
+           throw new SQLiteException("unexpected", t);
+        }
+     } finally {
+        operationLog.endOperation(cookie);
+     }
   }
 
 }

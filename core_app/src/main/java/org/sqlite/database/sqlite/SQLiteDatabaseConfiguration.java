@@ -42,11 +42,6 @@ public final class SQLiteDatabaseConfiguration {
     private static final Pattern EMAIL_IN_DB_PATTERN =
             Pattern.compile("[\\w\\.\\-]+@[\\w\\.\\-]+");
 
-    /**
-     * Special path used by in-memory databases.
-     */
-    public static final String MEMORY_DB_PATH = ":memory:";
-
   /**
    * Absolute max value that can be set by {@link #setMaxSqlCacheSize(int)}.
    *
@@ -103,15 +98,6 @@ public final class SQLiteDatabaseConfiguration {
      */
     public final ArrayList<SQLiteCustomFunction> customFunctions =
             new ArrayList<SQLiteCustomFunction>();
-
-  /**
-   * Creates a database configuration for a memory database with default values for all other parameters.
-   *
-   * @param openFlags Open flags for the database, such as {@link SQLiteDatabase#OPEN_READWRITE}.
-   */
-  public SQLiteDatabaseConfiguration(String appName, int openFlags) {
-    this(appName, MEMORY_DB_PATH, openFlags);
-  }
 
     /**
      * Creates a database configuration with the required parameters for opening a
@@ -256,14 +242,6 @@ public final class SQLiteDatabaseConfiguration {
         foreignKeyConstraintsEnabled = other.foreignKeyConstraintsEnabled;
         customFunctions.clear();
         customFunctions.addAll(other.customFunctions);
-    }
-
-    /**
-     * Returns true if the database is in-memory.
-     * @return True if the database is in-memory.
-     */
-    public boolean isInMemoryDb() {
-        return path.equalsIgnoreCase(MEMORY_DB_PATH);
     }
 
     private static String stripPathForLogs(String path) {
