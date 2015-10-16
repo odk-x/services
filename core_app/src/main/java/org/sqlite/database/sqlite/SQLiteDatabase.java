@@ -478,7 +478,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return null;
       }
 
-      return mConnection.executeForString(sql, bindArgs, cancellationSignal); // might throw
+      return mConnection.executeForStringImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**

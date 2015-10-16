@@ -288,9 +288,9 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
    }
 
    private void setLockingMode(String newValue) {
-      String value = executeForString("PRAGMA locking_mode", null, null);
+      String value = executeForStringImpl("PRAGMA locking_mode", null, null);
       if (!value.equalsIgnoreCase(newValue)) {
-         String result = executeForString("PRAGMA locking_mode=" + newValue, null, null);
+         String result = executeForStringImpl("PRAGMA locking_mode=" + newValue, null, null);
          if (result.equalsIgnoreCase(newValue)) {
             return;
          }
@@ -303,9 +303,9 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
    }
 
    private void setJournalMode(String newValue) {
-      String value = executeForString("PRAGMA journal_mode", null, null);
+      String value = executeForStringImpl("PRAGMA journal_mode", null, null);
       if (!value.equalsIgnoreCase(newValue)) {
-         String result = executeForString("PRAGMA journal_mode=" + newValue, null, null);
+         String result = executeForStringImpl("PRAGMA journal_mode=" + newValue, null, null);
          if (result.equalsIgnoreCase(newValue)) {
             return;
          }
@@ -322,7 +322,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
    }
 
    private void setSyncMode(String newValue) {
-      String value = executeForString("PRAGMA synchronous", null, null);
+      String value = executeForStringImpl("PRAGMA synchronous", null, null);
       if (!canonicalizeSyncMode(value).equalsIgnoreCase(
           canonicalizeSyncMode(newValue))) {
          executeImpl("PRAGMA synchronous=" + newValue, null, null);
@@ -536,8 +536,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * or invalid number of bind arguments.
      * @throws OperationCanceledException if the operation was canceled.
      */
-    public String executeForString(String sql, Object[] bindArgs,
-            CancellationSignal cancellationSignal) {
+    public String executeForStringImpl(String sql, Object[] bindArgs,
+        CancellationSignal cancellationSignal) {
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -547,7 +547,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
              throw new SQLiteException("connection closed");
           }
           final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForString", sql, bindArgs);
+              .beginOperation(mSessionQualifier, "executeForStringImpl", sql, bindArgs);
           try {
              final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
              try {
