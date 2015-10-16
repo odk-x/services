@@ -739,9 +739,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * or invalid number of bind arguments.
      * @throws OperationCanceledException if the operation was canceled.
      */
-    public int executeForCursorWindow(String sql, Object[] bindArgs,
-            CursorWindow window, int startPos, int requiredPos, boolean countAllRows,
-            CancellationSignal cancellationSignal) {
+    public int executeForCursorWindowImpl(String sql, Object[] bindArgs, CursorWindow window,
+        int startPos, int requiredPos, boolean countAllRows, CancellationSignal cancellationSignal) {
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -759,7 +758,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                  throw new SQLiteException("connection closed");
               }
               final int cookie = mRecentOperations
-                  .beginOperation(mSessionQualifier, "executeForCursorWindow", sql, bindArgs);
+                  .beginOperation(mSessionQualifier, "executeForCursorWindowImpl", sql, bindArgs);
               try {
                  final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
                  try {

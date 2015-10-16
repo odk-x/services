@@ -598,9 +598,8 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return 0;
       }
 
-      return mConnection.executeForCursorWindow(sql, bindArgs,
-          window, startPos, requiredPos, countAllRows,
-          cancellationSignal); // might throw
+      return mConnection.executeForCursorWindowImpl(sql, bindArgs, window, startPos, requiredPos,
+          countAllRows, cancellationSignal); // might throw
    }
 
    /**
