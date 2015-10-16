@@ -214,7 +214,7 @@ public final class SQLiteDatabaseConfiguration {
    * @param function callback to call when the function is executed
    * @hide
    */
-  public void addCustomFunction(String name, int numArgs, SQLiteDatabase.CustomFunction function) {
+  public void addCustomFunction(String name, int numArgs, SQLiteConnection.CustomFunction function) {
     // Create wrapper (also validates arguments).
     SQLiteCustomFunction wrapper = new SQLiteCustomFunction(name, numArgs, function);
 

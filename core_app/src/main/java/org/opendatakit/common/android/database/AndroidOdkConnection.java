@@ -20,7 +20,7 @@ import android.database.Cursor;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.SQLException;
-import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -36,7 +36,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
    */
   final OperationLog operationLog;
   final String appName;
-  final SQLiteDatabase db;
+  final SQLiteConnection db;
   final String sessionQualifier;
   int referenceCount = 1;
   Object initializationMutex = new Object();
@@ -58,14 +58,14 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      String dbFilePath = getDbFilePath(appName);
 
      SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
-            SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING |
-                    SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY |
-                    SQLiteDatabase.NO_LOCALIZED_COLLATORS );
+         SQLiteConnection.ENABLE_WRITE_AHEAD_LOGGING |
+             SQLiteConnection.OPEN_READWRITE | SQLiteConnection.CREATE_IF_NECESSARY |
+             SQLiteConnection.NO_LOCALIZED_COLLATORS );
 
      boolean success = false;
-     SQLiteDatabase db = null;
+     SQLiteConnection db = null;
      try {
-        db = new SQLiteDatabase(configuration, appNameSharedStateContainer.getOperationLog(),
+        db = new SQLiteConnection(configuration, appNameSharedStateContainer.getOperationLog(),
             null, sessionQualifier);
 
         // this might throw an exception
@@ -85,7 +85,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   private AndroidOdkConnection(Object mutex, String appName, OperationLog operationLog,
-      SQLiteDatabase db, String
+      SQLiteConnection db, String
       sessionQualifier) {
     this.mutex = mutex;
     this.appName = appName;

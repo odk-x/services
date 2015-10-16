@@ -64,7 +64,7 @@ final class SQLiteTransactionManager {
     * Marks the current transaction as having completed successfully.
     * <p>
     * This method can be called at most once between {@link
-    * SQLiteDatabase#beginTransactionNonExclusive} and
+    * SQLiteConnection#beginTransactionNonExclusive} and
     * {@link #endTransaction} to indicate that the changes made by the transaction should be
     * committed.  If this method is not called, the changes will be rolled back
     * when the transaction is ended.
@@ -73,7 +73,7 @@ final class SQLiteTransactionManager {
     * @throws IllegalStateException if there is no current transaction, or if
     * {@link #setTransactionSuccessful} has already been called for the current transaction.
     *
-    * @see SQLiteDatabase#beginTransactionNonExclusive
+    * @see SQLiteConnection#beginTransactionNonExclusive
     * @see #endTransaction
     */
    void setTransactionSuccessful() {

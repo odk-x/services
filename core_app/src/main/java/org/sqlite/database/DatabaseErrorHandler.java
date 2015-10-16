@@ -20,7 +20,7 @@
 
 package org.sqlite.database;
 
-import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteConnection;
 
 /**
  * An interface to let the apps define the actions to take when the following errors are detected
@@ -30,8 +30,8 @@ public interface DatabaseErrorHandler {
 
     /**
      * defines the method to be invoked when database corruption is detected.
-     * @param dbObj the {@link SQLiteDatabase} object representing the database on which corruption
-     * is detected.
+     * @param dbConnection the {@link SQLiteConnection} object representing
+     *                the database connection on which corruption is detected.
      */
-    void onCorruption(SQLiteDatabase dbObj);
+    void onCorruption(SQLiteConnection dbConnection);
 }

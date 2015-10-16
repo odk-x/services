@@ -28,7 +28,7 @@ package org.sqlite.database.sqlite;
 public final class SQLiteCustomFunction {
     public final String name;
     public final int numArgs;
-    public final SQLiteDatabase.CustomFunction callback;
+    public final SQLiteConnection.CustomFunction callback;
 
     /**
      * Create custom function.
@@ -39,7 +39,7 @@ public final class SQLiteCustomFunction {
      * @param callback The callback to invoke when the function is executed.
      */
     public SQLiteCustomFunction(String name, int numArgs,
-            SQLiteDatabase.CustomFunction callback) {
+        SQLiteConnection.CustomFunction callback) {
         if (name == null) {
             throw new IllegalArgumentException("name must not be null.");
         }

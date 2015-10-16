@@ -22,17 +22,17 @@ package org.sqlite.database.sqlite;
 
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
-import org.sqlite.database.ExtraUtils;
 
 import android.database.AbstractWindowedCursor;
 import android.database.CursorWindow;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A Cursor implementation that exposes results from a query on a
- * {@link SQLiteDatabase}.
+ * {@link SQLiteConnection}.
  *
  * SQLiteCursor is not internally synchronized so code using a SQLiteCursor from multiple
  * threads should perform its own synchronization when using the SQLiteCursor.
@@ -41,19 +41,72 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     static final String TAG = "SQLiteCursor";
     static final int NO_COUNT = -1;
 
-    /** The names of the columns in the rows */
+   /**
+    * Picks a start position for SQLiteQuery.fillWindow(CursorWindow,int,int,boolean) such that the
+    * window will contain the requested row and a useful range of rows
+    * around it.
+    *
+    * When the data set is too large to fit in a cursor window, seeking the
+    * cursor can become a very expensive operation since we have to run the
+    * query again when we move outside the bounds of the current window.
+    *
+    * We try to choose a start position for the cursor window such that
+    * 1/3 of the window's capacity is used to hold rows before the requested
+    * position and 2/3 of the window's capacity is used to hold rows after the
+    * requested position.
+    *
+    * @param cursorPosition The row index of the row we want to get.
+    * @param cursorWindowCapacity The estimated number of rows that can fit in
+    * a cursor window, or 0 if unknown.
+    * @return The recommended start position, always less than or equal to
+    * the requested row.
+    * @hide
+    */
+   public static int cursorPickFillWindowStartPosition(
+       int cursorPosition, int cursorWindowCapacity) {
+      return Math.max(cursorPosition - cursorWindowCapacity / 3, 0);
+   }
+
+    /**
+     * The names of the columns in the rows
+     * Thread-safe.
+     */
     private final String[] mColumns;
 
-   private SQLiteDatabase mDatabase;
-
-   /** the sqlQuery to execute */
+   /**
+    * the sqlQuery to execute
+    * Thread-safe.
+    */
    private final String mSqlQuery;
 
-   /** the bindArgs for that query */
+   /**
+    * the bindArgs for that query
+    * Thread-safe.
+    */
    private final Object[] mBindArgs;
 
-   /** the cancellation signal when managing cursor window */
+   /**
+    * the cancellation signal when managing cursor window
+    * Thread-safe.
+    */
    private final CancellationSignal mCancellationSignal;
+
+   /**
+    * A mapping of column names to column indices, to speed up lookups
+    * Thread-safe.
+    */
+   private final Map<String, Integer> mColumnNameMap;
+
+   /**
+    * The logger for this cursor.
+    * Thread-safe.
+    */
+   private final WebLogger mWebLogger;
+
+   /************************************************************************************
+    * These fields ARE NOT THREAD SAFE.
+    * synchronize on this object before accessing/manipulating them.
+    ************************************************************************************/
 
     /** The number of rows in the cursor */
     private int mCount = NO_COUNT;
@@ -61,11 +114,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     /** The number of rows that can fit in the cursor window, 0 if unknown */
     private int mCursorWindowCapacity;
 
-    /** A mapping of column names to column indices, to speed up lookups */
-    private Map<String, Integer> mColumnNameMap;
-
-    /** Used to find out where a cursor was allocated in case it never got released. */
-    private final Throwable mStackTrace;
+    private SQLiteConnection mConnection;
 
    /**
     * Execute a query and provide access to its result set through a Cursor
@@ -75,45 +124,43 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     * {@code FROM} onward would be in the params argument.
     *
     *
-    * @param database
+    * @param connection
     * @param columnNames
     * @param sqlQuery
     * @param bindArgs
     * @param cancellationSignal
     */
     public SQLiteCursor(
-        SQLiteDatabase database, String[] columnNames,
+        SQLiteConnection connection, String[] columnNames,
         String sqlQuery, Object[] bindArgs, CancellationSignal cancellationSignal) {
         if (sqlQuery == null) {
             throw new IllegalArgumentException("sqlQuery cannot be null");
         }
-        if (/* StrictMode.vmSqliteObjectLeaksEnabled() */ false ) {
-            mStackTrace = new DatabaseObjectNotClosedException().fillInStackTrace();
-        } else {
-            mStackTrace = null;
-        }
 
-       // we are going to hold onto the open database...
-       database.acquireReference();
-        mDatabase = database;
-        mColumnNameMap = null;
+       // we are going to hold onto the open connection...
+        connection.acquireReference();
+        mConnection = connection;
+
+       //
+       // The initialized values that follow are all final and thread-safe.
+       //
+
+        // mConnection will go away when we are closed, so save the logger now...
+        mWebLogger = mConnection.getLogger();
+        mColumns = columnNames;
+        int columnCount = mColumns.length;
+        HashMap<String, Integer> map = new HashMap<String, Integer>(columnCount, 1);
+        for (int i = 0; i < columnCount; i++) {
+           map.put(mColumns[i], i);
+        }
+        mColumnNameMap = map;
         mSqlQuery = sqlQuery;
         mBindArgs = bindArgs;
         mCancellationSignal = cancellationSignal;
-
-        mColumns = columnNames;
-    }
-
-    /**
-     * Get the database that this cursor is associated with.
-     * @return the SQLiteDatabase that this cursor is associated with.
-     */
-    public SQLiteDatabase getDatabase() {
-        return mDatabase;
     }
 
     @Override
-    public boolean onMove(int oldPosition, int newPosition) {
+    public synchronized boolean onMove(int oldPosition, int newPosition) {
         // Make sure the row at newPosition is present in the window
         if (mWindow == null || newPosition < mWindow.getStartPosition() ||
                 newPosition >= (mWindow.getStartPosition() + mWindow.getNumRows())) {
@@ -124,7 +171,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     }
 
     @Override
-    public int getCount() {
+    public synchronized int getCount() {
         if (mCount == NO_COUNT) {
             fillWindow(0);
         }
@@ -137,7 +184,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     ** class. But, since they are marked with "@hide", the following replacement 
     ** versions are required.
     */
-    private void awc_clearOrCreateWindow(String name){
+    private synchronized void awc_clearOrCreateWindow(String name){
       CursorWindow win = getWindow();
       if( win==null ){
         win = new CursorWindow(name);
@@ -146,21 +193,30 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         win.clear();
       }
     }
-    private void awc_closeWindow(){
+
+    private synchronized void awc_closeWindow(){
       setWindow(null);
     }
 
-    private void fillWindow(int requiredPos) {
-        awc_clearOrCreateWindow(getDatabase().getPath());
+    private synchronized void fillWindow(int requiredPos) {
+       if (isClosed()) {
+          throw new SQLiteException("cursor is closed");
+       }
+
+       if (mConnection == null || !mConnection.isOpen()) {
+          throw new SQLiteException("cursor's connection is closed");
+       }
+
+        awc_clearOrCreateWindow(mConnection.getPath());
 
         try {
             if (mCount == NO_COUNT) {
-                int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos, 0);
+                int startPos = cursorPickFillWindowStartPosition(requiredPos, 0);
                 mCount = fillWindow(mWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
-                getDatabase().getLogger().d(TAG, "received count(*) from native_fill_window: " + mCount);
+                mWebLogger.d(TAG, "received count(*) from native_fill_window: " + mCount);
             } else {
-                int startPos = ExtraUtils.cursorPickFillWindowStartPosition(requiredPos,
+                int startPos = cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);
                 fillWindow(mWindow, startPos, requiredPos, false);
             }
@@ -189,40 +245,44 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     * @throws SQLiteException if an error occurs.
     * @throws OperationCanceledException if the operation was canceled.
     */
-   int fillWindow(CursorWindow window, int startPos, int requiredPos, boolean countAllRows) {
+   private synchronized int fillWindow(CursorWindow window, int startPos, int requiredPos, boolean
+       countAllRows) {
+      if (isClosed()) {
+         throw new SQLiteException("cursor is closed");
+      }
+
+      if (mConnection == null || !mConnection.isOpen()) {
+         throw new SQLiteException("cursor's connection is closed");
+      }
+
       window.acquireReference();
       try {
-         int numRows = getDatabase().executeForCursorWindow(mSqlQuery, mBindArgs,
-             window, startPos, requiredPos, countAllRows,
-             mCancellationSignal);
+         int numRows = mConnection.executeForCursorWindow(mSqlQuery, mBindArgs, window, startPos,
+             requiredPos, countAllRows, mCancellationSignal);
          return numRows;
       } catch (SQLiteException ex) {
-         getDatabase().getLogger().e(TAG, "exception: " + ex.getMessage() + "; query: " + mSqlQuery);
+         mWebLogger.e(TAG, "exception: " + ex.getMessage() + "; query: " + mSqlQuery);
          throw ex;
       } finally {
          window.releaseReference();
       }
    }
 
+   /**
+    * This is thread-safe. It only accesses immutable (final) data.
+    *
+    * @param columnName
+    * @return
+    */
     @Override
     public int getColumnIndex(String columnName) {
-        // Create mColumnNameMap on demand
-        if (mColumnNameMap == null) {
-            String[] columns = mColumns;
-            int columnCount = columns.length;
-            HashMap<String, Integer> map = new HashMap<String, Integer>(columnCount, 1);
-            for (int i = 0; i < columnCount; i++) {
-                map.put(columns[i], i);
-            }
-            mColumnNameMap = map;
-        }
 
         // Hack according to bug 903852
         final int periodIndex = columnName.lastIndexOf('.');
         if (periodIndex != -1) {
             Exception e = new Exception();
-            getDatabase().getLogger().e(TAG, "requesting column name with table name -- " + columnName);
-            getDatabase().getLogger().printStackTrace(e);
+           mWebLogger.e(TAG, "requesting column name with table name -- " + columnName);
+           mWebLogger.printStackTrace(e);
             columnName = columnName.substring(periodIndex + 1);
         }
 
@@ -234,60 +294,64 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         }
     }
 
+   /**
+    * This is thread-safe. If the caller alters the array, we will be
+    * in trouble...
+    *
+    * @return
+    */
     @Override
     public String[] getColumnNames() {
         return mColumns;
     }
 
     @Override
-    public void deactivate() {
+    public synchronized void deactivate() {
         super.deactivate();
     }
 
     @Override
-    public void close() {
-        super.close();
+    public synchronized void close() {
+       super.close();
 
-       SQLiteDatabase db = null;
+       SQLiteConnection connection = null;
        synchronized (this) {
-          db = mDatabase;
-          mDatabase = null;
+          connection = mConnection;
+          mConnection = null;
        }
-       if ( db != null ) {
-          db.releaseReference();
+       if ( connection != null ) {
+          connection.releaseReference();
        }
     }
 
     @Override
-    public boolean requery() {
+    public synchronized boolean requery() {
         if (isClosed()) {
             return false;
         }
 
-        synchronized (this) {
-            if (!mDatabase.isOpen()) {
-               return false;
-            }
+         if (mConnection == null || !mConnection.isOpen()) {
+            return false;
+         }
 
-            if (mWindow != null) {
-                mWindow.clear();
-            }
-            mPos = -1;
-            mCount = NO_COUNT;
-        }
+         if (mWindow != null) {
+             mWindow.clear();
+         }
+         mPos = -1;
+         mCount = NO_COUNT;
 
         try {
             return super.requery();
         } catch (IllegalStateException e) {
             // for backwards compatibility, just return false
-            getDatabase().getLogger().w(TAG, "requery() failed " + e.getMessage());
-            getDatabase().getLogger().printStackTrace(e);
+           mWebLogger.w(TAG, "requery() failed " + e.getMessage());
+           mWebLogger.printStackTrace(e);
             return false;
         }
     }
 
     @Override
-    public void setWindow(CursorWindow window) {
+    public synchronized void setWindow(CursorWindow window) {
         super.setWindow(window);
         mCount = NO_COUNT;
     }
@@ -296,23 +360,12 @@ public class SQLiteCursor extends AbstractWindowedCursor {
      * Release the native resources, if they haven't been released yet.
      */
     @Override
-    protected void finalize() {
+    protected synchronized void finalize() {
         try {
             // if the cursor hasn't been closed yet, close it first
             if (mWindow != null) {
-                    /*
-                if (mStackTrace != null) {
-                    String sql = mQuery.getSql();
-                    int len = sql.length();
-                    StrictMode.onSqliteObjectLeaked(
-                        "Finalizing a Cursor that has not been deactivated or closed. " +
-                        "database = " + mQuery.getConnection().getLabel() +
-                        ", table = " + mEditTable +
-                        ", query = " + sql.substring(0, (len > 1000) ? 1000 : len),
-                        mStackTrace);
-                }
-                */
-                close();
+               mWebLogger.w(TAG, "finalize: cursor not closed!");
+               close();
             }
         } finally {
             super.finalize();
