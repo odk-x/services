@@ -558,8 +558,7 @@ public final class SQLiteDatabase extends SQLiteClosable {
          return 0;
       }
 
-      return mConnection.executeForLastInsertedRowId(sql, bindArgs,
-          cancellationSignal); // might throw
+      return mConnection.executeForLastInsertedRowIdImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**
