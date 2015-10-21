@@ -76,7 +76,7 @@ public abstract class OdkConnectionFactoryInterface {
     * Useful for debugging and understanding
     * cross-thread interactions.
     */
-   public final void dumpInfo() {
+   public final void dumpInfo(boolean asError) {
       ArrayList<AppNameSharedStateContainer> containers = new ArrayList<AppNameSharedStateContainer>();
       synchronized (mutex) {
          for (String appName : appNameSharedStateMap.keySet()) {
@@ -87,7 +87,11 @@ public abstract class OdkConnectionFactoryInterface {
       for (AppNameSharedStateContainer container : containers) {
          StringBuilder b = new StringBuilder();
          container.dumpInfo(b);
-         logWarn(container.getAppName(), b.toString());
+         if ( asError ) {
+            logError(container.getAppName(), b.toString());
+         } else {
+            logInfo(container.getAppName(), b.toString());
+         }
       }
    }
 
@@ -192,7 +196,6 @@ public abstract class OdkConnectionFactoryInterface {
             }
             initSuccessful = true;
          } finally {
-            dumpInfo();
             if ( !initSuccessful ) {
                try {
                   logInfo(appName,

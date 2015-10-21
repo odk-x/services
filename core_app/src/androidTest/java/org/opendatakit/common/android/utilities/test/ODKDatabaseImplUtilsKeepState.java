@@ -3,8 +3,11 @@ package org.opendatakit.common.android.utilities.test;
 import org.opendatakit.TestConsts;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.database.service.OdkDbHandle;
+
+import java.util.List;
 
 /**
  * Created by wrb on 9/21/2015.
@@ -35,7 +38,8 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(APPNAME);
 
-       if ( !initialized ) {
+       boolean beganUninitialized = !initialized;
+       if ( beganUninitialized ) {
           initialized = true;
           // Used to ensure that the singleton has been initialized properly
           AndroidConnectFactory.configure();
@@ -43,7 +47,17 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
 
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
-        verifyNoTablesExistNCleanAllTables();
+       if ( beganUninitialized ) {
+          // start clean
+          List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+
+          // Drop any leftover table now that the test is done
+          for(String id : tableIds) {
+             ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+          }
+       } else {
+          verifyNoTablesExistNCleanAllTables();
+       }
     }
 
 

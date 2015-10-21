@@ -32,7 +32,7 @@ public class SQLiteCursor implements CrossProcessCursor {
 
    public SQLiteCursor(SQLiteConnection connection, String[] columnNames, String sqlQuery,
        Object[] bindArgs, CancellationSignal cancellationSignal) {
-      impl = new SQLiteUnsafeCursor(connection, columnNames, sqlQuery, bindArgs,
+      impl = new SQLiteUnsafeCursor(this, connection, columnNames, sqlQuery, bindArgs,
                                     cancellationSignal);
    }
 
@@ -143,6 +143,10 @@ public class SQLiteCursor implements CrossProcessCursor {
          impl.throwIfClosed();
          return impl.isAfterLast();
       }
+   }
+
+   public String getSql() {
+      return impl.getSql();
    }
 
    @Override public int getColumnIndex(String columnName) {

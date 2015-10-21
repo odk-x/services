@@ -20,7 +20,10 @@ import org.sqlite.database.sqlite.SQLiteDebug;
 import java.util.ArrayList;
 
 /**
- * Created by Admin on 10/13/2015.
+ * Extracted from the SQLiteDatabase class.
+ * Thread-safe.
+ *
+ * @author mitchellsundt@gmail.com
  */
 public final class OperationLog {
 

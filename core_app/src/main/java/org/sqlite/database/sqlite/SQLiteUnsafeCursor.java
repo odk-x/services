@@ -25,8 +25,11 @@ import android.os.OperationCanceledException;
 
 import android.database.AbstractWindowedCursor;
 import android.database.CursorWindow;
+import android.util.Log;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,6 +106,24 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     */
    private final WebLogger mWebLogger;
 
+   /**
+    * The appName.
+    * Thread-safe.
+    */
+   private final String mAppName;
+
+   /**
+    * The session qualifier.
+    * Thread-safe.
+    */
+   private final String mSessionQualifier;
+
+   /**
+    * The enclosing SQLiteCursor.
+    * Thread-safe.
+    */
+   private final SQLiteCursor mEnclosingCursor;
+
    /************************************************************************************
     * These fields ARE NOT THREAD SAFE.
     * synchronize on this object before accessing/manipulating them.
@@ -130,11 +151,16 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     * @param bindArgs caller should NOT modify this array upon return.
     * @param cancellationSignal
     */
-    public SQLiteUnsafeCursor(SQLiteConnection connection, String[] columnNames, String sqlQuery,
+    public SQLiteUnsafeCursor(SQLiteCursor enclosingCursor,
+        SQLiteConnection connection, String[]
+        columnNames, String sqlQuery,
         Object[] bindArgs, CancellationSignal cancellationSignal) {
         if (sqlQuery == null) {
             throw new IllegalArgumentException("sqlQuery cannot be null");
         }
+
+       // remember our enclosing SQLiteCursor so we can release it from the connection.
+       mEnclosingCursor = enclosingCursor;
 
        // we are going to hold onto the open connection...
         connection.acquireReference();
@@ -156,6 +182,12 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
         mSqlQuery = sqlQuery;
         mBindArgs = bindArgs;
         mCancellationSignal = cancellationSignal;
+        mAppName = connection.getAppName();
+        mSessionQualifier = connection.getSessionQualifier();
+    }
+
+    public String getSql() {
+      return mSqlQuery;
     }
 
     public void throwIfClosed() {
@@ -164,7 +196,7 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
        }
 
        if (mConnection == null || !mConnection.isOpen()) {
-          throw new SQLiteException("cursor's connection is closed");
+          throw new SQLiteException("cursor's connection (" + mSessionQualifier + ") is closed");
        }
     }
 
@@ -213,7 +245,7 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
        }
 
        if (mConnection == null || !mConnection.isOpen()) {
-          throw new SQLiteException("cursor's connection is closed");
+          throw new SQLiteException("cursor's connection (" + mSessionQualifier + ") is closed");
        }
 
         awc_clearOrCreateWindow(mConnection.getPath());
@@ -223,7 +255,8 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
                 int startPos = cursorPickFillWindowStartPosition(requiredPos, 0);
                 mCount = fillWindow(mWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
-                mWebLogger.d(TAG, "received count(*) from native_fill_window: " + mCount);
+                mWebLogger.d(TAG, "connection:" + mSessionQualifier + " received count(*) "
+                    + "from native_fill_window: " + mCount);
             } else {
                 int startPos = cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);
@@ -256,12 +289,16 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     */
    private int fillWindow(CursorWindow window, int startPos, int requiredPos, boolean
        countAllRows) {
+      if ( window == null ) {
+         throw new SQLiteException("window is closed");
+      }
+
       if (isClosed()) {
          throw new SQLiteException("cursor is closed");
       }
 
       if (mConnection == null || !mConnection.isOpen()) {
-         throw new SQLiteException("cursor's connection is closed");
+         throw new SQLiteException("cursor's connection (" + mSessionQualifier + ") is closed");
       }
 
       window.acquireReference();
@@ -270,7 +307,8 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
              requiredPos, countAllRows, mCancellationSignal);
          return numRows;
       } catch (SQLiteException ex) {
-         mWebLogger.e(TAG, "exception: " + ex.getMessage() + "; query: " + mSqlQuery);
+         mWebLogger.e(TAG, "exception: " + ex.getMessage() + "; connection: " + mSessionQualifier
+             + " query: " + mSqlQuery);
          throw ex;
       } finally {
          window.releaseReference();
@@ -290,7 +328,8 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
         final int periodIndex = columnName.lastIndexOf('.');
         if (periodIndex != -1) {
             Exception e = new Exception();
-           mWebLogger.e(TAG, "requesting column name with table name -- " + columnName);
+           mWebLogger.e(TAG, "connection:" + mSessionQualifier
+               + " requesting column name with table name -- " + columnName);
            mWebLogger.printStackTrace(e);
             columnName = columnName.substring(periodIndex + 1);
         }
@@ -323,12 +362,21 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     public void close() {
        super.close();
 
-       SQLiteConnection connection = null;
-       connection = mConnection;
-       mConnection = null;
+       try {
+          // clear and release the CursorWindow, if any.
+          setWindow(null);
+       } finally {
+          // clear and release the connection
+          SQLiteConnection connection = null;
+          connection = mConnection;
+          mConnection = null;
 
-       if ( connection != null ) {
-          connection.releaseReference();
+          if (connection != null) {
+             // release the cursor
+             connection.releaseCursor(mEnclosingCursor);
+             // release the reference to it
+             connection.releaseReference();
+          }
        }
     }
 
@@ -345,6 +393,7 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
          if (mWindow != null) {
              mWindow.clear();
          }
+
          mPos = -1;
          mCount = NO_COUNT;
 
@@ -352,7 +401,7 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
             return super.requery();
         } catch (IllegalStateException e) {
             // for backwards compatibility, just return false
-           mWebLogger.w(TAG, "requery() failed " + e.getMessage());
+           mWebLogger.w(TAG, "connection:" + mSessionQualifier + " requery() failed " + e.getMessage());
            mWebLogger.printStackTrace(e);
             return false;
         }
@@ -371,9 +420,28 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     protected void finalize() {
         try {
             // if the cursor hasn't been closed yet, close it first
-            if (mWindow != null) {
-               mWebLogger.w(TAG, "finalize: cursor not closed!");
-               close();
+           boolean shouldClose = false;
+           String outstandingWork = "";
+            if (mWindow != null ) {
+               outstandingWork += " mWindow;";
+               shouldClose = true;
+            }
+           if (mConnection != null) {
+              outstandingWork += " mConnection";
+              shouldClose = true;
+           }
+           if ( shouldClose ) {
+              // during AndroidUnitTest testing, the directory might be
+              // torn down before the finalize has completed.
+              File f = new File(ODKFileUtils.getLoggingFolder(mAppName));
+              if ( f.exists() && f.isDirectory() ) {
+                 mWebLogger.w(TAG, "connection:" + mSessionQualifier
+                      + " finalize: cursor not closed: " + outstandingWork);
+              } else {
+                 Log.e(TAG, "connection:" + mSessionQualifier
+                     + " finalize: cursor not closed: " + outstandingWork);
+              }
+              close();
             }
         } finally {
             super.finalize();

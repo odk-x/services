@@ -23,8 +23,10 @@ package org.sqlite.database.sqlite;
 /* import dalvik.system.BlockGuard; */
 import android.content.ContentValues;
 import android.text.TextUtils;
+import android.util.Log;
 import org.opendatakit.common.android.database.AppNameSharedStateContainer;
 import org.opendatakit.common.android.database.OperationLog;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.database.Cursor;
@@ -38,7 +40,10 @@ import android.os.ParcelFileDescriptor;
 import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -504,17 +509,26 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * Member variables
     * ***************************************************************************************/
 
-    private final CloseGuard mCloseGuard;
-
+   /**
+    * Private copy of the database configuration (read-only).
+    * This can be accessed outside of locks
+    * Thread safe.
+    */
     private final SQLiteDatabaseConfiguration mConfiguration;
+
+   /**
+    * Session qualifier supplied by user.
+    * This can be accessed outside of locks
+    * Thread safe.
+    */
     private final String mSessionQualifier;
 
-    // The recent operations log.
+   /**
+    * The operations log.
+    * This can be accessed outside of locks
+    * Thread safe.
+    */
     private final OperationLog mRecentOperations;
-
-   // Manages the nesting of transactions on this connection
-   // This can be accessed outside of locks
-   private final SQLiteTransactionManager mTransactionManager;
 
    // Error handler to be used when SQLite returns corruption errors.
    // This can be accessed outside of locks
@@ -527,19 +541,47 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private final Object mConnectionPtrMutex = new Object();
 
    /**
+    * Manage the nesting of transactions on this connection.
+    *
+    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
+    * Thread-safe.
+    */
+   private final SQLiteTransactionManager mTransactionManager;
+
+   /**
     * The native (C++) SQLiteConnection pointer.
-    * This should only be accessed within the
-    * mNativeMutex.
+    *
+    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
     */
     private long mConnectionPtr = 0L;
 
-    // The number of times attachCancellationSignal has been called.
-    // Because SQLite statement execution can be reentrant, we keep track of how many
-    // times we have attempted to attach a cancellation signal to the connection so that
-    // we can ensure that we detach the signal at the right time.
+   /**
+    * The number of times attachCancellationSignal has been called.
+    * Because SQLite statement execution can be reentrant, we keep track of how many
+    * times we have attempted to attach a cancellation signal to the connection so that
+    * we can ensure that we detach the signal at the right time.
+    *
+    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
+    */
     private int mCancellationSignalAttachCount;
 
-    public SQLiteConnection(SQLiteDatabaseConfiguration configuration,
+   /**
+    * Tracks whether this SQLiteConnection has been closed/released
+    * before it was finalized.
+    *
+    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
+    */
+   private String mAllocationReference;
+
+   /**
+    * Tracks all open cursors.
+    *
+    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
+    */
+   private WeakHashMap<SQLiteCursor, Object> mActiveCursors = new
+       WeakHashMap<SQLiteCursor, Object>();
+
+   public SQLiteConnection(SQLiteDatabaseConfiguration configuration,
                              OperationLog recentOperations,
                              DatabaseErrorHandler errorHandler,
                              String sessionQualifier) {
@@ -547,10 +589,9 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
         mRecentOperations = recentOperations;
         mErrorHandler = (errorHandler != null) ? errorHandler : new DefaultDatabaseErrorHandler();
         mSessionQualifier = sessionQualifier;
-        mCloseGuard = CloseGuard.get(getLogger());
+        mAllocationReference = mConfiguration.appName + " " + mSessionQualifier;
         mTransactionManager = new SQLiteTransactionManager();
         mPreparedStatementCache = new PreparedStatementCache(mConfiguration.maxSqlCacheSize);
-        mCloseGuard.open("close");
     }
 
     public WebLogger getLogger() {
@@ -559,6 +600,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
 
    public String getAppName() {
       return mConfiguration.appName;
+   }
+
+   public String getSessionQualifier() {
+      return mSessionQualifier;
    }
 
    public String getPath() {
@@ -572,10 +617,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    protected synchronized void finalize() throws Throwable {
       boolean refCountBelowZero = getReferenceCount() < 0;
       try {
-         boolean isNotClosed;
-         synchronized (mConnectionPtrMutex) {
-            isNotClosed = (mConnectionPtr != 0L);
-         }
+         boolean isNotClosed = isOpen();
          if (isNotClosed) {
             // This code is running inside of the SQLiteConnection finalizer.
             //
@@ -624,32 +666,24 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
 
       try {
-         if (mCloseGuard != null) {
-            if (finalized) {
-               mCloseGuard.warnIfOpen();
-            }
-            mCloseGuard.close();
-         }
-
-         synchronized (mConnectionPtrMutex) {
-            if (mConnectionPtr != 0L) {
-               final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "close", null,
-                   null);
-               try {
-                  mPreparedStatementCache.evictAll();
-                  nativeClose(mConnectionPtr);
-               } catch ( Throwable t) {
-                  mRecentOperations.failOperation(cookie, t);
-                  throw t;
-               } finally {
-                  mConnectionPtr = 0L;
-                  mRecentOperations.endOperation(cookie);
-               }
+         File f = new File(ODKFileUtils.getWebDbFolder(getAppName()));
+         if ( f.exists() && f.isDirectory() ) {
+            closeImpl(finalized);
+            getLogger().i(TAG,
+                "A SQLiteConnection object for database '" + mConfiguration.appName
+                    + "' sessionQualifier '"
+                    + mSessionQualifier + "' successfully closed.");
+         } else {
+            if ( finalized ) {
+               // AndroidUnitTest might clear up directory before resources are GC'd
+               Log.w(TAG, "Database directory for database '" + mConfiguration.appName
+                   + "' sessionQualifier '" + mSessionQualifier + "' does not exist");
+            } else {
+               // getting here is wrong!
+               Log.e(TAG, "Database directory for database '" + mConfiguration.appName
+                   + "' sessionQualifier '" + mSessionQualifier + "' does not exist");
             }
          }
-         getLogger().i(TAG,
-             "A SQLiteConnection object for database '" + mConfiguration.appName
-                 + "' sessionQualifier '" + mSessionQualifier + "' successfully closed.");
       } catch (Throwable t) {
          getLogger().e(TAG,
              "A SQLiteConnection object for database '" + mConfiguration.appName
@@ -659,131 +693,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
    }
 
-   /**
-    * Returns true if the database is currently open.
-    *
-    * @return True if the database is currently open (has not been closed).
-    */
-   public boolean isOpen() {
-      synchronized (mConnectionPtrMutex) {
-         return (mConnectionPtr != 0L);
-      }
-   }
-
    public void open() {
       try {
          openImpl();
       } catch (SQLiteDatabaseCorruptException ex) {
          onCorruption();
-      }
-   }
-
-    private void openImpl() {
-      if ((mConfiguration.openFlags & ENABLE_WRITE_AHEAD_LOGGING) == 0) {
-        throw new IllegalStateException("Only WAL mode is allowed");
-      }
-
-       synchronized (mConnectionPtrMutex) {
-          mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags, mConfiguration.label,
-              SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
-
-          // Register custom functions.
-          final int functionCount = mConfiguration.customFunctions.size();
-          for (int i = 0; i < functionCount; i++) {
-             SQLiteCustomFunction function = mConfiguration.customFunctions.get(i);
-             nativeRegisterCustomFunction(mConnectionPtr, function);
-          }
-
-          {
-             final long newValue = SQLiteGlobal.getDefaultPageSize();
-             long value = executeForLongImpl("PRAGMA page_size", null, null);
-             if (value != newValue) {
-                executeImpl("PRAGMA page_size=" + newValue, null, null);
-             }
-          }
-
-          {
-             final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
-             long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
-             if (value != newValue) {
-                executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
-             }
-          }
-
-          {
-             final long newValue = SQLiteGlobal.getJournalSizeLimit();
-             long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
-             if (value != newValue) {
-                executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
-             }
-          }
-
-          {
-             final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
-             long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
-             if (value != newValue) {
-                executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
-             }
-          }
-
-          setLockingMode("NORMAL");
-          setJournalMode("WAL");
-          setSyncMode(SQLiteGlobal.getWALSyncMode());
-          setBusyTimeout();
-       }
-    }
-
-   private void setBusyTimeout() {
-      final long newValue = 5000L;
-      long value = executeForLongImpl("PRAGMA busy_timeout", null, null);
-      if (value != newValue) {
-         getLogger().w(TAG,"busy_timeout is not " + newValue + " but " + value);
-         // TODO: fix this when C++ code is updated.
-         // sqlite code does a strcmp that only recognizes 'busy_timeout', making it
-         // impossible to update this value.
-         // executeImpl("PRAGMA busy_timeout=" + newValue, null, null);
-      }
-   }
-
-   private void setLockingMode(String newValue) {
-      String value = executeForStringImpl("PRAGMA locking_mode", null, null);
-      if (!value.equalsIgnoreCase(newValue)) {
-         String result = executeForStringImpl("PRAGMA locking_mode=" + newValue, null, null);
-         if (result.equalsIgnoreCase(newValue)) {
-            return;
-         }
-         // PRAGMA locking_mode silently fails and returns the original journal
-         // mode in some cases if the locking mode could not be changed.
-         getLogger().e(TAG, "Could not change the database locking mode of '"
-             + mConfiguration.label + "' from '" + value + "' to '" + newValue);
-         throw new IllegalStateException("Unable to change the locking mode");
-      }
-   }
-
-   private void setJournalMode(String newValue) {
-      String value = executeForStringImpl("PRAGMA journal_mode", null, null);
-      if (!value.equalsIgnoreCase(newValue)) {
-         String result = executeForStringImpl("PRAGMA journal_mode=" + newValue, null, null);
-         if (result.equalsIgnoreCase(newValue)) {
-            return;
-         }
-         // PRAGMA journal_mode silently fails and returns the original journal
-         // mode in some cases if the journal mode could not be changed.
-         getLogger().e(TAG, "Could not change the database journal mode of '"
-             + mConfiguration.label + "' from '" + value + "' to '" + newValue
-             + "' because the database is locked.  This usually means that "
-             + "there are other open connections to the database which prevents "
-             + "the database from enabling or disabling write-ahead logging mode.  "
-             + "Proceeding without changing the journal mode.");
-         throw new IllegalStateException("Unable to change the journal mode");
-      }
-   }
-
-   private void setSyncMode(String newValue) {
-      String value = executeForStringImpl("PRAGMA synchronous", null, null);
-      if (!canonicalizeSyncMode(value).equalsIgnoreCase(
-          canonicalizeSyncMode(newValue))) {
-         executeImpl("PRAGMA synchronous=" + newValue, null, null);
       }
    }
 
@@ -802,7 +716,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     */
    public boolean isDatabaseIntegrityOk() {
       String rslt = null;
-      rslt = executeForString("PRAGMA main.integrity_check(1);", null, null);
+      rslt = executeForStringImpl("PRAGMA main.integrity_check(1);", null, null);
 
       if (!rslt.equalsIgnoreCase("ok")) {
          // integrity_checker failed on main database
@@ -998,7 +912,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * or invalid number of bind arguments.
     * @throws OperationCanceledException if the operation was canceled.
     */
-   public int executeForCursorWindow(String sql, Object[] bindArgs,
+   int executeForCursorWindow(String sql, Object[] bindArgs,
        CursorWindow window, int startPos, int requiredPos, boolean countAllRows,
        CancellationSignal cancellationSignal) {
       if (sql == null) {
@@ -1049,12 +963,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       final int type = DatabaseUtils.getSqlStatementType(sql);
       switch (type) {
       case DatabaseUtils.STATEMENT_BEGIN:
-         beginTransactionNonExclusive(cancellationSignal);
+            beginTransactionNonExclusive(cancellationSignal);
          return true;
 
       case DatabaseUtils.STATEMENT_COMMIT:
-         setTransactionSuccessful();
-         endTransaction(cancellationSignal);
+         commitTransactionImpl(cancellationSignal);
          return true;
 
       case DatabaseUtils.STATEMENT_ABORT:
@@ -1085,76 +998,20 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * </pre>
     */
    public void beginTransactionNonExclusive() {
-      beginTransactionNonExclusive(null);
+      // TODO: change this to Immediate?
+      beginTransactionImpl(TRANSACTION_MODE_DEFERRED, null);
    }
 
    public void beginTransactionNonExclusive(CancellationSignal cancellationSignal) {
-      if (cancellationSignal != null) {
-         cancellationSignal.throwIfCanceled();
-      }
       // TODO: change this to Immediate?
-      int transactionMode = TRANSACTION_MODE_DEFERRED;
-
-      if (mTransactionManager.beginTransaction(transactionMode) ) {
-         boolean success = false;
-         try {
-            // Execute SQL might throw a runtime exception.
-            switch (transactionMode) {
-            case TRANSACTION_MODE_IMMEDIATE:
-               executeImpl("BEGIN IMMEDIATE;", null, cancellationSignal); // might throw
-               break;
-            case TRANSACTION_MODE_EXCLUSIVE:
-               executeImpl("BEGIN EXCLUSIVE;", null, cancellationSignal); // might throw
-               break;
-            default:
-               executeImpl("BEGIN;", null, cancellationSignal); // might throw
-               break;
-            }
-            success = true;
-         } finally {
-            if ( !success ) {
-               mTransactionManager.cancelTransaction();
-            }
-         }
-      }
+      beginTransactionImpl(TRANSACTION_MODE_DEFERRED, cancellationSignal);
    }
 
-   /**
-    * Returns true if the current thread has a transaction pending.
-    *
-    * @return True if the current thread is in a transaction.
-    */
-   public boolean inTransaction() {
-      return mTransactionManager.hasTransaction();
+   public void beginTransaction(int transactionMode,
+       CancellationSignal cancellationSignal) {
+      beginTransactionImpl(transactionMode, cancellationSignal);
    }
 
-
-   /**
-    * Marks the current transaction as successful. Do not do any more database work between
-    * calling this and calling endTransaction. Do as little non-database work as possible in that
-    * situation too. If any errors are encountered between this and endTransaction the transaction
-    * will still be committed.
-    *
-    * @throws IllegalStateException if the current thread is not in a transaction or the
-    * transaction is already marked as successful.
-    *
-    * Marks the current transaction as having completed successfully.
-    * <p>
-    * This method can be called at most once between {@link #beginTransactionNonExclusive} and
-    * {@link #endTransaction} to indicate that the changes made by the transaction should be
-    * committed.  If this method is not called, the changes will be rolled back
-    * when the transaction is ended.
-    * </p>
-    *
-    * @throws IllegalStateException if there is no current transaction, or if
-    * {@link #setTransactionSuccessful} has already been called for the current transaction.
-    *
-    * @see #beginTransactionNonExclusive
-    * @see #endTransaction
-    */
-   public void setTransactionSuccessful() {
-      mTransactionManager.setTransactionSuccessful();
-   }
 
    /**
     * End a transaction. See beginTransaction for notes about how to use this and when transactions
@@ -1164,39 +1021,22 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * <p>
     * If this is the outermost transaction (not nested within any other
     * transaction), then the changes are committed if {@link #setTransactionSuccessful}
-    * was called or rolled back otherwise.
+    * was called on this and all transactions nested within this one.
+    * Otherwise, it is rolled back.
     * </p><p>
     * This method must be called exactly once for each call to {@link #beginTransactionNonExclusive}.
     * </p>
-    *
-    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
     *
     * @throws IllegalStateException if there is no current transaction.
     * @throws SQLiteException if an error occurs.
     * @throws OperationCanceledException if the operation was canceled.
     *
-    * @see #beginTransactionNonExclusive
+    * @see #beginTransaction
     * @see #setTransactionSuccessful
-    */
-   public void endTransaction(CancellationSignal cancellationSignal) {
-      if (cancellationSignal != null) {
-         cancellationSignal.throwIfCanceled();
-      }
-      SQLiteTransactionManager.TransactionOutcome outcome = mTransactionManager.endTransaction();
-      // do nothing on the no-action outcome
-      if ( outcome == SQLiteTransactionManager.TransactionOutcome.COMMIT_ACTION ) {
-         executeImpl("COMMIT;", null, cancellationSignal); // might throw
-      } else if ( outcome == SQLiteTransactionManager.TransactionOutcome.ROLLBACK_ACTION ) {
-         executeImpl("ROLLBACK;", null, cancellationSignal); // might throw
-      }
-   }
-
-   /**
     */
    public void endTransaction() {
       endTransaction(null);
    }
-
 
    /**
     * Gets the database version.
@@ -1204,7 +1044,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @return the database version
     */
    public int getVersion() {
-      long version = executeForLong("PRAGMA user_version;", null, null);
+      long version = executeForLongImpl("PRAGMA user_version;", null, null);
       return ((Long) version).intValue();
    }
 
@@ -1214,7 +1054,81 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param version the new database version
     */
    public void setVersion(int version) {
-      executeForChangedRowCount("PRAGMA user_version = " + version, null, null);
+      executeForChangedRowCountImpl("PRAGMA user_version = " + version, null, null);
+   }
+
+   /**
+    * Query the given table, returning a {@link Cursor} over the result set.
+    *
+    * @param table The table name to compile the query against.
+    * @param columns A list of which columns to return. Passing null will
+    *            return all columns, which is discouraged to prevent reading
+    *            data from storage that isn't going to be used.
+    * @param selection A filter declaring which rows to return, formatted as an
+    *            SQL WHERE clause (excluding the WHERE itself). Passing null
+    *            will return all rows for the given table.
+    * @param selectionArgs You may include ?s in selection, which will be
+    *         replaced by the values from selectionArgs, in order that they
+    *         appear in the selection. The values will be bound as Strings.
+    * @param groupBy A filter declaring how to group rows, formatted as an SQL
+    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
+    *            will cause the rows to not be grouped.
+    * @param having A filter declare which row groups to include in the cursor,
+    *            if row grouping is being used, formatted as an SQL HAVING
+    *            clause (excluding the HAVING itself). Passing null will cause
+    *            all row groups to be included, and is required when row
+    *            grouping is not being used.
+    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
+    *            (excluding the ORDER BY itself). Passing null will use the
+    *            default sort order, which may be unordered.
+    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
+    * {@link Cursor}s are not synchronized, see the documentation for more details.
+    * @see Cursor
+    */
+   public Cursor query(String table, String[] columns, String selection,
+       String[] selectionArgs, String groupBy, String having,
+       String orderBy) {
+
+      return query(false, table, columns, selection, selectionArgs, groupBy,
+          having, orderBy, null /* limit */);
+   }
+
+   /**
+    * Query the given table, returning a {@link Cursor} over the result set.
+    *
+    * @param table The table name to compile the query against.
+    * @param columns A list of which columns to return. Passing null will
+    *            return all columns, which is discouraged to prevent reading
+    *            data from storage that isn't going to be used.
+    * @param selection A filter declaring which rows to return, formatted as an
+    *            SQL WHERE clause (excluding the WHERE itself). Passing null
+    *            will return all rows for the given table.
+    * @param selectionArgs You may include ?s in selection, which will be
+    *         replaced by the values from selectionArgs, in order that they
+    *         appear in the selection. The values will be bound as Strings.
+    * @param groupBy A filter declaring how to group rows, formatted as an SQL
+    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
+    *            will cause the rows to not be grouped.
+    * @param having A filter declare which row groups to include in the cursor,
+    *            if row grouping is being used, formatted as an SQL HAVING
+    *            clause (excluding the HAVING itself). Passing null will cause
+    *            all row groups to be included, and is required when row
+    *            grouping is not being used.
+    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
+    *            (excluding the ORDER BY itself). Passing null will use the
+    *            default sort order, which may be unordered.
+    * @param limit Limits the number of rows returned by the query,
+    *            formatted as LIMIT clause. Passing null denotes no LIMIT clause.
+    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
+    * {@link Cursor}s are not synchronized, see the documentation for more details.
+    * @see Cursor
+    */
+   public Cursor query(String table, String[] columns, String selection,
+       String[] selectionArgs, String groupBy, String having,
+       String orderBy, String limit) {
+
+      return query(false, table, columns, selection, selectionArgs, groupBy,
+          having, orderBy, limit);
    }
 
    /**
@@ -1300,80 +1214,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
    /**
-    * Query the given table, returning a {@link Cursor} over the result set.
-    *
-    * @param table The table name to compile the query against.
-    * @param columns A list of which columns to return. Passing null will
-    *            return all columns, which is discouraged to prevent reading
-    *            data from storage that isn't going to be used.
-    * @param selection A filter declaring which rows to return, formatted as an
-    *            SQL WHERE clause (excluding the WHERE itself). Passing null
-    *            will return all rows for the given table.
-    * @param selectionArgs You may include ?s in selection, which will be
-    *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
-    * @param groupBy A filter declaring how to group rows, formatted as an SQL
-    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
-    *            will cause the rows to not be grouped.
-    * @param having A filter declare which row groups to include in the cursor,
-    *            if row grouping is being used, formatted as an SQL HAVING
-    *            clause (excluding the HAVING itself). Passing null will cause
-    *            all row groups to be included, and is required when row
-    *            grouping is not being used.
-    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
-    *            (excluding the ORDER BY itself). Passing null will use the
-    *            default sort order, which may be unordered.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    * @see Cursor
-    */
-   public Cursor query(String table, String[] columns, String selection,
-       String[] selectionArgs, String groupBy, String having,
-       String orderBy) {
-
-      return query(false, table, columns, selection, selectionArgs, groupBy,
-          having, orderBy, null /* limit */);
-   }
-
-   /**
-    * Query the given table, returning a {@link Cursor} over the result set.
-    *
-    * @param table The table name to compile the query against.
-    * @param columns A list of which columns to return. Passing null will
-    *            return all columns, which is discouraged to prevent reading
-    *            data from storage that isn't going to be used.
-    * @param selection A filter declaring which rows to return, formatted as an
-    *            SQL WHERE clause (excluding the WHERE itself). Passing null
-    *            will return all rows for the given table.
-    * @param selectionArgs You may include ?s in selection, which will be
-    *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
-    * @param groupBy A filter declaring how to group rows, formatted as an SQL
-    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
-    *            will cause the rows to not be grouped.
-    * @param having A filter declare which row groups to include in the cursor,
-    *            if row grouping is being used, formatted as an SQL HAVING
-    *            clause (excluding the HAVING itself). Passing null will cause
-    *            all row groups to be included, and is required when row
-    *            grouping is not being used.
-    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
-    *            (excluding the ORDER BY itself). Passing null will use the
-    *            default sort order, which may be unordered.
-    * @param limit Limits the number of rows returned by the query,
-    *            formatted as LIMIT clause. Passing null denotes no LIMIT clause.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    * @see Cursor
-    */
-   public Cursor query(String table, String[] columns, String selection,
-       String[] selectionArgs, String groupBy, String having,
-       String orderBy, String limit) {
-
-      return query(false, table, columns, selection, selectionArgs, groupBy,
-          having, orderBy, limit);
-   }
-
-   /**
     * Runs the provided SQL and returns a {@link Cursor} over the result set.
     *
     * @param sql the SQL query. The SQL string must not be ; terminated
@@ -1403,35 +1243,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    public Cursor rawQuery(
        String sql, String[] selectionArgs,
        CancellationSignal cancellationSignal) {
-
-      if (sql == null) {
-         throw new IllegalArgumentException("sql must not be null.");
-      }
-
-      if (cancellationSignal != null) {
-         cancellationSignal.throwIfCanceled();
-      }
-
-      SQLiteStatementInfo info = new SQLiteStatementInfo();
-
-      prepare(sql, info); // might throw
-
-      int selectionArgLength = (selectionArgs == null) ? 0 : selectionArgs.length;
-      if (selectionArgLength != info.numParameters) {
-         throw new IllegalArgumentException(
-             "Incorrect number of bind arguments supplied.  "
-                 + selectionArgLength + " "
-                 + "arguments "
-                 + "were provided but the statement needs "
-                 + info.numParameters + " arguments.");
-      }
-      try {
-         Cursor cursor = new SQLiteCursor(this,
-             info.columnNames, sql, selectionArgs, cancellationSignal);
-         return cursor;
-      } catch (RuntimeException ex) {
-         throw ex;
-      }
+      return rawQueryImpl(sql, selectionArgs, cancellationSignal);
    }
 
    /**
@@ -1553,7 +1365,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
       sql.append(')');
 
-      return executeForLastInsertedRowId(sql.toString(), bindArgs, null);
+      return executeForLastInsertedRowIdImpl(sql.toString(), bindArgs, null);
    }
 
    /**
@@ -1570,7 +1382,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *         whereClause.
     */
    public int delete(String table, String whereClause, String[] whereArgs) {
-      return executeForChangedRowCount("DELETE FROM " + table +
+      return executeForChangedRowCountImpl("DELETE FROM " + table +
           (!TextUtils.isEmpty(whereClause) ? " WHERE " + whereClause : ""), whereArgs, null);
    }
 
@@ -1638,7 +1450,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          sql.append(whereClause);
       }
 
-      return executeForChangedRowCount(sql.toString(), bindArgs, null);
+      return executeForChangedRowCountImpl(sql.toString(), bindArgs, null);
    }
 
    /**
@@ -1688,6 +1500,224 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       execute(sql, bindArgs, null);
    }
 
+   /**********************************************************************************************
+    * PROTECTED ACCESS
+    *
+    * Methods below this line use the mConnectionPtrMutex to guard
+    * their data structures and internals.
+    * *******************************************************************************************/
+
+   private void closeImpl(boolean finalized) {
+
+      // during AndroidUnitTest testing, the directory might be
+      // torn down before the finalize has completed.
+      File f = new File(ODKFileUtils.getLoggingFolder(getAppName()));
+      boolean hasLoggingDirectory = ( f.exists() && f.isDirectory() );
+
+      synchronized (mConnectionPtrMutex) {
+         if (finalized && (mAllocationReference != null)) {
+            String message = mAllocationReference + " was acquired but never released.";
+            try {
+               if ( hasLoggingDirectory ) {
+                  getLogger().e(TAG, message);
+               } else {
+                  Log.e(TAG, message);
+               }
+            } catch ( Throwable t) {
+               // ignore...
+            }
+         }
+         mAllocationReference = null;
+
+         if (mConnectionPtr != 0L) {
+            final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "close", null,
+                null);
+            try {
+               if (!mActiveCursors.isEmpty()) {
+                  if (!finalized) {
+                     /**
+                      * If there are active cursors, then if we are not finalizing, we are in
+                      * a weird state, since the cursors should be holding references to the
+                      * connection and not allowing it to die.
+                      */
+                     if ( hasLoggingDirectory ) {
+                        getLogger().e(TAG, "connection:" + mSessionQualifier
+                            + " Logic error! There are open cursors when calling close()");
+                     } else {
+                        Log.e(TAG, "connection:" + mSessionQualifier
+                            + " Logic error! There are open cursors when calling close()");
+                     }
+                  } else {
+                     /**
+                      * Only if we are finalized is it safe to do what follows....
+                      *
+                      * If we were to access cursor outside of the finalizer, we
+                      * might get into deadlock with another thread holding the
+                      * SQLiteCursor's impl mutex and attempting to gain our
+                      * mConnectionPtrMutex mutex while we do the reverse when
+                      * we call cursor.close().
+                      *
+                      * That is not possible when finalized, so we can safely call
+                      * cursor.close() with our inverted mutex order.
+                      */
+                     ArrayList<SQLiteCursor> cursors =
+                         new ArrayList<SQLiteCursor>(mActiveCursors.keySet());
+
+                     // close cursors -- this releases their prepared statements
+                     for (SQLiteCursor cursor : cursors) {
+                        if ( cursor != null ) {
+                           if ( hasLoggingDirectory ) {
+                              getLogger().e(TAG, "connection:" + getAppName() + " "
+                                  + mSessionQualifier
+                                  + " Program error! A cursor:" + cursor.getSql()
+                                  + " is open when finalized");
+                           } else {
+                              Log.e(TAG, "connection:" + getAppName() + " "
+                                  + mSessionQualifier
+                                  + " Program error! A cursor:" + cursor.getSql()
+                                  + " is open when finalized");
+                           }
+                           cursor.close();
+                        }
+                     }
+                     mActiveCursors.clear();
+                  }
+               }
+               // and now evict the now-released prepared statements
+               mPreparedStatementCache.evictAll();
+
+               nativeClose(mConnectionPtr);
+            } catch ( Throwable t) {
+               mRecentOperations.failOperation(cookie, t);
+               throw t;
+            } finally {
+               mConnectionPtr = 0L;
+               mRecentOperations.endOperation(cookie);
+            }
+         }
+      }
+   }
+
+   /**
+    * Returns true if the database is currently open.
+    *
+    * @return True if the database is currently open (has not been closed).
+    */
+   public boolean isOpen() {
+      synchronized (mConnectionPtrMutex) {
+         return (mConnectionPtr != 0L);
+      }
+   }
+
+   private void openImpl() {
+      if ((mConfiguration.openFlags & ENABLE_WRITE_AHEAD_LOGGING) == 0) {
+         throw new IllegalStateException("Only WAL mode is allowed");
+      }
+
+      synchronized (mConnectionPtrMutex) {
+         mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags, mConfiguration.label,
+             SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
+
+         // Register custom functions.
+         final int functionCount = mConfiguration.customFunctions.size();
+         for (int i = 0; i < functionCount; i++) {
+            SQLiteCustomFunction function = mConfiguration.customFunctions.get(i);
+            nativeRegisterCustomFunction(mConnectionPtr, function);
+         }
+
+         {
+            final long newValue = SQLiteGlobal.getDefaultPageSize();
+            long value = executeForLongImpl("PRAGMA page_size", null, null);
+            if (value != newValue) {
+               executeImpl("PRAGMA page_size=" + newValue, null, null);
+            }
+         }
+
+         {
+            final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
+            long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
+            if (value != newValue) {
+               executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
+            }
+         }
+
+         {
+            final long newValue = SQLiteGlobal.getJournalSizeLimit();
+            long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
+            if (value != newValue) {
+               executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
+            }
+         }
+
+         {
+            final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
+            long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
+            if (value != newValue) {
+               executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
+            }
+         }
+
+         setLockingMode("NORMAL");
+         setJournalMode("WAL");
+         setSyncMode(SQLiteGlobal.getWALSyncMode());
+         setBusyTimeout();
+      }
+   }
+
+   private void setBusyTimeout() {
+      final long newValue = 5000L;
+      long value = executeForLongImpl("PRAGMA busy_timeout", null, null);
+      if (value != newValue) {
+         getLogger().w(TAG,"busy_timeout is not " + newValue + " but " + value);
+         // TODO: fix this when C++ code is updated.
+         // sqlite code does a strcmp that only recognizes 'busy_timeout', making it
+         // impossible to update this value.
+         // executeImpl("PRAGMA busy_timeout=" + newValue, null, null);
+      }
+   }
+
+   private void setLockingMode(String newValue) {
+      String value = executeForStringImpl("PRAGMA locking_mode", null, null);
+      if (!value.equalsIgnoreCase(newValue)) {
+         String result = executeForStringImpl("PRAGMA locking_mode=" + newValue, null, null);
+         if (result.equalsIgnoreCase(newValue)) {
+            return;
+         }
+         // PRAGMA locking_mode silently fails and returns the original journal
+         // mode in some cases if the locking mode could not be changed.
+         getLogger().e(TAG, "Could not change the database locking mode of '"
+             + mConfiguration.label + "' from '" + value + "' to '" + newValue);
+         throw new IllegalStateException("Unable to change the locking mode");
+      }
+   }
+
+   private void setJournalMode(String newValue) {
+      String value = executeForStringImpl("PRAGMA journal_mode", null, null);
+      if (!value.equalsIgnoreCase(newValue)) {
+         String result = executeForStringImpl("PRAGMA journal_mode=" + newValue, null, null);
+         if (result.equalsIgnoreCase(newValue)) {
+            return;
+         }
+         // PRAGMA journal_mode silently fails and returns the original journal
+         // mode in some cases if the journal mode could not be changed.
+         getLogger().e(TAG, "Could not change the database journal mode of '"
+             + mConfiguration.label + "' from '" + value + "' to '" + newValue
+             + "' because the database is locked.  This usually means that "
+             + "there are other open connections to the database which prevents "
+             + "the database from enabling or disabling write-ahead logging mode.  "
+             + "Proceeding without changing the journal mode.");
+         throw new IllegalStateException("Unable to change the journal mode");
+      }
+   }
+
+   private void setSyncMode(String newValue) {
+      String value = executeForStringImpl("PRAGMA synchronous", null, null);
+      if (!canonicalizeSyncMode(value).equalsIgnoreCase(
+          canonicalizeSyncMode(newValue))) {
+         executeImpl("PRAGMA synchronous=" + newValue, null, null);
+      }
+   }
+
    // CancellationSignal.OnCancelListener callback.
    // This method may be called on a different thread than the executing statement.
    // However, it will only be called between calls to attachCancellationSignal and
@@ -1703,72 +1733,126 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
    }
 
+   private void beginTransactionImpl(int transactionMode,
+       CancellationSignal cancellationSignal) {
+      if (cancellationSignal != null) {
+         cancellationSignal.throwIfCanceled();
+      }
+
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         if (mTransactionManager.beginTransaction(transactionMode)) {
+            boolean success = false;
+            try {
+               // Execute SQL might throw a runtime exception.
+               switch (transactionMode) {
+               case TRANSACTION_MODE_IMMEDIATE:
+                  executeImpl("BEGIN IMMEDIATE;", null, cancellationSignal); // might throw
+                  break;
+               case TRANSACTION_MODE_EXCLUSIVE:
+                  executeImpl("BEGIN EXCLUSIVE;", null, cancellationSignal); // might throw
+                  break;
+               default:
+                  executeImpl("BEGIN;", null, cancellationSignal); // might throw
+                  break;
+               }
+               success = true;
+            } finally {
+               if (!success) {
+                  mTransactionManager.cancelTransaction();
+               }
+            }
+         }
+      }
+   }
+   /**
+    * Returns true if the current thread has a transaction pending.
+    *
+    * @return True if the current thread is in a transaction.
+    */
+   public boolean inTransaction() {
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         return mTransactionManager.hasTransaction();
+      }
+   }
+
+
+   private void commitTransactionImpl(CancellationSignal cancellationSignal) {
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         setTransactionSuccessful();
+         endTransaction(cancellationSignal);
+      }
+   }
 
    /**
-     * Prepares a statement for execution but does not bind its parameters or execute it.
-     * <p>
-     * This method can be used to check for syntax errors during compilation
-     * prior to execution of the statement.  If the {@code outStatementInfo} argument
-     * is not null, the provided {@link SQLiteStatementInfo} object is populated
-     * with information about the statement.
-     * </p><p>
-     * A prepared statement makes no reference to the arguments that may eventually
-     * be bound to it, consequently it it possible to cache certain prepared statements
-     * such as SELECT or INSERT/UPDATE statements.  If the statement is cacheable,
-     * then it will be stored in the cache for later.
-     * </p><p>
-     * To take advantage of this behavior as an optimization, the connection pool
-     * provides a method to acquire a connection that already has a given SQL statement
-     * in its prepared statement cache so that it is ready for execution.
-     * </p>
-     *
-     * @param sql The SQL statement to prepare.
-     * @param outStatementInfo The {@link SQLiteStatementInfo} object to populate
-     * with information about the statement, or null if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error.
-     */
-    public void prepare(String sql, SQLiteStatementInfo outStatementInfo) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
+    * Marks the current transaction as successful. Do not do any more database work between
+    * calling this and calling endTransaction. Do as little non-database work as possible in that
+    * situation too. If any errors are encountered between this and endTransaction the transaction
+    * will still be committed.
+    *
+    * @throws IllegalStateException if the current thread is not in a transaction or the
+    * transaction is already marked as successful.
+    *
+    * Marks the current transaction as having completed successfully.
+    * <p>
+    * This method can be called at most once between {@link #beginTransactionNonExclusive} and
+    * {@link #endTransaction} to indicate that the changes made by the transaction should be
+    * committed.  If this method is not called, the changes will be rolled back
+    * when the transaction is ended.
+    * </p>
+    *
+    * @throws IllegalStateException if there is no current transaction, or if
+    * {@link #setTransactionSuccessful} has already been called for the current transaction.
+    *
+    * @see #beginTransactionNonExclusive
+    * @see #endTransaction
+    */
+   public void setTransactionSuccessful() {
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         mTransactionManager.setTransactionSuccessful();
+      }
+   }
 
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "prepare", sql, null);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(
-                 sql);
-             try {
-                if (outStatementInfo != null) {
-                   outStatementInfo.numParameters = statement.mNumParameters;
-                   outStatementInfo.readOnly = statement.mReadOnly;
+   /**
+    *
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    *
+    * @throws IllegalStateException if there is no current transaction.
+    * @throws SQLiteException if an error occurs.
+    * @throws OperationCanceledException if the operation was canceled.
+    *
+    * @see #beginTransaction
+    * @see #setTransactionSuccessful
+    */
+   public void endTransaction(CancellationSignal cancellationSignal) {
+      if (cancellationSignal != null) {
+         cancellationSignal.throwIfCanceled();
+      }
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         SQLiteTransactionManager.TransactionOutcome outcome = mTransactionManager.endTransaction();
+         // do nothing on the no-action outcome
+         if (outcome == SQLiteTransactionManager.TransactionOutcome.COMMIT_ACTION) {
+            executeImpl("COMMIT;", null, cancellationSignal); // might throw
+         } else if (outcome == SQLiteTransactionManager.TransactionOutcome.ROLLBACK_ACTION) {
+            executeImpl("ROLLBACK;", null, cancellationSignal); // might throw
+         }
+      }
+   }
 
-                   final int columnCount = nativeGetColumnCount(mConnectionPtr, statement.mStatementPtr);
-                   if (columnCount == 0) {
-                      outStatementInfo.columnNames = EMPTY_STRING_ARRAY;
-                   } else {
-                      outStatementInfo.columnNames = new String[columnCount];
-                      for (int i = 0; i < columnCount; i++) {
-                         outStatementInfo.columnNames[i] = nativeGetColumnName(mConnectionPtr,
-                             statement.mStatementPtr, i);
-                      }
-                   }
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
 
     /**
      * Executes a statement that does not return a result.
@@ -2007,6 +2091,93 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
        }
     }
 
+   /**
+    * Runs the provided SQL and returns a cursor over the result set.
+    *
+    * @param sql the SQL query. The SQL string must not be ; terminated
+    * @param selectionArgs You may include ?s in where clause in the query,
+    *     which will be replaced by the values from selectionArgs. The
+    *     values will be bound as Strings.
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    * If the operation is canceled, then {@link OperationCanceledException} will be thrown
+    * when the query is executed.
+    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
+    * {@link Cursor}s are not synchronized, see the documentation for more details.
+    */
+   private Cursor rawQueryImpl(
+       String sql, String[] selectionArgs,
+       CancellationSignal cancellationSignal) {
+
+      if (sql == null) {
+         throw new IllegalArgumentException("sql must not be null.");
+      }
+
+      if (cancellationSignal != null) {
+         cancellationSignal.throwIfCanceled();
+      }
+
+      synchronized (mConnectionPtrMutex) {
+
+         SQLiteStatementInfo info = new SQLiteStatementInfo();
+
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+
+         final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "prepare", sql,
+             null);
+         try {
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(
+                sql);
+            try {
+               if (info != null) {
+                  info.numParameters = statement.mNumParameters;
+                  info.readOnly = statement.mReadOnly;
+
+                  final int columnCount = nativeGetColumnCount(mConnectionPtr, statement.mStatementPtr);
+                  if (columnCount == 0) {
+                     info.columnNames = EMPTY_STRING_ARRAY;
+                  } else {
+                     info.columnNames = new String[columnCount];
+                     for (int i = 0; i < columnCount; i++) {
+                        info.columnNames[i] = nativeGetColumnName(mConnectionPtr,
+                            statement.mStatementPtr, i);
+                     }
+                  }
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
+            }
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperation(cookie);
+         }
+
+         int selectionArgLength = (selectionArgs == null) ? 0 : selectionArgs.length;
+         if (selectionArgLength != info.numParameters) {
+            throw new IllegalArgumentException(
+                "Incorrect number of bind arguments supplied.  " + selectionArgLength + " arguments "
+                    + "were provided but the statement needs " + info.numParameters + " arguments.");
+         }
+         try {
+            SQLiteCursor cursor = new SQLiteCursor(this, info.columnNames, sql, selectionArgs,
+                cancellationSignal);
+            mActiveCursors.put(cursor,this);
+            return cursor;
+         } catch (RuntimeException ex) {
+            throw ex;
+         }
+      }
+   }
+
+   void releaseCursor(SQLiteCursor cursor) {
+      synchronized (mConnectionPtrMutex) {
+         mActiveCursors.remove(cursor);
+      }
+   }
+
     /**
      * Executes a statement that returns the row id of the last row inserted
      * by the statement.  Use for INSERT SQL statements.
@@ -2134,29 +2305,41 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
         if (cancellationSignal != null) {
             cancellationSignal.throwIfCanceled();
 
-            mCancellationSignalAttachCount += 1;
-            if (mCancellationSignalAttachCount == 1) {
-                // Reset cancellation flag before executing the statement.
-                nativeResetCancel(mConnectionPtr, true /*cancelable*/);
+           synchronized (mConnectionPtrMutex) {
+              if (mConnectionPtr == 0L) {
+                 throw new SQLiteException("connection closed");
+              }
 
-                // After this point, onCancel() may be called concurrently.
-                cancellationSignal.setOnCancelListener(this);
-            }
+              mCancellationSignalAttachCount += 1;
+              if (mCancellationSignalAttachCount == 1) {
+                 // Reset cancellation flag before executing the statement.
+                 nativeResetCancel(mConnectionPtr, true /*cancelable*/);
+
+                 // After this point, onCancel() may be called concurrently.
+                 cancellationSignal.setOnCancelListener(this);
+              }
+           }
         }
     }
 
     private void detachCancellationSignal(CancellationSignal cancellationSignal) {
         if (cancellationSignal != null) {
-            assert mCancellationSignalAttachCount > 0;
+           synchronized (mConnectionPtrMutex) {
+              if (mConnectionPtr == 0L) {
+                 throw new SQLiteException("connection closed");
+              }
 
-            mCancellationSignalAttachCount -= 1;
-            if (mCancellationSignalAttachCount == 0) {
-                // After this point, onCancel() cannot be called concurrently.
-                cancellationSignal.setOnCancelListener(null);
+              assert mCancellationSignalAttachCount > 0;
 
-                // Reset cancellation flag after executing the statement.
-                nativeResetCancel(mConnectionPtr, false /*cancelable*/);
-            }
+              mCancellationSignalAttachCount -= 1;
+              if (mCancellationSignalAttachCount == 0) {
+                 // After this point, onCancel() cannot be called concurrently.
+                 cancellationSignal.setOnCancelListener(null);
+
+                 // Reset cancellation flag after executing the statement.
+                 nativeResetCancel(mConnectionPtr, false /*cancelable*/);
+              }
+           }
         }
     }
 

@@ -303,7 +303,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
      if ( !success ) {
       WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo();
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
     }
   }
 

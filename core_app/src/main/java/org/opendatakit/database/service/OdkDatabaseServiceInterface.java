@@ -141,11 +141,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if ( db != null ) {
         try {
           // release the reference...
-          // this does not necessarily close the db handle
-          // or terminate any pending transaction
+          // this will not close the db handle
+          // the AppNameSharedStateContainer still holds a reference.
           db.releaseReference();
         } finally {
-          // this will trigger close...
+          // this will release the database from the AppNameSharedStateContainer...
+          // this may also not close the connection -- it may be held open by a cursor
           OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
         }
       }
@@ -186,45 +187,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   public void closeTransactionAndDatabase(String appName, OdkDbHandle dbHandleName, boolean successful)
       throws RemoteException {
 
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
-      if ( successful ) {
-        db.setTransactionSuccessful();
-      }
-      db.endTransaction();
-      boolean first = true;
-      while ( db != null && db.isOpen() && db.inTransaction()) {
-        if ( !first ) {
-          WebLogger.getLogger(appName).e("closeTransactionAndDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " aborting transaction!");
-        }
-        first = false;
-        // (presumably) abort the outstanding transaction
-        db.endTransaction();
-      }
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if ( msg == null ) msg = e.getMessage();
-      if ( msg == null ) msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("closeTransactionAndDatabase", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if ( db != null ) {
-        try {
-          // release the reference...
-          // this does not necessarily close the db handle
-          // or terminate any pending transaction
-          db.releaseReference();
-        } finally {
-          // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
-        }
-      }
-    }
+     // helpful RPC wrapper for calling two methods in succession
+     closeTransaction(appName, dbHandleName, successful);
+     closeDatabase(appName, dbHandleName);
   }
 
   @Override

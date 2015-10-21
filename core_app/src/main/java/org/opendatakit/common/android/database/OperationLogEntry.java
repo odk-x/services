@@ -33,10 +33,13 @@ final class OperationLogEntry {
    private static final SimpleDateFormat sDateFormat =
        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-   public static String getFormattedStartTime(long startTime) {
+   public static void getFormattedStartTime(StringBuilder b, long startTime) {
       // SimpleDateFormat is not thread safe...
       synchronized (sDateFormat) {
-         return sDateFormat.format(new Date(startTime));
+         // the format() return is a String overlaying a common buffer.
+         // the string content can change unexpectedly. Access it only
+         // within this synchronized section.
+         b.append(sDateFormat.format(new Date(startTime)));
       }
    }
 
@@ -62,9 +65,11 @@ final class OperationLogEntry {
       msg.append(" - ").append(getStatus());
       msg.append("\n      threadId:").append(mThreadId)
           .append(", sessionQualifier:").append(mSessionQualifier);
-      msg.append(", startTime:").append(getFormattedStartTime(mStartTime));
+      msg.append(", startTime:");
+      getFormattedStartTime(msg, mStartTime);
       if (mSql != null) {
-         msg.append(", sql=\"").append(AppNameSharedStateContainer.trimSqlForDisplay(mSql)).append("\"");
+         msg.append(", sql=\"")
+             .append(AppNameSharedStateContainer.trimSqlForDisplay(mSql)).append("\"");
       }
       if (verbose && mBindArgs != null && mBindArgs.size() != 0) {
          msg.append(", bindArgs=[");
