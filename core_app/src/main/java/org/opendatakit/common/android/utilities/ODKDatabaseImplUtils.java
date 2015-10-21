@@ -2111,7 +2111,7 @@ public class ODKDatabaseImplUtils {
   public void insertDataIntoExistingDBTableWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
-    if (cvValues.size() <= 0) {
+    if (cvValues == null || cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
@@ -2283,22 +2283,29 @@ public class ODKDatabaseImplUtils {
 
       String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
       String[] selArgs = whereArgs;
-      Cursor cursor = rawQuery(db, sel, selArgs);
+      Cursor cursor = null;
+       try {
+         cursor = rawQuery(db, sel, selArgs);
 
-      // There must be only one row in the db for the update to work
-      if (shouldUpdate) {
-        if (cursor.getCount() == 1) {
-          update = true;
-        } else if (cursor.getCount() > 1) {
-          throw new IllegalArgumentException(t + ": row id " + rowId
-              + " has more than 1 row in table " + tableId);
-        }
-      } else {
-        if (cursor.getCount() > 0) {
-          throw new IllegalArgumentException(t + ": id " + rowId + " is already present in table "
-              + tableId);
-        }
-      }
+         // There must be only one row in the db for the update to work
+         if (shouldUpdate) {
+           if (cursor.getCount() == 1) {
+             update = true;
+           } else if (cursor.getCount() > 1) {
+             throw new IllegalArgumentException(t + ": row id " + rowId
+                 + " has more than 1 row in table " + tableId);
+           }
+         } else {
+           if (cursor.getCount() > 0) {
+             throw new IllegalArgumentException(t + ": id " + rowId + " is already present in table "
+                 + tableId);
+           }
+         }
+       } finally {
+          if ( cursor != null ) {
+             cursor.close();
+          }
+       }
 
     } else {
       rowId = "uuid:" + UUID.randomUUID().toString();
@@ -2415,7 +2422,6 @@ public class ODKDatabaseImplUtils {
         db.endTransaction();
       }
     }
-
   }
 
   /**
