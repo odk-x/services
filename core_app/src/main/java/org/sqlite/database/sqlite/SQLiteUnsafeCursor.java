@@ -436,10 +436,10 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
               File f = new File(ODKFileUtils.getLoggingFolder(mAppName));
               if ( f.exists() && f.isDirectory() ) {
                  mWebLogger.w(TAG, "connection:" + mSessionQualifier
-                      + " finalize: cursor not closed: " + outstandingWork);
+                      + " finalize: cursor:" + mSqlQuery + " not closed: " + outstandingWork);
               } else {
                  Log.e(TAG, "connection:" + mSessionQualifier
-                     + " finalize: cursor not closed: " + outstandingWork);
+                     + " finalize: cursor:" + mSqlQuery + " not closed: " + outstandingWork);
               }
               close();
             }
