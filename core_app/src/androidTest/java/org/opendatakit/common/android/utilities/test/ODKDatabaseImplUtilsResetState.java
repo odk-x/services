@@ -108,7 +108,15 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
         OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getAppName(), uniqueKey);
         OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases();
-        FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+        // give a chance for GC to happen so that we
+        // release and close database handles in the
+        // C++ layer that were orphaned in Java
+        Thread.sleep(100L);
+        try {
+           FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+        } catch ( Exception e) {
+           // ignore
+        }
 
         super.tearDown();
     }

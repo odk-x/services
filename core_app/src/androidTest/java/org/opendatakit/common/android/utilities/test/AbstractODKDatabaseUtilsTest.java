@@ -1280,19 +1280,25 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
-    assertEquals(cursor.getCount(), 1);
+    Cursor cursor = null;
+     try {
+        cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+        assertEquals(cursor.getCount(), 1);
 
-    int val = 0;
-    while (cursor.moveToNext()) {
-      int ind = cursor.getColumnIndex(testCol);
-      int type = cursor.getType(ind);
-      assertEquals(type, Cursor.FIELD_TYPE_INTEGER);
-      val = cursor.getInt(ind);
-    }
+        int val = 0;
+        while (cursor.moveToNext()) {
+           int ind = cursor.getColumnIndex(testCol);
+           int type = cursor.getType(ind);
+           assertEquals(type, Cursor.FIELD_TYPE_INTEGER);
+           val = cursor.getInt(ind);
+        }
 
-    assertEquals(val, testVal);
-
+        assertEquals(val, testVal);
+     } finally {
+        if ( cursor != null && !cursor.isClosed() ) {
+           cursor.close();
+        }
+     }
     // Try updating that row in the database
     int testVal2 = 25;
     ContentValues cvValues2 = new ContentValues();
@@ -1307,6 +1313,12 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     assertEquals(thrown, true);
+
+     /**
+      * NOTE: we expect the log to report a failure to close this cursor.
+      * It is GC'd and closed in its finalizer. This is confirming that
+      * the finalizer is doing the right thing.
+      */
 
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
