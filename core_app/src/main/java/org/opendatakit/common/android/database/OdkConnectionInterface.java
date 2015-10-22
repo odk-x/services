@@ -2,10 +2,12 @@ package org.opendatakit.common.android.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.SQLException;
 
 /**
- * Created by clarice on 9/14/15.
+ *  @author clarlars@gmail.com
+ *  @author mitchellsundt@gmail.com
  */
 public interface OdkConnectionInterface {
 
@@ -35,30 +37,80 @@ public interface OdkConnectionInterface {
 
     public void dumpDetail(StringBuilder b);
 
+   /**
+    * This is called within
+    * {OdkConnectionFactoryInterface.getConnection(String appName, OdkDbHandle dbHandleName)}
+    * before the connection is returned.
+    *
+    * Only call this if you need to store the connection in your own data structures.
+    * In general, however, that is a bad idea. Just use the above function to retrieve
+    * the connection each time you need it.
+    */
     public void acquireReference();
 
+   /**
+    * Call this when you no longer need to use the connection.
+    * The connection remains open until it is removed from
+    * the connection map via:
+    * {OdkConnectionFactoryInterface.removeConnection(String appName, OdkDbHandle dbHandleName)}
+    *
+    * @throws SQLException
+    */
     public void releaseReference() throws SQLException;
 
+   /**
+    * Get the schema version in the database.
+    * This should only be called by the {OdkConnectionFactoryAbstractClass}.
+    *
+    * @return
+    * @throws SQLException
+    */
     public int getVersion() throws SQLException;
 
+   /**
+    * Set the schema version in the database.
+    * This should only be called by the {OdkConnectionFactoryAbstractClass}.
+    *
+    * @param version
+    * @throws SQLException
+    */
     public void setVersion(int version) throws SQLException;
 
     public boolean isOpen() throws SQLException;
 
-  /*
-   * close() is not implemented. Instead, users should call:
-   *
-   * {@link OdkConnectionFactoryInterface.removeConnection(String appName, OdkDbHandle dbHandleName)}
-   *
-   * That method or one of its variants will ensure that this interface is removed from the set of active
-   * interfaces managed by the connection factory.
+  /**
+   * close() is not implemented.
    *
    * To effect a close:
    * (1) call releaseReference() (because the referenceCount is +1 when you obtain this interface)
-   * (2) then call the above method or one of its variants.
+   * (2) then call:
+   * {OdkConnectionFactoryInterface.removeConnection(String appName, OdkDbHandle dbHandleName)}
+   * or one of its variants. Those methods will ensure that this interface is removed from the
+   * set of actively managed interfaces, causing its reference count to -1, and, if there are no
+   * open cursors, then trigger a close. Otherwise, we wait for a GC cycle to detect an unreachable
+   * connection and terminate it during the finalize() action (which should be considered a logic
+   * error).
    */
     public void close();
 
+   /**
+    * Take an immediate exclusive lock on the database.
+    *
+    * This should only be called by the {OdkConnectionFactoryAbstractClass}.
+    *
+    * It is used during database initialization and upgrade.
+    *
+    * @throws SQLException
+    */
+    public void beginTransactionExclusive() throws SQLException;
+
+   /**
+    * The normal lock is a non-exclusive deferred lock that gains
+    * a read lock and then only gains a write lock when a DDL or DML
+    * action occurs.
+    *
+    * @throws SQLException
+    */
     public void beginTransactionNonExclusive() throws SQLException;
 
     public boolean inTransaction() throws SQLException;
@@ -78,8 +130,6 @@ public interface OdkConnectionInterface {
             throws SQLException;
 
     public void execSQL(String sql, Object[] bindArgs) throws SQLException;
-
-    public void execSQL(String sql) throws SQLException;
 
     public Cursor rawQuery(String sql, String[] selectionArgs) throws SQLException;
 

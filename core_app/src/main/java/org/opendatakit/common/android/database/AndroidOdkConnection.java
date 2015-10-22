@@ -282,6 +282,31 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     }
   }
 
+   public void beginTransactionExclusive() throws SQLException {
+      boolean success = false;
+      final int cookie = operationLog.beginOperation(sessionQualifier,
+          "beginTransactionExclusive()", null, null);;
+      try {
+         synchronized (mutex) {
+            db.beginTransaction(SQLiteConnection.TRANSACTION_MODE_IMMEDIATE, null);
+         }
+         success = true;
+      } catch ( Throwable t ) {
+         operationLog.failOperation(cookie, t);
+         if ( t instanceof SQLiteException ) {
+            throw t;
+         } else {
+            throw new SQLiteException("unexpected", t);
+         }
+      } finally {
+         operationLog.endOperation(cookie);
+      }
+      if ( !success ) {
+         WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
+         OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
+      }
+   }
+
   public void beginTransactionNonExclusive() throws SQLException {
      boolean success = false;
      final int cookie = operationLog.beginOperation(sessionQualifier,
@@ -493,25 +518,6 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      try {
        synchronized (mutex) {
          db.execSQL(sql, bindArgs);
-       }
-     } catch ( Throwable t ) {
-        operationLog.failOperation(cookie, t);
-        if ( t instanceof SQLiteException ) {
-           throw t;
-        } else {
-           throw new SQLiteException("unexpected", t);
-        }
-     } finally {
-        operationLog.endOperation(cookie);
-     }
-  }
-
-  public void execSQL(String sql) throws SQLException {
-     final int cookie = operationLog.beginOperation(sessionQualifier,
-         "execSQL(\"" + sql + "\")", null, null);;
-     try {
-       synchronized (mutex) {
-         db.execSQL(sql, null);
        }
      } catch ( Throwable t ) {
         operationLog.failOperation(cookie, t);

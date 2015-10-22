@@ -51,35 +51,35 @@
         </service>
         <service android:name="org.opendatakit.dbshim.service.OdkDbShimService" 
             android:exported="true"
-            android:process=":databaseservice"
+            android:process=":dbshim"
             android:permission="org.opendatakit.dbshim.RUN_DBSHIM" >
         </service>
         <provider
             android:exported="true"
 	        android:syncable="false"
 	        android:initOrder="1"
-            android:process=":databaseservice"
+            android:process=":providers"
             android:authorities="org.opendatakit.common.android.provider.tables"
             android:name="org.opendatakit.tables.provider.TablesProvider" />
         <provider
             android:exported="true"
 	        android:syncable="false"
 	        android:initOrder="2"
-            android:process=":databaseservice"
+            android:process=":providers"
             android:authorities="org.opendatakit.common.android.provider.forms"
             android:name="org.opendatakit.forms.provider.FormsProvider" />
         <provider
             android:exported="true"
 	        android:syncable="false"
 	        android:initOrder="3"
-            android:process=":databaseservice"
+            android:process=":providers"
             android:authorities="org.opendatakit.common.android.provider.instances"
             android:name="org.opendatakit.instances.provider.InstanceProvider" />
         <provider
             android:exported="true"
 	        android:syncable="false"
 	        android:initOrder="4"
-            android:process=":databaseservice"
+            android:process=":providers"
             android:authorities="org.opendatakit.common.android.provider.submission.xml;org.opendatakit.common.android.provider.submission.json"
             android:name="org.opendatakit.submissions.provider.SubmissionProvider"
             />

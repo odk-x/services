@@ -241,7 +241,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       if ( shouldInitialize ) {
          boolean initSuccessful = false;
          try {
-            dbConnection.beginTransactionNonExclusive();
+            dbConnection.beginTransactionExclusive();
             try {
                int version = dbConnection.getVersion();
                if (version != mNewVersion) {

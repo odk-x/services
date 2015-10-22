@@ -563,7 +563,7 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";");
+      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";", null);
 
       // Delete the server sync ETags associated with this table
       seu.deleteAllSyncETagsForTableId(db, tableId);
@@ -1295,7 +1295,7 @@ public class ODKDatabaseImplUtils {
 
     createTableCmdWithCols.append(");");
 
-    db.execSQL(createTableCmdWithCols.toString());
+    db.execSQL(createTableCmdWithCols.toString(), null);
 
     // Create the metadata for the table - table def and KVS
     createDBTableMetadata(db, tableId);
@@ -2569,19 +2569,19 @@ public class ODKDatabaseImplUtils {
   private static void commonTableDefn(OdkConnectionInterface db) {
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
-    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME));
+    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
-    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME));
+    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
-    db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME));
+    db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME));
+    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME);
-    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME));
+    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
-    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME));
+    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
-    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME));
+    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
   }
 }
