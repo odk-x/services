@@ -85,7 +85,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
                 TEST_FILE_PREFIX);
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases();
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
         FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
 
         ODKFileUtils.verifyExternalStorageAvailability();
@@ -106,8 +106,9 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         }
 
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
-        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(getAppName(), uniqueKey);
-        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabases();
+        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+            getAppName(), uniqueKey);
+        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
         // give a chance for GC to happen so that we
         // release and close database handles in the
         // C++ layer that were orphaned in Java

@@ -18,7 +18,7 @@ import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.common.android.utilities.WebLogger;
 
-public final class AndroidConnectFactory  extends OdkConnectionFactoryInterface {
+public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
 
   static {
 

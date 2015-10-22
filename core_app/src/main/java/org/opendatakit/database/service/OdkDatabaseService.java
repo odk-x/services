@@ -51,7 +51,7 @@ public class OdkDatabaseService extends Service {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
     // release all non-group instances
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseNonGroupNonInternalInstances();
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
@@ -62,7 +62,7 @@ public class OdkDatabaseService extends Service {
     Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
     super.onDestroy();
     // release all non-group instances
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseAllDatabaseNonGroupNonInternalInstances();
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
   }

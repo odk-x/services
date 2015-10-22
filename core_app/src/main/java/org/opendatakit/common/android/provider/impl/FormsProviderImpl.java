@@ -36,7 +36,6 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
@@ -80,7 +79,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+          dbHandleName);
     }
   }
 
@@ -297,7 +297,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -443,7 +444,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                pf.appName, dbHandleName);
           }
         }
       }
@@ -557,7 +559,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                pf.appName, dbHandleName);
           }
         }
       }
@@ -750,7 +753,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(pf.appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                pf.appName, dbHandleName);
           }
         }
       }

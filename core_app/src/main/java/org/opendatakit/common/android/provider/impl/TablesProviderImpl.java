@@ -54,7 +54,8 @@ public abstract class TablesProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
       // this releases the connection
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+          dbHandleName);
     }
   }
 
@@ -156,7 +157,8 @@ public abstract class TablesProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -268,7 +270,8 @@ public abstract class TablesProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }

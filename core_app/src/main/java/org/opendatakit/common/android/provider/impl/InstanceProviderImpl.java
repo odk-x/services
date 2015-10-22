@@ -78,7 +78,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
     public void onInvalidated() {
       super.onInvalidated();
 
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+          dbHandleName);
     }
   }
 
@@ -169,7 +170,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
           if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -606,7 +608,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -712,7 +715,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().releaseDatabase(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
