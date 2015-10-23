@@ -31,11 +31,10 @@ interface OdkDbInterface {
    * Obtain a databaseHandleName
    *
    * @param appName
-   * @param beginTransaction - true if we should begin a (write) transaction
-   * 
+   *
    * @return dbHandleName
    */
-  OdkDbHandle openDatabase(in String appName, in boolean beginTransaction);
+  OdkDbHandle openDatabase(in String appName);
   
   /**
    * Begin a transaction.
