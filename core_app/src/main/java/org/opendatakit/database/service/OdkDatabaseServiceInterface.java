@@ -53,7 +53,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override
-  public OdkDbHandle openDatabase(String appName, boolean beginTransaction) throws RemoteException {
+  public OdkDbHandle openDatabase(String appName) throws RemoteException {
 
     Core.getInstance().possiblyWaitForDatabaseServiceDebugger();
 
@@ -63,9 +63,6 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
-      if ( beginTransaction ) {
-        db.beginTransactionNonExclusive();
-      }
       return dbHandleName;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

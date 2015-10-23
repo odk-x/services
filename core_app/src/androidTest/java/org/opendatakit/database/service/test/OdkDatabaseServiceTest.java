@@ -56,7 +56,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     protected void tearDown() throws Exception {
         OdkDbInterface serviceInterface = bindToDbService();
         try {
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "tearDown: " + db
                .getDatabaseHandle());
             verifyNoTablesExistNCleanAllTables(serviceInterface, db);
@@ -150,7 +150,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         try {
             ColumnList columnList = new ColumnList(createColumnList());
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbCreateNDeleteTable: " + db
                .getDatabaseHandle());
             // TODO: why do we have a dbHandle and APPNAME?
@@ -178,7 +178,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         try {
             ColumnList columnList = new ColumnList(createColumnList());
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbCreateNDeleteTableWTransactions: " + db
                .getDatabaseHandle());
             // TODO: why do we have a dbHandle and APPNAME?
@@ -213,7 +213,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db
                .getDatabaseHandle());
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -253,7 +253,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
             serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -290,7 +290,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertSingleRowIntoTableWTwoTransactions: " + db
                .getDatabaseHandle());
             serviceInterface.beginTransaction(APPNAME, db);
@@ -331,7 +331,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertTwoRowsIntoTable: " + db
                .getDatabaseHandle());
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -369,7 +369,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
 
             serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -409,7 +409,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertTwoRowsIntoTableWTwoTransactions: " + db
                .getDatabaseHandle());
 
@@ -453,7 +453,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbQueryWNoParams: " + db
                .getDatabaseHandle());
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -490,7 +490,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbQueryRowWNoColumnsSpecified: " + db
                .getDatabaseHandle());
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -526,7 +526,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbUpdateAllValues: " + db
                .getDatabaseHandle());
 
@@ -569,7 +569,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbUpdateAllValuesWTransactions: " + db
                .getDatabaseHandle());
 
@@ -620,7 +620,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbUpdateSingleValue: " + db
                .getDatabaseHandle());
 
@@ -678,7 +678,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
 
-            OdkDbHandle db = serviceInterface.openDatabase(APPNAME, false);
+            OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertNDeleteSingleRowIntoTable: " + db
                .getDatabaseHandle());
 
@@ -728,11 +728,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId =  UUID.randomUUID();
 
 
-            OdkDbHandle db1 = serviceInterface1.openDatabase(APPNAME, false);
+            OdkDbHandle db1 = serviceInterface1.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbUpdateWTwoServiceConnections db1: " + db1
                .getDatabaseHandle());
 
-           OdkDbHandle db2 = serviceInterface2.openDatabase(APPNAME, false);
+           OdkDbHandle db2 = serviceInterface2.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbUpdateWTwoServiceConnections db2: " + db2
                .getDatabaseHandle());
 
