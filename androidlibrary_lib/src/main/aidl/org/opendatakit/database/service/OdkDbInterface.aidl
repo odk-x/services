@@ -194,7 +194,8 @@ interface OdkDbInterface {
    */
   void deleteServerConflictRowWithId(in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in String rowId);
-	
+
+
   /**
    * Clean up the KVS row data types. This simplifies the migration process by
    * enforcing the proper data types regardless of what the values are in the
@@ -512,7 +513,63 @@ interface OdkDbInterface {
   void updateDataInExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
       in String tableId,
       in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
-  
+
+  /**
+   * Updates the local record with the appropriate changes to resolve a server conflict.
+   *
+   * A combination of primitive actions, all performed in one transaction:
+   *
+   * // update with server's changes
+   * updateDataInExistingDBTableWithId(appName, dbHandleName, tableId, orderedColumns,
+   *                                   cvValues, rowId);
+   * // delete the record of the server row
+   * deleteServerConflictRowWithId(appName, dbHandleName, tableId, rowId);
+   *
+   * // move the local conflict back into the normal (null) state
+   * restoreRowFromConflict(appName, dbHandleName, tableId, rowId,
+   *     syncState, localConflictType);
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @param syncState
+   * @param localConflictType
+   */
+  void resolveServerConflictWithUpdateInExistingDbTableWithId(in String appName,
+        in OdkDbHandle dbHandleName,
+  	    in String tableId,
+  	    in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId,
+  	    in String syncState,
+  	    in int localConflictType);
+
+
+  /**
+   * Delete the local and server conflict records to resolve a server conflict
+   *
+   * A combination of primitive actions, all performed in one transaction:
+   *
+   * // delete the record of the server row
+   * deleteServerConflictRowWithId(appName, dbHandleName, tableId, rowId);
+   *
+   * // move the local record into the 'new_row' sync state
+   * // so it can be physically deleted.
+   * updateRowETagAndSyncState(appName, dbHandleName, tableId, rowId, null,
+   *                           SyncState.new_row.name());
+   * // move the local conflict back into the normal (null) state
+   * deleteDataInExistingDBTableWithId(appName, dbHandleName, tableId, rowId);
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void resolveServerConflictWithDeleteInExistingDbTableWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId,
+  	    in String rowId);
+
     /**
    * Update the schema and data-modification ETags of a given tableId.
    * 
