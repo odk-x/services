@@ -42,7 +42,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
 
             try {
-                db.execSQL(createColCmd);
+                db.execSQL(createColCmd, null);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table "
                         + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
@@ -53,7 +53,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
 
             try {
-                db.execSQL(createTableDefCmd);
+                db.execSQL(createTableDefCmd, null);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table " + DatabaseConstants.TABLE_DEFS_TABLE_NAME);
                 e.printStackTrace();
@@ -63,7 +63,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
 
             try {
-                db.execSQL(createKVSCmd);
+                db.execSQL(createKVSCmd, null);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table "
                         + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
