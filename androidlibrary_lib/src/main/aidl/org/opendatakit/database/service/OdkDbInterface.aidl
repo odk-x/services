@@ -95,6 +95,48 @@ interface OdkDbInterface {
 	  in String tableId);
 
   /**
+   * Call this when the schemaETag for the given tableId has changed on the server.
+   *
+   * This is a combination of:
+   *
+   * Clean up this table and set the dataETag to null.
+   *
+   * changeDataRowsToNewRowState(sc.getAppName(), db, tableId);
+   *
+   * we need to clear out the dataETag so
+   * that we will pull all server changes and sync our properties.
+   *
+   * updateDBTableETags(sc.getAppName(), db, tableId, null, null);
+   *
+   * Although the server does not recognize this tableId, we can
+   * keep our record of the ETags for the table-level files and
+   * manifest. These may enable us to short-circuit the restoration
+   * of the table-level files should another client be simultaneously
+   * trying to restore those files to the server.
+   *
+   * However, we do need to delete all the instance-level files,
+   * as these are tied to the schemaETag we hold, and that is now
+   * invalid.
+   *
+   * if the local table ever had any server sync information for this
+   * host then clear it. If the user changed the server URL, we have
+   * already cleared this information.
+   *
+   * Clearing it here handles the case where an admin deleted the
+   * table on the server and we are now re-pushing that table to
+   * the server.
+   *
+   * We do not know whether the rows on the device match those on the server.
+   * We will find out later, in the course of the sync.
+   *
+   * if (tableInstanceFilesUri != null) {
+   *   deleteAllSyncETagsUnderServer(sc.getAppName(), db, tableInstanceFilesUri);
+   * }
+   */
+  void serverTableSchemaETagChanged(in String appName, in OdkDbHandle dbHandleName,
+    in String tableId, in String tableInstanceFilesUri);
+
+  /**
    * If the tableId is not recorded in the TableDefinition metadata table, then
    * create the tableId with the indicated columns. This will synthesize
    * reasonable metadata KVS entries for table.
