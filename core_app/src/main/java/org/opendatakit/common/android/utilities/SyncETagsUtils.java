@@ -87,14 +87,29 @@ public class SyncETagsUtils {
       bindArgs.add(serverUriPrefix);
     }
 
-    db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+     boolean inTransaction = db.inTransaction();
+     try {
+        if (!inTransaction) {
+           db.beginTransactionNonExclusive();
+        }
+
+        db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+
+        if ( !inTransaction ) {
+           db.setTransactionSuccessful();
+        }
+     } finally {
+        if ( !inTransaction ) {
+           db.endTransaction();
+        }
+     }
   }
 
   /**
-   * Remove all ETags for the given server. 
-   * Invoked when we are resetting the app server (to ensure 
+   * Remove all ETags for the given server.
+   * Invoked when we are resetting the app server (to ensure
    * everything we have locally is pushed to the server).
-   * 
+   *
    * @param db
    * @param serverUriPrefix
    */
