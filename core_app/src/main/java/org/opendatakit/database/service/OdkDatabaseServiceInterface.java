@@ -219,6 +219,34 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override
+  public void serverTableSchemaETagChanged(String appName, OdkDbHandle dbHandleName,
+       String tableId, String tableInstanceFilesUri) throws RemoteException {
+
+     OdkConnectionInterface db = null;
+
+     try {
+        // +1 referenceCount if db is returned (non-null)
+        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+        ODKDatabaseImplUtils.get().serverTableSchemaETagChanged(db, tableId, tableInstanceFilesUri);
+     } catch (Exception e) {
+        String msg = e.getLocalizedMessage();
+        if ( msg == null ) msg = e.getMessage();
+        if ( msg == null ) msg = e.toString();
+        msg = "Exception: " + msg;
+        WebLogger.getLogger(appName).e("serverTableSchemaETagChanged", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+        WebLogger.getLogger(appName).printStackTrace(e);
+        throw new RemoteException(msg);
+     } finally {
+        if ( db != null ) {
+           // release the reference...
+           // this does not necessarily close the db handle
+           // or terminate any pending transaction
+           db.releaseReference();
+        }
+     }
+  }
+
+  @Override
   public OrderedColumns createOrOpenDBTableWithColumns(String appName, OdkDbHandle dbHandleName, String tableId,
       ColumnList columns) throws RemoteException {
 

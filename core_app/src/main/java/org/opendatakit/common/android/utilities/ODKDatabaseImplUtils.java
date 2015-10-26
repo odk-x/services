@@ -1584,6 +1584,74 @@ public class ODKDatabaseImplUtils {
     }
   }
 
+   /**
+    *
+    * Clean up this table and set the dataETag to null.
+    *
+    * changeDataRowsToNewRowState(sc.getAppName(), db, tableId);
+    *
+    * we need to clear out the dataETag so
+    * that we will pull all server changes and sync our properties.
+    *
+    * updateDBTableETags(sc.getAppName(), db, tableId, null, null);
+    *
+    * Although the server does not recognize this tableId, we can
+    * keep our record of the ETags for the table-level files and
+    * manifest. These may enable us to short-circuit the restoration
+    * of the table-level files should another client be simultaneously
+    * trying to restore those files to the server.
+    *
+    * However, we do need to delete all the instance-level files,
+    * as these are tied to the schemaETag we hold, and that is now
+    * invalid.
+    *
+    * if the local table ever had any server sync information for this
+    * host then clear it. If the user changed the server URL, we have
+    * already cleared this information.
+    *
+    * Clearing it here handles the case where an admin deleted the
+    * table on the server and we are now re-pushing that table to
+    * the server.
+    *
+    * We do not know whether the rows on the device match those on the server.
+    * We will find out later, in the course of the sync.
+    *
+    * if (tableInstanceFilesUri != null) {
+    *   deleteAllSyncETagsUnderServer(sc.getAppName(), db, tableInstanceFilesUri);
+    * }
+    *
+    * @param db
+    * @param tableId
+    * @param tableInstanceFilesUri
+    */
+   public void serverTableSchemaETagChanged(OdkConnectionInterface db,
+       String tableId, String tableInstanceFilesUri) {
+
+      boolean dbWithinTransaction = db.inTransaction();
+      try {
+         if (!dbWithinTransaction) {
+            db.beginTransactionNonExclusive();
+         }
+
+         changeDataRowsToNewRowState(db, tableId);
+
+         updateDBTableETags(db, tableId, null, null);
+
+         if (tableInstanceFilesUri != null) {
+            SyncETagsUtils seu = new SyncETagsUtils();
+            seu.deleteAllSyncETagsUnderServer(db, tableInstanceFilesUri);
+         }
+
+         if (!dbWithinTransaction) {
+            db.setTransactionSuccessful();
+         }
+      } finally {
+         if (!dbWithinTransaction) {
+            db.endTransaction();
+         }
+      }
+   }
+
   /**
    * Deletes the server conflict row (if any) for this rowId in this tableId.
    * 
