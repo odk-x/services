@@ -1958,6 +1958,114 @@ public class ODKDatabaseImplUtils {
     upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true);
   }
 
+   /**
+    * Updates the local record with the appropriate changes to resolve a server conflict.
+    *
+    * A combination of primitive actions, all performed in one transaction:
+    *
+    * // update with server's changes
+    * updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
+    *                                   cvValues, rowId);
+    * // delete the record of the server row
+    * deleteServerConflictRowWithId(db, tableId, rowId);
+    *
+    * // move the local conflict back into the normal (null) state
+    * restoreRowFromConflict(db, tableId, rowId, syncState, localConflictType);
+    *
+    * @param db
+    * @param tableId
+    * @param orderedColumns
+    * @param cvValues
+    * @param rowId
+    * @param newSyncState
+    * @param localConflictType
+    */
+   public void resolveServerConflictWithUpdateInExistingDbTableWithId(OdkConnectionInterface db,
+       String tableId,
+       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, SyncState newSyncState,
+       int localConflictType) {
+
+      boolean inTransaction = false;
+      try {
+         inTransaction = db.inTransaction();
+         if ( !inTransaction ) {
+            db.beginTransactionNonExclusive();
+         }
+         // update with server's changes
+         ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db,
+             tableId, orderedColumns, cvValues, rowId);
+         // delete the record of the server row
+         ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId,
+             rowId);
+         // move the local conflict back into the normal (null) state
+         ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId,
+             newSyncState, localConflictType);
+
+         if ( !inTransaction ) {
+            db.setTransactionSuccessful();
+         }
+      } finally {
+         if ( db != null ) {
+            if ( !inTransaction ) {
+               db.endTransaction();
+            }
+         }
+      }
+   }
+
+   /**
+    * Delete the local and server conflict records to resolve a server conflict
+    *
+    * A combination of primitive actions, all performed in one transaction:
+    *
+    * // delete the record of the server row
+    * deleteServerConflictRowWithId(appName, dbHandleName, tableId, rowId);
+    *
+    * // move the local record into the 'new_row' sync state
+    * // so it can be physically deleted.
+    * updateRowETagAndSyncState(appName, dbHandleName, tableId, rowId, null,
+    *                           SyncState.new_row.name());
+    * // move the local conflict back into the normal (null) state
+    * deleteDataInExistingDBTableWithId(appName, dbHandleName, tableId, rowId);
+    *
+    * @param db
+    * @param appName
+    * @param tableId
+    * @param rowId
+    */
+   public void resolveServerConflictWithDeleteInExistingDbTableWithId(OdkConnectionInterface db,
+       String appName, String tableId, String rowId) {
+
+      boolean inTransaction = false;
+      try {
+
+         inTransaction = db.inTransaction();
+         if ( !inTransaction ) {
+            db.beginTransactionNonExclusive();
+         }
+         // delete the record of the server row
+         ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+
+         // move the local record into the 'new_row' sync state
+         // so it can be physically deleted.
+         ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId,
+             null, SyncState.new_row);
+
+         // move the local conflict back into the normal (null) state
+         ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
+
+         if ( !inTransaction ) {
+            db.setTransactionSuccessful();
+         }
+      } finally {
+         if ( db != null ) {
+            if ( !inTransaction ) {
+               db.endTransaction();
+            }
+         }
+      }
+   }
+
   /**
    * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint
    * rows are created by ODK Survey to hold intermediate values during the

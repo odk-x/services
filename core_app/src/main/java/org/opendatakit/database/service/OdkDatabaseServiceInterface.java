@@ -1077,6 +1077,74 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
+   @Override
+   public void resolveServerConflictWithUpdateInExistingDbTableWithId(String appName, OdkDbHandle
+       dbHandleName, String tableId,
+       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String syncState,
+       int localConflictType) throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         SyncState newState = SyncState.valueOf(syncState);
+
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+
+         ODKDatabaseImplUtils.get().resolveServerConflictWithUpdateInExistingDbTableWithId(db,
+             tableId, orderedColumns, cvValues, rowId, newState, localConflictType);
+
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("resolveServerConflictInExistingDbTableWithId",
+             appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
+
+   @Override
+   public void resolveServerConflictWithDeleteInExistingDbTableWithId(String appName, OdkDbHandle
+       dbHandleName, String tableId, String rowId) throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+
+         ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteInExistingDbTableWithId(db,
+             appName, tableId, rowId);
+
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("resolveServerConflictInExistingDbTableWithId",
+             appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
+
   @Override
   public void updateRowETagAndSyncState(String appName, OdkDbHandle dbHandleName, String tableId, String rowId,
       String rowETag, String syncState) throws RemoteException {
