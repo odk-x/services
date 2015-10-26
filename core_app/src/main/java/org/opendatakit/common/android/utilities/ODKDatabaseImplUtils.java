@@ -2419,170 +2419,171 @@ public class ODKDatabaseImplUtils {
     ContentValues cvDataTableVal = new ContentValues();
     cvDataTableVal.putAll(cvValues);
 
-    if (cvDataTableVal.containsKey(DataTableColumns.ID)) {
-      // The user specified a row id; we need to determine whether to
-      // insert or update the record, or to reject the action because
-      // there are either checkpoint records for this row id, or, if
-      // a server conflict is associated with this row, that the
-      // _conflict_type to update was not specified.
-      //
-      // i.e., the tuple (_id, _conflict_type) should be unique. If
-      // we find that there are more than 0 or 1 records matching this
-      // tuple, then we should reject the update request.
-      //
-      // TODO: perhaps we want to allow updates to the local conflict
-      // row if there are no checkpoints on it? I.e., change the
-      // tri-state conflict type to a pair of states (local / remote).
-      // and all local changes are flagged local. Remote only exists
-      // if the server is in conflict.
 
-      rowId = cvDataTableVal.getAsString(DataTableColumns.ID);
-      if (rowId == null) {
-        throw new IllegalArgumentException(DataTableColumns.ID + ", if specified, cannot be null");
-      }
-
-      if (specifiesConflictType) {
-        if (nullConflictType) {
-          whereClause = DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE
-              + " IS NULL";
-          whereArgs[0] = rowId;
-        } else {
-          whereClause = DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE
-              + " = ?";
-          whereArgs[0] = rowId;
-          whereArgs[1] = cvValues.getAsString(DataTableColumns.CONFLICT_TYPE);
-        }
-      } else {
-        whereClause = DataTableColumns.ID + " = ?";
-        whereArgs[0] = rowId;
-      }
-
-      String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-      String[] selArgs = whereArgs;
-      Cursor cursor = null;
-       try {
-         cursor = rawQuery(db, sel, selArgs);
-
-         // There must be only one row in the db for the update to work
-         if (shouldUpdate) {
-           if (cursor.getCount() == 1) {
-             update = true;
-           } else if (cursor.getCount() > 1) {
-             throw new IllegalArgumentException(t + ": row id " + rowId
-                 + " has more than 1 row in table " + tableId);
-           }
-         } else {
-           if (cursor.getCount() > 0) {
-             throw new IllegalArgumentException(t + ": id " + rowId + " is already present in table "
-                 + tableId);
-           }
-         }
-       } finally {
-          if ( cursor != null ) {
-             cursor.close();
-          }
+     boolean dbWithinTransaction = db.inTransaction();
+     try {
+       if (!dbWithinTransaction) {
+         db.beginTransactionNonExclusive();
        }
 
-    } else {
-      rowId = "uuid:" + UUID.randomUUID().toString();
-    }
+       if (cvDataTableVal.containsKey(DataTableColumns.ID)) {
+         // The user specified a row id; we need to determine whether to
+         // insert or update the record, or to reject the action because
+         // there are either checkpoint records for this row id, or, if
+         // a server conflict is associated with this row, that the
+         // _conflict_type to update was not specified.
+         //
+         // i.e., the tuple (_id, _conflict_type) should be unique. If
+         // we find that there are more than 0 or 1 records matching this
+         // tuple, then we should reject the update request.
+         //
+         // TODO: perhaps we want to allow updates to the local conflict
+         // row if there are no checkpoints on it? I.e., change the
+         // tri-state conflict type to a pair of states (local / remote).
+         // and all local changes are flagged local. Remote only exists
+         // if the server is in conflict.
 
-    // TODO: This is broken w.r.t. updates of partial fields
-    // TODO: This is broken w.r.t. updates of partial fields
-    // TODO: This is broken w.r.t. updates of partial fields
-    // TODO: This is broken w.r.t. updates of partial fields
+         rowId = cvDataTableVal.getAsString(DataTableColumns.ID);
+         if (rowId == null) {
+           throw new IllegalArgumentException(DataTableColumns.ID + ", if specified, cannot be null");
+         }
 
-    if (!cvDataTableVal.containsKey(DataTableColumns.ID)) {
-      cvDataTableVal.put(DataTableColumns.ID, rowId);
-    }
+         if (specifiesConflictType) {
+           if (nullConflictType) {
+             whereClause = DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE
+                 + " IS NULL";
+             whereArgs[0] = rowId;
+           } else {
+             whereClause = DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE
+                 + " = ?";
+             whereArgs[0] = rowId;
+             whereArgs[1] = cvValues.getAsString(DataTableColumns.CONFLICT_TYPE);
+           }
+         } else {
+           whereClause = DataTableColumns.ID + " = ?";
+           whereArgs[0] = rowId;
+         }
 
-    if (update) {
-      if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
-          || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
-        cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
+         String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
+         String[] selArgs = whereArgs;
+         Cursor cursor = null;
+          try {
+            cursor = rawQuery(db, sel, selArgs);
+
+            // There must be only one row in the db for the update to work
+            if (shouldUpdate) {
+              if (cursor.getCount() == 1) {
+                update = true;
+              } else if (cursor.getCount() > 1) {
+                throw new IllegalArgumentException(t + ": row id " + rowId
+                    + " has more than 1 row in table " + tableId);
+              }
+            } else {
+              if (cursor.getCount() > 0) {
+                throw new IllegalArgumentException(t + ": id " + rowId + " is already present in table "
+                    + tableId);
+              }
+            }
+          } finally {
+             if ( cursor != null ) {
+                cursor.close();
+             }
+          }
+
+       } else {
+         rowId = "uuid:" + UUID.randomUUID().toString();
+       }
+
+       // TODO: This is broken w.r.t. updates of partial fields
+       // TODO: This is broken w.r.t. updates of partial fields
+       // TODO: This is broken w.r.t. updates of partial fields
+       // TODO: This is broken w.r.t. updates of partial fields
+
+       if (!cvDataTableVal.containsKey(DataTableColumns.ID)) {
+         cvDataTableVal.put(DataTableColumns.ID, rowId);
+       }
+
+       if (update) {
+         if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
+             || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
+           cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
+         }
+
+         if (cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+             && (cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+           cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+         }
+
+         if (cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+             && (cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
+             || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
+           String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+             || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR,
+               DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+         }
+       } else {
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.ROW_ETAG)
+             || cvDataTableVal.get(DataTableColumns.ROW_ETAG) == null) {
+           cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
+             || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
+           cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
+           cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE)
+             || (cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
+           cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE)
+             || (cvDataTableVal.get(DataTableColumns.FILTER_VALUE) == null)) {
+           cvDataTableVal.put(DataTableColumns.FILTER_VALUE, DataTableColumns.DEFAULT_FILTER_VALUE);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
+           cvDataTableVal.putNull(DataTableColumns.FORM_ID);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+             || (cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+           cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+             || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
+             || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
+           String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
+         }
+
+         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+             || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+           cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR,
+               DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+         }
       }
 
-      if (cvDataTableVal.containsKey(DataTableColumns.LOCALE)
-          && (cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
-        cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
-      }
-
-      if (cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
-          && (cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
-          || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
-        String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
-          || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR,
-            DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
-      }
-    } else {
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.ROW_ETAG)
-          || cvDataTableVal.get(DataTableColumns.ROW_ETAG) == null) {
-        cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
-          || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
-        cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
-        cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE)
-          || (cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
-        cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE)
-          || (cvDataTableVal.get(DataTableColumns.FILTER_VALUE) == null)) {
-        cvDataTableVal.put(DataTableColumns.FILTER_VALUE, DataTableColumns.DEFAULT_FILTER_VALUE);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
-        cvDataTableVal.putNull(DataTableColumns.FORM_ID);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE)
-          || (cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
-        cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
-          || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
-          || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
-        String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
-      }
-
-      if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
-          || (cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
-        cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR,
-            DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
-      }
-    }
-
-    cleanUpValuesMap(orderedColumns, cvDataTableVal);
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
+      cleanUpValuesMap(orderedColumns, cvDataTableVal);
 
       if (update) {
         db.update(tableId, cvDataTableVal, whereClause, whereArgs);
@@ -2602,7 +2603,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Update the ETag and SyncState of a given rowId. There should be exactly one
-   * record for this rowId in thed database (i.e., no conflicts or checkpoints).
+   * record for this rowId in the database (i.e., no conflicts or checkpoints).
    * 
    * @param db
    * @param tableId
@@ -2631,7 +2632,22 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.put(DataTableColumns.ROW_ETAG, rowETag);
     cvDataTableVal.put(DataTableColumns.SYNC_STATE, state.name());
 
-    db.update(tableId, cvDataTableVal, whereClause, whereArgs);
+     boolean dbWithinTransaction = db.inTransaction();
+     try {
+        if (!dbWithinTransaction) {
+           db.beginTransactionNonExclusive();
+        }
+
+        db.update(tableId, cvDataTableVal, whereClause, whereArgs);
+
+        if (!dbWithinTransaction) {
+           db.setTransactionSuccessful();
+        }
+     } finally {
+        if (!dbWithinTransaction) {
+           db.endTransaction();
+        }
+     }
   }
 
   /**
