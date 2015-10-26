@@ -2411,6 +2411,7 @@ public class ODKDatabaseImplUtils {
         && (cvValues.get(DataTableColumns.CONFLICT_TYPE) == null);
     String[] whereArgs = new String[specifiesConflictType ? (1 + (nullConflictType ? 0 : 1)) : 1];
     boolean update = false;
+    String updatedSyncState = SyncState.new_row.name();
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -2473,6 +2474,18 @@ public class ODKDatabaseImplUtils {
             // There must be only one row in the db for the update to work
             if (shouldUpdate) {
               if (cursor.getCount() == 1) {
+             if (cursor.moveToFirst()) {
+               int syncStateCursorIndex = cursor.getColumnIndex(DataTableColumns.SYNC_STATE);
+               updatedSyncState = cursor.getString(syncStateCursorIndex);
+
+               if (updatedSyncState.equals(SyncState.deleted.name()) ||
+                   updatedSyncState.equals(SyncState.in_conflict.name())) {
+                 throw new IllegalStateException(t + ": Cannot update a deleted or in-conflict row");
+               } else if (updatedSyncState.equals(SyncState.synced.name()) ||
+                   updatedSyncState.equals(SyncState.synced_pending_files.name())) {
+                 updatedSyncState = SyncState.changed.name();
+               }
+             }
                 update = true;
               } else if (cursor.getCount() > 1) {
                 throw new IllegalArgumentException(t + ": row id " + rowId
@@ -2506,7 +2519,7 @@ public class ODKDatabaseImplUtils {
        if (update) {
          if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
              || (cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
-           cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
+           cvDataTableVal.put(DataTableColumns.SYNC_STATE, updatedSyncState);
          }
 
          if (cvDataTableVal.containsKey(DataTableColumns.LOCALE)
