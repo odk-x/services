@@ -151,7 +151,30 @@ interface OdkDbInterface {
    */
   OrderedColumns createOrOpenDBTableWithColumns(in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in ColumnList columns);
-		 
+
+	/**
+   * If the tableId is not recorded in the TableDefinition metadata table, then
+   * create the tableId with the indicated columns. And apply the supplied KVS
+   * settings. If some are missing, this will synthesize reasonable metadata KVS
+   * entries for table.
+   *
+   * If the table is present, this will delete and replace the KVS with the given KVS
+   * entries if the clear flag is true
+	 *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param columns simple transport wrapper for List<Columns>
+   * @param metaData a List<KeyValueStoreEntry>
+   * @param clear if true then delete the existing set of values for this
+   *          tableId before inserting or replacing with the new ones.
+   * @return the OrderedColumns of the user columns in the table.
+	 */
+  OrderedColumns createOrOpenDBTableWithColumnsAndProperties(in String appName,
+      in OdkDbHandle dbHandleName,
+      in String tableId, in ColumnList columns,
+      in List<KeyValueStoreEntry> metaData, in boolean clear);
+
   /**
    * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
    * rows are created by ODK Survey to hold intermediate values during the
@@ -489,6 +512,22 @@ interface OdkDbInterface {
   void replaceDBTableMetadataList(in String appName, in OdkDbHandle dbHandleName, 
       in String tableId,
       in List<KeyValueStoreEntry> metaData, in boolean clear);
+
+  /**
+   * Atomically delete all the fields under the given (tableId, partition, aspect)
+   * and replace with the supplied values.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param partition
+   * @param aspect
+   * @param metadata
+   *          a List<KeyValueStoreEntry>
+   */
+  void replaceDBTableMetadataSubList(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String partition, in String aspect,
+      in List<KeyValueStoreEntry> metaData);
 
   /**
    * Changes the conflictType for the given row from the specified one to null

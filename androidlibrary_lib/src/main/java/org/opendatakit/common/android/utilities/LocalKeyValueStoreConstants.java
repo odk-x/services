@@ -21,28 +21,67 @@ package org.opendatakit.common.android.utilities;
  *
  */
 public final class LocalKeyValueStoreConstants {
-  
-  public static class Graph {
-    public static final String PARTITION = "GraphDisplayActivity";
-    public static final String PARTITION_VIEWS = PARTITION + ".views";
-    public static final String KEY_GRAPH_VIEW_NAME = "nameOfGraphView";
-    public static final String KEY_GRAPH_TYPE = "graphtype";
+
+  public static final class TableColorRules {
+    public static final String PARTITION = "TableColorRuleGroup";
+    // Aspect: Default
+    // KEYs
+
+    // The row color rule
+    public static final String KEY_COLOR_RULES_ROW = "TableColorRuleGroup.ruleList";
+
+    // The status column color rule
+    public static final String KEY_COLOR_RULES_STATUS_COLUMN = "StatusColumn.ruleList";
+
+    // NOTE: The other metadata columns do not support color rules
+
+    // Type: array
   }
-  
+
+  public static final class ColumnColorRules {
+    public static final String PARTITION = "ColumnColorRuleGroup";
+    // Aspect: elementKey of column
+    // KEYs
+    public static final String KEY_COLOR_RULES_COLUMN = "ColumnColorRuleGroup.ruleList";
+    // Type: array
+  }
+
   public static final class Map {
     public static final String PARTITION = "TableMapFragment";
+    // Aspect: ??
+
     /** The key to grab which column is being used for latitude. */
     public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
     /** The key to grab which column is being used for longitude. */
     public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
     /** The key to grab which file is being used for the list view. */
     public static final String KEY_FILENAME = "keyFilename";
+
+    /** The key for the type of color rule to use on the map. */
+    public static final String KEY_COLOR_RULE_TYPE = "keyColorRuleType";
+    /**
+     * The key for, if the color rule is based off of a column, the column to use.
+     */
+    public static final String KEY_COLOR_RULE_COLUMN = "keyColorRuleColumn";
+
+    /** The constant if we want no color rules. */
+    public static final String COLOR_TYPE_NONE = "None";
+    /** The constant if we want the color rules based off of the table. */
+    public static final String COLOR_TYPE_TABLE = "Table Color Rules";
+    /** The constant if we want the color rules based off of the status column. */
+    public static final String COLOR_TYPE_STATUS = "Status Column Color Rules";
+    /** The constant if we want the color rules based off of a column. */
+    public static final String COLOR_TYPE_COLUMN = "Selectable Column Color Rules";
+
+    // anything for detail view?
   }
   
   public static final class Spreadsheet {
-    public static final String KEY_COLUMN_WIDTH =
-        "SpreadsheetView.columnWidth";
     public static final String PARTITION = "SpreadsheetView";
+    // Aspect: elementKey of column
+    // KEYs
+    public static final String KEY_COLUMN_WIDTH = "SpreadsheetView.columnWidth";
+    public static final String KEY_FONT_SIZE = "fontSize";
   }
 
   /**
@@ -81,6 +120,8 @@ public final class LocalKeyValueStoreConstants {
   };
   
   public static final class Tables {
+    /** The default view type for this table */
+    public static final String TABLE_DEFAULT_VIEW_TYPE = "defaultViewType";
 
     /** The file name for the list view that has been set on the table. */
     public static final String KEY_LIST_VIEW_FILE_NAME = "listViewFileName";
