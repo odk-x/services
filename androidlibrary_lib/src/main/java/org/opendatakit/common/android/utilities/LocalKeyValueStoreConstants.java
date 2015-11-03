@@ -48,14 +48,16 @@ public final class LocalKeyValueStoreConstants {
 
   public static final class Map {
     public static final String PARTITION = "TableMapFragment";
-    // Aspect: ??
+    // Aspect should be the view name eventually (e.g., "Map List View 1")
+    // Aspect: KeyValueStoreConstants.ASPECT_DEFAULT
+
+    /** NOTE: The filename is under the Tables subclass */
 
     /** The key to grab which column is being used for latitude. */
     public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
+
     /** The key to grab which column is being used for longitude. */
     public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
-    /** The key to grab which file is being used for the list view. */
-    public static final String KEY_FILENAME = "keyFilename";
 
     /** The key for the type of color rule to use on the map. */
     public static final String KEY_COLOR_RULE_TYPE = "keyColorRuleType";
@@ -82,6 +84,9 @@ public final class LocalKeyValueStoreConstants {
     // KEYs
     public static final String KEY_COLUMN_WIDTH = "SpreadsheetView.columnWidth";
     public static final String KEY_FONT_SIZE = "fontSize";
+
+    public static final int DEFAULT_COL_WIDTH = 125;
+    public static final int MAX_COL_WIDTH = 1000;
   }
 
   /**
@@ -102,8 +107,10 @@ public final class LocalKeyValueStoreConstants {
      * within this partition and a particular aspect. (Perhaps the name "Doctor"?)
      */
     public static final String PARTITION_VIEWS = PARTITION + ".views";
+
+    public static final String VIEW_ASPECT = "List View 1";
     /**
-     * This key holds the filename associated with the view.
+     * Key: Tables.KEY_LIST_VIEW_FILE_NAME holds the filename associated with the view.
      */
     public static final String KEY_FILENAME = "filename";
     /**
