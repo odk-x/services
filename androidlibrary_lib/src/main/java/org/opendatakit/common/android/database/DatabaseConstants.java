@@ -68,4 +68,11 @@ public class DatabaseConstants {
    */
   
   public static final String SYNC_ETAGS_TABLE_NAME = "_sync_etags";
+
+  /**
+   * All tools
+   *
+   * Maintains the (choiceListId, choiceListJSON) mapping.
+   */
+  public static final String CHOICE_LIST_TABLE_NAME = "_choice_lists";
 }

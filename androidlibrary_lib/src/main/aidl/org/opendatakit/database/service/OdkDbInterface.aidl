@@ -137,6 +137,29 @@ interface OdkDbInterface {
     in String tableId, in String tableInstanceFilesUri);
 
   /**
+   * Compute the app-global choiceListId for this choiceListJSON
+   * and register the tuple of (choiceListId, choiceListJSON).
+   * Return choiceListId.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param choiceListJSON -- the actual JSON choice list text.
+   * @return choiceListId -- the unique code mapping to the choiceListJSON
+   */
+  String setChoiceList(in String appName, in OdkDbHandle dbHandleName,
+   in String choiceListJSON );
+
+  /**
+   * Return the choice list JSON corresponding to the choiceListId
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param choiceListId -- the md5 hash of the choiceListJSON
+   * @return choiceListJSON -- the actual JSON choice list text.
+   */
+  String getChoiceList(in String appName, in OdkDbHandle dbHandleName, in String choiceListId );
+
+  /**
    * If the tableId is not recorded in the TableDefinition metadata table, then
    * create the tableId with the indicated columns. This will synthesize
    * reasonable metadata KVS entries for table.
