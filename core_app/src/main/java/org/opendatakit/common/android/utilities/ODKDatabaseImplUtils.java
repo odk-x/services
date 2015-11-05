@@ -41,27 +41,15 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.provider.InstanceColumns;
-import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.provider.SyncETagColumns;
-import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 
 public class ODKDatabaseImplUtils {
 
@@ -80,8 +68,33 @@ public class ODKDatabaseImplUtils {
    */
   private static final List<String> EXPORT_COLUMNS;
 
-  static {
-    ArrayList<String> adminColumns = new ArrayList<String>();
+   /**
+    * When a KVS change is made, enforce in the database layer that the
+    * value_type of some KVS entries is a specific type.  Log an error
+    * if the user attempts to do something differently, but correct
+    * the error. This is largely for migration / forward compatibility.
+    */
+  private static ArrayList<String[]> knownKVSValueTypeRestrictions = new ArrayList<String[]>();
+
+   /**
+    * Same as above, but quick access via the key.
+    * For now, we know that the keys are all unique.
+    * Eventually this might need to be a MultiMap.
+    */
+   private static TreeMap<String,ArrayList<String[]>> keyToKnownKVSValueTypeRestrictions = new
+       TreeMap<String,ArrayList<String[]>>();
+
+   private static void updateKeyToKnownKVSValueTypeRestrictions(String[] field) {
+      ArrayList<String[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
+      if ( fields == null ) {
+         fields = new ArrayList<String[]>();
+         keyToKnownKVSValueTypeRestrictions.put(field[2], fields);
+      }
+      fields.add(field);
+   }
+
+   static {
+      ArrayList<String> adminColumns = new ArrayList<String>();
     adminColumns.add(DataTableColumns.ID);
     adminColumns.add(DataTableColumns.ROW_ETAG);
     adminColumns.add(DataTableColumns.SYNC_STATE); // not exportable
@@ -109,6 +122,93 @@ public class ODKDatabaseImplUtils {
     Collections.sort(exportColumns);
     EXPORT_COLUMNS = Collections.unmodifiableList(exportColumns);
 
+     // declare the KVS value_type restrictions we know about...
+     // This is a list of triples: ( required value type, partition_label, key_label )
+     {
+        String[] fields;
+
+        // for columns
+        fields = new String[3];
+        fields[0] = ElementDataType.string.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
+        fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.string.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
+        fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.object.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
+        fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.bool.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
+        fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.array.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
+        fields[2] = KeyValueStoreConstants.COLUMN_JOINS;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        // and for the table...
+        fields = new String[3];
+        fields[0] = ElementDataType.array.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_COL_ORDER;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.object.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.array.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.string.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_INDEX_COL;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.object.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_SORT_COL;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        fields = new String[3];
+        fields[0] = ElementDataType.object.name();
+        fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
+        fields[2] = KeyValueStoreConstants.TABLE_SORT_ORDER;
+        knownKVSValueTypeRestrictions.add(fields);
+        updateKeyToKnownKVSValueTypeRestrictions(fields);
+
+        // TODO: color rule groups
+     }
+
     // Used to ensure that the singleton has been initialized properly
     AndroidConnectFactory.configure();
   }
@@ -133,7 +233,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * For mocking -- supply a mocked object.
-   * 
+   *
    * @param util
    */
   public static void set(ODKDatabaseImplUtils util) {
@@ -146,7 +246,7 @@ public class ODKDatabaseImplUtils {
   /**
    * Return an unmodifiable list of the admin columns that must be present in
    * every database table.
-   * 
+   *
    * @return
    */
   public List<String> getAdminColumns() {
@@ -156,7 +256,7 @@ public class ODKDatabaseImplUtils {
   /**
    * Return an unmodifiable list of the admin columns that should be exported to
    * a CSV file. This list excludes the SYNC_STATE and CONFLICT_TYPE columns.
-   * 
+   *
    * @return
    */
   public List<String> getExportColumns() {
@@ -165,7 +265,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Perform a raw query with bind parameters.
-   * 
+   *
    * @param db
    * @param sql
    * @param selectionArgs
@@ -178,7 +278,7 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Perform a query with the given parameters.
-   * 
+   *
    * @param db
    * @param table
    * @param columns
@@ -194,7 +294,7 @@ public class ODKDatabaseImplUtils {
       String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy,
-            limit);
+        limit);
     return c;
   }
 
@@ -208,30 +308,25 @@ public class ODKDatabaseImplUtils {
   /**
    * Get a {@link UserTable} for this table based on the given where clause. All
    * columns from the table are returned.
-   * <p>
+   * <p/>
    * SELECT * FROM table WHERE whereClause GROUP BY groupBy[]s HAVING
    * havingClause ORDER BY orderbyElement orderByDirection
-   * <p>
+   * <p/>
    * If any of the clause parts are omitted (null), then the appropriate
    * simplified SQL statement is constructed.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
    * @param columnDefns
-   * @param whereClause
-   *          the whereClause for the selection, beginning with "WHERE". Must
-   *          include "?" instead of actual values, which are instead passed in
-   *          the selectionArgs.
-   * @param selectionArgs
-   *          an array of string values for bind parameters
-   * @param groupBy
-   *          an array of elementKeys
+   * @param whereClause       the whereClause for the selection, beginning with "WHERE". Must
+   *                          include "?" instead of actual values, which are instead passed in
+   *                          the selectionArgs.
+   * @param selectionArgs     an array of string values for bind parameters
+   * @param groupBy           an array of elementKeys
    * @param having
-   * @param orderByElementKey
-   *          elementKey to order the results by
-   * @param orderByDirection
-   *          either "ASC" or "DESC"
+   * @param orderByElementKey elementKey to order the results by
+   * @param orderByDirection  either "ASC" or "DESC"
    * @return
    */
   public UserTable rawSqlQuery(OdkConnectionInterface db, String appName, String tableId,
@@ -343,7 +438,7 @@ public class ODKDatabaseImplUtils {
    * Return the row(s) for the given tableId and rowId. If the row has
    * checkpoints or conflicts, the returned UserTable will have more than one
    * Row returned. Otherwise, it will contain a single row.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
@@ -365,7 +460,7 @@ public class ODKDatabaseImplUtils {
    * This does a direct query against the database and is suitable for accessing
    * non-managed tables. It does not access any metadata and therefore will not
    * report non-unit-of-retention (grouping) columns.
-   * 
+   *
    * @param db
    * @param tableId
    * @return
@@ -390,7 +485,7 @@ public class ODKDatabaseImplUtils {
    * Retrieve the list of user-defined columns for a tableId using the metadata
    * for that table. Returns the unit-of-retention and non-unit-of-retention
    * (grouping) columns.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
@@ -554,10 +649,10 @@ public class ODKDatabaseImplUtils {
 
     SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
-    try {
-      String whereClause = TableDefinitionsColumns.TABLE_ID + " = ?";
-      String[] whereArgs = { tableId };
 
+    String[] whereArgs = { tableId };
+
+    try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
@@ -569,21 +664,36 @@ public class ODKDatabaseImplUtils {
       seu.deleteAllSyncETagsForTableId(db, tableId);
 
       // Delete the table definition for the tableId
-      int count = db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
+       int count;
+       {
+          String whereClause = TableDefinitionsColumns.TABLE_ID + " = ?";
 
-      // Delete the column definitions for this tableId
-      db.delete(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, whereClause, whereArgs);
+          count = db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
+       }
 
-      // Delete the uploads for the tableId
-      String uploadWhereClause = InstanceColumns.DATA_TABLE_TABLE_ID + " = ?";
-      db.delete(DatabaseConstants.UPLOADS_TABLE_NAME, uploadWhereClause, whereArgs);
+       // Delete the column definitions for this tableId
+       {
+          String whereClause = ColumnDefinitionsColumns.TABLE_ID + " = ?";
 
-      // Delete the values from the 4 key value stores
-      db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
-      db.delete(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME, whereClause, whereArgs);
+          db.delete(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, whereClause, whereArgs);
+       }
 
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
+       // Delete the uploads for the tableId
+       {
+          String uploadWhereClause = InstanceColumns.DATA_TABLE_TABLE_ID + " = ?";
+          db.delete(DatabaseConstants.UPLOADS_TABLE_NAME, uploadWhereClause, whereArgs);
+       }
+
+       // Delete the values from the 4 key value stores
+       {
+          String whereClause = KeyValueStoreColumns.TABLE_ID + " = ?";
+
+          db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
+          db.delete(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME, whereClause, whereArgs);
+       }
+
+       if (!dbWithinTransaction) {
+          db.setTransactionSuccessful();
       }
 
     } finally {
@@ -763,27 +873,199 @@ public class ODKDatabaseImplUtils {
     return e;
   }
 
-  /**
-   * Insert or update a single table-level metadata KVS entry.
-   *
-   * @param db
-   * @param entry
-   */
-  public void replaceDBTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry entry) {
+   /*
+    * Build the start of a create table statement -- specifies all the metadata
+    * columns. Caller must then add all the user-defined column definitions and
+    * closing parentheses.
+    */
+   private String getUserDefinedTableCreationStatement(String tableId) {
+    /*
+     * Resulting string should be the following String createTableCmd =
+     * "CREATE TABLE IF NOT EXISTS " + tableId + " (" + DataTableColumns.ID +
+     * " TEXT NOT NULL, " + DataTableColumns.ROW_ETAG + " TEXT NULL, " +
+     * DataTableColumns.SYNC_STATE + " TEXT NOT NULL, " +
+     * DataTableColumns.CONFLICT_TYPE + " INTEGER NULL," +
+     * DataTableColumns.FILTER_TYPE + " TEXT NULL," +
+     * DataTableColumns.FILTER_VALUE + " TEXT NULL," + DataTableColumns.FORM_ID
+     * + " TEXT NULL," + DataTableColumns.LOCALE + " TEXT NULL," +
+     * DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL," +
+     * DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL," +
+     * DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL";
+     */
+
+      String createTableCmd = "CREATE TABLE IF NOT EXISTS " + tableId + " (";
+
+      List<String> cols = getAdminColumns();
+
+      String endSeq = ", ";
+      for (int i = 0; i < cols.size(); ++i) {
+         if (i == cols.size() - 1) {
+            endSeq = "";
+         }
+         String colName = cols.get(i);
+         //@formatter:off
+      if (colName.equals(DataTableColumns.ID)
+          || colName.equals(DataTableColumns.SYNC_STATE)
+          || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
+        createTableCmd = createTableCmd + colName + " TEXT NOT NULL" + endSeq;
+      } else if (colName.equals(DataTableColumns.ROW_ETAG)
+          || colName.equals(DataTableColumns.FILTER_TYPE)
+          || colName.equals(DataTableColumns.FILTER_VALUE)
+          || colName.equals(DataTableColumns.FORM_ID)
+          || colName.equals(DataTableColumns.LOCALE)
+          || colName.equals(DataTableColumns.SAVEPOINT_TYPE)
+          || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
+        createTableCmd = createTableCmd + colName + " TEXT NULL" + endSeq;
+      } else if (colName.equals(DataTableColumns.CONFLICT_TYPE)) {
+        createTableCmd = createTableCmd + colName + " INTEGER NULL" + endSeq;
+      }
+      //@formatter:on
+      }
+
+      return createTableCmd;
+   }
+
+   /**
+    * Ensure that the kvs entry is valid.
+    *
+    * @param appName
+    * @param tableId
+    * @param kvs
+    * @throws IllegalArgumentException
+    */
+   private void validateKVSEntry(String appName, String tableId, KeyValueStoreEntry kvs) throws
+       IllegalArgumentException {
+
+      if ( kvs.tableId == null || kvs.tableId.trim().length() == 0 ) {
+         throw new IllegalArgumentException("KVS entry has a null or empty tableId");
+      }
+
+      if ( !kvs.tableId.equals(tableId) ) {
+         throw new IllegalArgumentException("KVS entry has a mismatched tableId");
+      }
+
+      if ( kvs.partition == null || kvs.partition.trim().length() == 0 ) {
+         throw new IllegalArgumentException("KVS entry has a null or empty partition");
+      }
+
+      if ( kvs.aspect == null || kvs.aspect.trim().length() == 0 ) {
+         throw new IllegalArgumentException("KVS entry has a null or empty aspect");
+      }
+
+      if ( kvs.key == null || kvs.key.trim().length() == 0 ) {
+         throw new IllegalArgumentException("KVS entry has a null or empty key");
+      }
+
+      // a null value will remove the entry from the KVS
+      if ( kvs.value != null && kvs.value.trim().length() != 0 ) {
+         // validate the type....
+         if ( kvs.type == null || kvs.type.trim().length() == 0 ) {
+            throw new IllegalArgumentException("KVS entry has a null or empty type");
+         }
+
+         // find subset matching the key...
+         ArrayList<String[]> kvsValueTypeRestrictions =
+             keyToKnownKVSValueTypeRestrictions.get(kvs.key);
+
+         if ( kvsValueTypeRestrictions != null ) {
+            for (String[] restriction : kvsValueTypeRestrictions) {
+               if (kvs.partition.equals(restriction[1]) && kvs.key.equals(restriction[2])) {
+                  // see if the client specified an incorrect type
+                  if (!kvs.type.equals(restriction[0])) {
+                     String type = kvs.type;
+                     kvs.type = restriction[0];
+
+                     // TODO: detect whether the value conforms to the specified type.
+                     enforceKVSValueType(kvs, ElementDataType.valueOf(restriction[0]));
+
+                     WebLogger.getLogger(appName)
+                         .w("validateKVSEntry", "Client Error: KVS value type reset from " + type +
+                             " to " + restriction[0] +
+                             " table: " + kvs.tableId +
+                             " partition: " + restriction[1] +
+                             " key: " + restriction[2]);
+                  }
+               }
+            }
+         }
+      } else {
+         // makes later tests easier...
+         kvs.value = null;
+      }
+   }
+
+   private void enforceKVSValueType(KeyValueStoreEntry e, ElementDataType type ) {
+      e.type = type.name();
+      if (e.value != null) {
+         if ( type == ElementDataType.integer ) {
+            // TODO: can add matcher if we want to
+         } else if ( type == ElementDataType.number ) {
+            // TODO: can add matcher if we want to
+         } else if ( type == ElementDataType.bool ) {
+            // TODO: can add matcher if we want to
+         } else if ( type == ElementDataType.string ||
+             type == ElementDataType.rowpath || type == ElementDataType.configpath ) {
+            // anything goes here...
+         } else if (type == ElementDataType.array) {
+            // minimal test for valid representation
+            if (!e.value.startsWith("[") || !e.value.endsWith("]")) {
+               throw new IllegalArgumentException("array value type is not an array! " +
+                   "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
+                   " Key: " + e.key);
+            }
+         } else if ( type == ElementDataType.object ) {
+            // this could be any value type
+            // TODO: test for any of the above values...
+            if (e.value.startsWith("\"") && !e.value.endsWith("\"")) {
+               throw new IllegalArgumentException("object value type is a malformed string! " +
+                   "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
+                   " Key: " + e.key);
+            }
+            if (e.value.startsWith("[") && !e.value.endsWith("]")) {
+               throw new IllegalArgumentException("object value type is a malformed array! " +
+                   "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
+                   " Key: " + e.key);
+            }
+            if (e.value.startsWith("{") && !e.value.endsWith("}")) {
+               throw new IllegalArgumentException("object value type is a malformed object! " +
+                   "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
+                   " Key: " + e.key);
+            }
+         } else {
+            // and who knows what goes here...
+         }
+      }
+   }
+
+   /**
+    * Insert or update a single table-level metadata KVS entry.
+    * The tableId, partition, aspect and key cannot be null or empty strings.
+    * If e.value is null or an empty string, the entry is deleted.
+    *
+    * @param db
+    * @param e  a KeyValueStoreEntry. If e.value is null or an empty string, the entry is deleted.
+    */
+  public void replaceDBTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
+    validateKVSEntry( db.getAppName(), e.tableId, e);
+
     ContentValues values = new ContentValues();
-    values.put(KeyValueStoreColumns.TABLE_ID, entry.tableId);
-    values.put(KeyValueStoreColumns.PARTITION, entry.partition);
-    values.put(KeyValueStoreColumns.ASPECT, entry.aspect);
-    values.put(KeyValueStoreColumns.VALUE_TYPE, entry.type);
-    values.put(KeyValueStoreColumns.VALUE, entry.value);
-    values.put(KeyValueStoreColumns.KEY, entry.key);
+    values.put(KeyValueStoreColumns.TABLE_ID, e.tableId);
+    values.put(KeyValueStoreColumns.PARTITION, e.partition);
+    values.put(KeyValueStoreColumns.ASPECT, e.aspect);
+    values.put(KeyValueStoreColumns.KEY, e.key);
+    values.put(KeyValueStoreColumns.VALUE_TYPE, e.type);
+    values.put(KeyValueStoreColumns.VALUE, e.value);
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
-      db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
+      if (e.value == null || e.value.trim().length() == 0) {
+         deleteDBTableMetadata(db, e.tableId, e.partition, e.aspect, e.key);
+      } else {
+         db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
+      }
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -819,23 +1101,9 @@ public class ODKDatabaseImplUtils {
         db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
             KeyValueStoreColumns.TABLE_ID + "=?", new String[] { tableId });
       }
+
       for (KeyValueStoreEntry e : metadata) {
-        ContentValues values = new ContentValues();
-        if (!tableId.equals(e.tableId)) {
-          throw new IllegalArgumentException(
-              "updateDBTableMetadata: expected all kvs entries to share the same tableId");
-        }
-        if (e.value == null || e.value.trim().length() == 0) {
-          deleteDBTableMetadata(db, e.tableId, e.partition, e.aspect, e.key);
-        } else {
-          values.put(KeyValueStoreColumns.TABLE_ID, e.tableId);
-          values.put(KeyValueStoreColumns.PARTITION, e.partition);
-          values.put(KeyValueStoreColumns.ASPECT, e.aspect);
-          values.put(KeyValueStoreColumns.KEY, e.key);
-          values.put(KeyValueStoreColumns.VALUE_TYPE, e.type);
-          values.put(KeyValueStoreColumns.VALUE, e.value);
-          db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
-        }
+        replaceDBTableMetadata(db, e);
       }
 
       if (!dbWithinTransaction) {
@@ -847,6 +1115,52 @@ public class ODKDatabaseImplUtils {
       }
     }
   }
+
+   public void replaceDBTableMetadataSubList(OdkConnectionInterface db, String tableId,
+       String partition, String aspect,
+       List<KeyValueStoreEntry> metadata) {
+
+      StringBuilder b = new StringBuilder();
+      ArrayList<String> whereArgsList = new ArrayList<String>();
+
+      if ( tableId == null || tableId.trim().length() == 0 ) {
+         throw new IllegalArgumentException("tableId cannot be null or an empty string");
+      }
+      b.append(KeyValueStoreColumns.TABLE_ID).append("=?");
+      whereArgsList.add(tableId);
+      if ( partition != null ) {
+         b.append(" AND ").append(KeyValueStoreColumns.PARTITION).append("=?");
+         whereArgsList.add(partition);
+      }
+      if ( aspect != null ) {
+         b.append(" AND ").append(KeyValueStoreColumns.ASPECT).append("=?");
+         whereArgsList.add(aspect);
+      }
+      String whereClause = b.toString();
+      String[] whereArgs = whereArgsList.toArray(new String[whereArgsList.size()]);
+
+      boolean dbWithinTransaction = db.inTransaction();
+      try {
+         if (!dbWithinTransaction) {
+            db.beginTransactionNonExclusive();
+         }
+
+         db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
+             whereClause, whereArgs);
+
+         for (KeyValueStoreEntry e : metadata) {
+            replaceDBTableMetadata(db, e);
+         }
+
+         if (!dbWithinTransaction) {
+            db.setTransactionSuccessful();
+         }
+      } finally {
+         if (!dbWithinTransaction) {
+            db.endTransaction();
+         }
+      }
+   }
 
   /**
    * The deletion filter includes all non-null arguments. If all arguments
@@ -898,7 +1212,7 @@ public class ODKDatabaseImplUtils {
       db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, b.toString(),
           selArgs.toArray(new String[selArgs.size()]));
 
-      if (!dbWithinTransaction) {
+       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
     } finally {
@@ -1008,68 +1322,10 @@ public class ODKDatabaseImplUtils {
       //@formatter:on
 
       String sql = b.toString();
-      String[] fields = new String[3];
 
-      // for columns
-
-      fields[0] = ElementDataType.array.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
-      fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.string.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
-      fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.object.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
-      fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.bool.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
-      fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.array.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
-      fields[2] = KeyValueStoreConstants.COLUMN_JOINS;
-      db.execSQL(sql, fields);
-
-      // and for the table...
-
-      fields[0] = ElementDataType.array.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_COL_ORDER;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.object.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.array.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.string.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_INDEX_COL;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.object.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_SORT_COL;
-      db.execSQL(sql, fields);
-
-      fields[0] = ElementDataType.object.name();
-      fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
-      fields[2] = KeyValueStoreConstants.TABLE_SORT_ORDER;
-      db.execSQL(sql, fields);
-
-      // TODO: color rule groups
+       for ( String[] fields : knownKVSValueTypeRestrictions ){
+          db.execSQL(sql, fields);
+       }
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1191,58 +1447,6 @@ public class ODKDatabaseImplUtils {
       db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null,
           cvTableValKVS.get(i));
     }
-  }
-
-  /*
-   * Build the start of a create table statement -- specifies all the metadata
-   * columns. Caller must then add all the user-defined column definitions and
-   * closing parentheses.
-   */
-  private String getUserDefinedTableCreationStatement(String tableId) {
-    /*
-     * Resulting string should be the following String createTableCmd =
-     * "CREATE TABLE IF NOT EXISTS " + tableId + " (" + DataTableColumns.ID +
-     * " TEXT NOT NULL, " + DataTableColumns.ROW_ETAG + " TEXT NULL, " +
-     * DataTableColumns.SYNC_STATE + " TEXT NOT NULL, " +
-     * DataTableColumns.CONFLICT_TYPE + " INTEGER NULL," +
-     * DataTableColumns.FILTER_TYPE + " TEXT NULL," +
-     * DataTableColumns.FILTER_VALUE + " TEXT NULL," + DataTableColumns.FORM_ID
-     * + " TEXT NULL," + DataTableColumns.LOCALE + " TEXT NULL," +
-     * DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL," +
-     * DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL," +
-     * DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL";
-     */
-
-    String createTableCmd = "CREATE TABLE IF NOT EXISTS " + tableId + " (";
-
-    List<String> cols = getAdminColumns();
-
-    String endSeq = ", ";
-    for (int i = 0; i < cols.size(); ++i) {
-      if (i == cols.size() - 1) {
-        endSeq = "";
-      }
-      String colName = cols.get(i);
-      //@formatter:off
-      if (colName.equals(DataTableColumns.ID) 
-          || colName.equals(DataTableColumns.SYNC_STATE)
-          || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-        createTableCmd = createTableCmd + colName + " TEXT NOT NULL" + endSeq;
-      } else if (colName.equals(DataTableColumns.ROW_ETAG)
-          || colName.equals(DataTableColumns.FILTER_TYPE)
-          || colName.equals(DataTableColumns.FILTER_VALUE)
-          || colName.equals(DataTableColumns.FORM_ID) 
-          || colName.equals(DataTableColumns.LOCALE)
-          || colName.equals(DataTableColumns.SAVEPOINT_TYPE)
-          || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
-        createTableCmd = createTableCmd + colName + " TEXT NULL" + endSeq;
-      } else if (colName.equals(DataTableColumns.CONFLICT_TYPE)) {
-        createTableCmd = createTableCmd + colName + " INTEGER NULL" + endSeq;
-      }
-      //@formatter:on
-    }
-
-    return createTableCmd;
   }
 
   /*
@@ -1414,13 +1618,123 @@ public class ODKDatabaseImplUtils {
     db.replaceOrThrow(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, null, cvColDefVal);
   }
 
+   /**
+    * Verifies that the schema the client has matches that of the given tableId.
+    *
+    * @param db
+    * @param appName
+    * @param tableId
+    * @param orderedDefs
+    */
+   private void verifyTableSchema(OdkConnectionInterface db, String appName, String tableId,
+       OrderedColumns orderedDefs ) {
+      // confirm that the column definitions are unchanged...
+      OrderedColumns existingDefns = getUserDefinedColumns(db, appName, tableId);
+      if (existingDefns.getColumnDefinitions().size() != orderedDefs.getColumnDefinitions()
+          .size()) {
+         throw new IllegalStateException(
+             "Unexpectedly found tableId with different column definitions that already exists!");
+      }
+      for (ColumnDefinition ci : orderedDefs.getColumnDefinitions()) {
+         ColumnDefinition existingDefn;
+         try {
+            existingDefn = existingDefns.find(ci.getElementKey());
+         } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Unexpectedly failed to match elementKey: " + ci.getElementKey());
+         }
+         if (!existingDefn.getElementName().equals(ci.getElementName())) {
+            throw new IllegalStateException(
+                "Unexpected mis-match of elementName for elementKey: " + ci.getElementKey());
+         }
+         List<ColumnDefinition> refList = existingDefn.getChildren();
+         List<ColumnDefinition> ciList = ci.getChildren();
+         if (refList.size() != ciList.size()) {
+            throw new IllegalStateException(
+                "Unexpected mis-match of listOfStringElementKeys for elementKey: " + ci
+                    .getElementKey());
+         }
+         for (int i = 0; i < ciList.size(); ++i) {
+            if (!refList.contains(ciList.get(i))) {
+               throw new IllegalStateException(
+                   "Unexpected mis-match of listOfStringElementKeys[" + i + "] for elementKey: " + ci.getElementKey());
+            }
+         }
+         ElementType type = ci.getType();
+         ElementType existingType = existingDefn.getType();
+         if (!existingType.equals(type)) {
+            throw new IllegalStateException(
+                "Unexpected mis-match of elementType for elementKey: " + ci.getElementKey());
+         }
+      }
+   }
+
+   /**
+    * Compute the app-global choiceListId for this choiceListJSON
+    * and register the tuple of (choiceListId, choiceListJSON).
+    * Return choiceListId.
+    *
+    * @param db
+    * @param appName
+    * @param choiceListJSON -- the actual JSON choice list text.
+    * @return choiceListId -- the unique code mapping to the choiceListJSON
+    */
+   public String setChoiceList(OdkConnectionInterface db, String appName,String choiceListJSON ) {
+      ChoiceListUtils utils = new ChoiceListUtils();
+      boolean dbWithinTransaction = db.inTransaction();
+      boolean success = false;
+      try {
+         if (!dbWithinTransaction) {
+            db.beginTransactionNonExclusive();
+         }
+         if ( choiceListJSON == null || choiceListJSON.trim().length() == 0 ) {
+            return null;
+         }
+
+         String choiceListId = ODKFileUtils.getNakedMd5Hash(appName, choiceListJSON);
+
+         utils.setChoiceList(db, choiceListId, choiceListJSON);
+
+         if (!dbWithinTransaction) {
+            db.setTransactionSuccessful();
+         }
+         success = true;
+         return choiceListId;
+      } finally {
+         if (!dbWithinTransaction) {
+            db.endTransaction();
+         }
+         if (success == false) {
+
+            WebLogger.getLogger(appName)
+                .e(t, "setChoiceList: Error while updating choiceList entry " + choiceListJSON);
+         }
+      }
+   }
+
+   /**
+    * Return the choice list JSON corresponding to the choiceListId
+    *
+    * @param db
+    * @param appName
+    * @param choiceListId -- the md5 hash of the choiceListJSON
+    * @return choiceListJSON -- the actual JSON choice list text.
+    */
+   public String getChoiceList(OdkConnectionInterface db, String appName, String choiceListId ) {
+      ChoiceListUtils utils = new ChoiceListUtils();
+
+      if ( choiceListId == null || choiceListId.trim().length() == 0 ) {
+         return null;
+      }
+      return utils.getChoiceList(db, choiceListId);
+   }
+
   /**
    * If the tableId is not recorded in the TableDefinition metadata table, then
    * create the tableId with the indicated columns. This will synthesize
    * reasonable metadata KVS entries for table.
-   * 
+   * <p/>
    * If the tableId is present, then this is a no-op.
-   * 
+   *
    * @param db
    * @param appName
    * @param tableId
@@ -1437,7 +1751,9 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, appName, tableId, orderedDefs);
+         createDBTableWithColumns(db, appName, tableId, orderedDefs);
+      } else {
+         verifyTableSchema(db, appName, tableId, orderedDefs);
       }
 
       if (!dbWithinTransaction) {
@@ -1474,25 +1790,199 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  /**
-   * Call this when the schema on the server has changed w.r.t. the schema on
-   * the device. In this case, we do not know whether the rows on the device
-   * match those on the server.
-   *
-   * <ul>
-   * <li>Reset all 'in_conflict' rows to their original local state (changed or
-   * deleted).</li>
-   * <li>Leave all 'deleted' rows in 'deleted' state.</li>
-   * <li>Leave all 'changed' rows in 'changed' state.</li>
-   * <li>Reset all 'synced' rows to 'new_row' to ensure they are sync'd to the
-   * server.</li>
-   * <li>Reset all 'synced_pending_files' rows to 'new_row' to ensure they are
-   * sync'd to the server.</li>
-   * </ul>
-   * 
-   * @param db
-   * @param tableId
-   */
+   /**
+    * If the tableId is not recorded in the TableDefinition metadata table, then
+    * create the tableId with the indicated columns. This will synthesize
+    * reasonable metadata KVS entries for table.
+    * <p/>
+    * If the tableId is present, then this is a no-op.
+    *
+    * @param db
+    * @param appName
+    * @param tableId
+    * @param columns
+    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
+    */
+   public OrderedColumns createOrOpenDBTableWithColumnsAndProperties(OdkConnectionInterface db, String appName,
+       String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData, boolean clear)
+       throws JsonProcessingException {
+      boolean dbWithinTransaction = db.inTransaction();
+      boolean success = false;
+
+      OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
+
+      // we need the PARTITION_COLUMN stuff pulled out separately to
+      // ensure that the column display name and other fields with
+      // expected default values are present
+      TreeMap<String, ArrayList<KeyValueStoreEntry> > colEntries =
+          new TreeMap<String, ArrayList<KeyValueStoreEntry> >();
+
+      // everything else
+      ArrayList<KeyValueStoreEntry> kvsOther = new ArrayList<KeyValueStoreEntry>();
+
+      for ( KeyValueStoreEntry kvs : metaData ) {
+         validateKVSEntry(appName, tableId, kvs);
+
+         // anything not in the PARTITION_TABLE partition is assumed to be a column
+         // specific value. Use the aspect to match against a column. If that does
+         // not matchwe need the
+         // partition column stuff pulled out separately to
+         // ensure that the column display name is present.
+         if ( kvs.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN) ) {
+            ArrayList<KeyValueStoreEntry> colEntry = colEntries.get(kvs.aspect);
+            if ( colEntry == null ) {
+               colEntry = new ArrayList<KeyValueStoreEntry>();
+               colEntries.put(kvs.aspect, colEntry);
+            }
+            colEntry.add(kvs);
+         } else {
+            kvsOther.add(kvs);
+         }
+      }
+
+      ArrayList<KeyValueStoreEntry> kvsReassembled = new ArrayList<KeyValueStoreEntry>();
+
+
+      // column display name
+      for (ColumnDefinition ci : orderedDefs.getColumnDefinitions()) {
+         // put the displayName into the KVS
+         ArrayList<KeyValueStoreEntry> kvsList = colEntries.get(ci.getElementKey());
+         if (kvsList == null) {
+            kvsList = new ArrayList<KeyValueStoreEntry>();
+            colEntries.put(ci.getElementKey(), kvsList);
+         }
+         KeyValueStoreEntry entry = null;
+         for (KeyValueStoreEntry e : kvsList) {
+            if (e.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN)
+                && e.aspect.equals(ci.getElementKey())
+                && e.key.equals(KeyValueStoreConstants.COLUMN_DISPLAY_NAME)) {
+               entry = e;
+               break;
+            }
+         }
+
+         boolean replaceEntry = false;
+         if (entry != null && (entry.value == null || entry.value.trim().length() == 0)) {
+            kvsList.remove(entry);
+            entry = null;
+            replaceEntry = true;
+         }
+
+         if ((replaceEntry || clear) && entry == null) {
+            entry = new KeyValueStoreEntry();
+            entry.tableId = tableId;
+            entry.partition = KeyValueStoreConstants.PARTITION_COLUMN;
+            entry.aspect = ci.getElementKey();
+            entry.key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
+            entry.type = ElementDataType.object.name();
+            entry.value = NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName(ci.getElementKey()));
+            kvsList.add(entry);
+         }
+         kvsReassembled.addAll(kvsList);
+      }
+
+      {
+         // table display name
+         KeyValueStoreEntry entry = null;
+         for (KeyValueStoreEntry e : kvsOther) {
+            if (e.partition.equals(KeyValueStoreConstants.PARTITION_TABLE)
+                && e.aspect.equals(KeyValueStoreConstants.ASPECT_DEFAULT)
+                && e.key.equals(KeyValueStoreConstants.TABLE_DISPLAY_NAME)) {
+               entry = e;
+               break;
+            }
+         }
+
+         boolean replaceEntry = false;
+         if (entry != null && (entry.value == null || entry.value.trim().length() == 0)) {
+            kvsOther.remove(entry);
+            entry = null;
+            replaceEntry = true;
+         }
+
+         if ((replaceEntry || clear) && entry == null) {
+            entry = new KeyValueStoreEntry();
+            entry.tableId = tableId;
+            entry.partition = KeyValueStoreConstants.PARTITION_TABLE;
+            entry.aspect = KeyValueStoreConstants.ASPECT_DEFAULT;
+            entry.key = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
+            entry.type = ElementDataType.object.name();
+            entry.value = NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName
+                (tableId));
+            kvsOther.add(entry);
+         }
+         kvsReassembled.addAll(kvsOther);
+      }
+
+      try {
+         if (!dbWithinTransaction) {
+            db.beginTransactionNonExclusive();
+         }
+         boolean created = false;
+         if (!hasTableId(db, tableId)) {
+            createDBTableWithColumns(db, appName, tableId, orderedDefs);
+            created = true;
+         } else {
+            // confirm that the column definitions are unchanged...
+            verifyTableSchema(db, appName, tableId, orderedDefs);
+         }
+
+         replaceDBTableMetadata(db, tableId, kvsReassembled, (clear || created));
+         enforceTypesDBTableMetadata(db, tableId);
+
+         if (!dbWithinTransaction) {
+            db.setTransactionSuccessful();
+         }
+         success = true;
+         return orderedDefs;
+      } finally {
+         if (!dbWithinTransaction) {
+            db.endTransaction();
+         }
+         if (success == false) {
+
+            // Get the names of the columns
+            StringBuilder colNames = new StringBuilder();
+            if (columns != null) {
+               for (Column column : columns) {
+                  colNames.append(" ").append(column.getElementKey()).append(",");
+               }
+               if (colNames != null && colNames.length() > 0) {
+                  colNames.deleteCharAt(colNames.length() - 1);
+                  WebLogger.getLogger(appName).e(
+                      t,
+                      "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
+                          + " with columns:" + colNames.toString());
+               }
+            } else {
+               WebLogger.getLogger(appName).e(
+                   t,
+                   "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
+                       + " with columns: null");
+            }
+         }
+      }
+   }
+
+   /**
+    * Call this when the schema on the server has changed w.r.t. the schema on
+    * the device. In this case, we do not know whether the rows on the device
+    * match those on the server.
+    * <p/>
+    * <ul>
+    * <li>Reset all 'in_conflict' rows to their original local state (changed or
+    * deleted).</li>
+    * <li>Leave all 'deleted' rows in 'deleted' state.</li>
+    * <li>Leave all 'changed' rows in 'changed' state.</li>
+    * <li>Reset all 'synced' rows to 'new_row' to ensure they are sync'd to the
+    * server.</li>
+    * <li>Reset all 'synced_pending_files' rows to 'new_row' to ensure they are
+    * sync'd to the server.</li>
+    * </ul>
+    *
+    * @param db
+    * @param tableId
+    */
   public void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
 
     StringBuilder b = new StringBuilder();
@@ -2787,6 +3277,8 @@ public class ODKDatabaseImplUtils {
     db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
     db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME), null);
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.CHOICE_LIST_TABLE_NAME);
+    db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
   }
 }

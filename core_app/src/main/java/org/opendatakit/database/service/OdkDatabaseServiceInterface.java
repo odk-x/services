@@ -246,6 +246,80 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
      }
   }
 
+   /**
+    * Compute the app-global choiceListId for this choiceListJSON
+    * and register the tuple of (choiceListId, choiceListJSON).
+    * Return choiceListId.
+    *
+    * @param appName
+    * @param dbHandleName
+    * @param choiceListJSON -- the actual JSON choice list text.
+    * @return choiceListId -- the unique code mapping to the choiceListJSON
+    */
+   @Override
+   public String setChoiceList(String appName, OdkDbHandle dbHandleName,String choiceListJSON )
+       throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+         return ODKDatabaseImplUtils.get().setChoiceList(db, appName, choiceListJSON);
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("setChoiceList", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
+
+   /**
+    * Return the choice list JSON corresponding to the choiceListId
+    *
+    * @param appName
+    * @param dbHandleName
+    * @param choiceListId -- the md5 hash of the choiceListJSON
+    * @return choiceListJSON -- the actual JSON choice list text.
+    */
+   @Override
+   public String getChoiceList(String appName, OdkDbHandle dbHandleName, String choiceListId )
+       throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+         return ODKDatabaseImplUtils.get().getChoiceList(db, appName, choiceListId);
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("getChoiceList", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
+
   @Override
   public OrderedColumns createOrOpenDBTableWithColumns(String appName, OdkDbHandle dbHandleName, String tableId,
       ColumnList columns) throws RemoteException {
@@ -273,6 +347,38 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       }
     }
   }
+
+   @Override
+   public OrderedColumns createOrOpenDBTableWithColumnsAndProperties(String appName,
+       OdkDbHandle dbHandleName,
+       String tableId, ColumnList columns,
+       List<KeyValueStoreEntry> metaData, boolean clear) throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+         return ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumnsAndProperties(db, appName,
+             tableId, columns.getColumns(), metaData, clear);
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("createOrOpenDBTableWithColumnsAndProperties",
+             appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
 
   @Override
   public void deleteCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName, String tableId, String rowId)
@@ -934,6 +1040,36 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       }
     }
   }
+
+   @Override
+   public void replaceDBTableMetadataSubList(String appName, OdkDbHandle dbHandleName,
+       String tableId, String partition, String aspect,
+       List<KeyValueStoreEntry> entries) throws RemoteException {
+
+      OdkConnectionInterface db = null;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+         ODKDatabaseImplUtils.get().replaceDBTableMetadataSubList(db, tableId, partition, aspect,
+             entries);
+      } catch (Exception e) {
+         String msg = e.getLocalizedMessage();
+         if ( msg == null ) msg = e.getMessage();
+         if ( msg == null ) msg = e.toString();
+         msg = "Exception: " + msg;
+         WebLogger.getLogger(appName).e("replaceDBTableMetadataSubList", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+         WebLogger.getLogger(appName).printStackTrace(e);
+         throw new RemoteException(msg);
+      } finally {
+         if ( db != null ) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+   }
 
   @Override
   public void restoreRowFromConflict(String appName, OdkDbHandle dbHandleName, String tableId, String rowId,
