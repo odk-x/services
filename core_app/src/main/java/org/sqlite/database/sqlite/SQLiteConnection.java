@@ -32,6 +32,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import android.database.Cursor;
 import android.database.CursorWindow;
 import android.database.DatabaseUtils;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import android.os.CancellationSignal;
@@ -594,7 +595,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
         mPreparedStatementCache = new PreparedStatementCache(mConfiguration.maxSqlCacheSize);
     }
 
-    public WebLogger getLogger() {
+    public WebLoggerIf getLogger() {
       return WebLogger.getLogger(mConfiguration.appName);
     }
 

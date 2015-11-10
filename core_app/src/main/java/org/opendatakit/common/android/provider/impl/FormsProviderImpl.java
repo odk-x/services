@@ -38,6 +38,7 @@ import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
@@ -197,7 +198,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLoggerIf log = WebLogger.getLogger(appName);
 
     ContentValues values;
     if (initialValues != null) {
@@ -409,7 +410,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     List<String> segments = uri.getPathSegments();
     
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
-    WebLogger log = WebLogger.getLogger(pf.appName);
+    WebLoggerIf log = WebLogger.getLogger(pf.appName);
 
 
     // Get the database and run the query
@@ -464,7 +465,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     List<String> segments = uri.getPathSegments();
     
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
-    WebLogger logger = WebLogger.getLogger(pf.appName);
+    WebLoggerIf logger = WebLogger.getLogger(pf.appName);
 
     String[] projection = { FormsColumns._ID, FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
 
@@ -616,7 +617,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
     List<String> segments = uri.getPathSegments();
     
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
-    WebLogger logger = WebLogger.getLogger(pf.appName);
+    WebLoggerIf logger = WebLogger.getLogger(pf.appName);
 
     /*
      * First, find out what records match this query. Replicate the 

@@ -31,6 +31,7 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 
@@ -98,7 +99,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger logger = WebLogger.getLogger(appName);
+    WebLoggerIf logger = WebLogger.getLogger(appName);
 
     String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 
@@ -199,7 +200,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger log = WebLogger.getLogger(appName);
+    WebLoggerIf log = WebLogger.getLogger(appName);
 
     String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 

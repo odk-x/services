@@ -28,6 +28,7 @@ import android.database.CursorWindow;
 import android.util.Log;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 
 import java.io.File;
 import java.util.HashMap;
@@ -104,7 +105,7 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
     * The logger for this cursor.
     * Thread-safe.
     */
-   private final WebLogger mWebLogger;
+   private final WebLoggerIf mWebLogger;
 
    /**
     * The appName.

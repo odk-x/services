@@ -30,6 +30,7 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.application.Core;
 
 import java.util.ArrayList;
@@ -180,7 +181,7 @@ public class OdkDbShimService extends Service {
         .removeSessionGroupConnections(appName, thisGeneration, true);
     
     if ( releasedSessions ) {
-      WebLogger logger = WebLogger.getLogger(appName);
+      WebLoggerIf logger = WebLogger.getLogger(appName);
       logger.i(contextName, "calling dbshimCleanupCallback(\"" + thisGeneration + "\");");
       
       String fullCommand = "javascript:window.dbif.dbshimCleanupCallback(\"" + thisGeneration + "\");";
@@ -214,7 +215,7 @@ public class OdkDbShimService extends Service {
    */
   private void runRollback(String appName, String thisGeneration, int thisTransactionGeneration,
       DbShimCallback callback) throws RemoteException {
-    WebLogger logger = WebLogger.getLogger(appName);
+    WebLoggerIf logger = WebLogger.getLogger(appName);
 
     assertGeneration(appName, thisGeneration, "runRollback", callback);
 
@@ -285,7 +286,7 @@ public class OdkDbShimService extends Service {
    */
   private void runCommit(String appName, String thisGeneration, int thisTransactionGeneration,
       DbShimCallback callback) throws RemoteException {
-    WebLogger logger = WebLogger.getLogger(appName);
+    WebLoggerIf logger = WebLogger.getLogger(appName);
 
     assertGeneration(appName, thisGeneration, "runCommit", callback);
 
@@ -368,7 +369,7 @@ public class OdkDbShimService extends Service {
   private void runStmt(String appName, String thisGeneration, int thisTransactionGeneration,
       int thisActionIdx, String sqlStmt, String strBinds, DbShimCallback callback)
       throws RemoteException {
-    WebLogger logger = WebLogger.getLogger(appName);
+    WebLoggerIf logger = WebLogger.getLogger(appName);
 
     sqlStmt = sqlStmt.trim();
     // doesn't matter...

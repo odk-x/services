@@ -42,13 +42,8 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.logic.PropertyManager;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.utilities.EncryptionUtils;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
-import org.opendatakit.common.android.utilities.FileSet;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.w3c.dom.Document;
@@ -146,7 +141,7 @@ public class SubmissionProvider extends ContentProvider {
 
   @SuppressWarnings("unchecked")
   private static final int generateXmlHelper(Document d, Element data, int idx, String key,
-      Map<String, Object> values, WebLogger logger) {
+      Map<String, Object> values, WebLoggerIf logger) {
     Object o = values.get(key);
 
     Element e = d.createElement(key);
@@ -233,7 +228,7 @@ public class SubmissionProvider extends ContentProvider {
     final String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
-    WebLogger logger = WebLogger.getLogger(appName);
+    WebLoggerIf logger = WebLogger.getLogger(appName);
 
     final String tableId = segments.get(1);
     final String instanceId = segments.get(2);
@@ -800,7 +795,7 @@ public class SubmissionProvider extends ContentProvider {
    * @param  logger
    * @return
    */
-  private static boolean exportFile(String payload, File outputFilePath, WebLogger logger) {
+  private static boolean exportFile(String payload, File outputFilePath, WebLoggerIf logger) {
     // write xml file
     FileOutputStream os = null;
     OutputStreamWriter osw = null;
