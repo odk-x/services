@@ -159,10 +159,14 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
-      if ( successful ) {
-        db.setTransactionSuccessful();
+      if ( db.inTransaction() ) {
+        if (successful) {
+          db.setTransactionSuccessful();
+        }
+        db.endTransaction();
+      } else {
+         throw new RemoteException("closeTransaction: no outstanding transaction!");
       }
-      db.endTransaction();
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if ( msg == null ) msg = e.getMessage();
@@ -186,8 +190,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       throws RemoteException {
 
      // helpful RPC wrapper for calling two methods in succession
-     closeTransaction(appName, dbHandleName, successful);
-     closeDatabase(appName, dbHandleName);
+     try {
+        closeTransaction(appName, dbHandleName, successful);
+     } finally {
+        closeDatabase(appName, dbHandleName);
+     }
   }
 
   @Override
