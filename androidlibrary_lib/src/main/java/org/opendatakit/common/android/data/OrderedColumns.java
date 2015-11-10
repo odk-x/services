@@ -21,7 +21,6 @@ import java.util.TreeMap;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.utilities.GeoColumnUtil;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -52,7 +51,6 @@ public class OrderedColumns implements Parcelable {
    * Get the names of the columns that are written into the underlying database table.
    * These are the isUnitOfRetention() columns.
    * 
-   * @param orderedDefns
    * @return
    */
   public ArrayList<String> getRetentionColumnNames() {
@@ -83,7 +81,6 @@ public class OrderedColumns implements Parcelable {
   /**
    * Extract the list of geopoints from the table.
    * 
-   * @param orderedDefns
    * @return the list of geopoints.
    */
   public ArrayList<ColumnDefinition> getGeopointColumnDefinitions() {
@@ -97,6 +94,48 @@ public class OrderedColumns implements Parcelable {
     return cdList;
   }
 
+  public boolean isLatitudeColumnDefinition(List<ColumnDefinition> geoPointList,
+      ColumnDefinition cd) {
+    if (!cd.isUnitOfRetention()) {
+      return false;
+    }
+
+    ElementDataType type = cd.getType().getDataType();
+    if (!(type == ElementDataType.number || type == ElementDataType.integer)) {
+      return false;
+    }
+
+    ColumnDefinition cdParent = cd.getParent();
+
+    if (cdParent != null && geoPointList.contains(cdParent)
+        && cd.getElementName().equals("latitude")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean isLongitudeColumnDefinition(List<ColumnDefinition> geoPointList,
+      ColumnDefinition cd) {
+    if (!cd.isUnitOfRetention()) {
+      return false;
+    }
+
+    ElementDataType type = cd.getType().getDataType();
+    if (!(type == ElementDataType.number || type == ElementDataType.integer)) {
+      return false;
+    }
+
+    ColumnDefinition cdParent = cd.getParent();
+
+    if (cdParent != null && geoPointList.contains(cdParent)
+        && cd.getElementName().equals("longitude")) {
+      return true;
+    }
+
+    return false;
+  }
+
   public boolean mapViewIsPossible() {
     List<ColumnDefinition> geoPoints = getGeopointColumnDefinitions();
     if (geoPoints.size() != 0) {
@@ -106,8 +145,8 @@ public class OrderedColumns implements Parcelable {
     boolean hasLatitude = false;
     boolean hasLongitude = false;
     for (ColumnDefinition cd : orderedDefns) {
-      hasLatitude = hasLatitude || GeoColumnUtil.get().isLatitudeColumnDefinition(geoPoints, cd);
-      hasLongitude = hasLongitude || GeoColumnUtil.get().isLongitudeColumnDefinition(geoPoints, cd);
+      hasLatitude = hasLatitude || isLatitudeColumnDefinition(geoPoints, cd);
+      hasLongitude = hasLongitude || isLongitudeColumnDefinition(geoPoints, cd);
     }
     
     return (hasLatitude && hasLongitude);

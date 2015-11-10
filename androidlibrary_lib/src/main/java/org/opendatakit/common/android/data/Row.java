@@ -22,6 +22,7 @@ import java.util.HashMap;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 
@@ -114,9 +115,8 @@ public final class Row implements Parcelable {
    * If you specify ArrayList or HashMap, it JSON deserializes the value into
    * one of those.
    *
-   * @param c
+   * @param elementKey
    * @param clazz
-   * @param i
    * @return
    */
   @SuppressWarnings("unchecked")
@@ -241,4 +241,27 @@ public final class Row implements Parcelable {
     this.mRowData = new String[count];
     in.readStringArray(mRowData);
   }
+
+  /**
+   * The CREATOR and this constructor are not used.
+   * Row is constructed within the UserTable parcel context.
+   *
+   * @param in
+   */
+  public Row(Parcel in) {
+    throw new IllegalStateException("never used");
+  }
+
+  /**
+   * Declared to appease lint
+   */
+  public static final Parcelable.Creator<Row> CREATOR = new Parcelable.Creator<Row>() {
+    public Row createFromParcel(Parcel in) {
+      return new Row(in);
+    }
+
+    public Row[] newArray(int size) {
+      return new Row[size];
+    }
+  };
 }

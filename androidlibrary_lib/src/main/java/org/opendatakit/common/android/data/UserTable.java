@@ -45,10 +45,7 @@ public class UserTable implements Parcelable {
 
   private final OrderedColumns mColumnDefns;
   private final ArrayList<Row> mRows;
-  /**
-   * The {@link TableProperties} associated with this table. Included so that
-   * more intelligent things can be done with regards to interpretation of type.
-   */
+
   private final String mSqlWhereClause;
   private final String[] mSqlSelectionArgs;
   private final String[] mSqlGroupByArgs;

@@ -251,36 +251,6 @@ public class UTMConverter {
      * @return a 2-element array storing the latitude and longitude of the given UTM
      *         point, or null if the given UTM point is invalid.
      */
-    public static double[] parseUTM(String x, String y, int zone, boolean southhemi) {
-        return parseUTM(getDouble(x), getDouble(y), zone, southhemi);
-    }
-  
-    /**
-     * Takes the given string and returns either the corresponding double or
-     * -1 if the string cannot be interpretted as a valid double.
-     * 
-     * @param value the string value to parse
-     * @return the double version of the string, or -1 if the parsing is invalid
-     */
-    private static double getDouble(String value) {
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException ex) {
-            return -1;
-        }
-    }
-
-    /**
-     * Converts the given UTM coordinates to a latitude/longitude pair.
-     * 
-     * @param x the easting of the point, in meters.
-     * @param y the northing of the point, in meters.
-     * @param zone the UTM zone in which the point lies.
-     * @param southhemi true if the point is in the southern hemisphere;
-     *                  false otherwise.
-     * @return a 2-element array storing the latitude and longitude of the given UTM
-     *         point, or null if the given UTM point is invalid.
-     */
     public static double[] parseUTM(double x, double y, int zone, boolean southhemi) {
         if (x < 0 || y < 0 || zone < 1 || zone > 60) {
             return null;

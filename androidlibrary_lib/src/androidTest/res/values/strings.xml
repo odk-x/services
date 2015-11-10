@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ODK androidlibrary.test</string>
+	<string name="app_userLabel">OpenDataKit</string>
+    
+</resources>

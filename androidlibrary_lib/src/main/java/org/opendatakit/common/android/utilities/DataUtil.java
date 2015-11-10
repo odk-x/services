@@ -250,8 +250,8 @@ public class DataUtil {
             if (latLon == null) {
                 return null;
             }
-            String latStr = String.format("%.5g", latLon[0]);
-            String lonStr = String.format("%.5g", latLon[1]);
+            String latStr = String.format(Locale.US, "%.5g", latLon[0]);
+            String lonStr = String.format(Locale.US, "%.5g", latLon[1]);
             return latStr + "," + lonStr;
         }
      // UTM coordinates "17N 630084 4833438"
@@ -266,8 +266,8 @@ public class DataUtil {
             if (latLon == null) {
                 return null;
             }
-            String latStr = String.format("%.5g", latLon[0]);
-            String lonStr = String.format("%.5g", latLon[1]);
+            String latStr = String.format(Locale.US, "%.5g", latLon[0]);
+            String lonStr = String.format(Locale.US, "%.5g", latLon[1]);
             return latStr + "," + lonStr;
         }
         return null;

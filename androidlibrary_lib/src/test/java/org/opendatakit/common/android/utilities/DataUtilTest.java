@@ -17,15 +17,22 @@ package org.opendatakit.common.android.utilities;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import junit.framework.TestCase;
+import org.junit.*;
+import static org.junit.Assert.*;
 
-public class DataUtilTest extends TestCase {
+import org.opendatakit.common.android.utilities.StaticStateManipulator;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.desktop.WebLoggerDesktopFactoryImpl;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+public class DataUtilTest {
+
+  @BeforeClass
+  public static void oneTimeSetUp() throws Exception {
+    StaticStateManipulator.get().reset();
+    WebLogger.setFactory(new WebLoggerDesktopFactoryImpl());
   }
-  
+
+  @Test
   public void testDateInterpretation() {
     TimeZone tz = TimeZone.getTimeZone(TimeZone.getAvailableIDs()[0]);
     DataUtil util = new DataUtil(Locale.US, tz);

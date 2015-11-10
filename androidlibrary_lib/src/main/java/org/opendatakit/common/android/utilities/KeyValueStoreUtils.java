@@ -43,7 +43,7 @@ public class KeyValueStoreUtils {
   }
 
    public static Double getNumber(String appName,
-       KeyValueStoreEntry entry) throws RemoteException {
+       KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {
          return null;
       }
@@ -52,11 +52,17 @@ public class KeyValueStoreUtils {
              "key: " + entry.key + ", but the corresponding entry in the store was " +
              "not of type: " + ElementDataType.number.name());
       }
-      return Double.parseDouble(entry.value);
+      try {
+         return Double.parseDouble(entry.value);
+      } catch ( NumberFormatException e ) {
+         throw new IllegalArgumentException("requested int entry for " +
+             "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.number.name());
+      }
    }
 
    public static Integer getInteger(String appName,
-       KeyValueStoreEntry entry) throws RemoteException {
+       KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {
          return null;
       }
@@ -65,11 +71,17 @@ public class KeyValueStoreUtils {
              "key: " + entry.key + ", but the corresponding entry in the store was " +
              "not of type: " + ElementDataType.integer.name());
       }
-      return Integer.parseInt(entry.value);
+      try {
+         return Integer.parseInt(entry.value);
+      } catch ( NumberFormatException e ) {
+         throw new IllegalArgumentException("requested int entry for " +
+         "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.integer.name());
+      }
    }
 
    public static Boolean getBoolean(String appName,
-       KeyValueStoreEntry entry) throws RemoteException {
+       KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {
          return null;
       }
@@ -78,11 +90,17 @@ public class KeyValueStoreUtils {
              "key: " + entry.key + ", but the corresponding entry in the store was " +
              "not of type: " + ElementDataType.bool.name());
       }
-      return DataHelper.intToBool(Integer.parseInt(entry.value));
+      try {
+         return DataHelper.intToBool(Integer.parseInt(entry.value));
+      } catch ( NumberFormatException e ) {
+         throw new IllegalArgumentException("requested boolean entry for " +
+             "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.bool.name());
+      }
    }
 
    public static String getString(String appName,
-       KeyValueStoreEntry entry) throws RemoteException {
+       KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {
          return null;
       }
@@ -92,7 +110,7 @@ public class KeyValueStoreUtils {
 
    public static <T> ArrayList<T> getArray(String appName,
                   KeyValueStoreEntry entry, Class<T> clazz) throws
-       RemoteException {
+       IllegalArgumentException {
       CollectionType javaType =
           ODKFileUtils.mapper.getTypeFactory().constructCollectionType(ArrayList.class, clazz);
       if (entry == null) {
@@ -112,20 +130,29 @@ public class KeyValueStoreUtils {
          WebLogger.getLogger(appName).e("KeyValueStoreUtils",
              "getArray: problem parsing json list entry from the kvs");
          WebLogger.getLogger(appName).printStackTrace(e);
+         throw new IllegalArgumentException("requested list entry for " +
+             "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.array.name());
       } catch (JsonMappingException e) {
          WebLogger.getLogger(appName).e("KeyValueStoreUtils",
              "getArray: problem mapping json list entry from the kvs");
          WebLogger.getLogger(appName).printStackTrace(e);
+         throw new IllegalArgumentException("requested list entry for " +
+             "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.array.name());
       } catch (IOException e) {
          WebLogger.getLogger(appName).e("KeyValueStoreUtils",
              "getArray: i/o problem with json for list entry from the kvs");
          WebLogger.getLogger(appName).printStackTrace(e);
+         throw new IllegalArgumentException("requested list entry for " +
+             "key: " + entry.key + ", but the value in the store failed to " +
+             "parse to type: " + ElementDataType.array.name());
       }
       return result;
    }
 
    public static String getObject(String appName,
-       KeyValueStoreEntry entry) throws RemoteException {
+       KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {
          return null;
       }

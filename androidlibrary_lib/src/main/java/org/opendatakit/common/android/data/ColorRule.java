@@ -223,12 +223,12 @@ public class ColorRule {
       return false;
     }
     ColorRule other = (ColorRule) o;
-    return mId == null ? other.mId == null
-        : mId.equals(other.mId) && mElementKey == null ? other.mElementKey == null : mElementKey
-            .equals(other.mElementKey) && mOperator == null ? other.mOperator == null
-            : mOperator == other.mOperator && mValue == null ? other.mValue == null
-                : mValue == other.mValue && mBackground == other.mBackground
-                    && mForeground == other.mForeground;
+    boolean sameId = (mId == null) ? other.mId == null : mId.equals(other.mId);
+    if ( !sameId ) {
+      return false;
+    } else {
+      return equalsWithoutId(other);
+    }
   }
 
   /**
@@ -238,14 +238,23 @@ public class ColorRule {
    * @return
    */
   public boolean equalsWithoutId(ColorRule other) {
-    boolean sameElKey = mElementKey == null ? other.mElementKey == null : mElementKey
-        .equals(other.mElementKey);
-    boolean sameOp = mOperator == null ? other.mOperator == null : mOperator == other.mOperator;
-    boolean sameVal = mValue == null ? other.mValue == null : mValue == other.mValue;
-    boolean sameBackground = mBackground == other.mBackground;
-    boolean sameForeground = mForeground == other.mForeground;
-    return sameElKey && sameOp && sameVal && sameBackground && sameForeground;
-
+    if ( mBackground != other.mBackground ) {
+      return false;
+    }
+    if ( mForeground != other.mForeground ) {
+      return false;
+    }
+    if ( (mOperator == null) ? (other.mOperator != null) : (mOperator != other.mOperator) ) {
+      return false;
+    }
+    if ( (mElementKey == null) ? (other.mElementKey != null) : !mElementKey.equals(other.mElementKey) ) {
+      return false;
+    }
+    if ( (mValue == null) ? (other.mValue != null) : !mValue.equals(other.mValue) ) {
+      return false;
+    }
+    // otherwise it is the same (excluding the mId)!
+    return true;
   }
 
   public void setForeground(int newForeground) {

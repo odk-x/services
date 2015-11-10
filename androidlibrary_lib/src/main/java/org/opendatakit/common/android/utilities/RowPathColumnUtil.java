@@ -78,6 +78,7 @@ public class RowPathColumnUtil {
         uriFragmentList.add(cdParent);
       }
       if ( cd.getElementName().equals("contentType") &&
+          cd.getType().getDataType() == ElementDataType.string &&
           cdParent != null ) {
         contentTypeList.add(cdParent);
       }

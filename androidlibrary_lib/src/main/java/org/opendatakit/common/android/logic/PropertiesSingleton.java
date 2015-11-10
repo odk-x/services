@@ -57,7 +57,7 @@ public class PropertiesSingleton {
 
   void setCurrentContext(Context context) {
     try {
-      mBaseContext = context.createPackageContext(COMMON_PREFERENCES_CONTEXT, Context.MODE_PRIVATE);
+      mBaseContext = context.createPackageContext(COMMON_PREFERENCES_CONTEXT, Context.CONTEXT_INCLUDE_CODE);
       if (isModified()) {
         readProperties();
       }
