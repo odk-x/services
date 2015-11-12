@@ -14,6 +14,9 @@
 
 package org.opendatakit.common.android.provider;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import org.opendatakit.aggregate.odktables.rest.TableConstants;

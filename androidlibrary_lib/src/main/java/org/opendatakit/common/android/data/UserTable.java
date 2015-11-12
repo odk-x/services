@@ -18,12 +18,9 @@ package org.opendatakit.common.android.data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.DataUtil;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -58,11 +55,8 @@ public class UserTable implements Parcelable {
   private final Map<String, Integer> mElementKeyToIndex;
   private final String[] mElementKeyForIndex;
 
-  private final DataUtil du;
-
   public UserTable(UserTable table, List<Integer> indexes) {
     this.mColumnDefns = table.mColumnDefns;
-    du = table.du;
     mRows = new ArrayList<Row>(indexes.size());
     for (int i = 0; i < indexes.size(); ++i) {
       Row r = table.getRowAtIndex(indexes.get(i));
@@ -84,7 +78,6 @@ public class UserTable implements Parcelable {
       String sqlOrderByDirection, String[] adminColumnOrder,
       HashMap<String, Integer> elementKeyToIndex, String[] elementKeyForIndex, Integer rowCount) {
     this.mColumnDefns = columnDefns;
-    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     this.mSqlWhereClause = sqlWhereClause;
     this.mSqlSelectionArgs = sqlSelectionArgs;
@@ -146,6 +139,9 @@ public class UserTable implements Parcelable {
   }
 
   public String[] getSelectionArgs() {
+    if ( mSqlSelectionArgs == null ) {
+      return null;
+    }
     return mSqlSelectionArgs.clone();
   }
 
@@ -159,6 +155,9 @@ public class UserTable implements Parcelable {
   }
 
   public String[] getGroupByArgs() {
+    if (mSqlGroupByArgs == null) {
+      return null;
+    }
     return mSqlGroupByArgs.clone();
   }
 
@@ -231,15 +230,13 @@ public class UserTable implements Parcelable {
     String[] emptyString = {};
     out.writeString(mSqlWhereClause);
     if (mSqlSelectionArgs == null) {
-      out.writeInt(0);
-      out.writeStringArray(emptyString);
+      out.writeInt(-1);
     } else {
       out.writeInt(mSqlSelectionArgs.length);
       out.writeStringArray(mSqlSelectionArgs);
     }
     if (mSqlGroupByArgs == null) {
-      out.writeInt(0);
-      out.writeStringArray(emptyString);
+      out.writeInt(-1);
     } else {
       out.writeInt(mSqlGroupByArgs.length);
       out.writeStringArray(mSqlGroupByArgs);
@@ -258,10 +255,20 @@ public class UserTable implements Parcelable {
 
   public UserTable(Parcel in) {
     this.mSqlWhereClause = in.readString();
-    this.mSqlSelectionArgs = new String[in.readInt()];
-    in.readStringArray(mSqlSelectionArgs);
-    this.mSqlGroupByArgs = new String[in.readInt()];
-    in.readStringArray(mSqlGroupByArgs);
+    int n = in.readInt();
+    if ( n == -1 ) {
+      this.mSqlSelectionArgs = null;
+    } else {
+      this.mSqlSelectionArgs = new String[n];
+      in.readStringArray(mSqlSelectionArgs);
+    }
+    n = in.readInt();
+    if ( n == -1 ) {
+      this.mSqlGroupByArgs = null;
+    } else {
+      this.mSqlGroupByArgs = new String[n];
+      in.readStringArray(mSqlGroupByArgs);
+    }
     this.mSqlHavingClause = in.readString();
     this.mSqlOrderByElementKey = in.readString();
     this.mSqlOrderByDirection = in.readString();
@@ -275,8 +282,6 @@ public class UserTable implements Parcelable {
       Row r = new Row(this, in);
       mRows.add(r);
     }
-
-    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
