@@ -87,7 +87,10 @@ public class UserTableTest extends AndroidTestCase {
   public static final String LIST_COL = "List_col";
   public static final String MY_COL = "My_col";
   public static final String THEIR_COL = "Their_col";
+  public static final String YOUR_BOOLEAN_COL = "Your_boolean_col";
   public static final String YOUR_COL = "Your_col";
+  public static final String YOUR_CONFIG_FILE_COL = "Your_config_file_col";
+  public static final String YOUR_ROW_FILE_COL = "Your_row_file_col";
 
   @Override
   protected void setUp() throws Exception {
@@ -116,7 +119,11 @@ public class UserTableTest extends AndroidTestCase {
         ODKFileUtils.mapper.writeValueAsString(Collections.singletonList(LIST_COL + "_items"))));
     columns.add(new Column(LIST_COL + "_items", "items", ElementDataType.integer.name(), null));
     columns.add(new Column(THEIR_COL, THEIR_COL, ElementDataType.integer.name(), null));
+    columns.add(new Column(YOUR_BOOLEAN_COL, YOUR_BOOLEAN_COL, ElementDataType.bool.name(), null));
     columns.add(new Column(YOUR_COL, YOUR_COL, ElementDataType.integer.name(), null));
+    columns.add(new Column(YOUR_CONFIG_FILE_COL, YOUR_CONFIG_FILE_COL, ElementDataType.configpath.name(),
+        null));
+    columns.add(new Column(YOUR_ROW_FILE_COL, YOUR_ROW_FILE_COL, ElementDataType.rowpath.name(), null));
 
     OrderedColumns ta = new OrderedColumns(APP_NAME, TABLE_ID_1, columns);
 
@@ -260,7 +267,11 @@ public class UserTableTest extends AndroidTestCase {
         ODKFileUtils.mapper.writeValueAsString(Collections.singletonList(LIST_COL + "_items"))));
     columns.add(new Column(LIST_COL + "_items", "items", ElementDataType.integer.name(), null));
     columns.add(new Column(THEIR_COL, THEIR_COL, ElementDataType.integer.name(), null));
+    columns.add(new Column(YOUR_BOOLEAN_COL, YOUR_BOOLEAN_COL, ElementDataType.bool.name(), null));
     columns.add(new Column(YOUR_COL, YOUR_COL, ElementDataType.integer.name(), null));
+    columns.add(new Column(YOUR_CONFIG_FILE_COL, YOUR_CONFIG_FILE_COL, ElementDataType.configpath.name(),
+        null));
+    columns.add(new Column(YOUR_ROW_FILE_COL, YOUR_ROW_FILE_COL, ElementDataType.rowpath.name(), null));
     OrderedColumns orderedColumns = new OrderedColumns(APP_NAME, TABLE_ID_1, columns);
 
     List<String> retentionColumnNames = orderedColumns.getRetentionColumnNames();
@@ -309,11 +320,26 @@ public class UserTableTest extends AndroidTestCase {
     elementKeyForIndex[i] = THEIR_COL;
     assertEquals(retentionColumnNames.get(i), elementKeyForIndex[i]);
     elementKeyToIndex.put(THEIR_COL, i++);
+    rowValues1[i] = Integer.toString(DataHelper.boolToInt(true));
+    rowValues2[i] = null;
+    elementKeyForIndex[i] = YOUR_BOOLEAN_COL;
+    assertEquals(retentionColumnNames.get(i), elementKeyForIndex[i]);
+    elementKeyToIndex.put(YOUR_BOOLEAN_COL, i++);
     rowValues1[i] = "9";
     rowValues2[i] = "9";
     elementKeyForIndex[i] = YOUR_COL;
     assertEquals(retentionColumnNames.get(i), elementKeyForIndex[i]);
     elementKeyToIndex.put(YOUR_COL, i++);
+    rowValues1[i] = "assets/configfile.js";
+    rowValues2[i] = "assets/configfile.html";
+    elementKeyForIndex[i] = YOUR_CONFIG_FILE_COL;
+    assertEquals(retentionColumnNames.get(i), elementKeyForIndex[i]);
+    elementKeyToIndex.put(YOUR_CONFIG_FILE_COL, i++);
+    rowValues1[i] = "filename.jpg";
+    rowValues2[i] = "filename.wav";
+    elementKeyForIndex[i] = YOUR_ROW_FILE_COL;
+    assertEquals(retentionColumnNames.get(i), elementKeyForIndex[i]);
+    elementKeyToIndex.put(YOUR_ROW_FILE_COL, i++);
     rowValues1[i] = null;
     rowValues2[i] = null;
     elementKeyForIndex[i] = DataTableColumns.CONFLICT_TYPE;
@@ -479,7 +505,53 @@ public class UserTableTest extends AndroidTestCase {
       assertEquals(rowValues1[i], rbt1.getRawDataOrMetadataByElementKey(elementKey));
       assertEquals(rowValues2[i], rat2.getRawDataOrMetadataByElementKey(elementKey));
       assertEquals(rowValues2[i], rbt2.getRawDataOrMetadataByElementKey(elementKey));
+      try {
+        ColumnDefinition cd = orderedColumns.find(elementKey);
+        assertEquals(rat1.getDisplayTextOfData(table.getColumnDefinitions().find(elementKey).getType(), elementKey),
+              rbt1.getDisplayTextOfData(t.getColumnDefinitions().find(elementKey).getType(),
+                  elementKey));
+        assertEquals(rat2.getDisplayTextOfData(table.getColumnDefinitions().find(elementKey).getType(), elementKey),
+            rbt2.getDisplayTextOfData(t.getColumnDefinitions().find(elementKey).getType(),
+                elementKey));
+      } catch ( Exception e) {
+        // ignore...
+      }
     }
+    Long va = rat1.getRawDataType(GROUP_COL, Long.class);
+    Long vb = rbt1.getRawDataType(GROUP_COL, Long.class);
+    assertEquals(va, Long.valueOf(15));
+    assertEquals(va, vb);
+    Integer vai = rat1.getRawDataType(GROUP_COL, Integer.class);
+    Integer vbi = rbt1.getRawDataType(GROUP_COL, Integer.class);
+    assertEquals(vai, Integer.valueOf(15));
+    assertEquals(vai, vbi);
+    Double vad = rat1.getRawDataType(geopointCells.get(2), Double.class);
+    Double vbd = rbt1.getRawDataType(geopointCells.get(2), Double.class);
+    assertEquals(vad, Double.valueOf(47.6097));
+    assertEquals(vad, vbd);
+    assertEquals("47.6097",
+        rat1.getDisplayTextOfData(orderedColumns.find(geopointCells.get(2)).getType(),
+            geopointCells.get(2)));
+    Boolean vabb = rat1.getRawDataType(YOUR_BOOLEAN_COL, Boolean.class);
+    Boolean vbbb = rbt1.getRawDataType(YOUR_BOOLEAN_COL, Boolean.class);
+    assertEquals(vabb, Boolean.TRUE);
+    assertEquals(vabb, vbbb);
+    vabb = rat2.getRawDataType(YOUR_BOOLEAN_COL, Boolean.class);
+    vbbb = rbt2.getRawDataType(YOUR_BOOLEAN_COL, Boolean.class);
+    assertNull(vabb);
+    assertEquals(vabb, vbbb);
+    String vaf = rat1.getRawDataType(YOUR_ROW_FILE_COL, String.class);
+    String vbf = rbt1.getRawDataType(YOUR_ROW_FILE_COL, String.class);
+    assertEquals(vaf, "filename.jpg");
+    assertEquals(vaf, vbf);
+    ArrayList<Object> vaar = rat1.getRawDataType(LIST_COL, ArrayList.class);
+    ArrayList<Object> vbar = rbt1.getRawDataType(LIST_COL, ArrayList.class);
+    assertEquals(vaar.size(), vbar.size());
+    for ( i = 0 ; i < vaar.size() ; ++i) {
+      assertEquals(vaar.get(i), vbar.get(i));
+    }
+    Integer cta = rat1.getRawDataType(DataTableColumns.CONFLICT_TYPE, Integer.class);
+    assertNull(cta);
   }
 
   public void testUserTableParcelationNoGeoNoArray() throws IOException {
