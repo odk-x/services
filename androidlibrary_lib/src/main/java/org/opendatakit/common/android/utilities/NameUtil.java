@@ -15,8 +15,11 @@
  */
 package org.opendatakit.common.android.utilities;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -45,10 +48,16 @@ public class NameUtil {
    * table names, so we only have to track the SQLite reserved names
    * and not all MySQL or PostgreSQL reserved names.
    */
-  private static final TreeSet<String> reservedNames;
+  private static final ArrayList<String> reservedNamesSortedList;
+
+  private static final Pattern letterFirstPattern;
+
 
   static {
-    reservedNames = new TreeSet<String>();
+    letterFirstPattern = Pattern.compile("(?U)^\\p{L}\\p{M}*(\\p{L}\\p{M}*|\\p{Nd}|_)*$",
+                                            Pattern.UNICODE_CASE);
+
+    ArrayList<String> reservedNames = new ArrayList<String>();
 
     /**
      * ODK Metadata reserved names
@@ -189,10 +198,10 @@ public class NameUtil {
     reservedNames.add("WHEN");
     reservedNames.add("WHERE");
 
-    }
+    Collections.sort(reservedNames);
 
-  private static final String PATTERN_VALID_USER_DEFINED_DB_NAME =
-      "^\\p{L}\\p{M}*(\\p{L}\\p{M}*|\\p{Nd}|_)*$";
+    reservedNamesSortedList = reservedNames;
+    }
 
   /**
    * Determines whether or not the given name is valid for a user-defined
@@ -203,9 +212,10 @@ public class NameUtil {
    * @return true if valid else false
    */
   public static boolean isValidUserDefinedDatabaseName(String name) {
-    boolean matchHit = name.matches(PATTERN_VALID_USER_DEFINED_DB_NAME);
+    boolean matchHit = letterFirstPattern.matcher(name).matches();
     // TODO: uppercase is bad...
-    boolean reserveHit = reservedNames.contains(name.toUpperCase(Locale.US));
+    boolean reserveHit = Collections.binarySearch(reservedNamesSortedList,
+        name.toUpperCase(Locale.US)) >= 0;
     return (!reserveHit && matchHit);
   }
 
