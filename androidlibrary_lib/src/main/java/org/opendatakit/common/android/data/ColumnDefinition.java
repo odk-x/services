@@ -356,7 +356,7 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
   /**
    * Covert the ColumnDefinition map into a JSON schema.
    *
-   * @param defns
+   * @param orderedDefns
    * @return
    */
   static TreeMap<String, Object> getDataModel(List<ColumnDefinition> orderedDefns) {

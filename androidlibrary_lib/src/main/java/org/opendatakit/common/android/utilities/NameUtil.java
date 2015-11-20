@@ -54,7 +54,10 @@ public class NameUtil {
 
 
   static {
-    letterFirstPattern = Pattern.compile("(?U)^\\p{L}\\p{M}*(\\p{L}\\p{M}*|\\p{Nd}|_)*$",
+    /**
+     * This pattern does not support (?U) (UNICODE_CHARACTER_CLASS)
+     */
+    letterFirstPattern = Pattern.compile("^\\p{L}\\p{M}*(\\p{L}\\p{M}*|\\p{Nd}|_)*$",
                                             Pattern.UNICODE_CASE);
 
     ArrayList<String> reservedNames = new ArrayList<String>();
@@ -201,7 +204,7 @@ public class NameUtil {
     Collections.sort(reservedNames);
 
     reservedNamesSortedList = reservedNames;
-    }
+  }
 
   /**
    * Determines whether or not the given name is valid for a user-defined
