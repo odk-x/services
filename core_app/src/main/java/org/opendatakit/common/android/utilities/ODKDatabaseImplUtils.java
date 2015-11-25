@@ -32,7 +32,6 @@ import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
@@ -44,7 +43,6 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -1038,6 +1036,15 @@ public class ODKDatabaseImplUtils {
    }
 
    /**
+    * REVISIT THESE TO ENFORCE SAFE UPDATES OF KVS database
+    * *********************************************************************************************
+    * *********************************************************************************************
+    * *********************************************************************************************
+    * *********************************************************************************************
+    */
+
+
+   /**
     * Insert or update a single table-level metadata KVS entry.
     * The tableId, partition, aspect and key cannot be null or empty strings.
     * If e.value is null or an empty string, the entry is deleted.
@@ -1354,99 +1361,6 @@ public class ODKDatabaseImplUtils {
     cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME, -1);
 
     db.replaceOrThrow(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, cvTableDef);
-
-    // Add the tables values into KVS
-    ArrayList<ContentValues> cvTableValKVS = new ArrayList<ContentValues>();
-
-    ContentValues cvTableVal = null;
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_COL_ORDER);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "array");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "[]");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, "defaultViewType");
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "string");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "SPREADSHEET");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_DISPLAY_NAME);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "object");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "\"" + tableId + "\"");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_GROUP_BY_COLS);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "array");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "[]");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_INDEX_COL);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "string");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_SORT_COL);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "string");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_SORT_ORDER);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "string");
-    cvTableVal.put(KeyValueStoreColumns.VALUE, "");
-    cvTableValKVS.add(cvTableVal);
-
-    cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, "TableColorRuleGroup");
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, "StatusColumn.ruleList");
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "object");
-    try {
-      List<ColorRule> rules = ColorRuleUtil.getDefaultSyncStateColorRules();
-      List<TreeMap<String, Object>> jsonableList = new ArrayList<TreeMap<String, Object>>();
-      for (ColorRule rule : rules) {
-        jsonableList.add(rule.getJsonRepresentation());
-      }
-      String value = ODKFileUtils.mapper.writeValueAsString(jsonableList);
-      cvTableVal.put(KeyValueStoreColumns.VALUE, value);
-      cvTableValKVS.add(cvTableVal);
-    } catch (JsonProcessingException e) {
-      e.printStackTrace();
-    }
-
-    // Now add Tables values into KVS
-    for (int i = 0; i < cvTableValKVS.size(); i++) {
-      db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null,
-          cvTableValKVS.get(i));
-    }
   }
 
   /*
@@ -1508,36 +1422,6 @@ public class ODKDatabaseImplUtils {
     for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
       createNewColumnMetadata(db, tableId, column);
     }
-
-    // Need to address column order
-    ContentValues cvTableVal = new ContentValues();
-    cvTableVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvTableVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_TABLE);
-    cvTableVal.put(KeyValueStoreColumns.ASPECT, KeyValueStoreConstants.ASPECT_DEFAULT);
-    cvTableVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.TABLE_COL_ORDER);
-    cvTableVal.put(KeyValueStoreColumns.VALUE_TYPE, "array");
-
-    StringBuilder tableDefCol = new StringBuilder();
-
-    boolean needsComma = false;
-    for (ColumnDefinition def : orderedDefs.getColumnDefinitions()) {
-      if (!def.isUnitOfRetention()) {
-        continue;
-      }
-      if (needsComma) {
-        tableDefCol.append(",");
-      }
-      needsComma = true;
-      tableDefCol.append("\"").append(def.getElementKey()).append("\"");
-    }
-
-    WebLogger.getLogger(appName).i(t,
-        "Column order for table " + tableId + " is " + tableDefCol.toString());
-    String colOrderVal = "[" + tableDefCol.toString() + "]";
-    cvTableVal.put(KeyValueStoreColumns.VALUE, colOrderVal);
-
-    // Now add Tables values into KVS
-    db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, cvTableVal);
   }
 
   /*
@@ -1546,67 +1430,9 @@ public class ODKDatabaseImplUtils {
    */
   private void createNewColumnMetadata(OdkConnectionInterface db, String tableId, ColumnDefinition column) {
     String colName = column.getElementKey();
-    ArrayList<ContentValues> cvColValKVS = new ArrayList<ContentValues>();
-
-    ContentValues cvColVal;
-
-    cvColVal = new ContentValues();
-    cvColVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvColVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_COLUMN);
-    cvColVal.put(KeyValueStoreColumns.ASPECT, colName);
-    cvColVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST);
-    cvColVal.put(KeyValueStoreColumns.VALUE_TYPE, ElementDataType.array.name());
-    cvColVal.put(KeyValueStoreColumns.VALUE, "[]");
-    cvColValKVS.add(cvColVal);
-
-    cvColVal = new ContentValues();
-    cvColVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvColVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_COLUMN);
-    cvColVal.put(KeyValueStoreColumns.ASPECT, colName);
-    cvColVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT);
-    cvColVal.put(KeyValueStoreColumns.VALUE_TYPE, ElementDataType.string.name());
-    cvColVal.put(KeyValueStoreColumns.VALUE, "");
-    cvColValKVS.add(cvColVal);
-
-    cvColVal = new ContentValues();
-    cvColVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvColVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_COLUMN);
-    cvColVal.put(KeyValueStoreColumns.ASPECT, colName);
-    cvColVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
-    cvColVal.put(KeyValueStoreColumns.VALUE_TYPE, ElementDataType.object.name());
-    String colDisplayName = "\"" + colName + "\"";
-    cvColVal.put(KeyValueStoreColumns.VALUE, colDisplayName);
-    cvColValKVS.add(cvColVal);
-
-    // TODO: change bool to be integer valued in the KVS?
-    cvColVal = new ContentValues();
-    cvColVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvColVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_COLUMN);
-    cvColVal.put(KeyValueStoreColumns.ASPECT, colName);
-    cvColVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE);
-    cvColVal.put(KeyValueStoreColumns.VALUE_TYPE, ElementDataType.bool.name());
-    cvColVal.put(KeyValueStoreColumns.VALUE, column.isUnitOfRetention() ? "true" : "false");
-    cvColValKVS.add(cvColVal);
-
-    cvColVal = new ContentValues();
-    cvColVal.put(KeyValueStoreColumns.TABLE_ID, tableId);
-    cvColVal.put(KeyValueStoreColumns.PARTITION, KeyValueStoreConstants.PARTITION_COLUMN);
-    cvColVal.put(KeyValueStoreColumns.ASPECT, colName);
-    cvColVal.put(KeyValueStoreColumns.KEY, KeyValueStoreConstants.COLUMN_JOINS);
-    cvColVal.put(KeyValueStoreColumns.VALUE_TYPE, ElementDataType.object.name());
-    cvColVal.put(KeyValueStoreColumns.VALUE, "");
-    cvColValKVS.add(cvColVal);
-
-    // Now add all this data into the database
-    for (int i = 0; i < cvColValKVS.size(); i++) {
-      db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null,
-          cvColValKVS.get(i));
-    }
 
     // Create column definition
-    ContentValues cvColDefVal = null;
-
-    cvColDefVal = new ContentValues();
+    ContentValues cvColDefVal = new ContentValues();
     cvColDefVal.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_KEY, colName);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_NAME, column.getElementName());
@@ -1811,109 +1637,6 @@ public class ODKDatabaseImplUtils {
 
       OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
 
-      // we need the PARTITION_COLUMN stuff pulled out separately to
-      // ensure that the column display name and other fields with
-      // expected default values are present
-      TreeMap<String, ArrayList<KeyValueStoreEntry> > colEntries =
-          new TreeMap<String, ArrayList<KeyValueStoreEntry> >();
-
-      // everything else
-      ArrayList<KeyValueStoreEntry> kvsOther = new ArrayList<KeyValueStoreEntry>();
-
-      for ( KeyValueStoreEntry kvs : metaData ) {
-         validateKVSEntry(appName, tableId, kvs);
-
-         // anything not in the PARTITION_TABLE partition is assumed to be a column
-         // specific value. Use the aspect to match against a column. If that does
-         // not matchwe need the
-         // partition column stuff pulled out separately to
-         // ensure that the column display name is present.
-         if ( kvs.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN) ) {
-            ArrayList<KeyValueStoreEntry> colEntry = colEntries.get(kvs.aspect);
-            if ( colEntry == null ) {
-               colEntry = new ArrayList<KeyValueStoreEntry>();
-               colEntries.put(kvs.aspect, colEntry);
-            }
-            colEntry.add(kvs);
-         } else {
-            kvsOther.add(kvs);
-         }
-      }
-
-      ArrayList<KeyValueStoreEntry> kvsReassembled = new ArrayList<KeyValueStoreEntry>();
-
-
-      // column display name
-      for (ColumnDefinition ci : orderedDefs.getColumnDefinitions()) {
-         // put the displayName into the KVS
-         ArrayList<KeyValueStoreEntry> kvsList = colEntries.get(ci.getElementKey());
-         if (kvsList == null) {
-            kvsList = new ArrayList<KeyValueStoreEntry>();
-            colEntries.put(ci.getElementKey(), kvsList);
-         }
-         KeyValueStoreEntry entry = null;
-         for (KeyValueStoreEntry e : kvsList) {
-            if (e.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN)
-                && e.aspect.equals(ci.getElementKey())
-                && e.key.equals(KeyValueStoreConstants.COLUMN_DISPLAY_NAME)) {
-               entry = e;
-               break;
-            }
-         }
-
-         boolean replaceEntry = false;
-         if (entry != null && (entry.value == null || entry.value.trim().length() == 0)) {
-            kvsList.remove(entry);
-            entry = null;
-            replaceEntry = true;
-         }
-
-         if ((replaceEntry || clear) && entry == null) {
-            entry = new KeyValueStoreEntry();
-            entry.tableId = tableId;
-            entry.partition = KeyValueStoreConstants.PARTITION_COLUMN;
-            entry.aspect = ci.getElementKey();
-            entry.key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
-            entry.type = ElementDataType.object.name();
-            entry.value = NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName(ci.getElementKey()));
-            kvsList.add(entry);
-         }
-         kvsReassembled.addAll(kvsList);
-      }
-
-      {
-         // table display name
-         KeyValueStoreEntry entry = null;
-         for (KeyValueStoreEntry e : kvsOther) {
-            if (e.partition.equals(KeyValueStoreConstants.PARTITION_TABLE)
-                && e.aspect.equals(KeyValueStoreConstants.ASPECT_DEFAULT)
-                && e.key.equals(KeyValueStoreConstants.TABLE_DISPLAY_NAME)) {
-               entry = e;
-               break;
-            }
-         }
-
-         boolean replaceEntry = false;
-         if (entry != null && (entry.value == null || entry.value.trim().length() == 0)) {
-            kvsOther.remove(entry);
-            entry = null;
-            replaceEntry = true;
-         }
-
-         if ((replaceEntry || clear) && entry == null) {
-            entry = new KeyValueStoreEntry();
-            entry.tableId = tableId;
-            entry.partition = KeyValueStoreConstants.PARTITION_TABLE;
-            entry.aspect = KeyValueStoreConstants.ASPECT_DEFAULT;
-            entry.key = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
-            entry.type = ElementDataType.object.name();
-            entry.value = NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName
-                (tableId));
-            kvsOther.add(entry);
-         }
-         kvsReassembled.addAll(kvsOther);
-      }
-
       try {
          if (!dbWithinTransaction) {
             db.beginTransactionNonExclusive();
@@ -1927,7 +1650,7 @@ public class ODKDatabaseImplUtils {
             verifyTableSchema(db, appName, tableId, orderedDefs);
          }
 
-         replaceDBTableMetadata(db, tableId, kvsReassembled, (clear || created));
+         replaceDBTableMetadata(db, tableId, metaData, (clear || created));
          enforceTypesDBTableMetadata(db, tableId);
 
          if (!dbWithinTransaction) {
@@ -1963,6 +1686,15 @@ public class ODKDatabaseImplUtils {
          }
       }
    }
+
+   /***********************************************************************************************
+    * REVISIT THESE TO ENFORCE SAFE UPDATES OF KVS database
+    * *********************************************************************************************
+    * *********************************************************************************************
+    * *********************************************************************************************
+    * *********************************************************************************************
+    */
+
 
    /**
     * Call this when the schema on the server has changed w.r.t. the schema on
