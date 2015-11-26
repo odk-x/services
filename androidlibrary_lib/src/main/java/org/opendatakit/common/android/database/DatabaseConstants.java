@@ -20,9 +20,7 @@ public class DatabaseConstants {
    * key-value store table
    */
 
-  // tablenames for the various key value stores
   public static final String KEY_VALUE_STORE_ACTIVE_TABLE_NAME = "_key_value_store_active";
-  public static final String KEY_VALULE_STORE_SYNC_TABLE_NAME = "_key_value_store_sync";
 
   /**
    * table definitions table
