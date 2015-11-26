@@ -687,7 +687,6 @@ public class ODKDatabaseImplUtils {
           String whereClause = KeyValueStoreColumns.TABLE_ID + " = ?";
 
           db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
-          db.delete(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME, whereClause, whereArgs);
        }
 
        if (!dbWithinTransaction) {
@@ -1994,12 +1993,17 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @return the sync state of the row (see {@link SyncState}), or null if the
    *         row does not exist.
+   * @throws IllegalStateException if the row has conflicts or checkpoints
    */
-  public SyncState getSyncState(OdkConnectionInterface db, String appName, String tableId, String rowId) {
+  public SyncState getSyncState(OdkConnectionInterface db, String appName, String tableId, String rowId)
+      throws IllegalStateException {
     Cursor c = null;
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID
           + " = ?", new String[] { rowId }, null, null, null, null);
+      if (c.getCount() > 1) {
+         throw new IllegalStateException(t + ": row has conflicts or checkpoints");
+      }
       if (c.moveToFirst()) {
         int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
         if (!c.isNull(syncStateIndex)) {
@@ -2035,59 +2039,55 @@ public class ODKDatabaseImplUtils {
    */
   public void deleteDataInExistingDBTableWithId(OdkConnectionInterface db, String appName, String tableId,
       String rowId) {
-    SyncState syncState = getSyncState(db, appName, tableId, rowId);
+
+    boolean shouldPhysicallyDelete = false;
 
     boolean dbWithinTransaction = db.inTransaction();
-    if (syncState == SyncState.new_row) {
-      String[] whereArgs = { rowId };
-      String whereClause = DataTableColumns.ID + " = ?";
-
-      try {
-        if (!dbWithinTransaction) {
+    try {
+       if (!dbWithinTransaction) {
           db.beginTransactionNonExclusive();
-        }
+       }
+       SyncState syncState = getSyncState(db, appName, tableId, rowId);
 
-        db.delete(tableId, whereClause, whereArgs);
+       if (syncState == SyncState.new_row) {
+         // we can safely remove this record from the database
+         String[] whereArgs = { rowId };
+         String whereClause = DataTableColumns.ID + " = ?";
 
-        if (!dbWithinTransaction) {
-          db.setTransactionSuccessful();
-        }
-      } finally {
-        if (!dbWithinTransaction) {
+         db.delete(tableId, whereClause, whereArgs);
+         shouldPhysicallyDelete = true;
+
+       } else if (syncState != SyncState.in_conflict) {
+
+         String[] whereArgs = { rowId };
+         ContentValues values = new ContentValues();
+         values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
+         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+
+         db.update(tableId, values, DataTableColumns.ID + " = ?", whereArgs);
+       }
+       // TODO: throw exception if in the SyncState.in_conflict state?
+
+       if (!dbWithinTransaction) {
+         db.setTransactionSuccessful();
+       }
+    } finally {
+       if (!dbWithinTransaction) {
           db.endTransaction();
-        }
-      }
+       }
+    }
 
-      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(appName, tableId, rowId));
-      try {
-        FileUtils.deleteDirectory(instanceFolder);
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        WebLogger.getLogger(appName).e(t,
-            "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
-        WebLogger.getLogger(appName).printStackTrace(e);
-      }
-    } else if (syncState == SyncState.synced || syncState == SyncState.changed) {
-      String[] whereArgs = { rowId };
-      ContentValues values = new ContentValues();
-      values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
-      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
-          TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
-      try {
-        if (!dbWithinTransaction) {
-          db.beginTransactionNonExclusive();
-        }
-
-        db.update(tableId, values, DataTableColumns.ID + " = ?", whereArgs);
-
-        if (!dbWithinTransaction) {
-          db.setTransactionSuccessful();
-        }
-      } finally {
-        if (!dbWithinTransaction) {
-          db.endTransaction();
-        }
-      }
+    if ( shouldPhysicallyDelete ) {
+       File instanceFolder = new File(ODKFileUtils.getInstanceFolder(appName, tableId, rowId));
+       try {
+          FileUtils.deleteDirectory(instanceFolder);
+       } catch (IOException e) {
+          // TODO Auto-generated catch block
+          WebLogger.getLogger(appName)
+               .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+          WebLogger.getLogger(appName).printStackTrace(e);
+       }
     }
   }
 
@@ -3003,8 +3003,6 @@ public class ODKDatabaseImplUtils {
     db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
     db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME), null);
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME);
-    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALULE_STORE_SYNC_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
     db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
