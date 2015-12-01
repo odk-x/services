@@ -454,6 +454,39 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
+   * Return the row with the most recent changes for the given tableId and rowId.
+   * If the rowId does not exist, it returns an empty UserTable for this tableId.
+   * If the row has conflicts, it throws an exception. Otherwise, it returns the
+   * most recent checkpoint or non-checkpoint value; it will contain a single row.
+   *
+   * @param db
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
+   * @param rowId
+   * @return
+   */
+   public UserTable getMostRecentRowInExistingDBTableWithId(OdkConnectionInterface db, String
+       appName, String tableId,
+       OrderedColumns orderedDefns, String rowId) {
+
+      StringBuilder b = new StringBuilder();
+      UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
+          new String[]{rowId}, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+
+      if ( table.getNumberOfRows() == 0 ) {
+         return table;
+      }
+
+      // most recent savepoint timestamp...
+      UserTable t = new UserTable(table, Collections.singletonList(Integer.valueOf(0)));
+      if ( t.hasConflictRows() ) {
+         throw new IllegalStateException("row is in conflict");
+      }
+      return t;
+   }
+
+  /**
    * Return all the columns in the given table, including any metadata columns.
    * This does a direct query against the database and is suitable for accessing
    * non-managed tables. It does not access any metadata and therefore will not
