@@ -421,8 +421,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void deleteAllCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId) throws RemoteException {
+  @Override public UserTable deleteAllCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName,
+      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -430,7 +430,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
+      db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, appName, tableId, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
+          appName, tableId, orderedDefns, rowId);
+      db.setTransactionSuccessful();
+      return t;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -438,12 +443,13 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteCheckpointRowsWithId",
+      WebLogger.getLogger(appName).e("deleteAllCheckpointRowsWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
       if (db != null) {
+        db.endTransaction();
         // release the reference...
         // this does not necessarily close the db handle
         // or terminate any pending transaction
@@ -452,8 +458,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId) throws RemoteException {
+  @Override public UserTable deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName,
+      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -461,7 +467,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
+      db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
+          appName, tableId, orderedDefns, rowId);
+      db.setTransactionSuccessful();
+      return t;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -475,6 +486,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       throw new RemoteException(msg);
     } finally {
       if (db != null) {
+        db.endTransaction();
         // release the reference...
         // this does not necessarily close the db handle
         // or terminate any pending transaction
@@ -545,8 +557,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void deleteDataInExistingDBTableWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId) throws RemoteException {
+  @Override public UserTable deleteRowWithId(String appName,
+      OdkDbHandle dbHandleName,
+      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -554,7 +567,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
+      db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
+          appName, tableId, orderedDefns, rowId);
+      db.setTransactionSuccessful();
+      return t;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -562,43 +580,13 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteDataInExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("deleteRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
       if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-  }
-
-  @Override public void deleteServerConflictRowWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteServerConflictRowWithId",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
+        db.endTransaction();
         // release the reference...
         // this does not necessarily close the db handle
         // or terminate any pending transaction
@@ -709,7 +697,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable getDataInExistingDBTableWithId(String appName,
+  @Override public UserTable getRowsWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedDefns, String rowId)
       throws RemoteException {
 
@@ -728,7 +716,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getDataInExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("getRowsWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -742,7 +730,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable getMostRecentRowInExistingDBTableWithId(String appName,
+  @Override public UserTable getMostRecentRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedDefns, String rowId)
       throws RemoteException {
 
@@ -761,7 +749,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getDataInExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("getMostRecentRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -998,7 +986,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable insertCheckpointRowIntoExistingDBTableWithId(String appName,
+  @Override public UserTable insertCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1023,7 +1011,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("insertCheckpointRowIntoExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("insertCheckpointRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1038,7 +1026,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable insertDataIntoExistingDBTableWithId(String appName,
+  @Override public UserTable insertRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1062,7 +1050,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("insertDataIntoExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("insertRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1077,8 +1065,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void placeRowIntoConflict(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId, int conflictType) throws RemoteException {
+  @Override public UserTable placeRowIntoServerConflictWithId(String appName, OdkDbHandle
+      dbHandleName,
+      String tableId, OrderedColumns orderedColumns, ContentValues cvValues,
+      String rowId, int localRowConflictType) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -1086,7 +1076,14 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().placeRowIntoConflict(db, tableId, rowId, conflictType);
+      db.beginTransactionExclusive();
+
+      ODKDatabaseImplUtils.get().placeRowIntoServerConflictWithId(db, tableId, orderedColumns,
+          cvValues, rowId, localRowConflictType);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
+          appName, tableId, orderedColumns, rowId);
+      db.setTransactionSuccessful();
+      return t;
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1094,18 +1091,20 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName)
-          .e("placeRowIntoConflict", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).e("placeRowIntoServerConflictWithId",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
       if (db != null) {
+        db.endTransaction();
         // release the reference...
         // this does not necessarily close the db handle
         // or terminate any pending transaction
         db.releaseReference();
       }
     }
+
   }
 
   @Override public UserTable rawSqlQuery(String appName, OdkDbHandle dbHandleName, String tableId,
@@ -1237,39 +1236,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void restoreRowFromConflict(String appName, OdkDbHandle dbHandleName,
-      String tableId, String rowId, String syncState, int conflictType) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get()
-          .restoreRowFromConflict(db, tableId, rowId, SyncState.valueOf(syncState), conflictType);
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("restoreRowFromConflict",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-  }
-
-  @Override public UserTable saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(String appName,
+  @Override public UserTable saveAsIncompleteMostRecentCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1293,7 +1260,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("saveAsIncompleteMostRecentCheckpointDataInDBTableWithId",
+      WebLogger.getLogger(appName).e("saveAsIncompleteMostRecentCheckpointRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1308,7 +1275,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable saveAsCompleteMostRecentCheckpointDataInDBTableWithId(String appName,
+  @Override public UserTable saveAsCompleteMostRecentCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1332,7 +1299,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("saveAsCompleteMostRecentCheckpointDataInDBTableWithId",
+      WebLogger.getLogger(appName).e("saveAsCompleteMostRecentCheckpointRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1409,7 +1376,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable updateDataInExistingDBTableWithId(String appName,
+  @Override public UserTable updateRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1433,7 +1400,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("updateDataInExistingDBTableWithId",
+      WebLogger.getLogger(appName).e("updateRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1448,7 +1415,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable resolveServerConflictWithUpdateInExistingDbTableWithId(String appName,
+  @Override public UserTable resolveServerConflictWithUpdateRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId, String syncState, int localConflictType)
       throws RemoteException {
@@ -1476,7 +1443,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("resolveServerConflictInExistingDbTableWithId",
+      WebLogger.getLogger(appName).e("resolveServerConflictWithUpdateRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -1491,7 +1458,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void resolveServerConflictWithDeleteInExistingDbTableWithId(String appName,
+  @Override public void resolveServerConflictWithDeleteRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1511,7 +1478,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("resolveServerConflictInExistingDbTableWithId",
+      WebLogger.getLogger(appName).e("resolveServerConflictWithDeleteRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);

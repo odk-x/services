@@ -1913,7 +1913,8 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId, String rowId) {
+  private void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId,
+      String rowId) {
     // delete the old server-values in_conflict row if it exists
     String whereClause = String.format("%s = ? AND %s = ? AND %s IN " + "( ?, ? )",
         DataTableColumns.ID, DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
@@ -1939,6 +1940,30 @@ public class ODKDatabaseImplUtils {
     }
   }
 
+  public void placeRowIntoServerConflictWithId(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, ContentValues cvValues, String rowId, int localRowConflictType) {
+
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      this.deleteServerConflictRowWithId(db, tableId, rowId);
+      this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
+      this.insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
   /**
    * Change the conflictType for the given row from null (not in conflict) to
    * the specified one.
@@ -1950,7 +1975,8 @@ public class ODKDatabaseImplUtils {
    *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
    *          ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
    */
-  public void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId, int conflictType) {
+  private void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId, int
+      conflictType) {
 
     String whereClause = String.format("%s = ? AND %s IS NULL", DataTableColumns.ID,
         DataTableColumns.CONFLICT_TYPE);
@@ -2318,11 +2344,10 @@ public class ODKDatabaseImplUtils {
          ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db,
              tableId, orderedColumns, cvValues, rowId);
          // delete the record of the server row
-         ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId,
-             rowId);
+         ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
          // move the local conflict back into the normal (null) state
-         ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId,
-             newSyncState, localConflictType);
+         ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, newSyncState,
+             localConflictType);
 
          if ( !inTransaction ) {
             db.setTransactionSuccessful();
@@ -2371,8 +2396,8 @@ public class ODKDatabaseImplUtils {
 
          // move the local record into the 'new_row' sync state
          // so it can be physically deleted.
-         ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId,
-             null, SyncState.new_row);
+         ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId, null,
+             SyncState.new_row);
 
          // move the local conflict back into the normal (null) state
          ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
@@ -2504,7 +2529,7 @@ public class ODKDatabaseImplUtils {
     // because assigning the result to Object v
     // would not work for the currValues.put function
     if (theClass == Long.class) {
-      cv.put(name, (Long)obj);
+      cv.put(name, (Long) obj);
     } else if (theClass == Integer.class) {
       cv.put(name, (Integer)obj);
     } else if (theClass == Double.class) {
