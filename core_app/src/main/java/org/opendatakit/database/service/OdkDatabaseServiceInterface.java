@@ -54,7 +54,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
   @Override public OdkDbHandle openDatabase(String appName) throws RemoteException {
 
-    Core.getInstance().possiblyWaitForDatabaseServiceDebugger();
+    OdkDatabaseService.possiblyWaitForDatabaseServiceDebugger();
 
     OdkConnectionInterface db = null;
 

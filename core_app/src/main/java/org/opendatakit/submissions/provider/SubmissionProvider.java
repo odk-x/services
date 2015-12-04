@@ -95,6 +95,16 @@ public class SubmissionProvider extends ContentProvider {
   // namespace
   private static final String NEW_LINE = "\n";
 
+  /**
+   * change to true expression if you want to debug this content provider
+   */
+  public static void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
+
   @Override
   public boolean onCreate() {
 
@@ -207,7 +217,7 @@ public class SubmissionProvider extends ContentProvider {
   @Override
   public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
 
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     final boolean asXml = uri.getAuthority().equalsIgnoreCase(ProviderConsts.XML_SUBMISSION_AUTHORITY);
 

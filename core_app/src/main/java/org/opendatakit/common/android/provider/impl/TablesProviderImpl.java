@@ -32,7 +32,6 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import java.io.File;
@@ -41,6 +40,16 @@ import java.util.List;
 
 public abstract class TablesProviderImpl extends ContentProvider {
   private static final String t = "TablesProviderImpl";
+
+  /**
+   * change to true expression if you want to debug this content provider
+   */
+  public static void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
@@ -88,7 +97,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
       String sortOrder) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -189,7 +198,7 @@ public abstract class TablesProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int delete(Uri uri, String selection, String[] selectionArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 

@@ -39,7 +39,6 @@ import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -64,6 +63,16 @@ import java.util.Map.Entry;
  */
 public abstract class FormsProviderImpl extends ContentProvider {
   static final String t = "FormsProvider";
+
+  /**
+   * change to true expression if you want to debug this content provider
+   */
+  public static void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
 
   public abstract String getFormsAuthority();
 
@@ -187,7 +196,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized Uri insert(Uri uri, ContentValues initialValues) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -405,7 +414,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
                       String sortOrder) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -460,7 +469,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
    */
   @Override
   public synchronized int delete(Uri uri, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -612,7 +621,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     

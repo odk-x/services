@@ -28,6 +28,16 @@ public class OdkDatabaseService extends Service {
 
   public static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 
+  /**
+   * change to true expression if you want to debug the database service
+   */
+  public static void possiblyWaitForDatabaseServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
+
   private OdkDatabaseServiceInterface servInterface;
   
   @Override
@@ -40,7 +50,7 @@ public class OdkDatabaseService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    Core.getInstance().possiblyWaitForDatabaseServiceDebugger();
+    possiblyWaitForDatabaseServiceDebugger();
     Log.i(LOGTAG, "onBind -- returning interface.");
     return servInterface; 
   }

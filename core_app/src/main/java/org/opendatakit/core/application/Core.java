@@ -14,121 +14,20 @@
 
 package org.opendatakit.core.application;
 
-import android.app.Application;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.util.Log;
-
+import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
 
-public class Core extends Application {
+public class Core extends AppAwareApplication {
 
-  public static final String LOGTAG = Core.class.getSimpleName();
-
-  private int sessionCount = 0;
-  
-  private static Core singleton = null;
-
-  public static Core getInstance() {
-    return singleton;
-  }
-
-  /**
-   * change to true expression if you want to debug the content providers
-   */
-  public void possiblyWaitForContentProviderDebugger() {
-    if ( false ) {
-      android.os.Debug.waitForDebugger();
-      String version = getVersionedAppName();
-    }
-  }
-
-  /**
-   * change to true expression if you want to debug the webkit server service
-   */
-  public void possiblyWaitForWebkitServerServiceDebugger() {
-    if ( false ) {
-      android.os.Debug.waitForDebugger();
-      String version = getVersionedAppName();
-    }
-  }
-
-  /**
-   * change to true expression if you want to debug the dbShim service
-   */
-  public void possiblyWaitForDbShimServiceDebugger() {
-    if ( false ) {
-      android.os.Debug.waitForDebugger();
-      String version = getVersionedAppName();
-    }
-  }
-
-  /**
-   * change to true expression if you want to debug the database service
-   */
-  public void possiblyWaitForDatabaseServiceDebugger() {
-    if ( false ) {
-      android.os.Debug.waitForDebugger();
-      String version = getVersionedAppName();
-    }
-  }
-
-  public String getVersionCodeString() {
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
-      return Integer.toString(versionNumber);
-    } catch (NameNotFoundException e) {
-      e.printStackTrace();
-      return "";
-    }
-  }
-
-  public String getVersionedAppName() {
-    String versionDetail = "";
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
-      String versionName = pinfo.versionName;
-      versionDetail = " " + versionName + " (rev " + versionNumber + ")";
-    } catch (NameNotFoundException e) {
-      e.printStackTrace();
-    }
-    return getString(R.string.app_name) + versionDetail;
-  }
-
-  /**
-   * Creates required directories on the SDCard (or other external storage)
-   *
-   * @return true if there are tables present
-   * @throws RuntimeException
-   *           if there is no SDCard or the directory exists as a non directory
-   */
-  public static void createODKDirs(String appName) throws RuntimeException {
-
-    ODKFileUtils.verifyExternalStorageAvailability();
-
-    ODKFileUtils.assertDirectoryStructure(appName);
+  @Override public int getApkDisplayNameResourceId() {
+    return R.string.app_name;
   }
 
   @Override
   public void onCreate() {
-    singleton = this;
     super.onCreate();
-    Log.i(LOGTAG, "onCreate");
     PropertiesSingleton.setStartCoreServices(this);
-  }
-
-  @Override
-  public void onTerminate() {
-    Log.i(LOGTAG, "onTerminate");
-    WebLogger.closeAll();
-    super.onTerminate();
   }
 
 }
