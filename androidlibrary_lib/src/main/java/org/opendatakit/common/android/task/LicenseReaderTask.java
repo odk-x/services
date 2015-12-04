@@ -88,7 +88,17 @@ public class LicenseReaderTask extends AsyncTask<Void, Integer, String> {
   }
 
   public void setLicenseReaderListener(LicenseReaderListener listener) {
-    lrl = listener;
+    synchronized (this) {
+      lrl = listener;
+    }
+  }
+
+  public void clearLicenseReaderListener(LicenseReaderListener listener) {
+    synchronized (this) {
+      if (lrl == listener) {
+        lrl = null;
+      }
+    }
   }
 
   public void setAppName(String appName) {

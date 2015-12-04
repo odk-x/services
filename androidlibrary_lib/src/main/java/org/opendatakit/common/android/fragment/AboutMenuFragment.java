@@ -89,7 +89,6 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
     WebLogger.getLogger(activity.getAppName()).i(t, "Read license complete");
     if (result != null) {
       // Read license file successfully
-      Toast.makeText(getActivity(), R.string.read_license_success, Toast.LENGTH_SHORT).show();
       mLicenseText = result;
       mTextView.setText(Html.fromHtml(result));
     } else {
@@ -110,14 +109,24 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
       lrt.setLicenseReaderListener(this);
       licenseReaderTask = lrt;
       licenseReaderTask.execute();
-    } else if (licenseReaderTask.getStatus() != AsyncTask.Status.FINISHED) {
-      licenseReaderTask.setLicenseReaderListener(this);
-      Toast.makeText(getActivity(), getString(R.string.still_reading_license_file), Toast.LENGTH_LONG)
-          .show();
     } else {
+      // update listener
       licenseReaderTask.setLicenseReaderListener(this);
-      this.readLicenseComplete(licenseReaderTask.getResult());
+      if (licenseReaderTask.getStatus() != AsyncTask.Status.FINISHED) {
+        Toast.makeText(getActivity(), getString(R.string.still_reading_license_file), Toast.LENGTH_LONG)
+            .show();
+      } else {
+        // it is already done -- grab the result and display it.
+        licenseReaderTask.setLicenseReaderListener(null);
+        this.readLicenseComplete(licenseReaderTask.getResult());
+      }
     }
   }
 
+  @Override public void onDestroy() {
+    if ( licenseReaderTask != null ) {
+      licenseReaderTask.clearLicenseReaderListener(null);
+    }
+    super.onDestroy();
+  }
 }
