@@ -285,29 +285,17 @@ public class FormInfo {
       if ( setting != null ) {
         Object o = setting.get(FORMDEF_TITLE_ELEMENT);
         if (o == null) {
-	      throw new IllegalArgumentException("title is not specified in the display section of the survey settings of the formdef json file! "
-	          + formDefFile.getAbsolutePath());
-	    }
-	    if (o instanceof String) {
-	      formTitle = (String) o;
-	    } else {
-	      try {
-	        formDefStruct = (Map<String, Object>) o;
-
-	        if (formDefStruct == null || formDefStruct.size() == 0) {
-	          throw new IllegalArgumentException(
-	              "title is not specified in the display section of the survey settings of the formdef json file! "
-	                  + formDefFile.getAbsolutePath());
-	        }
-
-	        // just get the one title string from the file...
-	        formTitle = (String) formDefStruct.get(defaultLocale);
-	      } catch (ClassCastException e) {
+          throw new IllegalArgumentException(
+              "title is not specified in the display section of the survey settings of the formdef json file! "
+                  + formDefFile.getAbsolutePath());
+        }
+        try {
+          formTitle = ODKFileUtils.mapper.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
-	        throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	      }
-	    }
+          throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
+              + formDefFile.getAbsolutePath());
+        }
       } else {
 	    throw new IllegalArgumentException("display entry is not specified in the survey section of the settings of formdef json file! "
 	            + formDefFile.getAbsolutePath());

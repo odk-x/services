@@ -35,10 +35,7 @@ import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -148,7 +145,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
     File formDefFolder = new File(formFolder);
     
     if (values.containsKey(FormsColumns.DISPLAY_NAME) == false) {
-      values.put(FormsColumns.DISPLAY_NAME, formDefFolder.getName());
+      values.put(FormsColumns.DISPLAY_NAME, NameUtil.normalizeDisplayName(NameUtil
+          .constructSimpleDisplayName(formId)));
     }
 
     // require that it contain a formDef file
