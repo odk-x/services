@@ -49,6 +49,8 @@ public interface OdkConnectionFactoryInterface {
     * Dump the state and history of the database layer.
     * Useful for debugging and understanding
     * cross-thread interactions.
+    *
+    * @param asError true if it should be logged as an error
     */
    public void dumpInfo(boolean asError);
 
@@ -58,7 +60,7 @@ public interface OdkConnectionFactoryInterface {
     * and insert it into the active-connection map (so that it can be retrieved later).
     * The connection has a +1 reference count upon return.
     * <p>
-    * Callers are responsible for calling {@link OdkConnectionInterface.releaseReference()}
+    * Callers are responsible for calling {@link OdkConnectionInterface#releaseReference()}
     * </p>
     *
     * @param appName
