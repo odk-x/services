@@ -44,7 +44,10 @@ public final class FormsColumns implements BaseColumns {
   public static final String SETTINGS = "settings";
   /** form_version | value from the settings sheet */
   public static final String FORM_VERSION = "formVersion"; // can be null
-  /** survey | display.title from the settings sheet */
+  /**
+   * survey | display.title from the settings sheet
+   * In general, this will be an localizable JS object.
+   */
   public static final String DISPLAY_NAME = "displayName";
   /** locale that the form should start in (extracted from settings) */
   public static final String DEFAULT_FORM_LOCALE = "defaultFormLocale";
@@ -56,15 +59,14 @@ public final class FormsColumns implements BaseColumns {
 
   // these are generated for you
   public static final String JSON_MD5_HASH = "jsonMd5Hash";
-  public static final String DATE = "date"; // last modification date on the file
-  public static final String FILE_LENGTH = "fileLength"; // bytes in formDef.json
-
-  // this is generated for you but you can override if you want
-  public static final String DISPLAY_SUBTEXT = "displaySubtext";
+  // last modification date of the file (long)
+  public static final String DATE = "date";
+  // bytes in the formDef.json (long)
+  public static final String FILE_LENGTH = "fileLength";
 
   // NOTE: this omits _ID (the primary key)
   public static final String[] formsDataColumnNames = { TABLE_ID, FORM_ID, SETTINGS, FORM_VERSION,
-      DISPLAY_NAME, DEFAULT_FORM_LOCALE, INSTANCE_NAME, JSON_MD5_HASH, FILE_LENGTH, DISPLAY_SUBTEXT, DATE };
+      DISPLAY_NAME, DEFAULT_FORM_LOCALE, INSTANCE_NAME, JSON_MD5_HASH, FILE_LENGTH, DATE };
 
   /**
    * Get the create sql for the forms table (ODK Survey only).
@@ -83,7 +85,6 @@ public final class FormsColumns implements BaseColumns {
            + DEFAULT_FORM_LOCALE + " text null, "
            + INSTANCE_NAME + " text null, " 
            + JSON_MD5_HASH + " text not null, "
-           + DISPLAY_SUBTEXT + " text not null, "
            + FILE_LENGTH + " integer not null, "
            + DATE + " integer not null " // milliseconds
            + ")";
