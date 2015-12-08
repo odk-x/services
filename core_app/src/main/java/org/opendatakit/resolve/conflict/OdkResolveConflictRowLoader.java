@@ -13,11 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.resolve.checkpoint;
+package org.opendatakit.resolve.conflict;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
@@ -30,7 +32,9 @@ import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -38,7 +42,7 @@ import java.util.UUID;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
+public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
 
   private final String mAppName;
   private final String mTableId;
@@ -49,7 +53,7 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
     String formId;
   }
 
-  public OdkResolveRowLoader(Context context, String appName, String tableId) {
+  public OdkResolveConflictRowLoader(Context context, String appName, String tableId) {
     super(context);
     this.mAppName = appName;
     this.mTableId = tableId;
@@ -62,6 +66,7 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
+    String tableDisplayName = null;
     Cursor forms = null;
     UserTable table = null;
 
@@ -72,11 +77,21 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
 
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
           mAppName, mTableId);
-      String[] empty = {};
       String[] groupBy = { DataTableColumns.ID };
+
       table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
-          DataTableColumns.SAVEPOINT_TYPE + " IS NULL", empty, groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP,
-          "DESC");
+          DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
+          new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
+              Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) },
+          groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+
+      // The display name is the table display name, not the form display name...
+      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db,
+          mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
+          KeyValueStoreConstants.TABLE_DISPLAY_NAME);
+
+      tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
+          .constructSimpleDisplayName(mTableId)) : entries.get(0).value;
 
       forms = ODKDatabaseImplUtils.get().rawQuery(db,
           "SELECT " + FormsColumns.INSTANCE_NAME +
@@ -101,8 +116,8 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
             continue;
           }
 
-          String displayName = forms.getString(idxFormDisplayName);
           String formId = forms.getString(idxFormId);
+          String displayName = forms.getString(idxFormDisplayName);
 
           FormDefinition fd = new FormDefinition();
           fd.instanceName = instanceName;
@@ -121,7 +136,7 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(mAppName).e("OdkResolveRowLoader",
+      WebLogger.getLogger(mAppName).e("OdkResolveConflictRowLoader",
           mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(mAppName).printStackTrace(e);
       throw new IllegalStateException(msg);
@@ -152,8 +167,7 @@ public class OdkResolveRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEnt
       if ( formDefinitions.isEmpty() ) {
         nameToUse = new FormDefinition();
         nameToUse.formId = null;
-        nameToUse.formDisplayName = NameUtil.normalizeDisplayName(NameUtil
-            .constructSimpleDisplayName(mTableId));
+        nameToUse.formDisplayName = tableDisplayName;
         nameToUse.instanceName = DataTableColumns.SAVEPOINT_TIMESTAMP;
       } else {
         // otherwise use the name from the first formId that gave one.

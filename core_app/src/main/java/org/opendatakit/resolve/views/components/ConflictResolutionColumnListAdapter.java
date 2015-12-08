@@ -25,6 +25,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+
 /**
  * A basic adapter for displaying things with sections. Based on the code from
  * the Google IO 2012 app:
@@ -39,12 +41,13 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
   private static final String TAG = ConflictResolutionColumnListAdapter.class.getSimpleName();
 
   private final String mAppName;
+  private final int mLocalButtonTextId;
+  private final int mServerButtonTextId;
   private UICallbacks mCallbacks;
   private LayoutInflater mLayoutInflater;
+  private ArrayList<ConflictColumn> mConflictColumnArray = new ArrayList<ConflictColumn>();
   private SparseArray<ConflictColumn> mConflictColumns = new SparseArray<ConflictColumn>();
   private SparseArray<ConcordantColumn> mConcordantColumns = new SparseArray<ConcordantColumn>();
-  /** Whether or not conflictColumns are enabled should be disabled. */
-  private boolean mConflictColumnsAreEnabled;
 
   public interface UICallbacks {
 
@@ -64,6 +67,7 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
      * @return null if a decision has not yet been made
      */
     public Resolution getConflictResolutionDecision(String elementKey);
+
     /**
      * Called when the user has made a decision about which row to use.
      */
@@ -76,18 +80,20 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
    */
   private int mLeftPaddingOnTopLevel = -1;
 
-  public ConflictResolutionColumnListAdapter(Context context, String appName, UICallbacks callbacks) {
+  public ConflictResolutionColumnListAdapter(Context context, String appName,
+      int localButtonTextId, int serverButtonTextId, UICallbacks callbacks) {
     this.mAppName = appName;
+    this.mLocalButtonTextId = localButtonTextId;
+    this.mServerButtonTextId = serverButtonTextId;
     this.mLayoutInflater = (LayoutInflater) context
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     this.mCallbacks = callbacks;
-    this.mConflictColumnsAreEnabled = false;
   }
 
   public void clear() {
     mConcordantColumns.clear();
     mConflictColumns.clear();
-    mConflictColumnsAreEnabled = false;
+    mConflictColumnArray.clear();
   }
 
   public void addAll(ResolveActionList resolveActionList) {
@@ -97,11 +103,15 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
     for (ConflictColumn cc : resolveActionList.conflictColumns) {
       mConflictColumns.append(cc.getPosition(), cc);
     }
-    this.mConflictColumnsAreEnabled = !resolveActionList.conflictColumns.isEmpty();
+    mConflictColumnArray = resolveActionList.conflictColumns;
   }
 
   public int getConflictCount() {
     return mConflictColumns.size();
+  }
+
+  public ArrayList<ConflictColumn> getConflictColumnArray() {
+    return mConflictColumnArray;
   }
 
   public boolean isConflictColumnPosition(int position) {
@@ -119,8 +129,7 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
 
   @Override
   public Object getItem(int position) {
-    // This position can be one of three types: a section, a concordant, or a
-    // conflict column.
+    // This position can be one of two types: a concordant, or a conflict column.
     if (isConflictColumnPosition(position)) {
       return mConflictColumns.get(position);
     } else if (isConcordantColumnPosition(position)) {
@@ -140,9 +149,9 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
   @Override
   public int getItemViewType(int position) {
     if (isConflictColumnPosition(position)) {
-      return 1;
+      return 0;
     } else if (isConcordantColumnPosition(position)) {
-      return 2;
+      return 1;
     } else {
       WebLogger.getLogger(mAppName).e(TAG,
           "[getItem] position " + position + " didn't match any of " + "the types!");
@@ -153,23 +162,15 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
   @Override
   public boolean isEnabled(int position) {
     if (isConflictColumnPosition(position)) {
-      if (mConflictColumnsAreEnabled) {
-        return true;
-      } else {
-        return false;
-      }
-    } else if (isConcordantColumnPosition(position)) {
-      return false;
+      return true;
     } else {
-      WebLogger.getLogger(mAppName).e(TAG,
-          "[getItem] position " + position + " didn't match any of " + "the types!");
       return false;
     }
   }
 
   @Override
   public int getViewTypeCount() {
-    return 3; // heading, conflict, concordant.
+    return 2; // conflict, concordant.
   }
 
   @Override
@@ -178,15 +179,6 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
     // dividers returning true or false? Kind of a strange thing, but if
     // you're wondering why, consider looking at that.
     return false;
-  }
-
-  /**
-   * Sets whether or not the views returned by this adapter are clickable.
-   *
-   * @param enabled
-   */
-  public void setConflictColumnsEnabled(boolean enabled) {
-    this.mConflictColumnsAreEnabled = enabled;
   }
 
   /**
@@ -228,9 +220,13 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       // The decision the user has made. May be null if it hasn't been set.
       Resolution userDecision = mCallbacks.getConflictResolutionDecision(
           conflictColumn.getElementKey());
+
       RadioButton localButton = (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
-      RadioButton serverButton = (RadioButton) view
-          .findViewById(R.id.list_item_server_radio_button);
+      localButton.setText(mLocalButtonTextId);
+
+      RadioButton serverButton = (RadioButton) view.findViewById(R.id.list_item_server_radio_button);
+      serverButton.setText(mServerButtonTextId);
+
       if (userDecision != null) {
         if (userDecision == Resolution.LOCAL) {
           localButton.setChecked(true);
@@ -265,8 +261,8 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       localRow.setOnLongClickListener(new ResolutionOnLongClickListener());
       serverRow.setOnClickListener(new ResolutionOnClickListener());
       serverRow.setOnLongClickListener(new ResolutionOnLongClickListener());
-      localRow.setEnabled(mConflictColumnsAreEnabled);
-      serverRow.setEnabled(mConflictColumnsAreEnabled);
+      localRow.setEnabled(true);
+      serverRow.setEnabled(true);
       return view;
 
     } else if (isConcordantColumnPosition(position)) {

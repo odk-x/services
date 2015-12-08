@@ -40,13 +40,14 @@ import java.util.*;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveFieldLoader extends AsyncTaskLoader<ResolveActionList> {
+public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList> {
 
   private final String mAppName;
   private final String mTableId;
   private final String mRowId;
 
-  public OdkResolveFieldLoader(Context context, String appName, String tableId, String rowId) {
+  public OdkResolveCheckpointFieldLoader(Context context, String appName, String tableId,
+      String rowId) {
     super(context);
     this.mAppName = appName;
     this.mTableId = tableId;
@@ -96,10 +97,10 @@ public class OdkResolveFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(mAppName).e("OdkResolveRowLoader",
+      WebLogger.getLogger(mAppName).e("OdkResolveCheckpointFieldLoader",
           mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(mAppName).printStackTrace(e);
-      throw new IllegalStateException(msg);
+      return null;
     } finally {
       if (db != null) {
         // release the reference...
@@ -112,7 +113,9 @@ public class OdkResolveFieldLoader extends AsyncTaskLoader<ResolveActionList> {
 
     if (table.getNumberOfRows() == 0) {
       // another process deleted this row?
-      throw new IllegalStateException("Unexpectedly did not find row in database!");
+      WebLogger.getLogger(mAppName).w("OdkResolveCheckpointFieldLoader",
+          "Unexpectedly did not find row in database!");
+      return null;
     }
 
     // the last row is the oldest -- it should be a COMPLETE or INCOMPLETE row
@@ -129,8 +132,9 @@ public class OdkResolveFieldLoader extends AsyncTaskLoader<ResolveActionList> {
           && (SavepointTypeManipulator.isComplete(type) ||
               SavepointTypeManipulator.isIncomplete(type))) {
         // something else seems to have resolved this?
-        throw new IllegalStateException(
+        WebLogger.getLogger(mAppName).w("OdkResolveCheckpointFieldLoader",
             "Unexpectedly found that row does not need to be resolved");
+        return null;
       }
     }
 
@@ -190,9 +194,7 @@ public class OdkResolveFieldLoader extends AsyncTaskLoader<ResolveActionList> {
             ResolveActionType.RESTORE_TO_COMPLETE :
             ResolveActionType.RESTORE_TO_INCOMPLETE);
 
-    ResolveActionList actionList = new ResolveActionList(actionType,
-        concordantColumns, conflictColumns);
-    return actionList;
+    return new ResolveActionList(actionType, concordantColumns, conflictColumns);
   }
 
   @Override protected void onStartLoading() {

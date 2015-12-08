@@ -15,9 +15,11 @@
  */
 package org.opendatakit.common.android.utilities;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import android.widget.Toast;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -39,10 +41,13 @@ import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
+import org.opendatakit.core.R;
 import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -2413,6 +2418,397 @@ public class ODKDatabaseImplUtils {
          }
       }
    }
+
+  /**
+   * Resolve the server conflict by taking the local changes.
+   * If the local changes are to delete this record, the record will be deleted
+   * upon the next successful sync.
+   *
+   * @param db
+   * @param appName
+   * @param tableId
+   * @param rowId
+   */
+  public void resolveServerConflictTakeLocalChangesWithId(OdkConnectionInterface db,
+      String appName, String tableId, String rowId) {
+
+    boolean inTransaction = false;
+    try {
+
+      inTransaction = db.inTransaction();
+      if ( !inTransaction ) {
+        db.beginTransactionNonExclusive();
+      }
+
+      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
+          appName, tableId);
+
+      // get both conflict records for this row.
+      // the local record is always before the server record (due to conflict_type values)
+      UserTable table = ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId, orderedColumns,
+          DataTableColumns.ID + "=?" +
+              " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
+          null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
+
+      if ( table.getNumberOfRows() != 2) {
+        throw new IllegalStateException(
+            "Did not find a server and local row when resolving conflicts for rowId: " + rowId);
+      }
+      Row localRow = table.getRowAtIndex(0);
+      Row serverRow = table.getRowAtIndex(1);
+
+      int localConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      int serverConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+           localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find local conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      if ( serverConflictType != ConflictType.SERVER_UPDATED_UPDATED_VALUES &&
+           serverConflictType != ConflictType.SERVER_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find server conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      // update the local conflict record with the local's changes
+      ContentValues updateValues = new ContentValues();
+      updateValues.put(DataTableColumns.ROW_ETAG,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG));
+      updateValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+
+      // By specifying the conflictType, we add this to the where-clause filter.
+      // I.e., we will update only the local conflict record.
+      updateValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+
+      // take the server's filter metadata values ...
+      updateValues.put(DataTableColumns.FILTER_TYPE,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_TYPE));
+      updateValues.put(DataTableColumns.FILTER_VALUE,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_VALUE));
+
+      // Figure out whether to take the server or local metadata fields.
+      // and whether to take the server or local data fields.
+
+      SyncState finalSyncState = SyncState.changed;
+
+      if ( localConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES ) {
+        // We are updating -- preserve the local metadata and column values
+        // this is a no-op, as we are updating the local record, so we don't
+        // need to do anything special.
+      } else {
+        finalSyncState = SyncState.deleted;
+
+        // Deletion is really a "TakeServerChanges" action, but ending with 'deleted' as
+        // the final sync state.
+
+        // copy everything over from the server row
+        updateValues.put(DataTableColumns.FORM_ID,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FORM_ID));
+        updateValues.put(DataTableColumns.LOCALE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.LOCALE));
+        updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE));
+        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
+        updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
+
+        // including the values of the user fields on the server
+        for ( String elementKey : orderedColumns.getRetentionColumnNames()) {
+          updateValues.put(elementKey, serverRow.getRawDataOrMetadataByElementKey(elementKey));
+        }
+      }
+
+      // delete the record of the server row
+      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+
+      // update local with the changes
+      ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
+          updateValues, rowId);
+
+      // move the local conflict back into the normal non-conflict (null) state
+      // and set the final sync state.
+      ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, finalSyncState,
+          localConflictType);
+
+      if ( !inTransaction ) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if ( db != null ) {
+        if ( !inTransaction ) {
+          db.endTransaction();
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve the server conflict by taking the local changes plus a value map
+   * of select server field values.  This map should not update any metadata
+   * fields -- it should just contain user data fields.
+   *
+   * It is an error to call this if the local change is to delete the row.
+   *
+   * @param db
+   * @param appName
+   * @param tableId
+   * @param cvValues  key-value pairs from the server record that we should incorporate.
+   * @param rowId
+   */
+  public void resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(OdkConnectionInterface db,
+      String appName, String tableId, ContentValues cvValues, String rowId) {
+
+    boolean inTransaction = false;
+    try {
+
+      inTransaction = db.inTransaction();
+      if ( !inTransaction ) {
+        db.beginTransactionNonExclusive();
+      }
+
+      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
+          appName, tableId);
+
+      // get both conflict records for this row.
+      // the local record is always before the server record (due to conflict_type values)
+      UserTable table = ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId, orderedColumns,
+          DataTableColumns.ID + "=?" +
+              " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
+          null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
+
+      if ( table.getNumberOfRows() != 2) {
+        throw new IllegalStateException(
+            "Did not find a server and local row when resolving conflicts for rowId: " + rowId);
+      }
+      Row localRow = table.getRowAtIndex(0);
+      Row serverRow = table.getRowAtIndex(1);
+
+      int localConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      int serverConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+          localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find local conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      if ( serverConflictType != ConflictType.SERVER_UPDATED_UPDATED_VALUES &&
+          serverConflictType != ConflictType.SERVER_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find server conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      if ( localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Local row is marked for deletion -- blending does not make sense for rowId: " +
+                rowId);
+      }
+
+      // clean up the incoming map of server values to retain
+      cleanUpValuesMap(orderedColumns, cvValues);
+      // update the local conflict record with the local's changes
+      ContentValues updateValues = cvValues;
+      updateValues.put(DataTableColumns.ROW_ETAG,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG));
+      updateValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+      updateValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      // take the server's filter metadata values ...
+      updateValues.put(DataTableColumns.FILTER_TYPE,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_TYPE));
+      updateValues.put(DataTableColumns.FILTER_VALUE,
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_VALUE));
+      // but take the local's metadata values (i.e., do not change these
+      // during the update) ...
+      updateValues.put(DataTableColumns.FORM_ID,
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.FORM_ID));
+      updateValues.put(DataTableColumns.LOCALE,
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.LOCALE));
+      updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE));
+      updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
+      updateValues.put(DataTableColumns.SAVEPOINT_CREATOR, localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
+
+      // delete the record of the server row
+      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+
+      // update local with server's changes
+      ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db,
+          tableId, orderedColumns, updateValues, rowId);
+
+      // move the local conflict back into the normal (null) state
+      ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
+          localConflictType);
+
+      if ( !inTransaction ) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if ( db != null ) {
+        if ( !inTransaction ) {
+          db.endTransaction();
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve the server conflict by taking the server changes.  This may delete the local row.
+   *
+   * @param db
+   * @param appName
+   * @param tableId
+   * @param rowId
+   */
+  public void resolveServerConflictTakeServerChangesWithId(OdkConnectionInterface db,
+      String appName, String tableId, String rowId) {
+
+    boolean inTransaction = false;
+    try {
+
+      inTransaction = db.inTransaction();
+      if ( !inTransaction ) {
+        db.beginTransactionNonExclusive();
+      }
+
+      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
+          appName, tableId);
+
+      // get both conflict records for this row.
+      // the local record is always before the server record (due to conflict_type values)
+      UserTable table = ODKDatabaseImplUtils.get().rawSqlQuery(db, appName, tableId, orderedColumns,
+          DataTableColumns.ID + "=?" +
+              " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
+          null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
+
+      if ( table.getNumberOfRows() != 2) {
+        throw new IllegalStateException(
+            "Did not find a server and local row when resolving conflicts for rowId: " + rowId);
+      }
+      Row localRow = table.getRowAtIndex(0);
+      Row serverRow = table.getRowAtIndex(1);
+
+      int localConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      int serverConflictType = Integer.parseInt(
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+
+      if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+          localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find local conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      if ( serverConflictType != ConflictType.SERVER_UPDATED_UPDATED_VALUES &&
+          serverConflictType != ConflictType.SERVER_DELETED_OLD_VALUES ) {
+        throw new IllegalStateException(
+            "Did not find server conflict row when resolving conflicts for rowId: " + rowId);
+      }
+
+      if ( serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+
+        // delete the record of the server row
+        ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+
+        // move the local record into the 'new_row' sync state
+        // so it can be physically deleted.
+        ODKDatabaseImplUtils.get().updateRowETagAndSyncState(db, tableId, rowId, null,
+            SyncState.new_row);
+
+        // and delete the local conflict and all of its associated attachments
+        ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
+
+      } else {
+        // update the local conflict record with the server's changes
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(DataTableColumns.ROW_ETAG,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG));
+        updateValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+        updateValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+        // take the server's metadata values too...
+        updateValues.put(DataTableColumns.FILTER_TYPE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_TYPE));
+        updateValues.put(DataTableColumns.FILTER_VALUE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_VALUE));
+        updateValues.put(DataTableColumns.FORM_ID,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.FORM_ID));
+        updateValues.put(DataTableColumns.LOCALE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.LOCALE));
+        updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE));
+        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
+        updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
+            serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
+
+        // take all the data values from the server...
+        for (String elementKey : orderedColumns.getRetentionColumnNames()) {
+          updateValues.put(elementKey, serverRow.getRawDataOrMetadataByElementKey(elementKey));
+        }
+
+        // determine whether we should flag this as pending files
+        // or whether it can transition directly to sync'd.
+        SyncState newState;
+        {
+          boolean hasUriFragments = false;
+          // we are collapsing to the server state. Examine the
+          // server row. Look at all the columns that may contain file
+          // attachments. If they do (non-null, non-empty), then
+          // set the hasUriFragments flag to true and break out of the loop.
+          //
+          // Set the resolved row to synced_pending_files if there are
+          // non-null, non-empty file attachments in the row. This
+          // ensures that we will pull down those attachments at the next
+          // sync.
+          for ( ColumnDefinition cd : orderedColumns.getColumnDefinitions() ) {
+            if (cd.getType().getDataType() != ElementDataType.rowpath) {
+              // not a file attachment
+              continue;
+            }
+            String v = serverRow.getRawDataOrMetadataByElementKey(cd.getElementKey());
+            if ( v != null && v.length() != 0 ) {
+              // non-null file attachment specified on server row
+              hasUriFragments = true;
+              break;
+            }
+          }
+          newState = hasUriFragments ? SyncState.synced_pending_files :
+              SyncState.synced;
+        }
+
+        // delete the record of the server row
+        ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+
+        // update local with server's changes
+        ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db,
+            tableId, orderedColumns, updateValues, rowId);
+
+        // move the local conflict back into the normal (null) state
+        ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
+            localConflictType);
+      }
+
+      if ( !inTransaction ) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if ( db != null ) {
+        if ( !inTransaction ) {
+          db.endTransaction();
+        }
+      }
+    }
+  }
 
   /**
    * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint

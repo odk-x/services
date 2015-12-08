@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.resolve.checkpoint;
+package org.opendatakit.resolve.views.components;
 
 /**
  * @author mitchellsundt@gmail.com
  */
-final class ResolveRowEntry {
-  final String rowId;
-  final String displayName;
+public final class ResolveRowEntry {
+  public final String rowId;
+  public final String displayName;
 
-  ResolveRowEntry(String rowId, String displayName) {
+  public ResolveRowEntry(String rowId, String displayName) {
     this.rowId = rowId;
     this.displayName = displayName;
   }

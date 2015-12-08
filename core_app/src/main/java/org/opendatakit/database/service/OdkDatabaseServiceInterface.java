@@ -1080,8 +1080,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       ODKDatabaseImplUtils.get().placeRowIntoServerConflictWithId(db, tableId, orderedColumns,
           cvValues, rowId, localRowConflictType);
-      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
-          appName, tableId, orderedColumns, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db, appName,
+          tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -1479,6 +1479,110 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         msg = e.toString();
       msg = "Exception: " + msg;
       WebLogger.getLogger(appName).e("resolveServerConflictWithDeleteRowWithId",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override public void resolveServerConflictTakeLocalRowWithId(String appName,
+      OdkDbHandle dbHandleName, String tableId, String rowId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.get()
+          .resolveServerConflictTakeLocalChangesWithId(db, appName, tableId, rowId);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("resolveServerConflictTakeLocalRowWithId",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(String appName,
+      OdkDbHandle dbHandleName, String tableId, ContentValues cvValues, String rowId)
+      throws  RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.get()
+          .resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(db,
+              appName, tableId, cvValues, rowId);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("resolveServerConflictTakeLocalRowWithId",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override public void resolveServerConflictTakeServerRowWithId(String appName,
+      OdkDbHandle dbHandleName, String tableId, String rowId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.get()
+          .resolveServerConflictTakeServerChangesWithId(db, appName, tableId, rowId);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("resolveServerConflictTakeServerRowWithId",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);

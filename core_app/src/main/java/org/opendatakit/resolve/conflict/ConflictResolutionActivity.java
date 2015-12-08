@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.resolve.checkpoint;
+package org.opendatakit.resolve.conflict;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -32,7 +32,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
 
 /**
- * An activity for handling checkpoint conflicts.
+ * An activity for handling server conflicts.
  * If an IntentConsts.INTENT_KEY_INSTANCE_ID is provided,
  * opens the row resolution fragment. Otherwise, opens
  * the list resolution fragment.
@@ -40,9 +40,9 @@ import org.opendatakit.core.R;
  * @author mitchellsundt@gmail.com
  *
  */
-public class CheckpointResolutionActivity extends Activity implements IAppAwareActivity {
+public class ConflictResolutionActivity extends Activity implements IAppAwareActivity {
 
-  private static final String TAG = CheckpointResolutionActivity.class.getSimpleName();
+  private static final String TAG = ConflictResolutionActivity.class.getSimpleName();
 
   public static final int RESOLVE_ROW = 1;
 
@@ -53,7 +53,7 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.checkpoint_resolver_activity);
+    setContentView(R.layout.conflict_resolver_activity);
 
     // IMPORTANT NOTE: the Application object is not yet created!
 
@@ -88,22 +88,22 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
     mRowId = getIntent().getStringExtra(IntentConsts.INTENT_KEY_INSTANCE_ID);
     if ( mRowId == null ) {
       // we want the list fragment
-      newFragmentName = CheckpointResolutionListFragment.NAME;
+      newFragmentName = ConflictResolutionListFragment.NAME;
       newFragment = mgr.findFragmentByTag(newFragmentName);
       if ( newFragment == null ) {
-        newFragment = new CheckpointResolutionListFragment();
+        newFragment = new ConflictResolutionListFragment();
       }
     } else {
       // we want the row fragment
-      newFragmentName = CheckpointResolutionRowFragment.NAME;
+      newFragmentName = ConflictResolutionRowFragment.NAME;
       newFragment = mgr.findFragmentByTag(newFragmentName);
       if ( newFragment == null ) {
-        newFragment = new CheckpointResolutionRowFragment();
+        newFragment = new ConflictResolutionRowFragment();
       }
     }
 
     FragmentTransaction trans = mgr.beginTransaction();
-    trans.replace(R.id.checkpoint_resolver_activity_view, newFragment, newFragmentName);
+    trans.replace(R.id.conflict_resolver_activity_view, newFragment, newFragmentName);
     trans.commit();
   }
   
@@ -136,7 +136,7 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
         newFragment = new AboutMenuFragment();
       }
       FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.checkpoint_resolver_activity_view, newFragment, AboutMenuFragment.NAME);
+      trans.replace(R.id.conflict_resolver_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 

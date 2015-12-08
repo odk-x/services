@@ -13,9 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.resolve.checkpoint;
+package org.opendatakit.resolve.conflict;
 
-import android.app.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ListFragment;
+import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,7 +31,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -37,20 +40,23 @@ import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.views.components.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  * @author mitchellsundt@gmail.com
  */
-public class CheckpointResolutionRowFragment extends ListFragment implements
+public class ConflictResolutionRowFragment extends ListFragment implements
     ConflictResolutionColumnListAdapter.UICallbacks,  LoaderManager
     .LoaderCallbacks<ResolveActionList>  {
 
-  private static final String TAG = "CheckpointResolutionRowFragment";
+  private static final String TAG = "ConflictResolutionRowFragment";
   private static final int RESOLVE_FIELD_LOADER = 0x03;
 
-  public static final String NAME = "CheckpointResolutionRowFragment";
-  public static final int ID = R.layout.checkpoint_resolver_field_list;
+  public static final String NAME = "ConflictResolutionRowFragment";
+  public static final int ID = R.layout.conflict_resolver_field_list;
 
   private static final String BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG =
       "showingLocalWithDeltasDialog";
@@ -67,9 +73,9 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
   private String mTableId;
   private String mRowId;
 
-  private Button mButtonTakeOldest;
-  private Button mButtonTakeNewest;
-  private Button mButtonTakeNewestWithDeltas;
+  private Button mButtonTakeServer;
+  private Button mButtonTakeLocal;
+  private Button mButtonTakeLocalWithDeltas;
 
   /**
    * The message to the user as to why they're getting extra options. Will be
@@ -78,181 +84,29 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
    * have to choose either to delete or to go ahead and actually restore and
    * then resolve it.
    */
-  private TextView mTextViewCheckpointOverviewMessage;
+  private TextView mTextViewConflictOverviewMessage;
 
-  private boolean mIsShowingTakeNewestWithDeltasDialog;
-  private boolean mIsShowingTakeNewestDialog;
-  private boolean mIsShowingTakeOldestDialog;
+  private boolean mIsShowingTakeLocalWithDeltasDialog;
+  private boolean mIsShowingTakeLocalDialog;
+  private boolean mIsShowingTakeServerDialog;
 
   private Map<String, String> mChosenValuesMap = new TreeMap<String, String>();
   private Map<String, Resolution> mUserResolutions = new TreeMap<String, Resolution>();
 
-  private class DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener implements
-      View.OnClickListener {
 
-    @Override
-    public void onClick(View v) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage(getString(R.string.checkpoint_take_newest_warning));
-      builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          mIsShowingTakeNewestDialog = false;
-          dialog.dismiss();
-          OdkConnectionInterface db = null;
-
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-          try {
-            // +1 referenceCount if db is returned (non-null)
-            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
-
-            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId
-                (db, mTableId, mRowId);
-            getActivity().setResult(Activity.RESULT_OK);
-          } catch (Exception e) {
-            String msg = e.getLocalizedMessage();
-            if (msg == null)
-              msg = e.getMessage();
-            if (msg == null)
-              msg = e.toString();
-            msg = "Exception: " + msg;
-            WebLogger.getLogger(mAppName).e("OdkResolveCheckpointRowLoader",
-                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-            WebLogger.getLogger(mAppName).printStackTrace(e);
-            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
-            getActivity().setResult(Activity.RESULT_CANCELED);
-          } finally {
-            if (db != null) {
-              // release the reference...
-              // this does not necessarily close the db handle
-              // or terminate any pending transaction
-              db.releaseReference();
-            }
-          }
-          getActivity().finish();
-          WebLogger.getLogger(mAppName).d(TAG, "update to checkpointed version");
-        }
-      });
-      builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          dialog.cancel();
-        }
-      });
-      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeNewestDialog = false;
-        }
-      });
-      mIsShowingTakeNewestDialog = true;
-      builder.create().show();
-    }
-
-  }
-
-  private class ApplyDeltasAndMarkNewestAsIncompleteRowClickListener implements
-      View.OnClickListener {
-
-    @Override
-    public void onClick(View v) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage(getString(R.string.checkpoint_take_newest_with_deltas_warning));
-      builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          mIsShowingTakeNewestWithDeltasDialog = false;
-          dialog.dismiss();
-          OdkConnectionInterface db = null;
-
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-          ContentValues values = new ContentValues();
-          for (Map.Entry<String, Resolution> entry : mUserResolutions.entrySet() ) {
-            if ( entry.getValue() == Resolution.SERVER ) {
-              values.put( entry.getKey(), mChosenValuesMap.get(entry.getKey()));
-            }
-          }
-
-          try {
-            // +1 referenceCount if db is returned (non-null)
-            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
-
-            // create a new checkpoint with the revisions
-            OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
-                mAppName, mTableId);
-            ODKDatabaseImplUtils.get().insertCheckpointRowIntoExistingDBTableWithId(db, mTableId,
-                orderedColumns, values, mRowId);
-
-            // and save that checkpoint as incomplete
-            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId
-                (db, mTableId, mRowId);
-            getActivity().setResult(Activity.RESULT_OK);
-          } catch (Exception e) {
-            String msg = e.getLocalizedMessage();
-            if (msg == null)
-              msg = e.getMessage();
-            if (msg == null)
-              msg = e.toString();
-            msg = "Exception: " + msg;
-            WebLogger.getLogger(mAppName).e("OdkResolveCheckpointRowLoader",
-                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-            WebLogger.getLogger(mAppName).printStackTrace(e);
-            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
-            getActivity().setResult(Activity.RESULT_CANCELED);
-          } finally {
-            if (db != null) {
-              // release the reference...
-              // this does not necessarily close the db handle
-              // or terminate any pending transaction
-              db.releaseReference();
-            }
-          }
-          getActivity().finish();
-          WebLogger.getLogger(mAppName).d(TAG, "update to checkpointed version with deltas");
-        }
-      });
-      builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          dialog.cancel();
-        }
-      });
-      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeNewestWithDeltasDialog = false;
-        }
-      });
-      mIsShowingTakeNewestWithDeltasDialog = true;
-      builder.create().show();
-    }
-
-  }
-
-  private class DiscardAllValuesAndDeleteRowClickListener implements View.OnClickListener {
+  private class DiscardChangesAndDeleteLocalListener implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
       // We should do a popup.
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage(getString(R.string.checkpoint_delete_warning));
+      builder.setMessage(getString(R.string.conflict_delete_local_confirmation_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-          mIsShowingTakeOldestDialog = false;
+          // delete all data (since it was deleted on the server and we accepted that)
+          mIsShowingTakeServerDialog = false;
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
@@ -263,7 +117,9 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteInExistingDbTableWithId(db,
+                mAppName, mTableId, mRowId);
+
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
             String msg = e.getLocalizedMessage();
@@ -272,7 +128,81 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             if (msg == null)
               msg = e.toString();
             msg = "Exception: " + msg;
-            WebLogger.getLogger(mAppName).e("OdkResolveCheckpointRowLoader",
+            WebLogger.getLogger(mAppName).e("ConflictResolveListener",
+                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+            WebLogger.getLogger(mAppName).printStackTrace(e);
+            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
+            getActivity().setResult(Activity.RESULT_CANCELED);
+          } finally {
+            if (db != null) {
+              // release the reference...
+              // this does not necessarily close the db handle
+              // or terminate any pending transaction
+              db.releaseReference();
+            }
+          }
+          getActivity().finish();
+          WebLogger.getLogger(mAppName).d(TAG, "delete local row (apply server delete)");
+        }
+      });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          dialog.cancel();
+        }
+      });
+      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          mIsShowingTakeServerDialog = false;
+          dialog.dismiss();
+        }
+      });
+      mIsShowingTakeServerDialog = true;
+      builder.create().show();
+    }
+  }
+
+  private class SetRowToDeleteOnServerListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      // We should do a popup.
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setMessage(getString(R.string.conflict_delete_on_server_confirmation_warning));
+      builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          // We're going to discard the local changes by acting as if
+          // takeServer was pressed. Then we're going to flag row as
+          // deleted.
+          mIsShowingTakeLocalDialog = false;
+          dialog.dismiss();
+          OdkConnectionInterface db = null;
+
+          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+          try {
+            // +1 referenceCount if db is returned (non-null)
+            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+                .getConnection(mAppName, dbHandleName);
+
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesWithId(db,
+                mAppName, mTableId, mRowId);
+
+            getActivity().setResult(Activity.RESULT_OK);
+          } catch (Exception e) {
+            String msg = e.getLocalizedMessage();
+            if (msg == null)
+              msg = e.getMessage();
+            if (msg == null)
+              msg = e.toString();
+            msg = "Exception: " + msg;
+            WebLogger.getLogger(mAppName).e("ConflictResolveListener",
                 mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
             WebLogger.getLogger(mAppName).printStackTrace(e);
             Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
@@ -287,7 +217,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           }
           getActivity().finish();
           WebLogger.getLogger(mAppName).d(TAG,
-              "delete row (no prior save-as incomplete or complete)");
+              "mark local row as deleted (removal on next sync to server)");
         }
       });
       builder.setCancelable(true);
@@ -302,34 +232,68 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeOldestDialog = false;
+          mIsShowingTakeLocalDialog = false;
           dialog.dismiss();
         }
       });
-      mIsShowingTakeOldestDialog = true;
+      mIsShowingTakeLocalDialog = true;
       builder.create().show();
     }
   }
 
-  private class DiscardNewerValuesAndRetainOldestInOriginalStateRowClickListener implements
-      View.OnClickListener {
+  private class ApplyDeltasAndTakeLocalClickListener implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage(getString(R.string.checkpoint_take_oldest_warning));
+      builder.setMessage(getString(R.string.conflict_take_local_with_deltas_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-          mIsShowingTakeOldestDialog = false;
+          mIsShowingTakeLocalDialog = false;
           dialog.dismiss();
+          OdkConnectionInterface db = null;
 
-          discardAllCheckpointChanges();
+          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          try {
+            // +1 referenceCount if db is returned (non-null)
+            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+                .getConnection(mAppName, dbHandleName);
+
+            // this is overkill, as we only need to pull the server values that were selected.
+            ContentValues updateValues = new ContentValues();
+            for (Map.Entry<String, Resolution> entry : mUserResolutions.entrySet() ) {
+              updateValues.put( entry.getKey(), mChosenValuesMap.get(entry.getKey()));
+            }
+
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(
+                db, mAppName, mTableId, updateValues, mRowId);
+
+            getActivity().setResult(Activity.RESULT_OK);
+          } catch (Exception e) {
+            String msg = e.getLocalizedMessage();
+            if (msg == null)
+              msg = e.getMessage();
+            if (msg == null)
+              msg = e.toString();
+            msg = "Exception: " + msg;
+            WebLogger.getLogger(mAppName).e("ConflictResolveListener",
+                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+            WebLogger.getLogger(mAppName).printStackTrace(e);
+            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
+            getActivity().setResult(Activity.RESULT_CANCELED);
+          } finally {
+            if (db != null) {
+              // release the reference...
+              // this does not necessarily close the db handle
+              // or terminate any pending transaction
+              db.releaseReference();
+            }
+          }
           getActivity().finish();
-          WebLogger.getLogger(mAppName).d(TAG,
-              "delete the checkpoint and restore to older version");
+          WebLogger.getLogger(mAppName).d(TAG, "update to local with deltas version");
         }
       });
       builder.setCancelable(true);
@@ -344,19 +308,156 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeOldestDialog = false;
-          dialog.dismiss();
+          mIsShowingTakeLocalDialog = false;
         }
       });
-      mIsShowingTakeOldestDialog = true;
+      mIsShowingTakeLocalDialog = true;
       builder.create().show();
     }
+
   }
 
-  /**
-   * Sets the Activity result to OK (if successful) or CANCELLED (if an error)
-   */
-  private void discardAllCheckpointChanges() {
+  private class TakeLocalClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setMessage(getString(R.string.conflict_take_local_warning));
+      builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          mIsShowingTakeLocalDialog = false;
+          dialog.dismiss();
+          OdkConnectionInterface db = null;
+
+          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+          try {
+            // +1 referenceCount if db is returned (non-null)
+            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+                .getConnection(mAppName, dbHandleName);
+
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesWithId(db,
+                mAppName, mTableId, mRowId);
+
+            getActivity().setResult(Activity.RESULT_OK);
+          } catch (Exception e) {
+            String msg = e.getLocalizedMessage();
+            if (msg == null)
+              msg = e.getMessage();
+            if (msg == null)
+              msg = e.toString();
+            msg = "Exception: " + msg;
+            WebLogger.getLogger(mAppName).e("ConflictResolveListener",
+                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+            WebLogger.getLogger(mAppName).printStackTrace(e);
+            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
+            getActivity().setResult(Activity.RESULT_CANCELED);
+          } finally {
+            if (db != null) {
+              // release the reference...
+              // this does not necessarily close the db handle
+              // or terminate any pending transaction
+              db.releaseReference();
+            }
+          }
+          getActivity().finish();
+          WebLogger.getLogger(mAppName).d(TAG, "update to local version");
+        }
+      });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          dialog.cancel();
+        }
+      });
+      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          mIsShowingTakeLocalDialog = false;
+        }
+      });
+      mIsShowingTakeLocalDialog = true;
+      builder.create().show();
+    }
+
+  }
+
+  private class TakeServerClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setMessage(getString(R.string.conflict_take_server_warning));
+      builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          mIsShowingTakeServerDialog = false;
+          dialog.dismiss();
+          OdkConnectionInterface db = null;
+
+          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+          try {
+            // +1 referenceCount if db is returned (non-null)
+            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+                .getConnection(mAppName, dbHandleName);
+
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db,
+                mAppName, mTableId, mRowId);
+
+            getActivity().setResult(Activity.RESULT_OK);
+          } catch (Exception e) {
+            String msg = e.getLocalizedMessage();
+            if (msg == null)
+              msg = e.getMessage();
+            if (msg == null)
+              msg = e.toString();
+            msg = "Exception: " + msg;
+            WebLogger.getLogger(mAppName).e("ConflictResolveListener",
+                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+            WebLogger.getLogger(mAppName).printStackTrace(e);
+            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
+            getActivity().setResult(Activity.RESULT_CANCELED);
+          } finally {
+            if (db != null) {
+              // release the reference...
+              // this does not necessarily close the db handle
+              // or terminate any pending transaction
+              db.releaseReference();
+            }
+          }
+          getActivity().finish();
+          WebLogger.getLogger(mAppName).d(TAG, "update to server version");
+        }
+      });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          dialog.cancel();
+        }
+      });
+      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          mIsShowingTakeServerDialog = false;
+        }
+      });
+      mIsShowingTakeServerDialog = true;
+      builder.create().show();
+    }
+
+  }
+
+  private void discardAllLocalChanges() {
     OdkConnectionInterface db = null;
 
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
@@ -366,8 +467,9 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
-      getActivity().setResult(Activity.RESULT_OK);
+      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db, mAppName,
+          mTableId, mRowId);
+
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -375,11 +477,11 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(mAppName).e("OdkResolveCheckpointRowLoader",
+      WebLogger.getLogger(mAppName).e("OdkResolveConflictRowLoader",
           mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(mAppName).printStackTrace(e);
-      Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
-      getActivity().setResult(Activity.RESULT_CANCELED);
+      Toast.makeText(getActivity(), "database access failure",
+          Toast.LENGTH_LONG).show();
     } finally {
       if (db != null) {
         // release the reference...
@@ -393,9 +495,10 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG, mIsShowingTakeNewestWithDeltasDialog);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG, mIsShowingTakeNewestDialog);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG, mIsShowingTakeOldestDialog);
+    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG,
+        mIsShowingTakeLocalWithDeltasDialog);
+    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG, mIsShowingTakeLocalDialog);
+    outState.putBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG, mIsShowingTakeServerDialog);
     // We also need to save the chosen values and decisions so
     // that we don't lose information if they rotate the screen.
     if (mChosenValuesMap.size() != mUserResolutions.size()) {
@@ -434,14 +537,14 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
     }
 
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG)) {
-      mIsShowingTakeNewestWithDeltasDialog = savedInstanceState.getBoolean
+      mIsShowingTakeLocalWithDeltasDialog = savedInstanceState.getBoolean
           (BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG);
     }
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
-      mIsShowingTakeNewestDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
+      mIsShowingTakeLocalDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
     }
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_SERVER_DIALOG)) {
-      mIsShowingTakeOldestDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG);
+      mIsShowingTakeServerDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG);
     }
     String[] valueKeys = savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
     String[] chosenValues = savedInstanceState.getStringArray(BUNDLE_KEY_CHOSEN_VALUES);
@@ -501,22 +604,23 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
     // render total instance view
     mAdapter = new ConflictResolutionColumnListAdapter(getActivity(), mAppName,
-        R.string.checkpoint_radio_local, R.string.checkpoint_radio_server, this);
+        R.string.conflict_radio_local, R.string.conflict_radio_server, this);
 
     setListAdapter(mAdapter);
 
     getLoaderManager().initLoader(RESOLVE_FIELD_LOADER, null, this);
+
   }
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     View view = inflater.inflate(ID, container, false);
 
-    this.mTextViewCheckpointOverviewMessage =
-        (TextView) view.findViewById(R.id.checkpoint_overview_message);
-    this.mButtonTakeOldest = (Button) view.findViewById(R.id.take_oldest);
-    this.mButtonTakeNewest = (Button) view.findViewById(R.id.take_newest);
-    this.mButtonTakeNewestWithDeltas = (Button) view.findViewById(R.id.take_newest_with_deltas);
+    this.mTextViewConflictOverviewMessage =
+        (TextView) view.findViewById(R.id.conflict_overview_message);
+    this.mButtonTakeServer = (Button) view.findViewById(R.id.take_server);
+    this.mButtonTakeLocal = (Button) view.findViewById(R.id.take_local);
+    this.mButtonTakeLocalWithDeltas = (Button) view.findViewById(R.id.take_local_with_deltas);
 
     return view;
   }
@@ -538,10 +642,10 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
   @Override public void onDecisionMade() {
     if ( mUserResolutions.size() != mAdapter.getConflictCount() ) {
-      mIsShowingTakeNewestWithDeltasDialog = false;
-      mButtonTakeNewestWithDeltas.setEnabled(false);
+      mIsShowingTakeLocalWithDeltasDialog = false;
+      mButtonTakeLocalWithDeltas.setEnabled(false);
     } else {
-      mButtonTakeNewestWithDeltas.setEnabled(true);
+      mButtonTakeLocalWithDeltas.setEnabled(true);
     }
 
     // set the listview enabled in case it'd been down due to deletion resolution.
@@ -551,9 +655,9 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
   @Override
   public Loader<ResolveActionList> onCreateLoader(int id, Bundle args) {
-    // Now create and return a OdkResolveCheckpointRowLoader that will take care of
-    // creating an ArrayList<ResolveRowEntry> for the data being displayed.
-    return new OdkResolveCheckpointFieldLoader(getActivity(), mAppName, mTableId, mRowId);
+    // Now create and return a OdkResolveConflictFieldLoader that will take care of
+    // creating an ResolveActionList for the data being displayed.
+    return new OdkResolveConflictFieldLoader(getActivity(), mAppName, mTableId, mRowId);
   }
 
   @Override
@@ -570,9 +674,10 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       return;
     }
 
-    if ( resolveFieldEntryArrayList.noChangesInUserDefinedFieldValues() ) {
-      // don't even prompt -- just remove the checkpoint
-      discardAllCheckpointChanges();
+    if ( resolveFieldEntryArrayList.noChangesInUserDefinedFieldValues() ){
+      // don't even prompt -- just remove the conflict
+      discardAllLocalChanges();
+      getActivity().setResult(Activity.RESULT_OK);
       getActivity().finish();
       return;
     }
@@ -592,56 +697,68 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       throw new IllegalStateException("Unexpectedly found no view!");
     }
 
-    this.mButtonTakeNewest
-        .setOnClickListener(new DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener());
+    if (resolveFieldEntryArrayList.localConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+        resolveFieldEntryArrayList.serverConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+      // Then it's a normal conflict. Hide the elements of the view relevant
+      // to deletion restoration.
+      this.mTextViewConflictOverviewMessage.setText(getString(R.string.conflict_resolve_or_choose));
 
-    if (resolveFieldEntryArrayList.actionType != ResolveActionType.DELETE) {
-      this.mButtonTakeOldest
-          .setOnClickListener(new DiscardNewerValuesAndRetainOldestInOriginalStateRowClickListener());
-      if (resolveFieldEntryArrayList.actionType == ResolveActionType.RESTORE_TO_COMPLETE) {
-        this.mTextViewCheckpointOverviewMessage
-            .setText(getString(R.string.checkpoint_restore_complete_or_take_newest));
-        this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_finalized));
-      } else {
-        this.mTextViewCheckpointOverviewMessage
-            .setText(getString(R.string.checkpoint_restore_incomplete_or_take_newest));
-        this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_incomplete));
-      }
-    } else {
-      this.mButtonTakeOldest.setOnClickListener(new DiscardAllValuesAndDeleteRowClickListener());
-      this.mTextViewCheckpointOverviewMessage
-          .setText(getString(R.string.checkpoint_remove_or_take_newest));
-      this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_remove));
+      this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
+      this.mButtonTakeLocal.setText(getString(R.string.conflict_take_local_updates));
+      this.mButtonTakeServer.setOnClickListener(new TakeServerClickListener());
+      this.mButtonTakeServer.setText(getString(R.string.conflict_take_server_updates));
+    } else if (
+        resolveFieldEntryArrayList.localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+        resolveFieldEntryArrayList.serverConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+      // Then the local row was deleted, but someone had inserted a newer
+      // updated version on the server.
+      this.mTextViewConflictOverviewMessage
+          .setText(getString(R.string.conflict_local_was_deleted_explanation));
+      this.mButtonTakeServer.setOnClickListener(new TakeServerClickListener());
+      this.mButtonTakeServer.setText(getString(R.string.conflict_restore_with_server_changes));
+      this.mButtonTakeLocal.setOnClickListener(new SetRowToDeleteOnServerListener());
+      this.mButtonTakeLocal.setText(getString(R.string.conflict_enforce_local_delete));
+    } else if (
+        resolveFieldEntryArrayList.localConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+        resolveFieldEntryArrayList.serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) {
+      // Then the row was updated locally but someone had deleted it on the
+      // server.
+      this.mTextViewConflictOverviewMessage
+          .setText(getString(R.string.conflict_server_was_deleted_explanation));
+      this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
+      this.mButtonTakeLocal.setText(getString(R.string.conflict_restore_with_local_changes));
+      this.mButtonTakeServer.setText(getString(R.string.conflict_apply_delete_from_server));
+      this.mButtonTakeServer.setOnClickListener(new DiscardChangesAndDeleteLocalListener());
     }
 
     // hide the deltas button if it doesn't make sense
     if ( resolveFieldEntryArrayList.hideDeltasButton() ) {
-      mButtonTakeNewestWithDeltas.setVisibility(View.GONE);
+      mButtonTakeLocalWithDeltas.setVisibility(View.GONE);
     } else {
-      mButtonTakeNewestWithDeltas.setVisibility(View.VISIBLE);
-      mButtonTakeNewestWithDeltas
-          .setOnClickListener(new ApplyDeltasAndMarkNewestAsIncompleteRowClickListener());
+      mButtonTakeLocalWithDeltas.setVisibility(View.VISIBLE);
+      mButtonTakeLocalWithDeltas
+          .setOnClickListener(new ApplyDeltasAndTakeLocalClickListener());
     }
 
     // enable or disable the deltas button based upon whether the user has
     // made all the necessary discrepancy choices.
     if ( mUserResolutions.size() != resolveFieldEntryArrayList.conflictColumns.size() ) {
-      mIsShowingTakeNewestWithDeltasDialog = false;
-      mButtonTakeNewestWithDeltas.setEnabled(false);
+      mIsShowingTakeLocalWithDeltasDialog = false;
+      mButtonTakeLocalWithDeltas.setEnabled(false);
     } else {
-      mButtonTakeNewestWithDeltas.setEnabled(true);
+      mButtonTakeLocalWithDeltas.setEnabled(true);
     }
 
     // restore whatever dialog is visible
-    if ( mIsShowingTakeNewestWithDeltasDialog ) {
-      mButtonTakeNewestWithDeltas.performClick();
+    if (mIsShowingTakeLocalWithDeltasDialog) {
+      mButtonTakeLocalWithDeltas.performClick();
     }
-    if ( mIsShowingTakeNewestDialog ) {
-      mButtonTakeNewest.performClick();
+    if (mIsShowingTakeLocalDialog) {
+      mButtonTakeLocal.performClick();
     }
 
-    if ( mIsShowingTakeOldestDialog ) {
-      mButtonTakeOldest.performClick();
+    if (mIsShowingTakeServerDialog) {
+      mButtonTakeServer.performClick();
     }
     // TODO: is this needed, or does it trigger an unnecessary refresh?
     mAdapter.notifyDataSetChanged();

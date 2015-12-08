@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.resolve.checkpoint;
+package org.opendatakit.resolve.conflict;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -43,14 +43,14 @@ import java.util.UUID;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class CheckpointResolutionListFragment extends ListFragment implements LoaderManager
+public class ConflictResolutionListFragment extends ListFragment implements LoaderManager
     .LoaderCallbacks<ArrayList<ResolveRowEntry>> {
 
-  private static final String TAG = "CheckpointResolutionListFragment";
+  private static final String TAG = "ConflictResolutionListFragment";
   private static final int RESOLVE_ROW_LOADER = 0x02;
 
-  public static final String NAME = "CheckpointResolutionListFragment";
-  public static final int ID = R.layout.checkpoint_resolver_chooser_list;
+  public static final String NAME = "ConflictResolutionListFragment";
+  public static final int ID = R.layout.conflict_resolver_chooser_list;
 
   private String mAppName;
   private String mTableId;
@@ -86,22 +86,22 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     View view = inflater.inflate(ID, container, false);
-    Button buttonTakeAllOldest = (Button) view.findViewById(R.id.take_all_oldest);
-    Button buttonTakeAllNewest = (Button) view.findViewById(R.id.take_all_newest);
-    buttonTakeAllNewest.setOnClickListener(new View.OnClickListener() {
+    Button buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
+    Button buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
+    buttonTakeAllLocal.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        takeAllNewest();
+        takeAllLocal();
       }
     });
-    buttonTakeAllOldest.setOnClickListener(new View.OnClickListener() {
+    buttonTakeAllServer.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        takeAllOldest();
+        takeAllServer();
       }
     });
     return view;
   }
 
-  private void takeAllNewest() {
+  private void takeAllLocal() {
     if ( mAdapter == null ) return;
 
     OdkConnectionInterface db = null;
@@ -115,44 +115,46 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
-        ResolveRowEntry entry = mAdapter.getItem(i);
-        try {
-          ODKDatabaseImplUtils.get()
-              .saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, mTableId, entry.rowId);
-        } catch (Exception e) {
-          String msg = e.getLocalizedMessage();
-          if (msg == null)
-            msg = e.getMessage();
-          if (msg == null)
-            msg = e.toString();
-          msg = "Exception: " + msg;
-          WebLogger.getLogger(mAppName).e("takeAllNewest",
-              mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-          WebLogger.getLogger(mAppName).printStackTrace(e);
+    for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
+      ResolveRowEntry entry = mAdapter.getItem(i);
+      try {
 
-          if (exceptions == null) {
-            exceptions = new StringBuilder();
-          } else {
-            exceptions.append("\n");
-          }
-          exceptions.append(msg);
+        ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesWithId(db,
+            mAppName, mTableId, entry.rowId);
 
-          // and to be sure, try to release this database connection and create a new one...
-          OdkConnectionInterface dbOld = db;
-          db = null;
+      } catch (Exception e) {
+        String msg = e.getLocalizedMessage();
+        if (msg == null)
+          msg = e.getMessage();
+        if (msg == null)
+          msg = e.toString();
+        msg = "Exception: " + msg;
+        WebLogger.getLogger(mAppName).e("takeAllLocal",
+            mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+        WebLogger.getLogger(mAppName).printStackTrace(e);
 
-          dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-          if ( dbOld != null ) {
-            dbOld.releaseReference();
-          }
-
-          // +1 referenceCount if db is returned (non-null)
-          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(mAppName, dbHandleName);
+        if (exceptions == null) {
+          exceptions = new StringBuilder();
+        } else {
+          exceptions.append("\n");
         }
+        exceptions.append(msg);
+
+        // and to be sure, try to release this database connection and create a new one...
+        OdkConnectionInterface dbOld = db;
+        db = null;
+
+        dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+        if ( dbOld != null ) {
+          dbOld.releaseReference();
+        }
+
+        // +1 referenceCount if db is returned (non-null)
+        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+            .getConnection(mAppName, dbHandleName);
       }
+    }
 
     } finally {
       if (db != null) {
@@ -169,7 +171,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
   }
 
-  private void takeAllOldest() {
+  private void takeAllServer() {
     if ( mAdapter == null ) return;
 
     OdkConnectionInterface db = null;
@@ -186,7 +188,10 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
         ResolveRowEntry entry = mAdapter.getItem(i);
         try {
-          ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, entry.rowId);
+
+          ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db,
+              mAppName, mTableId, entry.rowId);
+
         } catch (Exception e) {
           String msg = e.getLocalizedMessage();
           if (msg == null)
@@ -194,7 +199,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
           if (msg == null)
             msg = e.toString();
           msg = "Exception: " + msg;
-          WebLogger.getLogger(mAppName).e("takeAllOldest",
+          WebLogger.getLogger(mAppName).e("takeAllServer",
               mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
           WebLogger.getLogger(mAppName).printStackTrace(e);
 
@@ -246,18 +251,18 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   }
 
   private void launchRowResolution(ResolveRowEntry e) {
-    Intent i = new Intent(getActivity(), CheckpointResolutionActivity.class);
+    Intent i = new Intent(getActivity(), ConflictResolutionActivity.class);
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
     i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, mTableId);
     i.putExtra(IntentConsts.INTENT_KEY_INSTANCE_ID, e.rowId);
-    this.startActivityForResult(i, CheckpointResolutionActivity.RESOLVE_ROW);
+    this.startActivityForResult(i, ConflictResolutionActivity.RESOLVE_ROW);
   }
 
   @Override
   public Loader<ArrayList<ResolveRowEntry>> onCreateLoader(int id, Bundle args) {
     // Now create and return a OdkResolveCheckpointRowLoader that will take care of
     // creating an ArrayList<ResolveRowEntry> for the data being displayed.
-    return new OdkResolveCheckpointRowLoader(getActivity(), mAppName, mTableId);
+    return new OdkResolveConflictRowLoader(getActivity(), mAppName, mTableId);
   }
 
   @Override
@@ -280,6 +285,8 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       throw new IllegalStateException("Unexpectedly found no view!");
     }
 
+
+    // TODO: is this needed, or does it trigger an unnecessary refresh?
     mAdapter.notifyDataSetChanged();
   }
 

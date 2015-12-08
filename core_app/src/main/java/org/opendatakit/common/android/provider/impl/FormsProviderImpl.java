@@ -219,13 +219,6 @@ public abstract class FormsProviderImpl extends ContentProvider {
     values.remove(FormsColumns.JSON_MD5_HASH);
     FormSpec formSpec = patchUpValues(appName, values);
 
-    if (values.containsKey(FormsColumns.DISPLAY_SUBTEXT) == false) {
-      Date today = new Date();
-      String ts = new SimpleDateFormat(getContext().getString(R.string.added_on_date_at_time),
-                                       Locale.getDefault()).format(today);
-      values.put(FormsColumns.DISPLAY_SUBTEXT, ts);
-    }
-
     // first try to see if a record with this filename already exists...
     String[] projection = { FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
     String selection = FormsColumns.TABLE_ID + "=? AND " + FormsColumns.FORM_ID + "=?";
@@ -687,12 +680,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
                 // don't insert the PK
                 continue;
               }
-              if ( colName.equals(FormsColumns.DISPLAY_SUBTEXT) && 
-                   cv.containsKey(FormsColumns.DISPLAY_SUBTEXT) ) {
-                // allow user to specify their own values
-                continue;
-              }
-              
+
               // everything else, we control...
               Class<?> dataType = ODKCursorUtils.getIndexDataType(c, idx);
               if ( dataType == String.class ) {
@@ -726,15 +714,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
         FormSpec fs = e.getKey();
         ContentValues cv = e.getValue();
         
-        // Make sure that the necessary fields are all set
-        if (cv.containsKey(FormsColumns.DATE) == true) {
-          Date today = new Date();
-          String ts = new SimpleDateFormat(getContext().getString(R.string.added_on_date_at_time),
-                                           Locale.getDefault()).format(today);
-          cv.put(FormsColumns.DISPLAY_SUBTEXT, ts);
-        }
-  
-        if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv, 
+        if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv,
             FormsColumns._ID + "=?", new String[] { fs._id }) > 0 ) {
           fs.success = true;
         }

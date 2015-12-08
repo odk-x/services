@@ -58,7 +58,6 @@ public class FormInfo {
   public final String appName;
   public final String tableId;
   public final String formTitle;
-  public final String displaySubtext;
   public final String defaultLocale; // default locale
   public final String instanceName;  // column containing instance name for display
 
@@ -101,8 +100,6 @@ public class FormInfo {
 
       if (FormsColumns.DISPLAY_NAME.equals(s)) {
         ret[i] = formTitle;
-      } else if (FormsColumns.DISPLAY_SUBTEXT.equals(s)) {
-        ret[i] = displaySubtext;
       } else if (FormsColumns.TABLE_ID.equals(s)) {
         ret[i] = tableId;
       } else if (FormsColumns.FORM_ID.equals(s)) {
@@ -147,7 +144,6 @@ public class FormInfo {
     settings = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.SETTINGS));
     formVersion = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_VERSION));
     formTitle = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_NAME));
-    displaySubtext = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_SUBTEXT));
     defaultLocale = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DEFAULT_FORM_LOCALE));
     instanceName = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.INSTANCE_NAME));
 
@@ -349,10 +345,6 @@ public class FormInfo {
 
     lastModificationDate = formDefFile.lastModified();
     fileLength = formDefFile.length();
-    
-    String ts = new SimpleDateFormat(c.getString(R.string.added_on_date_at_time),
-        Locale.getDefault()).format(lastModificationDate);
-    displaySubtext = ts;
   }
 
 }
