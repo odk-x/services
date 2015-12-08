@@ -672,6 +672,13 @@ interface OdkDbInterface {
       in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
 
   /**
+   * TODO: Remove this
+   * TODO: Remove this
+   * TODO: Remove this
+   * TODO: Remove this
+   * TODO: Remove this
+   * TODO: Remove this
+   *
    * Updates the local record with the appropriate changes to resolve a server conflict.
    *
    * A combination of primitive actions, all performed in one transaction:
@@ -725,6 +732,49 @@ interface OdkDbInterface {
    * @param rowId
    */
   void resolveServerConflictWithDeleteRowWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId,
+  	    in String rowId);
+
+  /**
+   * Resolve the server conflict by taking the local changes.
+   * If the local changes are to delete this record, the record will be deleted
+   * upon the next successful sync.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void resolveServerConflictTakeLocalRowWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId,
+  	    in String rowId);
+
+  /**
+   * Resolve the server conflict by taking the local changes plus a value map
+   * of select server field values.  This map should not update any metadata
+   * fields -- it should just contain user data fields.
+   *
+   * It is an error to call this if the local change is to delete the row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param cvValues
+   * @param rowId
+   */
+  void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId, in ContentValues cvValues,
+  	    in String rowId);
+
+  /**
+   * Resolve the server conflict by taking the server changes.  This may delete the local row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void resolveServerConflictTakeServerRowWithId(in String appName,
         in OdkDbHandle dbHandleName, in String tableId,
   	    in String rowId);
 
