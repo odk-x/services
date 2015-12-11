@@ -3,8 +3,11 @@
     
     <string name="app_name">ODK Library</string>
 	<string name="app_userLabel">OpenDataKit</string>
-	
-	<string name="webkit_permission_tree">Open Data Kit WebServer</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="webkit_permission_tree">Open Data Kit WebServer</string>
 	<string name="webkit_launch_permission">Launch WebServer</string>
 	<string name="database_launch_permission">Launch Database</string>
 	<string name="dbshim_launch_permission">Launch DbShim</string>
