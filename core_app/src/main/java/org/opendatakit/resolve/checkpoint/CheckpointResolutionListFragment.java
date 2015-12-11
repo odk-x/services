@@ -16,11 +16,13 @@
 package org.opendatakit.resolve.checkpoint;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,10 +33,14 @@ import android.widget.Toast;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.fragment.ProgressDialogFragment;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.listener.ResolutionListener;
+import org.opendatakit.resolve.task.CheckpointResolutionListTask;
+import org.opendatakit.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
@@ -44,7 +50,7 @@ import java.util.UUID;
  * @author mitchellsundt@gmail.com
  */
 public class CheckpointResolutionListFragment extends ListFragment implements LoaderManager
-    .LoaderCallbacks<ArrayList<ResolveRowEntry>> {
+    .LoaderCallbacks<ArrayList<ResolveRowEntry>>, ResolutionListener {
 
   private static final String TAG = "CheckpointResolutionListFragment";
   private static final int RESOLVE_ROW_LOADER = 0x02;
@@ -52,9 +58,23 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   public static final String NAME = "CheckpointResolutionListFragment";
   public static final int ID = R.layout.checkpoint_resolver_chooser_list;
 
+  private static final String PROGRESS_DIALOG_TAG = "progressDialog";
+
+  private static enum DialogState {
+    Progress, Alert, None
+  };
+
+  /**
+   * The license reader task. Once this completes, we never re-run it.
+   */
+  private static CheckpointResolutionListTask checkpointResolutionListTask = null;
+
   private String mAppName;
   private String mTableId;
   private ArrayAdapter<ResolveRowEntry> mAdapter;
+
+  private Handler handler = new Handler();
+  private ProgressDialogFragment progressDialog = null;
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -101,139 +121,19 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     return view;
   }
 
+  @Override
+  public void onResume() {
+    showProgressDialog();
+  }
+
   private void takeAllNewest() {
     if ( mAdapter == null ) return;
-
-    OdkConnectionInterface db = null;
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-    StringBuilder exceptions = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
-
-      for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
-        ResolveRowEntry entry = mAdapter.getItem(i);
-        try {
-          ODKDatabaseImplUtils.get()
-              .saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, mTableId, entry.rowId);
-        } catch (Exception e) {
-          String msg = e.getLocalizedMessage();
-          if (msg == null)
-            msg = e.getMessage();
-          if (msg == null)
-            msg = e.toString();
-          msg = "Exception: " + msg;
-          WebLogger.getLogger(mAppName).e("takeAllNewest",
-              mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-          WebLogger.getLogger(mAppName).printStackTrace(e);
-
-          if (exceptions == null) {
-            exceptions = new StringBuilder();
-          } else {
-            exceptions.append("\n");
-          }
-          exceptions.append(msg);
-
-          // and to be sure, try to release this database connection and create a new one...
-          OdkConnectionInterface dbOld = db;
-          db = null;
-
-          dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-          if ( dbOld != null ) {
-            dbOld.releaseReference();
-          }
-
-          // +1 referenceCount if db is returned (non-null)
-          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(mAppName, dbHandleName);
-        }
-      }
-
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-
-      if ( exceptions != null ) {
-        Toast.makeText(getActivity(), exceptions.toString(), Toast.LENGTH_LONG).show();
-      }
-    }
-    getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
+    resolveConflictList(true);
   }
 
   private void takeAllOldest() {
     if ( mAdapter == null ) return;
-
-    OdkConnectionInterface db = null;
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-    StringBuilder exceptions = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
-
-      for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
-        ResolveRowEntry entry = mAdapter.getItem(i);
-        try {
-          ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, entry.rowId);
-        } catch (Exception e) {
-          String msg = e.getLocalizedMessage();
-          if (msg == null)
-            msg = e.getMessage();
-          if (msg == null)
-            msg = e.toString();
-          msg = "Exception: " + msg;
-          WebLogger.getLogger(mAppName).e("takeAllOldest",
-              mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-          WebLogger.getLogger(mAppName).printStackTrace(e);
-
-          if (exceptions == null) {
-            exceptions = new StringBuilder();
-          } else {
-            exceptions.append("\n");
-          }
-          exceptions.append(msg);
-
-          // and to be sure, try to release this database connection and create a new one...
-          OdkConnectionInterface dbOld = db;
-          db = null;
-
-          dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
-
-          if ( dbOld != null ) {
-            dbOld.releaseReference();
-          }
-
-          // +1 referenceCount if db is returned (non-null)
-          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(mAppName, dbHandleName);
-        }
-      }
-
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-
-      if ( exceptions != null ) {
-        Toast.makeText(getActivity(), exceptions.toString(), Toast.LENGTH_LONG).show();
-      }
-    }
-    getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
+    this.resolveConflictList(false);
   }
 
   @Override
@@ -242,7 +142,11 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     ResolveRowEntry e = mAdapter.getItem(position);
     WebLogger.getLogger(mAppName).e(TAG,
         "[onListItemClick] clicked position: " + position + " rowId: " + e.rowId);
-    launchRowResolution(e);
+    if ( checkpointResolutionListTask != null ) {
+      launchRowResolution(e);
+    } else {
+      Toast.makeText(getActivity(), R.string.resolver_already_active, Toast.LENGTH_LONG).show();
+    }
   }
 
   private void launchRowResolution(ResolveRowEntry e) {
@@ -291,4 +195,117 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     mAdapter.clear();
   }
 
+  @Override public void onDestroy() {
+    if ( checkpointResolutionListTask != null ) {
+      checkpointResolutionListTask.clearResolutionListener(null);
+    }
+    super.onDestroy();
+  }
+
+  private void resolveConflictList(boolean takeNewest) {
+    if (mAdapter.getCount() > 0) {
+      if (checkpointResolutionListTask == null) {
+        checkpointResolutionListTask = new CheckpointResolutionListTask(getActivity(), takeNewest);
+        checkpointResolutionListTask.setAppName(mAppName);
+        checkpointResolutionListTask.setTableId(mTableId);
+        checkpointResolutionListTask.setResolveRowEntryAdapter(mAdapter);
+        checkpointResolutionListTask.setResolutionListener(this);
+        checkpointResolutionListTask.execute();
+      } else {
+        checkpointResolutionListTask.setResolutionListener(this);
+        Toast.makeText(getActivity(), R.string.resolver_already_active, Toast.LENGTH_LONG)
+            .show();
+      }
+
+      // show dialog box
+      showProgressDialog();
+    }
+  }
+
+  private void showProgressDialog() {
+    if ( checkpointResolutionListTask != null ) {
+      checkpointResolutionListTask.setResolutionListener(this);
+      String progress = checkpointResolutionListTask.getProgress();
+
+      if ( checkpointResolutionListTask.getResult() != null ) {
+        resolutionComplete(checkpointResolutionListTask.getResult());
+        return;
+      }
+
+      Button buttonTakeAllOldest = (Button) getView().findViewById(R.id.take_all_oldest);
+      Button buttonTakeAllNewest = (Button) getView().findViewById(R.id.take_all_newest);
+
+      buttonTakeAllOldest.setEnabled(false);
+      buttonTakeAllNewest.setEnabled(false);
+
+      // try to retrieve the active dialog
+      Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+
+      if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
+        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.conflict_resolving_all);
+        ((ProgressDialogFragment) dialog).setMessage(progress);
+      } else if (progressDialog != null && progressDialog.getDialog() != null) {
+        progressDialog.getDialog().setTitle(R.string.conflict_resolving_all);
+        progressDialog.setMessage(progress);
+      } else {
+        if (progressDialog != null) {
+          dismissProgressDialog();
+        }
+        progressDialog = ProgressDialogFragment.newInstance(getId(),
+            getString(R.string.conflict_resolving_all), progress);
+        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+      }
+    }
+  }
+
+  private void dismissProgressDialog() {
+    final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+    if (dialog != null && dialog != progressDialog) {
+      // the UI may not yet have resolved the showing of the dialog.
+      // use a handler to add the dismiss to the end of the queue.
+      handler.post(new Runnable() {
+        @Override
+        public void run() {
+          ((ProgressDialogFragment) dialog).dismiss();
+        }
+      });
+    }
+    if (progressDialog != null) {
+      final ProgressDialogFragment scopedReference = progressDialog;
+      progressDialog = null;
+      // the UI may not yet have resolved the showing of the dialog.
+      // use a handler to add the dismiss to the end of the queue.
+      handler.post(new Runnable() {
+        @Override public void run() {
+          try {
+            scopedReference.dismiss();
+          } catch (Exception e) {
+            // ignore... we tried!
+          }
+        }
+      });
+    }
+  }
+
+
+  @Override public void resolutionProgress(String progress) {
+    if ( progressDialog != null ) {
+      progressDialog.setMessage(progress);
+    }
+  }
+
+  @Override public void resolutionComplete(String result) {
+    checkpointResolutionListTask = null;
+    Button buttonTakeAllOldest = (Button) getView().findViewById(R.id.take_all_oldest);
+    Button buttonTakeAllNewest = (Button) getView().findViewById(R.id.take_all_newest);
+    buttonTakeAllOldest.setEnabled(true);
+    buttonTakeAllNewest.setEnabled(true);
+
+    dismissProgressDialog();
+    getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
+
+    if ( result != null && result.length() != 0 ) {
+      Toast.makeText(getActivity(), result, Toast.LENGTH_LONG).show();
+    }
+  }
 }

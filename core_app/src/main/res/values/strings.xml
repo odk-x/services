@@ -54,6 +54,11 @@
     <string name="conflict_take_all_local_updates">Take Local Version - Reject All Server Changes</string>
     <string name="conflict_take_all_server_updates">Take Server Version - Discard Local Changes</string>
 
+    <string name="conflict_resolving_all">Resolving All Conflicts</string>
+    <string name="resolving_row_n_of_m">Resolving row %1$d of %2$d</string>
+    <string name="resolver_already_active">Action already in progress</string>
+    <string name="done_resolving_rows">Completed</string>
+
     <string name="conflict_radio_local">Local:</string>
     <string name="conflict_radio_server">Server:</string>
 	<string name="conflict_resolve_or_choose">Choose to take local or server changes, or select individual values and resolve the row.</string>
