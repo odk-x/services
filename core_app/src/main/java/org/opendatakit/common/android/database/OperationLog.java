@@ -18,6 +18,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.sqlite.database.sqlite.SQLiteDebug;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Extracted from the SQLiteDatabase class.
@@ -27,7 +28,7 @@ import java.util.ArrayList;
  */
 public final class OperationLog {
 
-   private static final int MAX_RECENT_OPERATIONS = 20;
+   private static final int MAX_RECENT_OPERATIONS = 60;
    private static final int COOKIE_GENERATION_SHIFT = 8;
    private static final int COOKIE_INDEX_MASK = 0xff;
    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
@@ -38,6 +39,23 @@ public final class OperationLog {
    private String appName;
    private int mIndex;
    private int mGeneration;
+  /**
+   * Access only within synchronized mOperations
+   *
+   * tracks the number of opens in the last 65 seconds
+   */
+  private final int[] opens = new int[8];
+  private int totalOpens = 0;
+  private int lastOpenIdx = 0;
+
+  /**
+   * Access only within synchronized mOperations
+   *
+   * tracks the number of closes in the last 65 seconds
+   */
+  private final int[] closes = new int[8];
+  private int totalCloses = 0;
+  private int lastCloseIdx = 0;
 
    public OperationLog(String appName) {
       this.appName = appName;
@@ -123,6 +141,40 @@ public final class OperationLog {
       }
    }
 
+  /**
+   * Function to track the number of new connection opens within the last 65 seconds
+   */
+  public void tickOpen() {
+    synchronized (mOperations) {
+      long now = System.currentTimeMillis();
+      int idx = (int) ((now & 0xE000L) >> 13);
+
+      while (idx != lastOpenIdx) {
+        lastOpenIdx = (lastOpenIdx + 1) % 8;
+        opens[lastOpenIdx] = 0;
+      }
+      ++opens[idx];
+      ++totalOpens;
+    }
+  }
+
+  /**
+   * Function to track the number of connection closes within the last 65 seconds
+   */
+  public void tickClose() {
+    synchronized (mOperations) {
+      long now = System.currentTimeMillis();
+      int idx = (int) ((now & 0xE000L) >> 13);
+
+      while (idx != lastCloseIdx) {
+        lastCloseIdx = (lastCloseIdx + 1) % 8;
+        closes[lastCloseIdx] = 0;
+      }
+      ++closes[idx];
+      ++totalCloses;
+    }
+  }
+
    public void logOperation(int cookie, String detail) {
       String logString = null;
       synchronized (mOperations) {
@@ -147,7 +199,38 @@ public final class OperationLog {
 
    public void dump(StringBuilder b, boolean verbose) {
       synchronized (mOperations) {
-         b.append("  Most recently executed operations:\n");
+        //////////////////////////////////////////////////////
+        // Display a time histogram of the number of opens and closes
+        // in the last 65 seconds.
+
+        // First: update the histogram to the present time.
+        long now = System.currentTimeMillis();
+        int idx;
+
+        idx = (int) ((now & 0xE000L) >> 13);
+        while (idx != lastOpenIdx) {
+          lastOpenIdx = (lastOpenIdx + 1) % 8;
+          opens[lastOpenIdx] = 0;
+        }
+
+        idx = (int) ((now & 0xE000L) >> 13);
+        while (idx != lastCloseIdx) {
+          lastCloseIdx = (lastCloseIdx + 1) % 8;
+          closes[lastCloseIdx] = 0;
+        }
+
+        idx = (int) ((now & 0xE000L) >> 13);
+        b.append("  Last 65 seconds of open and close activity on this appName\n");
+        b.append("     opens | closes\n");
+        for ( int i = 0 ; i < 8 ; ++i ) {
+          b.append(String.format(Locale.US, "    %1$6d   %2$6d\n", opens[idx], closes[idx]));
+          idx = (idx + 7) % 8;
+        }
+
+        b.append("Total opens: ").append(totalOpens).append(" closes: ").append(totalCloses)
+            .append(" currently active: ").append(totalOpens-totalCloses).append("\n\n");
+
+        b.append("  Most recently executed operations:\n");
          int index = mIndex;
          OperationLogEntry operation = mOperations[index];
          if (operation != null) {
