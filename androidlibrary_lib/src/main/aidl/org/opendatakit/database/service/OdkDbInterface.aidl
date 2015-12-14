@@ -672,46 +672,6 @@ interface OdkDbInterface {
       in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
 
   /**
-   * TODO: Remove this
-   * TODO: Remove this
-   * TODO: Remove this
-   * TODO: Remove this
-   * TODO: Remove this
-   * TODO: Remove this
-   *
-   * Updates the local record with the appropriate changes to resolve a server conflict.
-   *
-   * A combination of primitive actions, all performed in one transaction:
-   *
-   * // update with server's changes
-   * updateRowWithId(appName, dbHandleName, tableId, orderedColumns,
-   *                                   cvValues, rowId);
-   * // delete the record of the server row
-   * deleteServerConflictRowWithId(appName, dbHandleName, tableId, rowId);
-   *
-   * // move the local conflict back into the normal (null) state
-   * restoreRowFromConflict(appName, dbHandleName, tableId, rowId,
-   *     syncState, localConflictType);
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param syncState
-   * @param localConflictType
-   * @return single-row table with the content of the resolved row
-   */
-  UserTable resolveServerConflictWithUpdateRowWithId(in String appName,
-        in OdkDbHandle dbHandleName,
-  	    in String tableId,
-  	    in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId,
-  	    in String syncState,
-  	    in int localConflictType);
-
-
-  /**
    * Delete the local and server conflict records to resolve a server conflict
    *
    * A combination of primitive actions, all performed in one transaction:
