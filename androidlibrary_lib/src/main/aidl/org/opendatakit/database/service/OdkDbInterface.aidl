@@ -52,16 +52,7 @@ interface OdkDbInterface {
    * @param successful - true if we should commit, false if we should rollback.
    */
    void closeTransaction(in String appName, in OdkDbHandle dbHandleName, in boolean successful);
-  
-  /**
-   * Commit or roll back an outstanding transaction and release the databaseHandleName
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param successful - true if we should commit, false if we should rollback.
-   */
-   void closeTransactionAndDatabase(in String appName, in OdkDbHandle dbHandleName, in boolean successful);
-   
+
   /**
    * Release the databaseHandle. Will roll back any outstanding transactions
    * and release/close the database handle.
@@ -70,29 +61,6 @@ interface OdkDbInterface {
    * @param dbHandleName
    */
    void closeDatabase(in String appName, in OdkDbHandle dbHandleName); 
-   
-  /**
-   * Call this when the schema on the server has changed w.r.t. the schema on
-   * the device. In this case, we do not know whether the rows on the device
-   * match those on the server.
-   *
-   * <ul>
-   * <li>Reset all 'in_conflict' rows to their original local state (changed or
-   * deleted).</li>
-   * <li>Leave all 'deleted' rows in 'deleted' state.</li>
-   * <li>Leave all 'changed' rows in 'changed' state.</li>
-   * <li>Reset all 'synced' rows to 'new_row' to ensure they are sync'd to the
-   * server.</li>
-   * <li>Reset all 'synced_pending_files' rows to 'new_row' to ensure they are
-   * sync'd to the server.</li>
-   * </ul>
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   */
-  void changeDataRowsToNewRowState(in String appName, in OdkDbHandle dbHandleName,
-	  in String tableId);
 
   /**
    * Call this when the schemaETag for the given tableId has changed on the server.
@@ -106,7 +74,7 @@ interface OdkDbInterface {
    * we need to clear out the dataETag so
    * that we will pull all server changes and sync our properties.
    *
-   * updateDBTableETags(sc.getAppName(), db, tableId, null, null);
+   * updateDBTableETags(sc.getAppName(), db, tableId, schemaETag, null);
    *
    * Although the server does not recognize this tableId, we can
    * keep our record of the ETags for the table-level files and
@@ -134,7 +102,7 @@ interface OdkDbInterface {
    * }
    */
   void serverTableSchemaETagChanged(in String appName, in OdkDbHandle dbHandleName,
-    in String tableId, in String tableInstanceFilesUri);
+    in String tableId, in String schemaETag, in String tableInstanceFilesUri);
 
   /**
    * Compute the app-global choiceListId for this choiceListJSON
@@ -222,18 +190,6 @@ interface OdkDbInterface {
    */
   void deleteDBTableMetadata(in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in String partition, in String aspect, in String key);
-
-  /**
-   * Clean up the KVS row data types. This simplifies the migration process by
-   * enforcing the proper data types regardless of what the values are in the
-   * imported CSV files.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   */
-  void enforceTypesDBTableMetadata(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId);
 
   /**
    * Return an array of the admin columns that must be present in
