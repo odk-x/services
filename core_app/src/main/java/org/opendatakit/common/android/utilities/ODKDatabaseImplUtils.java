@@ -491,6 +491,28 @@ public class ODKDatabaseImplUtils {
       return t;
    }
 
+  public UserTable getConflictingRowsInExistingDBTableWithId(OdkConnectionInterface db, String
+      appName, String tableId,
+      OrderedColumns orderedDefns, String rowId) {
+
+    StringBuilder b = new StringBuilder();
+    UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
+        new String[]{rowId}, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+
+    if ( table.getNumberOfRows() == 0 ) {
+      return table;
+    }
+
+    for ( int i = 0 ; i < table.getNumberOfRows() ; ++i ) {
+      if ( table.getRowAtIndex(i).getRawDataOrMetadataByElementKey(DataTableColumns
+          .CONFLICT_TYPE) == null ) {
+        throw new IllegalStateException("row is not in conflict");
+      }
+    }
+
+    return table;
+  }
+
   /**
    * Return all the columns in the given table, including any metadata columns.
    * This does a direct query against the database and is suitable for accessing
@@ -2461,7 +2483,7 @@ public class ODKDatabaseImplUtils {
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       int serverConflictType = Integer.parseInt(
-          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
            localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
@@ -2593,7 +2615,7 @@ public class ODKDatabaseImplUtils {
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       int serverConflictType = Integer.parseInt(
-          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
           localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
@@ -2636,7 +2658,8 @@ public class ODKDatabaseImplUtils {
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE));
       updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
-      updateValues.put(DataTableColumns.SAVEPOINT_CREATOR, localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
+      updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
+          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       // delete the record of the server row
       ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
@@ -2701,7 +2724,7 @@ public class ODKDatabaseImplUtils {
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       int serverConflictType = Integer.parseInt(
-          localRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+          serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
 
       if ( localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
           localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES ) {
@@ -2793,8 +2816,9 @@ public class ODKDatabaseImplUtils {
         ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db,
             tableId, orderedColumns, updateValues, rowId);
 
-        // move the local conflict back into the normal (null) state
-        ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
+        // move the local conflict back into either the synced or synced_pending_files
+        // state
+        ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, newState,
             localConflictType);
       }
 

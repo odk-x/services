@@ -105,6 +105,8 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+
     View view = inflater.inflate(ID, container, false);
     Button buttonTakeAllOldest = (Button) view.findViewById(R.id.take_all_oldest);
     Button buttonTakeAllNewest = (Button) view.findViewById(R.id.take_all_newest);
@@ -123,6 +125,8 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   @Override
   public void onResume() {
+    super.onResume();
+
     showProgressDialog();
   }
 
@@ -139,10 +143,11 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   @Override
   public void onListItemClick(ListView l, View v, int position, long id) {
     super.onListItemClick(l, v, position, id);
+
     ResolveRowEntry e = mAdapter.getItem(position);
     WebLogger.getLogger(mAppName).e(TAG,
         "[onListItemClick] clicked position: " + position + " rowId: " + e.rowId);
-    if ( checkpointResolutionListTask != null ) {
+    if ( checkpointResolutionListTask == null ) {
       launchRowResolution(e);
     } else {
       Toast.makeText(getActivity(), R.string.resolver_already_active, Toast.LENGTH_LONG).show();

@@ -105,6 +105,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+
     View view = inflater.inflate(ID, container, false);
     Button buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
     Button buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
@@ -123,6 +125,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override
   public void onResume() {
+    super.onResume();
+
     showProgressDialog();
   }
 
@@ -139,10 +143,11 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   @Override
   public void onListItemClick(ListView l, View v, int position, long id) {
     super.onListItemClick(l, v, position, id);
+
     ResolveRowEntry e = mAdapter.getItem(position);
     WebLogger.getLogger(mAppName).e(TAG,
         "[onListItemClick] clicked position: " + position + " rowId: " + e.rowId);
-    if ( conflictResolutionListTask != null ) {
+    if ( conflictResolutionListTask == null ) {
       launchRowResolution(e);
     } else {
       Toast.makeText(getActivity(), R.string.resolver_already_active, Toast.LENGTH_LONG).show();
@@ -166,7 +171,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override
   public void onLoadFinished(Loader<ArrayList<ResolveRowEntry>> loader,
-      ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
+    ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
     // Swap the new cursor in. (The framework will take care of closing the
     // old cursor once we return.)
     mAdapter.clear();

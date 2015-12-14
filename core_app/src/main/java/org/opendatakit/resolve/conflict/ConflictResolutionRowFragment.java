@@ -86,9 +86,9 @@ public class ConflictResolutionRowFragment extends ListFragment implements
    */
   private TextView mTextViewConflictOverviewMessage;
 
-  private boolean mIsShowingTakeLocalWithDeltasDialog;
-  private boolean mIsShowingTakeLocalDialog;
-  private boolean mIsShowingTakeServerDialog;
+  private boolean mIsShowingTakeLocalWithDeltasDialog = false;
+  private boolean mIsShowingTakeLocalDialog = false;
+  private boolean mIsShowingTakeServerDialog = false;
 
   private Map<String, String> mChosenValuesMap = new TreeMap<String, String>();
   private Map<String, Resolution> mUserResolutions = new TreeMap<String, Resolution>();
@@ -495,6 +495,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
+
     outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG,
         mIsShowingTakeLocalWithDeltasDialog);
     outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG, mIsShowingTakeLocalDialog);
@@ -530,50 +531,6 @@ public class ConflictResolutionRowFragment extends ListFragment implements
     outState.putStringArray(BUNDLE_KEY_RESOLUTION_VALUES, resolutionValues);
   }
 
-  private void restoreFromInstanceState(Bundle savedInstanceState) {
-    WebLogger.getLogger(mAppName).i(TAG, "restoreFromInstanceState");
-    if ( savedInstanceState == null ) {
-      return;
-    }
-
-    if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG)) {
-      mIsShowingTakeLocalWithDeltasDialog = savedInstanceState.getBoolean
-          (BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG);
-    }
-    if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
-      mIsShowingTakeLocalDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
-    }
-    if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_SERVER_DIALOG)) {
-      mIsShowingTakeServerDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG);
-    }
-    String[] valueKeys = savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
-    String[] chosenValues = savedInstanceState.getStringArray(BUNDLE_KEY_CHOSEN_VALUES);
-    String[] resolutionKeys = savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_KEYS);
-    String[] resolutionValues = savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_VALUES);
-    if (valueKeys != null) {
-      // Then we know that we should have the chosenValues as well, or else
-      // there is trouble. We're not doing a null check here, but if we didn't
-      // get it then we know there is an error. We'll throw a null pointer
-      // exception, but that is better than restoring bad state.
-      // Same thing goes for the resolution keys. Those and the map should
-      // always go together.
-      Map<String, String> chosenValuesMap = new HashMap<String, String>();
-      for (int i = 0; i < valueKeys.length; i++) {
-        chosenValuesMap.put(valueKeys[i], chosenValues[i]);
-      }
-      Map<String, Resolution> userResolutions = new HashMap<String, Resolution>();
-      for (int i = 0; i < resolutionKeys.length; i++) {
-        userResolutions.put(resolutionKeys[i], Resolution.valueOf(resolutionValues[i]));
-      }
-      mChosenValuesMap.clear();
-      mUserResolutions.clear();
-      mChosenValuesMap.putAll(chosenValuesMap);
-      mUserResolutions.putAll(userResolutions);
-    }
-    // And finally, call this to make sure we update the button as appropriate.
-    WebLogger.getLogger(mAppName).i(TAG, "restoreFromInstanceState - done");
-  }
-
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
@@ -600,7 +557,47 @@ public class ConflictResolutionRowFragment extends ListFragment implements
       return;
     }
 
-    restoreFromInstanceState(savedInstanceState);
+    if ( savedInstanceState != null ) {
+
+      WebLogger.getLogger(mAppName).i(TAG, "onActivityCreated - restoreFromInstanceState");
+
+      if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG)) {
+        mIsShowingTakeLocalWithDeltasDialog = savedInstanceState.getBoolean
+            (BUNDLE_KEY_SHOWING_LOCAL_WITH_DELTAS_DIALOG);
+      }
+      if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
+        mIsShowingTakeLocalDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
+      }
+      if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_SERVER_DIALOG)) {
+        mIsShowingTakeServerDialog = savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG);
+      }
+      String[] valueKeys = savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
+      String[] chosenValues = savedInstanceState.getStringArray(BUNDLE_KEY_CHOSEN_VALUES);
+      String[] resolutionKeys = savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_KEYS);
+      String[] resolutionValues = savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_VALUES);
+      if (valueKeys != null) {
+        // Then we know that we should have the chosenValues as well, or else
+        // there is trouble. We're not doing a null check here, but if we didn't
+        // get it then we know there is an error. We'll throw a null pointer
+        // exception, but that is better than restoring bad state.
+        // Same thing goes for the resolution keys. Those and the map should
+        // always go together.
+        Map<String, String> chosenValuesMap = new HashMap<String, String>();
+        for (int i = 0; i < valueKeys.length; i++) {
+          chosenValuesMap.put(valueKeys[i], chosenValues[i]);
+        }
+        Map<String, Resolution> userResolutions = new HashMap<String, Resolution>();
+        for (int i = 0; i < resolutionKeys.length; i++) {
+          userResolutions.put(resolutionKeys[i], Resolution.valueOf(resolutionValues[i]));
+        }
+        mChosenValuesMap.clear();
+        mUserResolutions.clear();
+        mChosenValuesMap.putAll(chosenValuesMap);
+        mUserResolutions.putAll(userResolutions);
+      }
+      // And finally, call this to make sure we update the button as appropriate.
+      WebLogger.getLogger(mAppName).i(TAG, "onActivityCreated - restoreFromInstanceState - done");
+    }
 
     // render total instance view
     mAdapter = new ConflictResolutionColumnListAdapter(getActivity(), mAppName,

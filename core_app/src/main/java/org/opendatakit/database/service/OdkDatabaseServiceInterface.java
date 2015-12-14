@@ -1080,8 +1080,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       ODKDatabaseImplUtils.get().placeRowIntoServerConflictWithId(db, tableId, orderedColumns,
           cvValues, rowId, localRowConflictType);
-      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db, appName,
-          tableId, orderedColumns, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getConflictingRowsInExistingDBTableWithId(db,
+          appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
