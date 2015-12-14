@@ -202,50 +202,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void closeTransactionAndDatabase(String appName, OdkDbHandle dbHandleName,
-      boolean successful) throws RemoteException {
-
-    // helpful RPC wrapper for calling two methods in succession
-    try {
-      closeTransaction(appName, dbHandleName, successful);
-    } finally {
-      closeDatabase(appName, dbHandleName);
-    }
-  }
-
-  @Override public void changeDataRowsToNewRowState(String appName, OdkDbHandle dbHandleName,
-      String tableId) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().changeDataRowsToNewRowState(db, tableId);
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("changeDataRowsToNewRowState",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-  }
-
   @Override public void serverTableSchemaETagChanged(String appName, OdkDbHandle dbHandleName,
-      String tableId, String tableInstanceFilesUri) throws RemoteException {
+      String tableId, String schemaETag, String tableInstanceFilesUri) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -253,7 +211,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().serverTableSchemaETagChanged(db, tableId, tableInstanceFilesUri);
+      ODKDatabaseImplUtils.get().serverTableSchemaETagChanged(db, tableId, schemaETag,
+          tableInstanceFilesUri);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -512,8 +471,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteDBTableAndAllDat",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName)
+          .e("deleteDBTableAndAllDat", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
@@ -593,38 +552,6 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         db.releaseReference();
       }
     }
-  }
-
-  @Override public void enforceTypesDBTableMetadata(String appName, OdkDbHandle dbHandleName,
-      String tableId) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().enforceTypesDBTableMetadata(db, tableId);
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("enforceTypesDBTableMetadata",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-
   }
 
   @Override public String[] getAdminColumns() throws RemoteException {
@@ -749,8 +676,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getMostRecentRowWithId",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName)
+          .e("getMostRecentRowWithId", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
@@ -910,8 +837,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("getTableDefinitionEntry",
-          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName)
+          .e("getTableDefinitionEntry", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
     } finally {
@@ -998,8 +925,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues,
-              rowId);
+          .insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();

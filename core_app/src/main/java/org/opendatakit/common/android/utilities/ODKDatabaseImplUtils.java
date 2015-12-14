@@ -1903,10 +1903,11 @@ public class ODKDatabaseImplUtils {
     *
     * @param db
     * @param tableId
+    * @parma schemaETag
     * @param tableInstanceFilesUri
     */
    public void serverTableSchemaETagChanged(OdkConnectionInterface db,
-       String tableId, String tableInstanceFilesUri) {
+       String tableId, String schemaETag, String tableInstanceFilesUri) {
 
       boolean dbWithinTransaction = db.inTransaction();
       try {
@@ -1916,7 +1917,7 @@ public class ODKDatabaseImplUtils {
 
          changeDataRowsToNewRowState(db, tableId);
 
-         updateDBTableETags(db, tableId, null, null);
+         updateDBTableETags(db, tableId, schemaETag, null);
 
          if (tableInstanceFilesUri != null) {
             SyncETagsUtils seu = new SyncETagsUtils();
