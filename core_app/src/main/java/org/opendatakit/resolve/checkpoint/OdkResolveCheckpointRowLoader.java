@@ -33,6 +33,7 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
   private final String mAppName;
   private final String mTableId;
+  private final boolean mHaveResolvedMetadataConflicts;
 
   private static class FormDefinition {
     String instanceName;
@@ -52,10 +54,12 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
     String formId;
   }
 
-  public OdkResolveCheckpointRowLoader(Context context, String appName, String tableId) {
+  public OdkResolveCheckpointRowLoader(Context context, String appName, String tableId,
+      boolean haveResolvedMetadataConflicts) {
     super(context);
     this.mAppName = appName;
     this.mTableId = tableId;
+    this.mHaveResolvedMetadataConflicts = haveResolvedMetadataConflicts;
   }
 
   @Override public ArrayList<ResolveRowEntry> loadInBackground() {
@@ -81,6 +85,32 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
           DataTableColumns.SAVEPOINT_TYPE + " IS NULL", empty, groupBy, null,
           DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+
+      if ( !mHaveResolvedMetadataConflicts ) {
+
+        boolean tableSetChanged = false;
+        // resolve the automatically-resolvable ones
+        // (the ones that differ only in their metadata).
+        for (int i = 0; i < table.getNumberOfRows(); ++i) {
+          Row row = table.getRowAtIndex(i);
+          String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
+
+          OdkResolveCheckpointFieldLoader loader = new OdkResolveCheckpointFieldLoader(getContext(),
+              mAppName, mTableId, rowId);
+          ResolveActionList resolveActionList = loader.doWork(dbHandleName);
+
+          if (resolveActionList.noChangesInUserDefinedFieldValues()) {
+            tableSetChanged = true;
+            ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, rowId);
+          }
+        }
+
+        if ( tableSetChanged ) {
+          table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
+              DataTableColumns.SAVEPOINT_TYPE + " IS NULL", empty, groupBy, null,
+              DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+        }
+      }
 
       // The display name is the table display name, not the form display name...
       ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db,

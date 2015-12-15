@@ -60,6 +60,8 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
+  private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
+
   private static enum DialogState {
     Progress, Alert, None
   };
@@ -71,10 +73,19 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   private String mAppName;
   private String mTableId;
+  private boolean mHaveResolvedMetadataConflicts = false;
   private ArrayAdapter<ResolveRowEntry> mAdapter;
 
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+
+    outState.putBoolean(HAVE_RESOLVED_METADATA_CONFLICTS, mHaveResolvedMetadataConflicts);
+  }
+
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -93,6 +104,14 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       getActivity().setResult(Activity.RESULT_CANCELED);
       getActivity().finish();
       return;
+    }
+
+    if ( savedInstanceState != null ) {
+      mHaveResolvedMetadataConflicts =
+          savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
+              savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) : false;
+    } else {
+      mHaveResolvedMetadataConflicts = false;
     }
 
     // render total instance view
@@ -166,12 +185,16 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   public Loader<ArrayList<ResolveRowEntry>> onCreateLoader(int id, Bundle args) {
     // Now create and return a OdkResolveCheckpointRowLoader that will take care of
     // creating an ArrayList<ResolveRowEntry> for the data being displayed.
-    return new OdkResolveCheckpointRowLoader(getActivity(), mAppName, mTableId);
+    return new OdkResolveCheckpointRowLoader(getActivity(), mAppName, mTableId,
+        mHaveResolvedMetadataConflicts);
   }
 
   @Override
   public void onLoadFinished(Loader<ArrayList<ResolveRowEntry>> loader,
       ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
+    // we have resolved the metadata conflicts -- no need to try this again
+    mHaveResolvedMetadataConflicts = true;
+
     // Swap the new cursor in. (The framework will take care of closing the
     // old cursor once we return.)
     mAdapter.clear();
@@ -179,6 +202,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       launchRowResolution(resolveRowEntryArrayList.get(0));
       return;
     } else if ( resolveRowEntryArrayList.isEmpty() ){
+      Toast.makeText(getActivity(), R.string.checkpoint_auto_apply_all, Toast.LENGTH_SHORT).show();
       getActivity().setResult(Activity.RESULT_OK);
       getActivity().finish();
       return;

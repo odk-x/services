@@ -34,6 +34,8 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.checkpoint.OdkResolveCheckpointFieldLoader;
+import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
   private final String mAppName;
   private final String mTableId;
+  private final boolean mHaveResolvedMetadataConflicts;
 
   private static class FormDefinition {
     String instanceName;
@@ -53,10 +56,12 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
     String formId;
   }
 
-  public OdkResolveConflictRowLoader(Context context, String appName, String tableId) {
+  public OdkResolveConflictRowLoader(Context context, String appName, String tableId,
+      boolean haveResolvedMetadataConflicts) {
     super(context);
     this.mAppName = appName;
     this.mTableId = tableId;
+    this.mHaveResolvedMetadataConflicts = haveResolvedMetadataConflicts;
   }
 
   @Override public ArrayList<ResolveRowEntry> loadInBackground() {
@@ -84,6 +89,34 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
               Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) },
           groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+
+      if ( !mHaveResolvedMetadataConflicts ) {
+
+        boolean tableSetChanged = false;
+        // resolve the automatically-resolvable ones
+        // (the ones that differ only in their metadata).
+        for ( int i = 0 ; i < table.getNumberOfRows(); ++i ) {
+          Row row = table.getRowAtIndex(i);
+          String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
+          OdkResolveConflictFieldLoader loader = new OdkResolveConflictFieldLoader(getContext()
+              , mAppName, mTableId, rowId);
+          ResolveActionList resolveActionList = loader.doWork(dbHandleName);
+
+          if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
+            tableSetChanged = true;
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db, mAppName,
+                mTableId, rowId);
+          }
+        }
+
+        if ( tableSetChanged ) {
+          table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
+              DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
+              new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
+                             Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) },
+              groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+        }
+      }
 
       // The display name is the table display name, not the form display name...
       ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db,
@@ -184,6 +217,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       ResolveRowEntry re = new ResolveRowEntry(rowId, formDisplayName + ": " + instanceName);
       results.add(re);
     }
+
     return results;
   }
 

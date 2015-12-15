@@ -31,20 +31,14 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.IAppAwareActivity;
-import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.fragment.ProgressDialogFragment;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.listener.ResolutionListener;
 import org.opendatakit.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -60,6 +54,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
+  private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
+
   private static enum DialogState {
     Progress, Alert, None
   };
@@ -71,10 +67,19 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   private String mAppName;
   private String mTableId;
+  private boolean mHaveResolvedMetadataConflicts = false;
   private ArrayAdapter<ResolveRowEntry> mAdapter;
 
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+
+    outState.putBoolean(HAVE_RESOLVED_METADATA_CONFLICTS, mHaveResolvedMetadataConflicts);
+  }
+
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -93,6 +98,14 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
       getActivity().setResult(Activity.RESULT_CANCELED);
       getActivity().finish();
       return;
+    }
+
+    if ( savedInstanceState != null ) {
+      mHaveResolvedMetadataConflicts =
+          savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
+          savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) : false;
+    } else {
+      mHaveResolvedMetadataConflicts = false;
     }
 
     // render total instance view
@@ -166,12 +179,16 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   public Loader<ArrayList<ResolveRowEntry>> onCreateLoader(int id, Bundle args) {
     // Now create and return a OdkResolveCheckpointRowLoader that will take care of
     // creating an ArrayList<ResolveRowEntry> for the data being displayed.
-    return new OdkResolveConflictRowLoader(getActivity(), mAppName, mTableId);
+    return new OdkResolveConflictRowLoader(getActivity(), mAppName, mTableId,
+        mHaveResolvedMetadataConflicts);
   }
 
   @Override
   public void onLoadFinished(Loader<ArrayList<ResolveRowEntry>> loader,
     ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
+    // we have resolved the metadata conflicts -- no need to try this again
+    mHaveResolvedMetadataConflicts = true;
+
     // Swap the new cursor in. (The framework will take care of closing the
     // old cursor once we return.)
     mAdapter.clear();
@@ -179,6 +196,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
       launchRowResolution(resolveRowEntryArrayList.get(0));
       return;
     } else if ( resolveRowEntryArrayList.isEmpty() ){
+      Toast.makeText(getActivity(), R.string.conflict_auto_apply_all, Toast.LENGTH_SHORT).show();
       getActivity().setResult(Activity.RESULT_OK);
       getActivity().finish();
       return;

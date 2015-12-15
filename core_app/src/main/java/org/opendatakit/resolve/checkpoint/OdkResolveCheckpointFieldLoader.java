@@ -54,14 +54,19 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
     this.mRowId = rowId;
   }
 
-  @Override public ResolveActionList loadInBackground() {
+  /**
+   * API used by the list loader to test and potentially auto-resolve the record
+   * that do not have any differences in the user-defined fields.
+   *
+   * @param dbHandleName
+   * @return
+   */
+  public ResolveActionList doWork(OdkDbHandle dbHandleName) {
 
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
 
     OdkConnectionInterface db = null;
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
     UserTable table = null;
 
@@ -130,7 +135,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
     if (!deleteEntirely) {
       if (table.getNumberOfRows() == 1
           && (SavepointTypeManipulator.isComplete(type) ||
-              SavepointTypeManipulator.isIncomplete(type))) {
+          SavepointTypeManipulator.isIncomplete(type))) {
         // something else seems to have resolved this?
         WebLogger.getLogger(mAppName).w("OdkResolveCheckpointFieldLoader",
             "Unexpectedly found that row does not need to be resolved");
@@ -195,6 +200,13 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
             ResolveActionType.RESTORE_TO_INCOMPLETE);
 
     return new ResolveActionList(actionType, concordantColumns, conflictColumns);
+  }
+
+  @Override public ResolveActionList loadInBackground() {
+
+    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+    return doWork(dbHandleName);
   }
 
   @Override protected void onStartLoading() {

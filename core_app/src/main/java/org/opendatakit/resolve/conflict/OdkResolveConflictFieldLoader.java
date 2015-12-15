@@ -60,14 +60,20 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     this.mRowId = rowId;
   }
 
-  @Override public ResolveActionList loadInBackground() {
+  /**
+   * API used by the list loader to test whether a conflict has any differences
+   * among its user-defined fields. If it doesn't, the list loader can auto-resolve
+   * them (taking the server version).
+   *
+   * @param dbHandleName
+   * @return
+   */
+  public ResolveActionList doWork(OdkDbHandle dbHandleName) {
 
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
 
     OdkConnectionInterface db = null;
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
     UserTable table = null;
 
@@ -196,6 +202,13 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     }
     return new ResolveActionList(localConflictType, serverConflictType,
         concordantColumns, conflictColumns);
+  }
+
+  @Override public ResolveActionList loadInBackground() {
+
+    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+    return doWork(dbHandleName);
   }
 
   @Override protected void onStartLoading() {
