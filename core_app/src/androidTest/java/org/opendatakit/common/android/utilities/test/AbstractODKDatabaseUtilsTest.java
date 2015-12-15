@@ -32,10 +32,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by wrb on 9/21/2015.
@@ -279,7 +276,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(),
+        tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -2616,7 +2614,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertNotSame(saveptType, SavepointTypeManipulator.incomplete());
     assertNotSame(saveptType, SavepointTypeManipulator.complete());
 
-    ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+    ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId,
+        rowId);
 
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
@@ -2703,5 +2702,108 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
   }
+
+  /*
+ * Test for memory leaks in the SQL interface.
+ *
+ * The general plan is to do a large loop where we create a table, insert a row,
+ * select data from the table, drop the table, and create 2 x ( set of small byte[]
+ * allocations ), every iteration, free 1x of the byte[] allocations.
+ */
+  public void testMemoryLeakCycling_ExpectPass() {
+
+    LinkedList<byte[]> byteQueue = new LinkedList<byte[]>();
+
+    String tableId = "memoryTest";
+    int maxBytes = 32;
+    int maxIterations = 1000;
+    String testColType = ElementDataType.string.name();
+
+    for (int j = 0 ; j < maxIterations ; ++j ) {
+      System.out.println("iteration " + j + " of " + maxIterations);
+
+      int maxCols = 10 + (j % 7);
+      // construct table
+      List<Column> columns = new ArrayList<Column>();
+      for (int i = 0; i < maxCols; ++i) {
+        String testCol = "testColumn_" + Integer.toString(i);
+        columns.add(new Column(testCol, testCol, testColType, "[]"));
+      }
+      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+          .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+
+      String rowId = ODKDataUtils.genUUID();
+
+      ContentValues cvValues = new ContentValues();
+      for (int i = 0; i < maxCols; ++i) {
+        String testCol = "testColumn_" + Integer.toString(i);
+        String testVal = "testVal_" + Integer.toString(i);
+        cvValues.put(testCol, testVal);
+      }
+
+      ODKDatabaseImplUtils.get()
+          .insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+
+      // Select everything out of the table
+      String queryCol = "testColumn_" + Integer.toString(j % maxCols);
+      String queryVal = "testVal_" + Integer.toString(j % maxCols);
+      String sel = "SELECT * FROM " + tableId + " WHERE " + queryCol + " = ?";
+      String[] selArgs = { queryVal };
+      Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+      String val = null;
+      while (cursor.moveToNext()) {
+        int ind = cursor.getColumnIndex(queryCol);
+        int type = cursor.getType(ind);
+        assertEquals(type, Cursor.FIELD_TYPE_STRING);
+        val = cursor.getString(ind);
+
+        ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+        assertFalse(cursor.isNull(ind));
+
+        // Get the conflict_type and make sure that it is null
+        ind = cursor.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+        assertTrue(cursor.isNull(ind));
+      }
+
+      assertEquals(val, queryVal);
+      cursor.close();
+
+      ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, getAppName(),
+          tableId, rowId);
+
+      // Select everything out of the table
+      sel = "SELECT * FROM " + tableId;
+      selArgs = new String[0];
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs);
+
+      assertEquals(cursor.getCount(), 0);
+
+      // Drop the table now that the test is done
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+
+      for ( int len = 1 ; len < maxBytes ; len += 4 ) {
+        byte[] bytes = new byte[len];
+        for ( int k = 0 ; k < len ; ++k ) {
+          bytes[k] = (byte) k;
+        }
+        byteQueue.add(bytes);
+      }
+      for ( int len = 1 ; len < maxBytes ; len += 4 ) {
+        byte[] bytes = new byte[len];
+        for ( int k = 0 ; k < len ; ++k ) {
+          bytes[k] = (byte) k;
+        }
+        byteQueue.add(bytes);
+      }
+      for ( int len = 1 ; len < maxBytes ; len += 4 ) {
+        byte[] bytes = byteQueue.pop();
+        for ( int k = 0 ; k < len ; ++k ) {
+          assertEquals(bytes[k], (byte) k);
+        }
+      }
+    }
+  }
+
 
 }
