@@ -2045,11 +2045,20 @@ public class ODKDatabaseImplUtils {
    * @param conflictType
    */
   public void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
-      SyncState syncState, int conflictType) {
+      SyncState syncState, Integer conflictType) {
 
-    String whereClause = String.format("%s = ? AND %s = ?", DataTableColumns.ID,
-        DataTableColumns.CONFLICT_TYPE);
-    String[] whereArgs = { rowId, String.valueOf(conflictType) };
+    String whereClause;
+    String[] whereArgs;
+
+    if ( conflictType == null ) {
+      whereClause = String.format("%s = ? AND %s IS NULL", DataTableColumns.ID,
+          DataTableColumns.CONFLICT_TYPE);
+      whereArgs = new String[]{ rowId };
+    } else {
+      whereClause = String.format("%s = ? AND %s = ?", DataTableColumns.ID,
+          DataTableColumns.CONFLICT_TYPE);
+      whereArgs = new String[]{ rowId, String.valueOf(conflictType) };
+    }
 
     ContentValues cv = new ContentValues();
     cv.putNull(DataTableColumns.CONFLICT_TYPE);
@@ -2504,6 +2513,9 @@ public class ODKDatabaseImplUtils {
       ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
           updateValues, rowId);
 
+      // and reset the sync state to whatever it should be (update will make it changed)
+      ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
+
       if ( !inTransaction ) {
         db.setTransactionSuccessful();
       }
@@ -2777,6 +2789,9 @@ public class ODKDatabaseImplUtils {
         // update local with server's changes
         ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
             updateValues, rowId);
+
+        // and reset the sync state to whatever it should be (update will make it changed)
+        ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, newState, null);
       }
 
       if ( !inTransaction ) {
