@@ -32,7 +32,7 @@
 	<string name="checkpoint_remove_or_take_newest">Discard or Save checkpoint as Incomplete</string>
 
     <string name="select_checkpoint_to_resolve">Select the row with checkpoints to resolve</string>
-    <string name="no_items_display_checkpoints">There are no checkpoint rows to resolve</string>
+    <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
     <string name="checkpoint_take_all_oldest_or_remove">Discard All Checkpoints</string>
     <string name="checkpoint_take_all_newest">Update All Checkpoints to Incomplete State</string>
 
@@ -50,11 +50,11 @@
 	<string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
     <string name="checkpoint_take_newest_with_deltas_warning">Apply Indicated Changes, Save as Incomplete and Proceed?</string>
 
-    <string name="checkpoint_auto_apply">No user-defined field differences -- automatically discarding checkpoint,</string>
+    <string name="checkpoint_auto_apply">No user-defined field differences -- automatically discarding checkpoint.</string>
     <string name="checkpoint_auto_apply_all">No user-defined field differences in any rows\nAutomatically discarded checkpoints.</string>
 
     <string name="select_conflict_to_resolve">Select the row with conflicts to resolve</string>
-    <string name="no_items_display_conflicts">There are no conflicting rows to resolve</string>
+    <string name="no_items_display_conflicts">Please Wait&#8230;\nSearching for conflicting rows to resolve.</string>
     <string name="conflict_take_all_local_updates">Take Local Version - Reject All Server Changes</string>
     <string name="conflict_take_all_server_updates">Take Server Version - Discard Local Changes</string>
 
