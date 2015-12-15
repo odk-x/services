@@ -15,6 +15,7 @@
 	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
 	<string name="conflict_local_was_deleted_explanation">You have deleted a row someone else has edited.</string>
 	<string name="conflict_server_was_deleted_explanation">Another user has deleted a row you have edited.</string>
+    <string name="conflict_resolve_or_choose">Another user has edited the same row you have edited.</string>
 	<string name="radio_button_message_restore_local_deleted">Restore and resolve.</string>
 	<string name="radio_button_message_delete_local_deleted">Ignore changes, delete on server.</string>
 	<string name="radio_button_message_restore_server_deleted">Restore and resolve.</string>
@@ -49,6 +50,8 @@
 	<string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
     <string name="checkpoint_take_newest_with_deltas_warning">Apply Indicated Changes, Save as Incomplete and Proceed?</string>
 
+    <string name="checkpoint_auto_apply">No user-defined field differences -- automatically discarding checkpoint,</string>
+
     <string name="select_conflict_to_resolve">Select the row with conflicts to resolve</string>
     <string name="no_items_display_conflicts">There are no conflicting rows to resolve</string>
     <string name="conflict_take_all_local_updates">Take Local Version - Reject All Server Changes</string>
@@ -61,7 +64,6 @@
 
     <string name="conflict_radio_local">Local:</string>
     <string name="conflict_radio_server">Server:</string>
-	<string name="conflict_resolve_or_choose">Choose to take local or server changes, or select individual values and resolve the row.</string>
 	<string name="conflict_take_local_updates">Take Local Version</string>
 	<string name="conflict_take_server_updates">Take Server Version</string>
 	<string name="conflict_take_local_with_deltas">Merge Changes as Indicated Below</string>
@@ -70,6 +72,8 @@
 	<string name="conflict_restore_with_local_changes">Restore server record with local updates</string>
 	<string name="conflict_enforce_local_delete">Delete record on server</string>
 	<string name="conflict_apply_delete_from_server">Delete local record</string>
+
+    <string name="conflict_auto_apply">No user-defined field differences -- automatically taking server metadata revisions.</string>
 
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
 </resources>

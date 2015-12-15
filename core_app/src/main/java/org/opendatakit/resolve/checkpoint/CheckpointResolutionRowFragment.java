@@ -324,9 +324,37 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
         public void onClick(DialogInterface dialog, int which) {
           mIsShowingTakeOldestDialog = false;
           dialog.dismiss();
+          OdkConnectionInterface db = null;
 
-          discardAllCheckpointChanges();
+          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          try {
+            // +1 referenceCount if db is returned (non-null)
+            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+                .getConnection(mAppName, dbHandleName);
+
+            ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
+            getActivity().setResult(Activity.RESULT_OK);
+          } catch (Exception e) {
+            String msg = e.getLocalizedMessage();
+            if (msg == null)
+              msg = e.getMessage();
+            if (msg == null)
+              msg = e.toString();
+            msg = "Exception: " + msg;
+            WebLogger.getLogger(mAppName).e("OdkResolveCheckpointRowLoader",
+                mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+            WebLogger.getLogger(mAppName).printStackTrace(e);
+            Toast.makeText(getActivity(), "database access failure", Toast.LENGTH_LONG).show();
+            getActivity().setResult(Activity.RESULT_CANCELED);
+          } finally {
+            if (db != null) {
+              // release the reference...
+              // this does not necessarily close the db handle
+              // or terminate any pending transaction
+              db.releaseReference();
+            }
+          }
           getActivity().finish();
           WebLogger.getLogger(mAppName).d(TAG,
               "delete the checkpoint and restore to older version");
@@ -388,6 +416,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
         db.releaseReference();
       }
     }
+    Toast.makeText(getActivity(), R.string.checkpoint_auto_apply, Toast.LENGTH_LONG).show();
   }
 
   @Override

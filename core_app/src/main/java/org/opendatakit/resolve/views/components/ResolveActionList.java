@@ -39,12 +39,12 @@ public final class ResolveActionList {
    */
   public boolean noChangesInUserDefinedFieldValues() {
     return conflictColumns.isEmpty() &&
-        ((actionType != null) && (actionType != ResolveActionType.DELETE)) ||
-        ((actionType == null) &&
+        (((actionType != null) && (actionType != ResolveActionType.DELETE)) ||
+         ((actionType == null) &&
             ((localConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
               serverConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) ||
              (localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES &&
-              serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES)));
+              serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES))));
   }
 
   /**

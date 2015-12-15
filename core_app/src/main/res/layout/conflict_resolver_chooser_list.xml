@@ -23,7 +23,6 @@ the License.
         android:id="@+id/status_text"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#DDDDDD"
         android:paddingBottom="4dip"
         android:paddingLeft="8dip"
         android:paddingRight="8dip"
@@ -42,6 +41,7 @@ the License.
                 android:text="@string/conflict_take_all_server_updates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="24dip"
                 android:layout_weight="50" />
 
         <Button
@@ -49,6 +49,7 @@ the License.
                 android:text="@string/conflict_take_all_local_updates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="24dip"
                 android:layout_weight="50"  />
 
     </LinearLayout>

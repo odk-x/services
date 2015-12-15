@@ -105,7 +105,7 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
         db.releaseReference();
       }
     }
-    return exceptions.toString();
+    return (exceptions != null) ? exceptions.toString() : null;
   }
 
   @Override

@@ -490,6 +490,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
         db.releaseReference();
       }
     }
+    Toast.makeText(getActivity(), R.string.conflict_auto_apply, Toast.LENGTH_LONG).show();
   }
 
   @Override
