@@ -524,19 +524,26 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public String[] getAllColumnNames(OdkConnectionInterface db, String tableId) {
-    Cursor cursor = db.rawQuery("SELECT * FROM " + tableId + " LIMIT 1", null);
-    // If this query has been executed before, the cursor is created using the
-    // previously-constructed PreparedStatement for the query. There is no actual
-    // interaction with the database itself at the time the Cursor is constructed.
-    // The first database interaction is when the content of the cursor is fetched.
-    //
-    // This can be triggered by a call to getCount().
-    // At that time, if the table does not exist, it will throw an exception.
-    cursor.getCount();
-    // Otherwise, when cached, getting the column names doesn't call into the database
-    // and will not, itself, detect that the table has been dropped.
-    String[] colNames = cursor.getColumnNames();
-    return colNames;
+    Cursor cursor = null;
+    try {
+      cursor = db.rawQuery("SELECT * FROM " + tableId + " LIMIT 1", null);
+      // If this query has been executed before, the cursor is created using the
+      // previously-constructed PreparedStatement for the query. There is no actual
+      // interaction with the database itself at the time the Cursor is constructed.
+      // The first database interaction is when the content of the cursor is fetched.
+      //
+      // This can be triggered by a call to getCount().
+      // At that time, if the table does not exist, it will throw an exception.
+      cursor.getCount();
+      // Otherwise, when cached, getting the column names doesn't call into the database
+      // and will not, itself, detect that the table has been dropped.
+      String[] colNames = cursor.getColumnNames();
+      return colNames;
+    } finally {
+      if ( cursor != null && !cursor.isClosed() ) {
+        cursor.close();
+      }
+    }
   }
 
   /**
@@ -2841,72 +2848,76 @@ public class ODKDatabaseImplUtils {
     // get the current row to create a checkpoint with the relevant
     // data
     Cursor c = null;
+    try {
+      // Allow the user to pass in no rowId if this is the first
+      // checkpoint row that the user is adding
+      if (rowId == null) {
+        String rowIdToUse = ODKDataUtils.genUUID();
+        ContentValues currValues = new ContentValues();
+        currValues.putAll(cvValues);
+        currValues.put(DataTableColumns._ID, rowIdToUse);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+        return;
+      } else {
+        c = db.query(tableId, null,
+            DataTableColumns.ID + "=?" + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
+                + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId }, null,
+            null, null, null);
 
-    // Allow the user to pass in no rowId if this is the first
-    // checkpoint row that the user is adding
-    if (rowId == null) {
-      String rowIdToUse = ODKDataUtils.genUUID();
-      ContentValues currValues = new ContentValues();
-      currValues.putAll(cvValues);
-      currValues.put(DataTableColumns._ID, rowIdToUse);
-      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
-      return;
-    } else {
-      c = db.query(tableId, null, DataTableColumns.ID + "=?"
-                      + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
-                      + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-                      + "\" WHERE " + DataTableColumns.ID + "=?)",
-              new String[]{rowId, rowId}, null, null, null, null);
-
-      if (c.getCount() > 1) {
-        throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
-      }
-    }
-
-    // Inserting a checkpoint for the first time
-    if (c.getCount() <= 0) {
-      cvValues.put(DataTableColumns._ID, rowId);
-      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues);
-      return;
-    } else {
-      // Make sure that the conflict_type of any existing row
-      // is null, otherwise throw an exception
-      c.moveToFirst();
-
-      int conflictIndex = c.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
-      if (!c.isNull(conflictIndex)) {
-        throw new IllegalStateException(t + ":  A checkpoint cannot be added for a row that is in conflict");
+        if (c.getCount() > 1) {
+          throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
+        }
       }
 
-      ContentValues currValues = new ContentValues();
+      // Inserting a checkpoint for the first time
+      if (c.getCount() <= 0) {
+        cvValues.put(DataTableColumns._ID, rowId);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues);
+        return;
+      } else {
+        // Make sure that the conflict_type of any existing row
+        // is null, otherwise throw an exception
+        c.moveToFirst();
 
-      currValues.putAll(cvValues);
-
-      // This is unnecessary
-      // We should only have one row at this point
-      //c.moveToFirst();
-
-      // Get the number of columns to iterate over and add
-      // those values to the content values
-      for (int i = 0; i < c.getColumnCount(); i++) {
-        String name = c.getColumnName(i);
-
-        if (currValues.containsKey(name)) {
-          continue;
+        int conflictIndex = c.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
+        if (!c.isNull(conflictIndex)) {
+          throw new IllegalStateException(t + ":  A checkpoint cannot be added for a row that is in conflict");
         }
 
-        if (c.isNull(i) || name.equals(DataTableColumns.SAVEPOINT_TIMESTAMP) ||
-            name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
-          currValues.putNull(name);
-          continue;
+        ContentValues currValues = new ContentValues();
+
+        currValues.putAll(cvValues);
+
+        // This is unnecessary
+        // We should only have one row at this point
+        //c.moveToFirst();
+
+        // Get the number of columns to iterate over and add
+        // those values to the content values
+        for (int i = 0; i < c.getColumnCount(); i++) {
+          String name = c.getColumnName(i);
+
+          if (currValues.containsKey(name)) {
+            continue;
+          }
+
+          if (c.isNull(i) || name.equals(DataTableColumns.SAVEPOINT_TIMESTAMP) ||
+              name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
+            currValues.putNull(name);
+            continue;
+          }
+
+          Class<?> theClass = ODKCursorUtils.getIndexDataType(c, i);
+          Object object = ODKCursorUtils.getIndexAsType(c, theClass, i);
+          insertValueIntoContentValues(currValues, theClass, name, object);
         }
 
-        Class<?> theClass = ODKCursorUtils.getIndexDataType(c, i);
-        Object object = ODKCursorUtils.getIndexAsType(c, theClass, i);
-        insertValueIntoContentValues(currValues, theClass, name, object);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
       }
-
-      insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+    } finally {
+      if ( c != null && !c.isClosed() ) {
+        c.close();
+      }
     }
   }
 
@@ -3304,24 +3315,32 @@ public class ODKDatabaseImplUtils {
 
     ContentValues cvDataTableVal = new ContentValues();
 
-    String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-    String[] selArgs = whereArgs;
-    Cursor cursor = rawQuery(db, sel, selArgs);
-
-    // There must be only one row in the db
-    if (cursor.getCount() != 1) {
-      throw new IllegalArgumentException(t + ": row id " + rowId
-          + " does not have exactly 1 row in table " + tableId);
-    }
-
     cvDataTableVal.put(DataTableColumns.ROW_ETAG, rowETag);
     cvDataTableVal.put(DataTableColumns.SYNC_STATE, state.name());
 
+    Cursor cursor = null;
      boolean dbWithinTransaction = db.inTransaction();
      try {
         if (!dbWithinTransaction) {
            db.beginTransactionNonExclusive();
         }
+
+       String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
+       String[] selArgs = whereArgs;
+
+       try {
+         cursor = rawQuery(db, sel, selArgs);
+
+         // There must be only one row in the db
+         if (cursor.getCount() != 1) {
+           throw new IllegalArgumentException(
+               t + ": row id " + rowId + " does not have exactly 1 row in table " + tableId);
+         }
+       } finally {
+         if ( cursor != null && !cursor.isClosed()) {
+           cursor.close();
+         }
+       }
 
         db.update(tableId, cvDataTableVal, whereClause, whereArgs);
 
