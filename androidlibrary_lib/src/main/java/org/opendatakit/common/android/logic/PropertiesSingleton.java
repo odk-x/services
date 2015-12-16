@@ -14,6 +14,14 @@
 
 package org.opendatakit.common.android.logic;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Log;
+import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,23 +31,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.util.Log;
-
 public class PropertiesSingleton {
 
   private static final String t = "PropertiesSingleton";
 
   private static final String PROPERTIES_FILENAME = "app.properties";
-
-  private static final String COMMON_PREFERENCES_CONTEXT = "org.opendatakit.core";
-  private static final String COMMON_SHARED_PREFERENCES = "secure_prefs";
 
   private static boolean isMocked = false;
 
@@ -57,7 +53,7 @@ public class PropertiesSingleton {
 
   void setCurrentContext(Context context) {
     try {
-      mBaseContext = context.createPackageContext(COMMON_PREFERENCES_CONTEXT, Context.CONTEXT_INCLUDE_CODE);
+      mBaseContext = context;
       if (isModified()) {
         readProperties();
       }
@@ -100,8 +96,8 @@ public class PropertiesSingleton {
 
   private static SharedPreferences getSharedPreferences(Context context) {
     try {
-      return context.getSharedPreferences(COMMON_SHARED_PREFERENCES, Context.MODE_PRIVATE
-        | Context.MODE_MULTI_PROCESS);
+      return context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE
+            | Context.MODE_MULTI_PROCESS);
     } catch ( Exception e ) {
      Log.e("PropertiesSingleton", "Unable to access SharedPreferences!");
      return null;
@@ -246,7 +242,7 @@ public class PropertiesSingleton {
   /**
    * Indicate that the core services APK has started
    *
-   * @param toolName
+   * @param context
    */
   public static void setStartCoreServices(Context context) {
     // this needs to be stored in a protected area
