@@ -2551,6 +2551,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                final int numParameters = nativeGetParameterCount(mConnectionPtr, statementPtr);
                final int type = DatabaseUtils.getSqlStatementType(sql);
                final boolean readOnly = nativeIsReadOnly(mConnectionPtr, statementPtr);
+
+               if (type == DatabaseUtils.STATEMENT_DDL ) {
+                  impl.evictAll();
+               }
+
                // and build up the statement.
                statement = obtainPreparedStatement(sql, statementPtr, numParameters, type, readOnly);
 

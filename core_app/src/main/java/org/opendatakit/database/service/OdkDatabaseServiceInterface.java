@@ -144,8 +144,14 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         } finally {
           // this will release the database from the AppNameSharedStateContainer...
           // this may also not close the connection -- it may be held open by a cursor
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
-              dbHandleName);
+           try {
+              OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+                  dbHandleName);
+
+           } finally{
+              OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
+           }
+
         }
       }
     }
