@@ -16,7 +16,6 @@ package org.opendatakit.database.service;
 
 import android.content.ContentValues;
 import android.os.RemoteException;
-
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
@@ -29,7 +28,6 @@ import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,8 +155,13 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         } finally {
           // this will release the database from the AppNameSharedStateContainer...
           // this may also not close the connection -- it may be held open by a cursor
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .removeConnection(appName, dbHandleName);
+           try {
+              OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+                  dbHandleName);
+
+           } finally{
+              OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
+           }
         }
       }
     }

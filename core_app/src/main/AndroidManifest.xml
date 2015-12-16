@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.opendatakit.core"
-    android:sharedUserId="org.opendatakit"
-    android:sharedUserLabel="@string/app_userLabel" >
+    package="org.opendatakit.core">
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
         
     <permission-tree android:icon="@drawable/odk_core"
                      android:label="@string/webkit_permission_tree"
