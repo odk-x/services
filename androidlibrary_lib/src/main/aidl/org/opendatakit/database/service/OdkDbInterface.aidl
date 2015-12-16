@@ -52,16 +52,7 @@ interface OdkDbInterface {
    * @param successful - true if we should commit, false if we should rollback.
    */
    void closeTransaction(in String appName, in OdkDbHandle dbHandleName, in boolean successful);
-  
-  /**
-   * Commit or roll back an outstanding transaction and release the databaseHandleName
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param successful - true if we should commit, false if we should rollback.
-   */
-   void closeTransactionAndDatabase(in String appName, in OdkDbHandle dbHandleName, in boolean successful);
-   
+
   /**
    * Release the databaseHandle. Will roll back any outstanding transactions
    * and release/close the database handle.
@@ -70,29 +61,6 @@ interface OdkDbInterface {
    * @param dbHandleName
    */
    void closeDatabase(in String appName, in OdkDbHandle dbHandleName); 
-   
-  /**
-   * Call this when the schema on the server has changed w.r.t. the schema on
-   * the device. In this case, we do not know whether the rows on the device
-   * match those on the server.
-   *
-   * <ul>
-   * <li>Reset all 'in_conflict' rows to their original local state (changed or
-   * deleted).</li>
-   * <li>Leave all 'deleted' rows in 'deleted' state.</li>
-   * <li>Leave all 'changed' rows in 'changed' state.</li>
-   * <li>Reset all 'synced' rows to 'new_row' to ensure they are sync'd to the
-   * server.</li>
-   * <li>Reset all 'synced_pending_files' rows to 'new_row' to ensure they are
-   * sync'd to the server.</li>
-   * </ul>
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   */
-  void changeDataRowsToNewRowState(in String appName, in OdkDbHandle dbHandleName,
-	  in String tableId);
 
   /**
    * Call this when the schemaETag for the given tableId has changed on the server.
@@ -106,7 +74,7 @@ interface OdkDbInterface {
    * we need to clear out the dataETag so
    * that we will pull all server changes and sync our properties.
    *
-   * updateDBTableETags(sc.getAppName(), db, tableId, null, null);
+   * updateDBTableETags(sc.getAppName(), db, tableId, schemaETag, null);
    *
    * Although the server does not recognize this tableId, we can
    * keep our record of the ETags for the table-level files and
@@ -134,7 +102,7 @@ interface OdkDbInterface {
    * }
    */
   void serverTableSchemaETagChanged(in String appName, in OdkDbHandle dbHandleName,
-    in String tableId, in String tableInstanceFilesUri);
+    in String tableId, in String schemaETag, in String tableInstanceFilesUri);
 
   /**
    * Compute the app-global choiceListId for this choiceListJSON
@@ -199,55 +167,6 @@ interface OdkDbInterface {
       in List<KeyValueStoreEntry> metaData, in boolean clear);
 
   /**
-   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
-   * rows are created by ODK Survey to hold intermediate values during the
-   * filling-in of the form. They act as restore points in the Survey, should
-   * the application die.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   */
-  void deleteCheckpointRowsWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
-
-  /**
-   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
-   * rows are created by ODK Survey to hold intermediate values during the
-   * filling-in of the form. They act as restore points in the Survey, should
-   * the application die.
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   */
-  void deleteLastCheckpointRowWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
-		
- /**
-   * Delete the specified rowId in this tableId. Deletion respects sync
-   * semantics. If the row is in the SyncState.new_row state, then the row and
-   * its associated file attachments are immediately deleted. Otherwise, the row
-   * is placed into the SyncState.deleted state and will be retained until the
-   * device can delete the record on the server.
-   * <p>
-   * If you need to immediately delete a record that would otherwise sync to the
-   * server, call updateRowETagAndSyncState(...) to set the row to
-   * SyncState.new_row, and then call this method and it will be immediately
-   * deleted (in this case, unless the record on the server was already deleted,
-   * it will remain and not be deleted during any subsequent synchronizations).
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   */
-  void deleteDataInExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
-
-  /**
    * Drop the given tableId and remove all the files (both configuration and
    * data attachments) associated with that table.
    * 
@@ -271,30 +190,6 @@ interface OdkDbInterface {
    */
   void deleteDBTableMetadata(in String appName, in OdkDbHandle dbHandleName,
       in String tableId, in String partition, in String aspect, in String key);
-	
-  /**
-   * Deletes the server conflict row (if any) for this rowId in this tableId.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   */
-  void deleteServerConflictRowWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
-
-
-  /**
-   * Clean up the KVS row data types. This simplifies the migration process by
-   * enforcing the proper data types regardless of what the values are in the
-   * imported CSV files.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   */
-  void enforceTypesDBTableMetadata(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId);
 
   /**
    * Return an array of the admin columns that must be present in
@@ -328,21 +223,6 @@ interface OdkDbInterface {
   List<String> getAllTableIds(in String appName, in OdkDbHandle dbHandleName);
   
   /**
-   * Return the row(s) for the given tableId and rowId. If the row has
-   * checkpoints or conflicts, the returned UserTable will have more than one
-   * Row returned. Otherwise, it will contain a single row.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedDefns
-   * @param rowId
-   * @return
-   */
-  UserTable getDataInExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in OrderedColumns orderedDefns, in String rowId);
-    
-  /**
    * @param appName
    * @param dbHandleName
    * @param tableId
@@ -364,18 +244,6 @@ interface OdkDbInterface {
    */
   String[] getExportColumns();
 
-  /**
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   * @return the sync state of the row (use {@link SyncState.valueOf()} to reconstruct), or null if the
-   *         row does not exist.
-   */
-  String getSyncState(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
- 
   /**
    * Get the table definition entry for a tableId. This specifies the schema
    * ETag, the data-modification ETag, and the date-time of the last successful
@@ -422,55 +290,6 @@ interface OdkDbInterface {
    */
   boolean hasTableId(in String appName, in OdkDbHandle dbHandleName, 
       in String tableId);
-
-  /**
-   * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint
-   * rows are created by ODK Survey to hold intermediate values during the
-   * filling-in of the form. They act as restore points in the Survey, should
-   * the application die.
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   */
-  void insertCheckpointRowIntoExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
-
-  /**
-   * Insert the given rowId with the values in the cvValues. If certain metadata
-   * values are not specified in the cvValues, then suitable default values may
-   * be supplied for them.
-   * 
-   * If a row with this rowId and certain matching metadata fields is present,
-   * then an exception is thrown.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   */
-  void insertDataIntoExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName, 
-  	  in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
-
-  /**
-   * Change the conflictType for the given row from null (not in conflict) to
-   * the specified one.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
-   * @param conflictType
-   *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
-   *          ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
-   */
-  void placeRowIntoConflict(in String appName, in OdkDbHandle dbHandleName, 
-      in String tableId, in String rowId, in int conflictType);
 
   /* rawQuery */
 
@@ -552,21 +371,204 @@ interface OdkDbInterface {
       in String tableId, in String partition, in String aspect,
       in List<KeyValueStoreEntry> metaData);
 
+    /**
+   * Update the schema and data-modification ETags of a given tableId.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param schemaETag
+   * @param lastDataETag
+   */
+  void updateDBTableETags(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String schemaETag,
+      in String lastDataETag);
+
   /**
-   * Changes the conflictType for the given row from the specified one to null
-   * and set the sync state of this row to the indicated value. In general, you
-   * should first update the local conflict record with its new values, then
-   * call deleteServerConflictRowWithId(...) and then call this method.
-   * 
+   * Update the timestamp of the last entirely-successful synchronization
+   * attempt of this table.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   */
+  void updateDBTableLastSyncTime(in String appName, in OdkDbHandle dbHandleName, in String tableId);
+
+  /////////////////////////////////////////////////////////////////////////////////////
+  // Row level changes
+  /////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   *
    * @param appName
    * @param dbHandleName
    * @param tableId
    * @param rowId
-   * @param syncState as SyncState.name()
-   * @param conflictType
+   * @return the sync state of the row (use {@link SyncState.valueOf()} to reconstruct), or null if the
+   *         row does not exist.
    */
-  void restoreRowFromConflict(in String appName, in OdkDbHandle dbHandleName, 
-      in String tableId, in String rowId, in String syncState, in int conflictType);
+  String getSyncState(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String rowId);
+
+  /**
+   * Update the ETag and SyncState of a given rowId. There should be exactly one
+   * record for this rowId in thed database (i.e., no conflicts or checkpoints).
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   * @param rowETag
+   * @param syncState - the SyncState.name()
+   */
+  void updateRowETagAndSyncState(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in String rowId, in String rowETag, in String syncState);
+
+  /**
+   * Return the row(s) for the given tableId and rowId. If the row has
+   * checkpoints or conflicts, the returned UserTable will have more than one
+   * Row returned. Otherwise, it will contain a single row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedDefns
+   * @param rowId
+   * @return one or more rows (depending upon sync conflict and edit checkpoint states)
+   */
+  UserTable getRowsWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedDefns, in String rowId);
+
+  /**
+   * Return the row with the most recent changes for the given tableId and rowId.
+   * If the row has conflicts, it throws an exception. Otherwise, it returns the
+   * most recent checkpoint or non-checkpoint value; it will contain a single row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedDefns
+   * @param rowId
+   * @return
+   */
+  UserTable getMostRecentRowWithId(in String appName,
+      in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedDefns, in String rowId);
+
+  /**
+   * A combination of:
+   *
+   * deleteServerConflictRowWithId(appName, db, tableId, rowId)
+   * placeRowIntoConflict(appName, db, tableId, rowId, localRowConflictType)
+   * and, for the values which are the server row changes:
+   * insertDataIntoExistingDBTableWithId( appName, db, tableId, orderedColumns, values, rowId)
+   *
+   * Change the conflictType for the given row from null (not in conflict) to
+   * the specified one.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @param localRowConflictType
+   *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
+   *          ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
+   */
+  UserTable placeRowIntoServerConflictWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues,
+      in String rowId, in int localRowConflictType);
+
+  /**
+   * Inserts a checkpoint row for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @return single-row table with the content of the inserted checkpoint
+   */
+  UserTable insertCheckpointRowWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
+
+  /**
+   * Insert the given rowId with the values in the cvValues. If certain metadata
+   * values are not specified in the cvValues, then suitable default values may
+   * be supplied for them.
+   *
+   * If a row with this rowId and certain matching metadata fields is present,
+   * then an exception is thrown.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @return single-row table with the content of the inserted row
+   */
+  UserTable insertRowWithId(in String appName, in OdkDbHandle dbHandleName,
+  	  in String tableId, in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
+
+
+  /**
+   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param rowId
+   */
+  UserTable deleteAllCheckpointRowsWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in String rowId);
+
+  /**
+   * Delete any checkpoint rows for the given rowId in the tableId. Checkpoint
+   * rows are created by ODK Survey to hold intermediate values during the
+   * filling-in of the form. They act as restore points in the Survey, should
+   * the application die.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param rowId
+   */
+  UserTable deleteLastCheckpointRowWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in String rowId);
+
+ /**
+   * Delete the specified rowId in this tableId. Deletion respects sync
+   * semantics. If the row is in the SyncState.new_row state, then the row and
+   * its associated file attachments are immediately deleted. Otherwise, the row
+   * is placed into the SyncState.deleted state and will be retained until the
+   * device can delete the record on the server.
+   * <p>
+   * If you need to immediately delete a record that would otherwise sync to the
+   * server, call updateRowETagAndSyncState(...) to set the row to
+   * SyncState.new_row, and then call this method and it will be immediately
+   * deleted (in this case, unless the record on the server was already deleted,
+   * it will remain and not be deleted during any subsequent synchronizations).
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param rowId
+   */
+  UserTable deleteRowWithId(in String appName, in OdkDbHandle dbHandleName,
+      in String tableId, in OrderedColumns orderedColumns, in String rowId);
+
 
   /**
    * Update all rows for the given rowId to SavepointType 'INCOMPLETE' and
@@ -578,11 +580,14 @@ interface OdkDbInterface {
    * @param appName
    * @param dbHandleName
    * @param tableId
+   * @param columnDefns
+   * @param cvValues
    * @param rowId
+   * @return single-row table with the content of the saved-as-incomplete row
    */
-  void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(
+  UserTable saveAsIncompleteMostRecentCheckpointRowWithId(
   	  in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
+      in String tableId, in OrderedColumns columnDefns, in ContentValues cvValues, in String rowId);
 
  /**
    * Update all rows for the given rowId to SavepointType 'INCOMPLETE' and
@@ -594,11 +599,14 @@ interface OdkDbInterface {
    * @param appName
    * @param dbHandleName
    * @param tableId
+   * @param columnDefns
+   * @param cvValues
    * @param rowId
+   * @return single-row table with the content of the saved-as-incomplete row
    */
-  void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(
+  UserTable saveAsCompleteMostRecentCheckpointRowWithId(
   	  in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String rowId);
+      in String tableId, in OrderedColumns columnDefns, in ContentValues cvValues, in String rowId);
 
   /**
    * Update the given rowId with the values in the cvValues. If certain metadata
@@ -613,42 +621,11 @@ interface OdkDbInterface {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @return single-row table with the content of the saved-as-incomplete row
    */
-  void updateDataInExistingDBTableWithId(in String appName, in OdkDbHandle dbHandleName,
+  UserTable updateRowWithId(in String appName, in OdkDbHandle dbHandleName,
       in String tableId,
       in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId);
-
-  /**
-   * Updates the local record with the appropriate changes to resolve a server conflict.
-   *
-   * A combination of primitive actions, all performed in one transaction:
-   *
-   * // update with server's changes
-   * updateDataInExistingDBTableWithId(appName, dbHandleName, tableId, orderedColumns,
-   *                                   cvValues, rowId);
-   * // delete the record of the server row
-   * deleteServerConflictRowWithId(appName, dbHandleName, tableId, rowId);
-   *
-   * // move the local conflict back into the normal (null) state
-   * restoreRowFromConflict(appName, dbHandleName, tableId, rowId,
-   *     syncState, localConflictType);
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param syncState
-   * @param localConflictType
-   */
-  void resolveServerConflictWithUpdateInExistingDbTableWithId(in String appName,
-        in OdkDbHandle dbHandleName,
-  	    in String tableId,
-  	    in OrderedColumns orderedColumns, in ContentValues cvValues, in String rowId,
-  	    in String syncState,
-  	    in int localConflictType);
-
 
   /**
    * Delete the local and server conflict records to resolve a server conflict
@@ -663,54 +640,60 @@ interface OdkDbInterface {
    * updateRowETagAndSyncState(appName, dbHandleName, tableId, rowId, null,
    *                           SyncState.new_row.name());
    * // move the local conflict back into the normal (null) state
-   * deleteDataInExistingDBTableWithId(appName, dbHandleName, tableId, rowId);
+   * deleteRowWithId(appName, dbHandleName, tableId, rowId);
    *
    * @param appName
    * @param dbHandleName
    * @param tableId
    * @param rowId
    */
-  void resolveServerConflictWithDeleteInExistingDbTableWithId(in String appName,
+  void resolveServerConflictWithDeleteRowWithId(in String appName,
         in OdkDbHandle dbHandleName, in String tableId,
   	    in String rowId);
 
-    /**
-   * Update the schema and data-modification ETags of a given tableId.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param schemaETag
-   * @param lastDataETag
-   */
-  void updateDBTableETags(in String appName, in OdkDbHandle dbHandleName,
-      in String tableId, in String schemaETag,
-      in String lastDataETag);
-      
   /**
-   * Update the timestamp of the last entirely-successful synchronization
-   * attempt of this table.
-   * 
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   */
-  void updateDBTableLastSyncTime(in String appName, in OdkDbHandle dbHandleName, in String tableId);
-      
-  /**
-   * Update the ETag and SyncState of a given rowId. There should be exactly one
-   * record for this rowId in thed database (i.e., no conflicts or checkpoints).
-   * 
+   * Resolve the server conflict by taking the local changes.
+   * If the local changes are to delete this record, the record will be deleted
+   * upon the next successful sync.
+   *
    * @param appName
    * @param dbHandleName
    * @param tableId
    * @param rowId
-   * @param rowETag
-   * @param syncState - the SyncState.name() 
    */
-  void updateRowETagAndSyncState(in String appName, in OdkDbHandle dbHandleName, 
-      in String tableId, in String rowId, in String rowETag, in String syncState);  
-      
+  void resolveServerConflictTakeLocalRowWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId,
+  	    in String rowId);
+
+  /**
+   * Resolve the server conflict by taking the local changes plus a value map
+   * of select server field values.  This map should not update any metadata
+   * fields -- it should just contain user data fields.
+   *
+   * It is an error to call this if the local change is to delete the row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param cvValues
+   * @param rowId
+   */
+  void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId, in ContentValues cvValues,
+  	    in String rowId);
+
+  /**
+   * Resolve the server conflict by taking the server changes.  This may delete the local row.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowId
+   */
+  void resolveServerConflictTakeServerRowWithId(in String appName,
+        in OdkDbHandle dbHandleName, in String tableId,
+  	    in String rowId);
+
   /************************************
    * Sync Communications Tracking Tables.
    *

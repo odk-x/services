@@ -44,8 +44,9 @@ public class WebLoggerImpl implements WebLoggerIf {
   private static final int SUCCESS = 7;
   private static final int TIP = 8;
 
-  private static final int LOG_INFO_LEVEL = 1;
+  private static final int MIN_LOG_LEVEL_TO_SPEW = 3;
   private static final String DATE_FORMAT = "yyyy-MM-dd_HH";
+  private static final String LOG_LINE_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
 
   /**
    * Instance variables
@@ -62,6 +63,8 @@ public class WebLoggerImpl implements WebLoggerIf {
 
   // date formatter
   private SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
+  private SimpleDateFormat logLineDateFormatter = new SimpleDateFormat(LOG_LINE_DATE_FORMAT,
+      Locale.ENGLISH);
 
   private class LoggingFileObserver extends FileObserver {
 
@@ -233,16 +236,44 @@ public class WebLoggerImpl implements WebLoggerIf {
 
   public void log(int severity, String t, String logMsg) {
     try {
+      if (MIN_LOG_LEVEL_TO_SPEW > severity) {
+        // we are suppressing this level of logging
+        return;
+      }
+
+      String androidLogLine = logMsg;
+
+      // insert timestamp to help with time tracking
+      String curLogLineStamp = logLineDateFormatter.format(new Date());
+      if ( !logMsg.startsWith(curLogLineStamp.substring(0, 16))) {
+        logMsg = curLogLineStamp + " " + logMsg;
+      } else {
+        androidLogLine = (logMsg.length() > curLogLineStamp.length()) ?
+            logMsg.substring(curLogLineStamp.length()) : logMsg;
+      }
+      if ( androidLogLine.length() > 128 ) {
+        androidLogLine = androidLogLine.substring(0,125) + "...";
+      }
+
+      String androidTag = t;
+      int periodIdx = t.lastIndexOf('.');
+      if ( t.length() > 26 && periodIdx != -1 ) {
+        androidTag = t.substring(periodIdx+1);
+      }
+
       // do logcat logging...
       if (severity == ERROR) {
-        Log.e(t, logMsg);
+        Log.e(androidTag, androidLogLine);
       } else if (severity == WARN) {
-        Log.w(t, logMsg);
-      } else if (LOG_INFO_LEVEL >= severity) {
-        Log.i(t, logMsg);
+        Log.w(androidTag, androidLogLine);
+      } else if (severity == INFO || severity == SUCCESS || severity == TIP) {
+        Log.i(androidTag, androidLogLine);
+      } else if (severity == DEBUG){
+        Log.d(androidTag, androidLogLine);
       } else {
-        Log.d(t, logMsg);
+        Log.v(androidTag, androidLogLine);
       }
+
       // and compose the log to the file...
       switch (severity) {
       case ASSERT:

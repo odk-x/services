@@ -147,8 +147,6 @@ public class ODKFileUtils {
    */
   private static final String DEFINITION_CSV = "definition.csv";
 
-  private static final Set<String> topLevelSyncExclusions;
-
   /**
    * directories within an application that are inaccessible via the
    * getAsFile() API.
@@ -162,23 +160,10 @@ public class ODKFileUtils {
     temp.add(SYSTEM_FOLDER_NAME);
     temp.add(OUTPUT_FOLDER_NAME);
     topLevelWebServerExclusions = Collections.unmodifiableSet(temp);
-
-    /**
-     * Going forward, only the config directory should be sync'd.
-     */
-
-    temp = new TreeSet<String>();
-    temp.add(SYSTEM_FOLDER_NAME);
-    temp.add(OUTPUT_FOLDER_NAME);
-    topLevelSyncExclusions = Collections.unmodifiableSet(temp);
   }
 
   public static Set<String> getDirectoriesToExcludeFromWebServer() {
     return topLevelWebServerExclusions;
-  }
-
-  public static Set<String> getTopLevelDirectoriesToExcludeFromSync() {
-    return topLevelSyncExclusions;
   }
 
   /**
@@ -325,6 +310,10 @@ public class ODKFileUtils {
     assertConfiguredOdkApp(appName, "tables.version", apkVersion);
   }
 
+  public static void assertConfiguredScanApp(String appName, String apkVersion) {
+    assertConfiguredOdkApp(appName, "scan.version", apkVersion);
+  }
+
   public static void assertConfiguredOdkApp(String appName, String odkAppVersionFile, String apkVersion) {
     File versionFile = new File(getDataFolder(appName), odkAppVersionFile);
 
@@ -373,6 +362,10 @@ public class ODKFileUtils {
 
   public static boolean isConfiguredTablesApp(String appName, String apkVersion) {
     return isConfiguredOdkApp(appName, "tables.version", apkVersion);
+  }
+
+  public static boolean isConfiguredScanApp(String appName, String apkVersion) {
+    return isConfiguredOdkApp(appName, "scan.version", apkVersion);
   }
 
   private static boolean isConfiguredOdkApp(String appName, String odkAppVersionFile, String apkVersion) {
@@ -903,6 +896,22 @@ public class ODKFileUtils {
    */
   public static File asAppFile(String appName, String relativePath) {
     return new File(getAppFolder(appName) + File.separator + relativePath);
+  }
+
+  public static File asConfigFile(String appName, String relativePath) {
+    return new File(getConfigFolder(appName) + File.separator + relativePath);
+  }
+
+  public static String asConfigRelativePath(String appName, File fileUnderAppConfigName) {
+    String relativePath = asRelativePath(appName, fileUnderAppConfigName);
+    if ( !relativePath.startsWith(CONFIG_FOLDER_NAME + File.separator) ) {
+      throw new IllegalArgumentException("File is not located under config folder");
+    }
+    relativePath = relativePath.substring(CONFIG_FOLDER_NAME.length()+File.separator.length());
+    if ( relativePath.contains(File.separator + "..")) {
+      throw new IllegalArgumentException("File contains " + File.separator + "..");
+    }
+    return relativePath;
   }
 
   /**

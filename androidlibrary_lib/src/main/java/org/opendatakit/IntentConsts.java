@@ -23,4 +23,27 @@ public class IntentConsts {
   public static final String INTENT_KEY_URI_FRAGMENT = "uriFragment";
   public static final String INTENT_KEY_CONTENT_TYPE = "contentType";
 
+  /**
+   * Intent Extras:
+   * <ol><li>INTENT_KEY_APP_NAME</li>
+   * <li>INTENT_KEY_TABLE_ID</li>
+   * <li>INTENT_KEY_INSTANCE_ID (optional)</li></ol>
+   */
+  public class ResolveCheckpoint {
+    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String ACTIVITY_NAME =
+        "org.opendatakit.resolve.checkpoint.CheckpointResolutionActivity";
+  }
+
+  /**
+   * Intent Extras:
+   * <ol><li>INTENT_KEY_APP_NAME</li>
+   * <li>INTENT_KEY_TABLE_ID</li>
+   * <li>INTENT_KEY_INSTANCE_ID (optional)</li></ol>
+   */
+  public class ResolveConflict {
+    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String ACTIVITY_NAME =
+        "org.opendatakit.resolve.conflict.ConflictResolutionActivity";
+  }
 }

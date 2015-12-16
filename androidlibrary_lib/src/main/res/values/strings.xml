@@ -3,8 +3,11 @@
     
     <string name="app_name">ODK Library</string>
 	<string name="app_userLabel">OpenDataKit</string>
-	
-	<string name="webkit_permission_tree">Open Data Kit WebServer</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="webkit_permission_tree">Open Data Kit WebServer</string>
 	<string name="webkit_launch_permission">Launch WebServer</string>
 	<string name="database_launch_permission">Launch Database</string>
 	<string name="dbshim_launch_permission">Launch DbShim</string>
@@ -16,5 +19,11 @@
 	
     <string name="default_sync_server_url">https://open-data-kit.appspot.com</string>
 	<string name="default_legacy_server_url">https://opendatakit-2.appspot.com</string>
+
+    <string name="still_reading_license_file">Sorry, the license file is still being read.</string>
+ 	<string name="about">About</string>
+ 	<string name="waiting_for_license">Retrieving license info &#8230;</string>
+	<string name="read_license_success">Read license file successfully</string>
+	<string name="read_license_fail">Failed to read license file</string>
 
 </resources>
