@@ -6,7 +6,7 @@
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
 
-	<!-- Conflict Resolution Stuff -->
+	<!-- Checkpoint and Conflict Resolution Stuff -->
 	<string name="cancel">Cancel</string>
 	<string name="yes">Yes</string>
 	<string name="take_local">Take Local Version</string>
@@ -78,4 +78,32 @@
     <string name="conflict_auto_apply_all">No user-defined field differences in any rows.\nAutomatically took server revisions.</string>
 
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
+
+    <!-- Sync stuff -->
+    <string name="sync_starting">Starting sync&#8230;</string>
+
+    <string name="sync_table_data_sync_complete">Completed sync of %1$s dataset with server.</string>
+    <string name="sync_table_data_sync_pending_attachments">Partially completed sync of %1$s dataset with server. Not all attachments synced.</string>
+    <string name="sync_table_data_sync_with_conflicts">Partially completed sync of %1$s dataset with server. Resolve conflicts and resync.</string>
+    <string name="sync_table_contains_checkpoints">Checkpoints must be resolved before sync can proceed.</string>
+
+    <string name="sync_retrieving_tables_list_from_server">Retrieving list of tables from server.</string>
+    <string name="sync_verifying_table_schema_on_server">Verifying %1$s schema matches that on server.</string>
+    <string name="sync_creating_local_table">Creating %1$s&#8230;</string>
+    <string name="sync_dropping_local_table">Deleting %1$s from device&#8230;</string>
+    <string name="sync_table_level_file_sync_complete">Completed sync of all %1$s configuration files.</string>
+
+    <string name="sync_getting_changed_rows_on_server">Fetching %1$s dataset changes from server.</string>
+    <string name="sync_anaylzing_row_changes">Analyzing %1$s dataset changes.</string>
+
+    <string name="sync_upserting_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
+    <string name="sync_altering_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
+    <string name="sync_deleting_server_row">Deleting %1$s dataset row %2$d of %3$d on server.</string>
+    <string name="sync_uploading_attachments_server_row">Uploading %1$s dataset attachment %2$d of %3$d to server.</string>
+
+    <string name="sync_deleting_local_row">Deleting %1$s local dataset row %2$d of %3$d.</string>
+    <string name="sync_updating_local_row">Updating %1$s local dataset row %2$d of %3$d.</string>
+    <string name="sync_inserting_local_row">Inserting %1$s local dataset row %2$d of %3$d.</string>
+    <string name="sync_marking_conflicting_local_row">Mark conflicting %1$s local dataset row %2$d of %3$d.</string>
+
 </resources>
