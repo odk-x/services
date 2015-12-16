@@ -18,6 +18,7 @@ import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteCantOpenDatabaseException;
+import org.sqlite.database.sqlite.SQLiteDatabaseLockedException;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.util.*;
@@ -177,7 +178,36 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
           appName + " " + sessionQualifier);
 
       // this throws an exception if the db cannot be opened
-      dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier);
+      SQLiteDatabaseLockedException ex = null;
+      int MAX_OPEN_RETRY_COUNT = 3;
+      int retryCount = 1;
+      for (; retryCount <= MAX_OPEN_RETRY_COUNT ; ++retryCount ) {
+        try {
+          dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier);
+          break;
+        } catch ( SQLiteDatabaseLockedException e ) {
+          if ( retryCount == MAX_OPEN_RETRY_COUNT ) {
+            StringBuilder b = new StringBuilder();
+            b.append("openDatabase Attempt ").append(retryCount)
+                .append(" Failed: throwing  SQLiteDatabaseLockedException");
+            appNameSharedStateContainer.dumpInfo(b);
+          } else {
+            logWarn(appName, "openDatabase Attempt " + retryCount +
+                " Failed: will throw an exception after attempt " + MAX_OPEN_RETRY_COUNT);
+          }
+          ex = e;
+          long retryDelay = (retryCount+1)*300L;
+          try {
+            Thread.sleep(retryDelay);
+          } catch (InterruptedException e1) {
+            // ignore
+          }
+        }
+      }
+      if ( dbConnection == null ) {
+        throw ex;
+      }
+
       if ( dbConnection != null ) {
          boolean success = false;
          try {
@@ -345,13 +375,13 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
 
             if (dbConnectionAppName != null) {
                logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-                   " -- obtaining reference to base database for " + appName +
+                   " -- successfully obtained reference to base database for " + appName +
                    " when getting " + sessionQualifier);
             }
 
             if (dbConnection != null) {
                logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-                   " -- obtaining reference to already-open database for " + appName +
+                   " -- successfully obtained reference to already-open database for " + appName +
                    " when getting " + sessionQualifier);
             }
 
@@ -384,8 +414,10 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
             throw new SQLiteCantOpenDatabaseException("unable to initialize base database for "
                 + appName + " when getting " + sessionQualifier);
          } else {
-            // we aren't going to do anything with this, so we can release it.
-            // It is retained in the connection map.
+            // we aren't going to do anything with this.
+            // Do not release it -- keep it in the connection map
+            // until we terminate all service connections.
+            // This keeps it retained in the connection map.
             dbConnectionAppName.releaseReference();
          }
       }

@@ -58,7 +58,6 @@ public class FormInfo {
   public final String appName;
   public final String tableId;
   public final String formTitle;
-  public final String displaySubtext;
   public final String defaultLocale; // default locale
   public final String instanceName;  // column containing instance name for display
 
@@ -101,8 +100,6 @@ public class FormInfo {
 
       if (FormsColumns.DISPLAY_NAME.equals(s)) {
         ret[i] = formTitle;
-      } else if (FormsColumns.DISPLAY_SUBTEXT.equals(s)) {
-        ret[i] = displaySubtext;
       } else if (FormsColumns.TABLE_ID.equals(s)) {
         ret[i] = tableId;
       } else if (FormsColumns.FORM_ID.equals(s)) {
@@ -147,7 +144,6 @@ public class FormInfo {
     settings = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.SETTINGS));
     formVersion = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_VERSION));
     formTitle = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_NAME));
-    displaySubtext = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_SUBTEXT));
     defaultLocale = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DEFAULT_FORM_LOCALE));
     instanceName = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.INSTANCE_NAME));
 
@@ -285,29 +281,17 @@ public class FormInfo {
       if ( setting != null ) {
         Object o = setting.get(FORMDEF_TITLE_ELEMENT);
         if (o == null) {
-	      throw new IllegalArgumentException("title is not specified in the display section of the survey settings of the formdef json file! "
-	          + formDefFile.getAbsolutePath());
-	    }
-	    if (o instanceof String) {
-	      formTitle = (String) o;
-	    } else {
-	      try {
-	        formDefStruct = (Map<String, Object>) o;
-
-	        if (formDefStruct == null || formDefStruct.size() == 0) {
-	          throw new IllegalArgumentException(
-	              "title is not specified in the display section of the survey settings of the formdef json file! "
-	                  + formDefFile.getAbsolutePath());
-	        }
-
-	        // just get the one title string from the file...
-	        formTitle = (String) formDefStruct.get(defaultLocale);
-	      } catch (ClassCastException e) {
+          throw new IllegalArgumentException(
+              "title is not specified in the display section of the survey settings of the formdef json file! "
+                  + formDefFile.getAbsolutePath());
+        }
+        try {
+          formTitle = ODKFileUtils.mapper.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
-	        throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	      }
-	    }
+          throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
+              + formDefFile.getAbsolutePath());
+        }
       } else {
 	    throw new IllegalArgumentException("display entry is not specified in the survey section of the settings of formdef json file! "
 	            + formDefFile.getAbsolutePath());
@@ -361,10 +345,6 @@ public class FormInfo {
 
     lastModificationDate = formDefFile.lastModified();
     fileLength = formDefFile.length();
-    
-    String ts = new SimpleDateFormat(c.getString(R.string.added_on_date_at_time),
-        Locale.getDefault()).format(lastModificationDate);
-    displaySubtext = ts;
   }
 
 }

@@ -47,6 +47,16 @@ public class OdkDbShimService extends Service {
   public static final String LOGTAG = OdkDbShimService.class.getSimpleName();
 
   /**
+   * change to true expression if you want to debug the dbShim service
+   */
+  public static void possiblyWaitForDbShimServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
+
+  /**
    * Type of action to be performed on an appName and open database
    */
   private enum Action {
@@ -534,7 +544,7 @@ public class OdkDbShimService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     Log.i(LOGTAG, "onBind -- returning interface.");
-    Core.getInstance().possiblyWaitForDbShimServiceDebugger();
+    possiblyWaitForDbShimServiceDebugger();
     return servInterface;
   }
 

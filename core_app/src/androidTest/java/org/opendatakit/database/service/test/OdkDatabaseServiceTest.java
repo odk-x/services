@@ -221,9 +221,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
 
-            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
@@ -260,10 +262,12 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
             serviceInterface.closeTransaction(APPNAME, db, true);
 
-            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
@@ -301,10 +305,12 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId =  UUID.randomUUID();
 
             serviceInterface.beginTransaction(APPNAME, db);
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
             serviceInterface.closeTransaction(APPNAME, db, true);
 
-            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
@@ -340,8 +346,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId1 = UUID.randomUUID();
             UUID rowId2 = UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId1.toString());
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId2.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId1.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId2.toString());
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
                     assertEquals(DB_TABLE_ID, table.getTableId());
@@ -378,8 +386,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId1 = UUID.randomUUID();
             UUID rowId2 = UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId1.toString());
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId2.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId1.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId2.toString());
 
             serviceInterface.closeTransaction(APPNAME, db, true);
 
@@ -420,11 +430,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId1 = UUID.randomUUID();
             UUID rowId2 = UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId1.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId1.toString());
             serviceInterface.closeTransaction(APPNAME, db, true);
 
             serviceInterface.beginTransaction(APPNAME, db);
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId2.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId2.toString());
             serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
@@ -461,7 +473,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
 
@@ -535,7 +548,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null,null, null,null,null);
             assertEquals(DB_TABLE_ID, table.getTableId());
@@ -543,9 +557,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             verifyRowTestSet1(table.getRowAtIndex(0));
 
-            serviceInterface.updateDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId.toString());
+            serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId.toString());
 
-            table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
 
@@ -579,7 +595,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
             serviceInterface.closeTransaction(APPNAME, db, true);
 
             serviceInterface.beginTransaction(APPNAME, db);
@@ -591,9 +608,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             serviceInterface.closeTransaction(APPNAME, db, true);
 
             serviceInterface.beginTransaction(APPNAME, db);
-            serviceInterface.updateDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId.toString());
+            serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId.toString());
 
-            table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
 
@@ -629,7 +648,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
             assertEquals(DB_TABLE_ID, table.getTableId());
@@ -646,9 +666,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             int changeValue = 3;
             singleValue.put(COL_INTEGER_ID, changeValue);
 
-            serviceInterface.updateDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, singleColumn, singleValue, rowId.toString());
+            serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, singleColumn, singleValue,
+                rowId.toString());
 
-            table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
@@ -688,9 +710,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             UUID rowId =  UUID.randomUUID();
 
             // insert row
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                contentValuesTestSet1(), rowId.toString());
 
-            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
@@ -699,9 +723,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             verifyRowTestSet1(row);
 
             // delete row
-            serviceInterface.deleteDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, rowId.toString());
+            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
-            table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+            table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
+                rowId.toString());
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(0, table.getNumberOfRows());
 
@@ -742,7 +767,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             serviceInterface1.closeTransaction(APPNAME, db1, true);
 
             serviceInterface1.beginTransaction(APPNAME, db1);
-            serviceInterface1.insertDataIntoExistingDBTableWithId(APPNAME, db1, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface1.insertRowWithId(APPNAME, db1, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
             serviceInterface1.closeTransaction(APPNAME, db1, true);
 
             UserTable table;
@@ -765,7 +790,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             // use service connection 2 to update values
             serviceInterface2.beginTransaction(APPNAME, db2);
-            serviceInterface2.updateDataInExistingDBTableWithId(APPNAME, db2, DB_TABLE_ID, columns, contentValuesTestSet2(), rowId.toString());
+            serviceInterface2.updateRowWithId(APPNAME, db2, DB_TABLE_ID, columns,
+                contentValuesTestSet2(), rowId.toString());
             serviceInterface2.closeTransaction(APPNAME, db2, true);
 
 

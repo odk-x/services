@@ -40,7 +40,6 @@ import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import java.io.File;
@@ -58,6 +57,16 @@ import java.util.Locale;
 public abstract class InstanceProviderImpl extends ContentProvider {
 
   private static final String t = "InstancesProviderImpl";
+
+  /**
+   * change to true expression if you want to debug this content provider
+   */
+  public static void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
 
   private static final String DATA_TABLE_ID_COLUMN = DataTableColumns.ID;
   private static final String DATA_TABLE_SAVEPOINT_TIMESTAMP_COLUMN = DataTableColumns.SAVEPOINT_TIMESTAMP;
@@ -123,7 +132,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
       String sortOrder) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -473,7 +482,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
    */
   @Override
   public synchronized int delete(Uri uri, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -620,7 +629,7 @@ public abstract class InstanceProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 

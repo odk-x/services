@@ -35,11 +35,7 @@ import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.core.application.Core;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -64,6 +60,16 @@ import java.util.Map.Entry;
  */
 public abstract class FormsProviderImpl extends ContentProvider {
   static final String t = "FormsProvider";
+
+  /**
+   * change to true expression if you want to debug this content provider
+   */
+  public static void possiblyWaitForContentProviderDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
 
   public abstract String getFormsAuthority();
 
@@ -139,7 +145,8 @@ public abstract class FormsProviderImpl extends ContentProvider {
     File formDefFolder = new File(formFolder);
     
     if (values.containsKey(FormsColumns.DISPLAY_NAME) == false) {
-      values.put(FormsColumns.DISPLAY_NAME, formDefFolder.getName());
+      values.put(FormsColumns.DISPLAY_NAME, NameUtil.normalizeDisplayName(NameUtil
+          .constructSimpleDisplayName(formId)));
     }
 
     // require that it contain a formDef file
@@ -187,7 +194,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized Uri insert(Uri uri, ContentValues initialValues) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
 
@@ -211,13 +218,6 @@ public abstract class FormsProviderImpl extends ContentProvider {
     values.remove(FormsColumns.DATE);
     values.remove(FormsColumns.JSON_MD5_HASH);
     FormSpec formSpec = patchUpValues(appName, values);
-
-    if (values.containsKey(FormsColumns.DISPLAY_SUBTEXT) == false) {
-      Date today = new Date();
-      String ts = new SimpleDateFormat(getContext().getString(R.string.added_on_date_at_time),
-                                       Locale.getDefault()).format(today);
-      values.put(FormsColumns.DISPLAY_SUBTEXT, ts);
-    }
 
     // first try to see if a record with this filename already exists...
     String[] projection = { FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
@@ -405,7 +405,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
                       String sortOrder) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -460,7 +460,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
    */
   @Override
   public synchronized int delete(Uri uri, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -612,7 +612,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
 
   @Override
   public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
-    Core.getInstance().possiblyWaitForContentProviderDebugger();
+    possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
     
@@ -680,12 +680,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
                 // don't insert the PK
                 continue;
               }
-              if ( colName.equals(FormsColumns.DISPLAY_SUBTEXT) && 
-                   cv.containsKey(FormsColumns.DISPLAY_SUBTEXT) ) {
-                // allow user to specify their own values
-                continue;
-              }
-              
+
               // everything else, we control...
               Class<?> dataType = ODKCursorUtils.getIndexDataType(c, idx);
               if ( dataType == String.class ) {
@@ -719,15 +714,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
         FormSpec fs = e.getKey();
         ContentValues cv = e.getValue();
         
-        // Make sure that the necessary fields are all set
-        if (cv.containsKey(FormsColumns.DATE) == true) {
-          Date today = new Date();
-          String ts = new SimpleDateFormat(getContext().getString(R.string.added_on_date_at_time),
-                                           Locale.getDefault()).format(today);
-          cv.put(FormsColumns.DISPLAY_SUBTEXT, ts);
-        }
-  
-        if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv, 
+        if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv,
             FormsColumns._ID + "=?", new String[] { fs._id }) > 0 ) {
           fs.success = true;
         }

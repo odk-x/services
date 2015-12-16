@@ -29,6 +29,15 @@ import fi.iki.elonen.SimpleWebServer;
 public class OdkWebkitServerService extends Service {
 
   public static final String LOGTAG = OdkWebkitServerService.class.getSimpleName();
+  /**
+   * change to true expression if you want to debug this webkit service
+   */
+  public static void possiblyWaitForWebkitServerServiceDebugger() {
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = new String("for setting breakpoint").length();
+    }
+  }
 
   private SimpleWebServer server = null;
   private volatile Thread webServer = null;
@@ -64,7 +73,7 @@ public class OdkWebkitServerService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    Core.getInstance().possiblyWaitForWebkitServerServiceDebugger();
+    possiblyWaitForWebkitServerServiceDebugger();
     return servInterface;
   }
 

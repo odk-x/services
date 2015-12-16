@@ -280,29 +280,35 @@ public class SyncETagsUtils {
     b.append(" ORDER BY ").append(SyncETagColumns.LAST_MODIFIED_TIMESTAMP).append(" DESC");
 
     Cursor c = null;
-    c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
-    
-    if ( c.getCount() == 0 ) {
-      // unknown...
-      return null;
-    }
-    
-    if ( c.getCount() > 1 ) {
-      // TODO: log something
-    }
-    
-    c.moveToFirst();
-    int idx = c.getColumnIndex(SyncETagColumns.ETAG_MD5_HASH);
-    int idxLMT = c.getColumnIndex(SyncETagColumns.LAST_MODIFIED_TIMESTAMP);
-    if ( c.isNull(idx) ) {
-      // shouldn't happen...
-      return null;
-    }
-    String value = c.getString(idx);
-    String lmtValue = c.getString(idxLMT);
-    Long modifiedTime = TableConstants.milliSecondsFromNanos(lmtValue);
-    if ( modifiedTime.equals(modified) ) {
-      return value;
+    try {
+      c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+
+      if (c.getCount() == 0) {
+        // unknown...
+        return null;
+      }
+
+      if (c.getCount() > 1) {
+        // TODO: log something
+      }
+
+      c.moveToFirst();
+      int idx = c.getColumnIndex(SyncETagColumns.ETAG_MD5_HASH);
+      int idxLMT = c.getColumnIndex(SyncETagColumns.LAST_MODIFIED_TIMESTAMP);
+      if (c.isNull(idx)) {
+        // shouldn't happen...
+        return null;
+      }
+      String value = c.getString(idx);
+      String lmtValue = c.getString(idxLMT);
+      Long modifiedTime = TableConstants.milliSecondsFromNanos(lmtValue);
+      if (modifiedTime.equals(modified)) {
+        return value;
+      }
+    } finally {
+      if ( c != null && !c.isClosed()) {
+        c.close();
+      }
     }
     return null;
   }

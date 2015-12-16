@@ -55,31 +55,37 @@ public class ChoiceListUtils {
     bindArgs.add(choiceListId);
 
     Cursor c = null;
-    c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+    try {
+      c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 
-    if ( c.getCount() == 0 ) {
-      // unknown...
-      return null;
-    }
+      if (c.getCount() == 0) {
+        // unknown...
+        return null;
+      }
 
-    if ( c.getCount() > 1 ) {
-      throw new IllegalStateException("getChoiceList: multiple entries for choiceListId " +
-          choiceListId);
-    }
+      if (c.getCount() > 1) {
+        throw new IllegalStateException(
+            "getChoiceList: multiple entries for choiceListId " + choiceListId);
+      }
 
-    c.moveToFirst();
-    int idx = c.getColumnIndex(ChoiceListColumns.CHOICE_LIST_JSON);
-    if ( c.isNull(idx) ) {
-      // shouldn't happen...
-      return null;
-    }
-    String value = c.getString(idx);
-    if ( value == null || value.trim().length() == 0 ) {
-      // also shouldn't happen...
-      return null;
-    }
+      c.moveToFirst();
+      int idx = c.getColumnIndex(ChoiceListColumns.CHOICE_LIST_JSON);
+      if (c.isNull(idx)) {
+        // shouldn't happen...
+        return null;
+      }
+      String value = c.getString(idx);
+      if (value == null || value.trim().length() == 0) {
+        // also shouldn't happen...
+        return null;
+      }
 
-    return value;
+      return value;
+    } finally {
+      if ( c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
   }
 
   public void setChoiceList(OdkConnectionInterface db, String choiceListId,

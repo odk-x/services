@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp">
+
+    <TextView
+        android:id="@+id/conflict_overview_message"
+        android:layout_width="match_parent"
+        android:lines="3"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/take_server"
+            android:text="@string/conflict_take_server_updates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dip"
+            android:layout_weight="50" />
+
+        <Button
+            android:id="@+id/take_local"
+            android:text="@string/conflict_take_local_updates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dip"
+            android:layout_weight="50"  />
+
+        <Button
+                android:id="@+id/take_local_with_deltas"
+                android:text="@string/conflict_take_local_with_deltas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dip"
+                android:layout_weight="50"  />
+     </LinearLayout>
+
+    <ListView
+        android:id="@android:id/list"
+        android:listSelector="@android:color/transparent"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

@@ -1090,8 +1090,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
        String[] selectionArgs, String groupBy, String having,
        String orderBy) {
 
-      return query(false, table, columns, selection, selectionArgs, groupBy,
-          having, orderBy, null /* limit */);
+      return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, null /* limit */);
    }
 
    /**
@@ -1128,8 +1127,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
        String[] selectionArgs, String groupBy, String having,
        String orderBy, String limit) {
 
-      return query(false, table, columns, selection, selectionArgs, groupBy,
-          having, orderBy, limit);
+      return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
    }
 
    /**
@@ -1312,8 +1310,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     */
    public long replaceOrThrow(String table, String nullColumnHack,
        ContentValues initialValues) throws SQLException {
-      return insertWithOnConflict(table, nullColumnHack, initialValues,
-          CONFLICT_REPLACE);
+      return insertWithOnConflict(table, nullColumnHack, initialValues, CONFLICT_REPLACE);
    }
 
    /**
@@ -1534,6 +1531,31 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "close", null,
                 null);
             try {
+              // verify that all transactions are closed...
+              while ( inTransaction()) {
+
+                String errorMsg = "connection:" + getAppName() + " " + mSessionQualifier +
+                    (finalized ? " Program error! A transaction is open when finalized"
+                        : " Program error! A transaction is open when calling close()");
+
+                if ( hasLoggingDirectory ) {
+                  getLogger().e(TAG, errorMsg);
+                } else {
+                  Log.e(TAG, errorMsg);
+                }
+
+                try {
+                  endTransaction(null);
+                } catch ( Throwable t ) {
+                  if ( hasLoggingDirectory ) {
+                    getLogger().w(TAG, errorMsg + " Exception: " + t.toString());
+                  } else {
+                    Log.w(TAG, errorMsg + " Exception: " + t.toString());
+                  }
+                }
+              }
+
+              // and close all cursors
                if (!mActiveCursors.isEmpty()) {
                   if (!finalized) {
                      /**
@@ -1584,10 +1606,12 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                      mActiveCursors.clear();
                   }
                }
-               // and now evict the now-released prepared statements
-               mPreparedStatementCache.evictAll();
 
-               nativeClose(mConnectionPtr);
+              // and now evict the now-released prepared statements
+              mPreparedStatementCache.evictAll();
+
+              mRecentOperations.tickClose();
+              nativeClose(mConnectionPtr);
             } catch ( Throwable t) {
                mRecentOperations.failOperation(cookie, t);
                throw t;
@@ -1616,52 +1640,70 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
 
       synchronized (mConnectionPtrMutex) {
+         mRecentOperations.tickOpen();
          mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags, mConfiguration.label,
              SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
 
-         // Register custom functions.
-         final int functionCount = mConfiguration.customFunctions.size();
-         for (int i = 0; i < functionCount; i++) {
+        try {
+          // Register custom functions.
+          final int functionCount = mConfiguration.customFunctions.size();
+          for (int i = 0; i < functionCount; i++) {
             SQLiteCustomFunction function = mConfiguration.customFunctions.get(i);
             nativeRegisterCustomFunction(mConnectionPtr, function);
-         }
+          }
 
-         {
+          {
             final long newValue = SQLiteGlobal.getDefaultPageSize();
             long value = executeForLongImpl("PRAGMA page_size", null, null);
             if (value != newValue) {
-               executeImpl("PRAGMA page_size=" + newValue, null, null);
+              executeImpl("PRAGMA page_size=" + newValue, null, null);
             }
-         }
+          }
 
-         {
+          {
             final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
             long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
             if (value != newValue) {
-               executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
+              executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
             }
-         }
+          }
 
-         {
+          {
             final long newValue = SQLiteGlobal.getJournalSizeLimit();
             long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
             if (value != newValue) {
-               executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
+              executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
             }
-         }
+          }
 
-         {
+          {
             final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
             long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
             if (value != newValue) {
-               executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
+              executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
             }
-         }
+          }
 
-         setLockingMode("NORMAL");
-         setJournalMode("WAL");
-         setSyncMode(SQLiteGlobal.getWALSyncMode());
-         setBusyTimeout();
+          setLockingMode("NORMAL");
+          setJournalMode("WAL");
+          setSyncMode(SQLiteGlobal.getWALSyncMode());
+          setBusyTimeout();
+        } catch ( Exception e ) {
+          try {
+            // release any prepared statements.
+            // close will not succeed if there are any
+            mPreparedStatementCache.evictAll();
+
+            mRecentOperations.tickClose();
+            nativeClose(mConnectionPtr);
+          } catch ( Exception ex ) {
+            getLogger().e(TAG, "Unable to close connection during failed Open: " + ex.toString());
+            getLogger().printStackTrace(ex);
+          } finally {
+            mConnectionPtr = 0L;
+          }
+          throw e;
+        }
       }
    }
 
@@ -1695,6 +1737,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private void setJournalMode(String newValue) {
       String value = executeForStringImpl("PRAGMA journal_mode", null, null);
       if (!value.equalsIgnoreCase(newValue)) {
+         getLogger().i(TAG, "Found journal_mode = " + value + " changing to " + newValue);
          String result = executeForStringImpl("PRAGMA journal_mode=" + newValue, null, null);
          if (result.equalsIgnoreCase(newValue)) {
             return;
