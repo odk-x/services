@@ -14,6 +14,7 @@
 
 package org.opendatakit.sync;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ import java.util.Set;
 
 import org.apache.http.HttpStatus;
 import org.apache.wink.client.ClientWebException;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
@@ -32,9 +35,12 @@ import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.provider.FormsColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.PropertiesFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.sync.SynchronizationResult.Status;
 import org.opendatakit.sync.Synchronizer.OnTablePropertiesChanged;
@@ -662,7 +668,36 @@ public class ProcessAppAndTableLevelChanges {
       // write the current schema and properties set.
       try {
         db = sc.getDatabase();
-        sc.writePropertiesCsv(tableId, orderedDefns);
+        File definitionCsv = new File(ODKFileUtils.getTableDefinitionCsvFile(sc.getAppName(), tableId));
+        File propertiesCsv = new File(ODKFileUtils.getTablePropertiesCsvFile(sc.getAppName(), tableId));
+        /**
+         * Since the md5Hash of the file identifies identical properties, ensure
+         * that the list of KVS entries is in alphabetical order.
+         */
+        List<KeyValueStoreEntry> kvsEntries =
+            sc.getDatabaseService().getDBTableMetadata(sc.getAppName(), db, tableId, null, null, null);
+
+        for (int i = 0; i < kvsEntries.size(); i++) {
+          KeyValueStoreEntry entry = kvsEntries.get(i);
+
+          // replace all the choiceList entries with their choiceListJSON
+          if (entry.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN) && entry.key
+              .equals(KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST)) {
+            // exported type is an array -- the choiceListJSON
+            entry.type = ElementDataType.array.name();
+            if ((entry.value != null) && (entry.value.trim().length() != 0)) {
+              String choiceListJSON =
+                  sc.getDatabaseService().getChoiceList(sc.getAppName(), db, entry.value);
+              entry.value = choiceListJSON;
+            } else {
+              entry.value = null;
+            }
+          }
+        }
+
+        PropertiesFileUtils
+            .writePropertiesIntoCsv(sc.getAppName(), tableId, orderedDefns, kvsEntries, definitionCsv,
+                propertiesCsv);
       } finally {
         sc.releaseDatabase(db);
         db = null;
@@ -674,7 +709,27 @@ public class ProcessAppAndTableLevelChanges {
               @Override
               public void onTablePropertiesChanged(String tableId) {
                 try {
-                  sc.updateTablePropertiesFromCsv(tableId);
+                  PropertiesFileUtils.DataTableDefinition dtd =
+                      PropertiesFileUtils.readPropertiesFromCsv(sc.getAppName(), tableId);
+
+                  // Go through the KVS list and replace all the choiceList entries with their choiceListId
+                  for ( KeyValueStoreEntry entry : dtd.kvsEntries ) {
+                    if ( entry.partition.equals(KeyValueStoreConstants.PARTITION_COLUMN) &&
+                        entry.key.equals(KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST) ) {
+                      // stored type is a string -- the choiceListId
+                      entry.type = ElementDataType.string.name();
+                      if ((entry.value != null) && (entry.value.trim().length() != 0)) {
+                        String choiceListId = sc.getDatabaseService().setChoiceList(sc.getAppName(),
+                            sc.getDatabase(), entry.value);
+                        entry.value = choiceListId;
+                      } else {
+                        entry.value = null;
+                      }
+                    }
+                  }
+
+                  sc.getDatabaseService().createOrOpenDBTableWithColumnsAndProperties(sc.getAppName(),
+                      sc.getDatabase(), tableId, dtd.columnList, dtd.kvsEntries, true);
                 } catch (IOException e) {
                   log.printStackTrace(e);
                   String msg = e.getMessage();

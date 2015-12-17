@@ -25,12 +25,9 @@ import android.os.IBinder;
 import android.util.Log;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.application.AppAwareApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -45,7 +42,6 @@ import android.os.RemoteException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -290,19 +286,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
         e.printStackTrace();
       }
     }
-  }
-
-  public void writePropertiesCsv(String tableId, OrderedColumns orderedDefns)
-      throws RemoteException {
-    CsvUtil csvUtil = new CsvUtil(application, appName, getDatabaseService());
-
-    csvUtil.writePropertiesCsv(getDatabase(), tableId, orderedDefns);
-  }
-
-  public void updateTablePropertiesFromCsv(String tableId) throws IOException, RemoteException {
-    CsvUtil csvUtil = new CsvUtil(application, appName, getDatabaseService());
-
-    csvUtil.updateTablePropertiesFromCsv(null, tableId);
   }
 
   public void resetMajorSyncSteps(int nMajorSyncSteps) {
