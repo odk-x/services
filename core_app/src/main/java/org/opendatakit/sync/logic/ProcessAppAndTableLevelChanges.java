@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.sync;
+package org.opendatakit.sync.logic;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,8 +42,10 @@ import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.sync.SynchronizationResult.Status;
-import org.opendatakit.sync.Synchronizer.OnTablePropertiesChanged;
+import org.opendatakit.sync.SyncExecutionContext;
+import org.opendatakit.sync.data.SynchronizationResult.Status;
+import org.opendatakit.sync.logic.Synchronizer.OnTablePropertiesChanged;
+import org.opendatakit.sync.data.TableResult;
 import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.sync.service.OdkSyncService;
@@ -696,8 +698,8 @@ public class ProcessAppAndTableLevelChanges {
         }
 
         PropertiesFileUtils
-            .writePropertiesIntoCsv(sc.getAppName(), tableId, orderedDefns, kvsEntries, definitionCsv,
-                propertiesCsv);
+            .writePropertiesIntoCsv(sc.getAppName(), tableId, orderedDefns, kvsEntries,
+                definitionCsv, propertiesCsv);
       } finally {
         sc.releaseDatabase(db);
         db = null;

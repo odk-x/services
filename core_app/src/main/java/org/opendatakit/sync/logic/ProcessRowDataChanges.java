@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync;
+package org.opendatakit.sync.logic;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,7 +45,12 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.sync.SynchronizationResult.Status;
+import org.opendatakit.sync.*;
+import org.opendatakit.sync.data.SyncRow;
+import org.opendatakit.sync.data.SyncRowDataChanges;
+import org.opendatakit.sync.data.SyncRowPending;
+import org.opendatakit.sync.data.SynchronizationResult.Status;
+import org.opendatakit.sync.data.TableResult;
 import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.SyncProgressState;
 
@@ -1354,7 +1359,7 @@ public class ProcessRowDataChanges {
       // ensure that all those files are uploaded before
       // we update the row. This ensures that all attachments
       // are saved before we revise the local row value.
-      if (change.isRestPendingFiles) {
+      if (change.isSyncedPendingFiles) {
         log.w(TAG,
             "file attachment at risk -- updating from server while in synced_pending_files state. rowId: "
                 + change.localRow.getRowId() + " rowETag: " + change.localRow.getRowETag());
@@ -1400,7 +1405,7 @@ public class ProcessRowDataChanges {
   /**
    * Attempt to push all the attachments of the local rows up to the server
    * (before the row is locally deleted). If the attachments were pushed to the
-   * server, the 'isRestPendingFiles' flag is cleared. This makes the local row
+   * server, the 'isSyncedPendingFiles' flag is cleared. This makes the local row
    * eligible for deletion. Otherwise, the localRow is removed from the
    * localRowplaced in the
     *
@@ -1421,10 +1426,10 @@ public class ProcessRowDataChanges {
     // local row up to the server
     for (int i = 0; i < changes.size();) {
       SyncRowDataChanges change = changes.get(i);
-      if (change.isRestPendingFiles) {
+      if (change.isSyncedPendingFiles) {
         if (change.localRow.getUriFragments().isEmpty()) {
           // nothing to push
-          change.isRestPendingFiles = false;
+          change.isSyncedPendingFiles = false;
           ++i;
         } else {
           // since we are directly calling putFileAttachments, the flags in this
@@ -1434,7 +1439,7 @@ public class ProcessRowDataChanges {
               resource.getTableId(), srp, deferInstanceAttachments);
           if (outcome) {
             // successful
-            change.isRestPendingFiles = false;
+            change.isSyncedPendingFiles = false;
             ++i;
           } else {
             // there are files that should be pushed that weren't.
@@ -1456,7 +1461,7 @@ public class ProcessRowDataChanges {
 
   /**
    * Delete the rows that have had all of their (locally-available) attachments
-   * pushed to the server. I.e., those with 'isRestPendingFiles' false.
+   * pushed to the server. I.e., those with 'isSyncedPendingFiles' false.
    * Otherwise, leave these rows in the local database until their files are
    * pushed and they can safely be removed.
    * 
@@ -1476,7 +1481,7 @@ public class ProcessRowDataChanges {
 
     // now delete the rows we can delete...
     for (SyncRowDataChanges change : changes) {
-      if (!change.isRestPendingFiles) {
+      if (!change.isSyncedPendingFiles) {
         // DELETE
         // this is equivalent to the conflict-resolution action where we accept the server delete
         // this ensures there are no server conflict rows, and that the local row is removed.

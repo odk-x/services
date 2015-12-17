@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync;
+package org.opendatakit.sync.logic;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,6 +27,8 @@ import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.sync.data.SyncRow;
+import org.opendatakit.sync.data.SyncRowPending;
 import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.SyncProgressState;
 

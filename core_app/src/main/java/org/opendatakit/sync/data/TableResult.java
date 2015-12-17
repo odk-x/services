@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync;
+package org.opendatakit.sync.data;
 
-import org.opendatakit.sync.SynchronizationResult.Status;
+import org.opendatakit.sync.data.SynchronizationResult.Status;
 
 /**
  * The mapping of a table to the status of its synchronization.
@@ -91,8 +91,7 @@ public class TableResult {
    * then only be updated in the case of success or exceptions. The boolean
    * flags are initialized to false;
    * 
-   * @param dbTableName
-   * @param status
+   * @param tableId
    */
   public TableResult(String tableId) {
     this.mTableId = tableId;

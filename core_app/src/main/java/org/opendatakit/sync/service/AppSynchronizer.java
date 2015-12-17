@@ -24,11 +24,17 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
 import org.opendatakit.sync.*;
-import org.opendatakit.sync.SynchronizationResult.Status;
+import org.opendatakit.sync.data.SynchronizationResult;
+import org.opendatakit.sync.data.SynchronizationResult.Status;
+import org.opendatakit.sync.data.TableResult;
 import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.exceptions.NoAppNameSpecifiedException;
 
 import android.app.Service;
+import org.opendatakit.sync.logic.AggregateSynchronizer;
+import org.opendatakit.sync.logic.ProcessAppAndTableLevelChanges;
+import org.opendatakit.sync.logic.ProcessRowDataChanges;
+import org.opendatakit.sync.logic.Synchronizer;
 
 public class AppSynchronizer {
 
@@ -133,15 +139,11 @@ public class AppSynchronizer {
         // app support).
         //
         // NOTE: server limits this string to 10 characters
-        // For now, assume all APKs are sync'd to the same API version.
-        String versionCode = application.getVersionCodeString();
-        // android.os.Debug.waitForDebugger();
-        String odkClientVersion = versionCode.substring(0, versionCode.length() - 2);
 
         SynchronizationResult syncResult = new SynchronizationResult();
 
         SyncExecutionContext sharedContext = new SyncExecutionContext( application,
-            appName, odkClientVersion, syncProgress, syncResult);
+            appName, syncProgress, syncResult);
 
         Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
@@ -178,7 +180,7 @@ public class AppSynchronizer {
         }
 
         for (TableResult result : syncResult.getTableResults()) {
-          org.opendatakit.sync.SynchronizationResult.Status tableStatus = result.getStatus();
+          SynchronizationResult.Status tableStatus = result.getStatus();
           // TODO: decide how to handle the status
           if (tableStatus != Status.SUCCESS) {
             if (tableStatus == Status.AUTH_EXCEPTION) {

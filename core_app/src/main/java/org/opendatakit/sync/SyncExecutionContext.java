@@ -32,8 +32,11 @@ import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.SynchronizationResult.Status;
-import org.opendatakit.sync.Synchronizer.SynchronizerStatus;
+import org.opendatakit.sync.data.SynchronizationResult;
+import org.opendatakit.sync.data.SynchronizationResult.Status;
+import org.opendatakit.sync.data.TableResult;
+import org.opendatakit.sync.logic.Synchronizer;
+import org.opendatakit.sync.logic.Synchronizer.SynchronizerStatus;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncProgressState;
 
@@ -85,6 +88,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final AppAwareApplication application;
   private final String appName;
   private final String odkClientApiVersion;
+  private final String userAgent;
   private final String aggregateUri;
   private final SyncNotification syncProgress;
 
@@ -94,12 +98,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private OdkDbHandle odkDbHandle = null;
 
   public SyncExecutionContext(AppAwareApplication context, String appName,
-      String odkClientApiVersion,
       SyncNotification syncProgress,
       SynchronizationResult syncResult) {
     this.application = context;
     this.appName = appName;
-    this.odkClientApiVersion = odkClientApiVersion;
+    String versionCode = application.getVersionCodeString();
+    this.odkClientApiVersion = versionCode.substring(0, versionCode.length() - 2);
+    this.userAgent = "Sync " + application.getVersionCodeString() + " (gzip)";
     this.syncProgress = syncProgress;
     this.synchronizer = null;
     this.mUserResult = syncResult;
@@ -136,6 +141,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getOdkClientApiVersion() {
     return this.odkClientApiVersion;
+  }
+
+  public String getUserAgent() {
+    return this.userAgent;
   }
 
   public String getAggregateUri() {

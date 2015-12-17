@@ -82,6 +82,15 @@
     <!-- Sync stuff -->
     <string name="sync_starting">Starting sync&#8230;</string>
 
+    <string name="sync_getting_app_level_manifest">Retrieving list of application files from server.</string>
+    <string name="sync_uploading_local_file">Uploading %1$s to server.</string>
+    <string name="sync_deleting_file_on_server">Deleting %1$s on server.</string>
+    <string name="sync_verifying_local_file">Verifying %1$s matches version on server.</string>
+    <string name="sync_deleting_local_file">Deleting %1$s on device.</string>
+
+    <string name="sync_getting_table_manifest">Retrieving list of %1$s files from server.</string>
+
+
     <string name="sync_table_data_sync_complete">Completed sync of %1$s dataset with server.</string>
     <string name="sync_table_data_sync_pending_attachments">Partially completed sync of %1$s dataset with server. Not all attachments synced.</string>
     <string name="sync_table_data_sync_with_conflicts">Partially completed sync of %1$s dataset with server. Resolve conflicts and resync.</string>

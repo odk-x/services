@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.sync;
+package org.opendatakit.sync.data;
 
 import java.util.ArrayList;
 
@@ -20,6 +20,7 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.sync.data.SyncRow;
 
 /**
  * Tracks the data values for the local and server row so that we
@@ -28,28 +29,29 @@ import org.opendatakit.common.android.data.OrderedColumns;
  * @author mitchellsundt@gmail.com
  *
  */
-final class SyncRowDataChanges {
-  final SyncRow serverRow;
-  final SyncRow localRow;
-  boolean isRestPendingFiles;
-  final int localRowConflictType;
+public final class SyncRowDataChanges {
+  public final SyncRow serverRow;
+  public final SyncRow localRow;
+  public final int localRowConflictType;
+  // this can be modified during the sync process
+  public boolean isSyncedPendingFiles;
 
-  SyncRowDataChanges(SyncRow serverRow, SyncRow localRow, boolean isRestPendingFiles) {
+  public SyncRowDataChanges(SyncRow serverRow, SyncRow localRow, boolean isSyncedPendingFiles) {
     this.serverRow = serverRow;
     this.localRow = localRow;
-    this.isRestPendingFiles = isRestPendingFiles;
+    this.isSyncedPendingFiles = isSyncedPendingFiles;
     this.localRowConflictType = -1;
   }
 
-  SyncRowDataChanges(SyncRow serverRow, SyncRow localRow, boolean isRestPendingFiles,
+  public SyncRowDataChanges(SyncRow serverRow, SyncRow localRow, boolean isSyncedPendingFiles,
       int localRowConflictType) {
     this.serverRow = serverRow;
     this.localRow = localRow;
-    this.isRestPendingFiles = isRestPendingFiles;
+    this.isSyncedPendingFiles = isSyncedPendingFiles;
     this.localRowConflictType = localRowConflictType;
   }
 
-  boolean identicalValuesExceptRowETagAndFilterScope(OrderedColumns orderedDefns) {
+  public boolean identicalValuesExceptRowETagAndFilterScope(OrderedColumns orderedDefns) {
     if ((serverRow.getSavepointTimestamp() == null) ? (localRow.getSavepointTimestamp() != null)
         : !serverRow.getSavepointTimestamp().equals(localRow.getSavepointTimestamp())) {
       return false;
@@ -161,7 +163,7 @@ final class SyncRowDataChanges {
     return true;
   }
 
-  boolean identicalValues(OrderedColumns orderedDefns) {
+  public boolean identicalValues(OrderedColumns orderedDefns) {
     if ((serverRow.getFilterScope() == null) ? (localRow.getFilterScope() != null) : !serverRow
         .getFilterScope().equals(localRow.getFilterScope())) {
       return false;

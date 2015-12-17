@@ -63,6 +63,11 @@
             android:process=":dbshim"
             android:permission="org.opendatakit.dbshim.RUN_DBSHIM" >
         </service>
+        <service android:name="org.opendatakit.sync.service.OdkSyncService"
+             android:exported="true"
+             android:process=":dbshim"
+             android:permission="org.opendatakit.sync.RUN_SYNC" >
+        </service>
         <provider
             android:exported="true"
 	        android:syncable="false"
