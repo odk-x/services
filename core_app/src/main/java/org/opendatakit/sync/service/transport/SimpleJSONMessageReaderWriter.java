@@ -38,6 +38,7 @@ import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.HttpHeaders;
 
@@ -76,7 +77,7 @@ public class SimpleJSONMessageReaderWriter<T> implements MessageBodyReader<T>,
         throw new IllegalArgumentException("charset for the request is not utf-8");
       }
 
-      InputStreamReader r = new InputStreamReader(stream);
+      InputStreamReader r = new InputStreamReader(stream, CharEncoding.UTF_8);
       return mapper.readValue(r, aClass);
     } catch (Exception e) {
       throw new IOException(e);

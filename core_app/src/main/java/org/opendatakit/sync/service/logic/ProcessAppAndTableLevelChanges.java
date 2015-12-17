@@ -114,7 +114,7 @@ public class ProcessAppAndTableLevelChanges {
     for (;;) {
       try {
         tableList = sc.getSynchronizer().getTables(webSafeResumeCursor);
-        if (tableList != null & tableList.getTables() != null) {
+        if (tableList != null && tableList.getTables() != null) {
           tables.addAll(tableList.getTables());
         }
       } catch (InvalidAuthTokenException e) {
