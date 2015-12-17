@@ -17,6 +17,7 @@ package org.opendatakit.common.android.fragment;
 import android.app.*;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
 import org.opendatakit.androidlibrary.R;
 
 /**
@@ -54,27 +55,37 @@ public class ProgressDialogFragment extends DialogFragment {
     FragmentManager mgr = getFragmentManager();
     Fragment f = mgr.findFragmentById(fragmentId);
 
+    boolean cancellable = ( f != null && f instanceof CancelProgressDialog );
+
     DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         FragmentManager mgr = getFragmentManager();
         Fragment f = mgr.findFragmentById(fragmentId);
 
-        ((CancelProgressDialog) f).cancelProgressDialog();
-        // user code should dismiss the dialog
-        // since this is a cancellation action...
-        // dialog.dismiss();
+        if ( f != null && f instanceof CancelProgressDialog ) {
+          // user code should dismiss the dialog
+          // since this is a cancellation action...
+          // dialog.dismiss();
+          ((CancelProgressDialog) f).cancelProgressDialog();
+        }
       }
     };
     ProgressDialog mProgressDialog = new ProgressDialog(getActivity());
-    mProgressDialog.setTitle(title);
-    mProgressDialog.setMessage(message);
+          mProgressDialog.setTitle(title);
+          mProgressDialog.setMessage(message);
     mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
     mProgressDialog.setIndeterminate(true);
     mProgressDialog.setCancelable(false);
     mProgressDialog.setCanceledOnTouchOutside(false);
     mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.cancel),
         loadingButtonListener);
+
+    if ( cancellable ) {
+      mProgressDialog.getButton(DialogInterface.BUTTON_POSITIVE).setVisibility(View.VISIBLE);
+    } else {
+      mProgressDialog.getButton(DialogInterface.BUTTON_POSITIVE).setVisibility(View.GONE);
+    }
     return mProgressDialog;
   }
 }
