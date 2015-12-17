@@ -3,7 +3,6 @@ package org.opendatakit.resolve.task;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
-import android.widget.Toast;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
@@ -56,10 +55,10 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
           if ( mTakeLocal ) {
             ODKDatabaseImplUtils.get()
-                .resolveServerConflictTakeLocalChangesWithId(db, mAppName, mTableId, entry.rowId);
+                .resolveServerConflictTakeLocalRowWithId(db, mAppName, mTableId, entry.rowId);
           } else {
             ODKDatabaseImplUtils.get()
-                .resolveServerConflictTakeServerChangesWithId(db, mAppName, mTableId, entry.rowId);
+                .resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId, entry.rowId);
           }
 
         } catch (Exception e) {

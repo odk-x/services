@@ -2373,7 +2373,13 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                  throw new SQLiteException("connection closed");
               }
 
-              assert mCancellationSignalAttachCount > 0;
+              if ( mCancellationSignalAttachCount <= 0 ) {
+                // potential race condition
+                // perhaps this might occur in some shutdown pathways?
+                getLogger().w("detachCancellationSignal",
+                    "cancellation signal attachment count is <= 0");
+                return;
+              }
 
               mCancellationSignalAttachCount -= 1;
               if (mCancellationSignalAttachCount == 0) {

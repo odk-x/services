@@ -15,11 +15,9 @@
  */
 package org.opendatakit.common.android.utilities;
 
-import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import android.widget.Toast;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -41,13 +39,10 @@ import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -380,6 +375,7 @@ public class ODKDatabaseImplUtils {
       String[] selectionArgs, String[] groupBy, String having, String orderByElementKey,
       String orderByDirection) {
 
+    c.moveToFirst();
     int rowCount = c.getCount();
 
     UserTable userTable = null;
@@ -449,7 +445,7 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @return
    */
-  public UserTable getDataInExistingDBTableWithId(OdkConnectionInterface db, String appName, String tableId,
+  public UserTable getRowsWithId(OdkConnectionInterface db, String appName, String tableId,
       OrderedColumns orderedDefns, String rowId) {
 
     UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
@@ -471,9 +467,8 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @return
    */
-   public UserTable getMostRecentRowInExistingDBTableWithId(OdkConnectionInterface db, String
-       appName, String tableId,
-       OrderedColumns orderedDefns, String rowId) {
+   public UserTable getMostRecentRowWithId(OdkConnectionInterface db, String appName,
+       String tableId, OrderedColumns orderedDefns, String rowId) {
 
       StringBuilder b = new StringBuilder();
       UserTable table = rawSqlQuery(db, appName, tableId, orderedDefns, DataTableColumns.ID + "=?",
@@ -534,6 +529,7 @@ public class ODKDatabaseImplUtils {
       //
       // This can be triggered by a call to getCount().
       // At that time, if the table does not exist, it will throw an exception.
+      cursor.moveToFirst();
       cursor.getCount();
       // Otherwise, when cached, getting the column names doesn't call into the database
       // and will not, itself, detect that the table has been dropped.
@@ -610,9 +606,9 @@ public class ODKDatabaseImplUtils {
           TableDefinitionsColumns.TABLE_ID + "=?", 
           new String[] { tableId }, null, null, null, null);
       //@formatter:on
-       // we know about the table...
-       // tableId is the database table name...
-      return (c != null) && (c.getCount() != 0);
+      // we know about the table...
+      // tableId is the database table name...
+      return (c != null) && c.moveToFirst() && (c.getCount() != 0);
     } finally {
       if (c != null && !c.isClosed()) {
         c.close();
@@ -1951,7 +1947,7 @@ public class ODKDatabaseImplUtils {
   private void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId,
       String rowId) {
     // delete the old server-values in_conflict row if it exists
-    String whereClause = String.format("%s = ? AND %s = ? AND %s IN " + "( ?, ? )",
+    String whereClause = String.format("%s = ? AND %s = ? AND %s IN ( ?, ? )",
         DataTableColumns.ID, DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
     String[] whereArgs = { rowId, SyncState.in_conflict.name(),
         String.valueOf(ConflictType.SERVER_DELETED_OLD_VALUES),
@@ -1975,6 +1971,18 @@ public class ODKDatabaseImplUtils {
     }
   }
 
+  /**
+   * Delete any prior server conflict row.
+   * Move the local row into the indicated local conflict state.
+   * Insert a server row with the values specified in the cvValues array.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @param localRowConflictType
+   */
   public void placeRowIntoServerConflictWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, int localRowConflictType) {
 
@@ -1987,7 +1995,7 @@ public class ODKDatabaseImplUtils {
 
       this.deleteServerConflictRowWithId(db, tableId, rowId);
       this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
-      this.insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+      this.insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2104,6 +2112,7 @@ public class ODKDatabaseImplUtils {
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID
           + " = ?", new String[] { rowId }, null, null, null, null);
+      c.moveToFirst();
       if (c.getCount() > 1) {
          throw new IllegalStateException(t + ": row has conflicts or checkpoints");
       }
@@ -2140,7 +2149,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteDataInExistingDBTableWithId(OdkConnectionInterface db, String appName, String tableId,
+  public void deleteRowWithId(OdkConnectionInterface db, String appName, String tableId,
       String rowId) {
 
     boolean shouldPhysicallyDelete = false;
@@ -2228,8 +2237,8 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void deleteCheckpointRowsWithId(OdkConnectionInterface db, String appName, String tableId,
-                                         String rowId) {
+  public void deleteAllCheckpointRowsWithId(OdkConnectionInterface db, String appName,
+      String tableId, String rowId) {
     rawDeleteDataInDBTable(db, tableId, DataTableColumns.ID + "=? AND "
             + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", new String[] { rowId });
   }
@@ -2263,7 +2272,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(OdkConnectionInterface db,
+  public void saveAsIncompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db,
       String tableId, String rowId) {
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2299,8 +2308,8 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void saveAsCompleteMostRecentCheckpointDataInDBTableWithId(OdkConnectionInterface db,
-                                                                      String tableId, String rowId) {
+  public void saveAsCompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db, String tableId,
+      String rowId) {
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -2337,7 +2346,7 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    */
-  public void updateDataInExistingDBTableWithId(OdkConnectionInterface db, String tableId,
+  public void updateRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
     if (cvValues.size() <= 0) {
@@ -2364,15 +2373,15 @@ public class ODKDatabaseImplUtils {
     * updateRowETagAndSyncState(appName, dbHandleName, tableId, rowId, null,
     *                           SyncState.new_row.name());
     * // move the local conflict back into the normal (null) state
-    * deleteDataInExistingDBTableWithId(appName, dbHandleName, tableId, rowId);
+    * deleteRowWithId(appName, dbHandleName, tableId, rowId);
     *
     * @param db
     * @param appName
     * @param tableId
     * @param rowId
     */
-   public void resolveServerConflictWithDeleteInExistingDbTableWithId(OdkConnectionInterface db,
-       String appName, String tableId, String rowId) {
+   public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db, String appName,
+       String tableId, String rowId) {
 
       boolean inTransaction = false;
       try {
@@ -2381,6 +2390,7 @@ public class ODKDatabaseImplUtils {
          if ( !inTransaction ) {
             db.beginTransactionNonExclusive();
          }
+
          // delete the record of the server row
          ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
 
@@ -2390,7 +2400,7 @@ public class ODKDatabaseImplUtils {
              SyncState.new_row);
 
          // move the local conflict back into the normal (null) state
-         ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
+         ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId);
 
          if ( !inTransaction ) {
             db.setTransactionSuccessful();
@@ -2414,8 +2424,8 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void resolveServerConflictTakeLocalChangesWithId(OdkConnectionInterface db,
-      String appName, String tableId, String rowId) {
+  public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String appName,
+      String tableId, String rowId) {
 
     boolean inTransaction = false;
     try {
@@ -2517,8 +2527,7 @@ public class ODKDatabaseImplUtils {
           localConflictType);
 
       // update local with the changes
-      ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
-          updateValues, rowId);
+      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
       // and reset the sync state to whatever it should be (update will make it changed)
       ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
@@ -2548,7 +2557,7 @@ public class ODKDatabaseImplUtils {
    * @param cvValues  key-value pairs from the server record that we should incorporate.
    * @param rowId
    */
-  public void resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(OdkConnectionInterface db,
+  public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface db,
       String appName, String tableId, ContentValues cvValues, String rowId) {
 
     boolean inTransaction = false;
@@ -2640,8 +2649,7 @@ public class ODKDatabaseImplUtils {
           localConflictType);
 
       // update local with server's changes
-      ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
-          updateValues, rowId);
+      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
       if ( !inTransaction ) {
         db.setTransactionSuccessful();
@@ -2663,8 +2671,8 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    */
-  public void resolveServerConflictTakeServerChangesWithId(OdkConnectionInterface db,
-      String appName, String tableId, String rowId) {
+  public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db, String appName,
+      String tableId, String rowId) {
 
     boolean inTransaction = false;
     try {
@@ -2720,7 +2728,7 @@ public class ODKDatabaseImplUtils {
             SyncState.new_row);
 
         // and delete the local conflict and all of its associated attachments
-        ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
+        ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId);
 
       } else {
         // update the local conflict record with the server's changes
@@ -2794,8 +2802,7 @@ public class ODKDatabaseImplUtils {
             localConflictType);
 
         // update local with server's changes
-        ODKDatabaseImplUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
-            updateValues, rowId);
+        ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
         // and reset the sync state to whatever it should be (update will make it changed)
         ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, newState, null);
@@ -2825,8 +2832,8 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    */
-  public void insertCheckpointRowIntoExistingDBTableWithId(OdkConnectionInterface db, String tableId,
-                                                           OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
+  public void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table for checkpoint" + tableId);
@@ -2858,15 +2865,16 @@ public class ODKDatabaseImplUtils {
         currValues.put(DataTableColumns._ID, rowIdToUse);
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
         return;
-      } else {
-        c = db.query(tableId, null,
-            DataTableColumns.ID + "=?" + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-                + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId }, null,
-            null, null, null);
+      }
 
-        if (c.getCount() > 1) {
-          throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
-        }
+      c = db.query(tableId, null,
+          DataTableColumns.ID + "=?" + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
+              + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId }, null,
+          null, null, null);
+      c.moveToFirst();
+
+      if (c.getCount() > 1) {
+        throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
       }
 
       // Inserting a checkpoint for the first time
@@ -2877,8 +2885,6 @@ public class ODKDatabaseImplUtils {
       } else {
         // Make sure that the conflict_type of any existing row
         // is null, otherwise throw an exception
-        c.moveToFirst();
-
         int conflictIndex = c.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
         if (!c.isNull(conflictIndex)) {
           throw new IllegalStateException(t + ":  A checkpoint cannot be added for a row that is in conflict");
@@ -2967,7 +2973,7 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    */
-  public void insertDataIntoExistingDBTableWithId(OdkConnectionInterface db, String tableId,
+  public void insertRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
 
     if (cvValues == null || cvValues.size() <= 0) {
@@ -3153,6 +3159,7 @@ public class ODKDatabaseImplUtils {
          Cursor cursor = null;
           try {
             cursor = rawQuery(db, sel, selArgs);
+            cursor.moveToFirst();
 
             // There must be only one row in the db for the update to work
             if (shouldUpdate) {
@@ -3330,6 +3337,8 @@ public class ODKDatabaseImplUtils {
 
        try {
          cursor = rawQuery(db, sel, selArgs);
+
+         cursor.moveToFirst();
 
          // There must be only one row in the db
          if (cursor.getCount() != 1) {

@@ -101,7 +101,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
-            ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, mAppName, mTableId, rowId);
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, rowId);
           }
         }
 

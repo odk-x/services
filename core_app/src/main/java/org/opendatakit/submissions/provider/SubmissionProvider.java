@@ -289,8 +289,9 @@ public class SubmissionProvider extends ContentProvider {
               KeyValueStoreConstants.XML_DEVICE_ID_PROPERTY_NAME,
               KeyValueStoreConstants.XML_USER_ID_PROPERTY_NAME,
               KeyValueStoreConstants.XML_BASE64_RSA_PUBLIC_KEY }, null, null, null, null);
+          c.moveToFirst();
+
           if (c.getCount() > 0) {
-            c.moveToFirst();
             int idxKey = c.getColumnIndex(KeyValueStoreColumns.KEY);
             int idxValue = c.getColumnIndex(KeyValueStoreColumns.VALUE);
             do {
@@ -384,13 +385,13 @@ public class SubmissionProvider extends ContentProvider {
                 } else if (type.getElementType().equals("date")) {
                   String value = ODKCursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
-                      ISO8601_DATE_ONLY_FORMAT, Locale.ENGLISH)).format(new Date(TableConstants
+                      ISO8601_DATE_ONLY_FORMAT, Locale.US)).format(new Date(TableConstants
                       .milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("dateTime")) {
                   String value = ODKCursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
-                      ISO8601_DATE_FORMAT, Locale.ENGLISH)).format(new Date(TableConstants
+                      ISO8601_DATE_FORMAT, Locale.US)).format(new Date(TableConstants
                       .milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("time")) {
@@ -501,7 +502,7 @@ public class SubmissionProvider extends ContentProvider {
                 }
               }
 
-              datestamp = (new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.ENGLISH))
+              datestamp = (new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.US))
                   .format(new Date(TableConstants.milliSecondsFromNanos(savepointTimestamp)));
 
               // For XML, we traverse the map to serialize it

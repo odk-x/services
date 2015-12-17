@@ -117,8 +117,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteInExistingDbTableWithId(db,
-                mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, mAppName,
+                mTableId, mRowId);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -191,8 +191,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesWithId(db,
-                mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
+                mTableId, mRowId);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -268,8 +268,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
               updateValues.put( entry.getKey(), mChosenValuesMap.get(entry.getKey()));
             }
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(
-                db, mAppName, mTableId, updateValues, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db,
+                mAppName, mTableId, updateValues, mRowId);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -338,8 +338,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalChangesWithId(db,
-                mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
+                mTableId, mRowId);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -408,8 +408,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db,
-                mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
+                mTableId, mRowId);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -467,8 +467,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerChangesWithId(db, mAppName,
-          mTableId, mRowId);
+      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId,
+          mRowId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

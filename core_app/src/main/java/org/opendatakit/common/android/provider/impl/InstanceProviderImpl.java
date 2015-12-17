@@ -230,8 +230,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
                 KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
                 KeyValueStoreConstants.XML_INSTANCE_NAME }, null, null, null, null);
 
+        c.moveToFirst();
         if (c.getCount() == 1) {
-          c.moveToFirst();
           int idxInstanceName = c.getColumnIndex(KeyValueStoreColumns.VALUE);
           instanceName = c.getString(idxInstanceName);
         }
@@ -678,8 +678,8 @@ public abstract class InstanceProviderImpl extends ContentProvider {
             uri, 
             appName, tableId, instanceId,
             null, where, whereArgs, null);
+        ref.moveToFirst();
         if (ref.getCount() != 0) {
-          ref.moveToFirst();
           do {
             String iId = ODKCursorUtils.getIndexAsString(ref,
                 ref.getColumnIndex(InstanceColumns._ID));

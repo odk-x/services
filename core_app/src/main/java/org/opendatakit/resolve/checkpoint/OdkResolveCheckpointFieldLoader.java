@@ -93,8 +93,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
         }
       }
 
-      table = ODKDatabaseImplUtils.get().getDataInExistingDBTableWithId(db, mAppName, mTableId,
-          orderedDefns, mRowId);
+      table = ODKDatabaseImplUtils.get().getRowsWithId(db, mAppName, mTableId, orderedDefns, mRowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)

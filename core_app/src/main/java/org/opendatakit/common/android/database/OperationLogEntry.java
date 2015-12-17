@@ -20,9 +20,10 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 /**
- * Created by Admin on 10/13/2015.
+ * @author mitchellsundt@gmail.com
  */
 final class OperationLogEntry {
 
@@ -31,7 +32,7 @@ final class OperationLogEntry {
     * on it before accessing it.
     */
    private static final SimpleDateFormat sDateFormat =
-       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
 
    public static void getFormattedStartTime(StringBuilder b, long startTime) {
       // SimpleDateFormat is not thread safe...

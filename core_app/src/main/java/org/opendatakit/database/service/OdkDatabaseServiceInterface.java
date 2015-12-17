@@ -34,7 +34,7 @@ import java.util.List;
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
-  private static final String LOGTAG = OdkDatabaseServiceInterface.class.getSimpleName();
+  private static final String TAG = OdkDatabaseServiceInterface.class.getSimpleName();
 
   /**
    *
@@ -393,9 +393,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteCheckpointRowsWithId(db, appName, tableId, rowId);
-      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
-          appName, tableId, orderedDefns, rowId);
+      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, appName, tableId, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
+          orderedDefns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -431,8 +431,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
-      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
-          appName, tableId, orderedDefns, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
+          orderedDefns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -530,9 +530,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteDataInExistingDBTableWithId(db, appName, tableId, rowId);
-      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowInExistingDBTableWithId(db,
-          appName, tableId, orderedDefns, rowId);
+      ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId);
+      UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
+          orderedDefns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -638,7 +638,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get()
-          .getDataInExistingDBTableWithId(db, appName, tableId, orderedDefns, rowId);
+          .getRowsWithId(db, appName, tableId, orderedDefns, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -671,7 +671,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       return ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedDefns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedDefns, rowId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -928,9 +928,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertCheckpointRowIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -967,9 +967,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -1177,9 +1177,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .saveAsIncompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+          .saveAsIncompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -1216,9 +1216,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .saveAsCompleteMostRecentCheckpointDataInDBTableWithId(db, tableId, rowId);
+          .saveAsCompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -1317,9 +1317,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .updateDataInExistingDBTableWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId);
       UserTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowInExistingDBTableWithId(db, appName, tableId, orderedColumns, rowId);
+          .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
       return t;
     } catch (Exception e) {
@@ -1355,7 +1355,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictWithDeleteInExistingDbTableWithId(db, appName, tableId, rowId);
+          .resolveServerConflictWithDeleteRowWithId(db, appName, tableId, rowId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1389,7 +1389,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalChangesWithId(db, appName, tableId, rowId);
+          .resolveServerConflictTakeLocalRowWithId(db, appName, tableId, rowId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1424,8 +1424,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalChangesPlusServerDeltasWithId(db,
-              appName, tableId, cvValues, rowId);
+          .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, appName, tableId, cvValues,
+              rowId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1459,7 +1459,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeServerChangesWithId(db, appName, tableId, rowId);
+          .resolveServerConflictTakeServerRowWithId(db, appName, tableId, rowId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

@@ -1,6 +1,7 @@
 package org.opendatakit.org.opendatakit.webkitserver.service.test;
 
 import android.content.Intent;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
@@ -27,7 +28,7 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
     private static final String HELLO_WORLD_HTML_TXT = "<HTML><BODY>Hello World!!!</BODY></HTML>";
     private static final String TEST_FILE_NAME = "Hello.html";
     private static final String TEST_DIR = "testfiles";
-    private static final String SD_ODK = "/sdcard/opendatakit/";
+    private static final String SD_ODK = ODKFileUtils.getOdkFolder() + "/";
 
     public OdkWebserverServiceTest() {
         super(OdkWebkitServerService.class);

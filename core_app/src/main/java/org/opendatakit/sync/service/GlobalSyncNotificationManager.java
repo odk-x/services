@@ -103,7 +103,9 @@ public final class GlobalSyncNotificationManager {
       removeNotification();
     }
 
-    assert (shouldDisplay == displayNotification);
+    if ( shouldDisplay != displayNotification ) {
+      throw new IllegalStateException("unexpected dissonant state");
+    }
   }
 
   private void createNotification() {

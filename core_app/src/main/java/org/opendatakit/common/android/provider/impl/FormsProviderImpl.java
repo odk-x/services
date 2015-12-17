@@ -238,6 +238,7 @@ public abstract class FormsProviderImpl extends ContentProvider {
           throw new SQLException("FAILED Insert into " + uri
               + " -- unable to query for existing records. tableId=" + formSpec.tableId + " formId=" + formSpec.formId);
         }
+        c.moveToFirst();
         if (c.getCount() > 0) {
           // already exists
           throw new SQLException("FAILED Insert into " + uri

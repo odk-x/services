@@ -58,6 +58,7 @@ public class ChoiceListUtils {
     try {
       c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
 
+      c.moveToFirst();
       if (c.getCount() == 0) {
         // unknown...
         return null;
@@ -68,7 +69,6 @@ public class ChoiceListUtils {
             "getChoiceList: multiple entries for choiceListId " + choiceListId);
       }
 
-      c.moveToFirst();
       int idx = c.getColumnIndex(ChoiceListColumns.CHOICE_LIST_JSON);
       if (c.isNull(idx)) {
         // shouldn't happen...

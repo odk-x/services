@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 
 /**
@@ -34,9 +35,9 @@ public abstract class Pattern {
         public DatePattern(int count, int length, String dateFormat) {
             super(count, length);
             if (dateFormat != null) {
-                this.dateFormat = new SimpleDateFormat(dateFormat);
+                this.dateFormat = new SimpleDateFormat(dateFormat, Locale.US);
             } else {
-                this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
             }
 
         }
@@ -96,9 +97,11 @@ public abstract class Pattern {
             } else {
                 String callerString;
                 if (caller.getLineNumber() < 0) {
-                    callerString = String.format("%s#%s", caller.getClassName(), caller.getMethodName());
+                    callerString = String.format(Locale.US, "%s#%s", caller.getClassName(), caller
+                        .getMethodName());
                 } else {
-                    callerString = String.format("%s#%s:%d", caller.getClassName(), caller.getMethodName(), caller.getLineNumber());
+                    callerString = String.format(Locale.US, "%s#%s:%d", caller.getClassName(),
+                        caller.getMethodName(), caller.getLineNumber());
                 }
                 return Utils.shortenClassName(callerString, callerCount, callerLength);
             }
@@ -129,9 +132,11 @@ public abstract class Pattern {
                         builder.append("(unknown)");
                     } else {
                         if (caller.getLineNumber() >= 0) {
-                            builder.append(String.format("(%s:%d)", caller.getFileName(), caller.getLineNumber()));
+                            builder.append(String.format(Locale.US,
+                                "(%s:%d)", caller.getFileName(), caller.getLineNumber()));
                         } else {
-                            builder.append(String.format("(%s)", caller.getFileName()));
+                            builder.append(String.format(Locale.US,
+                                "(%s)", caller.getFileName()));
                         }
                     }
                 }

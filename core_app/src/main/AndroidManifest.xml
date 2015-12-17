@@ -4,17 +4,23 @@
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
-        
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+
     <permission-tree android:icon="@drawable/odk_core"
-                     android:label="@string/webkit_permission_tree"
+                     android:label="@string/core_permission_tree"
+                     android:name="org.opendatakit.sync" />
+
+    <permission-tree android:icon="@drawable/odk_core"
+                     android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.dbshim" />
     
     <permission-tree android:icon="@drawable/odk_core"
-                     android:label="@string/webkit_permission_tree"
+                     android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.database" />
     
     <permission-tree android:icon="@drawable/odk_core"
-                     android:label="@string/webkit_permission_tree"
+                     android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.webkitserver" />
     
     <permission android:name="org.opendatakit.webkitserver.RUN_WEBSERVER" 
@@ -28,7 +34,11 @@
     <permission android:name="org.opendatakit.dbshim.RUN_DBSHIM" 
         android:label="@string/dbshim_launch_permission" 
         android:protectionLevel="signature"></permission>
-    
+
+    <permission android:name="org.opendatakit.sync.RUN_SYNC"
+                android:label="@string/sync_launch_permission"
+                android:protectionLevel="signature"></permission>
+
     <application
         android:name="org.opendatakit.core.application.Core"
         android:allowBackup="true"

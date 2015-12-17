@@ -511,9 +511,9 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.insertDataIntoExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+            serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
 
-            UserTable table = serviceInterface.getDataInExistingDBTableWithId(APPNAME, db, DB_TABLE_ID, null, rowId.toString());
+            UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, null, rowId.toString());
 
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());

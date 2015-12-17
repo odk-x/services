@@ -162,7 +162,8 @@ public class SyncETagsUtils {
     Cursor c = null;
     try {
       c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
-      
+      c.moveToFirst();
+
       if ( c.getCount() == 0 ) {
         // unknown...
         return null;
@@ -172,7 +173,6 @@ public class SyncETagsUtils {
         // TODO: log something
       }
       
-      c.moveToFirst();
       int idx = c.getColumnIndex(SyncETagColumns.ETAG_MD5_HASH);
       if ( c.isNull(idx) ) {
         // shouldn't happen...
@@ -282,6 +282,7 @@ public class SyncETagsUtils {
     Cursor c = null;
     try {
       c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+      c.moveToFirst();
 
       if (c.getCount() == 0) {
         // unknown...
@@ -292,7 +293,6 @@ public class SyncETagsUtils {
         // TODO: log something
       }
 
-      c.moveToFirst();
       int idx = c.getColumnIndex(SyncETagColumns.ETAG_MD5_HASH);
       int idxLMT = c.getColumnIndex(SyncETagColumns.LAST_MODIFIED_TIMESTAMP);
       if (c.isNull(idx)) {

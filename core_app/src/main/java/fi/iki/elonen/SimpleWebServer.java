@@ -35,15 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -406,7 +398,7 @@ public class SimpleWebServer extends NanoHTTPD {
         int dot = uri.lastIndexOf('.');
         String mime = null;
         if (dot >= 0) {
-            mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
+            mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase(Locale.US));
         }
         return mime == null ? MIME_DEFAULT_BINARY : mime;
     }
