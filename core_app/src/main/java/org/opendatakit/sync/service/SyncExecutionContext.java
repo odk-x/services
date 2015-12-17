@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.sync;
+package org.opendatakit.sync.service;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -32,11 +32,11 @@ import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.data.SynchronizationResult;
-import org.opendatakit.sync.data.SynchronizationResult.Status;
-import org.opendatakit.sync.data.TableResult;
-import org.opendatakit.sync.logic.Synchronizer;
-import org.opendatakit.sync.logic.Synchronizer.SynchronizerStatus;
+import org.opendatakit.sync.service.data.SynchronizationResult;
+import org.opendatakit.sync.service.data.SynchronizationResult.Status;
+import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.logic.Synchronizer;
+import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncProgressState;
 

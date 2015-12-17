@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.core.R;
-import org.opendatakit.sync.exceptions.NoAppNameSpecifiedException;
+import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
 
 import android.app.Notification;
 import android.app.PendingIntent;

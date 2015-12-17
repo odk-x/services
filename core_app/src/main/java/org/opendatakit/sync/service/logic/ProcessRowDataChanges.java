@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.logic;
+package org.opendatakit.sync.service.logic;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,13 +45,13 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.sync.*;
-import org.opendatakit.sync.data.SyncRow;
-import org.opendatakit.sync.data.SyncRowDataChanges;
-import org.opendatakit.sync.data.SyncRowPending;
-import org.opendatakit.sync.data.SynchronizationResult.Status;
-import org.opendatakit.sync.data.TableResult;
-import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.SyncExecutionContext;
+import org.opendatakit.sync.service.data.SyncRow;
+import org.opendatakit.sync.service.data.SyncRowDataChanges;
+import org.opendatakit.sync.service.data.SyncRowPending;
+import org.opendatakit.sync.service.data.SynchronizationResult.Status;
+import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.SyncProgressState;
 
 import android.content.ContentValues;

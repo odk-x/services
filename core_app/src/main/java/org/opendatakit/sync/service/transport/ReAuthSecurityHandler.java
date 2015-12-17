@@ -17,7 +17,7 @@
  *  under the License.
  *  
  */
-package org.opendatakit.sync.transport;
+package org.opendatakit.sync.service.transport;
 
 import org.apache.wink.client.ClientAuthenticationException;
 import org.apache.wink.client.ClientRequest;
@@ -25,8 +25,8 @@ import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.handlers.ClientHandler;
 import org.apache.wink.client.handlers.HandlerContext;
 import org.apache.wink.common.http.HttpStatus;
-import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
-import org.opendatakit.sync.logic.AggregateSynchronizer;
+import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.logic.AggregateSynchronizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

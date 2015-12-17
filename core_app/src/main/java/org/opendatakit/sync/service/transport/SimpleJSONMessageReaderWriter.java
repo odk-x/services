@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.opendatakit.sync.transport;
+package org.opendatakit.sync.service.transport;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

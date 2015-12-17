@@ -13,36 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.exceptions;
+package org.opendatakit.sync.service.exceptions;
 
-public class SchemaMismatchException extends Exception {
+import java.io.IOException;
+
+public class RequestFailureException extends IOException {
 
   private static final long serialVersionUID = 1L;
 
-  public SchemaMismatchException() {
+  public RequestFailureException() {
     super();
   }
 
   /**
    * @param detailMessage
-   * @param throwable
    */
-  public SchemaMismatchException(String detailMessage, Throwable throwable) {
-    super(detailMessage, throwable);
-  }
-
-  /**
-   * @param detailMessage
-   */
-  public SchemaMismatchException(String detailMessage) {
+  public RequestFailureException(String detailMessage) {
     super(detailMessage);
-  }
-
-  /**
-   * @param throwable
-   */
-  public SchemaMismatchException(Throwable throwable) {
-    super(throwable);
   }
 
 }

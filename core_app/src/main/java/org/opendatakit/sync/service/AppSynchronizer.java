@@ -23,18 +23,17 @@ import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
-import org.opendatakit.sync.*;
-import org.opendatakit.sync.data.SynchronizationResult;
-import org.opendatakit.sync.data.SynchronizationResult.Status;
-import org.opendatakit.sync.data.TableResult;
-import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
-import org.opendatakit.sync.exceptions.NoAppNameSpecifiedException;
+import org.opendatakit.sync.service.data.SynchronizationResult;
+import org.opendatakit.sync.service.data.SynchronizationResult.Status;
+import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
 
 import android.app.Service;
-import org.opendatakit.sync.logic.AggregateSynchronizer;
-import org.opendatakit.sync.logic.ProcessAppAndTableLevelChanges;
-import org.opendatakit.sync.logic.ProcessRowDataChanges;
-import org.opendatakit.sync.logic.Synchronizer;
+import org.opendatakit.sync.service.logic.AggregateSynchronizer;
+import org.opendatakit.sync.service.logic.ProcessAppAndTableLevelChanges;
+import org.opendatakit.sync.service.logic.ProcessRowDataChanges;
+import org.opendatakit.sync.service.logic.Synchronizer;
 
 public class AppSynchronizer {
 

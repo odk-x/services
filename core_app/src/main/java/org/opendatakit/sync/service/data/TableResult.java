@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.data;
+package org.opendatakit.sync.service.data;
 
-import org.opendatakit.sync.data.SynchronizationResult.Status;
+import org.opendatakit.sync.service.data.SynchronizationResult.Status;
 
 /**
  * The mapping of a table to the status of its synchronization.

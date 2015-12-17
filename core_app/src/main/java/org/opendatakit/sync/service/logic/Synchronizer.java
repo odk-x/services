@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.logic;
+package org.opendatakit.sync.service.logic;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,10 +27,10 @@ import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
-import org.opendatakit.sync.data.SyncRow;
-import org.opendatakit.sync.data.SyncRowPending;
-import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.data.SyncRow;
+import org.opendatakit.sync.service.data.SyncRowPending;
+import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
@@ -69,7 +69,8 @@ public interface Synchronizer {
    * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
-  public TableResourceList getTables(String webSafeResumeCursor) throws ClientWebException, InvalidAuthTokenException;
+  public TableResourceList getTables(String webSafeResumeCursor) throws ClientWebException,
+      InvalidAuthTokenException;
 
   /**
    * Discover the schema for a table resource.

@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.sync.data;
+package org.opendatakit.sync.service.data;
 
 import java.util.ArrayList;
 
@@ -20,7 +20,7 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.sync.data.SyncRow;
+import org.opendatakit.sync.service.data.SyncRow;
 
 /**
  * Tracks the data values for the local and server row so that we

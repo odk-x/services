@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.logic;
+package org.opendatakit.sync.service.logic;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -72,17 +72,17 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.sync.*;
-import org.opendatakit.sync.data.SyncRow;
-import org.opendatakit.sync.data.SyncRowPending;
-import org.opendatakit.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.SyncExecutionContext;
+import org.opendatakit.sync.service.data.SyncRow;
+import org.opendatakit.sync.service.data.SyncRowPending;
+import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.SyncProgressState;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.os.RemoteException;
-import org.opendatakit.sync.transport.ODKClientApplication;
-import org.opendatakit.sync.transport.ReAuthSecurityHandler;
+import org.opendatakit.sync.service.transport.ODKClientApplication;
+import org.opendatakit.sync.service.transport.ReAuthSecurityHandler;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.

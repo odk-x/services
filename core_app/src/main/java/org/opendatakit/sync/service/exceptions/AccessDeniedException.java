@@ -13,38 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.sync.exceptions;
+package org.opendatakit.sync.service.exceptions;
 
 import java.io.IOException;
 
-public class NoAppNameSpecifiedException extends IOException {
+public class AccessDeniedException extends IOException {
 
-  private static final long serialVersionUID = -5359484141172388331L;
+  private static final long serialVersionUID = 1L;
 
-  public NoAppNameSpecifiedException() {
+  public AccessDeniedException() {
     super();
   }
 
   /**
    * @param detailMessage
-   * @param throwable
    */
-  public NoAppNameSpecifiedException(String detailMessage, Throwable throwable) {
-    super(detailMessage, throwable);
-  }
-
-  /**
-   * @param detailMessage
-   */
-  public NoAppNameSpecifiedException(String detailMessage) {
+  public AccessDeniedException(String detailMessage) {
     super(detailMessage);
-  }
-
-  /**
-   * @param throwable
-   */
-  public NoAppNameSpecifiedException(Throwable throwable) {
-    super(throwable);
   }
 
 }
