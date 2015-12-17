@@ -66,9 +66,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     Progress, Alert, None
   };
 
-  /**
-   * The license reader task. Once this completes, we never re-run it.
-   */
   private static CheckpointResolutionListTask checkpointResolutionListTask = null;
 
   private String mAppName;

@@ -60,9 +60,6 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
     Progress, Alert, None
   };
 
-  /**
-   * The license reader task. Once this completes, we never re-run it.
-   */
   private static ConflictResolutionListTask conflictResolutionListTask = null;
 
   private String mAppName;
