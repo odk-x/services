@@ -62,9 +62,9 @@ public class WebLoggerImpl implements WebLoggerIf {
   private long lastFlush = 0L;
 
   // date formatter
-  private SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
+  private SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT, Locale.US);
   private SimpleDateFormat logLineDateFormatter = new SimpleDateFormat(LOG_LINE_DATE_FORMAT,
-      Locale.ENGLISH);
+      Locale.US);
 
   private class LoggingFileObserver extends FileObserver {
 
