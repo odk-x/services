@@ -286,7 +286,9 @@ public class SyncExecutionContext implements SynchronizerStatus {
                     Context.BIND_ADJUST_WITH_ACTIVITY :
                     0));
           }
-          wait();
+
+          odkDbInterfaceBindComplete.wait();
+
           if ( odkDbInterface != null ) {
             return odkDbInterface;
           }

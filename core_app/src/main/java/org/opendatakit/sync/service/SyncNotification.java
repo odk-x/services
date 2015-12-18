@@ -85,9 +85,14 @@ public final class SyncNotification {
         messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
   }
 
-  public synchronized void clearNotification() {
+  public synchronized void clearNotification(int pendingAttachments) {
     this.progressState = SyncProgressState.COMPLETE;
-    this.updateText = "Sync Completed Successfully";
+    if ( pendingAttachments > 0 ) {
+      this.updateText = "Sync Table Data Completed Successfully. Failed to Sync " +
+          pendingAttachments + " attached files.";
+    } else {
+      this.updateText = "Sync Completed Successfully";
+    }
 
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle("ODK SYNC SUCESS " + appName).setContentText(updateText)

@@ -178,6 +178,7 @@ public class AppSynchronizer {
           status = SyncStatus.NETWORK_ERROR;
         }
 
+        int attachmentsFailed = 0;
         for (TableResult result : syncResult.getTableResults()) {
           SynchronizationResult.Status tableStatus = result.getStatus();
           // TODO: decide how to handle the status
@@ -185,6 +186,7 @@ public class AppSynchronizer {
             if (tableStatus == Status.AUTH_EXCEPTION) {
               authProblems = true;
             } else if (tableStatus == Status.TABLE_PENDING_ATTACHMENTS) {
+              ++attachmentsFailed;
               continue;
             } else if (tableStatus == Status.TABLE_CONTAINS_CHECKPOINTS
                 || tableStatus == Status.TABLE_CONTAINS_CONFLICTS
@@ -210,8 +212,9 @@ public class AppSynchronizer {
 
         // success
         if (status != SyncStatus.CONFLICT_RESOLUTION) {
-          status = SyncStatus.SYNC_COMPLETE;
-          syncProgress.clearNotification();
+          status = (attachmentsFailed > 0) ? SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS :
+              SyncStatus.SYNC_COMPLETE;
+          syncProgress.clearNotification(attachmentsFailed);
         } else {
           syncProgress.finalErrorNotification("Conflicts exist.  Please resolve.");
         }
