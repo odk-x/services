@@ -4,6 +4,7 @@
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
 
@@ -65,7 +66,7 @@
         </service>
         <service android:name="org.opendatakit.sync.service.OdkSyncService"
              android:exported="true"
-             android:process=":dbshim"
+             android:process=":sync"
              android:permission="org.opendatakit.sync.RUN_SYNC" >
         </service>
         <provider
@@ -102,7 +103,6 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -113,6 +113,18 @@
             </intent-filter>
         </activity>
         <activity android:name="org.opendatakit.resolve.conflict.ConflictResolutionActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name="org.opendatakit.sync.activities.AccountInfoActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name="org.opendatakit.sync.activities.SyncActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />

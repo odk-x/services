@@ -79,17 +79,17 @@
 
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
 
-    <!-- Sync stuff -->
+    <!-- Sync Service and Notifications stuff -->
     <string name="sync_starting">Starting sync&#8230;</string>
 
     <string name="sync_getting_app_level_manifest">Retrieving list of application files from server.</string>
+
     <string name="sync_uploading_local_file">Uploading %1$s to server.</string>
     <string name="sync_deleting_file_on_server">Deleting %1$s on server.</string>
     <string name="sync_verifying_local_file">Verifying %1$s matches version on server.</string>
     <string name="sync_deleting_local_file">Deleting %1$s on device.</string>
 
     <string name="sync_getting_table_manifest">Retrieving list of %1$s files from server.</string>
-
 
     <string name="sync_table_data_sync_complete">Completed sync of %1$s dataset with server.</string>
     <string name="sync_table_data_sync_pending_attachments">Partially completed sync of %1$s dataset with server. Not all attachments synced.</string>
@@ -114,5 +114,30 @@
     <string name="sync_updating_local_row">Updating %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_inserting_local_row">Inserting %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_marking_conflicting_local_row">Mark conflicting %1$s local dataset row %2$d of %3$d.</string>
+
+    <!-- Sync User Interface stuff -->
+    <string name="sync_server_url">Aggregate URL:</string>
+    <string name="sync_default_server_url">http://opendatakit-2.appspot.com</string>
+    <string name="sync_account">Account:</string>
+    <string name="sync_progress_state_label">Sync Progress State</string>
+    <string name="sync_progress_message_label">Sync Progress Message</string>
+    <string name="sync_save_settings">Save settings</string>
+    <string name="sync_auth_account">Authorize account</string>
+    <string name="sync_instance_files">Sync Instance Attachments</string>
+    <string name="sync_defer_instance_files">Defer Instance Attachments</string>
+    <string name="sync_start">Sync now</string>
+    <string name="sync_reset_server">Reset App Server</string>
+
+    <string name="sync_confirm_change_settings">Confirm Change Settings</string>
+    <string name="sync_change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
+    <string name="sync_save">Save</string>
+
+    <string name="sync_choose_account">Please choose an account</string>
+    <string name="sync_waiting_auth">Waiting on authentication</string>
+
+    <string name="sync_confirm_reset_app_server">Confirm Reset App Server</string>
+    <string name="sync_reset_app_server_warning">Resetting the App Server will clear all data currently on the server.</string>
+    <string name="sync_reset">Reset</string>
+
 
 </resources>

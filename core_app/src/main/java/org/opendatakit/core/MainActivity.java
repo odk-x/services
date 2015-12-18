@@ -14,14 +14,28 @@
 
 package org.opendatakit.core;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.Intent;
+import android.util.Log;
+import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.activities.IAppAwareActivity;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import org.opendatakit.sync.activities.SyncActivity;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements IAppAwareActivity {
+
+  private static final String TAG = "MainActivity";
+
+  private String mAppName;
 
   @Override
   protected void onDestroy() {
@@ -33,6 +47,26 @@ public class MainActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    // IMPORTANT NOTE: the Application object is not yet created!
+
+    // Used to ensure that the singleton has been initialized properly
+    AndroidConnectFactory.configure();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    // Do this in on resume so that if we resolve a row it will be refreshed
+    // when we come back.
+    mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+    if (mAppName == null) {
+      mAppName = "tables";
+//      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
+//      setResult(Activity.RESULT_CANCELED);
+//      finish();
+//      return;
+    }
   }
 
   @Override
@@ -49,8 +83,30 @@ public class MainActivity extends Activity {
     // as you specify a parent activity in AndroidManifest.xml.
     int id = item.getItemId();
     if (id == R.id.action_settings) {
+      Intent i = new Intent(this, SyncActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(i, 3);
+      return true;
+    }
+
+    if (id == R.id.action_about) {
+
+      FragmentManager mgr = getFragmentManager();
+      Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
+      if ( newFragment == null ) {
+        newFragment = new AboutMenuFragment();
+      }
+      FragmentTransaction trans = mgr.beginTransaction();
+      trans.replace(R.id.main_activity_view, newFragment, AboutMenuFragment.NAME);
+      trans.addToBackStack(AboutMenuFragment.NAME);
+      trans.commit();
+
       return true;
     }
     return super.onOptionsItemSelected(item);
+  }
+
+  @Override public String getAppName() {
+    return mAppName;
   }
 }
