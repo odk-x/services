@@ -155,13 +155,18 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         } finally {
           // this will release the database from the AppNameSharedStateContainer...
           // this may also not close the connection -- it may be held open by a cursor
-           try {
+           // try {
               OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
                   dbHandleName);
 
-           } finally{
-              OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
-           }
+           // }
+           // Enabling dumpInfo will expose a bug in which
+           // an open file handle on a directory that has been deleted
+           // will prevent the directory to be created for the WebLogger
+           // which will throw an exception
+           // finally{
+           //    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
+           // }
         }
       }
     }
