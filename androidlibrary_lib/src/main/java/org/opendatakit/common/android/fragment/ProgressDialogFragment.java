@@ -18,19 +18,21 @@ import android.app.*;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import org.opendatakit.androidlibrary.R;
 
 /**
  * Fragment-version of Progress dialog
  *
  * @author mitchellsundt@gmail.com
- *
  */
 public class ProgressDialogFragment extends DialogFragment {
 
   public static interface CancelProgressDialog {
     public void cancelProgressDialog();
-  };
+  }
+
+  ;
 
   public static ProgressDialogFragment newInstance(int fragmentId, String title, String message) {
     ProgressDialogFragment frag = new ProgressDialogFragment();
@@ -55,15 +57,13 @@ public class ProgressDialogFragment extends DialogFragment {
     FragmentManager mgr = getFragmentManager();
     Fragment f = mgr.findFragmentById(fragmentId);
 
-    boolean cancellable = ( f != null && f instanceof CancelProgressDialog );
-
     DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         FragmentManager mgr = getFragmentManager();
         Fragment f = mgr.findFragmentById(fragmentId);
 
-        if ( f != null && f instanceof CancelProgressDialog ) {
+        if (f != null && f instanceof CancelProgressDialog) {
           // user code should dismiss the dialog
           // since this is a cancellation action...
           // dialog.dismiss();
@@ -71,21 +71,34 @@ public class ProgressDialogFragment extends DialogFragment {
         }
       }
     };
+    DialogInterface.OnShowListener showButtonListener = new DialogInterface.OnShowListener() {
+      @Override
+      public void onShow(DialogInterface dialog) {
+        FragmentManager mgr = getFragmentManager();
+        Fragment f = mgr.findFragmentById(fragmentId);
+
+        if (f != null && f instanceof CancelProgressDialog) {
+          ((ProgressDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE)
+              .setVisibility(View.VISIBLE);
+        } else {
+          ((ProgressDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE)
+              .setVisibility(View.GONE);
+        }
+
+      }
+    };
+
     ProgressDialog mProgressDialog = new ProgressDialog(getActivity());
-          mProgressDialog.setTitle(title);
-          mProgressDialog.setMessage(message);
+    mProgressDialog.setTitle(title);
+    mProgressDialog.setMessage(message);
     mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
     mProgressDialog.setIndeterminate(true);
     mProgressDialog.setCancelable(false);
     mProgressDialog.setCanceledOnTouchOutside(false);
     mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.cancel),
         loadingButtonListener);
+    mProgressDialog.setOnShowListener(showButtonListener);
 
-    if ( cancellable ) {
-      mProgressDialog.getButton(DialogInterface.BUTTON_POSITIVE).setVisibility(View.VISIBLE);
-    } else {
-      mProgressDialog.getButton(DialogInterface.BUTTON_POSITIVE).setVisibility(View.GONE);
-    }
     return mProgressDialog;
   }
 }
