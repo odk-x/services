@@ -674,8 +674,9 @@ static jboolean copyRowToWindow(
       }
 
       case SQLITE_TEXT: {
-        const char *zVal = (const char*)sqlite3_column_text(pStmt, i);
-        jstring val = pEnv->NewStringUTF(zVal);
+        jchar *pStr = (jchar*)sqlite3_column_text16(pStmt, i);
+        int nStr = sqlite3_column_bytes16(pStmt, i) / sizeof(jchar);
+        jstring val = pEnv->NewString(pStr, nStr);
         bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val, iRow, i);
         pEnv->DeleteLocalRef(val);
         break;
