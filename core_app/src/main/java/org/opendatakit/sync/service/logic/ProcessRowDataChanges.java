@@ -730,13 +730,14 @@ public class ProcessRowDataChanges {
                   }
                 }
                 
-                if ( !firstDataETag.equals(rows.getDataETag()) ) {
-                  // re-issue request...
-                  websafeResumeCursor = null;
-                } else {
+                if ( (firstDataETag == rows.getDataETag()) ||
+                     firstDataETag.equals(rows.getDataETag() ) ) {
                   // success -- exit the update loop...
                   pullCompletedSuccessfully = true;
                   break;
+                } else {
+                  // re-issue request...
+                  websafeResumeCursor = null;
                 }
               }
             }
