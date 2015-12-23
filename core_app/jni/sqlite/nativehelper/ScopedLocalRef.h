@@ -20,6 +20,7 @@
 #include "jni.h"
 
 #include <stddef.h>
+#include "JNIHelp.h"  // for DISALLOW_COPY_AND_ASSIGN.
 
 // A smart pointer that deletes a JNI local reference when it goes out of scope.
 template<typename T>
@@ -52,12 +53,10 @@ public:
     }
 
 private:
-    JNIEnv* mEnv;
+    JNIEnv* const mEnv;
     T mLocalRef;
 
-    // Disallow copy and assignment.
-    ScopedLocalRef(const ScopedLocalRef&);
-    void operator=(const ScopedLocalRef&);
+    DISALLOW_COPY_AND_ASSIGN(ScopedLocalRef);
 };
 
 #endif  // SCOPED_LOCAL_REF_H_included

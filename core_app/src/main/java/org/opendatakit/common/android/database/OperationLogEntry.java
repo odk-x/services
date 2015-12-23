@@ -31,17 +31,13 @@ final class OperationLogEntry {
     * SimpleDateFormat is not thread-safe. synchronize
     * on it before accessing it.
     */
-   private static final SimpleDateFormat sDateFormat =
-       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
-
    public static void getFormattedStartTime(StringBuilder b, long startTime) {
-      // SimpleDateFormat is not thread safe...
-      synchronized (sDateFormat) {
-         // the format() return is a String overlaying a common buffer.
-         // the string content can change unexpectedly. Access it only
-         // within this synchronized section.
-         b.append(sDateFormat.format(new Date(startTime)));
-      }
+     // the format() return is a String overlaying a common buffer.
+     // the string content can change unexpectedly. Access it only
+     // within this synchronized section.
+     SimpleDateFormat restrictedDateFormat =
+         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+     b.append(restrictedDateFormat.format(new Date(startTime)));
    }
 
    public long mThreadId;

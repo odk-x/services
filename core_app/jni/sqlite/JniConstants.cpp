@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 
-jclass JniConstants::bidiRunClass;
 jclass JniConstants::bigDecimalClass;
 jclass JniConstants::booleanClass;
 jclass JniConstants::byteArrayClass;
@@ -42,7 +41,6 @@ jclass JniConstants::gaiExceptionClass;
 jclass JniConstants::inet6AddressClass;
 jclass JniConstants::inetAddressClass;
 jclass JniConstants::inetSocketAddressClass;
-jclass JniConstants::inetUnixAddressClass;
 jclass JniConstants::inflaterClass;
 jclass JniConstants::inputStreamClass;
 jclass JniConstants::integerClass;
@@ -51,9 +49,11 @@ jclass JniConstants::longClass;
 jclass JniConstants::methodClass;
 jclass JniConstants::mutableIntClass;
 jclass JniConstants::mutableLongClass;
+jclass JniConstants::netlinkSocketAddressClass;
 jclass JniConstants::objectClass;
 jclass JniConstants::objectArrayClass;
 jclass JniConstants::outputStreamClass;
+jclass JniConstants::packetSocketAddressClass;
 jclass JniConstants::parsePositionClass;
 jclass JniConstants::patternSyntaxExceptionClass;
 jclass JniConstants::realToStringClass;
@@ -65,6 +65,7 @@ jclass JniConstants::stringClass;
 jclass JniConstants::structAddrinfoClass;
 jclass JniConstants::structFlockClass;
 jclass JniConstants::structGroupReqClass;
+jclass JniConstants::structGroupSourceReqClass;
 jclass JniConstants::structLingerClass;
 jclass JniConstants::structPasswdClass;
 jclass JniConstants::structPollfdClass;
@@ -73,6 +74,8 @@ jclass JniConstants::structStatVfsClass;
 jclass JniConstants::structTimevalClass;
 jclass JniConstants::structUcredClass;
 jclass JniConstants::structUtsnameClass;
+jclass JniConstants::unixSocketAddressClass;
+jclass JniConstants::zipEntryClass;
 
 static jclass findClass(JNIEnv* env, const char* name) {
     ScopedLocalRef<jclass> localClass(env, env->FindClass(name));
@@ -85,7 +88,6 @@ static jclass findClass(JNIEnv* env, const char* name) {
 }
 
 void JniConstants::init(JNIEnv* env) {
-    bidiRunClass = findClass(env, "java/text/Bidi$Run");
     bigDecimalClass = findClass(env, "java/math/BigDecimal");
     booleanClass = findClass(env, "java/lang/Boolean");
     byteClass = findClass(env, "java/lang/Byte");
@@ -97,26 +99,27 @@ void JniConstants::init(JNIEnv* env) {
     floatClass = findClass(env, "java/lang/Float");
     deflaterClass = findClass(env, "java/util/zip/Deflater");
     doubleClass = findClass(env, "java/lang/Double");
-    errnoExceptionClass = findClass(env, "libcore/io/ErrnoException");
+    errnoExceptionClass = findClass(env, "android/system/ErrnoException");
     fieldClass = findClass(env, "java/lang/reflect/Field");
     fieldPositionIteratorClass = findClass(env, "libcore/icu/NativeDecimalFormat$FieldPositionIterator");
     fileDescriptorClass = findClass(env, "java/io/FileDescriptor");
-    gaiExceptionClass = findClass(env, "libcore/io/GaiException");
+    gaiExceptionClass = findClass(env, "android/system/GaiException");
     inet6AddressClass = findClass(env, "java/net/Inet6Address");
     inetAddressClass = findClass(env, "java/net/InetAddress");
     inetSocketAddressClass = findClass(env, "java/net/InetSocketAddress");
-    inetUnixAddressClass = findClass(env, "java/net/InetUnixAddress");
     inflaterClass = findClass(env, "java/util/zip/Inflater");
     inputStreamClass = findClass(env, "java/io/InputStream");
     integerClass = findClass(env, "java/lang/Integer");
     localeDataClass = findClass(env, "libcore/icu/LocaleData");
     longClass = findClass(env, "java/lang/Long");
     methodClass = findClass(env, "java/lang/reflect/Method");
-    mutableIntClass = findClass(env, "libcore/util/MutableInt");
-    mutableLongClass = findClass(env, "libcore/util/MutableLong");
+    mutableIntClass = findClass(env, "android/util/MutableInt");
+    mutableLongClass = findClass(env, "android/util/MutableLong");
+    netlinkSocketAddressClass = findClass(env, "android/system/NetlinkSocketAddress");
     objectClass = findClass(env, "java/lang/Object");
     objectArrayClass = findClass(env, "[Ljava/lang/Object;");
     outputStreamClass = findClass(env, "java/io/OutputStream");
+    packetSocketAddressClass = findClass(env, "android/system/PacketSocketAddress");
     parsePositionClass = findClass(env, "java/text/ParsePosition");
     patternSyntaxExceptionClass = findClass(env, "java/util/regex/PatternSyntaxException");
     realToStringClass = findClass(env, "java/lang/RealToString");
@@ -125,15 +128,18 @@ void JniConstants::init(JNIEnv* env) {
     socketClass = findClass(env, "java/net/Socket");
     socketImplClass = findClass(env, "java/net/SocketImpl");
     stringClass = findClass(env, "java/lang/String");
-    structAddrinfoClass = findClass(env, "libcore/io/StructAddrinfo");
-    structFlockClass = findClass(env, "libcore/io/StructFlock");
-    structGroupReqClass = findClass(env, "libcore/io/StructGroupReq");
-    structLingerClass = findClass(env, "libcore/io/StructLinger");
-    structPasswdClass = findClass(env, "libcore/io/StructPasswd");
-    structPollfdClass = findClass(env, "libcore/io/StructPollfd");
-    structStatClass = findClass(env, "libcore/io/StructStat");
-    structStatVfsClass = findClass(env, "libcore/io/StructStatVfs");
-    structTimevalClass = findClass(env, "libcore/io/StructTimeval");
-    structUcredClass = findClass(env, "libcore/io/StructUcred");
-    structUtsnameClass = findClass(env, "libcore/io/StructUtsname");
+    structAddrinfoClass = findClass(env, "android/system/StructAddrinfo");
+    structFlockClass = findClass(env, "android/system/StructFlock");
+    structGroupReqClass = findClass(env, "android/system/StructGroupReq");
+    structGroupSourceReqClass = findClass(env, "android/system/StructGroupSourceReq");
+    structLingerClass = findClass(env, "android/system/StructLinger");
+    structPasswdClass = findClass(env, "android/system/StructPasswd");
+    structPollfdClass = findClass(env, "android/system/StructPollfd");
+    structStatClass = findClass(env, "android/system/StructStat");
+    structStatVfsClass = findClass(env, "android/system/StructStatVfs");
+    structTimevalClass = findClass(env, "android/system/StructTimeval");
+    structUcredClass = findClass(env, "android/system/StructUcred");
+    structUtsnameClass = findClass(env, "android/system/StructUtsname");
+    unixSocketAddressClass = findClass(env, "android/system/UnixSocketAddress");
+    zipEntryClass = findClass(env, "java/util/zip/ZipEntry");
 }
