@@ -62,9 +62,35 @@ public class WebLoggerImpl implements WebLoggerIf {
   private long lastFlush = 0L;
 
   // date formatter
-  private SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT, Locale.US);
-  private SimpleDateFormat logLineDateFormatter = new SimpleDateFormat(LOG_LINE_DATE_FORMAT,
-      Locale.US);
+  private SimpleDateFormat restrictedFileDateFormatter =
+      new SimpleDateFormat(DATE_FORMAT, Locale.US);
+
+  public String getFormattedFileDateNow() {
+    // SimpleDateFormat is not thread safe...
+    synchronized (restrictedFileDateFormatter) {
+      // the format() return is a String overlaying a common buffer.
+      // the string content can change unexpectedly. Access it only
+      // within this synchronized section.
+      String value = restrictedFileDateFormatter.format(new Date());
+      return new String(value);
+    }
+
+  }
+
+  private SimpleDateFormat restrictedLogLineDateFormatter =
+      new SimpleDateFormat(LOG_LINE_DATE_FORMAT, Locale.US);
+
+  public String getFormattedLogLineDateNow() {
+    // SimpleDateFormat is not thread safe...
+    synchronized (restrictedLogLineDateFormatter) {
+      // the format() return is a String overlaying a common buffer.
+      // the string content can change unexpectedly. Access it only
+      // within this synchronized section.
+      String value = restrictedLogLineDateFormatter.format(new Date());
+      return new String(value);
+    }
+  }
+
 
   private class LoggingFileObserver extends FileObserver {
 
@@ -162,7 +188,7 @@ public class WebLoggerImpl implements WebLoggerIf {
   }
 
   private synchronized void log(String logMsg) throws IOException {
-    String curDateStamp = dateFormatter.format(new Date());
+    String curDateStamp = getFormattedFileDateNow();
     if (logFile == null || dateStamp == null || !curDateStamp.equals(dateStamp)) {
       // the file we should log to has changed.
       // or has not yet been opened.
@@ -244,7 +270,7 @@ public class WebLoggerImpl implements WebLoggerIf {
       String androidLogLine = logMsg;
 
       // insert timestamp to help with time tracking
-      String curLogLineStamp = logLineDateFormatter.format(new Date());
+      String curLogLineStamp = getFormattedLogLineDateNow();
       if ( !logMsg.startsWith(curLogLineStamp.substring(0, 16))) {
         logMsg = curLogLineStamp + " " + logMsg;
       } else {
