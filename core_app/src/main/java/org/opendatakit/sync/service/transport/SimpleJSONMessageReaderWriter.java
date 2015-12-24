@@ -28,10 +28,12 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -39,8 +41,6 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.httpclientandroidlib.HttpHeaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,7 +51,6 @@ public class SimpleJSONMessageReaderWriter<T> implements MessageBodyReader<T>,
     MessageBodyWriter<T> {
 
   private static final ObjectMapper mapper = new ObjectMapper();
-  private static final String DEFAULT_ENCODING = "utf-8";
 
   @Override
   public boolean isReadable(Class<?> type, Type genericType, Annotation annotations[],
@@ -73,7 +72,7 @@ public class SimpleJSONMessageReaderWriter<T> implements MessageBodyReader<T>,
       throws IOException, WebApplicationException {
     String encoding = getCharsetAsString(mediaType);
     try {
-      if (!encoding.equalsIgnoreCase(DEFAULT_ENCODING)) {
+      if (!encoding.equalsIgnoreCase(CharEncoding.UTF_8)) {
         throw new IllegalArgumentException("charset for the request is not utf-8");
       }
 
@@ -90,13 +89,13 @@ public class SimpleJSONMessageReaderWriter<T> implements MessageBodyReader<T>,
       throws IOException, WebApplicationException {
     String encoding = getCharsetAsString(mediaType);
     try {
-      if (!encoding.equalsIgnoreCase(DEFAULT_ENCODING)) {
+      if (!encoding.equalsIgnoreCase(CharEncoding.UTF_8)) {
         throw new IllegalArgumentException("charset for the response is not utf-8");
       }
       // write it to a byte array
       ByteArrayOutputStream bas = new ByteArrayOutputStream(8192);
       OutputStreamWriter w = new OutputStreamWriter(bas,
-          Charset.forName(ApiConstants.UTF8_ENCODE));
+          Charset.forName(CharEncoding.UTF_8));
       mapper.writeValue(w, o);
       // get the array and compute md5 hash
       byte[] bytes = bas.toByteArray();
@@ -132,9 +131,9 @@ public class SimpleJSONMessageReaderWriter<T> implements MessageBodyReader<T>,
 
   protected static String getCharsetAsString(MediaType m) {
     if (m == null) {
-      return DEFAULT_ENCODING;
+      return CharEncoding.UTF_8.toLowerCase(Locale.US);
     }
     String result = m.getParameters().get("charset");
-    return (result == null) ? DEFAULT_ENCODING : result;
+    return ((result == null) ? CharEncoding.UTF_8 : result).toLowerCase(Locale.US);
   }
 }
