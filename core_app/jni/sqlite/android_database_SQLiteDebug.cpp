@@ -22,6 +22,7 @@
 
 #include <jni.h>
 #include <JNIHelp.h>
+#include <ScopedLocalRef.h>
 #include <ALog-priv.h>
 
 #include <stdio.h>
@@ -33,11 +34,9 @@
 
 namespace android {
 
-static struct {
-    jfieldID memoryUsed;
-    jfieldID pageCacheOverflow;
-    jfieldID largestMemAlloc;
-} gSQLiteDebugPagerStatsClassInfo;
+#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
+        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
+        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
 
 static void nativeGetPagerStats(JNIEnv *env, jobject clazz, jobject statsObj)
 {
@@ -49,10 +48,26 @@ static void nativeGetPagerStats(JNIEnv *env, jobject clazz, jobject statsObj)
     sqlite3_status(SQLITE_STATUS_MEMORY_USED, &memoryUsed, &unused, 0);
     sqlite3_status(SQLITE_STATUS_MALLOC_SIZE, &unused, &largestMemAlloc, 0);
     sqlite3_status(SQLITE_STATUS_PAGECACHE_OVERFLOW, &pageCacheOverflow, &unused, 0);
-    env->SetIntField(statsObj, gSQLiteDebugPagerStatsClassInfo.memoryUsed, memoryUsed);
-    env->SetIntField(statsObj, gSQLiteDebugPagerStatsClassInfo.pageCacheOverflow,
-            pageCacheOverflow);
-    env->SetIntField(statsObj, gSQLiteDebugPagerStatsClassInfo.largestMemAlloc, largestMemAlloc);
+
+	// these are local references.
+	ScopedLocalRef<jclass> pagerStatsClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteDebug$PagerStats"));
+    if (pagerStatsClass.get() == NULL) {
+		// unable to locate the class -- silently exit
+		ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteDebug$PagerStats");
+        return;
+    }
+	
+    jfieldID f_memoryUsed ;
+    jfieldID f_pageCacheOverflow;
+    jfieldID f_largestMemAlloc;
+
+    GET_FIELD_ID(f_memoryUsed, pagerStatsClass.get(), "memoryUsed", "I");
+    GET_FIELD_ID(f_largestMemAlloc, pagerStatsClass.get(), "largestMemAlloc", "I");
+    GET_FIELD_ID(f_pageCacheOverflow, pagerStatsClass.get(), "pageCacheOverflow", "I");
+	
+    env->SetIntField(statsObj, f_memoryUsed, memoryUsed);
+    env->SetIntField(statsObj, f_pageCacheOverflow, pageCacheOverflow);
+    env->SetIntField(statsObj, f_largestMemAlloc, largestMemAlloc);
 }
 
 /*
@@ -65,26 +80,8 @@ static JNINativeMethod gMethods[] =
             (void*) nativeGetPagerStats },
 };
 
-#define FIND_CLASS(var, className) \
-        var = env->FindClass(className); \
-        LOG_FATAL_IF(! var, "Unable to find class " className);
-
-#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
-        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
-
 int register_android_database_SQLiteDebug(JNIEnv *env)
 {
-    jclass clazz;
-    FIND_CLASS(clazz, "org/sqlite/database/sqlite/SQLiteDebug$PagerStats");
-
-    GET_FIELD_ID(gSQLiteDebugPagerStatsClassInfo.memoryUsed, clazz,
-            "memoryUsed", "I");
-    GET_FIELD_ID(gSQLiteDebugPagerStatsClassInfo.largestMemAlloc, clazz,
-            "largestMemAlloc", "I");
-    GET_FIELD_ID(gSQLiteDebugPagerStatsClassInfo.pageCacheOverflow, clazz,
-            "pageCacheOverflow", "I");
-
     return jniRegisterNativeMethods(env, "org/sqlite/database/sqlite/SQLiteDebug",
             gMethods, NELEM(gMethods));
 }

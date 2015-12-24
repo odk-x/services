@@ -21,7 +21,9 @@
 #define LOG_TAG "SQLiteConnection"
 
 #include <jni.h>
+#include <JniConstants.h>
 #include <JNIHelp.h>
+#include <ScopedLocalRef.h>
 #include "ALog-priv.h"
 
 
@@ -48,6 +50,15 @@
 
 namespace android {
 
+
+#define GET_METHOD_ID(var, clazz, methodName, fieldDescriptor) \
+        var = env->GetMethodID(clazz, methodName, fieldDescriptor); \
+        LOG_FATAL_IF(! var, "Unable to find method" methodName);
+
+#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
+        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
+        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
+
 /* Busy timeout in milliseconds.
  * If another connection (possibly in another process) has the database locked for
  * longer than this amount of time then SQLite will generate a SQLITE_BUSY error.
@@ -63,16 +74,6 @@ namespace android {
 static const int BUSY_TIMEOUT_MS = 2500;
 
 static JavaVM *gpJavaVM = 0;
-
-static struct {
-    jfieldID name;
-    jfieldID numArgs;
-    jmethodID dispatchCallback;
-} gSQLiteCustomFunctionClassInfo;
-
-static struct {
-    jclass clazz;
-} gStringClassInfo;
 
 struct SQLiteConnection {
     // Open flags.
@@ -235,40 +236,51 @@ static void sqliteCustomFunctionCallback(sqlite3_context *context,
         int argc, sqlite3_value **argv) {
 
     JNIEnv* env = 0;
-    gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_4);
+    gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
 
     // Get the callback function object.
     // Create a new local reference to it in case the callback tries to do something
     // dumb like unregister the function (thereby destroying the global ref) while it is running.
     jobject functionObjGlobal = reinterpret_cast<jobject>(sqlite3_user_data(context));
-    jobject functionObj = env->NewLocalRef(functionObjGlobal);
+    ScopedLocalRef<jobject> functionObj(env, env->NewLocalRef(functionObjGlobal));
 
-    jobjectArray argsArray = env->NewObjectArray(argc, gStringClassInfo.clazz, NULL);
-    if (argsArray) {
+    ScopedLocalRef<jobjectArray> argsArray(env, env->NewObjectArray(argc, JniConstants::stringClass, NULL));
+    if (argsArray.get() != NULL) {
         for (int i = 0; i < argc; i++) {
             const jchar* arg = static_cast<const jchar*>(sqlite3_value_text16(argv[i]));
             if (!arg) {
                 ALOGW("NULL argument in custom_function_callback.  This should not happen.");
             } else {
                 size_t argLen = sqlite3_value_bytes16(argv[i]) / sizeof(jchar);
-                jstring argStr = env->NewString(arg, argLen);
-                if (!argStr) {
+                ScopedLocalRef<jstring> argStr(env, env->NewString(arg, argLen));
+                if (argStr.get() == NULL) {
                     goto error; // out of memory error
                 }
-                env->SetObjectArrayElement(argsArray, i, argStr);
-                env->DeleteLocalRef(argStr);
+                env->SetObjectArrayElement(argsArray.get(), i, argStr.get());
             }
         }
+        
+        {
 
-        // TODO: Support functions that return values.
-        env->CallVoidMethod(functionObj,
-                gSQLiteCustomFunctionClassInfo.dispatchCallback, argsArray);
 
-error:
-        env->DeleteLocalRef(argsArray);
+            ScopedLocalRef<jclass> customFunctionClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteCustomFunction"));
+            if (customFunctionClass.get() == NULL) {
+                // unable to locate the class -- silently exit
+                ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteCustomFunction");
+                goto error;
+            }
+        
+            jmethodID dispatchCallback;
+            GET_METHOD_ID(dispatchCallback, customFunctionClass.get(), "dispatchCallback", "([Ljava/lang/String;)V");
+
+            // TODO: Support functions that return values.
+            env->CallVoidMethod(functionObj.get(), dispatchCallback, argsArray.get());
+        }
+
     }
 
-    env->DeleteLocalRef(functionObj);
+error:
+    // drop out -- will release the local ref
 
     if (env->ExceptionCheck()) {
         ALOGE("An exception was thrown by custom SQLite function.");
@@ -281,7 +293,7 @@ error:
 static void sqliteCustomFunctionDestructor(void* data) {
     jobject functionObjGlobal = reinterpret_cast<jobject>(data);
     JNIEnv* env = 0;
-    gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_4);
+    gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
     env->DeleteGlobalRef(functionObjGlobal);
 }
 
@@ -289,16 +301,32 @@ static void nativeRegisterCustomFunction(JNIEnv* env, jclass clazz, jlong connec
         jobject functionObj) {
     SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
 
-    jstring nameStr = jstring(env->GetObjectField(
-            functionObj, gSQLiteCustomFunctionClassInfo.name));
-    jint numArgs = env->GetIntField(functionObj, gSQLiteCustomFunctionClassInfo.numArgs);
+        
+    ScopedLocalRef<jclass> customFunctionClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteCustomFunction"));
+    if (customFunctionClass.get() == NULL) {
+        // unable to locate the class -- silently exit
+        ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteCustomFunction");
+        return;
+    }
+        
+    jfieldID f_name;
+    GET_FIELD_ID(f_name, customFunctionClass.get(), "name", "Ljava/lang/String;");
+    jfieldID f_numArgs;
+    GET_FIELD_ID(f_numArgs, customFunctionClass.get(), "numArgs", "I");
 
+    jstring nameStr = jstring(env->GetObjectField(functionObj, f_name));
+    jint numArgs = env->GetIntField(functionObj, f_numArgs);
+
+    // this is important -- the sqlite3_user_data() function will return functionObjGlobal
+    // so it needs to be a global ref.
     jobject functionObjGlobal = env->NewGlobalRef(functionObj);
 
     const char* name = env->GetStringUTFChars(nameStr, NULL);
+    // this will copy the name, so we don't have to worry about localref reloc of the buffer.
     int err = sqlite3_create_function_v2(connection->db, name, numArgs, SQLITE_UTF16,
             reinterpret_cast<void*>(functionObjGlobal),
             &sqliteCustomFunctionCallback, NULL, NULL, &sqliteCustomFunctionDestructor);
+    // and release the lock on name (nameStr), allowing it to reloc.
     env->ReleaseStringUTFChars(nameStr, name);
 
     if (err != SQLITE_OK) {
@@ -314,14 +342,15 @@ static void nativeRegisterLocalizedCollators(JNIEnv* env, jclass clazz, jlong co
     SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
 
     const char* locale = env->GetStringUTFChars(localeStr, NULL);
+    int err = SQLITE_OK;
 #if 0
-    int err = register_localized_collators(connection->db, locale, UTF16_STORAGE);
+    err = register_localized_collators(connection->db, locale, UTF16_STORAGE);
+#endif
     env->ReleaseStringUTFChars(localeStr, locale);
 
     if (err != SQLITE_OK) {
         throw_sqlite3_exception(env, connection->db);
     }
-#endif
 }
 
 static jlong nativePrepareStatement(JNIEnv* env, jclass clazz, jlong connectionPtr,
@@ -329,11 +358,11 @@ static jlong nativePrepareStatement(JNIEnv* env, jclass clazz, jlong connectionP
     SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
 
     jsize sqlLength = env->GetStringLength(sqlString);
-    const jchar* sql = env->GetStringCritical(sqlString, NULL);
+    const jchar* sql = env->GetStringChars(sqlString, NULL);
     sqlite3_stmt* statement;
     int err = sqlite3_prepare16_v2(connection->db,
             sql, sqlLength * sizeof(jchar), &statement, NULL);
-    env->ReleaseStringCritical(sqlString, sql);
+    env->ReleaseStringChars(sqlString, sql);
 
     if (err != SQLITE_OK) {
         // Error messages like 'near ")": syntax error' are not
@@ -446,10 +475,10 @@ static void nativeBindString(JNIEnv* env, jclass clazz, jlong connectionPtr,
     sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
     jsize valueLength = env->GetStringLength(valueString);
-    const jchar* value = env->GetStringCritical(valueString, NULL);
+    const jchar* value = env->GetStringChars(valueString, NULL);
     int err = sqlite3_bind_text16(statement, index, value, valueLength * sizeof(jchar),
             SQLITE_TRANSIENT);
-    env->ReleaseStringCritical(valueString, value);
+    env->ReleaseStringChars(valueString, value);
     if (err != SQLITE_OK) {
         throw_sqlite3_exception(env, connection->db, NULL);
     }
@@ -461,9 +490,9 @@ static void nativeBindBlob(JNIEnv* env, jclass clazz, jlong connectionPtr,
     sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
     jsize valueLength = env->GetArrayLength(valueArray);
-    jbyte* value = static_cast<jbyte*>(env->GetPrimitiveArrayCritical(valueArray, NULL));
+    jbyte* value = env->GetByteArrayElements(valueArray, NULL);
     int err = sqlite3_bind_blob(statement, index, value, valueLength, SQLITE_TRANSIENT);
-    env->ReleasePrimitiveArrayCritical(valueArray, value, JNI_ABORT);
+    env->ReleaseByteArrayElements(valueArray, value, JNI_ABORT);
     if (err != SQLITE_OK) {
         throw_sqlite3_exception(env, connection->db, NULL);
     }
@@ -676,9 +705,8 @@ static jboolean copyRowToWindow(
       case SQLITE_TEXT: {
         jchar *pStr = (jchar*)sqlite3_column_text16(pStmt, i);
         int nStr = sqlite3_column_bytes16(pStmt, i) / sizeof(jchar);
-        jstring val = pEnv->NewString(pStr, nStr);
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val, iRow, i);
-        pEnv->DeleteLocalRef(val);
+        ScopedLocalRef<jstring> val(pEnv, pEnv->NewString(pStr, nStr));
+        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val.get(), iRow, i);
         break;
       }
 
@@ -686,10 +714,9 @@ static jboolean copyRowToWindow(
         assert( sqlite3_column_type(pStmt, i)==SQLITE_BLOB );
         const jbyte *p = (const jbyte*)sqlite3_column_blob(pStmt, i);
         int n = sqlite3_column_bytes(pStmt, i);
-        jbyteArray val = pEnv->NewByteArray(n);
-        pEnv->SetByteArrayRegion(val, 0, n, p);
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val, iRow, i);
-        pEnv->DeleteLocalRef(val);
+        ScopedLocalRef<jbyteArray> val(pEnv, pEnv->NewByteArray(n));
+        pEnv->SetByteArrayRegion(val.get(), 0, n, p);
+        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val.get(), iRow, i);
         break;
       }
     }
@@ -765,17 +792,18 @@ static jlong nativeExecuteForCursorWindow(
     {0, "putString",     "(Ljava/lang/String;II)Z"},
     {0, "putBlob",       "([BII)Z"},
   };
-  jclass cls;                     /* Class android.database.CursorWindow */
   int i;                          /* Iterator variable */
   int nCol;                       /* Number of columns returned by pStmt */
   int nRow;
   jboolean bOk;
   int iStart;                     /* First row copied to CursorWindow */
 
+  
+  /* Class android.database.CursorWindow */
+  ScopedLocalRef<jclass> cls(pEnv, pEnv->FindClass("android/database/CursorWindow"));
   /* Locate all required CursorWindow methods. */
-  cls = pEnv->FindClass("android/database/CursorWindow");
   for(i=0; i<(sizeof(aMethod)/sizeof(struct CWMethod)); i++){
-    aMethod[i].id = pEnv->GetMethodID(cls, aMethod[i].zName, aMethod[i].zSig);
+    aMethod[i].id = pEnv->GetMethodID(cls.get(), aMethod[i].zName, aMethod[i].zSig);
     if( aMethod[i].id==NULL ){
       jniThrowExceptionFmt(pEnv, "java/lang/Exception", 
           "Failed to find method CursorWindow.%s()", aMethod[i].zName
@@ -783,7 +811,6 @@ static jlong nativeExecuteForCursorWindow(
       return 0;
     }
   }
-
 
   /* Set the number of columns in the window */
   bOk = setWindowNumColumns(pEnv, win, pStmt, aMethod);
@@ -925,34 +952,8 @@ static JNINativeMethod sMethods[] =
 
     { "nativeHasCodec", "()Z", (void*)nativeHasCodec },
 };
-
-#define FIND_CLASS(var, className) \
-        var = env->FindClass(className); \
-        LOG_FATAL_IF(! var, "Unable to find class " className);
-
-#define GET_METHOD_ID(var, clazz, methodName, fieldDescriptor) \
-        var = env->GetMethodID(clazz, methodName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find method" methodName);
-
-#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
-        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
-
 int register_android_database_SQLiteConnection(JNIEnv *env)
 {
-    jclass clazz;
-    FIND_CLASS(clazz, "org/sqlite/database/sqlite/SQLiteCustomFunction");
-
-    GET_FIELD_ID(gSQLiteCustomFunctionClassInfo.name, clazz,
-            "name", "Ljava/lang/String;");
-    GET_FIELD_ID(gSQLiteCustomFunctionClassInfo.numArgs, clazz,
-            "numArgs", "I");
-    GET_METHOD_ID(gSQLiteCustomFunctionClassInfo.dispatchCallback,
-            clazz, "dispatchCallback", "([Ljava/lang/String;)V");
-
-    FIND_CLASS(clazz, "java/lang/String");
-    gStringClassInfo.clazz = jclass(env->NewGlobalRef(clazz));
-
     return jniRegisterNativeMethods(env, 
         "org/sqlite/database/sqlite/SQLiteConnection",
         sMethods, NELEM(sMethods)
@@ -968,13 +969,13 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
   JNIEnv *env = 0;
 
   android::gpJavaVM = vm;
-  vm->GetEnv((void**)&env, JNI_VERSION_1_4);
+  vm->GetEnv((void**)&env, JNI_VERSION_1_6);
 
   android::register_android_database_SQLiteConnection(env);
   android::register_android_database_SQLiteDebug(env);
   android::register_android_database_SQLiteGlobal(env);
 
-  return JNI_VERSION_1_4;
+  return JNI_VERSION_1_6;
 }
 
 
