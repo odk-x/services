@@ -30,7 +30,9 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 
-
+/**
+ * TODO: consolidate dateTime handling with DateTimeUtils
+ */
 public class DataUtil {
   
   private static final String TAG = DataUtil.class.getSimpleName();
