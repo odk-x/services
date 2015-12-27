@@ -15,11 +15,7 @@
  */
 package org.opendatakit.sync.service.logic;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.MalformedURLException;
@@ -28,25 +24,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.RuntimeDelegate;
 
 import org.apache.commons.lang3.CharEncoding;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpStatus;
+import org.apache.http.message.BasicHeaderValueParser;
+import org.apache.http.message.HeaderValueParser;
 import org.apache.wink.client.ClientConfig;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.ClientWebException;
@@ -54,6 +43,10 @@ import org.apache.wink.client.EntityType;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 import org.apache.wink.client.internal.handlers.GzipHandler;
+import org.apache.wink.common.model.multipart.BufferedOutMultiPart;
+import org.apache.wink.common.model.multipart.InMultiPart;
+import org.apache.wink.common.model.multipart.InPart;
+import org.apache.wink.common.model.multipart.OutPart;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -650,25 +643,10 @@ public class AggregateSynchronizer implements Synchronizer {
       return new ArrayList<String>();
     }
 
-    // construct the set of starting directories and files to process
-    File[] partials = baseFolder.listFiles();
-
-    if (partials == null) {
-      return Collections.emptyList();
-    }
-
     LinkedList<File> unexploredDirs = new LinkedList<File>();
     List<String> relativePaths = new ArrayList<String>();
     
-    // copy the starting set into a queue of unexploredDirs
-    // and a list of files to be sync'd
-    for (int i = 0; i < partials.length; ++i) {
-      if (partials[i].isDirectory()) {
-        unexploredDirs.add(partials[i]);
-      } else {
-        relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), partials[i]));
-      }
-    }
+    unexploredDirs.add(baseFolder);
 
     boolean haveFilteredTablesDir = false;
     boolean haveFilteredAssetsCsvDir = false;
@@ -956,7 +934,8 @@ public class AggregateSynchronizer implements Synchronizer {
         new Object[] { tableId }, 1.0, false);
 
     // get the table files on the server
-    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId, serverReportedTableLevelETag, pushLocalFiles);
+    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId,
+        serverReportedTableLevelETag, pushLocalFiles);
 
     if (manifest == null) {
       log.i(LOGTAG, "no change in table manifest -- skipping!");
@@ -967,6 +946,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
       return;
     }
+    String tableIdDefinitionFile = ODKFileUtils.asRelativePath(sc.getAppName(),
+        new File(ODKFileUtils.getTableDefinitionCsvFile(sc.getAppName(), tableId)));
 
     String tableIdPropertiesFile = ODKFileUtils.asRelativePath(sc.getAppName(),
         new File(ODKFileUtils.getTablePropertiesCsvFile(sc.getAppName(), tableId)));
@@ -1509,6 +1490,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private static final class CommonFileAttachmentTerms {
+    String rowPathUri;
     File localFile;
     URI instanceFileDownloadUri;
   }
@@ -1527,6 +1509,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   
     CommonFileAttachmentTerms cat = new CommonFileAttachmentTerms();
+    cat.rowPathUri = rowpathUri;
     cat.localFile = localFile;
     cat.instanceFileDownloadUri = instanceFileDownloadUri;
     

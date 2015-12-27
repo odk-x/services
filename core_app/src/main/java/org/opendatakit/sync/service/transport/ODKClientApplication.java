@@ -19,7 +19,11 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import org.apache.wink.common.internal.providers.entity.ByteArrayProvider;
 import org.apache.wink.common.internal.providers.entity.FileProvider;
+import org.apache.wink.common.internal.providers.multipart.BufferedInMultiPartProvider;
+import org.apache.wink.common.internal.providers.multipart.InMultiPartProvider;
+import org.apache.wink.common.internal.providers.multipart.OutMultiPartProvider;
 
 public class ODKClientApplication extends Application {
 
@@ -29,6 +33,9 @@ public class ODKClientApplication extends Application {
       
       // standard content stream reader/writer
       classes.add(SimpleJSONMessageReaderWriter.class);
+      classes.add(InMultiPartProvider.class);
+      classes.add(OutMultiPartProvider.class);
+      classes.add(ByteArrayProvider.class);
       classes.add(FileProvider.class);
       return classes;
     }
