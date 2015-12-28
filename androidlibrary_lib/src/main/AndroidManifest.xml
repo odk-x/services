@@ -3,11 +3,7 @@
     package="org.opendatakit.androidlibrary"
     android:versionCode="127"
     android:versionName="2.0">
-
-    <uses-sdk
-        android:minSdkVersion="16"
-        android:targetSdkVersion="16" />
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 </manifest>
