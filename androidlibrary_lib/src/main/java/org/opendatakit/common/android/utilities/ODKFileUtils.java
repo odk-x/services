@@ -693,7 +693,7 @@ public class ODKFileUtils {
   }
   
   public static String asRowpathUri( String appName, String tableId, String instanceId, File rowFile ) {
-    String instanceFolder = 
+    String instanceFolder =
         ODKFileUtils.getInstanceFolder(appName, tableId, instanceId);
     String instanceUri = ODKFileUtils.asUriFragment(appName, new File(instanceFolder));
     String rowpathUri = ODKFileUtils.asUriFragment(appName, rowFile);
@@ -702,7 +702,7 @@ public class ODKFileUtils {
     }
     String relativeUri = rowpathUri.substring(instanceUri.length());
     if ( relativeUri.startsWith("/") ) {
-      relativeUri.substring(1);
+      relativeUri = relativeUri.substring(1);
     }
     return relativeUri;
   }

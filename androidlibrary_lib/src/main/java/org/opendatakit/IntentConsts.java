@@ -46,4 +46,14 @@ public class IntentConsts {
     public static final String ACTIVITY_NAME =
         "org.opendatakit.resolve.conflict.ConflictResolutionActivity";
   }
+
+  /**
+   * Intent Extras:
+   * <ol><li>INTENT_KEY_APP_NAME</li></ol>
+   */
+  public class Sync {
+    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String ACTIVITY_NAME =
+        "org.opendatakit.sync.activities.SyncActivity";
+  }
 }
