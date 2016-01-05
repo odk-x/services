@@ -17,6 +17,8 @@ apply plugin: 'com.android.library'
 
 group = groupId
 
+com.android.ddmlib.DdmPreferences.setTimeOut(60000)
+
 android {
     // The following are set in the common.gradle file
     compileSdkVersion(compileVersion)
@@ -27,10 +29,6 @@ android {
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
-    }
-
-    adbOptions {
-        timeOutInMs 60000 // set timeout to 1 min
     }
 
     buildTypes {
