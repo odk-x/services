@@ -81,8 +81,8 @@ public class SyncFragment extends Fragment {
   private Spinner syncInstanceAttachmentsSpinner;
   private SyncAttachmentState syncAttachmentState = SyncAttachmentState.UPLOAD;
 
-  private TextView progressState;
-  private TextView progressMessage;
+  //private TextView progressState;
+  //private TextView progressMessage;
 
   private Button saveSettings;
   private Button authorizeAccount;
@@ -216,8 +216,10 @@ public class SyncFragment extends Fragment {
     uriField = (EditText) view.findViewById(R.id.sync_uri_field);
     accountListSpinner = (Spinner) view.findViewById(R.id.sync_account_list_spinner);
     syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
-    progressState = (TextView) view.findViewById(R.id.sync_progress_state);
-    progressMessage = (TextView) view.findViewById(R.id.sync_progress_message);
+
+    // TODO: Hiding these until we figure out what Sync's UI should be
+    //progressState = (TextView) view.findViewById(R.id.sync_progress_state);
+    //progressMessage = (TextView) view.findViewById(R.id.sync_progress_message);
 
     saveSettings = (Button) view.findViewById(R.id.sync_save_settings_button);
     saveSettings.setOnClickListener(new View.OnClickListener() {

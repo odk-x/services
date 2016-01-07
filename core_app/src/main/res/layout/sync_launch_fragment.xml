@@ -58,6 +58,9 @@
             android:layout_height="wrap_content"
             android:text="@string/sync_start" />
 
+        <!-- TODO: Hiding these until we settle on a new Sync UI. For now its just the
+                notification bar -->
+        <!--
         <TextView
             android:id="@+id/sync_progress_state_label"
             android:layout_width="wrap_content"
@@ -69,6 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+
         <TextView
             android:id="@+id/sync_progress_message_label"
             android:layout_width="wrap_content"
@@ -79,6 +83,7 @@
             android:id="@+id/sync_progress_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+        -->
 
         <!-- push the reset button to the bottom of the screen -->
 
