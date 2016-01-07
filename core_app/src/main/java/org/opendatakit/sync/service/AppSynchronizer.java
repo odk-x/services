@@ -57,10 +57,10 @@ public class AppSynchronizer {
     this.syncProgress = new SyncNotification(srvc, appName);
   }
 
-  public boolean synchronize(boolean push, boolean deferInstanceAttachments) {
+  public boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
     if (curThread == null || (!curThread.isAlive() || curThread.isInterrupted())) {
       curTask = new SyncTask(((AppAwareApplication) service.getApplication()), push,
-          deferInstanceAttachments);
+          attachmentState);
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
       curThread.start();
@@ -85,20 +85,18 @@ public class AppSynchronizer {
 
     private AppAwareApplication application;
     private boolean push;
-    private boolean deferInstanceAttachments;
+    private SyncAttachmentState attachmentState;
 
-    public SyncTask(AppAwareApplication application, boolean push, boolean deferInstanceAttachments) {
+    public SyncTask(AppAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
       this.application = application;
       this.push = push;
-      this.deferInstanceAttachments = deferInstanceAttachments;
+      this.attachmentState = attachmentState;
     }
 
     @Override
     public void run() {
 
       try {
-
-        // android.os.Debug.waitForDebugger();
 
         globalNotifManager.startingSync(appName);
         syncProgress.updateNotification(SyncProgressState.STARTING,
@@ -165,7 +163,7 @@ public class AppSynchronizer {
           // was an app-level sync failure or if the particular tableId
           // experienced a table-level sync failure in the preceeding step.
   
-          rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, deferInstanceAttachments);
+          rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState);
         }
 
         boolean authProblems = false;

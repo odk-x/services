@@ -38,7 +38,9 @@ import org.opendatakit.core.R;
 import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.sync.service.AppSynchronizer;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.net.URI;
@@ -76,7 +78,8 @@ public class SyncFragment extends Fragment {
   private EditText uriField;
   private Spinner accountListSpinner;
 
-  private ToggleButton syncInstanceAttachments;
+  private Spinner syncInstanceAttachmentsSpinner;
+  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.UPLOAD;
 
   private TextView progressState;
   private TextView progressMessage;
@@ -130,8 +133,23 @@ public class SyncFragment extends Fragment {
       if (syncServiceInterface != null) {
         switch (this.syncAction) {
         case SYNC:
-          boolean syncFiles = syncInstanceAttachments.isChecked();
-          syncServiceInterface.synchronize(getAppName(), !syncFiles);
+          switch (syncInstanceAttachmentsSpinner.getSelectedItemPosition()) {
+          case 0:
+            syncAttachmentState = SyncAttachmentState.SYNC;
+            break;
+          case 1:
+            syncAttachmentState = SyncAttachmentState.UPLOAD;
+            break;
+          case 2:
+            syncAttachmentState = SyncAttachmentState.DOWNLOAD;
+            break;
+          case 3:
+            syncAttachmentState = SyncAttachmentState.NONE;
+            break;
+          default:
+            Log.e(TAG, "Invalid sync attachment state spinner");
+          }
+          syncServiceInterface.synchronize(getAppName(), syncAttachmentState);
           break;
         case RESET_SERVER:
           syncServiceInterface.push(getAppName());
@@ -184,7 +202,6 @@ public class SyncFragment extends Fragment {
       return;
     }
 
-    syncInstanceAttachments.setChecked(true);
     disableButtons();
     initializeData();
 
@@ -198,7 +215,7 @@ public class SyncFragment extends Fragment {
     View view = inflater.inflate(ID, container, false);
     uriField = (EditText) view.findViewById(R.id.sync_uri_field);
     accountListSpinner = (Spinner) view.findViewById(R.id.sync_account_list_spinner);
-    syncInstanceAttachments = (ToggleButton) view.findViewById(R.id.sync_instance_attachments);
+    syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
     progressState = (TextView) view.findViewById(R.id.sync_progress_state);
     progressMessage = (TextView) view.findViewById(R.id.sync_progress_message);
 
@@ -228,7 +245,7 @@ public class SyncFragment extends Fragment {
       }
     });
 
-    syncInstanceAttachments.setChecked(true);
+
     disableButtons();
 
     return view;
@@ -262,9 +279,14 @@ public class SyncFragment extends Fragment {
     for (int i = 0; i < accounts.length; i++)
       accountNames.add(accounts[i].name);
 
-    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+    ArrayAdapter<String> accountListAapter = new ArrayAdapter<String>(getActivity(),
         android.R.layout.select_dialog_item, accountNames);
-    accountListSpinner.setAdapter(adapter);
+    accountListSpinner.setAdapter(accountListAapter);
+
+    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
+        getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
+    syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
+    syncInstanceAttachmentsSpinner.setSelection(1);
 
     // Set saved server url
     String serverUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
@@ -528,4 +550,5 @@ public class SyncFragment extends Fragment {
     }
     return mAppName;
   }
+
 }

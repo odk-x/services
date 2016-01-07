@@ -46,12 +46,11 @@
             android:layout_height="wrap_content"
             android:text="@string/sync_auth_account" />
 
-        <ToggleButton
+        <Spinner
             android:id="@+id/sync_instance_attachments"
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textOff="@string/sync_defer_instance_files"
-            android:textOn="@string/sync_instance_files" />
+            />
 
         <Button
             android:id="@+id/sync_start_button"

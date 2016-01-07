@@ -52,11 +52,11 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
   }
 
   @Override
-  public boolean synchronize(String appName, boolean deferInstanceAttachments) throws RemoteException {
+  public boolean synchronize(String appName, SyncAttachmentState attachmentState) throws RemoteException {
     try {
       WebLogger.getLogger(appName).i(LOGTAG,
           "SERVICE INTERFACE: synchronize WITH appName:" + appName);
-      return syncService.synchronize(appName, deferInstanceAttachments);
+      return syncService.synchronize(appName, attachmentState);
     } catch (Throwable throwable) {
       WebLogger.getLogger(appName).printStackTrace(throwable);
       throw new RemoteException();

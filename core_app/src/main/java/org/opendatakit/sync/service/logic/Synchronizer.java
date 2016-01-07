@@ -20,13 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wink.client.ClientWebException;
-import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowPending;
@@ -204,33 +199,19 @@ public interface Synchronizer {
       boolean pushLocal, SynchronizerStatus syncStatus) throws ClientWebException, InvalidAuthTokenException;
 
   /**
-   * Ensure that the file attachments for the indicated row values are pulled
-   * down to the local system.
-   *
-   * @param instanceFileUri
-   * @param tableId
-   * @param serverRow
-   * @param deferInstanceAttachments -- do not transfer the attachments
-   * @return true if successful
-   * @throws ClientWebException
-   */
-  public boolean getFileAttachments(String instanceFileUri, String tableId, SyncRowPending serverRow,
-      boolean deferInstanceAttachments) throws ClientWebException;
-
-  /**
-   * Ensure that the file attachments for the indicated row values exist on the
-   * server. File attachments are immutable on the server -- never updated and
+   * Ensure that the file attachments for the indicated row values match between the
+   * server and the client. File attachments are immutable on the server -- never updated and
    * never destroyed.
    *
    * @param instanceFileUri
    * @param tableId
    * @param localRow
-   * @param deferInstanceAttachments -- do not transfer the attachments
+   * @param attachmentState -- whether to upload, download, both, or neither the attachments
    * @return true if successful
    * @throws ClientWebException
    */
-  public boolean putFileAttachments(String instanceFileUri, String tableId, SyncRowPending localRow,
-      boolean deferInstanceAttachments)
+  public boolean syncFileAttachments(String instanceFileUri, String tableId, SyncRowPending
+      localRow, SyncAttachmentState attachmentState)
       throws ClientWebException;
   
   /**

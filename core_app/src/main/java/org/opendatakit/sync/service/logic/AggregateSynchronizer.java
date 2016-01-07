@@ -31,6 +31,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.RuntimeDelegate;
 
+import android.support.annotation.NonNull;
+import android.util.Log;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpStatus;
@@ -43,6 +45,7 @@ import org.apache.wink.client.EntityType;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 import org.apache.wink.client.internal.handlers.GzipHandler;
+import org.apache.wink.common.internal.type.CollectionType;
 import org.apache.wink.common.model.multipart.BufferedOutMultiPart;
 import org.apache.wink.common.model.multipart.InMultiPart;
 import org.apache.wink.common.model.multipart.InPart;
@@ -65,6 +68,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowPending;
@@ -89,6 +93,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String LOGTAG = AggregateSynchronizer.class.getSimpleName();
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
   public static final int CONNECTION_TIMEOUT = 45000;
+
+  public static final long MAX_BATCH_SIZE = 10485760;
 
   // parameters for queries that could return a lot of data...
   public static final String CURSOR_PARAMETER = "cursor";
@@ -1198,6 +1204,68 @@ public class AggregateSynchronizer implements Synchronizer {
     return theList;
   }
 
+  public List<OdkTablesFileManifestEntry> getRowLevelFileManifest(String serverInstanceFileUri,
+      String tableId, String instanceId) throws ClientWebException, InvalidAuthTokenException {
+
+    URI instanceFileManifestUri = normalizeUri(serverInstanceFileUri, instanceId + "/manifest");
+
+    String eTag = null;
+    try {
+      eTag = getManifestSyncETag(instanceFileManifestUri, tableId);
+    } catch (RemoteException e) {
+      log.printStackTrace(e);
+      log.e(LOGTAG, "database access error (ignoring)");
+    }
+    Resource rsc = buildResource(instanceFileManifestUri);
+
+    /* TODO: Do we need to add pushLocalFiles and uncomment this?
+    // don't short-circuit manifest if we are pushing local files,
+    // as we need to know exactly what is on the server to minimize
+    // transmissions of files being pushed up to the server.
+    if (!pushLocalFiles && eTag != null) {
+      rsc.header(HttpHeaders.IF_NONE_MATCH, eTag);
+      if ( serverReportedTableLevelETag != null && serverReportedTableLevelETag.equals(eTag) ) {
+        // no change -- we can skip the request to the server
+        return null;
+      }
+    }
+    */
+    ClientResponse rsp = rsc.get();
+    if (rsp.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+      // signal this by returning null;
+      return null;
+    }
+    if (rsp.getStatusCode() < 200 || rsp.getStatusCode() >= 300) {
+      throw new ClientWebException(null, rsp);
+    }
+    if (!rsp.getHeaders().containsKey(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) ) {
+      throw new ClientWebException(null, rsp);
+    }
+
+    // retrieve the manifest...
+    OdkTablesFileManifest manifest;
+    manifest = rsp.getEntity(OdkTablesFileManifest.class);
+    List<OdkTablesFileManifestEntry> theList = null;
+    if (manifest != null) {
+      theList = manifest.getFiles();
+    }
+    if (theList == null) {
+      theList = Collections.emptyList();
+    }
+    // update the manifest ETag record...
+    eTag = rsp.getHeaders().getFirst(HttpHeaders.ETAG);
+    try {
+      updateManifestSyncETag(instanceFileManifestUri, tableId, eTag);
+    } catch (RemoteException e) {
+      log.printStackTrace(e);
+      log.e(LOGTAG, "database access error (ignoring)");
+    }
+    // and return the list of values...
+    return theList;
+
+
+  }
+
   private boolean deleteConfigFile(File localFile) throws ClientWebException,
       InvalidAuthTokenException {
     String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
@@ -1515,105 +1583,6 @@ public class AggregateSynchronizer implements Synchronizer {
     
     return cat;
   }
-  
-  @Override
-  public boolean getFileAttachments(String serverInstanceFileUri, String tableId, SyncRowPending serverRow,
-      boolean deferInstanceAttachments) throws ClientWebException {
-
-    if (serverRow.getUriFragments().isEmpty()) {
-      throw new IllegalStateException("should never get here!");
-    }
-    
-    /**********************************************
-     * 
-     * 
-     * 
-     * 
-     * With the new mechanism, we can directly fetch any file from the server
-     * in the fileAttachmentColumns. And we can include any md5Hash we might
-     * have of the local file. This would enable the server to say
-     * "yes, it is identical".
-     */
-    boolean success = true;
-    try {
-      // 1) Get this row's instanceId (rowId)
-      String instanceId = serverRow.getRowId();
-      
-      // 2) Get the folder holding the instance attachments
-      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(sc.getAppName(), tableId, instanceId));
-
-      // 3) get all the files in that folder...
-      List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
-          instanceFolder, null);
-
-      // 4) Iterate over all non-null file attachments in the data row
-      for (String rowpathUri : serverRow.getUriFragments()) {
-        
-        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri, 
-            tableId, instanceId, rowpathUri);
-
-        String appFolderRelativePath = ODKFileUtils.asRelativePath(sc.getAppName(), cat.localFile);
-        // remove it from the local files list
-        relativePathsToAppFolderOnDevice.remove(appFolderRelativePath);
-
-        if (!cat.localFile.exists()) {
-
-          if (deferInstanceAttachments) {
-            return false;
-          }
-
-          int statusCode = downloadFile(cat.localFile, cat.instanceFileDownloadUri);
-          if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NOT_MODIFIED) { 
-            String md5Hash = ODKFileUtils.getMd5Hash(sc.getAppName(), cat.localFile);
-            updateFileSyncETag(cat.instanceFileDownloadUri, tableId,
-                cat.localFile.lastModified(), md5Hash);
-          } else {
-            success = false;
-          }
-        } else {
-          // assume that if the local file exists, it matches exactly the
-          // content on the server.
-          // this could be inaccurate if there are buggy programs on the
-          // device!
-          String md5hash = getFileSyncETag(cat.instanceFileDownloadUri,
-              tableId, cat.localFile.lastModified());
-          if (md5hash == null) {
-            md5hash = ODKFileUtils.getMd5Hash(sc.getAppName(), cat.localFile);
-            updateFileSyncETag(cat.instanceFileDownloadUri, tableId,
-                cat.localFile.lastModified(), md5hash);
-          }
-        }
-      }
-
-      // we usually do this, but, when we have a conflict row, we pull the
-      // server files down, and leave the local files. Upon the next sync,
-      // we will resolve what to do and clean up.
-      if (serverRow.shouldDeleteExtraneousLocalFiles()) {
-        for (String relativePath : relativePathsToAppFolderOnDevice) {
-          // remove local files that are not on server...
-          File localFile = ODKFileUtils.asAppFile(sc.getAppName(), relativePath);
-          if (!localFile.delete()) {
-            success = false;
-          }
-        }
-      }
-      return success;
-    } catch (ClientWebException e) {
-      log.e(LOGTAG, "Exception while getting attachment: " + e.toString());
-      throw e;
-    } catch (Exception e) {
-      log.printStackTrace(e);
-      return false;
-    }
-    /******************************************************
-     * End of the new file attachment mechanism...
-     *
-     * 
-     * 
-     * 
-     * 
-     */
-  }
 
   private String getFileSyncETag(URI
       fileDownloadUri, String tableId, long lastModified) throws RemoteException {
@@ -1663,71 +1632,124 @@ public class AggregateSynchronizer implements Synchronizer {
       db = null;
     }
   }
-    
+
   @Override
-  public boolean putFileAttachments(String serverInstanceFileUri, String tableId, SyncRowPending localRow,
-      boolean deferInstanceAttachments) throws ClientWebException {
+  public boolean syncFileAttachments(String serverInstanceFileUri, String tableId,
+      SyncRowPending localRow, SyncAttachmentState attachmentState) throws ClientWebException {
 
     if (localRow.getUriFragments().isEmpty()) {
       throw new IllegalStateException("should never get here!");
     }
 
-    /**********************************************
-     * 
-     * 
-     * 
-     * 
-     * With the new mechanism, we can directly fetch any file from the server
-     * in the fileAttachmentColumns. For PUT, we don't know if the local file
-     * exists on the server, so we need to PUT every attachment. This can be 
-     * done by retrieving the manifest, and comparing that against the local 
-     * directory, or we can issue an if-none-match GET request for each file 
-     * we need. If we do not get a NOT_MODIFIED return, then we upload it. 
-     */
-    boolean success = true;
+    // If we are not syncing instance files, then return
+    if (attachmentState.equals(SyncAttachmentState.NONE)) {
+      return false;
+    }
+
+    boolean fullySynced = true;
     try {
-      // 1) Get this row's instanceId (rowId)
+       // 1) Get this row's instanceId (rowId)
       String instanceId = localRow.getRowId();
-      
-      // 3) Iterate over all non-null file attachments in the data row
-      for (String rowpathUri : localRow.getUriFragments()) {
-        
-        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri, 
-            tableId, instanceId, rowpathUri);
 
-        if (cat.localFile.exists()) {
+      // 2) Get the list of files on the server
+      List<OdkTablesFileManifestEntry> entries = getRowLevelFileManifest(serverInstanceFileUri,
+          tableId, instanceId);
 
-          // issue a GET. If the return is NOT_MODIFIED, then we don't need to
-          // POST it.
-          int statusCode = downloadFile(cat.localFile, cat.instanceFileDownloadUri);
-          if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
-            // no-op... what is on server matches local.
-          } else if (statusCode == HttpStatus.SC_OK) {
-            // The test for ODK header ensures we detect wifi login overlays
-            // this should not happen -- indicates something is corrupted.
-            log.e(LOGTAG,
-                "Unexpectedly overwriting attachment: " + cat.instanceFileDownloadUri.toString());
-          } else if (statusCode == HttpStatus.SC_NOT_FOUND
-              || statusCode == HttpStatus.SC_NO_CONTENT) {
+      // 3) Create a list of files to that need to be uploaded to or downloaded from the server.
+      List<String> localRowPathUris = localRow.getUriFragments();
+      List<CommonFileAttachmentTerms> filesToUpload = new ArrayList<CommonFileAttachmentTerms>();
+      List<CommonFileAttachmentTerms> filesToDownload = new ArrayList<CommonFileAttachmentTerms>();
 
-            if (deferInstanceAttachments) {
-              return false;
-            }
+      // First, iterate over the files that exist on the server, noting any that are missing
+      // or changed on either end
+      for (OdkTablesFileManifestEntry entry : entries) {
 
-            // upload it...
-            boolean outcome = uploadInstanceFile(cat.localFile, cat.instanceFileDownloadUri);
-            if (!outcome) {
-              success = false;
-            }
-          } else {
-            success = false;
-          }
+        // Remove files that exist on the server from our list of local files, leaving us with a
+        // list of files that only exist locally.
+        localRowPathUris.remove(entry.filename);
+
+        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri,
+            tableId, instanceId, entry.filename);
+
+        if (!cat.localFile.exists()) {
+          // File exists on the server but not locally; queue it for download
+          filesToDownload.add(cat);
+          continue;
+        }
+
+        // Check if the server and local versions match
+        String localMd5 = ODKFileUtils.getMd5Hash(sc.getAppName(), cat.localFile);
+        if (entry.md5hash == null || entry.md5hash.length() == 0) {
+          // Recorded but not present on server -- upload
+          filesToUpload.add(cat);
+        } else if (!localMd5.equals(entry.md5hash)) {
+          // Found, but it is wrong locally, so we need to pull it
+          log.e(LOGTAG, "Put attachments: md5Hash on server does not match local file hash!");
+          filesToDownload.add(cat);
+          continue;
         } else {
-          // we will pull these files later during a getFileAttachments() call,
-          // if needed...
+          // Server matches local; don't upload or download
         }
       }
-      return success;
+
+      // Next, account for any files that exist locally but aren't referenced on the server
+      for (String rowPathUri : localRowPathUris) {
+
+        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri,
+            tableId, instanceId, rowPathUri);
+
+        if (!cat.localFile.exists()) {
+          Log.e(LOGTAG, "Put attachments: row has reference to non-existant file");
+          fullySynced = false;
+          continue;
+        }
+
+        filesToUpload.add(cat);
+      }
+
+      // 4) Split that list of files to upload into 10MB batches and upload those to the server
+      if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
+          attachmentState.equals(SyncAttachmentState.UPLOAD))) {
+        // If we are not set to upload files, then don't.
+        fullySynced = false;
+      } else if (filesToUpload.isEmpty()) {
+        log.i(LOGTAG, "Put attachments: no files to send to server -- they are all synced");
+      } else {
+        long batchSize = 0;
+        List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
+        for (CommonFileAttachmentTerms fileAttachment : filesToUpload) {
+
+          // Check if adding the file exceeds the batch limit. If so, upload the current batch and
+          // start a new one.
+          // Note: If the batch is empty then this is just one giant file and it will get uploaded
+          // on the next iteration.
+          if (batchSize + fileAttachment.localFile.length() > MAX_BATCH_SIZE && !batch.isEmpty()) {
+            fullySynced &= uploadBatch(batch, serverInstanceFileUri, instanceId, tableId);
+            batch.clear();
+            batchSize = 0;
+          }
+
+          batch.add(fileAttachment);
+          batchSize += fileAttachment.localFile.length();
+        }
+
+        // Upload the final batch
+        fullySynced &= uploadBatch(batch, serverInstanceFileUri, instanceId, tableId);
+
+      }
+
+      // 5) Download the files from the server TODO: Batch these calls into 10MB chunks
+      if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
+          attachmentState.equals(SyncAttachmentState.DOWNLOAD))) {
+      } else if (filesToDownload.isEmpty()){
+        log.i(LOGTAG, "Put attachments: no files to fetch from server -- they are all synced");
+      } else {
+        fullySynced &= downloadFileBatches(filesToDownload, serverInstanceFileUri, instanceId,
+            tableId);
+      }
+
+      return fullySynced;
+
     } catch (ClientWebException e) {
       log.e(LOGTAG, "Exception while putting attachment: " + e.toString());
       throw e;
@@ -1735,13 +1757,164 @@ public class AggregateSynchronizer implements Synchronizer {
       log.e(LOGTAG, "Exception during sync: " + e.toString());
       return false;
     }
-    /******************************************************
-     * End of the new file attachment mechanism...
-     *
-     * 
-     * 
-     * 
-     * 
-     */
+
+  }
+
+  private boolean uploadBatch(List<CommonFileAttachmentTerms> batch,
+      String serverInstanceFileUri, String instanceId, String tableId) throws Exception {
+    Resource rsc;
+    URI instanceFilesUploadUri = normalizeUri(serverInstanceFileUri, instanceId + "/upload");
+    String boundary = "ref" + UUID.randomUUID();
+
+    Map<String, String> params = Collections.singletonMap("boundary", boundary);
+    MediaType mt = new MediaType(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), params);
+    rsc = buildResource(instanceFilesUploadUri, mt);
+
+    BufferedOutMultiPart mpOut = new BufferedOutMultiPart();
+    mpOut.setBoundary(boundary);
+
+    for (CommonFileAttachmentTerms cat : batch) {
+      log.i(LOGTAG, "[uploadFile] filePostUri: " + cat.instanceFileDownloadUri.toString());
+      String ct = determineContentType(cat.localFile.getName());
+
+      OutPart part = new OutPart();
+      part.setContentType(ct);
+      String filename = ODKFileUtils
+          .asRowpathUri(sc.getAppName(), tableId, instanceId, cat.localFile);
+      filename = filename.replace("\"", "\"\"");
+      part.addHeader("Content-Disposition", "file;filename=\"" + filename + "\"");
+      ByteArrayOutputStream bo = new ByteArrayOutputStream();
+      InputStream is = null;
+      try {
+        is = new BufferedInputStream(new FileInputStream(cat.localFile));
+        int length = 1024;
+        // Transfer bytes from in to out
+        byte[] data = new byte[length];
+        int len;
+        while ((len = is.read(data, 0, length)) >= 0) {
+          if (len != 0) {
+            bo.write(data, 0, len);
+          }
+        }
+      } finally {
+        is.close();
+      }
+      byte[] content = bo.toByteArray();
+      part.setBody(content);
+      mpOut.addPart(part);
+    }
+    ClientResponse response = rsc.post(mpOut);
+    if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+      return false;
+    }
+    if (!response.getHeaders().containsKey(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean downloadFileBatches(List<CommonFileAttachmentTerms> filesToDownload,
+      String serverInstanceFileUri, String instanceId, String tableId) throws Exception {
+    Resource rsc;
+    boolean downloadedAllFiles = true;
+
+
+    URI instanceFilesDownloadUri = normalizeUri(serverInstanceFileUri, instanceId +
+        "/download");
+
+    ArrayList<OdkTablesFileManifestEntry> entries = new ArrayList<OdkTablesFileManifestEntry>();
+    for (CommonFileAttachmentTerms cat : filesToDownload) {
+      OdkTablesFileManifestEntry entry = new OdkTablesFileManifestEntry();
+      entry.filename = cat.rowPathUri;
+      entries.add(entry);
+    }
+
+    OdkTablesFileManifest manifest = new OdkTablesFileManifest();
+    manifest.setFiles(entries);
+
+    rsc = buildBasicResource(instanceFilesDownloadUri);
+    rsc.contentType(MediaType.APPLICATION_JSON_TYPE);
+    ClientResponse response = rsc.post(manifest);
+    if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+      return false;
+    }
+
+    InMultiPart inMP = response.getEntity(InMultiPart.class);
+
+    // Parse the request
+    while (inMP.hasNext()) {
+      InPart part = inMP.next();
+      MultivaluedMap<String, String> headers = part.getHeaders();
+      String disposition = (headers != null) ? headers.getFirst("Content-Disposition") : null;
+      if (disposition == null) {
+        log.e("putAttachments", "Unable to retrieve ContentDisposition from response part");
+        return false;
+      }
+      String partialPath = null;
+      {
+        HeaderValueParser parser = new BasicHeaderValueParser();
+        HeaderElement[] values = BasicHeaderValueParser.parseElements(disposition, parser);
+        for (HeaderElement v : values) {
+          if (v.getName().equalsIgnoreCase("file")) {
+            partialPath = v.getParameterByName("filename").getValue();
+            break;
+          }
+        }
+      }
+      if (partialPath == null) {
+        log.e("putAttachments", "Server did not identify the rowPathUri for the file");
+        return false;
+      }
+
+      String contentType = (headers != null) ? headers.getFirst("Content-Type") : null;
+
+      File instFile = ODKFileUtils
+          .getRowpathFile(sc.getAppName(), tableId, instanceId, partialPath);
+      OutputStream os = null;
+      InputStream bi = null;
+      try {
+        bi = new BufferedInputStream(part.getInputStream());
+        os = new BufferedOutputStream(new FileOutputStream(instFile));
+        int length = 1024;
+        // Transfer bytes from in to out
+        byte[] data = new byte[length];
+        int len;
+        while ((len = bi.read(data, 0, length)) >= 0) {
+          if (len != 0) {
+            os.write(data, 0, len);
+          }
+        }
+        os.flush();
+        os.close();
+        os = null;
+        bi.close();
+        bi = null;
+      } catch (IOException e) {
+        log.printStackTrace(e);
+        log.e(LOGTAG, "Download file batches: Unable to read attachment");
+        return false;
+      } finally {
+        if (bi != null) {
+          try {
+            bi.close();
+          } catch (IOException e) {
+            log.printStackTrace(e);
+            log.e(LOGTAG, "Download file batches: Error closing input stream");
+          }
+        }
+        if (os != null) {
+          try {
+            os.close();
+          } catch (IOException e) {
+            log.printStackTrace(e);
+            log.e(LOGTAG, "Download file batches: Error closing output stream");
+          }
+        }
+      }
+    }
+
+
+    return downloadedAllFiles;
   }
 }
