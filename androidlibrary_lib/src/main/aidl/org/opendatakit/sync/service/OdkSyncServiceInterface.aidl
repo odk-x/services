@@ -17,12 +17,13 @@ package org.opendatakit.sync.service;
 
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.SyncAttachmentState;
 
 interface OdkSyncServiceInterface {
 
 	SyncStatus getSyncStatus(in String appName);
 	
-	boolean synchronize(in String appName, in boolean deferInstanceAttachments);
+	boolean synchronize(in String appName, in SyncAttachmentState syncAttachments);
 	
 	boolean push(in String appName);
 	

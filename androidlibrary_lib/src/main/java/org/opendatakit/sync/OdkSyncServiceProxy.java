@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
@@ -96,12 +97,13 @@ public class OdkSyncServiceProxy implements ServiceConnection {
     }
   }
 
-  public boolean synchronizeFromServer(String appName, boolean deferInstanceAttachments) throws RemoteException {
+  public boolean synchronizeFromServer(String appName, SyncAttachmentState attachmentState) throws
+      RemoteException {
     if (appName == null)
       throw new IllegalArgumentException("App Name cannot be null");
 
     try {
-      return sensorSvcProxy.synchronize(appName, deferInstanceAttachments);
+      return sensorSvcProxy.synchronize(appName, attachmentState);
     } catch (RemoteException rex) {
       WebLogger.getLogger(appName).printStackTrace(rex);
       throw rex;

@@ -31,13 +31,14 @@ public enum SyncAttachmentState implements Parcelable {
     dest.writeString(this.name());
   }
 
-  public static final Parcelable.Creator<SyncProgressState> CREATOR = new Parcelable.Creator<SyncProgressState>() {
-    public SyncProgressState createFromParcel(Parcel in) {
-      return SyncProgressState.valueOf(in.readString());
+  public static final Parcelable.Creator<SyncAttachmentState> CREATOR = new Parcelable
+      .Creator<SyncAttachmentState>() {
+    public SyncAttachmentState createFromParcel(Parcel in) {
+      return SyncAttachmentState.valueOf(in.readString());
     }
 
-    public SyncProgressState[] newArray(int size) {
-      return new SyncProgressState[size];
+    public SyncAttachmentState[] newArray(int size) {
+      return new SyncAttachmentState[size];
     }
   };
 
