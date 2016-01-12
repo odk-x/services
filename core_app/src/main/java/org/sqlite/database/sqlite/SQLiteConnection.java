@@ -98,6 +98,15 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+  static {
+    // load the shared stlport library
+    System.loadLibrary("stlport_shared");
+    // loads our custom libsqliteX.so
+    System.loadLibrary("sqliteX");
+
+    nativeInit();
+  }
+
    /**
     * A callback interface for a custom sqlite3 function.
     * This can be used to create a function that can be called from
@@ -317,6 +326,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * JNI Class methods
     *******************************************************************************************/
 
+   private static native void nativeInit();
    /**
     * Open the database, returning a pointer to the C++ object in the long.
     *

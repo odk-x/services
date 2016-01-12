@@ -18,6 +18,7 @@ LOCAL_CFLAGS += -U__APPLE__
 LOCAL_CFLAGS += -DHAVE_STRCHRNUL=0
 LOCAL_CFLAGS += -Wno-unused-parameter -Wno-int-to-pointer-cast
 LOCAL_CFLAGS += -Wno-maybe-uninitialized -Wno-parentheses
+LOCAL_CPPFEATURES += exceptions rtti
 LOCAL_CPPFLAGS += -Wno-conversion-null
 
 
@@ -28,18 +29,17 @@ else
 endif
 
 LOCAL_SRC_FILES:=                             \
-	android_database_SQLiteCommon.cpp     \
-	android_database_SQLiteConnection.cpp \
-	android_database_SQLiteGlobal.cpp     \
-	android_database_SQLiteDebug.cpp      \
-	JNIHelp.cpp JniConstants.cpp
+	org_sqlite_database_sqlite_SQLiteCommon.cpp     \
+	org_sqlite_database_sqlite_SQLiteConnection.cpp \
+	org_sqlite_database_sqlite_SQLiteGlobal.cpp     \
+	org_sqlite_database_sqlite_SQLiteDebug.cpp 
 
 LOCAL_SRC_FILES += sqlite3.c
 
-LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/nativehelper/
+LOCAL_C_INCLUDES += $(LOCAL_PATH) 
 
-LOCAL_CFLAGS += -I. -I./nativehelper
-LOCAL_CPPFLAGS += -I. -I./nativehelper
+LOCAL_CFLAGS += -I.
+LOCAL_CPPFLAGS += -I. -std=gnu++11
 
 LOCAL_MODULE:= libsqliteX
 LOCAL_LDLIBS += -ldl -llog 

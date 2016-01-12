@@ -21,10 +21,6 @@ import org.opendatakit.common.android.utilities.WebLogger;
 public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
 
   static {
-
-    // loads our custom libsqliteX.so
-    System.loadLibrary("sqliteX");
-
     OdkConnectionFactorySingleton.set(new AndroidConnectFactory());
 
     // register a state-reset manipulator for 'connectionFactory' field.
