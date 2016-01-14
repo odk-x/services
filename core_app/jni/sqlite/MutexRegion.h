@@ -28,7 +28,7 @@ class MutexRegion {
 
  public:
     MutexRegion(pthread_mutex_t* mutexArg) : mutex(mutexArg) {
-	pthread_mutex_lock(mutex);
+        pthread_mutex_lock(mutex);
     }
 
     ~MutexRegion() {

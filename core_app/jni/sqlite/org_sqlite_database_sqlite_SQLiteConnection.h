@@ -71,14 +71,6 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRe
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeRegisterLocalizedCollators
- * Signature: (JLjava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRegisterLocalizedCollators
-  (JNIEnv *, jclass, jlong, jstring);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
  * Method:    nativePrepareStatement
  * Signature: (JLjava/lang/String;)J
  */
@@ -195,14 +187,6 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
  * Signature: (JJ)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForString
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeExecuteForBlobFileDescriptor
- * Signature: (JJ)I
- */
-JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForBlobFileDescriptor
   (JNIEnv *, jclass, jlong, jlong);
 
 /*

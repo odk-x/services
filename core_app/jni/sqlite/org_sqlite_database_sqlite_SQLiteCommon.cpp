@@ -21,26 +21,73 @@
 #define LOG_TAG "SQLiteCommon"
 
 #include <stdio.h>
+#include <unistd.h>
 #include <assert.h>
 #include <pthread.h>
 
 #include "MutexRegion.h"
 
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
+#include "org_sqlite_database_sqlite_SQLiteConnection.h"
 
 namespace org_opendatakit {
 
-// FIX:
-static JavaVM *gpJavaVM = 0;
+// Limit heap to 8MB for now.  This is 4 times the maximum cursor window
+// size, as has been used by the original code in SQLiteDatabase for
+// a long time.
+const int SOFT_HEAP_LIMIT = 8 * 1024 * 1024;
 
+/* Busy timeout in milliseconds.
+ * If another connection (possibly in another process) has the database locked for
+ * longer than this amount of time then SQLite will generate a SQLITE_BUSY error.
+ * The SQLITE_BUSY error is then raised as a SQLiteDatabaseLockedException.
+ *
+ * In ordinary usage, busy timeouts are quite rare.  Most databases only ever
+ * have a single open connection at a time unless they are using WAL.  When using
+ * WAL, a timeout could occur if one connection is busy performing an auto-checkpoint
+ * operation.  The busy timeout needs to be long enough to tolerate slow I/O write
+ * operations but not so long as to cause the application to hang indefinitely if
+ * there is a problem acquiring a database lock.
+ */
+const int BUSY_TIMEOUT_MS = 2500;
 
-#define GET_METHOD_ID(var, clazz, methodName, fieldDescriptor) \
-        var = env->GetMethodID(clazz, methodName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find method" methodName);
+/*
+** Note: The following symbols must be in the same order as the corresponding
+** elements in the aMethod[] array in function executeIntoCursorWindow().
+*/
+enum CWMethodNames {
+  CW_CLEAR         = 0,
+  CW_SETNUMCOLUMNS = 1,
+  CW_ALLOCROW      = 2,
+  CW_FREELASTROW   = 3,
+  CW_PUTNULL       = 4,
+  CW_PUTLONG       = 5,
+  CW_PUTDOUBLE     = 6,
+  CW_PUTSTRING     = 7,
+  CW_PUTBLOB       = 8
+};
 
-#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
-        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
+/*
+** An instance of this structure represents a single CursorWindow java method.
+*/
+struct CWMethod {
+  jmethodID id;                   /* Method id */
+  const char *zName;              /* Method name */
+  const char *zSig;               /* Method JNI signature */
+};
+
+struct SQLiteConnection {
+
+    sqlite3* db;
+    const int openFlags;
+    std::string path;
+    std::string label;
+
+    volatile bool canceled;
+
+    SQLiteConnection(sqlite3* db, int openFlags, const std::string& path, const std::string& label) :
+        db(db), openFlags(openFlags), path(path), label(label), canceled(false) { }
+};
 
 // Called each time a message is logged.
 void sqliteLogCallback(void* data, int iErrCode, const char* zMsg) {
@@ -54,36 +101,49 @@ void sqliteLogCallback(void* data, int iErrCode, const char* zMsg) {
     }
 }
 
-pthread_mutex_t g_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// this is initialized within the above mutex
+static JavaVM *gpJavaVM = nullptr;
 
 // Sets the global SQLite configuration.
 // This must be called before any other SQLite functions are called.
 void sqliteInitialize(JNIEnv* env) {
+    pid_t tid = getpid();
+    ALOGV("sqliteInitialize 0x%.8x -- entered", tid);
+
     MutexRegion guard(&g_init_mutex);
+    ALOGV("sqliteInitialize 0x%.8x -- gained mutex", tid);
 
-    env->GetJavaVM(&gpJavaVM);
+    if ( gpJavaVM == nullptr ) {
+      ALOGV("sqliteInitialize 0x%.8x -- executing sqlite3_config statements", tid);
 
-    // Enable multi-threaded mode.  In this mode, SQLite is safe to use by multiple
-    // threads as long as no two threads use the same database connection at the same
-    // time (which we guarantee in the SQLite database wrappers).
-    sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
+      // Enable multi-threaded mode.  In this mode, SQLite is safe to use by multiple
+      // threads as long as no two threads use the same database connection at the same
+      // time (which we guarantee in the SQLite database wrappers).
+      sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
 
-    // Redirect SQLite log messages to the Android log.
+      // Redirect SQLite log messages to the Android log.
 #if 0
-    bool verboseLog = android_util_Log_isVerboseLogEnabled(SQLITE_LOG_TAG);
+      bool verboseLog = android_util_Log_isVerboseLogEnabled(SQLITE_LOG_TAG);
 #endif
-    bool verboseLog = false;
-    void * verboseLogging = (void*) 1L;
-    void * quietLogging = (void*) 0L;
-    sqlite3_config(SQLITE_CONFIG_LOG, &sqliteLogCallback, verboseLog ? verboseLogging : quietLogging);
+      bool verboseLog = false;
+      void * verboseLogging = (void*) 1L;
+      void * quietLogging = (void*) 0L;
+      sqlite3_config(SQLITE_CONFIG_LOG, &sqliteLogCallback, verboseLog ? verboseLogging : quietLogging);
 
-    // The soft heap limit prevents the page cache allocations from growing
-    // beyond the given limit, no matter what the max page cache sizes are
-    // set to. The limit does not, as of 3.5.0, affect any other allocations.
-    sqlite3_soft_heap_limit(SOFT_HEAP_LIMIT);
+      // The soft heap limit prevents the page cache allocations from growing
+      // beyond the given limit, no matter what the max page cache sizes are
+      // set to. The limit does not, as of 3.5.0, affect any other allocations.
+      sqlite3_soft_heap_limit(SOFT_HEAP_LIMIT);
 
-    // Initialize SQLite.
-    sqlite3_initialize();
+      // Initialize SQLite.
+      sqlite3_initialize();
+
+      // finally, get the VM pointer
+      env->GetJavaVM(&gpJavaVM);
+    }
+    ALOGV("sqliteInitialize 0x%.8x -- done!", tid);
 }
 
 /*
@@ -94,8 +154,8 @@ void sqliteInitialize(JNIEnv* env) {
 static bool getExceptionSummary(JNIEnv* env, jthrowable exception, std::string& result) {
 
     /* get the name of the exception's class */
-	// can't fail
-	ScopedLocalRef<jclass> exceptionClass(env, env->GetObjectClass(exception));
+      // can't fail
+      ScopedLocalRef<jclass> exceptionClass(env, env->GetObjectClass(exception));
     // java.lang.Class, can't fail
     ScopedLocalRef<jclass> classClass(env, env->GetObjectClass(exceptionClass.get()));
     jmethodID classGetNameMethod =
@@ -283,8 +343,8 @@ void throw_sqlite3_exception_db(JNIEnv* env, sqlite3* handle, const char* messag
         // the error message may contain more information than the error code
         // because it is based on the extended error code rather than the simplified
         // error code that SQLite normally returns.
-    	int extendedErrCode = sqlite3_extended_errcode(handle);
-    	const char * extendedMsg = sqlite3_errmsg(handle);
+        int extendedErrCode = sqlite3_extended_errcode(handle);
+        const char * extendedMsg = sqlite3_errmsg(handle);
         throw_sqlite3_exception(env, extendedErrCode, extendedMsg, message);
     } else {
         // we use SQLITE_OK so that a generic SQLiteException is thrown;
@@ -302,26 +362,26 @@ void throw_sqlite3_exception_errcode(JNIEnv* env, int errcode, const char* messa
 
 /* throw a SQLiteException with a message appropriate for the error in handle */
 void throw_sqlite3_exception_db_unspecified(JNIEnv* env, sqlite3* handle) {
-	const char * unspecified = "unspecified";
-	throw_sqlite3_exception_db(env, handle, unspecified);
+    const char * unspecified = "unspecified";
+    throw_sqlite3_exception_db(env, handle, unspecified);
 }
 
 // Called each time a statement begins execution, when tracing is enabled.
-void sqliteTraceCallback(void *data, const char *sql) {
+static void sqliteTraceCallback(void *data, const char *sql) {
     SQLiteConnection* connection = static_cast<SQLiteConnection*>(data);
     ALOG(LOG_VERBOSE, SQLITE_TRACE_TAG, "%s: \"%s\"\n",
             connection->label.c_str(), sql);
 }
 
 // Called each time a statement finishes execution, when profiling is enabled.
-void sqliteProfileCallback(void *data, const char *sql, sqlite3_uint64 tm) {
+static void sqliteProfileCallback(void *data, const char *sql, sqlite3_uint64 tm) {
     SQLiteConnection* connection = static_cast<SQLiteConnection*>(data);
     ALOG(LOG_VERBOSE, SQLITE_PROFILE_TAG, "%s: \"%s\" took %0.3f ms\n",
             connection->label.c_str(), sql, tm * 0.000001f);
 }
 
 // Called after each SQLite VM instruction when cancelation is enabled.
-int sqliteProgressHandlerCallback(void* data) {
+static int sqliteProgressHandlerCallback(void* data) {
     SQLiteConnection* connection = static_cast<SQLiteConnection*>(data);
     return connection->canceled;
 }
@@ -337,7 +397,7 @@ int sqliteProgressHandlerCallback(void* data) {
 ** with the NDK only). Instead, this function is registered as "LOCALIZED" for all
 ** new database handles.
 */
-int coll_localized(
+static int coll_localized(
   void *not_used,
   int nKey1, const void *pKey1,
   int nKey2, const void *pKey2
@@ -351,11 +411,97 @@ int coll_localized(
   return rc;
 }
 
+SQLiteConnection* openConnection(JNIEnv* env,
+          std::string path, jint openFlags, std::string label,
+          jboolean enableTrace, jboolean enableProfile) {
+              
+    pid_t tid = getpid();
+    int sqliteFlags;
+
+    if (openFlags & org_sqlite_database_sqlite_SQLiteConnection_CREATE_IF_NECESSARY) {
+        sqliteFlags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    } else {
+        sqliteFlags = SQLITE_OPEN_READWRITE;
+    }
+
+    sqlite3* db;
+    int err = sqlite3_open_v2(path.c_str(), &db, sqliteFlags, nullptr);
+    if (err != SQLITE_OK) {
+        ALOGV("openConnection 0x%.8x -- failed sqlite3_open_v2", tid);
+        throw_sqlite3_exception_errcode(env, err, "Could not open database");
+        return 0L;
+    }
+    err = sqlite3_create_collation(db, "localized", SQLITE_UTF8, nullptr,
+            coll_localized);
+    if (err != SQLITE_OK) {
+        ALOGV("openConnection 0x%.8x -- failed sqlite3_create_collation", tid);
+        throw_sqlite3_exception_errcode(env, err, "Could not register collation");
+        sqlite3_close_v2(db);
+        return 0L;
+    }
+
+    // Check that the database is really read/write when that is what we asked for.
+    if ((sqliteFlags & SQLITE_OPEN_READWRITE) && sqlite3_db_readonly(db, nullptr)) {
+        ALOGV("openConnection 0x%.8x -- failed sqlite3_db_readonly", tid);
+        throw_sqlite3_exception_db(env, db, "Could not open the database in read/write mode.");
+        sqlite3_close_v2(db);
+        return 0L;
+    }
+
+    // Set the default busy handler to retry automatically before returning SQLITE_BUSY.
+    err = sqlite3_busy_timeout(db, BUSY_TIMEOUT_MS);
+    if (err != SQLITE_OK) {
+        ALOGV("openConnection 0x%.8x -- failed sqlite3_busy_timeout", tid);
+        throw_sqlite3_exception_db(env, db, "Could not set busy timeout");
+        sqlite3_close_v2(db);
+        return 0L;
+    }
+
+    // Register custom Android functions.
+#if 0
+    err = register_android_functions(db, UTF16_STORAGE);
+    if (err) {
+        throw_sqlite3_exception_db(env, db, "Could not register Android SQL functions.");
+        sqlite3_close_v2(db);
+        return 0L;
+    }
+#endif
+    ALOGV("openConnection 0x%.8x -- creating connection", tid);
+
+    // Create wrapper object.
+    SQLiteConnection* connection = new SQLiteConnection(db, openFlags, path, label);
+
+    // Enable tracing and profiling if requested.
+    if (enableTrace) {
+        sqlite3_trace(db, &sqliteTraceCallback, connection);
+    }
+    if (enableProfile) {
+        sqlite3_profile(db, &sqliteProfileCallback, connection);
+    }
+
+    return connection;
+}
+
+void closeConnection(JNIEnv *env, SQLiteConnection* connection) {
+    if (connection) {
+        ALOGV("Closing connection %p", connection->db);
+        int err = sqlite3_close_v2(connection->db);
+        if (err != SQLITE_OK) {
+            // This can happen if sub-objects aren't closed first.  Make sure the caller knows.
+            ALOGE("sqlite3_close_v2(%p) failed: %d", connection->db, err);
+            throw_sqlite3_exception_db(env, connection->db, "Count not close db.");
+            return;
+        }
+
+        delete connection;
+    }
+}
+
 // Called each time a custom function is evaluated.
-void sqliteCustomFunctionCallback(sqlite3_context *context,
+static void sqliteCustomFunctionCallback(sqlite3_context *context,
         int argc, sqlite3_value **argv) {
 
-    JNIEnv* env = 0;
+    JNIEnv* env = nullptr;
     gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
 
     // Get the callback function object.
@@ -364,7 +510,6 @@ void sqliteCustomFunctionCallback(sqlite3_context *context,
     jobject functionObjGlobal = reinterpret_cast<jobject>(sqlite3_user_data(context));
     ScopedLocalRef<jobject> functionObj(env, env->NewLocalRef(functionObjGlobal));
 
-    // FIX: ScopedLocalRef<jobjectArray> argsArray(env, env->NewObjectArray(argc, JniConstants::stringClass, nullptr));
     ScopedLocalRef<jclass> stringClass(env, env->FindClass("java/lang/String"));
     ScopedLocalRef<jobjectArray> argsArray(env, env->NewObjectArray(argc, stringClass.get(), nullptr));
     if (argsArray.get() != nullptr) {
@@ -383,8 +528,6 @@ void sqliteCustomFunctionCallback(sqlite3_context *context,
         }
 
         {
-
-
             ScopedLocalRef<jclass> customFunctionClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteCustomFunction"));
             if (customFunctionClass.get() == nullptr) {
                 // unable to locate the class -- silently exit
@@ -398,7 +541,6 @@ void sqliteCustomFunctionCallback(sqlite3_context *context,
             // TODO: Support functions that return values.
             env->CallVoidMethod(functionObj.get(), dispatchCallback, argsArray.get());
         }
-
     }
 
 error:
@@ -412,11 +554,166 @@ error:
 }
 
 // Called when a custom function is destroyed.
-void sqliteCustomFunctionDestructor(void* data) {
+static void sqliteCustomFunctionDestructor(void* data) {
     jobject functionObjGlobal = reinterpret_cast<jobject>(data);
-    JNIEnv* env = 0;
+    JNIEnv* env = nullptr;
     gpJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
     env->DeleteGlobalRef(functionObjGlobal);
+}
+
+void registerCustomFunction(JNIEnv* env, SQLiteConnection* connection,
+        const char * name, int numArgs, jobject functionObj) {
+
+    // this is important -- the sqlite3_user_data() function will return functionObjGlobal
+    // so it needs to be a global ref.
+    jobject functionObjGlobal = env->NewGlobalRef(functionObj);
+
+    // this will copy the name, so we don't have to worry about localref reloc of the buffer.
+    // should an error occur, the destructor function will be called, which will have called:
+    //    env->DeleteGlobalRef(functionObjGlobal);
+    int err = sqlite3_create_function_v2(connection->db, name, numArgs, SQLITE_UTF16,
+            reinterpret_cast<void*>(functionObjGlobal),
+            &sqliteCustomFunctionCallback, nullptr, nullptr, &sqliteCustomFunctionDestructor);
+
+    if (err != SQLITE_OK) {
+        ALOGE("sqlite3_create_function returned %d", err);
+        throw_sqlite3_exception_db(env, connection->db, "Error while registering custom function");
+    }
+}
+
+sqlite3_stmt* prepareStatement(JNIEnv* env, SQLiteConnection* connection, jstring sqlString) {
+
+    sqlite3_stmt* stmt = nullptr;
+
+    jsize sqlLength = env->GetStringLength(sqlString);
+    const jchar* sql = env->GetStringChars(sqlString, nullptr);
+
+    int err = sqlite3_prepare16_v2(connection->db,
+            sql, sqlLength * sizeof(jchar), &stmt, nullptr);
+
+    env->ReleaseStringChars(sqlString, sql);
+    if (err != SQLITE_OK) {
+        // Error messages like 'near ")": syntax error' are not
+        // always helpful enough, so construct an error string that
+        // includes the query itself.
+        const char *query = env->GetStringUTFChars(sqlString, nullptr);
+        char *message = (char*) malloc(strlen(query) + 50);
+        if (message) {
+            strcpy(message, ", while compiling: "); // less than 50 chars
+            strcat(message, query);
+        }
+        env->ReleaseStringUTFChars(sqlString, query);
+        throw_sqlite3_exception_db(env, connection->db, message);
+        free(message);
+        return 0L;
+    }
+
+    ALOGV("Prepared statement %p on connection %p", stmt, connection->db);
+    return stmt;
+}
+
+void finalizeStatement(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+
+    // We ignore the result of sqlite3_finalize because it is really telling us about
+    // whether any errors occurred while executing the statement.  The statement itself
+    // is always finalized regardless.
+    ALOGV("Finalized statement %p on connection %p", statement, connection->db);
+    sqlite3_finalize(statement);
+}
+
+jint bindParameterCount(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    return sqlite3_bind_parameter_count(statement);
+}
+
+jboolean statementIsReadOnly(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    return sqlite3_stmt_readonly(statement) != 0;
+}
+
+jint getColumnCount(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    return sqlite3_column_count(statement);
+}
+
+jstring getColumnName(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index) {
+    // sqlite3_column_name16 returns a null-terminated UTF-16 string.
+    const jchar* name = static_cast<const jchar*>(sqlite3_column_name16(statement, index));
+    if (name) {
+        size_t length = 0;
+        while (name[length]) {
+            length += 1;
+        }
+        return env->NewString(name, length);
+    }
+    return nullptr;
+}
+
+void bindNull(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index) {
+    int err = sqlite3_bind_null(statement, index);
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error while binding null value");
+    }
+}
+
+void bindLong(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index,
+      jlong value) {
+    int err = sqlite3_bind_int64(statement, index, value);
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error while binding long value");
+    }
+}
+
+
+void bindDouble(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index,
+      jdouble value) {
+    int err = sqlite3_bind_double(statement, index, value);
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error while binding double value");
+    }
+}
+
+void bindString(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index,
+      const jchar* value, size_t valueLength) {
+    int err = sqlite3_bind_text16(statement, index, value, valueLength * sizeof(jchar),
+        SQLITE_TRANSIENT);
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error while binding string value");
+    }
+}
+
+void bindBlob(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index,
+      const jbyte* value, size_t valueLength) {
+    int err = sqlite3_bind_blob(statement, index, value, valueLength, SQLITE_TRANSIENT);
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error while binding blob value");
+    }
+}
+
+void resetAndClearBindings(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    int err = sqlite3_reset(statement);
+    if (err == SQLITE_OK) {
+        err = sqlite3_clear_bindings(statement);
+    }
+
+    if (err != SQLITE_OK) {
+        throw_sqlite3_exception_db(env, connection->db, "Error during resetAndClearBindings");
+    }
+}
+
+jstring getColumnStringValue(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement, int index) {
+    // Strings returned by sqlite3_column_text16() are always null terminated.
+    const jchar* text = static_cast<const jchar*>(sqlite3_column_text16(statement, index));
+    if (text) {
+        size_t length = 0;
+        while (text[length]) {
+            length += 1;
+        }
+        return env->NewString(text, length);
+    }
+    return nullptr;
 }
 
 int executeNonQuery(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
@@ -430,6 +727,19 @@ int executeNonQuery(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* sta
     return err;
 }
 
+jint executeForChangedRowCount(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+
+    int err = executeNonQuery(env, connection, statement);
+    return err == SQLITE_DONE ? sqlite3_changes(connection->db) : -1;
+}
+
+jlong executeForLastInsertedRowId(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+
+    int err = executeNonQuery(env, connection, statement);
+    return err == SQLITE_DONE && sqlite3_changes(connection->db) > 0
+            ? sqlite3_last_insert_rowid(connection->db) : -1L;
+}
+
 int executeOneRowQuery(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
     int err = sqlite3_step(statement);
     if (err != SQLITE_ROW) {
@@ -439,117 +749,265 @@ int executeOneRowQuery(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* 
 }
 
 
-int createAshmemRegionWithData(JNIEnv* env, const void* data, size_t length) {
-#if 0
-    int error = 0;
-    int fd = ashmem_create_region(nullptr, length);
-    if (fd < 0) {
-        error = errno;
-        ALOGE("ashmem_create_region failed: %s", strerror(error));
-    } else {
-        if (length > 0) {
-            void* ptr = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-            if (ptr == MAP_FAILED) {
-                error = errno;
-                ALOGE("mmap failed: %s", strerror(error));
-            } else {
-                memcpy(ptr, data, length);
-                munmap(ptr, length);
-            }
-        }
-
-        if (!error) {
-            if (ashmem_set_prot_region(fd, PROT_READ) < 0) {
-                error = errno;
-                ALOGE("ashmem_set_prot_region failed: %s", strerror(errno));
-            } else {
-                return fd;
-            }
-        }
-
-        close(fd);
+jlong executeForLong(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    int err = executeOneRowQuery(env, connection, statement);
+    if (err == SQLITE_ROW && sqlite3_column_count(statement) >= 1) {
+        return sqlite3_column_int64(statement, 0);
     }
+    return -1L;
+}
 
-#endif
-    jniThrowIOException(env, -1);
-    return -1;
+jstring executeForString(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement) {
+    int err = executeOneRowQuery(env, connection, statement);
+    if (err == SQLITE_ROW && sqlite3_column_count(statement) >= 1) {
+        return getColumnStringValue(env, connection, statement, 0);
+    }
+    return nullptr;
 }
 
 /*
-** Append the contents of the row that SQL statement pStmt currently points to
+** Append the contents of the row that SQL statement statement currently points to
 ** to the CursorWindow object passed as the second argument. The CursorWindow
 ** currently contains iRow rows. Return true on success or false if an error
 ** occurs.
 */
-jboolean copyRowToWindow(
-  JNIEnv *pEnv,
+static jboolean copyRowToWindow(
+  JNIEnv *env,
   jobject win,
   int iRow,
-  sqlite3_stmt *pStmt,
+  sqlite3_stmt *statement,
   CWMethod *aMethod
 ){
-  int nCol = sqlite3_column_count(pStmt);
+  int nCol = sqlite3_column_count(statement);
   int i;
   jboolean bOk;
 
-  bOk = pEnv->CallBooleanMethod(win, aMethod[CW_ALLOCROW].id);
+  bOk = env->CallBooleanMethod(win, aMethod[CW_ALLOCROW].id);
   for(i=0; bOk && i<nCol; i++){
-    switch( sqlite3_column_type(pStmt, i) ){
+    switch( sqlite3_column_type(statement, i) ){
       case SQLITE_NULL: {
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
+        bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
         break;
       }
 
       case SQLITE_INTEGER: {
-        jlong val = sqlite3_column_int64(pStmt, i);
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTLONG].id, val, iRow, i);
+        jlong val = sqlite3_column_int64(statement, i);
+        bOk = env->CallBooleanMethod(win, aMethod[CW_PUTLONG].id, val, iRow, i);
         break;
       }
 
       case SQLITE_FLOAT: {
-        jdouble val = sqlite3_column_double(pStmt, i);
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTDOUBLE].id, val, iRow, i);
+        jdouble val = sqlite3_column_double(statement, i);
+        bOk = env->CallBooleanMethod(win, aMethod[CW_PUTDOUBLE].id, val, iRow, i);
         break;
       }
 
       case SQLITE_TEXT: {
-        jchar *pStr = (jchar*)sqlite3_column_text16(pStmt, i);
-        int nStr = sqlite3_column_bytes16(pStmt, i) / sizeof(jchar);
-        ScopedLocalRef<jstring> val(pEnv, pEnv->NewString(pStr, nStr));
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val.get(), iRow, i);
+        // Strings returned by sqlite3_column_text16() are always null terminated.
+        jchar *pStr = (jchar*)sqlite3_column_text16(statement, i);
+        if (pStr) {
+            size_t nStr = 0;
+            while (pStr[nStr]) {
+                nStr += 1;
+            }
+            ScopedLocalRef<jstring> val(env, env->NewString(pStr, nStr));
+            bOk = env->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val.get(), iRow, i);
+        } else {
+          bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
+        }
         break;
       }
 
       default: {
-        assert( sqlite3_column_type(pStmt, i)==SQLITE_BLOB );
-        const jbyte *p = (const jbyte*)sqlite3_column_blob(pStmt, i);
-        int n = sqlite3_column_bytes(pStmt, i);
-        ScopedLocalRef<jbyteArray> val(pEnv, pEnv->NewByteArray(n));
-        pEnv->SetByteArrayRegion(val.get(), 0, n, p);
-        bOk = pEnv->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val.get(), iRow, i);
+        assert( sqlite3_column_type(statement, i)==SQLITE_BLOB );
+        const jbyte *p = (const jbyte*)sqlite3_column_blob(statement, i);
+        if (p) {
+          int n = sqlite3_column_bytes(statement, i);
+          ScopedLocalRef<jbyteArray> val(env, env->NewByteArray(n));
+          env->SetByteArrayRegion(val.get(), 0, n, p);
+          bOk = env->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val.get(), iRow, i);
+        } else {
+          bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
+        }
         break;
       }
     }
 
     if( bOk==0 ){
-      pEnv->CallVoidMethod(win, aMethod[CW_FREELASTROW].id);
+      env->CallVoidMethod(win, aMethod[CW_FREELASTROW].id);
     }
   }
 
   return bOk;
 }
 
-jboolean setWindowNumColumns(
-  JNIEnv *pEnv,
+static jboolean setWindowNumColumns(
+  JNIEnv *env,
   jobject win,
-  sqlite3_stmt *pStmt,
+  sqlite3_stmt *statement,
   CWMethod *aMethod
 ){
   int nCol;
 
-  pEnv->CallVoidMethod(win, aMethod[CW_CLEAR].id);
-  nCol = sqlite3_column_count(pStmt);
-  return pEnv->CallBooleanMethod(win, aMethod[CW_SETNUMCOLUMNS].id, (jint)nCol);
+  env->CallVoidMethod(win, aMethod[CW_CLEAR].id);
+  nCol = sqlite3_column_count(statement);
+  return env->CallBooleanMethod(win, aMethod[CW_SETNUMCOLUMNS].id, (jint)nCol);
+}
+
+/*
+** This method has been rewritten for org.sqlite.database.*. The original
+** android implementation used the C++ interface to populate a CursorWindow
+** object. Since the NDK does not export this interface, we invoke the Java
+** interface using standard JNI methods to do the same thing.
+**
+** This function executes the SQLite statement object passed as the 4th
+** argument and copies one or more returned rows into the CursorWindow
+** object passed as the 5th argument. The set of rows copied into the
+** CursorWindow is always contiguous.
+**
+** The only row that *must* be copied into the CursorWindow is row
+** iRowRequired. Ideally, all rows from iRowStart through to the end
+** of the query are copied into the CursorWindow. If this is not possible
+** (CursorWindow objects have a finite capacity), some compromise position
+** is found (see comments embedded in the code below for details).
+**
+** The return value is a 64-bit integer calculated as follows:
+**
+**      (iStart << 32) | nRow
+**
+** where iStart is the index of the first row copied into the CursorWindow.
+** If the countAllRows argument is true, nRow is the total number of rows
+** returned by the query. Otherwise, nRow is one greater than the index of
+** the last row copied into the CursorWindow.
+*/
+jlong executeIntoCursorWindow(JNIEnv* env, SQLiteConnection* connection, sqlite3_stmt* statement,
+                          jobject win,
+                          jint startPos,                  /* First row to add (advisory) */
+                          jint iRowRequired,              /* Required row */
+                          jboolean countAllRows) {
+
+  CWMethod aMethod[] = {
+    {0, "clear",         "()V"},
+    {0, "setNumColumns", "(I)Z"},
+    {0, "allocRow",      "()Z"},
+    {0, "freeLastRow",   "()V"},
+    {0, "putNull",       "(II)Z"},
+    {0, "putLong",       "(JII)Z"},
+    {0, "putDouble",     "(DII)Z"},
+    {0, "putString",     "(Ljava/lang/String;II)Z"},
+    {0, "putBlob",       "([BII)Z"},
+  };
+
+  /* Class android.database.CursorWindow */
+  ScopedLocalRef<jclass> cls(env, env->FindClass("android/database/CursorWindow"));
+  /* Locate all required CursorWindow methods. */
+  for(int i=0; i<(sizeof(aMethod)/sizeof(struct CWMethod)); i++){
+    aMethod[i].id = env->GetMethodID(cls.get(), aMethod[i].zName, aMethod[i].zSig);
+    if( aMethod[i].id==nullptr ){
+      jniThrowExceptionFmt(env, "java/lang/Exception",
+          "Failed to find method CursorWindow.%s()", aMethod[i].zName
+      );
+      return 0L;
+    }
+  }
+
+  /* Set the number of columns in the window */
+  jboolean bOk = setWindowNumColumns(env, win, statement, aMethod);
+  if( bOk==0 ) {
+    return 0L;
+  }
+
+  int nRow = 0;
+  int iStart = startPos;
+  while( sqlite3_step(statement)==SQLITE_ROW ){
+    /* Only copy in rows that occur at or after row index iStart. */
+    if( nRow>=iStart && bOk ){
+      bOk = copyRowToWindow(env, win, (nRow - iStart), statement, aMethod);
+      if( bOk==0 ){
+        /* The CursorWindow object ran out of memory. If row iRowRequired was
+        ** not successfully added before this happened, clear the CursorWindow
+        ** and try to add the current row again.  */
+        if( nRow<=iRowRequired ){
+          bOk = setWindowNumColumns(env, win, statement, aMethod);
+          if( bOk==0 ){
+            sqlite3_reset(statement);
+            return 0L;
+          }
+          iStart = nRow;
+          bOk = copyRowToWindow(env, win, (nRow - iStart), statement, aMethod);
+        }
+
+        /* If the CursorWindow is still full and the countAllRows flag is not
+        ** set, break out of the loop here. If countAllRows is set, continue
+        ** so as to set variable nRow correctly.  */
+        if( bOk==0 && countAllRows==0 ) break;
+      }
+    }
+
+    nRow++;
+  }
+
+  /* Finalize the statement. If this indicates an error occurred, throw an
+  ** SQLiteException exception.  */
+  int rc = sqlite3_reset(statement);
+  if( rc!=SQLITE_OK ){
+    throw_sqlite3_exception_db_unspecified(env, connection->db);
+    return 0L;
+  }
+
+  jlong lRet = jlong(iStart) << 32 | jlong(nRow);
+  return lRet;
+}
+
+jint getDbLookasideUsed(JNIEnv* env, SQLiteConnection* connection) {
+    int cur = -1;
+    int unused;
+    sqlite3_db_status(connection->db, SQLITE_DBSTATUS_LOOKASIDE_USED, &cur, &unused, 0);
+    return cur;
+}
+
+void cancel(JNIEnv* env, SQLiteConnection* connection) {
+    connection->canceled = true;
+}
+
+void resetCancel(JNIEnv* env, SQLiteConnection* connection, jboolean cancelable) {
+    connection->canceled = false;
+
+    if (cancelable) {
+        sqlite3_progress_handler(connection->db, 4, sqliteProgressHandlerCallback,
+                connection);
+    } else {
+        sqlite3_progress_handler(connection->db, 0, nullptr, nullptr);
+    }
+}
+
+jboolean hasCodec(JNIEnv* env) {
+#ifdef SQLITE_HAS_CODEC
+  return true;
+#else
+  return false;
+#endif
+}
+
+// Called by SQLiteGlobal
+jint releaseMemory() {
+    return sqlite3_release_memory(org_opendatakit::SOFT_HEAP_LIMIT);
+}
+
+// Called by SQLiteDebug
+void getStatus(JNIEnv* env, jint* memoryUsed, jint* largestMemAlloc, jint *pageCacheOverflow) {
+    int imemoryUsed;
+    int ipageCacheOverflow;
+    int ilargestMemAlloc;
+    int iunused;
+
+    sqlite3_status(SQLITE_STATUS_MEMORY_USED, &imemoryUsed, &iunused, 0);
+    sqlite3_status(SQLITE_STATUS_MALLOC_SIZE, &iunused, &ilargestMemAlloc, 0);
+    sqlite3_status(SQLITE_STATUS_PAGECACHE_OVERFLOW, &ipageCacheOverflow, &iunused, 0);
+
+    *memoryUsed = imemoryUsed;
+    *pageCacheOverflow = ipageCacheOverflow;
+    *largestMemAlloc = ilargestMemAlloc;
 }
 
 } // namespace android

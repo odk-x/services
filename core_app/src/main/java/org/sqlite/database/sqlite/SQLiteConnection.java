@@ -342,7 +342,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native void nativeClose(long connectionPtr);
    private static native void nativeRegisterCustomFunction(long connectionPtr,
        SQLiteCustomFunction function);
-   private static native void nativeRegisterLocalizedCollators(long connectionPtr, String locale);
    private static native long nativePrepareStatement(long connectionPtr, String sql);
    private static native void nativeFinalizeStatement(long connectionPtr, long statementPtr);
    private static native int nativeGetParameterCount(long connectionPtr, long statementPtr);
@@ -365,8 +364,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native void nativeExecute(long connectionPtr, long statementPtr);
    private static native long nativeExecuteForLong(long connectionPtr, long statementPtr);
    private static native String nativeExecuteForString(long connectionPtr, long statementPtr);
-   private static native int nativeExecuteForBlobFileDescriptor(
-       long connectionPtr, long statementPtr);
    private static native int nativeExecuteForChangedRowCount(long connectionPtr, long statementPtr);
    private static native long nativeExecuteForLastInsertedRowId(
        long connectionPtr, long statementPtr);
@@ -819,34 +816,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
 
       return executeForStringImpl(sql, bindArgs, cancellationSignal); // might throw
-   }
-
-   /**
-    * Executes a statement that returns a single BLOB result as a
-    * file descriptor to a shared memory region.
-    *
-    * @param sql The SQL statement to execute.
-    * @param bindArgs The arguments to bind, or null if none.
-    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * @return The file descriptor for a shared memory region that contains
-    * the value of the first column in the first row of the result set as a BLOB,
-    * or null if none.
-    *
-    * @throws SQLiteException if an error occurs, such as a syntax error
-    * or invalid number of bind arguments.
-    * @throws OperationCanceledException if the operation was canceled.
-    */
-   public ParcelFileDescriptor executeForBlobFileDescriptor(String sql, Object[] bindArgs,
-       CancellationSignal cancellationSignal) {
-      if (sql == null) {
-         throw new IllegalArgumentException("sql must not be null.");
-      }
-
-      if (executeSpecial(sql, bindArgs, cancellationSignal)) {
-         return null;
-      }
-
-      return executeForBlobFileDescriptorImpl(sql, bindArgs, cancellationSignal); // might throw
    }
 
    /**
@@ -2031,56 +2000,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                 attachCancellationSignal(cancellationSignal);
                 try {
                    return nativeExecuteForString(mConnectionPtr, statement.mStatementPtr);
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
-
-    /**
-     * Executes a statement that returns a single BLOB result as a
-     * file descriptor to a shared memory region.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The file descriptor for a shared memory region that contains
-     * the value of the first column in the first row of the result set as a BLOB,
-     * or null if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private ParcelFileDescriptor executeForBlobFileDescriptorImpl(String sql, Object[] bindArgs,
-        CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForBlobFileDescriptorImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   int fd = nativeExecuteForBlobFileDescriptor(mConnectionPtr, statement.mStatementPtr);
-                   return fd >= 0 ? ParcelFileDescriptor.adoptFd(fd) : null;
                 } finally {
                    detachCancellationSignal(cancellationSignal);
                 }

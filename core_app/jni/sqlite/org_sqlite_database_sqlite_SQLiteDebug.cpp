@@ -24,12 +24,9 @@
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
 
 using org_opendatakit::ScopedLocalRef;
+using org_opendatakit::getStatus;
 
 extern "C" {
-
-#define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
-        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
-        LOG_FATAL_IF((var == nullptr), "Unable to find field " fieldName);
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteDebug
@@ -38,24 +35,20 @@ extern "C" {
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteDebug_nativeGetPagerStats
   (JNIEnv *env, jclass clazz, jobject statsObj) {
-	int imemoryUsed;
-    int ipageCacheOverflow;
-    int ilargestMemAlloc;
-    int iunused;
 
-    sqlite3_status(SQLITE_STATUS_MEMORY_USED, &imemoryUsed, &iunused, 0);
-    sqlite3_status(SQLITE_STATUS_MALLOC_SIZE, &iunused, &ilargestMemAlloc, 0);
-    sqlite3_status(SQLITE_STATUS_PAGECACHE_OVERFLOW, &ipageCacheOverflow, &iunused, 0);
+    jint memoryUsed = 0;
+    jint largestMemAlloc = 0;
+    jint pageCacheOverflow = 0;
 
-	jint memoryUsed = imemoryUsed;
-	jint pageCacheOverflow = ipageCacheOverflow;
-	jint largestMemAlloc = ilargestMemAlloc;
+    getStatus(env, &memoryUsed, &largestMemAlloc, &pageCacheOverflow);
 
     // these are local references.
-	ScopedLocalRef<jclass> pagerStatsClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteDebug$PagerStats"));
+    ScopedLocalRef<jclass> pagerStatsClass(env,
+        env->FindClass("org/sqlite/database/sqlite/SQLiteDebug$PagerStats"));
+
     if (pagerStatsClass.get() == nullptr) {
-		// unable to locate the class -- silently exit
-		ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteDebug$PagerStats");
+        // unable to locate the class -- silently exit
+        ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteDebug$PagerStats");
         return;
     }
 	

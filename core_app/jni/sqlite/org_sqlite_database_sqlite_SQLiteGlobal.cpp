@@ -23,6 +23,8 @@
 #include "org_sqlite_database_sqlite_SQLiteGlobal.h"
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
 
+using org_opendatakit::releaseMemory;
+
 extern "C" {
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteGlobal
@@ -31,7 +33,7 @@ extern "C" {
  */
 JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteGlobal_nativeReleaseMemory
   (JNIEnv * env, jclass clazz) {
-	return sqlite3_release_memory(org_opendatakit::SOFT_HEAP_LIMIT);
+	return releaseMemory();
 }
 
 }
