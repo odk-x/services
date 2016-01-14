@@ -31,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.RuntimeDelegate;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.http.HeaderElement;
@@ -45,7 +44,6 @@ import org.apache.wink.client.EntityType;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 import org.apache.wink.client.internal.handlers.GzipHandler;
-import org.apache.wink.common.internal.type.CollectionType;
 import org.apache.wink.common.model.multipart.BufferedOutMultiPart;
 import org.apache.wink.common.model.multipart.InMultiPart;
 import org.apache.wink.common.model.multipart.InPart;
