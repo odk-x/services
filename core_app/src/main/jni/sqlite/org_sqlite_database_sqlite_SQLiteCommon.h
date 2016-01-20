@@ -13,9 +13,9 @@
 #define SQLITE_TRACE_TAG "SQLiteStatements"
 #define SQLITE_PROFILE_TAG "SQLiteTime"
 
-#define nullptr 0
 #include "jni.h"
 #include <string>
+#include <cstddef>
 #include "ALog-priv.h"
 #include "sqlite3.h"
 #include "ScopedLocalRef.h"
