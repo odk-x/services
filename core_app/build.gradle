@@ -1,7 +1,6 @@
 /**************************************************************************************************
                                         GRADLE CONFIG
  *************************************************************************************************/
-
 if ((new File(gradle.local)).exists()) {
     apply from: gradle.local
 } else {
@@ -12,50 +11,94 @@ applicationScripts.each {
     apply from: it
 }
 
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.model.application'
 
 com.android.ddmlib.DdmPreferences.setTimeOut(60000)
 
-android {
-    // The following are set in the common.gradle file
-    compileSdkVersion(compileVersion)
-    buildToolsVersion(buildTools)
+model {
+    android {
+        // The following are set in the common.gradle file
+        compileSdkVersion(compileVersion)
+        buildToolsVersion(buildTools)
+        ndk {
+            moduleName "sqliteX"
+            CFlags.add("-USQLITE_HAS_CODEC")
+            CFlags.add("-DSQLITE_TEMP_STORE=3")
+            CFlags.add("-DSQLITE_THREADSAFE=2")
+            CFlags.add("-DHAVE_CONFIG_H")
+            CFlags.add("-DKHTML_NO_EXCEPTIONS")
+            CFlags.add("-DGKWQ_NO_JAVA")
+            CFlags.add("-DNO_SUPPORT_JS_BINDING")
+            CFlags.add("-DQT_NOWHEELEVENT")
+            CFlags.add("-DKHTML_NO_XBL")
+            CFlags.add("-U__APPLE__")
+            CFlags.add("-DHAVE_STRCHRNUL=0")
+            CFlags.add("-pthread")
+            CFlags.add("-Wno-unused-parameter")
+            // CFlags.add("-Wno-int-to-pointer-cast")
+            cppFlags.add("-USQLITE_HAS_CODEC")
+            cppFlags.add("-DSQLITE_TEMP_STORE=3")
+            cppFlags.add("-DSQLITE_THREADSAFE=2")
+            cppFlags.add("-DHAVE_CONFIG_H")
+            cppFlags.add("-DKHTML_NO_EXCEPTIONS")
+            cppFlags.add("-DGKWQ_NO_JAVA")
+            cppFlags.add("-DNO_SUPPORT_JS_BINDING")
+            cppFlags.add("-DQT_NOWHEELEVENT")
+            cppFlags.add("-DKHTML_NO_XBL")
+            cppFlags.add("-U__APPLE__")
+            cppFlags.add("-DHAVE_STRCHRNUL=0")
+            cppFlags.add("-pthread")
+            // cppFlags.add("-Wno-int-to-pointer-cast")
+            cppFlags.add("-fno-rtti")
+            cppFlags.add("-pthread")
+            cppFlags.add('-DPACKED="__attribute__((packed))"')
+            // cppFlags.add("-std=gnu++11")
+            ldFlags.add("-ldl")
+            ldFlags.add("-llog")
+            stl "stlport_shared"
+        }
+    
+        defaultConfig {
+            applicationId(groupId + coreName)
+            minSdkVersion.apiLevel(minVersion)
+            targetSdkVersion.apiLevel(targetVersion)
+            versionCode(releaseVersionCode)
+            versionName(versionCodeName)
 
-    defaultConfig {
-        applicationId(groupId + coreName)
-        minSdkVersion(minVersion)
-        targetSdkVersion(targetVersion)
-        versionCode(releaseVersionCode)
-        versionName(versionCodeName)
+            buildConfigFields {
+                create() {
+                    type "int"
+                    name "VALUE"
+                    value "1"
+                }
+            }
+        }
+    
+        lintOptions.disable.add('InvalidPackage')
     }
 
-	
-    buildTypes {
-        release {
-            minifyEnabled(minify)
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+    android.buildTypes {
+            release {
+                minifyEnabled(minify)
+                // proguardFiles.add(file(getDefaultProguardFile('proguard-android.txt')).add(file('proguard-rules.txt'))
+            }
+            // snapshot {
+                // Build type for snapshots
+            // }
+            debug {
+                testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+            }
         }
-        snapshot {
-            // Build type for snapshots
-        }
-        debug {
-            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
-        }
-    }
-
-    lintOptions {
-        disable 'InvalidPackage'
-    }
-
-    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+    
+    android.packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
         packageList.each {
             pickFirst it
         }
     }
-
-    compileOptions {
-      sourceCompatibility javaVersion
-      targetCompatibility javaVersion
+    
+    android.compileOptions {
+        sourceCompatibility javaVersion
+        targetCompatibility javaVersion
     }
 }
 
