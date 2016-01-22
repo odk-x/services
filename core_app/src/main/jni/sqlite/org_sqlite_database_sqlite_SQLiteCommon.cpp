@@ -36,6 +36,11 @@
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
 #include "org_sqlite_database_sqlite_SQLiteConnection.h"
 
+// wrapper for avoiding android log printf formatting
+#define LOGV(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGV("%s", stringStream.str().c_str()); }
+#define LOGI(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGI("%s", stringStream.str().c_str()); }
+#define LOGW(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGW("%s", stringStream.str().c_str()); }
+#define LOGE(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGE("%s", stringStream.str().c_str()); }
 // conversion macro to ensure we return a proper jboolean value
 #define AS_JBOOLEAN(B) ((B) ? ((jboolean) JNI_TRUE) : ((jboolean) JNI_FALSE))
 
@@ -99,14 +104,20 @@ namespace org_opendatakit {
         int status;
         // non-zero if the current action should be cancelled
         volatile int cancelled;
-        std::string path;
-        std::string label;
+        char * pathStr;
+        char * labelStr;
         sqlite3 *db;
 
-        SQLiteConnection(const char* path, sqlite3 *db, const char* label) :
-                refCount(0), status(0), cancelled(0),
-                path(path), label(label), db(db) {
+        SQLiteConnection(const char* szPath, sqlite3 *db, const char* szLabel) :
+                refCount(0), status(0), cancelled(0), db(db) {
             mutex = PTHREAD_MUTEX_INITIALIZER;
+            pathStr = strdup(szPath);
+            labelStr = strdup(szLabel);
+        }
+
+        ~SQLiteConnection() {
+            free(pathStr);
+            free(labelStr);
         }
     };
 
@@ -117,10 +128,10 @@ namespace org_opendatakit {
         bool verboseLog = !!data;
         if (iErrCode == 0 || iErrCode == SQLITE_CONSTRAINT || iErrCode == SQLITE_SCHEMA) {
             if (verboseLog) {
-                ALOGV("(%d) %s", iErrCode, zMsg);
+                LOGV("(" << iErrCode << ") " << zMsg);
             }
         } else {
-            ALOGE("(%d) %s", iErrCode, zMsg);
+            LOGE("(" << iErrCode << ") " << zMsg);
         }
     }
 
@@ -157,8 +168,8 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        ALOGE("ActiveConnection(delete): tid %d Fetch of delete-pending connection %ld from map -- should already have been removed!",
-                              tid, mConnectionPtr);
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection " 
+				<< mConnectionPtr << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
@@ -186,8 +197,8 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        ALOGE("ActiveConnection(delete): tid %d Fetch of delete-pending connection %ld from map -- should already have been removed!",
-                              tid, mConnectionPtr);
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection "
+				<< mConnectionPtr << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
@@ -227,15 +238,14 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        ALOGE("ActiveConnection(delete): tid %d Fetch of delete-pending connection %ld from map -- should already have been removed!",
-                              tid, mConnectionPtr);
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection "
+					<< mConnectionPtr << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
                     ++(mConnection->refCount);
                     mConnection->status |= CONNECTION_ACTIVE | CONNECTION_DELETE_PENDING;
-                    // TODO: uncomment this line
-                    // activeConnections.erase(mConnectionPtr);
+                    activeConnections.erase(mConnectionPtr);
                 }
             }
             // this would block waiting for the other holder to release the mutex
@@ -256,8 +266,8 @@ namespace org_opendatakit {
                         if (mConnection->status == CONNECTION_DELETE_PENDING) {
                             activeConnections.erase(mConnectionPtr);
                             shouldDelete = true;
-                            ALOGE("~ActiveConnection: tid %d Removing delete-pending connection %ld from map -- should already have been removed!",
-                                 tid, mConnectionPtr);
+                            LOGE("~ActiveConnection: tid " << tid << " Removing delete-pending connection "
+					<< mConnectionPtr << " from map -- should already have been removed!");
                         }
                     }
                 }
@@ -269,8 +279,7 @@ namespace org_opendatakit {
 
             if ( shouldDelete && mConnection != nullptr ) {
                 delete mConnection;
-                ALOGW("~ActiveConnection: tid %d delete Connection %ld.",
-                      tid, mConnectionPtr);
+                LOGW("~ActiveConnection: tid " << tid << " delete Connection " << mConnectionPtr);
             }
         }
 
@@ -313,7 +322,7 @@ namespace org_opendatakit {
             activeStatements.erase(found);
         } else {
             pid_t tid = getpid();
-            ALOGE("removeActiveStatement tid %d -- did not find statement %ld", tid, statementId);
+            LOGE("removeActiveStatement tid " << tid << " -- did not find statement " << statementId);
         }
     }
 
@@ -321,13 +330,13 @@ namespace org_opendatakit {
 // This must be called before any other SQLite functions are called.
     void sqliteInitialize(JNIEnv *env) {
         pid_t tid = getpid();
-        ALOGE("sqliteInitialize tid %d -- entered", tid);
+        LOGE("sqliteInitialize tid " << tid << " -- entered");
 
         MutexRegion guard(&g_init_mutex);
-        ALOGW("sqliteInitialize tid %d -- gained mutex", tid);
+        LOGW("sqliteInitialize tid " << tid << " -- gained mutex");
 
         if (!initialized) {
-            ALOGW("sqliteInitialize tid %d -- executing sqlite3_config statements", tid);
+            LOGW("sqliteInitialize tid " << tid << " -- executing sqlite3_config statements");
 
             // Enable multi-threaded mode.  In this mode, SQLite is safe to use by multiple
             // threads as long as no two threads use the same database connection at the same
@@ -355,7 +364,7 @@ namespace org_opendatakit {
             // finally,
             initialized = true;
         }
-        ALOGW("sqliteInitialize tid %d -- done!", tid);
+        LOGW("sqliteInitialize tid " << tid << " -- done!");
     }
 
 /*
@@ -421,19 +430,19 @@ namespace org_opendatakit {
             if (exception.get() != nullptr) {
                 std::string text;
                 getExceptionSummary(env, exception.get(), text);
-                ALOGW("Discarding pending exception (%s) to throw %s", text.c_str(), className);
+                LOGW("Discarding pending exception (" << text.c_str() << ") to throw " << className);
             }
         }
 
         ScopedLocalRef<jclass> exceptionClass(env, env->FindClass(className));
         if (exceptionClass.get() == nullptr) {
-            ALOGE("Unable to find exception class %s", className);
+            LOGE("Unable to find exception class " << className);
             /* ClassNotFoundException now pending */
             return -1;
         }
 
         if (env->ThrowNew(exceptionClass.get(), msg) != JNI_OK) {
-            ALOGE("Failed throwing '%s' '%s'", className, msg);
+            LOGE("Failed throwing '" << className << "' '" << msg << "'");
             /* an exception, most likely OOM, will now be pending */
             return -1;
         }
@@ -521,7 +530,7 @@ namespace org_opendatakit {
         const char *extendedMsg = sqlite3_errmsg(connection->db);
 
         stringStream << " tid " << tid << " connection " << connectionPtr
-                     << " '" << connection->label.c_str() << "' ";
+                     << " '" << connection->labelStr << "' ";
         if ( extendedMsg != nullptr ) {
             stringStream << extendedMsg << " ";
         }
@@ -530,9 +539,8 @@ namespace org_opendatakit {
         if ( message != nullptr ) {
             stringStream << " " << message;
         }
-        std::string msg(stringStream.str());
 
-        jniThrowException(env, getExceptionClass(extendedErrCode), msg.c_str());
+        jniThrowException(env, getExceptionClass(extendedErrCode), stringStream.str().c_str());
     }
 
     static void throw_sqlite3_open_exception_db(JNIEnv *env, const char* label, sqlite3* db,
@@ -556,9 +564,8 @@ namespace org_opendatakit {
         if ( message != nullptr ) {
             stringStream << " " << message;
         }
-        std::string msg(stringStream.str());
 
-        jniThrowException(env, getExceptionClass(extendedErrCode), msg.c_str());
+        jniThrowException(env, getExceptionClass(extendedErrCode), stringStream.str().c_str());
     }
 
 /* throw a SQLiteException for a given error code
@@ -574,23 +581,25 @@ namespace org_opendatakit {
         if ( message != nullptr ) {
             stringStream << " " << message;
         }
-        std::string msg(stringStream.str());
 
-        jniThrowException(env, getExceptionClass(errcode), msg.c_str());
+        jniThrowException(env, getExceptionClass(errcode), stringStream.str().c_str());
     }
 
 // Called each time a statement begins execution, when tracing is enabled.
     static void sqliteTraceCallback(void *data, const char *sql) {
         SQLiteConnection *connection = static_cast<SQLiteConnection *>(data);
-        ALOG(LOG_VERBOSE, SQLITE_TRACE_TAG, "%s: \"%s\"\n",
-             connection->label.c_str(), sql);
+	std::stringstream stringStream;
+	stringStream << connection->labelStr << ": \"" << sql << "\"";
+	ALOG(LOG_VERBOSE, SQLITE_TRACE_TAG, "%s", stringStream.str().c_str());
     }
 
 // Called each time a statement finishes execution, when profiling is enabled.
     static void sqliteProfileCallback(void *data, const char *sql, sqlite3_uint64 tm) {
         SQLiteConnection *connection = static_cast<SQLiteConnection *>(data);
-        ALOG(LOG_VERBOSE, SQLITE_PROFILE_TAG, "%s: \"%s\" took %0.3f ms\n",
-             connection->label.c_str(), sql, tm * 0.000001f);
+	std::stringstream stringStream;
+	double ms = 0.000001 * tm;
+	stringStream << connection->labelStr << ": \"" << sql << "\"took " << ms << " ms";
+        ALOG(LOG_VERBOSE, SQLITE_PROFILE_TAG, "%s", stringStream.str().c_str());
     }
 
 // Called after each SQLite VM instruction when cancellation is enabled.
@@ -641,14 +650,14 @@ namespace org_opendatakit {
         int err = sqlite3_open_v2(path, &db,
                                   sqliteFlags, nullptr);
         if (err != SQLITE_OK) {
-            ALOGE("openConnection tid %d -- failed sqlite3_open_v2 with label '%s'", tid, label);
+            LOGE("openConnection tid " << tid << " -- failed sqlite3_open_v2 with label '" << label << "'");
             throw_sqlite3_open_exception_errcode(env, label, err, "Could not open database");
             return 0L;
         }
         err = sqlite3_create_collation(db, "localized", SQLITE_UTF8, nullptr,
                                        coll_localized);
         if (err != SQLITE_OK) {
-            ALOGE("openConnection tid %d -- failed sqlite3_create_collation with label '%s'", tid, label);
+            LOGE("openConnection tid " << tid << " -- failed sqlite3_create_collation with label '" << label << "'");
             throw_sqlite3_open_exception_db(env, label, db, "Could not register collation");
             sqlite3_close_v2(db);
             return 0L;
@@ -656,7 +665,7 @@ namespace org_opendatakit {
 
         // Check that the database is really read/write when that is what we asked for.
         if ((sqliteFlags & SQLITE_OPEN_READWRITE) && sqlite3_db_readonly(db, nullptr)) {
-            ALOGE("openConnection tid %d -- failed sqlite3_db_readonly with label '%s'", tid, label);
+            LOGE("openConnection tid " << tid << " -- failed sqlite3_db_readonly with label '" << label << "'");
             throw_sqlite3_open_exception_db(env, label, db, "Could not open the database in read/write mode.");
             sqlite3_close_v2(db);
             return 0L;
@@ -665,7 +674,7 @@ namespace org_opendatakit {
         // Set the default busy handler to retry automatically before returning SQLITE_BUSY.
         err = sqlite3_busy_timeout(db, BUSY_TIMEOUT_MS);
         if (err != SQLITE_OK) {
-            ALOGE("openConnection tid %d -- failed sqlite3_busy_timeout with label '%s'", tid, label);
+            LOGE("openConnection tid " << tid << " -- failed sqlite3_busy_timeout with label '" << label << "'");
             throw_sqlite3_open_exception_db(env, label, db, "Could not set busy timeout");
             sqlite3_close_v2(db);
             return 0L;
@@ -689,7 +698,7 @@ namespace org_opendatakit {
             activeConnections[connectionId] = connection;
         }
 
-        ALOGI("openConnection tid %d returns: connection %ld '%s'", tid, connectionId, label);
+        LOGI("openConnection tid " << tid << " returns: connection " << connectionId << " '" << label << "'");
 
         return connectionId;
     }
@@ -713,7 +722,7 @@ namespace org_opendatakit {
             return;
         }
 
-        ALOGI("closeConnection tid %d connection %ld '%s'", tid, connectionPtr, connection.get()->label.c_str());
+        LOGI("closeConnection tid " << tid << " connection " << connectionPtr << " '" << connection.get()->labelStr << "'");
     }
 
     jlong prepareStatement(JNIEnv *env, jlong connectionPtr, jstring sqlString) {
@@ -748,8 +757,8 @@ namespace org_opendatakit {
         }
 
         jlong statementPtr = registerActiveStatement(stmt);
-        ALOGI("prepareStatement: returns statement %ld for connection %ld '%s'",
-              statementPtr, connectionPtr, connection.get()->label.c_str());
+        LOGI("prepareStatement: returns statement " << statementPtr << " for connection "
+		<< connectionPtr << " '" << connection.get()->labelStr << "'");
         return statementPtr;
     }
 
@@ -777,8 +786,8 @@ namespace org_opendatakit {
         sqlite3_finalize(statement);
         // and forget about this statement...
         removeActiveStatement(statementPtr);
-        ALOGI("finalizeStatement: remove statement %ld via connection %ld '%s'",
-              statementPtr, connectionPtr, connection.get()->label.c_str());
+        LOGI("finalizeStatement: remove statement " << statementPtr << " via connection "
+			<< connectionPtr << " '" << connection.get()->labelStr << "'");
     }
 
     jint bindParameterCount(JNIEnv *env, jlong connectionPtr, jlong statementPtr) {
