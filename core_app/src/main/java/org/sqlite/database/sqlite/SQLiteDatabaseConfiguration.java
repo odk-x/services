@@ -99,23 +99,27 @@ public final class SQLiteDatabaseConfiguration {
      * @param path The database path.
      * @param openFlags Open flags for the database
      */
-    public SQLiteDatabaseConfiguration(String appName, String path, int openFlags) {
+    public SQLiteDatabaseConfiguration(String appName, String path, int openFlags, String label) {
       if (appName == null) {
         throw new IllegalArgumentException("appName must not be null.");
       }
 
       if (path == null) {
-            throw new IllegalArgumentException("path must not be null.");
-        }
+        throw new IllegalArgumentException("path must not be null.");
+      }
 
       this.appName = appName;
-        this.path = path;
-        label = stripPathForLogs(path);
-        this.openFlags = openFlags;
+      this.path = path;
+      if ( label == null ) {
+        this.label = path;
+      } else {
+        this.label = label;
+      }
+      this.openFlags = openFlags;
 
-        // Set default values for optional parameters.
-        maxSqlCacheSize = 25;
-        locale = Locale.getDefault();
+      // Set default values for optional parameters.
+      maxSqlCacheSize = 25;
+      locale = Locale.getDefault();
     }
 
     /**
