@@ -20,10 +20,7 @@
 
 package org.sqlite.database.sqlite;
 
-import java.util.ArrayList;
-
 import android.util.Log;
-import android.util.Printer;
 
 /**
  * Provides debugging info about all SQLite databases running in the current process.
@@ -33,7 +30,6 @@ import android.util.Printer;
  * {@hide}
  */
 public final class SQLiteDebug {
-    private static native void nativeGetPagerStats(PagerStats stats);
 
     /**
      * Controls the printing of informational SQL log messages.
@@ -85,42 +81,5 @@ public final class SQLiteDebug {
     public static final boolean shouldLogSlowQuery(long elapsedTimeMillis) {
         int slowQueryMillis = 10000;
         return slowQueryMillis >= 0 && elapsedTimeMillis >= slowQueryMillis;
-    }
-
-    /**
-     * Contains statistics about the active pagers in the current process.
-     * Injected from C++ JNI code. DO NOT CHANGE!!!
-     *
-     * @see #nativeGetPagerStats(PagerStats)
-     */
-    public static class PagerStats {
-        /** the current amount of memory checked out by sqlite using sqlite3_malloc().
-         * documented at http://www.sqlite.org/c3ref/c_status_malloc_size.html
-         */
-        public int memoryUsed;
-
-        /** the number of bytes of page cache allocation which could not be sattisfied by the
-         * SQLITE_CONFIG_PAGECACHE buffer and where forced to overflow to sqlite3_malloc().
-         * The returned value includes allocations that overflowed because they where too large
-         * (they were larger than the "sz" parameter to SQLITE_CONFIG_PAGECACHE) and allocations
-         * that overflowed because no space was left in the page cache.
-         * documented at http://www.sqlite.org/c3ref/c_status_malloc_size.html
-         */
-        public int pageCacheOverflow;
-
-        /** records the largest memory allocation request handed to sqlite3.
-         * documented at http://www.sqlite.org/c3ref/c_status_malloc_size.html
-         */
-        public int largestMemAlloc;
-    }
-
-    /**
-     * return all pager and database stats for the current process.
-     * @return {@link PagerStats}
-     */
-    public static PagerStats getDatabaseInfo() {
-        PagerStats stats = new PagerStats();
-        nativeGetPagerStats(stats);
-        return stats;
     }
 }

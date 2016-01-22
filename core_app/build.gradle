@@ -22,36 +22,126 @@ model {
         buildToolsVersion(buildTools)
         ndk {
             moduleName "sqliteX"
-            CFlags.add("-USQLITE_HAS_CODEC")
-            CFlags.add("-DSQLITE_TEMP_STORE=3")
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            CFlags.add("-DHAVE_USLEEP=1")
+            CFlags.add("-DHAVE_ISNAN")
+            CFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
             CFlags.add("-DSQLITE_THREADSAFE=2")
-            CFlags.add("-DHAVE_CONFIG_H")
-            CFlags.add("-DKHTML_NO_EXCEPTIONS")
-            CFlags.add("-DGKWQ_NO_JAVA")
-            CFlags.add("-DNO_SUPPORT_JS_BINDING")
-            CFlags.add("-DQT_NOWHEELEVENT")
-            CFlags.add("-DKHTML_NO_XBL")
-            CFlags.add("-U__APPLE__")
-            CFlags.add("-DHAVE_STRCHRNUL=0")
+            CFlags.add("-DSQLITE_TEMP_STORE=3")
+            CFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
+            CFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
+            // autovacuum doesn't make sense with WAL mode
+            // DO NOT DO THIS: CFlags.add("-DSQLITE_DEFAULT_AUTOVACUUM=1")
+            CFlags.add("-DSQLITE_ENABLE_MEMORY_MANAGEMENT=1")
+            CFlags.add("-DSQLITE_ENABLE_FTS3") // redundant
+            CFlags.add("-DSQLITE_ENABLE_FTS3_BACKWARDS")
+            CFlags.add("-DSQLITE_ENABLE_FTS4")
+            CFlags.add("-DSQLITE_OMIT_BUILTIN_TEST")
+            CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
+            // PRAGMA compile_options will return this list iff...
+            // DO NOT DO THIS: CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
+            CFlags.add("-DSQLITE_OMIT_LOAD_EXTENSION")
+            CFlags.add("-DSQLITE_DEFAULT_FILE_PERMISSIONS=0600")
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // we would have to build and statically link in ICU to do this
+            // DO NOT DO THIS: CFlags.add("-DSQLITE_ENABLE_ICU")
+            CFlags.add("-DUSE_PREAD64")
+            CFlags.add("-Dfdatasync=fdatasync")
+            CFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+
+            // define this if we want to add encryption (no implementations are compatible with WAL)
+            CFlags.add("-USQLITE_HAS_CODEC")
+            // eliminate APIs that are deprecated -- we don't use any
+            CFlags.add("-DSQLITE_OMIT_DEPRECATED")
+            // don't warn about unused parameters
             CFlags.add("-Wno-unused-parameter")
+            // enable pthread support -- sets various other flags
             CFlags.add("-pthread")
-            cppFlags.add("-USQLITE_HAS_CODEC")
-            cppFlags.add("-DSQLITE_TEMP_STORE=3")
+            // we want the normal locking mode
+            CFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
+            // and do not set any -DPACKED setting
+
+            // Replicate all the CFlags for cppFlags
+            // we include sqlite3.h in our C++ code, so we need
+            // to ensure that the same #defines are configured for both...
+
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            // start from Android 4.4 and 5.0 source tree
+            cppFlags.add("-DHAVE_USLEEP=1")
+            cppFlags.add("-DHAVE_ISNAN")
+            cppFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
             cppFlags.add("-DSQLITE_THREADSAFE=2")
-            cppFlags.add("-DHAVE_CONFIG_H")
-            cppFlags.add("-DKHTML_NO_EXCEPTIONS")
-            cppFlags.add("-DGKWQ_NO_JAVA")
-            cppFlags.add("-DNO_SUPPORT_JS_BINDING")
-            cppFlags.add("-DQT_NOWHEELEVENT")
-            cppFlags.add("-DKHTML_NO_XBL")
-            cppFlags.add("-U__APPLE__")
-            cppFlags.add("-DHAVE_STRCHRNUL=0")
+            cppFlags.add("-DSQLITE_TEMP_STORE=3")
+            cppFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
+            cppFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
+            // autovacuum doesn't make sense with WAL mode
+            // DO NOT DO THIS: CFlags.add("-DSQLITE_DEFAULT_AUTOVACUUM=1")
+            cppFlags.add("-DSQLITE_ENABLE_MEMORY_MANAGEMENT=1")
+            cppFlags.add("-DSQLITE_ENABLE_FTS3") // redundant
+            cppFlags.add("-DSQLITE_ENABLE_FTS3_BACKWARDS")
+            cppFlags.add("-DSQLITE_ENABLE_FTS4")
+            cppFlags.add("-DSQLITE_OMIT_BUILTIN_TEST")
+            cppFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
+            // PRAGMA compile_options will return this list iff...
+            // DO NOT DO THIS: CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
+            cppFlags.add("-DSQLITE_OMIT_LOAD_EXTENSION")
+            cppFlags.add("-DSQLITE_DEFAULT_FILE_PERMISSIONS=0600")
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // device flags from Android 4.4 and 5.0 source tree
+            // we would have to build and statically link in ICU to do this
+            // DO NOT DO THIS: cppFlags.add("-DSQLITE_ENABLE_ICU")
+            cppFlags.add("-DUSE_PREAD64")
+            cppFlags.add("-Dfdatasync=fdatasync")
+            cppFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+            // end from Android 4.4 and 5.0 source tree
+
+            // define this if we want to add encryption (no implementations are compatible with WAL)
+            cppFlags.add("-USQLITE_HAS_CODEC")
+            // eliminate APIs that are deprecated -- we don't use any
+            cppFlags.add("-DSQLITE_OMIT_DEPRECATED")
+            // not using any rtti
             cppFlags.add("-fno-rtti")
+            // enable pthread support -- sets various other flags
             cppFlags.add("-pthread")
-            cppFlags.add('-DPACKED="__attribute__((packed))"')
+            // we want the normal locking mode
+            cppFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
+            // enable C++11 features for nullptr
             cppFlags.add("-std=gnu++11")
+
+            // linker
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // this library is not found: ldFlags.add("-lpthread")
             ldFlags.add("-ldl")
             ldFlags.add("-llog")
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // from Android 4.4 and 5.0 source tree
+            // no ICU support: ldFlags.add("-licuuc")
+            // no ICU support: ldFlags.add("-licui18n")
+            // unknown content: ldFlags.add("-lutils")
+            // linked a second time to resolve logging from above: ldFlags.add("-llog")
+
             stl "stlport_shared"
         }
     
