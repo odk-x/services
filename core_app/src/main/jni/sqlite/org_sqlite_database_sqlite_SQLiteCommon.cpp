@@ -341,7 +341,7 @@ namespace org_opendatakit {
             // Enable multi-threaded mode.  In this mode, SQLite is safe to use by multiple
             // threads as long as no two threads use the same database connection at the same
             // time (which we guarantee in the SQLite database wrappers).
-            sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
+            // use default: sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
 
             // Redirect SQLite log messages to the Android log.
 #if 0

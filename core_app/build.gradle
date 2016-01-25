@@ -29,7 +29,7 @@ model {
             CFlags.add("-DHAVE_USLEEP=1")
             CFlags.add("-DHAVE_ISNAN")
             CFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            CFlags.add("-DSQLITE_THREADSAFE=2")
+            CFlags.add("-DSQLITE_THREADSAFE=1")
             CFlags.add("-DSQLITE_TEMP_STORE=3")
             CFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             CFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -51,7 +51,7 @@ model {
             // device flags from Android 4.4 and 5.0 source tree
             // we would have to build and statically link in ICU to do this
             // DO NOT DO THIS: CFlags.add("-DSQLITE_ENABLE_ICU")
-            CFlags.add("-DUSE_PREAD64")
+            // CFlags.add("-DUSE_PREAD64")
             CFlags.add("-Dfdatasync=fdatasync")
             CFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
@@ -82,7 +82,7 @@ model {
             cppFlags.add("-DHAVE_USLEEP=1")
             cppFlags.add("-DHAVE_ISNAN")
             cppFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            cppFlags.add("-DSQLITE_THREADSAFE=2")
+            cppFlags.add("-DSQLITE_THREADSAFE=1")
             cppFlags.add("-DSQLITE_TEMP_STORE=3")
             cppFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             cppFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -104,7 +104,7 @@ model {
             // device flags from Android 4.4 and 5.0 source tree
             // we would have to build and statically link in ICU to do this
             // DO NOT DO THIS: cppFlags.add("-DSQLITE_ENABLE_ICU")
-            cppFlags.add("-DUSE_PREAD64")
+            // cppFlags.add("-DUSE_PREAD64")
             cppFlags.add("-Dfdatasync=fdatasync")
             cppFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
