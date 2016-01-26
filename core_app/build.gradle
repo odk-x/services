@@ -55,8 +55,8 @@ model {
             // Android Bionic uses off64_t argument, so we can't do this without a patch:
             // CFlags.add("-DUSE_PREAD64")
 
-			// ndk-build standalone with fdatasync 
-			// fails during linking on armeabi and arbeabi-v7a
+            // ndk-build standalone with fdatasync 
+            // fails during linking on armeabi and arbeabi-v7a
             // CFlags.add("-Dfdatasync=fdatasync")
             CFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
@@ -74,7 +74,7 @@ model {
             CFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
             // and do not set any -DPACKED setting
 
-	    // turn off debugging
+            // turn off debugging
             CFlags.add("-DNDEBUG") 
             // Replicate all the CFlags for cppFlags
             // we include sqlite3.h in our C++ code, so we need
@@ -113,8 +113,8 @@ model {
             // Android Bionic uses off64_t argument, so we can't do this without a patch:
             // cppFlags.add("-DUSE_PREAD64")
 
-			// ndk-build standalone with fdatasync 
-			// fails during linking on armeabi and arbeabi-v7a
+            // ndk-build standalone with fdatasync 
+            // fails during linking on armeabi and arbeabi-v7a
             // cppFlags.add("-Dfdatasync=fdatasync")
             cppFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
@@ -134,7 +134,7 @@ model {
             // we want the normal locking mode
             cppFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
 
-	    // turn off debugging
+            // turn off debugging
             cppFlags.add("-DNDEBUG") 
             // 
             // 3 standards choices:
@@ -142,11 +142,8 @@ model {
             //   2) c++11 standard -- uncomment -std=c++11
             //   3) gnu++11 standard -- uncomment -std=gnu++11
             //
-			// interestingly, while -Dnullptr=0 builds and runs
-			// a standalone ndk-build fails complaining about 
-			// the pthread mutex initializer using a c++11 feature.
-            // cppFlags.add("-Dnullptr=0")
-            cppFlags.add("-std=c++11")
+            cppFlags.add("-Dnullptr=0")
+            // cppFlags.add("-std=c++11")
             // cppFlags.add("-std=gnu++11")
 
             // linker
