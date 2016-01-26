@@ -20,7 +20,6 @@
 
 package org.sqlite.database.sqlite;
 
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -94,35 +93,33 @@ public final class SQLiteDatabaseConfiguration {
     public boolean foreignKeyConstraintsEnabled;
 
     /**
-     * The custom functions to register.
-     */
-    public final ArrayList<SQLiteCustomFunction> customFunctions =
-            new ArrayList<SQLiteCustomFunction>();
-
-    /**
      * Creates a database configuration with the required parameters for opening a
      * database and default values for all other parameters.
      *
      * @param path The database path.
-     * @param openFlags Open flags for the database, such as {@link SQLiteDatabase#OPEN_READWRITE}.
+     * @param openFlags Open flags for the database
      */
-    public SQLiteDatabaseConfiguration(String appName, String path, int openFlags) {
+    public SQLiteDatabaseConfiguration(String appName, String path, int openFlags, String label) {
       if (appName == null) {
         throw new IllegalArgumentException("appName must not be null.");
       }
 
       if (path == null) {
-            throw new IllegalArgumentException("path must not be null.");
-        }
+        throw new IllegalArgumentException("path must not be null.");
+      }
 
       this.appName = appName;
-        this.path = path;
-        label = stripPathForLogs(path);
-        this.openFlags = openFlags;
+      this.path = path;
+      if ( label == null ) {
+        this.label = path;
+      } else {
+        this.label = label;
+      }
+      this.openFlags = openFlags;
 
-        // Set default values for optional parameters.
-        maxSqlCacheSize = 25;
-        locale = Locale.getDefault();
+      // Set default values for optional parameters.
+      maxSqlCacheSize = 25;
+      locale = Locale.getDefault();
     }
 
     /**
@@ -205,22 +202,6 @@ public final class SQLiteDatabaseConfiguration {
     this.locale = locale;
   }
 
-  /**
-   * Registers a CustomFunction callback as a function that can be called from
-   * SQLite database triggers.
-   *
-   * @param name the name of the sqlite3 function
-   * @param numArgs the number of arguments for the function
-   * @param function callback to call when the function is executed
-   * @hide
-   */
-  public void addCustomFunction(String name, int numArgs, SQLiteConnection.CustomFunction function) {
-    // Create wrapper (also validates arguments).
-    SQLiteCustomFunction wrapper = new SQLiteCustomFunction(name, numArgs, function);
-
-    this.customFunctions.add(wrapper);
-  }
-
     /**
      * Updates the non-immutable parameters of this configuration object
      * from the other configuration object.
@@ -240,8 +221,6 @@ public final class SQLiteDatabaseConfiguration {
         maxSqlCacheSize = other.maxSqlCacheSize;
         locale = other.locale;
         foreignKeyConstraintsEnabled = other.foreignKeyConstraintsEnabled;
-        customFunctions.clear();
-        customFunctions.addAll(other.customFunctions);
     }
 
     private static String stripPathForLogs(String path) {

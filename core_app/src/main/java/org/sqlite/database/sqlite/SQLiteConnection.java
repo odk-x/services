@@ -108,16 +108,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
   }
 
    /**
-    * A callback interface for a custom sqlite3 function.
-    * This can be used to create a function that can be called from
-    * sqlite3 database triggers.
-    * @hide
-    */
-   public interface CustomFunction {
-      public void callback(String[] args);
-   }
-
-   /**
     * Holder type for a prepared statement.
     *
     * Although this object holds a pointer to a native statement object, it
@@ -340,8 +330,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native long nativeOpen(String path, int openFlags, String label,
        boolean enableTrace, boolean enableProfile);
    private static native void nativeClose(long connectionPtr);
-   private static native void nativeRegisterCustomFunction(long connectionPtr,
-       SQLiteCustomFunction function);
    private static native long nativePrepareStatement(long connectionPtr, String sql);
    private static native void nativeFinalizeStatement(long connectionPtr, long statementPtr);
    private static native int nativeGetParameterCount(long connectionPtr, long statementPtr);
@@ -374,16 +362,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native void nativeCancel(long connectionPtr);
    private static native void nativeResetCancel(long connectionPtr, boolean cancelable);
 
-   private static native boolean nativeHasCodec();
-
 
    /*******************************************************************************************
     * Class methods
     *******************************************************************************************/
-
-   public static boolean hasCodec(){
-      return nativeHasCodec();
-   }
 
    private static String canonicalizeSyncMode(String value) {
       if (value.equals("0")) {
@@ -1624,13 +1606,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
              SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
 
         try {
-          // Register custom functions.
-          final int functionCount = mConfiguration.customFunctions.size();
-          for (int i = 0; i < functionCount; i++) {
-            SQLiteCustomFunction function = mConfiguration.customFunctions.get(i);
-            nativeRegisterCustomFunction(mConnectionPtr, function);
-          }
-
           {
             final long newValue = SQLiteGlobal.getDefaultPageSize();
             long value = executeForLongImpl("PRAGMA page_size", null, null);

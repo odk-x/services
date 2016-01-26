@@ -63,14 +63,6 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCl
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeRegisterCustomFunction
- * Signature: (JLorg/sqlite/database/sqlite/SQLiteCustomFunction;)V
- */
-JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRegisterCustomFunction
-  (JNIEnv *, jclass, jlong, jobject);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
  * Method:    nativePrepareStatement
  * Signature: (JLjava/lang/String;)J
  */
@@ -236,14 +228,6 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCa
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeResetCancel
   (JNIEnv *, jclass, jlong, jboolean);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeHasCodec
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeHasCodec
-  (JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }
