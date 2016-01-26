@@ -29,7 +29,7 @@ model {
             CFlags.add("-DHAVE_USLEEP=1")
             CFlags.add("-DHAVE_ISNAN")
             CFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            CFlags.add("-DSQLITE_THREADSAFE=1")
+            CFlags.add("-DSQLITE_THREADSAFE=2")
             CFlags.add("-DSQLITE_TEMP_STORE=3")
             CFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             CFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -72,6 +72,8 @@ model {
             CFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
             // and do not set any -DPACKED setting
 
+	    // turn off debugging
+            CFlags.add("-DNDEBUG") 
             // Replicate all the CFlags for cppFlags
             // we include sqlite3.h in our C++ code, so we need
             // to ensure that the same #defines are configured for both...
@@ -83,7 +85,7 @@ model {
             cppFlags.add("-DHAVE_USLEEP=1")
             cppFlags.add("-DHAVE_ISNAN")
             cppFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            cppFlags.add("-DSQLITE_THREADSAFE=1")
+            cppFlags.add("-DSQLITE_THREADSAFE=2")
             cppFlags.add("-DSQLITE_TEMP_STORE=3")
             cppFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             cppFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -127,6 +129,9 @@ model {
             cppFlags.add("-pthread")
             // we want the normal locking mode
             cppFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
+
+	    // turn off debugging
+            cppFlags.add("-DNDEBUG") 
             // 
             // 3 standards choices:
             //   1) default -- uncomment -Dnullptr=0
