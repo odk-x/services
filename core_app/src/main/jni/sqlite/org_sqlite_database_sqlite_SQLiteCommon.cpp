@@ -21,75 +21,109 @@
 #define LOG_TAG "SQLiteCommon"
 
 #include <cstddef>
-// #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <string>
 #include <sstream>
+#include <iomanip>
 #include <map>
+#include <android/log.h>
 
 #include "sqlite3.h"
-#include "ALog-priv.h"
 #include "MutexRegion.h"
 #include "ScopedLocalRef.h"
 
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
 #include "org_sqlite_database_sqlite_SQLiteConnection.h"
 
+#if __cplusplus < 201103L
+
+#warning --------------compiling with obsolete (pre C++ 11) configuration
+
+#ifndef nullptr
+#error add -Dnullptr=0 to compiler options
+#endif
+
+#elif __cplusplus == 201103L
+
+#if __STRICT_ANSI__
+
+#warning --------------compiling with (Std C++ 11) configuration
+
+#else
+
+#warning --------------compiling with advanced (GNU C++ 11) configuration
+
+#endif // __STRICT_ANSI__
+#endif // __cplusplus
+
 // wrapper for avoiding android log printf formatting
-#define LOGV(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGV("%s", stringStream.str().c_str()); }
-#define LOGI(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGI("%s", stringStream.str().c_str()); }
-#define LOGW(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGW("%s", stringStream.str().c_str()); }
-#define LOGE(CONTENT) { std::stringstream stringStream; stringStream << CONTENT; ALOGE("%s", stringStream.str().c_str()); }
-// conversion macro to ensure we return a proper jboolean value
-#define AS_JBOOLEAN(B) ((B) ? ((jboolean) JNI_TRUE) : ((jboolean) JNI_FALSE))
+#define LOGIMPL(CONTENT, TAG, LEVEL) { std::stringstream strStream; strStream << CONTENT; __android_log_print(LEVEL, TAG, "%s", strStream.str().c_str()); }
+#define LOGV(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_VERBOSE);
+#define LOGI(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_INFO);
+#define LOGW(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_WARN);
+#define LOGE(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_ERROR);
 
 namespace org_opendatakit {
 
-// Limit heap to 8MB for now.  This is 4 times the maximum cursor window
-// size, as has been used by the original code in SQLiteDatabase for
-// a long time.
+    // ensure that a jlong is 64 bits (8 bytes) long
+    extern char __JLONG_IS_64__[1/((sizeof(jlong)==8)?1:0)];
+
+    static void stream_jlong(std::ostream& out, jlong& data) {
+  
+        union {
+            uint64_t v64;
+            uint32_t v32[2];
+        } v;
+        v.v64 = data;
+        if ( v.v32[0] != 0 ) {
+            out << v.v32[0] << ":";
+        }
+        out << v.v32[1];
+    }
+
+    // Limit heap to 8MB for now.  This is 4 times the maximum cursor window
+    // size, as has been used by the original code in SQLiteDatabase for
+    // a long time.
     const int SOFT_HEAP_LIMIT = 8 * 1024 * 1024;
 
-/* Busy timeout in milliseconds.
- * If another connection (possibly in another process) has the database locked for
- * longer than this amount of time then SQLite will generate a SQLITE_BUSY error.
- * The SQLITE_BUSY error is then raised as a SQLiteDatabaseLockedException.
- *
- * In ordinary usage, busy timeouts are quite rare.  Most databases only ever
- * have a single open connection at a time unless they are using WAL.  When using
- * WAL, a timeout could occur if one connection is busy performing an auto-checkpoint
- * operation.  The busy timeout needs to be long enough to tolerate slow I/O write
- * operations but not so long as to cause the application to hang indefinitely if
- * there is a problem acquiring a database lock.
- */
+    /* Busy timeout in milliseconds.
+     * If another connection (possibly in another process) has the database locked for
+     * longer than this amount of time then SQLite will generate a SQLITE_BUSY error.
+     * The SQLITE_BUSY error is then raised as a SQLiteDatabaseLockedException.
+     *
+     * In ordinary usage, busy timeouts are quite rare.  Most databases only ever
+     * have a single open connection at a time unless they are using WAL.  When using
+     * WAL, a timeout could occur if one connection is busy performing an auto-checkpoint
+     * operation.  The busy timeout needs to be long enough to tolerate slow I/O write
+     * operations but not so long as to cause the application to hang indefinitely if
+     * there is a problem acquiring a database lock.
+     */
     const int BUSY_TIMEOUT_MS = 2500;
 
-/*
-** Note: The following symbols must be in the same order as the corresponding
-** elements in the aMethod[] array in function executeIntoCursorWindow().
-*/
+    /*
+    ** Note: The following symbols must be in the same order as the corresponding
+    ** elements in the aMethod[] array in function executeIntoCursorWindow().
+    */
     enum CWMethodNames {
-        CW_CLEAR = 0,
+        CW_CLEAR         = 0,
         CW_SETNUMCOLUMNS = 1,
-        CW_ALLOCROW = 2,
-        CW_FREELASTROW = 3,
-        CW_PUTNULL = 4,
-        CW_PUTLONG = 5,
-        CW_PUTDOUBLE = 6,
-        CW_PUTSTRING = 7,
-        CW_PUTBLOB = 8
+        CW_ALLOCROW      = 2,
+        CW_FREELASTROW   = 3,
+        CW_PUTNULL       = 4,
+        CW_PUTLONG       = 5,
+        CW_PUTDOUBLE     = 6,
+        CW_PUTSTRING     = 7,
+        CW_PUTBLOB       = 8
     };
 
-/*
-** An instance of this structure represents a single CursorWindow java method.
-*/
+    /*
+    ** An instance of this structure represents a single CursorWindow java method.
+    */
     struct CWMethod {
-        jmethodID id;
-        /* Method id */
-        const char *zName;
-        /* Method name */
-        const char *zSig;               /* Method JNI signature */
+        jmethodID id;       /* Method id */
+        const char *zName;  /* Method name */
+        const char *zSig;   /* Method JNI signature */
     };
 
     const int CONNECTION_ACTIVE = 1;
@@ -108,11 +142,14 @@ namespace org_opendatakit {
         char * labelStr;
         sqlite3 *db;
 
-        SQLiteConnection(const char* szPath, sqlite3 *db, const char* szLabel) :
-                refCount(0), status(0), cancelled(0), db(db) {
+        SQLiteConnection(const char* szPath, sqlite3 *dbArg, const char* szLabel) {
             mutex = PTHREAD_MUTEX_INITIALIZER;
+            refCount = 0;
+            status = 0;
+            cancelled = 0;
             pathStr = strdup(szPath);
             labelStr = strdup(szLabel);
+            db = dbArg;
         }
 
         ~SQLiteConnection() {
@@ -123,7 +160,7 @@ namespace org_opendatakit {
 
     typedef struct SQLiteConnection SQLiteConnection;
 
-// Called each time a message is logged.
+    // Called each time a message is logged.
     void sqliteLogCallback(void *data, int iErrCode, const char *zMsg) {
         bool verboseLog = !!data;
         if (iErrCode == 0 || iErrCode == SQLITE_CONSTRAINT || iErrCode == SQLITE_SCHEMA) {
@@ -137,18 +174,18 @@ namespace org_opendatakit {
 
     static pthread_mutex_t g_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// this is initialized within the above mutex
+    // this is initialized within the above mutex
     static bool initialized = false;
 
-// protected by above mutex
+    // protected by above mutex
     static jlong commonIdCounter = 0L;
 
-// protected by above mutex
+    // protected by above mutex
     static std::map<jlong, SQLiteConnection*> activeConnections;
 
     static std::map<jlong, sqlite3_stmt*> activeStatements;
 
-// A smart pointer that deletes a JNI local reference when it goes out of scope.
+    // A smart pointer that deletes a JNI local reference when it goes out of scope.
     class ActiveConnection {
     public:
         ActiveConnection(jlong connectionPtr) :
@@ -168,8 +205,9 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection " 
-				<< mConnectionPtr << " from map -- should already have been removed!");
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection ";
+                 stream_jlong(strStream, mConnectionPtr);
+                 strStream << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
@@ -197,8 +235,9 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection "
-				<< mConnectionPtr << " from map -- should already have been removed!");
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection ";
+                stream_jlong(strStream, mConnectionPtr);
+                strStream << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
@@ -238,8 +277,9 @@ namespace org_opendatakit {
                     mConnection = found->second;
                     if (mConnection->status & CONNECTION_DELETE_PENDING) {
                         // don't let new requests get the connection if it is pending deletion
-                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection "
-					<< mConnectionPtr << " from map -- should already have been removed!");
+                        LOGE("ActiveConnection(delete): tid " << tid << " Fetch of delete-pending connection ";
+                stream_jlong(strStream, mConnectionPtr);
+                strStream << " from map -- should already have been removed!");
                         mConnection = nullptr;
                         return;
                     }
@@ -266,8 +306,9 @@ namespace org_opendatakit {
                         if (mConnection->status == CONNECTION_DELETE_PENDING) {
                             activeConnections.erase(mConnectionPtr);
                             shouldDelete = true;
-                            LOGE("~ActiveConnection: tid " << tid << " Removing delete-pending connection "
-					<< mConnectionPtr << " from map -- should already have been removed!");
+                            LOGE("~ActiveConnection: tid " << tid << " Removing delete-pending connection ";
+                    stream_jlong(strStream, mConnectionPtr);
+                    strStream << " from map -- should already have been removed!");
                         }
                     }
                 }
@@ -279,7 +320,8 @@ namespace org_opendatakit {
 
             if ( shouldDelete && mConnection != nullptr ) {
                 delete mConnection;
-                LOGW("~ActiveConnection: tid " << tid << " delete Connection " << mConnectionPtr);
+                LOGW("~ActiveConnection: tid " << tid << " delete Connection ";
+            stream_jlong(strStream, mConnectionPtr));
             }
         }
 
@@ -322,18 +364,19 @@ namespace org_opendatakit {
             activeStatements.erase(found);
         } else {
             pid_t tid = getpid();
-            LOGE("removeActiveStatement tid " << tid << " -- did not find statement " << statementId);
+            LOGE("removeActiveStatement tid " << tid << " -- did not find statement ";
+         stream_jlong(strStream, statementId));
         }
     }
 
-// Sets the global SQLite configuration.
-// This must be called before any other SQLite functions are called.
+    // Sets the global SQLite configuration.
+    // This must be called before any other SQLite functions are called.
     void sqliteInitialize(JNIEnv *env) {
         pid_t tid = getpid();
-        LOGE("sqliteInitialize tid " << tid << " -- entered");
+        LOGI("sqliteInitialize tid " << tid << " -- entered");
 
         MutexRegion guard(&g_init_mutex);
-        LOGW("sqliteInitialize tid " << tid << " -- gained mutex");
+        LOGI("sqliteInitialize tid " << tid << " -- gained mutex");
 
         if (!initialized) {
             LOGW("sqliteInitialize tid " << tid << " -- executing sqlite3_config statements");
@@ -341,7 +384,7 @@ namespace org_opendatakit {
             // Enable multi-threaded mode.  In this mode, SQLite is safe to use by multiple
             // threads as long as no two threads use the same database connection at the same
             // time (which we guarantee in the SQLite database wrappers).
-            sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
+            // sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
 
             // Redirect SQLite log messages to the Android log.
 #if 0
@@ -364,14 +407,14 @@ namespace org_opendatakit {
             // finally,
             initialized = true;
         }
-        LOGW("sqliteInitialize tid " << tid << " -- done!");
+        LOGI("sqliteInitialize tid " << tid << " -- done!");
     }
 
-/*
- * Returns a human-readable summary of an exception object.  The buffer will
- * be populated with the "binary" class name and, if present, the
- * exception message.
- */
+    /*
+     * Returns a human-readable summary of an exception object.  The buffer will
+     * be populated with the "binary" class name and, if present, the
+     * exception message.
+     */
     static bool getExceptionSummary(JNIEnv *env, jthrowable exception, std::string &result) {
 
         /* get the name of the exception's class */
@@ -450,7 +493,7 @@ namespace org_opendatakit {
         return 0;
     }
 
-/* map the error code to a Java exception class */
+    /* map the error code to a Java exception class */
     static const char * getExceptionClass(int errcode) {
         const char *exceptionClass;
         switch (errcode & 0xff) { /* mask off extended error code */
@@ -513,9 +556,9 @@ namespace org_opendatakit {
         return exceptionClass;
     }
 
-/* throw a SQLiteException with a message appropriate for the error in handle
-   concatenated with the given message
- */
+    /* throw a SQLiteException with a message appropriate for the error in handle
+       concatenated with the given message
+     */
     static void throw_sqlite3_exception_db(JNIEnv *env,
                                            jlong connectionPtr, SQLiteConnection * connection,
                                            const char *message) {
@@ -529,8 +572,9 @@ namespace org_opendatakit {
         int extendedErrCode = sqlite3_extended_errcode(connection->db);
         const char *extendedMsg = sqlite3_errmsg(connection->db);
 
-        stringStream << " tid " << tid << " connection " << connectionPtr
-                     << " '" << connection->labelStr << "' ";
+        stringStream << " tid " << tid << " connection ";
+    stream_jlong(stringStream, connectionPtr);
+        stringStream << " '" << connection->labelStr << "' ";
         if ( extendedMsg != nullptr ) {
             stringStream << extendedMsg << " ";
         }
@@ -568,9 +612,9 @@ namespace org_opendatakit {
         jniThrowException(env, getExceptionClass(extendedErrCode), stringStream.str().c_str());
     }
 
-/* throw a SQLiteException for a given error code
- * should only be used when the database connection is not available because the
- * error information will not be quite as rich */
+    /* throw a SQLiteException for a given error code
+     * should only be used when the database connection is not available because the
+     * error information will not be quite as rich */
     static void throw_sqlite3_open_exception_errcode(JNIEnv *env, const char* label,
                                                 int errcode, const char *message) {
         pid_t tid = getpid();
@@ -585,40 +629,38 @@ namespace org_opendatakit {
         jniThrowException(env, getExceptionClass(errcode), stringStream.str().c_str());
     }
 
-// Called each time a statement begins execution, when tracing is enabled.
+    // Called each time a statement begins execution, when tracing is enabled.
     static void sqliteTraceCallback(void *data, const char *sql) {
         SQLiteConnection *connection = static_cast<SQLiteConnection *>(data);
-	std::stringstream stringStream;
-	stringStream << connection->labelStr << ": \"" << sql << "\"";
-	ALOG(LOG_VERBOSE, SQLITE_TRACE_TAG, "%s", stringStream.str().c_str());
+
+        LOGIMPL(connection->labelStr << ": \"" << sql << "\"", SQLITE_TRACE_TAG, ANDROID_LOG_VERBOSE);
     }
 
-// Called each time a statement finishes execution, when profiling is enabled.
+    // Called each time a statement finishes execution, when profiling is enabled.
     static void sqliteProfileCallback(void *data, const char *sql, sqlite3_uint64 tm) {
         SQLiteConnection *connection = static_cast<SQLiteConnection *>(data);
-	std::stringstream stringStream;
-	double ms = 0.000001 * tm;
-	stringStream << connection->labelStr << ": \"" << sql << "\"took " << ms << " ms";
-        ALOG(LOG_VERBOSE, SQLITE_PROFILE_TAG, "%s", stringStream.str().c_str());
+        double ms = 0.000001 * tm;
+
+        LOGIMPL(connection->labelStr << ": \"" << sql << "\"took " << ms << " ms", SQLITE_PROFILE_TAG, ANDROID_LOG_VERBOSE);
     }
 
-// Called after each SQLite VM instruction when cancellation is enabled.
+    // Called after each SQLite VM instruction when cancellation is enabled.
     static int sqliteProgressHandlerCallback(void *data) {
         SQLiteConnection *connection = static_cast<SQLiteConnection *>(data);
         return connection->cancelled;
     }
 
-/*
-** This function is a collation sequence callback equivalent to the built-in
-** BINARY sequence.
-**
-** Stock Android uses a modified version of sqlite3.c that calls out to a module
-** named "sqlite3_android" to add extra built-in collations and functions to
-** all database handles. Specifically, collation sequence "LOCALIZED". For now,
-** this module does not include sqlite3_android (since it is difficult to build
-** with the NDK only). Instead, this function is registered as "LOCALIZED" for all
-** new database handles.
-*/
+    /*
+    ** This function is a collation sequence callback equivalent to the built-in
+    ** BINARY sequence.
+    **
+    ** Stock Android uses a modified version of sqlite3.c that calls out to a module
+    ** named "sqlite3_android" to add extra built-in collations and functions to
+    ** all database handles. Specifically, collation sequence "LOCALIZED". For now,
+    ** this module does not include sqlite3_android (since it is difficult to build
+    ** with the NDK only). Instead, this function is registered as "LOCALIZED" for all
+    ** new database handles.
+    */
     static int coll_localized(
             void *not_used,
             int nKey1, const void *pKey1,
@@ -698,7 +740,9 @@ namespace org_opendatakit {
             activeConnections[connectionId] = connection;
         }
 
-        LOGI("openConnection tid " << tid << " returns: connection " << connectionId << " '" << label << "'");
+        LOGI("openConnection tid " << tid << " returns: connection ";
+        stream_jlong(strStream, connectionId);
+        strStream << " '" << label << "'");
 
         return connectionId;
     }
@@ -722,7 +766,9 @@ namespace org_opendatakit {
             return;
         }
 
-        LOGI("closeConnection tid " << tid << " connection " << connectionPtr << " '" << connection.get()->labelStr << "'");
+        LOGI("closeConnection tid " << tid << " connection ";
+        stream_jlong(strStream, connectionPtr);
+        strStream << " '" << connection.get()->labelStr << "'");
     }
 
     jlong prepareStatement(JNIEnv *env, jlong connectionPtr, jstring sqlString) {
@@ -757,8 +803,6 @@ namespace org_opendatakit {
         }
 
         jlong statementPtr = registerActiveStatement(stmt);
-        LOGI("prepareStatement: returns statement " << statementPtr << " for connection "
-		<< connectionPtr << " '" << connection.get()->labelStr << "'");
         return statementPtr;
     }
 
@@ -786,8 +830,6 @@ namespace org_opendatakit {
         sqlite3_finalize(statement);
         // and forget about this statement...
         removeActiveStatement(statementPtr);
-        LOGI("finalizeStatement: remove statement " << statementPtr << " via connection "
-			<< connectionPtr << " '" << connection.get()->labelStr << "'");
     }
 
     jint bindParameterCount(JNIEnv *env, jlong connectionPtr, jlong statementPtr) {
@@ -818,7 +860,7 @@ namespace org_opendatakit {
             jniThrowException(env,
                               "org/sqlite/database/sqlite/SQLiteException",
                               "Connection already closed");
-            return AS_JBOOLEAN(true);
+            return JNI_TRUE;
         }
 
         sqlite3_stmt* statement = getActiveStatement(statementPtr);
@@ -826,10 +868,10 @@ namespace org_opendatakit {
             jniThrowException(env,
                               "org/sqlite/database/sqlite/SQLiteException",
                               "Statement already finalized");
-            return AS_JBOOLEAN(true);
+            return JNI_TRUE;
         }
 
-        return AS_JBOOLEAN(sqlite3_stmt_readonly(statement) != 0);
+        return sqlite3_stmt_readonly(statement) ? JNI_TRUE : JNI_FALSE;
     }
 
     jint getColumnCount(JNIEnv *env, jlong connectionPtr, jlong statementPtr) {
@@ -1188,12 +1230,12 @@ namespace org_opendatakit {
         return nullptr;
     }
 
-/*
-** Append the contents of the row that SQL statement statement currently points to
-** to the CursorWindow object passed as the second argument. The CursorWindow
-** currently contains iRow rows. Return true on success or false if an error
-** occurs.
-*/
+    /*
+    ** Append the contents of the row that SQL statement statement currently points to
+    ** to the CursorWindow object passed as the second argument. The CursorWindow
+    ** currently contains iRow rows. Return true on success or false if an error
+    ** occurs.
+    */
     static jboolean copyRowToWindow(
             JNIEnv *env,
             jobject win,
@@ -1250,8 +1292,7 @@ namespace org_opendatakit {
                             ScopedLocalRef<jbyteArray> val(env, env->NewByteArray(n));
                             env->SetByteArrayRegion(val.get(), 0, n, p);
                             bOk = env->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val.get(),
-                                                         iRow,
-                                                         i);
+                                                         iRow, i);
                         } else {
                             bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
                         }
@@ -1270,32 +1311,32 @@ namespace org_opendatakit {
         return bOk;
     }
 
-/*
-** This method has been rewritten for org.sqlite.database.*. The original
-** android implementation used the C++ interface to populate a CursorWindow
-** object. Since the NDK does not export this interface, we invoke the Java
-** interface using standard JNI methods to do the same thing.
-**
-** This function executes the SQLite statement object passed as the 4th
-** argument and copies one or more returned rows into the CursorWindow
-** object passed as the 5th argument. The set of rows copied into the
-** CursorWindow is always contiguous.
-**
-** The only row that *must* be copied into the CursorWindow is row
-** iRowRequired. Ideally, all rows from iRowStart through to the end
-** of the query are copied into the CursorWindow. If this is not possible
-** (CursorWindow objects have a finite capacity), some compromise position
-** is found (see comments embedded in the code below for details).
-**
-** The return value is a 64-bit integer calculated as follows:
-**
-**      (iStart << 32) | nRow
-**
-** where iStart is the index of the first row copied into the CursorWindow.
-** If the countAllRows argument is true, nRow is the total number of rows
-** returned by the query. Otherwise, nRow is one greater than the index of
-** the last row copied into the CursorWindow.
-*/
+    /*
+    ** This method has been rewritten for org.sqlite.database.*. The original
+    ** android implementation used the C++ interface to populate a CursorWindow
+    ** object. Since the NDK does not export this interface, we invoke the Java
+    ** interface using standard JNI methods to do the same thing.
+    **
+    ** This function executes the SQLite statement object passed as the 4th
+    ** argument and copies one or more returned rows into the CursorWindow
+    ** object passed as the 5th argument. The set of rows copied into the
+    ** CursorWindow is always contiguous.
+    **
+    ** The only row that *must* be copied into the CursorWindow is row
+    ** iRowRequired. Ideally, all rows from iRowStart through to the end
+    ** of the query are copied into the CursorWindow. If this is not possible
+    ** (CursorWindow objects have a finite capacity), some compromise position
+    ** is found (see comments embedded in the code below for details).
+    **
+    ** The return value is a 64-bit integer calculated as follows:
+    **
+    **      (iStart << 32) | nRow
+    **
+    ** where iStart is the index of the first row copied into the CursorWindow.
+    ** If the countAllRows argument is true, nRow is the total number of rows
+    ** returned by the query. Otherwise, nRow is one greater than the index of
+    ** the last row copied into the CursorWindow.
+    */
     jlong executeIntoCursorWindow(JNIEnv *env, jlong connectionPtr,
                                   jlong statementPtr,
                                   jobject win,

@@ -29,7 +29,7 @@ model {
             CFlags.add("-DHAVE_USLEEP=1")
             CFlags.add("-DHAVE_ISNAN")
             CFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            CFlags.add("-DSQLITE_THREADSAFE=2")
+            CFlags.add("-DSQLITE_THREADSAFE=1")
             CFlags.add("-DSQLITE_TEMP_STORE=3")
             CFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             CFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -37,10 +37,10 @@ model {
             // DO NOT DO THIS: CFlags.add("-DSQLITE_DEFAULT_AUTOVACUUM=1")
             CFlags.add("-DSQLITE_ENABLE_MEMORY_MANAGEMENT=1")
             CFlags.add("-DSQLITE_ENABLE_FTS3") // redundant
+            // this has no effect because we did not apply Android patch:
             CFlags.add("-DSQLITE_ENABLE_FTS3_BACKWARDS")
             CFlags.add("-DSQLITE_ENABLE_FTS4")
             CFlags.add("-DSQLITE_OMIT_BUILTIN_TEST")
-            CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
             // PRAGMA compile_options will return this list iff...
             // DO NOT DO THIS: CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
             CFlags.add("-DSQLITE_OMIT_LOAD_EXTENSION")
@@ -51,7 +51,10 @@ model {
             // device flags from Android 4.4 and 5.0 source tree
             // we would have to build and statically link in ICU to do this
             // DO NOT DO THIS: CFlags.add("-DSQLITE_ENABLE_ICU")
-            CFlags.add("-DUSE_PREAD64")
+
+            // Android Bionic uses off64_t argument, so we can't do this without a patch:
+            // CFlags.add("-DUSE_PREAD64")
+
             CFlags.add("-Dfdatasync=fdatasync")
             CFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
@@ -63,8 +66,6 @@ model {
             CFlags.add("-USQLITE_HAS_CODEC")
             // eliminate APIs that are deprecated -- we don't use any
             CFlags.add("-DSQLITE_OMIT_DEPRECATED")
-            // don't warn about unused parameters
-            CFlags.add("-Wno-unused-parameter")
             // enable pthread support -- sets various other flags
             CFlags.add("-pthread")
             // we want the normal locking mode
@@ -82,7 +83,7 @@ model {
             cppFlags.add("-DHAVE_USLEEP=1")
             cppFlags.add("-DHAVE_ISNAN")
             cppFlags.add("-DSQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=1048576")
-            cppFlags.add("-DSQLITE_THREADSAFE=2")
+            cppFlags.add("-DSQLITE_THREADSAFE=1")
             cppFlags.add("-DSQLITE_TEMP_STORE=3")
             cppFlags.add("-DSQLITE_POWERSAFE_OVERWRITE=1")
             cppFlags.add("-DSQLITE_DEFAULT_FILE_FORMAT=4")
@@ -90,10 +91,10 @@ model {
             // DO NOT DO THIS: CFlags.add("-DSQLITE_DEFAULT_AUTOVACUUM=1")
             cppFlags.add("-DSQLITE_ENABLE_MEMORY_MANAGEMENT=1")
             cppFlags.add("-DSQLITE_ENABLE_FTS3") // redundant
+            // this has no effect because we did not apply Android patch:
             cppFlags.add("-DSQLITE_ENABLE_FTS3_BACKWARDS")
             cppFlags.add("-DSQLITE_ENABLE_FTS4")
             cppFlags.add("-DSQLITE_OMIT_BUILTIN_TEST")
-            cppFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
             // PRAGMA compile_options will return this list iff...
             // DO NOT DO THIS: CFlags.add("-DSQLITE_OMIT_COMPILEOPTION_DIAGS")
             cppFlags.add("-DSQLITE_OMIT_LOAD_EXTENSION")
@@ -104,7 +105,10 @@ model {
             // device flags from Android 4.4 and 5.0 source tree
             // we would have to build and statically link in ICU to do this
             // DO NOT DO THIS: cppFlags.add("-DSQLITE_ENABLE_ICU")
-            cppFlags.add("-DUSE_PREAD64")
+
+            // Android Bionic uses off64_t argument, so we can't do this without a patch:
+            // cppFlags.add("-DUSE_PREAD64")
+
             cppFlags.add("-Dfdatasync=fdatasync")
             cppFlags.add("-DHAVE_MALLOC_USABLE_SIZE")
             // end from Android 4.4 and 5.0 source tree
@@ -116,14 +120,22 @@ model {
             cppFlags.add("-USQLITE_HAS_CODEC")
             // eliminate APIs that are deprecated -- we don't use any
             cppFlags.add("-DSQLITE_OMIT_DEPRECATED")
-            // not using any rtti
-            cppFlags.add("-fno-rtti")
+            // not using any rtti (default setting)
+            // uncomment this if we want them:
+            // cppFlags.add("-frtti")
             // enable pthread support -- sets various other flags
             cppFlags.add("-pthread")
             // we want the normal locking mode
             cppFlags.add("-DSQLITE_DEFAULT_LOCKING_MODE=0") // normal
-            // enable C++11 features for nullptr
-            cppFlags.add("-std=gnu++11")
+            // 
+            // 3 standards choices:
+            //   1) default -- uncomment -Dnullptr=0
+            //   2) c++11 standard -- uncomment -std=c++11
+            //   3) gnu++11 standard -- uncomment -std=gnu++11
+            //
+            cppFlags.add("-Dnullptr=0")
+            // cppFlags.add("-std=c++11")
+            // cppFlags.add("-std=gnu++11")
 
             // linker
             // from Android 4.4 and 5.0 source tree
@@ -142,6 +154,11 @@ model {
             // unknown content: ldFlags.add("-lutils")
             // linked a second time to resolve logging from above: ldFlags.add("-llog")
 
+            // if we want to minimize code: ldFlags.add("-Wl,--gc-sections")
+
+            // NOTE: if we change this, we need to load the
+            // appropriate library in the:
+            //    SQLiteConnection.java static {} block
             stl "stlport_shared"
         }
     
