@@ -64,7 +64,22 @@
 #define LOGW(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_WARN);
 #define LOGE(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_ERROR);
 
+static pthread_mutex_t g_init_mutex;
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return -1;
+    }
+    if ( pthread_mutex_init(&g_init_mutex, nullptr) != 0 ) {
+        return -1;
+    }
+    return JNI_VERSION_1_6;
+}
+
 namespace org_opendatakit {
+
+    static int jniThrowException(JNIEnv *env, const char *className, const char *msg);
 
     // ensure that a jlong is 64 bits (8 bytes) long
     extern char __JLONG_IS_64__[1/((sizeof(jlong)==8)?1:0)];
@@ -142,8 +157,12 @@ namespace org_opendatakit {
         char * labelStr;
         sqlite3 *db;
 
-        SQLiteConnection(const char* szPath, sqlite3 *dbArg, const char* szLabel) {
-            mutex = PTHREAD_MUTEX_INITIALIZER;
+        SQLiteConnection(JNIEnv* env, const char* szPath, sqlite3 *dbArg, const char* szLabel) {
+            if ( pthread_mutex_init(&mutex, nullptr) != 0 ) {
+                jniThrowException(env,
+		      "org/sqlite/database/sqlite/SQLiteException",
+		      "Unable to initialize connection");
+	    }
             refCount = 0;
             status = 0;
             cancelled = 0;
@@ -171,8 +190,6 @@ namespace org_opendatakit {
             LOGE("(" << iErrCode << ") " << zMsg);
         }
     }
-
-    static pthread_mutex_t g_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
     // this is initialized within the above mutex
     static bool initialized = false;
@@ -723,7 +740,7 @@ namespace org_opendatakit {
         }
 
         // Create wrapper object.
-        SQLiteConnection *connection = new SQLiteConnection(path, db, label);
+        SQLiteConnection *connection = new SQLiteConnection(env, path, db, label);
 
         // Enable tracing and profiling if requested.
         if (enableTrace) {
