@@ -182,20 +182,14 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
            Log.i("openDatabase", "testDbCreateNDeleteTableWTransactions: " + db
                .getDatabaseHandle());
             // TODO: why do we have a dbHandle and APPNAME?
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, columnList);
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
             // verify single table exists
             assertTrue(tableIds.size() == 1);
             assertTrue(tableIds.contains(DB_TABLE_ID));
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             // verify no tables left
             assertTrue(hasNoTablesInDb(serviceInterface, db));
@@ -256,7 +250,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             ColumnList colList = new ColumnList(columnList);
 
             OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -264,7 +257,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet1(), rowId.toString());
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
                 rowId.toString());
@@ -297,17 +289,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "testDbInsertSingleRowIntoTableWTwoTransactions: " + db
                .getDatabaseHandle());
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
             UUID rowId =  UUID.randomUUID();
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet1(), rowId.toString());
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
                 rowId.toString());
@@ -379,7 +367,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -390,8 +377,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                 contentValuesTestSet1(), rowId1.toString());
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet2(), rowId2.toString());
-
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
             assertEquals(DB_TABLE_ID, table.getTableId());
@@ -423,7 +408,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
            Log.i("openDatabase", "testDbInsertTwoRowsIntoTableWTwoTransactions: " + db
                .getDatabaseHandle());
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -432,12 +416,9 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet1(), rowId1.toString());
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet2(), rowId2.toString());
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID, "ASC");
             assertEquals(DB_TABLE_ID, table.getTableId());
@@ -589,7 +570,6 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
            Log.i("openDatabase", "testDbUpdateAllValuesWTransactions: " + db
                .getDatabaseHandle());
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
             OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -597,17 +577,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             serviceInterface.insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet1(), rowId.toString());
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null,null, null,null,null);
             assertEquals(DB_TABLE_ID, table.getTableId());
             assertEquals(1, table.getNumberOfRows());
 
             verifyRowTestSet1(table.getRowAtIndex(0));
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns,
                 contentValuesTestSet2(), rowId.toString());
 
@@ -617,12 +593,9 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
             assertEquals(1, table.getNumberOfRows());
 
             verifyRowTestSet2(table.getRowAtIndex(0));
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             // clean up
-            serviceInterface.beginTransaction(APPNAME, db);
             serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
-            serviceInterface.closeTransaction(APPNAME, db, true);
 
             // verify no tables left
             assertTrue(hasNoTablesInDb(serviceInterface, db));
@@ -762,63 +735,47 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                .getDatabaseHandle());
 
 
-           serviceInterface1.beginTransaction(APPNAME, db1);
-            serviceInterface1.createOrOpenDBTableWithColumns(APPNAME, db1, DB_TABLE_ID, colList);
-            serviceInterface1.closeTransaction(APPNAME, db1, true);
+           serviceInterface1.createOrOpenDBTableWithColumns(APPNAME, db1, DB_TABLE_ID, colList);
 
-            serviceInterface1.beginTransaction(APPNAME, db1);
-            serviceInterface1.insertRowWithId(APPNAME, db1, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
-            serviceInterface1.closeTransaction(APPNAME, db1, true);
+           serviceInterface1.insertRowWithId(APPNAME, db1, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
 
-            UserTable table;
+           UserTable table;
 
-            // use service connection 1 to verify db is in correct state
-            serviceInterface1.beginTransaction(APPNAME, db1);
-            table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
-            assertEquals(DB_TABLE_ID, table.getTableId());
-            assertEquals(1, table.getNumberOfRows());
-            verifyRowTestSet1(table.getRowAtIndex(0));
-            serviceInterface1.closeTransaction(APPNAME, db1, true);
+           // use service connection 1 to verify db is in correct state
+           table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
+           assertEquals(DB_TABLE_ID, table.getTableId());
+           assertEquals(1, table.getNumberOfRows());
+           verifyRowTestSet1(table.getRowAtIndex(0));
 
-            // use service connection 2 to verify db is in correct state
-            serviceInterface2.beginTransaction(APPNAME, db2);
-            table = serviceInterface2.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
-            assertEquals(DB_TABLE_ID, table.getTableId());
-            assertEquals(1, table.getNumberOfRows());
-            verifyRowTestSet1(table.getRowAtIndex(0));
-            serviceInterface2.closeTransaction(APPNAME, db2, true);
+           // use service connection 2 to verify db is in correct state
+           table = serviceInterface2.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
+           assertEquals(DB_TABLE_ID, table.getTableId());
+           assertEquals(1, table.getNumberOfRows());
+           verifyRowTestSet1(table.getRowAtIndex(0));
 
-            // use service connection 2 to update values
-            serviceInterface2.beginTransaction(APPNAME, db2);
-            serviceInterface2.updateRowWithId(APPNAME, db2, DB_TABLE_ID, columns,
-                contentValuesTestSet2(), rowId.toString());
-            serviceInterface2.closeTransaction(APPNAME, db2, true);
+           // use service connection 2 to update values
+           serviceInterface2.updateRowWithId(APPNAME, db2, DB_TABLE_ID, columns,
+               contentValuesTestSet2(), rowId.toString());
 
 
-            // use service connection 2 to verify db is in correct state
-            serviceInterface2.beginTransaction(APPNAME, db2);
-            table = serviceInterface1.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
-            assertEquals(DB_TABLE_ID, table.getTableId());
-            assertEquals(1, table.getNumberOfRows());
-            verifyRowTestSet2(table.getRowAtIndex(0));
-            serviceInterface2.closeTransaction(APPNAME, db2, true);
+           // use service connection 2 to verify db is in correct state
+           table = serviceInterface1.rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null,null, null,null,null);
+           assertEquals(DB_TABLE_ID, table.getTableId());
+           assertEquals(1, table.getNumberOfRows());
+           verifyRowTestSet2(table.getRowAtIndex(0));
 
-            // use service connection 1 to verify db is in correct state
-            serviceInterface1.beginTransaction(APPNAME, db1);
-            table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
-            assertEquals(DB_TABLE_ID, table.getTableId());
-            assertEquals(1, table.getNumberOfRows());
-            verifyRowTestSet2(table.getRowAtIndex(0));
-            serviceInterface1.closeTransaction(APPNAME, db1, true);
+           // use service connection 1 to verify db is in correct state
+           table = serviceInterface1.rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null,null, null,null,null);
+           assertEquals(DB_TABLE_ID, table.getTableId());
+           assertEquals(1, table.getNumberOfRows());
+           verifyRowTestSet2(table.getRowAtIndex(0));
 
-            // clean up
-            serviceInterface1.beginTransaction(APPNAME, db1);
-            serviceInterface1.deleteDBTableAndAllData(APPNAME, db1, DB_TABLE_ID);
-            serviceInterface1.closeTransaction(APPNAME, db1, true);
+           // clean up
+           serviceInterface1.deleteDBTableAndAllData(APPNAME, db1, DB_TABLE_ID);
 
-            // verify no tables left
-            assertTrue(hasNoTablesInDb(serviceInterface1, db1));
-            serviceInterface1.closeDatabase(APPNAME, db1);
+           // verify no tables left
+           assertTrue(hasNoTablesInDb(serviceInterface1, db1));
+           serviceInterface1.closeDatabase(APPNAME, db1);
 
         } catch (RemoteException e) {
             e.printStackTrace();

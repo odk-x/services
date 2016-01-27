@@ -1690,6 +1690,12 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       }
 
+       // TODO: I am uncertain of this logic. I think this will find and ensure
+       // TODO: that all local content files are pushed to the server for a given row
+       // TODO: but I don't know how that interacts with the rowETag. If these were
+       // TODO: attachments from an earlier rowETag, do they get correctly associated
+       // TODO: and visible at the other rowETag level?
+       // TODO: this needs testing.
       // Next, account for any files that exist locally but aren't referenced on the server
       for (String rowPathUri : localRowPathUris) {
 

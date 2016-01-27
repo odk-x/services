@@ -379,23 +379,14 @@ public class ProcessAppAndTableLevelChanges {
             TableDefinitionResource definitionResource = sc.getSynchronizer().getTableDefinition(table
                 .getDefinitionUri());
 
-            boolean successful = false;
             try {
               db = sc.getDatabase();
-              sc.getDatabaseService().beginTransaction(sc.getAppName(), db);
-              orderedDefns = addTableFromDefinitionResource(db, definitionResource,
-                  doesNotExistLocally);
+              orderedDefns = addTableFromDefinitionResource(db, definitionResource, doesNotExistLocally);
               entry = sc.getDatabaseService().getTableDefinitionEntry(sc.getAppName(), db, serverTableId);
-              successful = true;
             } finally {
               if (db != null) {
-                try {
-                  sc.getDatabaseService()
-                      .closeTransaction(sc.getAppName(), sc.getDatabase(), successful);
-                } finally {
-                  sc.releaseDatabase(db);
-                  db = null;
-                }
+                sc.releaseDatabase(db);
+                db = null;
               }
             }
           } catch (ClientWebException e) {
@@ -630,14 +621,11 @@ public class ProcessAppAndTableLevelChanges {
 
         // record that we have pulled it
         tableResult.setPulledServerSchema(true);
-        boolean successful = false;
         try {
           db = sc.getDatabase();
-          sc.getDatabaseService().beginTransaction(sc.getAppName(), db);
           // apply changes
           // this also updates the data rows so they will sync
           orderedDefns = addTableFromDefinitionResource(db, definitionResource, false);
-          successful = true;
           log.w(TAG,
               "database schema has changed. Structural modifications, if any, were successful.");
         } catch (SchemaMismatchException e) {
@@ -653,13 +641,8 @@ public class ProcessAppAndTableLevelChanges {
           return null;
         } finally {
           if (db != null) {
-            try {
-              sc.getDatabaseService()
-                  .closeTransaction(sc.getAppName(), sc.getDatabase(), successful);
-            } finally {
-              sc.releaseDatabase(db);
-              db = null;
-            }
+            sc.releaseDatabase(db);
+            db = null;
           }
         }
       }
@@ -782,7 +765,9 @@ public class ProcessAppAndTableLevelChanges {
 
   /**
    * Update the database to reflect the new structure.
-   * Expected to be called with a database open for transactions.
+   *
+   * This multi-step interaction can safely be called outside of a transaction.
+   * The atomic steps combine to be idempotent.
    * <p>
    * This should be called when downloading a table from the server, which is
    * why the syncTag is separate.
@@ -798,13 +783,22 @@ public class ProcessAppAndTableLevelChanges {
   private OrderedColumns addTableFromDefinitionResource(OdkDbHandle db,
       TableDefinitionResource definitionResource, boolean doesNotExistLocally)
       throws SchemaMismatchException, RemoteException {
+
+    // old URI prefix to instance content if schemaETag has changed or has been reset
+    String oldTableInstanceFilesUriString = null;
+
     if (doesNotExistLocally) {
       OrderedColumns orderedDefns;
       orderedDefns = sc.getDatabaseService().createOrOpenDBTableWithColumns(sc.getAppName(), db,
           definitionResource.getTableId(), new ColumnList(definitionResource.getColumns()));
-      sc.getDatabaseService().updateDBTableETags(sc.getAppName(), db, definitionResource.getTableId(),
-          definitionResource.getSchemaETag(), null);
+
+       // and update the schema, removing the old URI string
+      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(),
+           db, definitionResource.getTableId(), definitionResource.getSchemaETag(),
+           oldTableInstanceFilesUriString);
+
       return orderedDefns;
+
     } else {
       OrderedColumns localColumnDefns = sc.getDatabaseService().getUserDefinedColumns(
           sc.getAppName(), db, definitionResource.getTableId());
@@ -827,11 +821,11 @@ public class ProcessAppAndTableLevelChanges {
           definitionResource.getTableId());
 
       String schemaETag = te.getSchemaETag();
-      if (schemaETag == null || !schemaETag.equals(definitionResource.getSchemaETag())) {
+      if (schemaETag == null || definitionResource.getSchemaETag() == null ||
+          !schemaETag.equals(definitionResource.getSchemaETag())) {
         // server has changed its schema
 
         // construct old URI prefix to instance content
-        String oldTableInstanceFilesUriString = null;
         if ( schemaETag != null) {
           URI oldTableInstanceFilesUri = sc.getSynchronizer().constructTableInstanceFileUri(
               definitionResource.getTableId(),
@@ -844,6 +838,7 @@ public class ProcessAppAndTableLevelChanges {
             db, definitionResource.getTableId(), definitionResource.getSchemaETag(),
             oldTableInstanceFilesUriString);
       }
+
       return localColumnDefns;
     }
   }
