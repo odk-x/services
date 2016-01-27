@@ -35,23 +35,6 @@ interface OdkDbInterface {
    * @return dbHandleName
    */
   OdkDbHandle openDatabase(in String appName);
-  
-  /**
-   * Begin a transaction.
-   *
-   * @param appName
-   * @param dbHandleName
-   */
-  void beginTransaction(in String appName, in OdkDbHandle dbHandleName);
-  
-  /**
-   * Commit or roll back an outstanding transaction
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param successful - true if we should commit, false if we should rollback.
-   */
-   void closeTransaction(in String appName, in OdkDbHandle dbHandleName, in boolean successful);
 
   /**
    * Release the databaseHandle. Will roll back any outstanding transactions
