@@ -61,7 +61,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
          SQLiteConnection.ENABLE_WRITE_AHEAD_LOGGING |
              SQLiteConnection.OPEN_READWRITE | SQLiteConnection.CREATE_IF_NECESSARY |
-             SQLiteConnection.NO_LOCALIZED_COLLATORS );
+             SQLiteConnection.NO_LOCALIZED_COLLATORS, sessionQualifier );
 
      boolean success = false;
      SQLiteConnection db = null;

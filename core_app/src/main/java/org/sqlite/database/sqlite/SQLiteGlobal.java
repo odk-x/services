@@ -43,19 +43,7 @@ public final class SQLiteGlobal {
     private static final Object sLock = new Object();
     private static int sDefaultPageSize;
 
-    private static native int nativeReleaseMemory();
-
     private SQLiteGlobal() {
-    }
-
-    /**
-     * Attempts to release memory by pruning the SQLite page cache and other
-     * internal data structures.
-     *
-     * @return The number of bytes that were freed.
-     */
-    public static int releaseMemory() {
-        return nativeReleaseMemory();
     }
 
     /**

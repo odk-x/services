@@ -35,9 +35,6 @@ android {
             minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
-        snapshot {
-            // Build type for snapshots
-        }
         debug {
             testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
@@ -73,11 +70,8 @@ dependencies {
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
     } else {
-        releaseCompile(group: groupId, name: libraryArtifactName,
-                version: libraryRelease, ext: 'aar')
-        snapshotCompile(group: groupId, name: libraryArtifactName,
-                version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
-        debugCompile(group: groupId, name: libraryArtifactName,
+
+        compile(group: groupId, name: libraryArtifactName,
                 version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
     }
 

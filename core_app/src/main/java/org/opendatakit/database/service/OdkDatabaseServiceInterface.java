@@ -84,37 +84,6 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public void beginTransaction(String appName, OdkDbHandle dbHandleName)
-      throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName, odkDatabaseService.getBaseContext());
-      db.beginTransactionNonExclusive();
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName)
-          .e("beginTransaction", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-  }
-
   @Override public void closeDatabase(String appName, OdkDbHandle dbHandleName)
       throws RemoteException {
 
@@ -168,44 +137,6 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
            //    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
            // }
         }
-      }
-    }
-  }
-
-  @Override public void closeTransaction(String appName, OdkDbHandle dbHandleName,
-      boolean successful) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName, odkDatabaseService.getBaseContext());
-      if (db.inTransaction()) {
-        if (successful) {
-          db.setTransactionSuccessful();
-        }
-        db.endTransaction();
-      } else {
-        throw new RemoteException("closeTransaction: no outstanding transaction!");
-      }
-    } catch (Exception e) {
-      String msg = e.getLocalizedMessage();
-      if (msg == null)
-        msg = e.getMessage();
-      if (msg == null)
-        msg = e.toString();
-      msg = "Exception: " + msg;
-      WebLogger.getLogger(appName)
-          .e("closeTransaction", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new RemoteException(msg);
-    } finally {
-      if (db != null) {
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
       }
     }
   }

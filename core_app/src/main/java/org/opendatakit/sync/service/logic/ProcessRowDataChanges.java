@@ -451,7 +451,6 @@ public class ProcessRowDataChanges {
 
     {
       OdkDbHandle db = null;
-      boolean inTransaction = false;
       boolean successful = false;
       try {
         db = sc.getDatabase();
@@ -460,10 +459,6 @@ public class ProcessRowDataChanges {
         // if we cannot sync file attachments in those rows.
         pushLocalAttachmentsBeforeDeleteRowsInDb(db, tableResource, rowsToDeleteLocally,
             fileAttachmentColumns, attachmentState, tableResult);
-
-        // and now do a big transaction to update the local database.
-        sc.getDatabaseService().beginTransaction(sc.getAppName(), db);
-        inTransaction = true;
 
         deleteRowsInDb(db, tableResource, rowsToDeleteLocally, fileAttachmentColumns,
             attachmentState, tableResult);
@@ -488,15 +483,8 @@ public class ProcessRowDataChanges {
         successful = true;
       } finally {
         if (db != null) {
-          try {
-            if (inTransaction) {
-              sc.getDatabaseService()
-                  .closeTransaction(sc.getAppName(), sc.getDatabase(), successful);
-            }
-          } finally {
-            sc.releaseDatabase(db);
-            db = null;
-          }
+          sc.releaseDatabase(db);
+          db = null;
         }
       }
     }
@@ -767,7 +755,7 @@ public class ProcessRowDataChanges {
               Row localRow = localDataTable.getRowAtIndex(i);
               String stateStr = localRow
                   .getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
-              SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
+              SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
               String rowId = localRow.getRowId();
 
@@ -839,8 +827,7 @@ public class ProcessRowDataChanges {
 
                 // NOTE: specialCases should probably be deleted?
                 // This is the case if the user doesn't have permissions...
-                // TODO: figure out whether these are benign or need
-                // reporting....
+                // TODO: figure out whether these are benign or need reporting....
                 if (!specialCases.isEmpty()) {
                   throw new IllegalStateException(
                       "update request rejected by the server -- do you have table synchronize privileges?");
@@ -1027,6 +1014,25 @@ public class ProcessRowDataChanges {
     }
   }
 
+  /**
+   * We pushed changes up to the server and now need to update the local rowETags to match
+   * the rowETags assigned to those changes by the server.
+   *
+   * @param te            local table entry (dataETag is suspect)
+   * @param resource        server schemaETag, dataETag etc. before(at) changes were pushed
+   * @param tableResult          for progress UI
+   * @param orderedColumns            all user-defined columns in the table
+   * @param fileAttachmentColumns     columns in the table that hold rowPath values
+   * @param hasAttachments            boolean indicating whether table has any rowPath columns
+   * @param rowsToPushFileAttachments the rows-pending-attachments list
+   * @param countSoFar           for progress UI
+   * @param totalOutcomesSize    for progress UI
+   * @param segmentAlter  changes that were pushed to server
+   * @param outcomes      result of pushing those changes to server
+   * @param specialCases
+   * @return
+   * @throws RemoteException
+   */
   private int processRowOutcomes(TableDefinitionEntry te, TableResource resource,
       TableResult tableResult, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns, boolean hasAttachments,
@@ -1046,11 +1052,10 @@ public class ProcessRowDataChanges {
     //
 
     OdkDbHandle db = null;
-    boolean successful = false;
     try {
       db = sc.getDatabase();
-      sc.getDatabaseService().beginTransaction(sc.getAppName(), db);
 
+      boolean badState = false;
       for (int i = 0; i < segmentAlter.size(); ++i) {
         RowOutcome r = outcomes.get(i);
         SyncRow syncRow = segmentAlter.get(i);
@@ -1086,8 +1091,7 @@ public class ProcessRowDataChanges {
         } else if (r.getOutcome() == OutcomeType.FAILED) {
           if (r.getRowId() == null || !r.isDeleted()) {
             // should never occur!!!
-            throw new IllegalStateException(
-                "Unexpected null rowId or OutcomeType.FAILED when not deleting row");
+            badState = true;
           } else {
             // special case of a delete where server has no record of the row.
             // server should add row and mark it as deleted.
@@ -1136,21 +1140,19 @@ public class ProcessRowDataChanges {
             * perRowIncrement, false);
       }
 
+      if (badState) {
+        // TODO: we could update all the other row state then throw this...
+        throw new IllegalStateException(
+            "Unexpected null rowId or OutcomeType.FAILED when not deleting row");
+      }
+
       // process the conflict rows, if any
       conflictRowsInDb(db, resource, orderedColumns, rowsToMoveToInConflictLocally,
           rowsToPushFileAttachments, hasAttachments, tableResult);
-
-      // and allow this to happen
-      successful = true;
     } finally {
       if (db != null) {
-        try {
-          sc.getDatabaseService()
-              .closeTransaction(sc.getAppName(), sc.getDatabase(), successful);
-        } finally {
-          sc.releaseDatabase(db);
-          db = null;
-        }
+        sc.releaseDatabase(db);
+        db = null;
       }
     }
 

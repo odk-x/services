@@ -20,19 +20,18 @@
 
 #define LOG_TAG "SQLiteConnection"
 
-#include <assert.h>
+#include <cstddef>
 
 #include "org_sqlite_database_sqlite_SQLiteConnection.h"
 #include "org_sqlite_database_sqlite_SQLiteCommon.h"
 
-
-using org_opendatakit::ScopedLocalRef;
-using org_opendatakit::SQLiteConnection;
 using org_opendatakit::sqliteInitialize;
 using org_opendatakit::openConnection;
 using org_opendatakit::closeConnection;
 using org_opendatakit::prepareStatement;
 using org_opendatakit::finalizeStatement;
+using org_opendatakit::bindParameterCount;
+using org_opendatakit::statementIsReadOnly;
 using org_opendatakit::getColumnCount;
 using org_opendatakit::getColumnName;
 using org_opendatakit::bindNull;
@@ -50,7 +49,6 @@ using org_opendatakit::executeIntoCursorWindow;
 using org_opendatakit::getDbLookasideUsed;
 using org_opendatakit::cancel;
 using org_opendatakit::resetCancel;
-using org_opendatakit::hasCodec;
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
@@ -72,18 +70,14 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeO
         jstring labelStr, jboolean enableTrace, jboolean enableProfile) {
 
     const char* pathChars = env->GetStringUTFChars(pathStr, nullptr);
-    std::string path(pathChars);
-    env->ReleaseStringUTFChars(pathStr, pathChars);
-
     const char* labelChars = env->GetStringUTFChars(labelStr, nullptr);
-    std::string label(labelChars);
+
+    jlong connection = openConnection(env, pathChars, openFlags, labelChars, enableTrace, enableProfile);
+
+    env->ReleaseStringUTFChars(pathStr, pathChars);
     env->ReleaseStringUTFChars(labelStr, labelChars);
 
-    SQLiteConnection* connection = nullptr;
-    connection = openConnection(env, path, openFlags, label, enableTrace, enableProfile);
-
-    ALOGV("Opened connection %p with label '%s'", db, label.c_str());
-    return reinterpret_cast<jlong>(connection);
+    return connection;
 }
 
 /*
@@ -93,40 +87,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeO
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeClose
   (JNIEnv* env, jclass clazz, jlong connectionPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    closeConnection(env, connection);
-}
 
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeRegisterCustomFunction
- * Signature: (JLorg/sqlite/database/sqlite/SQLiteCustomFunction;)V
- */
-JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRegisterCustomFunction
-  (JNIEnv* env, jclass clazz, jlong connectionPtr, jobject functionObj) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-
-    ScopedLocalRef<jclass> customFunctionClass(env, env->FindClass("org/sqlite/database/sqlite/SQLiteCustomFunction"));
-    if (customFunctionClass.get() == nullptr) {
-        // unable to locate the class -- silently exit
-        ALOGE("Unable to find class org/sqlite/database/sqlite/SQLiteCustomFunction");
-        return;
-    }
-
-    jfieldID f_name;
-    jfieldID f_numArgs;
-    GET_FIELD_ID(f_name, customFunctionClass.get(), "name", "Ljava/lang/String;");
-    GET_FIELD_ID(f_numArgs, customFunctionClass.get(), "numArgs", "I");
-
-    jstring nameStr = jstring(env->GetObjectField(functionObj, f_name));
-    jint numArgs = env->GetIntField(functionObj, f_numArgs);
-
-    const char* name = env->GetStringUTFChars(nameStr, nullptr);
-
-    registerCustomFunction(env, connection, name, numArgs, functionObj);
-
-    // and release the lock on name (nameStr), allowing it to reloc.
-    env->ReleaseStringUTFChars(nameStr, name);
+    closeConnection(env, connectionPtr);
 }
 
 /*
@@ -136,11 +98,9 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRe
  */
 JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativePrepareStatement
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jstring sqlString) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
 
-    sqlite3_stmt* statement = prepareStatement(env, connection, sqlString);
-
-    return reinterpret_cast<jlong>(statement);
+    jlong statementId = prepareStatement(env, connectionPtr, sqlString);
+    return statementId;
 }
 
 /*
@@ -150,10 +110,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeP
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeFinalizeStatement
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    finalizeStatement(env, connection, statement);
+    finalizeStatement(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -163,10 +121,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeFi
  */
 JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetParameterCount
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return bindParameterCount(env, connection, statement);
+    return bindParameterCount(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -176,10 +132,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGe
  */
 JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeIsReadOnly
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return statementIsReadOnly(env, connection, statement);
+    return statementIsReadOnly(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -189,10 +143,8 @@ JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nati
  */
 JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnCount
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return getColumnCount(env, connection, statement);
+    return getColumnCount(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -203,10 +155,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGe
 JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnName
   (JNIEnv* env, jclass clazz, jlong connectionPtr,
         jlong statementPtr, jint index) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return getColumnName(env, connection, statement, index);
+    return getColumnName(env, connectionPtr, statementPtr, index);
 }
 
 /*
@@ -216,10 +166,8 @@ JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativ
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindNull
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    bindNull(env, connection, statement, index);
+    bindNull(env, connectionPtr, statementPtr, index);
 }
 
 /*
@@ -229,10 +177,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindLong
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index, jlong value) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    bindLong(env, connection, statement, index, value);
+    bindLong(env, connectionPtr, statementPtr, index, value);
 }
 
 /*
@@ -242,10 +188,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindDouble
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index, jdouble value) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    bindDouble(env, connection, statement, index, value);
+    bindDouble(env, connectionPtr, statementPtr, index, value);
 }
 
 /*
@@ -255,13 +199,11 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindString
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index, jstring valueString) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
     jsize valueLength = env->GetStringLength(valueString);
     const jchar* value = env->GetStringChars(valueString, nullptr);
 
-    bindString(env, connection, statement, index, value, valueLength);
+    bindString(env, connectionPtr, statementPtr, index, value, valueLength);
 
     env->ReleaseStringChars(valueString, value);
 }
@@ -274,13 +216,11 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindBlob
   (JNIEnv* env, jclass clazz, jlong connectionPtr,
         jlong statementPtr, jint index, jbyteArray valueArray) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
     jsize valueLength = env->GetArrayLength(valueArray);
     jbyte* value = env->GetByteArrayElements(valueArray, nullptr);
 
-    bindBlob(env, connection, statement, index, value, valueLength);
+    bindBlob(env, connectionPtr, statementPtr, index, value, valueLength);
 
     env->ReleaseByteArrayElements(valueArray, value, JNI_ABORT);
 }
@@ -292,10 +232,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeResetStatementAndClearBindings
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    resetAndClearBindings(env, connection, statement);
+    resetAndClearBindings(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -305,10 +243,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeRe
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecute
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    executeNonQuery(env, connection, statement);
+    executeNonQuery(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -318,10 +254,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeEx
  */
 JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForLong
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return executeForLong(env, connection, statement);
+    return executeForLong(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -331,10 +265,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
  */
 JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForString
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return executeForString(env, connection, statement);
+    return executeForString(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -344,10 +276,8 @@ JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativ
  */
 JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForChangedRowCount
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return executeForChangedRowCount(env, connection, statement);
+    return executeForChangedRowCount(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -357,10 +287,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeEx
  */
 JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForLastInsertedRowId
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    sqlite3_stmt* statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-    return executeForLastInsertedRowId(env, connection, statement);
+    return executeForLastInsertedRowId(env, connectionPtr, statementPtr);
 }
 
 /*
@@ -379,10 +307,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
   jint iRowRequired,              /* Required row */
   jboolean countAllRows
 ) {
-  SQLiteConnection *connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-  sqlite3_stmt *statement = reinterpret_cast<sqlite3_stmt*>(statementPtr);
 
-  jlong lResult = executeIntoCursorWindow(env, connection, statement,
+  jlong lResult = executeIntoCursorWindow(env, connectionPtr, statementPtr,
                           win, startPos, iRowRequired, countAllRows);
   return lResult;
 }
@@ -394,9 +320,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
  */
 JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetDbLookaside
   (JNIEnv* env, jclass clazz, jlong connectionPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
 
-    jint cur = getDbLookasideUsed(env, connection);
+    jint cur = getDbLookasideUsed(env, connectionPtr);
     return cur;
 }
 
@@ -407,8 +332,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGe
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCancel
   (JNIEnv* env, jclass clazz, jlong connectionPtr) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    cancel(env, connection);
+
+    cancel(env, connectionPtr);
 }
 
 /*
@@ -418,16 +343,6 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCa
  */
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeResetCancel
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jboolean cancelable) {
-    SQLiteConnection* connection = reinterpret_cast<SQLiteConnection*>(connectionPtr);
-    resetCancel(env, connection, cancelable);
-}
 
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeHasCodec
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeHasCodec
-(JNIEnv* env, jobject clazz){
-    return hasCodec(env);
+    resetCancel(env, connectionPtr, cancelable);
 }
