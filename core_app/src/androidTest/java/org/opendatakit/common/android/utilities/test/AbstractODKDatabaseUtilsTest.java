@@ -22,7 +22,7 @@ import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.*;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.*;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -4609,8 +4609,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         OdkConnectionInterface dbToUse = db;
         if (useNewDB) {
           OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
-              .getSimpleName() + testVal + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
-          dbToUse = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
+              .getSimpleName() + testVal + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
+          dbToUse = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey, getContext());
         }
 
         if (multipleWrites) {
@@ -4848,9 +4848,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String uniqueUUID = ODKDataUtils.genUUID();
     OdkDbHandle prevUniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
-        .getSimpleName() + uniqueUUID + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        .getSimpleName() + uniqueUUID + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface prevDb = OdkConnectionFactorySingleton
-        .getOdkConnectionFactoryInterface().getConnection(getAppName(), prevUniqueKey);
+        .getOdkConnectionFactoryInterface().getConnection(getAppName(), prevUniqueKey, getContext());
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(prevDb, getAppName(), tableId, columns);
@@ -4989,10 +4989,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Query with new connection to see if this gets all recent operations
     OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
-        .getSimpleName() + testVal + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        .getSimpleName() + testVal + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface dbForQuery = OdkConnectionFactorySingleton
         .getOdkConnectionFactoryInterface().getConnection
-        (getAppName(), uniqueKey);
+        (getAppName(), uniqueKey, getContext());
 
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2);
 
@@ -5281,10 +5281,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Query with new connection to see if this gets all recent operations
     String uuid = ODKDataUtils.genUUID();
     OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
-        .getSimpleName() + uuid + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        .getSimpleName() + uuid + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface dbForQuery = OdkConnectionFactorySingleton
         .getOdkConnectionFactoryInterface().getConnection
-            (getAppName(), uniqueKey);
+            (getAppName(), uniqueKey, getContext());
 
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
@@ -5430,15 +5430,15 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Create two different db connections
     String uuid1 = ODKDataUtils.genUUID();
     OdkDbHandle uniqueKey1 = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
-        .getSimpleName() + uuid1 + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        .getSimpleName() + uuid1 + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface db1 = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-        .getConnection(getAppName(), uniqueKey1);
+        .getConnection(getAppName(), uniqueKey1, getContext());
 
     String uuid2 = ODKDataUtils.genUUID();
     OdkDbHandle uniqueKey2 = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() +
-      uuid2 + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+      uuid2 + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface db2 = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-        .getConnection(getAppName(), uniqueKey2);
+        .getConnection(getAppName(), uniqueKey2, getContext());
 
     // Create a table on db1
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()

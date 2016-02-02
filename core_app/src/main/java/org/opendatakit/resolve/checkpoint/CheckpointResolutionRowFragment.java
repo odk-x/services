@@ -107,7 +107,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
                 mRowId);
@@ -184,7 +184,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             // create a new checkpoint with the revisions
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
@@ -261,7 +261,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
             getActivity().setResult(Activity.RESULT_OK);
@@ -331,7 +331,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
             getActivity().setResult(Activity.RESULT_OK);
@@ -392,7 +392,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
       ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
       getActivity().setResult(Activity.RESULT_OK);

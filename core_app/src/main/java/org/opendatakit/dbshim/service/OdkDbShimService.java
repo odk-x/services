@@ -24,14 +24,13 @@ import android.os.IBinder.DeathRecipient;
 import android.os.RemoteException;
 import android.util.Log;
 
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.core.application.Core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -234,7 +233,7 @@ public class OdkDbShimService extends Service {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration);
+          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration, this.getBaseContext());
 
       if (db != null) {
         logger.i(LOGTAG, "rollback gen: " + thisGeneration + " transaction: "
@@ -304,7 +303,7 @@ public class OdkDbShimService extends Service {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration);
+          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration, this.getBaseContext());
 
       if (db != null) {
         logger.i(LOGTAG, "commit gen: " + thisGeneration + " transaction: " + thisTransactionGeneration);
@@ -419,7 +418,7 @@ public class OdkDbShimService extends Service {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration);
+          .getSessionGroupInstanceConnection(appName, thisGeneration, thisTransactionGeneration, this.getBaseContext());
 
       if ( !db.inTransaction() ) {
         db.beginTransactionNonExclusive();
@@ -533,7 +532,7 @@ public class OdkDbShimService extends Service {
   public void onCreate() {
     super.onCreate();
 
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
 
     servInterface = new OdkDbShimServiceInterface(this);
 

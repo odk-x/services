@@ -44,7 +44,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, this.mContext);
 
       for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
         this.publishProgress(
@@ -91,7 +91,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
           // +1 referenceCount if db is returned (non-null)
           db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(mAppName, dbHandleName);
+              .getConnection(mAppName, dbHandleName, this.mContext);
         }
       }
       this.publishProgress(

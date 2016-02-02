@@ -77,7 +77,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, getContext());
 
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
           mAppName, mTableId);

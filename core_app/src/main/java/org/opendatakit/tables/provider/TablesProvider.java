@@ -23,7 +23,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -78,7 +78,7 @@ public class TablesProvider extends ContentProvider {
   public boolean onCreate() {
 
     // IMPORTANT NOTE: the Application object is not yet created!
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -145,7 +145,7 @@ public class TablesProvider extends ContentProvider {
     Cursor c = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
           null, null, sortOrder, null);
 
@@ -246,7 +246,7 @@ public class TablesProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
       HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;

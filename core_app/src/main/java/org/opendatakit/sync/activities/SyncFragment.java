@@ -35,13 +35,10 @@ import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
-import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.service.AppSynchronizer;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
-import org.sqlite.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -358,7 +355,7 @@ public class SyncFragment extends Fragment {
         try {
           // +1 referenceCount if db is returned (non-null)
           db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(getAppName(), dbHandleName);
+              .getConnection(getAppName(), dbHandleName, getActivity().getBaseContext());
 
           SyncETagsUtils utils = new SyncETagsUtils();
           utils.deleteAllSyncETagsExceptForServer(db,

@@ -44,7 +44,6 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
-import org.opendatakit.core.application.Core;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -252,7 +251,7 @@ public class SubmissionProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
 
       boolean success = false;
       try {

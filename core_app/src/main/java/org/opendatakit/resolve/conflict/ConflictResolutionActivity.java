@@ -26,7 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.R;
@@ -58,7 +58,7 @@ public class ConflictResolutionActivity extends Activity implements IAppAwareAct
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
   }
 
   @Override

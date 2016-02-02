@@ -51,22 +51,18 @@
         android:theme="@style/Opendatakit" >
         <service android:name="org.opendatakit.webkitserver.service.OdkWebkitServerService" 
             android:exported="true"
-            android:process=":webkitservice"
             android:permission="org.opendatakit.webkitserver.RUN_WEBSERVER" >
         </service>
         <service android:name="org.opendatakit.database.service.OdkDatabaseService" 
             android:exported="true"
-            android:process=":databaseservice"
             android:permission="org.opendatakit.database.RUN_DATABASE" >
         </service>
         <service android:name="org.opendatakit.dbshim.service.OdkDbShimService" 
             android:exported="true"
-            android:process=":dbshim"
             android:permission="org.opendatakit.dbshim.RUN_DBSHIM" >
         </service>
         <service android:name="org.opendatakit.sync.service.OdkSyncService"
              android:exported="true"
-             android:process=":sync"
              android:permission="org.opendatakit.sync.RUN_SYNC" >
         </service>
         <provider

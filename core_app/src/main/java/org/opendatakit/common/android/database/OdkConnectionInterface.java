@@ -3,7 +3,7 @@ package org.opendatakit.common.android.database;
 import android.content.ContentValues;
 import android.database.Cursor;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.sqlite.database.SQLException;
+import android.database.SQLException;
 
 /**
  *  @author clarlars@gmail.com
@@ -128,6 +128,8 @@ public interface OdkConnectionInterface {
 
     public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
             throws SQLException;
+
+    public void execSQL(String sql) throws SQLException;
 
     public void execSQL(String sql, Object[] bindArgs) throws SQLException;
 

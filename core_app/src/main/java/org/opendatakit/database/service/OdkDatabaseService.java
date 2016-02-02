@@ -19,7 +19,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.core.application.Core;
@@ -32,7 +32,7 @@ public class OdkDatabaseService extends Service {
    * change to true expression if you want to debug the database service
    */
   public static void possiblyWaitForDatabaseServiceDebugger() {
-    if ( false ) {
+    if ( false) {
       android.os.Debug.waitForDebugger();
       int len = new String("for setting breakpoint").length();
     }
@@ -44,7 +44,7 @@ public class OdkDatabaseService extends Service {
   public void onCreate() {
     super.onCreate();
     servInterface = new OdkDatabaseServiceInterface(this);
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
 
   }
 

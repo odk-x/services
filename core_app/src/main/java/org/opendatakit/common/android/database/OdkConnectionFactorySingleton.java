@@ -12,7 +12,7 @@ package org.opendatakit.common.android.database;
  * invoke the static set(OdkConnectionFactoryInterface) method
  * to register themselves.
  *
- * e.g., see AndroidConnectFactory.configure();
+ * e.g., see AndroidConvConnectFactory.configure();
  *
  * @author clarlars@gmail.com
  * @author mitchellsundt@gmail.com

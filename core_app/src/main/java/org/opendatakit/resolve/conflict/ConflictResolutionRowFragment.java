@@ -115,7 +115,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, mAppName,
                 mTableId, mRowId);
@@ -189,7 +189,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
                 mTableId, mRowId);
@@ -260,7 +260,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             // this is overkill, as we only need to pull the server values that were selected.
             ContentValues updateValues = new ContentValues();
@@ -336,7 +336,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
                 mTableId, mRowId);
@@ -406,7 +406,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .getConnection(mAppName, dbHandleName);
+                .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
                 mTableId, mRowId);
@@ -465,7 +465,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, getActivity().getBaseContext());
 
       ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId,
           mRowId);

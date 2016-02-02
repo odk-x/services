@@ -73,7 +73,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, getContext());
 
       orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mAppName, mTableId);
 

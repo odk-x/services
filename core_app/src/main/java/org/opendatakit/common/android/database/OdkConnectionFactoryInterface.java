@@ -1,5 +1,7 @@
 package org.opendatakit.common.android.database;
 
+import android.content.Context;
+
 import org.opendatakit.database.service.OdkDbHandle;
 
 /**
@@ -65,9 +67,10 @@ public interface OdkConnectionFactoryInterface {
     *
     * @param appName
     * @param dbHandleName
+    * @param context
     * @return
     */
-   public OdkConnectionInterface getConnection(String appName, OdkDbHandle dbHandleName);
+   public OdkConnectionInterface getConnection(String appName, OdkDbHandle dbHandleName, Context context);
 
    /**
     * Remove the connection to the database for the given dbHandleName from the
@@ -102,11 +105,12 @@ public interface OdkConnectionFactoryInterface {
     * @param appName
     * @param sessionGroupQualifier
     * @param instanceQualifier
+    * @param context
     * @return
     * @deprecated will be removed when DbShim interface goes away
     */
    public OdkConnectionInterface getSessionGroupInstanceConnection(String appName,
-       String sessionGroupQualifier, int instanceQualifier);
+       String sessionGroupQualifier, int instanceQualifier, Context context);
 
    /**
     * Remove the connection for the given sessionGroupQualifier and instanceQualifier

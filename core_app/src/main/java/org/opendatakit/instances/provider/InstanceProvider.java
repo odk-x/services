@@ -29,7 +29,7 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -111,7 +111,7 @@ public class InstanceProvider extends ContentProvider {
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -154,7 +154,7 @@ public class InstanceProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
 
       internalUpdate(db, uri, appName, tableId);
 
@@ -503,7 +503,7 @@ public class InstanceProvider extends ContentProvider {
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
 
       boolean success = false;
@@ -651,7 +651,7 @@ public class InstanceProvider extends ContentProvider {
     int count = 0;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
 
       boolean success = false;

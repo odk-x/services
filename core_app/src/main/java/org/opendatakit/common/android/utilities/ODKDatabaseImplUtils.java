@@ -37,13 +37,13 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.sqlite.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
@@ -208,7 +208,7 @@ public class ODKDatabaseImplUtils {
      }
 
     // Used to ensure that the singleton has been initialized properly
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
   }
 
   private static ODKDatabaseImplUtils databaseUtil = new ODKDatabaseImplUtils();
@@ -719,7 +719,7 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";", null);
+      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";");
 
       // Delete the server sync ETags associated with this table
       seu.deleteAllSyncETagsForTableId(db, tableId);
@@ -1475,7 +1475,7 @@ public class ODKDatabaseImplUtils {
 
     createTableCmdWithCols.append(");");
 
-    db.execSQL(createTableCmdWithCols.toString(), null);
+    db.execSQL(createTableCmdWithCols.toString());
 
     // Create the metadata for the table - table def and KVS
     createDBTableMetadata(db, tableId);
@@ -3474,19 +3474,19 @@ public class ODKDatabaseImplUtils {
   private static void commonTableDefn(OdkConnectionInterface db) {
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
-    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
+    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
-    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME), null);
+    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
-    db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME), null);
+    db.execSQL(ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME), null);
+    db.execSQL(KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
-    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME), null);
+    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
-    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME), null);
+    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.CHOICE_LIST_TABLE_NAME);
-    db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME), null);
+    db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME));
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
   }
 }

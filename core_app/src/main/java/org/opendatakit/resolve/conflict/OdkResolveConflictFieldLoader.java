@@ -17,11 +17,10 @@ package org.opendatakit.resolve.conflict;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
-import android.widget.Toast;
+
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
@@ -33,13 +32,11 @@ import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.views.components.ConcordantColumn;
 import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.opendatakit.resolve.views.components.ResolveActionList;
-import org.opendatakit.resolve.views.components.ResolveActionType;
 
 import java.util.*;
 
@@ -80,7 +77,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(mAppName, dbHandleName);
+          .getConnection(mAppName, dbHandleName, getContext());
 
       orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mAppName, mTableId);
 

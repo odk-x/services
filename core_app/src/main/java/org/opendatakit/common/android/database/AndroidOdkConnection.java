@@ -19,6 +19,7 @@ import android.database.Cursor;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDatabaseService;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
@@ -503,6 +504,29 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      } finally {
         operationLog.endOperation(cookie);
      }
+  }
+
+  public void execSQL(String sql) throws SQLException {
+    StringBuilder b = new StringBuilder();
+    b.append("execSQL(\"").append(sql).append("\",");
+    b.append("null)");
+
+    final int cookie = operationLog.beginOperation(sessionQualifier,
+            b.toString(), null, null);;
+    try {
+      synchronized (mutex) {
+        db.execSQL(sql, null);
+      }
+    } catch ( Throwable t ) {
+      operationLog.failOperation(cookie, t);
+      if ( t instanceof SQLiteException ) {
+        throw t;
+      } else {
+        throw new SQLiteException("unexpected", t);
+      }
+    } finally {
+      operationLog.endOperation(cookie);
+    }
   }
 
   public void execSQL(String sql, Object[] bindArgs) throws SQLException {

@@ -17,9 +17,11 @@ package org.opendatakit.common.android.database;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.sqlite.database.sqlite.SQLiteCantOpenDatabaseException;
-import org.sqlite.database.sqlite.SQLiteDatabaseLockedException;
-import org.sqlite.database.sqlite.SQLiteException;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
+import android.database.sqlite.SQLiteDatabaseLockedException;
+import android.database.sqlite.SQLiteException;
 
 import java.util.*;
 
@@ -102,10 +104,11 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     *
     * @param appNameSharedStateContainer
     * @param sessionQualifier
+    * @param context
     * @return
     */
    protected abstract OdkConnectionInterface openDatabase(
-       AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier);
+       AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier, Context context);
 
    /**
     * This handle is suitable for non-service uses.
@@ -113,7 +116,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @return sessionQualifier appropriate for 'internal uses'
     */
    public final OdkDbHandle generateInternalUseDbHandle() {
-      return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+      return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
    }
 
    /**
@@ -130,7 +133,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * Useful for debugging and understanding
     * cross-thread interactions.
     */
-   public final void dumpInfo(boolean asError) {
+   public void dumpInfo(boolean asError) {
       ArrayList<AppNameSharedStateContainer> containers = new ArrayList<AppNameSharedStateContainer>();
       synchronized (mutex) {
          for (String appName : appNameSharedStateMap.keySet()) {
@@ -158,12 +161,13 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @param appNameSharedStateContainer
     * @param sessionQualifier
     * @param shouldInitialize
+    * @param context
     * @return
     * @throws SQLiteException
     */
-   private final OdkConnectionInterface getNewConnectionImpl(
+   private OdkConnectionInterface getNewConnectionImpl(
        AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier,
-       boolean shouldInitialize) throws SQLiteException {
+       boolean shouldInitialize, Context context) throws SQLiteException {
 
       if (sessionQualifier == null) {
          throw new IllegalArgumentException(
@@ -183,7 +187,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       int retryCount = 1;
       for (; retryCount <= MAX_OPEN_RETRY_COUNT ; ++retryCount ) {
         try {
-          dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier);
+          dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier, context);
           break;
         } catch ( SQLiteDatabaseLockedException e ) {
           if ( retryCount == MAX_OPEN_RETRY_COUNT ) {
@@ -341,11 +345,12 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     *
     * @param appName
     * @param sessionQualifier
+    * @param context
     * @throws SQLiteCantOpenDatabaseException
     * @return
     */
-   private final OdkConnectionInterface getConnectionImpl(final String appName,
-       String sessionQualifier) {
+   private OdkConnectionInterface getConnectionImpl(final String appName,
+                                                          String sessionQualifier, Context context) {
 
       if (sessionQualifier == null) {
          throw new IllegalArgumentException("session qualifier cannot be null");
@@ -408,7 +413,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
 
          // the "appName" database qualifier  is created once and left open
          OdkConnectionInterface dbConnectionAppName = getNewConnectionImpl(
-             appNameSharedStateContainer, appName, true);
+             appNameSharedStateContainer, appName, true, context);
 
          if ( dbConnectionAppName == null ) {
             throw new SQLiteCantOpenDatabaseException("unable to initialize base database for "
@@ -435,7 +440,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
           " -- creating new connection for " + appName + " when getting " + sessionQualifier);
       OdkConnectionInterface db = getNewConnectionImpl(appNameSharedStateContainer,
-          sessionQualifier, false);
+          sessionQualifier, false, context);
 
       if ( db == null ) {
          throw new SQLiteCantOpenDatabaseException("unable to initialize session database for "
@@ -446,17 +451,17 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final OdkConnectionInterface getConnection(String appName,
-       OdkDbHandle dbHandleName) {
+   public OdkConnectionInterface getConnection(String appName,
+                                                     OdkDbHandle dbHandleName, Context context) {
       if (dbHandleName != null) {
-         return getConnectionImpl(appName, dbHandleName.getDatabaseHandle());
+         return getConnectionImpl(appName, dbHandleName.getDatabaseHandle(), context);
       } else {
          throw new IllegalArgumentException("null dbHandleName " + appName);
       }
    }
 
    @Override
-   public final void removeConnection(String appName, OdkDbHandle dbHandleName) {
+   public void removeConnection(String appName, OdkDbHandle dbHandleName) {
       removeConnectionImpl(appName, dbHandleName.getDatabaseHandle());
    }
 
@@ -469,7 +474,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @param appName
     * @param sessionQualifier
     */
-   private final void removeConnectionImpl(String appName, String sessionQualifier) {
+   private void removeConnectionImpl(String appName, String sessionQualifier) {
       boolean releaseTwice = false;
       OdkConnectionInterface dbConnection = null;
       if (appName == null) {
@@ -506,15 +511,15 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final OdkConnectionInterface getSessionGroupInstanceConnection(String appName,
-       String sessionGroupQualifier, int instanceQualifier) {
+   public OdkConnectionInterface getSessionGroupInstanceConnection(String appName,
+      String sessionGroupQualifier, int instanceQualifier, Context context) {
       String sessionQualifier =
           sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-      return getConnectionImpl(appName, sessionQualifier);
+      return getConnectionImpl(appName, sessionQualifier, context);
    }
 
    @Override
-   public final void removeSessionGroupInstanceConnection(String appName,
+   public void removeSessionGroupInstanceConnection(String appName,
        String sessionGroupQualifier, int instanceQualifier) {
       String sessionQualifier =
           sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
@@ -522,7 +527,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final boolean removeSessionGroupConnections(String appName, String sessionGroupQualifier,
+   public boolean removeSessionGroupConnections(String appName, String sessionGroupQualifier,
        boolean removeNonMatchingGroupsOnly) {
       AppNameSharedStateContainer appNameSharedStateContainer = null;
       synchronized (mutex) {
@@ -575,7 +580,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @param appName
     * @return true if we removed something. false otherwise.
     */
-   private final boolean removeDatabaseServiceConnections(String appName) {
+   private boolean removeDatabaseServiceConnections(String appName) {
       AppNameSharedStateContainer appNameSharedStateContainer = null;
       synchronized (mutex) {
          appNameSharedStateContainer = appNameSharedStateMap.get(appName);
@@ -620,7 +625,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @param appName
     * @return true if anything was removed.
     */
-   private final boolean removeAllConnections(String appName) {
+   private boolean removeAllConnections(String appName) {
       AppNameSharedStateContainer appNameSharedStateContainer = null;
       synchronized (mutex) {
          appNameSharedStateContainer = appNameSharedStateMap.get(appName);
@@ -664,12 +669,12 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final boolean removeAllSessionGroupConnections(String appName) {
+   public boolean removeAllSessionGroupConnections(String appName) {
       return removeSessionGroupConnections(appName, null, true);
    }
 
    @Override
-   public final boolean removeAllSessionGroupConnections() {
+   public boolean removeAllSessionGroupConnections() {
       HashSet<String> appNames = new HashSet<String>();
       synchronized (mutex) {
          appNames.addAll(appNameSharedStateMap.keySet());
@@ -681,7 +686,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final boolean removeAllDatabaseServiceConnections() {
+   public boolean removeAllDatabaseServiceConnections() {
       HashSet<String> appNames = new HashSet<String>();
       synchronized (mutex) {
          appNames.addAll(appNameSharedStateMap.keySet());
@@ -693,7 +698,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    }
 
    @Override
-   public final void removeAllConnections() {
+   public void removeAllConnections() {
       HashSet<String> appNames = new HashSet<String>();
       synchronized (mutex) {
          appNames.addAll(appNameSharedStateMap.keySet());
@@ -709,7 +714,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     *
     * @param db The database.
     */
-   protected final void onCreate(OdkConnectionInterface db) {
+   protected void onCreate(OdkConnectionInterface db) {
       ODKDatabaseImplUtils.initializeDatabase(db);
    }
 
@@ -729,7 +734,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     * @param oldVersion The old database version.
     * @param newVersion The new database version.
     */
-   protected final void onUpgrade(OdkConnectionInterface db, int oldVersion, int newVersion) {
+   protected void onUpgrade(OdkConnectionInterface db, int oldVersion, int newVersion) {
       // for now, upgrade and creation use the same codepath...
       ODKDatabaseImplUtils.initializeDatabase(db);
    }

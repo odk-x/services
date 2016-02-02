@@ -1,7 +1,7 @@
 package org.opendatakit.common.android.utilities.test;
 
 import org.opendatakit.TestConsts;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -21,7 +21,7 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
 
    private static boolean initialized = false;
     private static final String APPNAME = TestConsts.APPNAME;
-    private static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+    private static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
 
     @Override
     protected String getAppName() {
@@ -42,11 +42,11 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
        if ( beganUninitialized ) {
           initialized = true;
           // Used to ensure that the singleton has been initialized properly
-          AndroidConnectFactory.configure();
+          AndroidConvConnectFactory.configure();
        }
 
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey, getContext());
        if ( beganUninitialized ) {
           // start clean
           List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);

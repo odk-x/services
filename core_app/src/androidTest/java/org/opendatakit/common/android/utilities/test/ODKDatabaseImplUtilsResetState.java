@@ -4,7 +4,7 @@ import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -42,7 +42,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
 
             try {
-                db.execSQL(createColCmd, null);
+                db.execSQL(createColCmd);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table "
                         + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
@@ -53,7 +53,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
 
             try {
-                db.execSQL(createTableDefCmd, null);
+                db.execSQL(createTableDefCmd);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table " + DatabaseConstants.TABLE_DEFS_TABLE_NAME);
                 e.printStackTrace();
@@ -63,7 +63,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                     .getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
 
             try {
-                db.execSQL(createKVSCmd, null);
+                db.execSQL(createKVSCmd);
             } catch (Exception e) {
                 Log.e("test", "Error while creating table "
                         + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
@@ -79,7 +79,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         //StaticStateManipulator.get().reset();
 
         // Just to initialize this
-        AndroidConnectFactory.configure();
+        AndroidConvConnectFactory.configure();
         uniqueKey = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
 
         RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
@@ -93,7 +93,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         ODKFileUtils.assertDirectoryStructure(getAppName());
 
         // +1 referenceCount if db is returned (non-null)
-        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
+        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey, getContext());
 
         DatabaseInitializer.onCreate(db);
     }

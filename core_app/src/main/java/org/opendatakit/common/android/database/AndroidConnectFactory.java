@@ -17,6 +17,7 @@ package org.opendatakit.common.android.database;
 import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.common.android.utilities.WebLogger;
+import android.content.Context;
 
 public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
 
@@ -63,7 +64,7 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractCl
 
    @Override
    protected OdkConnectionInterface openDatabase(AppNameSharedStateContainer appNameSharedStateContainer,
-       String sessionQualifier) {
+       String sessionQualifier, Context context) {
       return AndroidOdkConnection.openDatabase(appNameSharedStateContainer,
           sessionQualifier);
    }

@@ -28,8 +28,7 @@ import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.opendatakit.androidlibrary.R;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.AndroidConvConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -38,15 +37,12 @@ import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.provider.FormsProviderAPI;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.sqlite.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map.Entry;
 
 /**
@@ -108,7 +104,7 @@ public class FormsProvider extends ContentProvider {
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
-    AndroidConnectFactory.configure();
+    AndroidConvConnectFactory.configure();
 
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
@@ -233,7 +229,7 @@ public class FormsProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
@@ -425,7 +421,7 @@ public class FormsProvider extends ContentProvider {
     Cursor c = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName, this.getContext());
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, sortOrder, null);
 
@@ -486,7 +482,7 @@ public class FormsProvider extends ContentProvider {
     try {
       // Get the database and run the query
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
@@ -644,7 +640,7 @@ public class FormsProvider extends ContentProvider {
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName, this.getContext());
       db.beginTransactionNonExclusive();
       Cursor c = null;
       try {
