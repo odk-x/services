@@ -13,14 +13,6 @@ import java.io.File;
  */
 public class AndroidConvDBHelper extends SQLiteOpenHelper {
 
-  private static AndroidConvDBHelper mInstance = null;
-
-  public static AndroidConvDBHelper getInstance(Context context, String dbFilePath) {
-    if (mInstance == null) {
-      mInstance = new AndroidConvDBHelper(context.getApplicationContext(), dbFilePath);
-    }
-    return mInstance;
-  }
   public AndroidConvDBHelper(Context context, String dbFilePath) {
     super(context, dbFilePath , null, 1);
   }

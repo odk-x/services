@@ -27,6 +27,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AndroidConvOdkConnection implements OdkConnectionInterface{
   final Object mutex = new Object();
@@ -44,6 +46,55 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
   boolean initializationComplete = false;
   boolean initializationStatus = false;
   AndroidConvDBHelper dbHelper = null;
+
+  // array of the underlying database handles used by all the content provider
+  // instances
+  private final Map<String, AndroidConvDBHelper> dbHelpers = new HashMap<String, AndroidConvDBHelper>();
+
+  /**
+   * Shared accessor to get a database handle.
+   *
+   * @param appName
+   * @return an entry in dbHelpers
+   */
+  private synchronized AndroidConvDBHelper getDbHelper(Context context, String appName, String dbFilePath) {
+
+    try {
+      ODKFileUtils.verifyExternalStorageAvailability();
+      ODKFileUtils.assertDirectoryStructure(appName);
+    } catch ( Exception e ) {
+      WebLogger.getLogger(appName).i("AndroidOdkConnection", "External storage not available -- purging dbHelpers");
+      dbHelpers.clear();
+      return null;
+    }
+
+    String path = ODKFileUtils.getWebDbFolder(appName);
+    File webDb = new File(path);
+    if ( !webDb.exists() || !webDb.isDirectory()) {
+      ODKFileUtils.assertDirectoryStructure(appName);
+    }
+
+    // the assert above should have created it...
+    if ( !webDb.exists() || !webDb.isDirectory()) {
+      WebLogger.getLogger(appName).i("AndroidOdkConnection", "webDb directory not available -- purging dbHelpers");
+      dbHelpers.clear();
+      return null;
+    }
+
+    AndroidConvDBHelper dbHelper = dbHelpers.get(appName);
+    if (dbHelper == null) {
+      AndroidConvDBHelper h = new AndroidConvDBHelper(context, dbFilePath);
+      dbHelper = h;
+      dbHelpers.put(appName, h);
+      // CAL: Do I need to do this?
+      File targetFile = new File(dbFilePath);
+      File parent = targetFile.getParentFile();
+      if(!parent.exists() && !parent.mkdirs()){
+        throw new IllegalStateException("Couldn't create dir: " + parent);
+      }
+    }
+    return dbHelper;
+  }
 
 
   private static String getDbFilePath(String appName) {
@@ -69,7 +120,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
     this.appName = appName;
 
     String dbFilePath = getDbFilePath(appName);
-    this.dbHelper = AndroidConvDBHelper.getInstance(context, dbFilePath);
+    this.dbHelper = getDbHelper(context, appName, dbFilePath);
     this.db = dbHelper.getWritableDatabase();
   }
 
@@ -288,7 +339,9 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
   public void endTransaction() {
     try {
       synchronized (mutex) {
-        db.endTransaction();
+        if (db.inTransaction()) {
+          db.endTransaction();
+        }
       }
     } catch ( Throwable t ) {
       if ( t instanceof SQLiteException ) {

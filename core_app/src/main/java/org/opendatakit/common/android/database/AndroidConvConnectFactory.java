@@ -131,7 +131,7 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
     String appName = appNameSharedStateContainer.getAppName();
 
     OdkConnectionInterface dbConnection = null;
-    OdkConnectionInterface dbConnectionExisting = null;
+    //OdkConnectionInterface dbConnectionExisting = null;
     logInfo(appName, "getNewConnectionImpl -- opening database for " +
             appName + " " + sessionQualifier + " shouldInitialize=" + shouldInitialize);
 
