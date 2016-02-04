@@ -157,7 +157,7 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
     if (shouldInitialize) {
       boolean initSuccessful = false;
       try {
-        // CAL: This doesn't work with the SQLiteOpenHelper
+        // CAL: Does this need to be exclusive?
         //dbConnection.beginTransactionExclusive();
         dbConnection.beginTransactionNonExclusive();
 
