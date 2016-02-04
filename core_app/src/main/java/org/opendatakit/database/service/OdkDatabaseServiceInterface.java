@@ -17,10 +17,7 @@ package org.opendatakit.database.service;
 import android.content.ContentValues;
 import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.common.android.data.ColumnList;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableDefinitionEntry;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -985,6 +982,37 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       return ODKDatabaseImplUtils.get()
           .rawSqlQuery(db, appName, tableId, columnDefns, whereClause, selectionArgs, groupBy,
               having, orderByElementKey, orderByDirection);
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName)
+          .e("rawSqlQuery", appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override public RawUserTable arbitraryQuery(String appName, OdkDbHandle dbHandleName,
+      String sqlCommand, String[] sqlBindArgs) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      return ODKDatabaseImplUtils.get().arbitraryQuery(db, appName, sqlCommand, sqlBindArgs);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)

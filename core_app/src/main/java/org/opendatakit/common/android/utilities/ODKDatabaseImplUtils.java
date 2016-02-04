@@ -32,17 +32,14 @@ import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.data.TableDefinitionEntry;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -429,6 +426,77 @@ public class ODKDatabaseImplUtils {
         userTable.addRow(nextRow);
       } while (c.moveToNext());
     }
+    c.close();
+    return userTable;
+  }
+
+  public RawUserTable arbitraryQuery(OdkConnectionInterface db, String appName,
+      String sqlCommand, String[] sqlBindArgs) {
+    Cursor c = null;
+    try {
+      c = db.rawQuery(sqlCommand, sqlBindArgs);
+      RawUserTable table = buildRawUserTable(c, sqlCommand, sqlBindArgs);
+      return table;
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+  }
+
+  private RawUserTable buildRawUserTable(Cursor c,
+      String sqlCommand, String[] sqlBindArgs) {
+
+    if ( !c.moveToFirst() ) {
+      c.close();
+      return null;
+    }
+
+    int rowCount = c.getCount();
+    int columnCount = c.getColumnCount();
+
+    RawUserTable userTable = null;
+
+    // may be -1 if there is no _id column in the result set.
+    int rowIdIndex = c.getColumnIndex(DataTableColumns.ID);
+
+    // These maps will map the element key to the corresponding index in
+    // either data or metadata. If the user has defined a column with the
+    // element key _my_data, and this column is at index 5 in the data
+    // array, dataKeyToIndex would then have a mapping of _my_data:5.
+    // The sync_state column, if present at index 7, would have a mapping
+    // in metadataKeyToIndex of sync_state:7.
+    String[] mElementKeyForIndex = new String[columnCount];
+    int i;
+
+    for ( i = 0 ; i < columnCount ; ++i ) {
+      String columnName = c.getColumnName(i);
+      mElementKeyForIndex[i] = columnName;
+    }
+
+    userTable = new RawUserTable(sqlCommand, sqlBindArgs, mElementKeyForIndex, rowCount);
+
+    rowCount = 0;
+    String[] rowData = new String[columnCount];
+    do {
+      String rowId;
+      if ( rowIdIndex == -1 ) {
+        rowId = Integer.toString(rowCount);
+      } else {
+        if (c.isNull(rowIdIndex)) {
+          throw new IllegalStateException("Unexpected null value for rowId");
+        }
+        rowId = ODKCursorUtils.getIndexAsString(c, rowIdIndex);
+      }
+      ++rowCount;
+      // First get the user-defined data for this row.
+      for (i = 0; i < columnCount; i++) {
+        String value = ODKCursorUtils.getIndexAsString(c, columnCount);
+        rowData[i] = value;
+      }
+      RawRow nextRow = new RawRow(userTable, rowId, rowData.clone());
+      userTable.addRow(nextRow);
+    } while (c.moveToNext());
     c.close();
     return userTable;
   }

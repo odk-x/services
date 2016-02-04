@@ -327,7 +327,7 @@ public class ProcessAppAndTableLevelChanges {
       List<String> localTableIdsToDelete = new ArrayList<String>();
       localTableIdsToDelete.addAll(localTableIds);
       // do not remove the framework table
-      localTableIdsToDelete.remove("framework");
+      localTableIdsToDelete.remove(FormsColumns.COMMON_BASE_FORM_ID);
 
       boolean firstTime = true;
       for (TableResource table : tables) {

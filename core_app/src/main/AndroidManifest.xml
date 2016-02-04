@@ -11,10 +11,6 @@
     <permission-tree android:icon="@drawable/odk_core"
                      android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.sync" />
-
-    <permission-tree android:icon="@drawable/odk_core"
-                     android:label="@string/core_permission_tree"
-                     android:name="org.opendatakit.dbshim" />
     
     <permission-tree android:icon="@drawable/odk_core"
                      android:label="@string/core_permission_tree"
@@ -30,10 +26,6 @@
     
     <permission android:name="org.opendatakit.database.RUN_DATABASE" 
         android:label="@string/database_launch_permission" 
-        android:protectionLevel="signature"></permission>
-    
-    <permission android:name="org.opendatakit.dbshim.RUN_DBSHIM" 
-        android:label="@string/dbshim_launch_permission" 
         android:protectionLevel="signature"></permission>
 
     <permission android:name="org.opendatakit.sync.RUN_SYNC"
@@ -58,11 +50,6 @@
             android:exported="true"
             android:process=":databaseservice"
             android:permission="org.opendatakit.database.RUN_DATABASE" >
-        </service>
-        <service android:name="org.opendatakit.dbshim.service.OdkDbShimService" 
-            android:exported="true"
-            android:process=":dbshim"
-            android:permission="org.opendatakit.dbshim.RUN_DBSHIM" >
         </service>
         <service android:name="org.opendatakit.sync.service.OdkSyncService"
              android:exported="true"
