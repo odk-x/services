@@ -21,6 +21,7 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.RawUserTable;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.KeyValueStoreEntry;
@@ -310,6 +311,19 @@ interface OdkDbInterface {
       in OrderedColumns columnDefns, in String whereClause, in String[] selectionArgs,
       in String[] groupBy, in String having, in String orderByElementKey, in String orderByDirection);
 
+  /**
+   * Get a {@link RawUserTable} for the result set of an arbitrary sql query
+   * and bind parameters. If the result set has an _id column, it is used as
+   * the RowId of the RawRow. Otherwise, an ordinal number is generated and used.
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param sqlCommand
+   * @param sqlBindArgs
+   * @return
+   */
+  RawUserTable arbitraryQuery(in String appName, in OdkDbHandle dbHandleName,
+      in String sqlCommand, in String[] sqlBindArgs);
   /**
    * Insert or update a single table-level metadata KVS entry.
    * 

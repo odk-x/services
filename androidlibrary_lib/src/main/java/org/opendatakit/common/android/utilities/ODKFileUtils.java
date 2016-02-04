@@ -595,12 +595,6 @@ public class ODKFileUtils {
   }
 
   public static String getFormFolder(String appName, String tableId, String formId) {
-    if ( FormsColumns.COMMON_BASE_FORM_ID.equals(tableId) ) {
-      if ( !FormsColumns.COMMON_BASE_FORM_ID.equals(formId) ) {
-        throw new IllegalStateException(FormsColumns.COMMON_BASE_FORM_ID + " can only have " + FormsColumns.COMMON_BASE_FORM_ID + " for a formId");
-      }
-    }
-
     if (formId == null || formId.length() == 0) {
       throw new IllegalArgumentException("getFormFolder: formId is null or the empty string!");
     } else {

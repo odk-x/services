@@ -10,7 +10,6 @@
     <string name="core_permission_tree">Open Data Kit Core Services</string>
 	<string name="webkit_launch_permission">Launch WebServer</string>
 	<string name="database_launch_permission">Launch Database</string>
-	<string name="dbshim_launch_permission">Launch DbShim</string>
     <string name="sync_launch_permission">Launch Sync</string>
 
 	<string name="added_on_date_at_time">\'Added on\' EEE, MMM dd, yyyy \'at\' HH:mm</string><!-- http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->

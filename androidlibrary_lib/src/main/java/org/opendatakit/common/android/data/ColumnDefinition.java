@@ -364,10 +364,8 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
 
     for (ColumnDefinition c : orderedDefns) {
       if (c.getParent() == null) {
-        model.put(c.getElementName(), new TreeMap<String, Object>());
-        @SuppressWarnings("unchecked")
-        TreeMap<String, Object> jsonSchema = (TreeMap<String, Object>) model
-            .get(c.getElementName());
+        TreeMap<String, Object> jsonSchema = new TreeMap<String, Object>();
+        model.put(c.getElementName(), jsonSchema);
         getDataModelHelper(jsonSchema, c);
       }
     }
