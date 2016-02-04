@@ -63,7 +63,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
       ODKFileUtils.verifyExternalStorageAvailability();
       ODKFileUtils.assertDirectoryStructure(appName);
     } catch ( Exception e ) {
-      WebLogger.getLogger(appName).i("AndroidOdkConnection", "External storage not available -- purging dbHelpers");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "External storage not available -- purging dbHelpers");
       dbHelpers.clear();
       return null;
     }
@@ -76,7 +76,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
 
     // the assert above should have created it...
     if ( !webDb.exists() || !webDb.isDirectory()) {
-      WebLogger.getLogger(appName).i("AndroidOdkConnection", "webDb directory not available -- purging dbHelpers");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "webDb directory not available -- purging dbHelpers");
       dbHelpers.clear();
       return null;
     }
@@ -122,6 +122,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
     String dbFilePath = getDbFilePath(appName);
     this.dbHelper = getDbHelper(context, appName, dbFilePath);
     this.db = dbHelper.getWritableDatabase();
+    this.db.setMaxSqlCacheSize(1);
   }
 
   public boolean waitForInitializationComplete() {
@@ -139,7 +140,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      WebLogger.getLogger(appName).i("AndroidOdkConnection", "waitForInitializationComplete - spin waiting " + Thread.currentThread().getId());
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "waitForInitializationComplete - spin waiting " + Thread.currentThread().getId());
     }
   }
 
@@ -164,7 +165,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
   }
 
   private String getLogTag() {
-    return "AndroidOdkConnection:" + appName + ":" + sessionQualifier;
+    return "AndroidConvOdkConnection:" + appName + ":" + sessionQualifier;
   }
 
   public void acquireReference() {
@@ -283,7 +284,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
       }
     }
     if ( !success ) {
-      WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
+      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Attempting dump of all database connections");
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
     }
   }
@@ -303,7 +304,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
       }
     }
     if ( !success ) {
-      WebLogger.getLogger(appName).e("AndroidOdkConnection", "Attempting dump of all database connections");
+      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Attempting dump of all database connections");
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
     }
   }

@@ -186,7 +186,7 @@ public class AppNameSharedStateContainer {
          }
 
          b.append("\n-------------------------------------\n\n");
-         WebLogger.getLogger(appName).e("AndroidOdkConnection", b.toString());
+         WebLogger.getLogger(appName).e("OdkConnectionInterface", b.toString());
       }
    }
 
