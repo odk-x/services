@@ -22,6 +22,7 @@ import android.util.Log;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.PRNGFixes;
 import org.opendatakit.common.android.utilities.WebLogger;
 
 /**
@@ -51,6 +52,7 @@ public abstract class AppAwareApplication extends Application {
 
   public AppAwareApplication() {
     super();
+    PRNGFixes.apply();
   }
 
   /**
