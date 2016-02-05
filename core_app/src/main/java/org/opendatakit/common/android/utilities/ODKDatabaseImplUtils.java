@@ -448,8 +448,32 @@ public class ODKDatabaseImplUtils {
       String sqlCommand, String[] sqlBindArgs) {
 
     if ( !c.moveToFirst() ) {
+      String[] mElementKeyForIndex = null;
+
+      // Attempt to retrieve the columns from the cursor.
+      // These may not be available if there were no rows returned.
+      // It depends upon the cursor implementation.
+      try {
+        int columnCount = c.getColumnCount();
+        mElementKeyForIndex = new String[columnCount];
+        int i;
+
+        for (i = 0; i < columnCount; ++i) {
+          String columnName = c.getColumnName(i);
+          mElementKeyForIndex[i] = columnName;
+        }
+      } catch ( Exception e ) {
+        // ignore.
+      }
+
+      // if they were not available, declare an empty array.
+      if ( mElementKeyForIndex == null ) {
+        mElementKeyForIndex = new String[0];
+      }
       c.close();
-      return null;
+
+      // we have no idea what the table should contain because it has no rows...
+      return new RawUserTable(sqlCommand, sqlBindArgs, mElementKeyForIndex, 0);
     }
 
     int rowCount = c.getCount();
