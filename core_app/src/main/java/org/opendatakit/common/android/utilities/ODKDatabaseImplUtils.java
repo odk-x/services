@@ -515,7 +515,7 @@ public class ODKDatabaseImplUtils {
       ++rowCount;
       // First get the user-defined data for this row.
       for (i = 0; i < columnCount; i++) {
-        String value = ODKCursorUtils.getIndexAsString(c, columnCount);
+        String value = ODKCursorUtils.getIndexAsString(c, i);
         rowData[i] = value;
       }
       RawRow nextRow = new RawRow(userTable, rowId, rowData.clone());
