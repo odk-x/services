@@ -39,7 +39,6 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;

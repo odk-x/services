@@ -22,7 +22,6 @@ import android.util.Log;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
 
 public class OdkDatabaseService extends Service {
 
