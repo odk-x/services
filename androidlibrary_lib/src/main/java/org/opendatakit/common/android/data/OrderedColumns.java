@@ -172,6 +172,15 @@ public class OrderedColumns implements Parcelable {
     return ColumnDefinition.getDataModel(orderedDefns);
   }
 
+  /**
+   * Return the JSON schema of the table that includes all the metadata columns.
+   *
+   * @return
+   */
+  public TreeMap<String, Object> getExtendedDataModel() {
+    return ColumnDefinition.getExtendedDataModel(orderedDefns);
+  }
+
   @Override
   public int describeContents() {
     return 0;

@@ -316,6 +316,9 @@ interface OdkDbInterface {
    * and bind parameters. If the result set has an _id column, it is used as
    * the RowId of the RawRow. Otherwise, an ordinal number is generated and used.
    *
+   * The sql query can be arbitrarily complex and can include joins, unions, etc.
+   * The data are returned as string values.
+   *
    * @param appName
    * @param dbHandleName
    * @param sqlCommand

@@ -25,7 +25,9 @@ import java.util.TreeMap;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -35,6 +37,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class ColumnDefinition implements Comparable<ColumnDefinition> {
   private static final String TAG = "ColumnDefinition";
+  private static final String JSON_SCHEMA_NOT_UNIT_OF_RETENTION = "notUnitOfRetention";
+  private static final String JSON_SCHEMA_IS_NOT_NULLABLE = "isNotNullable";
+  private static final String JSON_SCHEMA_ELEMENT_SET = "elementSet";
+  private static final String JSON_SCHEMA_INSTANCE_METADATA_VALUE = "instanceMetadata";
+  private static final String JSON_SCHEMA_DEFAULT = "default";
   private static final String JSON_SCHEMA_ELEMENT_KEY = "elementKey";
   private static final String JSON_SCHEMA_ELEMENT_TYPE = "elementType";
   private static final String JSON_SCHEMA_PROPERTIES = "properties";
@@ -184,7 +191,6 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
    * @param columns
    * @return
    */
-  @SuppressWarnings("unchecked")
   static final ArrayList<ColumnDefinition> buildColumnDefinitions(String appName, String tableId, List<Column> columns) {
 
      if ( appName == null || appName.length() == 0 ) {
@@ -354,6 +360,90 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
   }
 
   /**
+   * Covert the ColumnDefinition map into a JSON schema. and augment it with
+   * the schema for the administrative columns.
+   *
+   * @param orderedDefns
+   * @return
+   */
+  static TreeMap<String, Object> getExtendedDataModel(List<ColumnDefinition> orderedDefns) {
+    TreeMap<String, Object> model = getDataModel(orderedDefns);
+
+    TreeMap<String, Object> jsonSchema;
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.ID, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_IS_NOT_NULLABLE, Boolean.TRUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.ID);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.ROW_ETAG, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.ROW_ETAG);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.SYNC_STATE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_IS_NOT_NULLABLE, Boolean.TRUE);
+    jsonSchema.put(JSON_SCHEMA_DEFAULT, SyncState.new_row.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.SYNC_STATE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.CONFLICT_TYPE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.integer.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.CONFLICT_TYPE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.FILTER_TYPE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.FILTER_TYPE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.FILTER_VALUE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.FILTER_VALUE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.FORM_ID, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.FORM_ID);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.LOCALE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.LOCALE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.SAVEPOINT_TYPE, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.SAVEPOINT_TYPE);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.SAVEPOINT_TIMESTAMP, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.SAVEPOINT_TIMESTAMP);
+    //
+    jsonSchema = new TreeMap<String, Object>();
+    model.put(DataTableColumns.SAVEPOINT_CREATOR, jsonSchema);
+    jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
+    jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.SAVEPOINT_CREATOR);
+
+    return model;
+  }
+
+  /**
    * Covert the ColumnDefinition map into a JSON schema.
    *
    * @param orderedDefns
@@ -366,15 +456,20 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
       if (c.getParent() == null) {
         TreeMap<String, Object> jsonSchema = new TreeMap<String, Object>();
         model.put(c.getElementName(), jsonSchema);
-        getDataModelHelper(jsonSchema, c);
+        getDataModelHelper(jsonSchema, c, false);
       }
     }
     return model;
   }
 
-  private static void getDataModelHelper(TreeMap<String, Object> jsonSchema, ColumnDefinition c) {
+  private static void getDataModelHelper(TreeMap<String, Object> jsonSchema, ColumnDefinition c,
+      boolean nestedInsideUnitOfRetention) {
     ElementType type = c.getType();
     ElementDataType dataType = type.getDataType();
+
+    if ( nestedInsideUnitOfRetention ) {
+      jsonSchema.put(JSON_SCHEMA_NOT_UNIT_OF_RETENTION, Boolean.TRUE);
+    }
 
     if (dataType == ElementDataType.array) {
       jsonSchema.put(JSON_SCHEMA_TYPE, dataType.name());
@@ -383,11 +478,11 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
       }
       jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, c.getElementKey());
       ColumnDefinition ch = c.getChildren().get(0);
-      jsonSchema.put(JSON_SCHEMA_ITEMS, new TreeMap<String, Object>());
-      @SuppressWarnings("unchecked")
-      TreeMap<String, Object> itemSchema = (TreeMap<String, Object>) jsonSchema
-          .get(JSON_SCHEMA_ITEMS);
-      getDataModelHelper(itemSchema, ch); // recursion...
+      TreeMap<String, Object> itemSchema = new TreeMap<String, Object>();
+      jsonSchema.put(JSON_SCHEMA_ITEMS, itemSchema);
+      // if it isn't already nested within a unit of retention,
+      // an array is always itself a unit of retention
+      getDataModelHelper(itemSchema, ch, true); // recursion...
     } else if (dataType == ElementDataType.bool) {
       jsonSchema.put(JSON_SCHEMA_TYPE, dataType.name());
       if (!c.getElementType().equals(dataType.name())) {
@@ -416,16 +511,13 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
         jsonSchema.put(JSON_SCHEMA_ELEMENT_TYPE, c.getElementType());
       }
       jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, c.getElementKey());
-      jsonSchema.put(JSON_SCHEMA_PROPERTIES, new TreeMap<String, Object>());
-      @SuppressWarnings("unchecked")
-      TreeMap<String, Object> propertiesSchema = (TreeMap<String, Object>) jsonSchema
-          .get(JSON_SCHEMA_PROPERTIES);
+      TreeMap<String, Object> propertiesSchema = new TreeMap<String, Object>();
+      jsonSchema.put(JSON_SCHEMA_PROPERTIES, propertiesSchema);
       for (ColumnDefinition ch : c.getChildren()) {
-        propertiesSchema.put(ch.getElementName(), new TreeMap<String, Object>());
-        @SuppressWarnings("unchecked")
-        TreeMap<String, Object> itemSchema = (TreeMap<String, Object>) propertiesSchema.get(ch
-            .getElementName());
-        getDataModelHelper(itemSchema, ch); // recursion...
+        TreeMap<String, Object> itemSchema = new TreeMap<String, Object>();
+        propertiesSchema.put(ch.getElementName(), itemSchema);
+        // objects are not units of retention -- propagate retention status.
+        getDataModelHelper(itemSchema, ch, nestedInsideUnitOfRetention); // recursion...
       }
     } else if (dataType == ElementDataType.rowpath) {
       jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
