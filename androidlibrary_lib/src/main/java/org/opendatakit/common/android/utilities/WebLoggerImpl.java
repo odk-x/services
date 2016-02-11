@@ -44,7 +44,7 @@ public class WebLoggerImpl implements WebLoggerIf {
   private static final int SUCCESS = 7;
   private static final int TIP = 8;
 
-  private static final int MIN_LOG_LEVEL_TO_SPEW = 3;
+  private static final int MIN_LOG_LEVEL_TO_SPEW = INFO;
   private static final String DATE_FORMAT = "yyyy-MM-dd_HH";
   private static final String LOG_LINE_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
 
@@ -263,10 +263,6 @@ public class WebLoggerImpl implements WebLoggerIf {
 
   public void log(int severity, String t, String logMsg) {
     try {
-      if (MIN_LOG_LEVEL_TO_SPEW > severity) {
-        // we are suppressing this level of logging
-        return;
-      }
 
       String androidLogLine = logMsg;
 
@@ -288,17 +284,19 @@ public class WebLoggerImpl implements WebLoggerIf {
         androidTag = t.substring(periodIdx+1);
       }
 
-      // do logcat logging...
-      if (severity == ERROR) {
-        Log.e(androidTag, androidLogLine);
-      } else if (severity == WARN) {
-        Log.w(androidTag, androidLogLine);
-      } else if (severity == INFO || severity == SUCCESS || severity == TIP) {
-        Log.i(androidTag, androidLogLine);
-      } else if (severity == DEBUG){
-        Log.d(androidTag, androidLogLine);
-      } else {
-        Log.v(androidTag, androidLogLine);
+      if (severity >= MIN_LOG_LEVEL_TO_SPEW) {
+        // do logcat logging...
+        if (severity == ERROR) {
+          Log.e(androidTag, androidLogLine);
+        } else if (severity == WARN) {
+          Log.w(androidTag, androidLogLine);
+        } else if (severity == INFO || severity == SUCCESS || severity == TIP) {
+          Log.i(androidTag, androidLogLine);
+        } else if (severity == DEBUG){
+          Log.d(androidTag, androidLogLine);
+        } else {
+          Log.v(androidTag, androidLogLine);
+        }
       }
 
       // and compose the log to the file...
