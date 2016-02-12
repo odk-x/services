@@ -380,7 +380,7 @@ public class ODKDatabaseImplUtils {
     // array, dataKeyToIndex would then have a mapping of _my_data:5.
     // The sync_state column, if present at index 7, would have a mapping
     // in metadataKeyToIndex of sync_state:7.
-    List<String> adminCols = ODKDatabaseImplUtils.get().getAdminColumns();
+    List<String> adminCols = getAdminColumns();
     String[] mAdminColumnOrder = adminCols.toArray(new String[adminCols.size()]);
     HashMap<String, Integer> mElementKeyToIndex = new HashMap<String, Integer>();
     List<String> userColumnOrder = columnDefns.getRetentionColumnNames();
@@ -2523,15 +2523,15 @@ public class ODKDatabaseImplUtils {
       }
 
       // delete the record of the server row
-      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+      deleteServerConflictRowWithId(db, tableId, rowId);
 
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
-      ODKDatabaseImplUtils.get()
-          .updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
+
+      updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
 
       // move the local conflict back into the normal (null) state
-      ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId);
+      deleteRowWithId(db, appName, tableId, rowId);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2566,13 +2566,12 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, appName, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      UserTable table = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
+      UserTable table =
+          rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
               null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
 
@@ -2650,18 +2649,18 @@ public class ODKDatabaseImplUtils {
       }
 
       // delete the record of the server row
-      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+      deleteServerConflictRowWithId(db, tableId, rowId);
 
       // move the local conflict back into the normal non-conflict (null) state
       // and set the final sync state.
-      ODKDatabaseImplUtils.get()
-          .restoreRowFromConflict(db, tableId, rowId, finalSyncState, localConflictType);
+
+      restoreRowFromConflict(db, tableId, rowId, finalSyncState, localConflictType);
 
       // update local with the changes
-      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
       // and reset the sync state to whatever it should be (update will make it changed)
-      ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
+      restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2699,13 +2698,12 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, appName, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      UserTable table = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
+      UserTable table =
+          rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
               null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
 
@@ -2772,14 +2770,14 @@ public class ODKDatabaseImplUtils {
           localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       // delete the record of the server row
-      ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+      deleteServerConflictRowWithId(db, tableId, rowId);
 
       // move the local conflict back into the normal (null) state
-      ODKDatabaseImplUtils.get()
-          .restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
+
+      restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with server's changes
-      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2812,13 +2810,12 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, appName, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      UserTable table = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
+      UserTable table =
+          rawSqlQuery(db, appName, tableId, orderedColumns, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", new String[] { rowId },
               null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
 
@@ -2850,15 +2847,15 @@ public class ODKDatabaseImplUtils {
       if (serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) {
 
         // delete the record of the server row
-        ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+        deleteServerConflictRowWithId(db, tableId, rowId);
 
         // move the local record into the 'new_row' sync state
         // so it can be physically deleted.
-        ODKDatabaseImplUtils.get()
-            .updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
+
+        updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
 
         // and delete the local conflict and all of its associated attachments
-        ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId);
+        deleteRowWithId(db, appName, tableId, rowId);
 
       } else {
         // update the local conflict record with the server's changes
@@ -2923,19 +2920,19 @@ public class ODKDatabaseImplUtils {
         }
 
         // delete the record of the server row
-        ODKDatabaseImplUtils.get().deleteServerConflictRowWithId(db, tableId, rowId);
+        deleteServerConflictRowWithId(db, tableId, rowId);
 
         // move the local conflict back into either the synced or synced_pending_files
         // state
-        ODKDatabaseImplUtils.get()
-            .restoreRowFromConflict(db, tableId, rowId, newState, localConflictType);
+
+        restoreRowFromConflict(db, tableId, rowId, newState, localConflictType);
 
         // update local with server's changes
-        ODKDatabaseImplUtils.get()
-            .updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+
+        updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
 
         // and reset the sync state to whatever it should be (update will make it changed)
-        ODKDatabaseImplUtils.get().restoreRowFromConflict(db, tableId, rowId, newState, null);
+        restoreRowFromConflict(db, tableId, rowId, newState, null);
       }
 
       if (!inTransaction) {
