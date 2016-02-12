@@ -2689,7 +2689,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
-    ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
+    ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, getAppName(), tableId, rowId);
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
