@@ -363,7 +363,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId);
+      ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, appName, tableId, rowId);
       UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
           orderedDefns, rowId);
       db.setTransactionSuccessful();

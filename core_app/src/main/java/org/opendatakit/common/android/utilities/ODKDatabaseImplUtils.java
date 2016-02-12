@@ -2179,8 +2179,10 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    * @return the sync state of the row (see {@link SyncState}), or null if the
-   * row does not exist.
-   * @throws IllegalStateException if the row has conflicts or checkpoints
+   *         row does not exist.  Rows are required to have non-null sync states.
+   * @throws IllegalStateException if the row has a null sync state or has
+   *                               2+ conflicts or checkpoints and
+   *                               those do not have matching sync states!
    */
   public SyncState getSyncState(OdkConnectionInterface db, String appName, String tableId,
       String rowId) throws IllegalStateException {
@@ -2188,16 +2190,24 @@ public class ODKDatabaseImplUtils {
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
           DataTableColumns.ID + " = ?", new String[] { rowId }, null, null, null, null);
-      c.moveToFirst();
-      if (c.getCount() > 1) {
-        throw new IllegalStateException(t + ": row has conflicts or checkpoints");
-      }
+
       if (c.moveToFirst()) {
         int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
-        if (!c.isNull(syncStateIndex)) {
-          String val = ODKCursorUtils.getIndexAsString(c, syncStateIndex);
-          return SyncState.valueOf(val);
+        if (c.isNull(syncStateIndex)) {
+          throw new IllegalStateException(t + ": row had a null sync state!");
         }
+        String val = ODKCursorUtils.getIndexAsString(c, syncStateIndex);
+        while ( c.moveToNext() ) {
+          if (c.isNull(syncStateIndex)) {
+            throw new IllegalStateException(t + ": row had a null sync state!");
+          }
+          String otherVal = ODKCursorUtils.getIndexAsString(c, syncStateIndex);
+          if ( !val.equals(otherVal) ) {
+            throw new IllegalStateException(t + ": row with 2+ conflicts or checkpoints does "
+                + "not have matching sync states!");
+          }
+        }
+        return SyncState.valueOf(val);
       }
       return null;
     } finally {
@@ -2235,19 +2245,31 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
+
+      String[] whereArgs = new String[]{ rowId };
+      String whereClause;
+
+      // delete any checkpoints
+      whereClause = DataTableColumns.ID + " = ? AND " + DataTableColumns.SAVEPOINT_TYPE +
+          " IS NULL";
+      db.delete(tableId, whereClause, whereArgs);
+
+      // this will return null if there are no rows.
       SyncState syncState = getSyncState(db, appName, tableId, rowId);
 
-      if (syncState == SyncState.new_row) {
+      if (syncState == null ) {
+        // the rowId no longer exists (we deleted all checkpoints)
+        shouldPhysicallyDelete = true;
+
+      } else if (syncState == SyncState.new_row) {
         // we can safely remove this record from the database
-        String[] whereArgs = { rowId };
-        String whereClause = DataTableColumns.ID + " = ?";
+        whereClause = DataTableColumns.ID + " = ?";
 
         db.delete(tableId, whereClause, whereArgs);
         shouldPhysicallyDelete = true;
 
       } else if (syncState != SyncState.in_conflict) {
 
-        String[] whereArgs = { rowId };
         ContentValues values = new ContentValues();
         values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
@@ -2280,10 +2302,13 @@ public class ODKDatabaseImplUtils {
   }
 
   /*
-   * Internal method to execute a delete statement with the given where clause
+   * Internal method to execute a delete checkpoint statement with the given where clause
    */
-  private void rawDeleteDataInDBTable(OdkConnectionInterface db, String tableId, String whereClause,
-      String[] whereArgs) {
+  private void rawCheckpointDeleteDataInDBTable(OdkConnectionInterface db, String appName,
+      String tableId, String rowId, String whereClause, String[] whereArgs) {
+
+    boolean shouldPhysicallyDelete = false;
+
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -2292,12 +2317,39 @@ public class ODKDatabaseImplUtils {
 
       db.delete(tableId, whereClause, whereArgs);
 
+      // see how many rows remain.
+      // If there are none, then we should delete all the attachments for this row.
+      Cursor c = null;
+      try {
+        c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
+            DataTableColumns.ID + " = ?", new String[] { rowId }, null, null, null, null);
+        c.moveToFirst();
+        // the row is entirely removed -- delete the attachments
+        shouldPhysicallyDelete = (c.getCount() == 0);
+      } finally {
+        if (c != null && !c.isClosed()) {
+          c.close();
+        }
+      }
+
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
     } finally {
       if (!dbWithinTransaction) {
         db.endTransaction();
+      }
+    }
+
+    if (shouldPhysicallyDelete) {
+      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(appName, tableId, rowId));
+      try {
+        FileUtils.deleteDirectory(instanceFolder);
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        WebLogger.getLogger(appName)
+            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+        WebLogger.getLogger(appName).printStackTrace(e);
       }
     }
   }
@@ -2315,7 +2367,7 @@ public class ODKDatabaseImplUtils {
    */
   public void deleteAllCheckpointRowsWithId(OdkConnectionInterface db, String appName,
       String tableId, String rowId) {
-    rawDeleteDataInDBTable(db, tableId,
+    rawCheckpointDeleteDataInDBTable(db, appName, tableId, rowId,
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL",
         new String[] { rowId });
   }
@@ -2327,12 +2379,13 @@ public class ODKDatabaseImplUtils {
    * the application die.
    *
    * @param db
+   * @param appName
    * @param tableId
    * @param rowId
    */
-  public void deleteLastCheckpointRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId) {
-    rawDeleteDataInDBTable(db, tableId,
+  public void deleteLastCheckpointRowWithId(OdkConnectionInterface db, String appName,
+      String tableId, String rowId) {
+    rawCheckpointDeleteDataInDBTable(db, appName, tableId, rowId,
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL " + " AND "
             + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX("
             + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId + "\" WHERE "
