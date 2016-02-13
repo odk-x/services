@@ -7,20 +7,20 @@ import android.database.sqlite.SQLiteException;
 
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.StaticStateManipulator;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.HashMap;
 
 /**
  * Created by clarice on 1/27/16.
  */
-public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass {
+public final class AndroidConvConnectFactory implements OdkConnectionFactoryInterface {
   static {
     OdkConnectionFactorySingleton.set(new AndroidConvConnectFactory());
 
@@ -42,27 +42,27 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
   private AndroidConvConnectFactory() {
   }
 
-  @Override
+  //@Override
   protected void logInfo(String appName, String message) {
     WebLogger.getLogger(appName).i("AndroidConvConnectFactory", message);
   }
 
-  @Override
+  //@Override
   protected void logWarn(String appName, String message) {
     WebLogger.getLogger(appName).w("AndroidConvConnectFactory", message);
   }
 
-  @Override
+  //@Override
   protected void logError(String appName, String message) {
     WebLogger.getLogger(appName).e("AndroidConvConnectFactory", message);
   }
 
-  @Override
+  ///@Override
   protected void printStackTrace(String appName, Throwable e) {
     WebLogger.getLogger(appName).printStackTrace(e);
   }
 
-  @Override
+  //@Override
   protected OdkConnectionInterface openDatabase(AppNameSharedStateContainer appNameSharedStateContainer,
                                                 String sessionQualifier, Context context) {
     return AndroidConvOdkConnection.openDatabase(appNameSharedStateContainer, sessionQualifier,
@@ -70,9 +70,28 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
   }
 
   /**
+   * This handle is suitable for non-service uses.
+   *
+   * @return sessionQualifier appropriate for 'internal uses'
+   */
+  public final OdkDbHandle generateInternalUseDbHandle() {
+    return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConvConnectFactory.INTERNAL_TYPE_SUFFIX);
+  }
+
+
+  /**
+   * This handle is suitable for database service use.
+   *
+   * @return sessionQualifier appropriate for 'database service uses'
+   */
+  public final OdkDbHandle generateDatabaseServiceDbHandle() {
+    return new OdkDbHandle(ODKDataUtils.genUUID());
+  }
+
+  /**
    * the database schema version that the application expects
    */
-  private static final int mNewVersion = 1;
+  public static final int mNewVersion = 1;
 
   /**
    * object for guarding appNameSharedStateMap
@@ -98,6 +117,8 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
    * entries outside of this map.
    */
   private final Map<String, AppNameSharedStateContainer> appNameSharedStateMap = new TreeMap<String, AppNameSharedStateContainer>();
+
+  private final Map<String, OdkConnectionInterface> appNameToConnection = new HashMap<String, OdkConnectionInterface>();
 
   /**
    * Dump the state and history of the database layer.
@@ -138,6 +159,29 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
     // this throws an exception if the db cannot be opened
     SQLiteDatabaseLockedException ex = null;
     try {
+      // CAL: This was in dbHelpers moved here for efficiency - clean UP!
+      try {
+        ODKFileUtils.verifyExternalStorageAvailability();
+        ODKFileUtils.assertDirectoryStructure(appName);
+      } catch ( Exception e ) {
+        WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "External storage not available -- purging dbHelpers");
+        //dbHelpers.clear();
+        return null;
+      }
+
+      String path = ODKFileUtils.getWebDbFolder(appName);
+      File webDb = new File(path);
+      if ( !webDb.exists() || !webDb.isDirectory()) {
+        ODKFileUtils.assertDirectoryStructure(appName);
+      }
+
+      // the assert above should have created it...
+      if ( !webDb.exists() || !webDb.isDirectory()) {
+        WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "webDb directory not available -- purging dbHelpers");
+        //dbHelpers.clear();
+        return null;
+      }
+
       dbConnection = openDatabase(appNameSharedStateContainer, sessionQualifier, context);
       logInfo(appName, "getNewConnectionImpl -- opening database for " +
               appName + " " + sessionQualifier + " dbConnection=" + dbConnection);
@@ -220,24 +264,29 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
       throw new IllegalArgumentException("session qualifier cannot be the same as the appName");
     }
 
-    OdkConnectionInterface dbConnection = null;
-
     AppNameSharedStateContainer appNameSharedStateContainer = null;
-    boolean hasBeenInitialized = true;
+    boolean shouldBeInitialized = true;
+    OdkConnectionInterface db = null;
 
-    // otherwise, create a connection for the sessionQualifier and return that
     appNameSharedStateContainer = appNameSharedStateMap.get(appName);
     if (appNameSharedStateContainer == null) {
       appNameSharedStateContainer = new AppNameSharedStateContainer(appName);
-      appNameSharedStateMap.put(appName, appNameSharedStateContainer);
-    } else {
-      hasBeenInitialized = false;
-    }
 
-    logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-            " -- creating new connection for " + appName + " when getting " + sessionQualifier);
-    OdkConnectionInterface db = getNewConnectionImpl(appNameSharedStateContainer,
-                sessionQualifier, hasBeenInitialized, context);
+      logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
+              " -- creating new connection for " + appName);
+
+      db = getNewConnectionImpl(appNameSharedStateContainer,
+              sessionQualifier, shouldBeInitialized, context);
+
+      appNameSharedStateContainer.atomicSetOrGetExisting(appName, db);
+
+      appNameSharedStateMap.put(appName, appNameSharedStateContainer);
+
+      appNameToConnection.put(appName, db);
+    } else {
+      //db = appNameSharedStateContainer.getExisting(appName);
+      db = appNameToConnection.get(appName);
+    }
 
     if (db == null) {
       throw new SQLiteCantOpenDatabaseException("unable to initialize session database for "
@@ -260,7 +309,8 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
 
   @Override
   public void removeConnection(String appName, OdkDbHandle dbHandleName) {
-    removeConnectionImpl(appName, dbHandleName.getDatabaseHandle());
+    //removeConnectionImpl(appName, dbHandleName.getDatabaseHandle());
+    return;
   }
 
   /**
@@ -319,17 +369,17 @@ public class AndroidConvConnectFactory extends OdkConnectionFactoryAbstractClass
                                                                   String sessionGroupQualifier,
                                                                   int instanceQualifier,
                                                                   Context context) {
-    String sessionQualifier =
-                sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    return getConnectionImpl(appName, sessionQualifier, context);
+//    String sessionQualifier =
+//                sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
+    return getConnectionImpl(appName, sessionGroupQualifier, context);
   }
 
   @Override
   public void removeSessionGroupInstanceConnection(String appName,
                                                      String sessionGroupQualifier,
                                                    int instanceQualifier) {
-    String sessionQualifier = sessionGroupQualifier + GROUP_TYPE_DIVIDER +
-            Integer.toString(instanceQualifier);
+//    String sessionQualifier = sessionGroupQualifier + GROUP_TYPE_DIVIDER +
+//            Integer.toString(instanceQualifier);
   }
 
   @Override

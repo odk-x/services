@@ -25,12 +25,13 @@ import org.opendatakit.database.service.OdkDatabaseService;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AndroidConvOdkConnection implements OdkConnectionInterface{
+public final class AndroidConvOdkConnection implements OdkConnectionInterface{
   final Object mutex = new Object();
   /**
    * Reference count is pre-incremented to account for:
@@ -59,39 +60,17 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
    */
   private synchronized AndroidConvDBHelper getDbHelper(Context context, String appName, String dbFilePath) {
 
-    try {
-      ODKFileUtils.verifyExternalStorageAvailability();
-      ODKFileUtils.assertDirectoryStructure(appName);
-    } catch ( Exception e ) {
-      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "External storage not available -- purging dbHelpers");
-      dbHelpers.clear();
-      return null;
-    }
-
-    String path = ODKFileUtils.getWebDbFolder(appName);
-    File webDb = new File(path);
-    if ( !webDb.exists() || !webDb.isDirectory()) {
-      ODKFileUtils.assertDirectoryStructure(appName);
-    }
-
-    // the assert above should have created it...
-    if ( !webDb.exists() || !webDb.isDirectory()) {
-      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "webDb directory not available -- purging dbHelpers");
-      dbHelpers.clear();
-      return null;
-    }
-
     AndroidConvDBHelper dbHelper = dbHelpers.get(appName);
     if (dbHelper == null) {
       AndroidConvDBHelper h = new AndroidConvDBHelper(context, dbFilePath);
       dbHelper = h;
       dbHelpers.put(appName, h);
       // CAL: Do I need to do this?
-      File targetFile = new File(dbFilePath);
-      File parent = targetFile.getParentFile();
-      if(!parent.exists() && !parent.mkdirs()){
-        throw new IllegalStateException("Couldn't create dir: " + parent);
-      }
+//      File targetFile = new File(dbFilePath);
+//      File parent = targetFile.getParentFile();
+//      if(!parent.exists() && !parent.mkdirs()){
+//        throw new IllegalStateException("Couldn't create dir: " + parent);
+//      }
     }
     return dbHelper;
   }
@@ -126,30 +105,31 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
   }
 
   public boolean waitForInitializationComplete() {
-    for(;;) {
-      try {
-        synchronized (initializationMutex) {
-          if ( initializationComplete ) {
-            return initializationStatus;
-          }
-          initializationMutex.wait(100L);
-          if ( initializationComplete ) {
-            return initializationStatus;
-          }
-        }
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "waitForInitializationComplete - spin waiting " + Thread.currentThread().getId());
-    }
+//    for(;;) {
+//      try {
+//        synchronized (initializationMutex) {
+//          if ( initializationComplete ) {
+//            return initializationStatus;
+//          }
+//          initializationMutex.wait(100L);
+//          if ( initializationComplete ) {
+//            return initializationStatus;
+//          }
+//        }
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "waitForInitializationComplete - spin waiting " + Thread.currentThread().getId());
+    return true;
+//    }
   }
 
   public void signalInitializationComplete(boolean outcome) {
-    synchronized (initializationMutex) {
-      initializationStatus = outcome;
-      initializationComplete = true;
-      initializationMutex.notifyAll();
-    }
+//    synchronized (initializationMutex) {
+//      initializationStatus = outcome;
+//      initializationComplete = true;
+//      initializationMutex.notifyAll();
+//    }
   }
 
   public String getAppName() {
@@ -188,17 +168,18 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
   }
 
   public boolean isOpen() {
-    try {
-      synchronized (mutex) {
-        return db.isOpen();
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
+//    try {
+//      synchronized (mutex) {
+//        return db.isOpen();
+//      }
+//    } catch ( Throwable t ) {
+//      if ( t instanceof SQLiteException ) {
+//        throw t;
+//      } else {
+//        throw new SQLiteException("unexpected", t);
+//      }
+//    }
+    return true;
   }
 
   protected void finalize() throws Throwable {
@@ -209,41 +190,9 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
     throw new IllegalStateException("this method should not be called");
   }
 
-  private void commonWrapUpConnection(String action) throws Throwable {
-    try {
-      if ( isOpen() ) {
-        try {
-          while (inTransaction()) {
-            endTransaction();
-          }
-        } finally {
-          try {
-            synchronized (mutex) {
-            db.close();
-            }
-          } catch ( Throwable t ) {
-            if ( t instanceof SQLiteException ) {
-              throw t;
-            } else {
-              throw new SQLiteException("unexpected", t);
-            }
-          }
-        }
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
-  }
-
   public int getVersion() throws SQLiteException {
     try {
-      synchronized (mutex) {
         return db.getVersion();
-      }
     } catch ( Throwable t ) {
       if ( t instanceof SQLiteException ) {
         throw t;
@@ -255,9 +204,7 @@ public class AndroidConvOdkConnection implements OdkConnectionInterface{
 
   public void setVersion(int version) throws SQLiteException {
     try {
-      synchronized (mutex) {
         db.setVersion(version);
-      }
     } catch ( Throwable t ) {
       if ( t instanceof SQLiteException ) {
         throw t;

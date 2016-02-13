@@ -11,10 +11,10 @@ import java.io.File;
 /**
  * Created by clarice on 1/27/16.
  */
-public class AndroidConvDBHelper extends SQLiteOpenHelper {
+public final class AndroidConvDBHelper extends SQLiteOpenHelper {
 
   public AndroidConvDBHelper(Context context, String dbFilePath) {
-    super(context, dbFilePath , null, 1);
+    super(context, dbFilePath , null, AndroidConvConnectFactory.mNewVersion);
   }
 
   @Override
