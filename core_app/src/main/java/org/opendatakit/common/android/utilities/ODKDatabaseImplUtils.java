@@ -2967,6 +2967,9 @@ public class ODKDatabaseImplUtils {
           t + ": No values to add into table for checkpoint" + tableId);
     }
 
+    // these are all managed in the database layer...
+    // the user should NOT set them...
+
     if (cvValues.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
       throw new IllegalArgumentException(
           t + ": No user supplied savepoint timestamp can be included for a checkpoint");
@@ -2977,14 +2980,33 @@ public class ODKDatabaseImplUtils {
           t + ": No user supplied savepoint type can be included for a checkpoint");
     }
 
+    if (cvValues.containsKey(DataTableColumns.ROW_ETAG)) {
+      throw new IllegalArgumentException(
+          t + ": No user supplied row ETag can be included for a checkpoint");
+    }
+
+    if (cvValues.containsKey(DataTableColumns.SYNC_STATE)) {
+      throw new IllegalArgumentException(
+          t + ": No user supplied sync state can be included for a checkpoint");
+    }
+
     if (cvValues.containsKey(DataTableColumns.CONFLICT_TYPE)) {
       throw new IllegalArgumentException(
           t + ": No user supplied conflict type can be included for a checkpoint");
     }
 
+    if (cvValues.containsKey(DataTableColumns.FILTER_VALUE)) {
+      throw new IllegalArgumentException(
+          t + ": No user supplied filter value can be included for a checkpoint");
+    }
+
+    if (cvValues.containsKey(DataTableColumns.FILTER_TYPE)) {
+      throw new IllegalArgumentException(
+          t + ": No user supplied filter type can be included for a checkpoint");
+    }
+
     // If a rowId is specified, a cursor will be needed to
-    // get the current row to create a checkpoint with the relevant
-    // data
+    // get the current row to create a checkpoint with the relevant data
     Cursor c = null;
     try {
       // Allow the user to pass in no rowId if this is the first
@@ -2994,6 +3016,7 @@ public class ODKDatabaseImplUtils {
         ContentValues currValues = new ContentValues();
         currValues.putAll(cvValues);
         currValues.put(DataTableColumns._ID, rowIdToUse);
+        currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
         return;
       }
@@ -3012,6 +3035,7 @@ public class ODKDatabaseImplUtils {
       // Inserting a checkpoint for the first time
       if (c.getCount() <= 0) {
         cvValues.put(DataTableColumns._ID, rowId);
+        cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues);
         return;
       } else {
@@ -3040,12 +3064,35 @@ public class ODKDatabaseImplUtils {
             continue;
           }
 
-          if (c.isNull(i) || name.equals(DataTableColumns.SAVEPOINT_TIMESTAMP) ||
-              name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
+          // omitting savepoint timestamp will generate a new timestamp.
+          if (name.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
+            continue;
+          }
+
+          // set savepoint type to null to mark this as a checkpoint
+          if (name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
             currValues.putNull(name);
             continue;
           }
 
+          // sync state (a non-null field) should either remain 'new_row'
+          // or be set to 'changed' for all other existing values.
+          if (name.equals(DataTableColumns.SYNC_STATE)) {
+            String priorState = c.getString(i);
+            if ( priorState.equals(SyncState.new_row.name()) ) {
+              currValues.put(name, SyncState.new_row.name());
+            } else {
+              currValues.put(name, SyncState.changed.name());
+            }
+            continue;
+          }
+
+          if (c.isNull(i)) {
+            currValues.putNull(name);
+            continue;
+          }
+
+          // otherwise, just copy the values over...
           Class<?> theClass = ODKCursorUtils.getIndexDataType(c, i);
           Object object = ODKCursorUtils.getIndexAsType(c, theClass, i);
           insertValueIntoContentValues(currValues, theClass, name, object);
