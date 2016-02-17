@@ -61,6 +61,25 @@ public class KeyValueStoreUtils {
       }
    }
 
+  public static Long getLong(String appName,
+      KeyValueStoreEntry entry) throws IllegalArgumentException {
+    if (entry == null) {
+      return null;
+    }
+    if (!entry.type.equals(ElementDataType.integer.name())) {
+      throw new IllegalArgumentException("requested int entry for " +
+          "key: " + entry.key + ", but the corresponding entry in the store was " +
+          "not of type: " + ElementDataType.integer.name());
+    }
+    try {
+      return Long.parseLong(entry.value);
+    } catch ( NumberFormatException e ) {
+      throw new IllegalArgumentException("requested int entry for " +
+          "key: " + entry.key + ", but the value in the store failed to " +
+          "parse to type: " + ElementDataType.integer.name());
+    }
+  }
+
    public static Integer getInteger(String appName,
        KeyValueStoreEntry entry) throws IllegalArgumentException {
       if (entry == null) {

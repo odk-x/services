@@ -24,6 +24,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
  * This represents a single row of data in a table.
@@ -132,6 +133,9 @@ public final class RawRow implements Parcelable {
       } else if (clazz == HashMap.class) {
         // json deserialization of an object
         return (T) ODKFileUtils.mapper.readValue(value, HashMap.class);
+      } else if (clazz == TreeMap.class) {
+        // json deserialization of an object
+        return (T) ODKFileUtils.mapper.readValue(value, TreeMap.class);
       } else {
         throw new IllegalStateException("Unexpected data type in SQLite table");
       }
