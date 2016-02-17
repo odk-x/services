@@ -45,21 +45,25 @@ public class DataTableColumns implements BaseColumns {
   public static final String FILTER_VALUE = TableConstants.FILTER_VALUE;
 
   /**
-   * (_savepoint_timestamp, _savepoint_creator, _savepoint_type, _form_id, _locale)
-   * are the tuple written and managed by ODK Survey when a record is updated. ODK
-   * Tables needs to update these appropriately when a cell is directly edited based
-   * upon whether or not the table is 'form-managed' or not.
+   * (_savepoint_timestamp, _savepoint_type)
+   * are managed by the database layer based upon the OdkDbInterface methods being
+   * called to update a record.
    *
-   * <p>_savepoint_timestamp is a string representation in the form of</p>
-   * <pre>YYYYMMDDHHMMSS.nnnnnnnnn</pre>  
-   * <p>in the UTC timezone. See</p> 
+   * <p>_savepoint_timestamp is an iso8601-style UTC timestamp with nanosecond resolution.</p>
    * <ul><li>String TableConstants.nanoSecondsFromMillis(Long)</li>
    * <li>Long TableConstants.milliSecondsFromNanos(String)</li></ul>
    * <p>For converting to and from this string representation.</p>
    */
   public static final String SAVEPOINT_TIMESTAMP = TableConstants.SAVEPOINT_TIMESTAMP;
-  public static final String SAVEPOINT_CREATOR = TableConstants.SAVEPOINT_CREATOR;
   public static final String SAVEPOINT_TYPE = TableConstants.SAVEPOINT_TYPE;
+
+  /**
+   * (_savepoint_creator, _form_id, _locale)
+   * are the tuple written and managed by ODK Survey when a record is updated.
+   * ODK Tables and other clients need to update these appropriately when the
+   * row is modified.
+   */
+  public static final String SAVEPOINT_CREATOR = TableConstants.SAVEPOINT_CREATOR;
   public static final String FORM_ID = TableConstants.FORM_ID;
   public static final String LOCALE = TableConstants.LOCALE;
 
