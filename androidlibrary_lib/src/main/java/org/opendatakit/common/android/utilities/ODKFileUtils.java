@@ -300,6 +300,15 @@ public class ODKFileUtils {
         }
       }
     }
+    // and create an empty .nomedia file
+    File nomedia = new File(getAppFolder(appName), ".nomedia");
+    try {
+      nomedia.createNewFile();
+    } catch (IOException ex) {
+      RuntimeException e = new RuntimeException("Cannot create .nomedia in app directory: " +
+          ex.toString());
+      throw e;
+    }
   }
 
   public static void assertConfiguredSurveyApp(String appName, String apkVersion) {
