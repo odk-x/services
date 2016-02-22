@@ -401,7 +401,7 @@ public class ColumnDefinition implements Comparable<ColumnDefinition> {
     jsonSchema.put(JSON_SCHEMA_TYPE, ElementDataType.string.name());
     jsonSchema.put(JSON_SCHEMA_ELEMENT_SET, JSON_SCHEMA_INSTANCE_METADATA_VALUE);
     jsonSchema.put(JSON_SCHEMA_IS_NOT_NULLABLE, Boolean.TRUE);
-    jsonSchema.put(JSON_SCHEMA_DEFAULT, SyncState.new_row.name());
+    // don't force a default value -- the database layer handles sync state initialization itself.
     jsonSchema.put(JSON_SCHEMA_ELEMENT_KEY, DataTableColumns.SYNC_STATE);
     jsonSchema.put(JSON_SCHEMA_ELEMENT_NAME, DataTableColumns.SYNC_STATE);
     jsonSchema.put(JSON_SCHEMA_ELEMENT_PATH, DataTableColumns.SYNC_STATE);
