@@ -20,6 +20,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import org.opendatakit.core.R;
 
 public final class SyncNotification {
   private static final String LOGTAG = SyncNotification.class.getSimpleName();
@@ -50,7 +51,7 @@ public final class SyncNotification {
     this.updateText = text;
     builder.setContentTitle("ODK syncing " + appName).setContentText(text).setAutoCancel(false)
         .setOngoing(true);
-    builder.setSmallIcon(android.R.drawable.ic_popup_sync);
+    builder.setSmallIcon(R.drawable.ic_cached_white_24dp);
     builder.setProgress(maxProgress, progress, indeterminateProgress);
     Notification syncNotif = builder.getNotification();
 
@@ -76,7 +77,7 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle("ODK SYNC ERROR " + appName).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
+    finalBuilder.setSmallIcon(R.drawable.ic_backup_white_24dp);
 
     Notification syncNotif = finalBuilder.getNotification();
 
@@ -97,7 +98,7 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle("ODK SYNC SUCESS " + appName).setContentText(updateText)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
+    finalBuilder.setSmallIcon(R.drawable.ic_backup_white_24dp);
 
     Notification syncNotif = finalBuilder.getNotification();
 
