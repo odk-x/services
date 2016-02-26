@@ -79,7 +79,7 @@ public class SyncFragment extends Fragment {
   private Spinner accountListSpinner;
 
   private Spinner syncInstanceAttachmentsSpinner;
-  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.UPLOAD;
+  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
 
   //private TextView progressState;
   //private TextView progressMessage;
