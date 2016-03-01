@@ -16,7 +16,7 @@
 package org.opendatakit.webkitserver;
 
 public class WebkitServerConsts {
-  public static final String WEBKITSERVER_SERVICE_PACKAGE = "org.opendatakit.core";
+  public static final String WEBKITSERVER_SERVICE_PACKAGE = "org.opendatakit.services";
   public static final String WEBKITSERVER_SERVICE_CLASS = "org.opendatakit.webkitserver.service.OdkWebkitServerService";
 
   public static final String HOSTNAME = "localhost";

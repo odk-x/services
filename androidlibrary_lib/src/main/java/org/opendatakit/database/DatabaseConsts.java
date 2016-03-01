@@ -16,7 +16,7 @@
 package org.opendatakit.database;
 
 public class DatabaseConsts {
-	public static final String DATABASE_SERVICE_PACKAGE = "org.opendatakit.core";
+	public static final String DATABASE_SERVICE_PACKAGE = "org.opendatakit.services";
 	public static final String DATABASE_SERVICE_CLASS = "org.opendatakit.database.service.OdkDatabaseService";
 
 }

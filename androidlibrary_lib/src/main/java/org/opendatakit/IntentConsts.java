@@ -30,7 +30,7 @@ public class IntentConsts {
    * <li>INTENT_KEY_INSTANCE_ID (optional)</li></ol>
    */
   public class ResolveCheckpoint {
-    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String APPLICATION_NAME = "org.opendatakit.services";
     public static final String ACTIVITY_NAME =
         "org.opendatakit.resolve.checkpoint.CheckpointResolutionActivity";
   }
@@ -42,7 +42,7 @@ public class IntentConsts {
    * <li>INTENT_KEY_INSTANCE_ID (optional)</li></ol>
    */
   public class ResolveConflict {
-    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String APPLICATION_NAME = "org.opendatakit.services";
     public static final String ACTIVITY_NAME =
         "org.opendatakit.resolve.conflict.ConflictResolutionActivity";
   }
@@ -52,7 +52,7 @@ public class IntentConsts {
    * <ol><li>INTENT_KEY_APP_NAME</li></ol>
    */
   public class Sync {
-    public static final String APPLICATION_NAME = "org.opendatakit.core";
+    public static final String APPLICATION_NAME = "org.opendatakit.services";
     public static final String ACTIVITY_NAME =
         "org.opendatakit.sync.activities.SyncActivity";
   }
