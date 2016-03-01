@@ -12,23 +12,22 @@
  * the License.
  */
 
-package org.opendatakit.core;
+package org.opendatakit.services;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.util.Log;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.utilities.WebLogger;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import org.opendatakit.sync.activities.SyncActivity;
 
 public class MainActivity extends Activity implements IAppAwareActivity {

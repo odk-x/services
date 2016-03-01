@@ -15,7 +15,10 @@
  */
 package org.opendatakit.resolve.checkpoint;
 
-import android.app.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ListFragment;
+import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,17 +30,24 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.resolve.views.components.*;
+import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
+import org.opendatakit.resolve.views.components.Resolution;
+import org.opendatakit.resolve.views.components.ResolveActionList;
+import org.opendatakit.resolve.views.components.ResolveActionType;
+import org.opendatakit.services.R;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  * @author mitchellsundt@gmail.com

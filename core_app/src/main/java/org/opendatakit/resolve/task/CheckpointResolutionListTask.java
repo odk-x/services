@@ -3,14 +3,15 @@ package org.opendatakit.resolve.task;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
+
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.listener.ResolutionListener;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
+import org.opendatakit.services.R;
 
 import java.util.UUID;
 

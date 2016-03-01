@@ -30,21 +30,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.fragment.ProgressDialogFragment;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.listener.ResolutionListener;
 import org.opendatakit.resolve.task.CheckpointResolutionListTask;
-import org.opendatakit.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
+import org.opendatakit.services.R;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * @author mitchellsundt@gmail.com

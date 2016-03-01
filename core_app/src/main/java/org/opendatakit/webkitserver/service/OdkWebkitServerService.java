@@ -15,15 +15,14 @@
  */
 package org.opendatakit.webkitserver.service;
 
-import java.io.IOException;
-
-import org.opendatakit.core.application.Core;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+
+import java.io.IOException;
+
 import fi.iki.elonen.SimpleWebServer;
 
 public class OdkWebkitServerService extends Service {

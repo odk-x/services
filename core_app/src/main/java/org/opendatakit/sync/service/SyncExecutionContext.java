@@ -22,12 +22,19 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.NameUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -37,13 +44,6 @@ import org.opendatakit.sync.service.data.SynchronizationResult.Status;
 import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
-import org.opendatakit.sync.service.SyncNotification;
-import org.opendatakit.sync.service.SyncProgressState;
-
-import android.os.RemoteException;
-
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -179,7 +179,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
       odkDbHandle = getDatabaseService().openDatabase(appName);
     }
     if ( odkDbHandle == null ) {
-      throw new IllegalStateException("Unable to obtain database handle from Core Services!");
+      throw new IllegalStateException("Unable to obtain database handle from Services Services!");
     }
     ++refCount;
     return odkDbHandle;

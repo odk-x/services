@@ -30,15 +30,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.opendatakit.IntentConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.resolve.views.components.*;
+import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
+import org.opendatakit.resolve.views.components.Resolution;
+import org.opendatakit.resolve.views.components.ResolveActionList;
+import org.opendatakit.services.R;
 
 import java.util.HashMap;
 import java.util.Map;

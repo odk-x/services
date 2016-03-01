@@ -20,8 +20,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-
 import android.util.Log;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -42,9 +42,14 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.logic.PropertyManager;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.EncryptionUtils;
 import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
-import org.opendatakit.core.application.Core;
+import org.opendatakit.common.android.utilities.FileSet;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

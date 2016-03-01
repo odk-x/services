@@ -15,25 +15,25 @@
  */
 package org.opendatakit.sync.service;
 
-import java.util.Arrays;
-import java.util.List;
+import android.app.Service;
 
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.R;
+import org.opendatakit.services.R;
 import org.opendatakit.sync.service.data.SynchronizationResult;
 import org.opendatakit.sync.service.data.SynchronizationResult.Status;
 import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
-
-import android.app.Service;
 import org.opendatakit.sync.service.logic.AggregateSynchronizer;
 import org.opendatakit.sync.service.logic.ProcessAppAndTableLevelChanges;
 import org.opendatakit.sync.service.logic.ProcessRowDataChanges;
 import org.opendatakit.sync.service.logic.Synchronizer;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class AppSynchronizer {
 

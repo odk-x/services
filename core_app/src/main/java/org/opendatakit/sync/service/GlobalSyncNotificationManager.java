@@ -15,16 +15,16 @@
  */
 package org.opendatakit.sync.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.core.R;
-import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+
+import org.opendatakit.services.R;
+import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class GlobalSyncNotificationManager {
 
@@ -121,7 +121,7 @@ public final class GlobalSyncNotificationManager {
     builder.setTicker("ODK Syncing").setContentTitle("ODK Sync")
         .setContentText("ODK is syncing an Application").setWhen(System.currentTimeMillis())
         .setAutoCancel(false).setOngoing(true).setContentIntent(pendIntent)
-        .setSmallIcon(R.drawable.odk_sync);
+            .setSmallIcon(R.drawable.odk_services);
 
     Notification runningNotification = builder.getNotification();
     runningNotification.flags |= Notification.FLAG_NO_CLEAR;

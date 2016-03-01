@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.opendatakit.core">
+    package="org.opendatakit.services">
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -8,15 +8,18 @@
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
 
-    <permission-tree android:icon="@drawable/odk_core"
+    <permission-tree
+        android:icon="@drawable/odk_services"
                      android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.sync" />
-    
-    <permission-tree android:icon="@drawable/odk_core"
+
+    <permission-tree
+        android:icon="@drawable/odk_services"
                      android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.database" />
-    
-    <permission-tree android:icon="@drawable/odk_core"
+
+    <permission-tree
+        android:icon="@drawable/odk_services"
                      android:label="@string/core_permission_tree"
                      android:name="org.opendatakit.webkitserver" />
     
@@ -33,12 +36,12 @@
                 android:protectionLevel="signature"></permission>
 
     <application
-        android:name="org.opendatakit.core.application.Core"
+        android:name="org.opendatakit.services.application.Services"
         android:allowBackup="true"
         android:largeHeap="true"
         android:installLocation="auto"
-        android:icon="@drawable/odk_core"
-        android:logo="@drawable/odk_ab_core"
+        android:icon="@drawable/odk_services"
+        android:logo="@drawable/odk_services"
         android:label="@string/app_name"
         android:theme="@style/Opendatakit" >
         <service android:name="org.opendatakit.webkitserver.service.OdkWebkitServerService" 

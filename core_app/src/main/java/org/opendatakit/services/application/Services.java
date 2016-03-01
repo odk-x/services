@@ -12,13 +12,13 @@
  * the License.
  */
 
-package org.opendatakit.core.application;
+package org.opendatakit.services.application;
 
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.core.R;
+import org.opendatakit.services.R;
 
-public class Core extends AppAwareApplication {
+public class Services extends AppAwareApplication {
 
   @Override public int getApkDisplayNameResourceId() {
     return R.string.app_name;

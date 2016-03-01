@@ -14,14 +14,7 @@
 
 package org.opendatakit.sync.service.logic;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import android.os.RemoteException;
 
 import org.apache.http.HttpStatus;
 import org.apache.wink.client.ClientWebException;
@@ -39,19 +32,26 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.PropertiesFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.core.R;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.services.R;
+import org.opendatakit.sync.service.OdkSyncService;
 import org.opendatakit.sync.service.SyncExecutionContext;
+import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SynchronizationResult.Status;
-import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.SchemaMismatchException;
-import org.opendatakit.sync.service.OdkSyncService;
-import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 
-import android.os.RemoteException;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Isolate the app-level and table-level synchronization steps
