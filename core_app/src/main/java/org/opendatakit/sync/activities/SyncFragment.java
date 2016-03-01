@@ -174,7 +174,7 @@ public class SyncFragment extends Fragment {
       // Otherwise, set up a bind and attempt to re-tickle...
       Log.i(TAG, "Attempting bind to Database service");
       Intent bind_intent = new Intent();
-      bind_intent.setClassName("org.opendatakit.core",
+      bind_intent.setClassName("org.opendatakit.services",
           "org.opendatakit.sync.service.OdkSyncService");
 
       synchronized (odkSyncInterfaceBindComplete) {
