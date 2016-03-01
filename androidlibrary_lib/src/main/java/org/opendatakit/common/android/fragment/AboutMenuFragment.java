@@ -60,8 +60,8 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
     View aboutMenuView = inflater.inflate(ID, container, false);
 
     TextView versionBox = (TextView) aboutMenuView.findViewById(R.id.versionText);
-    versionBox.setText(((AppAwareApplication) getActivity().getApplication()).getVersionedAppName
-        ());
+    versionBox.setText(((AppAwareApplication) getActivity().getApplication())
+        .getVersionedAppName());
 
     mTextView = (TextView) aboutMenuView.findViewById(R.id.text1);
     mTextView.setAutoLinkMask(Linkify.WEB_URLS);

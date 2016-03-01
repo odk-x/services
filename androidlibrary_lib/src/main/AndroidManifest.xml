@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.opendatakit.androidlibrary"
-    android:versionCode="127"
-    android:versionName="2.0">
+    package="org.opendatakit.androidlibrary">
     
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />

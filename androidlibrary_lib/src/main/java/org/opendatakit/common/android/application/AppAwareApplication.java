@@ -115,9 +115,8 @@ public abstract class AppAwareApplication extends Application {
     try {
       PackageInfo pinfo;
       pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
       String versionName = pinfo.versionName;
-      versionDetail = " " + versionName + " (rev " + versionNumber + ")";
+      versionDetail = " " + versionName;
     } catch (NameNotFoundException e) {
       e.printStackTrace();
     }
