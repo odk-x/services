@@ -300,7 +300,7 @@ public class SyncFragment extends Fragment {
     ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
         getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
     syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
-    syncInstanceAttachmentsSpinner.setSelection(1);
+    syncInstanceAttachmentsSpinner.setSelection(0);
 
     // Set saved server url
     String serverUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
