@@ -10,17 +10,17 @@
 
     <permission-tree
         android:icon="@drawable/odk_services"
-                     android:label="@string/core_permission_tree"
+                     android:label="@string/services_permission_tree"
                      android:name="org.opendatakit.sync" />
 
     <permission-tree
         android:icon="@drawable/odk_services"
-                     android:label="@string/core_permission_tree"
+                     android:label="@string/services_permission_tree"
                      android:name="org.opendatakit.database" />
 
     <permission-tree
         android:icon="@drawable/odk_services"
-                     android:label="@string/core_permission_tree"
+                     android:label="@string/services_permission_tree"
                      android:name="org.opendatakit.webkitserver" />
     
     <permission android:name="org.opendatakit.webkitserver.RUN_WEBSERVER" 

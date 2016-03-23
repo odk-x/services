@@ -22,7 +22,7 @@ android {
     buildToolsVersion(buildTools)
 
     defaultConfig {
-        applicationId(groupId + coreName)
+        applicationId(groupId + servicesName)
         minSdkVersion(minVersion)
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)

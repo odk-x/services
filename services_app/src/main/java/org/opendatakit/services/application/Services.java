@@ -27,7 +27,7 @@ public class Services extends AppAwareApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    PropertiesSingleton.setStartCoreServices(this);
+    PropertiesSingleton.setStartServices(this);
   }
 
 }
