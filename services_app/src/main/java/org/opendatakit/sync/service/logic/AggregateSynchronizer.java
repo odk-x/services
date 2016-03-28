@@ -1677,7 +1677,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // 3) Create a list of files to that need to be uploaded to or downloaded from the server.
       List<String> localRowPathUris = localRow.getUriFragments();
       List<CommonFileAttachmentTerms> filesToUpload = new ArrayList<CommonFileAttachmentTerms>();
-      List<CommonFileAttachmentTerms> filesToDownload = new ArrayList<CommonFileAttachmentTerms>();
+      HashMap<CommonFileAttachmentTerms, Long> filesToDownloadSizes = new HashMap<>();
 
       // First, iterate over the files that exist on the server, noting any that are missing
       // or changed on either end
@@ -1692,7 +1692,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
         if (!cat.localFile.exists()) {
           // File exists on the server but not locally; queue it for download
-          filesToDownload.add(cat);
+          filesToDownloadSizes.put(cat, entry.contentLength);
           continue;
         }
 
@@ -1704,7 +1704,7 @@ public class AggregateSynchronizer implements Synchronizer {
         } else if (!localMd5.equals(entry.md5hash)) {
           // Found, but it is wrong locally, so we need to pull it
           log.e(LOGTAG, "Put attachments: md5Hash on server does not match local file hash!");
-          filesToDownload.add(cat);
+          filesToDownloadSizes.put(cat, entry.contentLength);
           continue;
         } else {
           // Server matches local; don't upload or download
@@ -1733,7 +1733,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
 
       // 4) Split that list of files to upload into 10MB batches and upload those to the server
-      if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
+      if ((attachmentState.equals(SyncAttachmentState.SYNC) ||
           attachmentState.equals(SyncAttachmentState.UPLOAD))) {
         // If we are not set to upload files, then don't.
         fullySynced = false;
@@ -1766,10 +1766,30 @@ public class AggregateSynchronizer implements Synchronizer {
       // 5) Download the files from the server TODO: Batch these calls into 10MB chunks
       if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
           attachmentState.equals(SyncAttachmentState.DOWNLOAD))) {
-      } else if (filesToDownload.isEmpty()){
+      } else if (filesToDownloadSizes.isEmpty()){
         log.i(LOGTAG, "Put attachments: no files to fetch from server -- they are all synced");
       } else {
-        fullySynced &= downloadFileBatches(filesToDownload, serverInstanceFileUri, instanceId,
+        long batchSize = 0;
+        List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
+
+        for (CommonFileAttachmentTerms fileAttachment : filesToDownloadSizes.keySet()) {
+
+          // Check if adding the file exceeds the batch limit. If so, download the current batch
+          // and start a new one.
+          // Note : If the batch is empty, then this is just one giant file and it will get
+          // downloaded on the next iteration.
+          if (batchSize + filesToDownloadSizes.get(fileAttachment) > MAX_BATCH_SIZE &&
+              !batch.isEmpty()) {
+            fullySynced &= downloadBatch(batch, serverInstanceFileUri, instanceId, tableId);
+            batch.clear();
+            batchSize = 0;
+          }
+
+          batch.add(fileAttachment);
+          batchSize += filesToDownloadSizes.get(fileAttachment);
+        }
+
+        fullySynced &= downloadBatch(batch, serverInstanceFileUri, instanceId,
             tableId);
       }
 
@@ -1839,7 +1859,7 @@ public class AggregateSynchronizer implements Synchronizer {
     return true;
   }
 
-  private boolean downloadFileBatches(List<CommonFileAttachmentTerms> filesToDownload,
+  private boolean downloadBatch(List<CommonFileAttachmentTerms> filesToDownload,
       String serverInstanceFileUri, String instanceId, String tableId) throws Exception {
     Resource rsc;
     boolean downloadedAllFiles = true;
