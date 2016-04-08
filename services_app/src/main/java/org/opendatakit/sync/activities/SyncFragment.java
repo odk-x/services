@@ -90,7 +90,8 @@ public class SyncFragment extends Fragment {
   private EditText uriField;
   private Spinner accountListSpinner;
 
-  private Spinner syncInstanceAttachmentsSpinner;
+  // TODO: Add this back when it works
+  //private Spinner syncInstanceAttachmentsSpinner;
   private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
 
   //private TextView progressState;
@@ -145,7 +146,9 @@ public class SyncFragment extends Fragment {
       if (syncServiceInterface != null) {
         switch (this.syncAction) {
         case SYNC:
-          switch (syncInstanceAttachmentsSpinner.getSelectedItemPosition()) {
+          // TODO: Add this back when it works
+          //switch (syncInstanceAttachmentsSpinner.getSelectedItemPosition()) {
+          switch(0) {
           case 0:
             syncAttachmentState = SyncAttachmentState.SYNC;
             break;
@@ -227,7 +230,7 @@ public class SyncFragment extends Fragment {
     View view = inflater.inflate(ID, container, false);
     uriField = (EditText) view.findViewById(R.id.sync_uri_field);
     accountListSpinner = (Spinner) view.findViewById(R.id.sync_account_list_spinner);
-    syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
+    //syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
 
     // TODO: Hiding these until we figure out what Sync's UI should be
     //progressState = (TextView) view.findViewById(R.id.sync_progress_state);
@@ -297,10 +300,11 @@ public class SyncFragment extends Fragment {
         android.R.layout.select_dialog_item, accountNames);
     accountListSpinner.setAdapter(accountListAapter);
 
-    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
-        getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
-    syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
-    syncInstanceAttachmentsSpinner.setSelection(0);
+    // TODO: Add this back when you can make it work
+    //ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
+    //    getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
+    //syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
+    //syncInstanceAttachmentsSpinner.setSelection(0);
 
     // Set saved server url
     String serverUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
