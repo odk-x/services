@@ -27,6 +27,7 @@ import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.sync.activities.SyncActivity;
 
@@ -60,7 +61,7 @@ public class MainActivity extends Activity implements IAppAwareActivity {
     // when we come back.
     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null) {
-      mAppName = "tables";
+      mAppName = ODKFileUtils.getOdkDefaultAppName();
 //      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
 //      setResult(Activity.RESULT_CANCELED);
 //      finish();
