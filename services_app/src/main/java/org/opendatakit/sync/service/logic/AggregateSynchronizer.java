@@ -1733,8 +1733,10 @@ public class AggregateSynchronizer implements Synchronizer {
       }
 
       // 4) Split that list of files to upload into 10MB batches and upload those to the server
-      if ((attachmentState.equals(SyncAttachmentState.SYNC) ||
-          attachmentState.equals(SyncAttachmentState.UPLOAD))) {
+      // TODO: Fix attachment state bug. For now just always sync all attachments
+      //if ((attachmentState.equals(SyncAttachmentState.SYNC) ||
+      //    attachmentState.equals(SyncAttachmentState.UPLOAD))) {
+      if (false) {
         // If we are not set to upload files, then don't.
         fullySynced = false;
       } else if (filesToUpload.isEmpty()) {
@@ -1763,9 +1765,11 @@ public class AggregateSynchronizer implements Synchronizer {
 
       }
 
-      // 5) Download the files from the server TODO: Batch these calls into 10MB chunks
-      if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
-          attachmentState.equals(SyncAttachmentState.DOWNLOAD))) {
+      // 5) Download the files from the server
+      // TODO: Fix attachment state bug. For now just always sync all attachments
+      //if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
+      //    attachmentState.equals(SyncAttachmentState.DOWNLOAD))) {
+      if (false) {
       } else if (filesToDownloadSizes.isEmpty()){
         log.i(LOGTAG, "Put attachments: no files to fetch from server -- they are all synced");
       } else {

@@ -20,14 +20,20 @@ import org.opendatakit.services.R;
 
 public class Services extends AppAwareApplication {
 
+  private static Services singleton = null;
+
   @Override public int getApkDisplayNameResourceId() {
     return R.string.app_name;
   }
 
   @Override
   public void onCreate() {
+    if (singleton == null) {
+      PropertiesSingleton.setToolStartedProperty(this.getBaseContext(), this.getToolName());
+    }
+    singleton = this;
+
     super.onCreate();
-    PropertiesSingleton.setStartServices(this);
   }
 
 }
