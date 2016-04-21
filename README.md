@@ -1,8 +1,9 @@
-# core
+# services
 
 This project is __*actively maintained*__
 
-It is part of the ODK 2.0 Android tools suite.
+It is part of the ODK 2.0 Android tools suite.  
+Prior to rev 200, this repo was the __*core*__ repo.
 
 It is an APK that provides core services (database, content providers, local webserver) used by all the other ODK 2.0 tools.
 
@@ -18,11 +19,11 @@ General instructions for setting up an ODK 2.0 environment can be found at our [
 
 Install [Android Studio](http://developer.android.com/tools/studio/index.html) and the [SDK](http://developer.android.com/sdk/index.html#Other).
 
-This project depends on the ODK [androidlibrary](https://github.com/opendatakit/androidlibrary) project; its binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify that project yourself, you must clone it into the same parent directory as core. You directory stucture should resemble the following:
+This project depends on the ODK [androidlibrary](https://github.com/opendatakit/androidlibrary) project; its binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify that project yourself, you must clone it into the same parent directory as services. You directory stucture should resemble the following:
 
         |-- odk
 
-            |-- androidcommon
+            |-- services
 
             |-- androidlibrary
 
