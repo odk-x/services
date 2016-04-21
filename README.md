@@ -43,7 +43,7 @@ If the project builds properly, it should be able to run on an Android device wi
 ## Source tree information
 Quick description of the content in the root folder:
 
-    |-- core_app     -- Source tree for Java components
+    |-- services_app     -- Source tree for Java components
 
         |-- src
 
@@ -55,11 +55,7 @@ Quick description of the content in the root folder:
 
                     |-- org
 
-                        |-- opendatakit
-
-                            |-- core
-
-                                |-- android     -- The most relevant Java code lives here
+                        |-- opendatakit  -- The most relevant Java code lives here
 
             |-- androidTest     -- Source tree for Android implementation tests
             |-- test            -- Source tree for Java JUnit tests
