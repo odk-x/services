@@ -187,9 +187,27 @@ public class SimpleWebServer extends NanoHTTPD {
               }
 
               if ( nextSlash == -1 ) {
-                // favicon.ico
-                WebLogger.getLogger("survey").w(t,b.toString());
-                return getNotFoundResponse();
+                 // this is likely the /favicon.ico request
+                 //
+                 // use the referer to retrieve the appname
+                 // adjust uri to be /appname/config/uri
+                 //
+                 // i.e., yielding /default/config/favicon.ico
+                 //
+                 String referer = header.get("referer");
+                 if ( referer == null ) {
+                    WebLogger.getLogger("default").w(t,b.toString());
+                    return getNotFoundResponse();
+                 }
+                 int idx = referer.indexOf("//");
+                 idx = referer.indexOf('/', idx+2);
+                 nextSlash = referer.indexOf('/', idx+1);
+                 String appName = referer.substring(idx+1,nextSlash);
+                 // adjust the uri to be under the config directory of the referer
+                 File file = new File(ODKFileUtils.getConfigFolder(appName), uri.substring(1));
+                 // we expect a leading slash...
+                 uri = "/" + appName + "/" + ODKFileUtils.asUriFragment(appName, file);
+                 nextSlash = uri.indexOf('/', 1);
               }
               String appName = uri.substring(1,nextSlash);
               WebLogger.getLogger(appName).i(t,b.toString());
