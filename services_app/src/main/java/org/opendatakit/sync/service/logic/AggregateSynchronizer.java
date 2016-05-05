@@ -53,18 +53,41 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.httpclientandroidlib.Header;
+import org.opendatakit.httpclientandroidlib.client.methods.HttpRequestBase;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowPending;
+import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.transport.ODKClientApplication;
 import org.opendatakit.sync.service.transport.ReAuthSecurityHandler;
 
+import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
+import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
+import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
+import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.httpclientandroidlib.protocol.BasicHttpContext;
+import org.opendatakit.httpclientandroidlib.client.CookieStore;
+import org.opendatakit.httpclientandroidlib.client.CredentialsProvider;
+import org.opendatakit.httpclientandroidlib.auth.AuthScope;
+import org.opendatakit.httpclientandroidlib.auth.Credentials;
+import org.opendatakit.httpclientandroidlib.auth.UsernamePasswordCredentials;
+import org.opendatakit.httpclientandroidlib.client.config.AuthSchemes;
+import org.opendatakit.httpclientandroidlib.client.protocol.HttpClientContext;
+import org.opendatakit.httpclientandroidlib.config.SocketConfig;
+import org.opendatakit.httpclientandroidlib.client.config.RequestConfig;
+import org.opendatakit.httpclientandroidlib.client.config.CookieSpecs;
+import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
+import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
+import org.opendatakit.httpclientandroidlib.HttpResponse;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -72,14 +95,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,6 +161,14 @@ public class AggregateSynchronizer implements Synchronizer {
   /** Path to the file servlet on the Aggregate server. */
 
   private static final String FORWARD_SLASH = "/";
+
+  private CloseableHttpClient httpClient = null;
+
+  private HttpContext localContext = null;
+
+  private CookieStore cookieStore = null;
+
+  private CredentialsProvider credsProvider = null;
 
   static Map<String, String> mimeMapping;
   static {
@@ -283,10 +317,10 @@ public class AggregateSynchronizer implements Synchronizer {
   }
   /**
    * Simple Resource for all server interactions.
-   * 
+   *
    * @param uri
    * @return
-   * @throws InvalidAuthTokenException 
+   * @throws InvalidAuthTokenException
    */
   private Resource buildBasicResource(URI uri) throws InvalidAuthTokenException {
 
@@ -311,8 +345,83 @@ public class AggregateSynchronizer implements Synchronizer {
         rsc.header("Authorization", "Bearer " + accessToken);
       }
     }
-    
+
     return rsc;
+  }
+
+  /**
+   * Simple Request for all server interactions.
+   * 
+   * @param uri
+   * @param request
+   * @return
+   * @throws InvalidAuthTokenException 
+   */
+  private void buildBasicRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
+
+    String agg_uri = uri.toString();
+    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
+
+    if (uri == null) {
+      throw new IllegalArgumentException("buildBasicRequest: URI cannot be null");
+    }
+
+    if (request == null) {
+      throw new IllegalArgumentException("buildBasicRequest: HttpRequest cannot be null");
+    }
+
+    request.setURI(uri);
+
+    // report our locale... (not currently used by server)
+    request.addHeader("Accept-Language", Locale.getDefault().getLanguage());
+    request.addHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER, ApiConstants.OPEN_DATA_KIT_VERSION);
+    request.addHeader(ApiConstants.ACCEPT_CONTENT_ENCODING_HEADER, ApiConstants.GZIP_CONTENT_ENCODING);
+    request.addHeader(HttpHeaders.USER_AGENT, sc.getUserAgent());
+
+    GregorianCalendar g = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    Date now = new Date();
+    g.setTime(now);
+    SimpleDateFormat formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss zz", Locale.US);
+    formatter.setCalendar(g);
+    request.addHeader(ApiConstants.DATE_HEADER, formatter.format(now));
+
+    // set the access token...
+    // CAL: For now take this out to ensure that we aren't using it
+//    if (accessToken != null && baseUri != null) {
+//      if (uri.getHost().equals(baseUri.getHost()) && uri.getPort() == baseUri.getPort()) {
+//        //rsc.header("Authorization", "Bearer " + accessToken);
+//        request.addHeader("Authorization", "Bearer " + accessToken);
+//      }
+//    }
+  }
+
+  private void buildRequest(URI uri, MediaType contentType, HttpRequestBase request) throws InvalidAuthTokenException {
+
+    buildBasicRequest(uri, request);
+
+    request.addHeader("content-type", contentType.toString());
+
+    // set our preferred response media type to json using quality parameters
+    Map<String, String> mediaTypeParams;
+    // we really like JSON
+    mediaTypeParams = new HashMap<String, String>();
+    mediaTypeParams.put("q", "1.0");
+    MediaType json = new MediaType(MediaType.APPLICATION_JSON_TYPE.getType(),
+            MediaType.APPLICATION_JSON_TYPE.getSubtype(), mediaTypeParams);
+    // don't really want plaintext...
+    mediaTypeParams = new HashMap<String, String>();
+    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
+    mediaTypeParams.put("q", "0.4");
+    MediaType tplainUtf8 = new MediaType(MediaType.TEXT_PLAIN_TYPE.getType(),
+            MediaType.TEXT_PLAIN_TYPE.getSubtype(), mediaTypeParams);
+
+    // accept either json or plain text (no XML to device)
+    //rsc.accept(json, tplainUtf8);
+    request.addHeader("accept", json.toString());
+    request.addHeader("accept", tplainUtf8.toString());
+
+    // set the response entity character set to CharEncoding.UTF_8
+    request.addHeader("Accept-Charset", CharEncoding.UTF_8);
   }
 
   private Resource buildResource(URI uri, MediaType contentType) throws InvalidAuthTokenException {
@@ -368,6 +477,15 @@ public class AggregateSynchronizer implements Synchronizer {
     return rsc;
   }
 
+  private void buildRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
+
+    // select our preferred protocol...
+    MediaType protocolType = MediaType.APPLICATION_JSON_TYPE;
+
+    buildRequest(uri, protocolType, request);
+  }
+
+
   public AggregateSynchronizer(SyncExecutionContext sc) throws
       InvalidAuthTokenException {
     this.sc = sc;
@@ -412,6 +530,55 @@ public class AggregateSynchronizer implements Synchronizer {
     String accessToken = sc.getAccessToken();
     checkAccessToken(accessToken);
     this.accessToken = accessToken;
+
+    // client initialization
+    int CONNECTION_TIMEOUT = 60000;
+
+    // Context
+    // context holds authentication state machine, so it cannot be
+    // shared across independent activities.
+    localContext = new BasicHttpContext();
+
+    cookieStore = new BasicCookieStore();
+    credsProvider = new BasicCredentialsProvider();
+
+    AuthScope a = new AuthScope(this.baseUri.getHost(), -1, null, AuthSchemes.DIGEST);
+
+    // Potentially we should be able to get these from the properties
+    String userName = sc.getODKUsername();
+
+    String password = sc.getODKPassword();
+
+    Credentials c = new UsernamePasswordCredentials(userName, password);
+    credsProvider.setCredentials(a, c);
+
+    localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+    localContext.setAttribute(HttpClientContext.CREDS_PROVIDER, credsProvider);
+
+    SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
+
+    // if possible, bias toward digest auth (may not be in 4.0 beta 2)
+    List<String> targetPreferredAuthSchemes = new ArrayList<String>();
+    targetPreferredAuthSchemes.add(AuthSchemes.DIGEST);
+    targetPreferredAuthSchemes.add(AuthSchemes.BASIC);
+
+    RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+            .setConnectTimeout(CONNECTION_TIMEOUT)
+            // support authenticating
+            .setAuthenticationEnabled(true)
+            // support redirecting to handle http: => https: transition
+            .setRedirectsEnabled(true)
+            // max redirects is set to 4
+            .setMaxRedirects(4)
+            .setCircularRedirectsAllowed(true)
+            .setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
+            .setCookieSpec(CookieSpecs.DEFAULT)
+            .build();
+
+    httpClient = HttpClientBuilder.create()
+            .setDefaultSocketConfig(socketConfig)
+            .setDefaultRequestConfig(requestConfig).build();
+
   }
 
   private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
@@ -821,7 +988,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public boolean syncAppLevelFiles(boolean pushLocalFiles, String serverReportedAppLevelETag, SynchronizerStatus syncStatus)
-      throws ClientWebException, InvalidAuthTokenException {
+      throws ClientWebException, HttpClientWebException, InvalidAuthTokenException {
     // Get the app-level files on the server.
     syncStatus.updateNotification(SyncProgressState.APP_FILES, R.string
             .sync_getting_app_level_manifest,
@@ -1112,7 +1279,98 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   public List<OdkTablesFileManifestEntry> getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
-      throws ClientWebException, InvalidAuthTokenException {
+    throws HttpClientWebException, InvalidAuthTokenException {
+
+    URI fileManifestUri = normalizeUri(sc.getAggregateUri(), getManifestUriFragment());
+    String eTag = null;
+    try {
+      eTag = getManifestSyncETag(fileManifestUri, null);
+    } catch (RemoteException e) {
+      log.printStackTrace(e);
+      log.e(LOGTAG, "database access error (ignoring)");
+    }
+
+    HttpGet request = new HttpGet();
+    buildRequest(fileManifestUri, request);
+
+    // don't short-circuit manifest if we are pushing local files,
+    // as we need to know exactly what is on the server to minimize
+    // transmissions of files being pushed up to the server.
+    if (!pushLocalFiles && eTag != null) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
+      if ( serverReportedAppLevelETag != null && serverReportedAppLevelETag.equals(eTag) ) {
+        // no change -- we can skip the request to the server
+        return null;
+      }
+    }
+
+    HttpResponse response = null;
+    List<OdkTablesFileManifestEntry> theList = null;
+
+    try {
+      if (localContext != null) {
+        response = httpClient.execute(request, localContext);
+      } else {
+        response = httpClient.execute(request);
+      }
+
+      if (response.getStatusLine().getStatusCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        // signal this by returning null;
+        return null;
+      }
+      if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
+        throw new HttpClientWebException(null, response);
+      }
+
+      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
+        throw new HttpClientWebException(null, response);
+      }
+
+      BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity()
+              .getContent(), Charset.forName("UTF-8")));
+      StringBuilder strLine = new StringBuilder();
+      String resLine;
+      while ((resLine = rd.readLine()) != null) {
+        strLine.append(resLine);
+      }
+      String res = strLine.toString();
+
+      // retrieve the manifest...
+      OdkTablesFileManifest manifest;
+
+      manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
+
+      if (manifest != null) {
+        theList = manifest.getFiles();
+      }
+
+      if (theList == null) {
+        theList = Collections.emptyList();
+      }
+
+      // update the manifest ETag record...
+      eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
+      try {
+        updateManifestSyncETag(fileManifestUri, null, eTag);
+      } catch (RemoteException e) {
+        log.printStackTrace(e);
+        log.e(LOGTAG, "database access error (ignoring)");
+      }
+
+    } catch (IOException ioe) {
+      log.e(LOGTAG, "database access error (ignoring)");
+      log.printStackTrace(ioe);
+    } finally {
+      if (request != null) {
+        request.releaseConnection();
+      }
+    }
+    // and return the list of values...
+    return theList;
+  }
+
+  public List<OdkTablesFileManifestEntry> orig_getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
+          throws ClientWebException, InvalidAuthTokenException {
 
     URI fileManifestUri = normalizeUri(sc.getAggregateUri(), getManifestUriFragment());
     String eTag = null;

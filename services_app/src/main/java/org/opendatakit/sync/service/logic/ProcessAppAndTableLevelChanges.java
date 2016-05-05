@@ -40,6 +40,7 @@ import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SynchronizationResult.Status;
 import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
@@ -231,6 +232,17 @@ public class ProcessAppAndTableLevelChanges {
       log.e(TAG,
           "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
       log.printStackTrace(e);
+      return new ArrayList<TableResource>();
+    } catch (HttpClientWebException he) {
+      // TODO: update a synchronization result to report back to them as well.
+      if ( he.getResponse() != null && he.getResponse().getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+        sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
+      } else {
+        sc.setAppLevelStatus(Status.EXCEPTION);
+      }
+      log.e(TAG,
+              "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
+      log.printStackTrace(he);
       return new ArrayList<TableResource>();
     }
 

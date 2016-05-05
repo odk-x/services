@@ -172,6 +172,18 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return props.getProperty(CommonToolProperties.KEY_AUTH);
   }
 
+  public String getODKUsername() {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    return props.getProperty(CommonToolProperties.KEY_PASSWORD);
+  }
+
+  public String getODKPassword() {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    return props.getProperty(CommonToolProperties.KEY_ODK_USER);
+  }
+
   private int refCount = 1;
 
   public synchronized OdkDbHandle getDatabase() throws RemoteException {
