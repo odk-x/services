@@ -53,8 +53,11 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.httpclientandroidlib.Header;
+import org.opendatakit.httpclientandroidlib.HttpEntity;
+import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
+import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpRequestBase;
+import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
@@ -92,6 +95,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1353,12 +1357,12 @@ public class AggregateSynchronizer implements Synchronizer {
       try {
         updateManifestSyncETag(fileManifestUri, null, eTag);
       } catch (RemoteException e) {
+        log.e(LOGTAG, "Error while trying to update the manifest sync etag");
         log.printStackTrace(e);
-        log.e(LOGTAG, "database access error (ignoring)");
       }
 
     } catch (IOException ioe) {
-      log.e(LOGTAG, "database access error (ignoring)");
+      log.e(LOGTAG, "Error while trying to get app level file manifest");
       log.printStackTrace(ioe);
     } finally {
       if (request != null) {
@@ -1556,6 +1560,63 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private boolean uploadConfigFile(File localFile) throws
+          InvalidAuthTokenException {
+    String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
+            localFile);
+    String escapedPath = uriEncodeSegments(pathRelativeToConfigFolder);
+    URI filesUri = normalizeUri(sc.getAggregateUri(), getFilePathURI() + escapedPath);
+    log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
+    String ct = determineContentType(localFile.getName());
+    MediaType contentType = MediaType.valueOf(ct);
+
+    // Change to use httpClient
+    HttpResponse response = null;
+    HttpPost request = new HttpPost();
+    buildRequest(filesUri, contentType, request);
+
+    int size = (int) localFile.length();
+    byte[] bytes = new byte[size];
+    try {
+      BufferedInputStream buf = new BufferedInputStream(new FileInputStream(localFile));
+      buf.read(bytes, 0, bytes.length);
+      buf.close();
+    } catch (FileNotFoundException fnfe) {
+      // TODO Auto-generated catch block
+      fnfe.printStackTrace();
+    } catch (IOException ioe) {
+      // TODO Auto-generated catch block
+      ioe.printStackTrace();
+    }
+
+    HttpEntity entity = new GzipCompressingEntity(new ByteArrayEntity(bytes));
+    request.setEntity(entity);
+
+    try {
+      if (localContext != null) {
+        response = httpClient.execute(request, localContext);
+      } else {
+        response = httpClient.execute(request);
+      }
+    } catch (IOException ioe) {
+      log.e(LOGTAG, "Error while executing post request");
+      log.printStackTrace(ioe);
+    } finally {
+      if (request != null) {
+        request.releaseConnection();
+      }
+    }
+
+    if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
+      return false;
+    }
+    if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean orig_uploadConfigFile(File localFile) throws
       InvalidAuthTokenException {
     String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
         localFile);
