@@ -474,8 +474,7 @@ public class ProcessRowDataChanges {
 
         String[] empty = {};
         localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db,
-            tableId,
-            orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
+            tableId, orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
 
         // TODO: fix this for synced_pending_files
         // We likely need to relax this constraint on the
@@ -607,8 +606,9 @@ public class ProcessRowDataChanges {
               try {
                 db = sc.getDatabase();
                 String[] empty = {};
-                localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db, tableId,
-                    orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
+                localDataTable = sc.getDatabaseService()
+                    .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty,
+                        null, DataTableColumns.ID, "ASC");
               } finally {
                 sc.releaseDatabase(db);
                 db = null;

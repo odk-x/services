@@ -22,37 +22,42 @@ import android.util.Log;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.core.application.Core;
+
+import java.util.*;
 
 public class OdkDatabaseService extends Service {
 
   public static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 
+  // A place to store pieces of large tables or other return values that won't fit across the
+  // AIDL call
+  private static Map<UUID, OdkDbChunk> parceledChunks;
+
   /**
    * change to true expression if you want to debug the database service
    */
   public static void possiblyWaitForDatabaseServiceDebugger() {
-    if ( false ) {
+    if (false) {
       android.os.Debug.waitForDebugger();
       int len = new String("for setting breakpoint").length();
     }
   }
 
   private OdkDatabaseServiceInterface servInterface;
-  
+
   @Override
   public void onCreate() {
     super.onCreate();
     servInterface = new OdkDatabaseServiceInterface(this);
     AndroidConnectFactory.configure();
-
+    parceledChunks = new HashMap<>();
   }
 
   @Override
   public IBinder onBind(Intent intent) {
     possiblyWaitForDatabaseServiceDebugger();
     Log.i(LOGTAG, "onBind -- returning interface.");
-    return servInterface; 
+    return servInterface;
   }
 
   @Override
@@ -61,20 +66,72 @@ public class OdkDatabaseService extends Service {
     super.onUnbind(intent);
     Log.i(LOGTAG, "onUnbind -- releasing interface.");
     // release all non-group instances
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
     return false;
   }
-  
+
   @Override
   public synchronized void onDestroy() {
     Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
     super.onDestroy();
     // release all non-group instances
-    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
+    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
+  }
+
+  /**
+   * Cache the extra data for a return value that exceeds the 1MB limit of an AIDL call.
+   *
+   * @param parceledChunk The extra data to be stored
+   */
+  public static void putParceledChunk(OdkDbChunk parceledChunk) {
+    if (parceledChunk == null) {
+      Log.w(LOGTAG, "Attempted to store a null chunk");
+      return;
+    }
+
+    parceledChunks.put(parceledChunk.getThisID(), parceledChunk);
+  }
+
+  /**
+   * Cache the extra data for a return value that exceeds the 1MB limit of an AIDL call.
+   *
+   * @param chunkList The extra data to be stored
+   */
+  public static void putParceledChunks(List<OdkDbChunk> chunkList) {
+    if (chunkList == null) {
+      Log.e(LOGTAG, "Attempted to store a null chunk list");
+      return;
+    }
+
+    for (OdkDbChunk chunk : chunkList) {
+      parceledChunks.put(chunk.getThisID(), chunk);
+    }
+  }
+
+  /**
+   * Retrieve a cached chunk
+   *
+   * @param id The look up key
+   * @return The chunk
+   */
+  public static OdkDbChunk getParceledChunk(UUID id) {
+    return parceledChunks.get(id);
+  }
+
+  /**
+   * Retrieve and remove a cached chunk
+   *
+   * @param id The look up key
+   * @return The chunk
+   */
+  public static OdkDbChunk removeParceledChunk(UUID id) {
+    return parceledChunks.remove(id);
   }
 
 }
