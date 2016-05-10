@@ -232,4 +232,6 @@
     <string name="admin_tool_tables_settings_summary">Limit non-Admin ability to change Tables-specific Settings</string>
     <string name="change_custom_home_screen">Change use of custom home screen</string>
 
+    <!-- legacy submission logic -->
+    <string name="success">Success</string>
 </resources>
