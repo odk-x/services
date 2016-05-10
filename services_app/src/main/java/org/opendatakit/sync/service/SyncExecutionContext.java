@@ -181,7 +181,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   public String getODKPassword() {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
-    return props.getProperty(CommonToolProperties.KEY_ODK_USER);
+    return props.getProperty(CommonToolProperties.KEY_USERNAME);
   }
 
   private int refCount = 1;

@@ -34,11 +34,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.*;
 
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
@@ -51,14 +47,10 @@ import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.services.R;
+import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.sqlite.database.sqlite.SQLiteException;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -71,7 +63,8 @@ public class SyncFragment extends Fragment {
   public static final int ID = R.layout.sync_launch_fragment;
 
   private static final String ACCOUNT_TYPE_G = "com.google";
-  private static final String URI_FIELD_EMPTY = "http://";
+
+  private static final String SYNC_ATTACHMENT_TREATMENT = "syncAttachmentState";
 
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
@@ -81,28 +74,20 @@ public class SyncFragment extends Fragment {
 
   private String mAppName;
 
-  private boolean mAuthorizeSinceCompletion;
-  private boolean mAuthorizeAccountSuccessful;
-
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
 
-  private EditText uriField;
-  private Spinner accountListSpinner;
+  private TextView uriField;
+  private TextView accountAuthType;
+  private TextView accountIdentity;
 
-  // TODO: Add this back when it works
-  //private Spinner syncInstanceAttachmentsSpinner;
+  private Spinner syncInstanceAttachmentsSpinner;
   private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
 
-  //private TextView progressState;
-  //private TextView progressMessage;
-
-  private Button saveSettings;
-  private Button authorizeAccount;
   private Button startSync;
   private Button resetServer;
 
-  private enum SyncActions { IDLE, MONITOR, SYNC, RESET_SERVER };
+  private enum SyncActions { IDLE, MONITOR_SYNC, MONITOR_RESET_SERVER, SYNC, RESET_SERVER };
   private SyncActions syncAction = SyncActions.IDLE;
 
   private class ServiceConnectionWrapper implements ServiceConnection {
@@ -146,30 +131,14 @@ public class SyncFragment extends Fragment {
       if (syncServiceInterface != null) {
         switch (this.syncAction) {
         case SYNC:
-          // TODO: Add this back when it works
-          //switch (syncInstanceAttachmentsSpinner.getSelectedItemPosition()) {
-          switch(0) {
-          case 0:
-            syncAttachmentState = SyncAttachmentState.SYNC;
-            break;
-          case 1:
-            syncAttachmentState = SyncAttachmentState.UPLOAD;
-            break;
-          case 2:
-            syncAttachmentState = SyncAttachmentState.DOWNLOAD;
-            break;
-          case 3:
-            syncAttachmentState = SyncAttachmentState.NONE;
-            break;
-          default:
-            Log.e(TAG, "Invalid sync attachment state spinner");
-          }
-          syncServiceInterface.synchronize(getAppName(), syncAttachmentState);
+          syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
+          syncAction = SyncActions.MONITOR_SYNC;
           break;
         case RESET_SERVER:
-          syncServiceInterface.push(getAppName());
+          syncServiceInterface.resetServer(getAppName(), syncAttachmentState);
+          syncAction = SyncActions.MONITOR_RESET_SERVER;
           break;
-        case MONITOR:
+        default:
           break;
         }
       }
@@ -202,6 +171,7 @@ public class SyncFragment extends Fragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
+    outState.putString(SYNC_ATTACHMENT_TREATMENT, syncAttachmentState.name());
   }
 
 
@@ -217,10 +187,15 @@ public class SyncFragment extends Fragment {
       return;
     }
 
+    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT) ) {
+      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
+      try {
+        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
+      } catch ( IllegalArgumentException e ) {
+        syncAttachmentState = SyncAttachmentState.SYNC;
+      }
+    }
     disableButtons();
-    initializeData();
-
-    mAuthorizeAccountSuccessful = false;
   }
 
   @Override
@@ -228,27 +203,46 @@ public class SyncFragment extends Fragment {
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
-    uriField = (EditText) view.findViewById(R.id.sync_uri_field);
-    accountListSpinner = (Spinner) view.findViewById(R.id.sync_account_list_spinner);
-    //syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
+    uriField = (TextView) view.findViewById(R.id.sync_uri_field);
+    accountAuthType = (TextView) view.findViewById(R.id.sync_account_auth_label);
+    accountIdentity = (TextView) view.findViewById(R.id.sync_account);
 
-    // TODO: Hiding these until we figure out what Sync's UI should be
-    //progressState = (TextView) view.findViewById(R.id.sync_progress_state);
-    //progressMessage = (TextView) view.findViewById(R.id.sync_progress_message);
+    syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
 
-    saveSettings = (Button) view.findViewById(R.id.sync_save_settings_button);
-    saveSettings.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-        onClickSaveSettings(v);
+    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT) ) {
+      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
+      try {
+        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
+      } catch ( IllegalArgumentException e ) {
+        syncAttachmentState = SyncAttachmentState.SYNC;
+      }
+    }
+
+    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
+        getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
+    syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
+
+    syncInstanceAttachmentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override public void onItemSelected(AdapterView<?> parent, View view, int position,
+          long id) {
+        String[] syncAttachmentType =
+            getResources().getStringArray(R.array.sync_attachment_option_values);
+        syncAttachmentState = SyncAttachmentState.valueOf(syncAttachmentType[position]);
+      }
+
+      @Override public void onNothingSelected(AdapterView<?> parent) {
+        String[] syncAttachmentType =
+            getResources().getStringArray(R.array.sync_attachment_option_values);
+        syncAttachmentState = SyncAttachmentState.SYNC;
+        for ( int i = 0 ; i < syncAttachmentType.length ; ++i ) {
+          if ( syncAttachmentType[i].equals(syncAttachmentState.name()) ) {
+            syncInstanceAttachmentsSpinner.setSelection(i);
+            break;
+          }
+        }
       }
     });
 
-    authorizeAccount = (Button) view.findViewById(R.id.sync_authorize_account_button);
-    authorizeAccount.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-        onClickAuthorizeAccount(v);
-      }
-    });
     startSync = (Button) view.findViewById(R.id.sync_start_button);
     startSync.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
@@ -262,9 +256,6 @@ public class SyncFragment extends Fragment {
       }
     });
 
-
-    disableButtons();
-
     return view;
   }
 
@@ -272,53 +263,68 @@ public class SyncFragment extends Fragment {
   public void onResume() {
     super.onResume();
 
+    Intent incomingIntent = getActivity().getIntent();
+    mAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+    if ( mAppName == null || mAppName.length() == 0 ) {
+      getActivity().setResult(Activity.RESULT_CANCELED);
+      getActivity().finish();
+      return;
+    }
+
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
+
+    String credentialToUse = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
+    String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
+
+    if ( credentialToUse == null ) {
+      credentialToUse = getString(R.string.credential_type_none);
+    }
+
+    for ( int i = 0 ; i < credentialValues.length ; ++i ) {
+      if ( credentialToUse.equals(credentialValues[i]) ) {
+        accountAuthType.setText(credentialEntries[i]);
+      }
+    }
+
+    if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
+      accountIdentity.setText("");
+    } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
+      String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
+      accountIdentity.setText(username);
+    } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
+      String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
+      accountIdentity.setText(googleAccount);
+    } else {
+      accountIdentity.setText("");
+    }
+
+    String[] syncAttachmentValues =
+        getResources().getStringArray(R.array.sync_attachment_option_values);
+    for ( int i = 0 ; i < syncAttachmentValues.length ; ++i ) {
+      if ( syncAttachmentState.name().equals(syncAttachmentValues[i]) ) {
+        syncInstanceAttachmentsSpinner.setSelection(i);
+        break;
+      }
+    }
+
+    perhapsEnableButtons(props);
+
     showProgressDialog();
   }
 
   private void disableButtons() {
-    mAuthorizeSinceCompletion = false;
-    saveSettings.setEnabled(true);
-    authorizeAccount.setEnabled(false);
     startSync.setEnabled(false);
     resetServer.setEnabled(false);
   }
-
-  private void initializeData() {
-    if ( getActivity() == null ) {
-      return;
-    }
-
-    PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
-    // Add accounts to spinner
-    AccountManager accountManager = AccountManager.get(getActivity());
-    Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
-    List<String> accountNames = new ArrayList<String>(accounts.length);
-    for (int i = 0; i < accounts.length; i++)
-      accountNames.add(accounts[i].name);
-
-    ArrayAdapter<String> accountListAapter = new ArrayAdapter<String>(getActivity(),
-        android.R.layout.select_dialog_item, accountNames);
-    accountListSpinner.setAdapter(accountListAapter);
-
-    // TODO: Add this back when you can make it work
-    //ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
-    //    getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
-    //syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
-    //syncInstanceAttachmentsSpinner.setSelection(0);
-
-    // Set saved server url
-    String serverUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-
-    if (serverUri == null)
-      uriField.setText(URI_FIELD_EMPTY);
-    else
-      uriField.setText(serverUri);
-
-    // Set chosen account
-    String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-    if (accountName != null) {
-      int index = accountNames.indexOf(accountName);
-      accountListSpinner.setSelection(index);
+  private void perhapsEnableButtons(PropertiesSingleton props) {
+    String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    if ( url == null || url.length() == 0 ) {
+      disableButtons();
+    } else {
+      startSync.setEnabled(true);
+      resetServer.setEnabled(true);
     }
   }
 
@@ -332,107 +338,72 @@ public class SyncFragment extends Fragment {
   }
 
   /**
-   * Hooked up to save settings button in aggregate_activity.xml
+   * Invoke this at the start of sync or reset
    */
-  public void onClickSaveSettings(View v) {
-    // show warning message
-    AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_change_settings),
-        getString(R.string.sync_change_settings_warning));
+  public void prepareForSyncAction() {
+    // remove any settings for a URL other than the server URL...
 
-    msg.setPositiveButton(getString(R.string.sync_save), new DialogInterface.OnClickListener() {
-      @Override public void onClick(DialogInterface dialog, int which) {
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    String verifiedUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
 
-        // save fields in preferences
-        String uri = uriField.getText().toString();
-        if (uri.equals(URI_FIELD_EMPTY)) {
-          uri = null;
-        }
-        String accountName = (String) accountListSpinner.getSelectedItem();
+    OdkDbHandle dbHandleName = new OdkDbHandle(ODKDataUtils.genUUID());
+    OdkConnectionInterface db = null;
 
-        URI verifiedUri = null;
-        if (uri != null) {
-          try {
-            verifiedUri = new URI(uri);
-          } catch (URISyntaxException e) {
-            WebLogger.getLogger(getAppName())
-                .d(TAG, "[onClickSaveSettings][onClick] invalid server URI: " + uri);
-            Toast.makeText(getActivity(), "Invalid server URI: " + uri, Toast.LENGTH_LONG).show();
-            return;
-          }
-        }
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(getAppName(), dbHandleName);
 
-        PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
-        props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, uri);
-        props.setProperty(CommonToolProperties.KEY_ACCOUNT, accountName);
-        props.writeProperties();
-
-        // and remove any settings for a URL other than this...
-
-        OdkDbHandle dbHandleName = new OdkDbHandle(ODKDataUtils.genUUID());
-        OdkConnectionInterface db = null;
-
-        try {
-          // +1 referenceCount if db is returned (non-null)
-          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(getAppName(), dbHandleName);
-
-          SyncETagsUtils utils = new SyncETagsUtils();
-          utils.deleteAllSyncETagsExceptForServer(db,
-              (verifiedUri == null) ? null : verifiedUri.toString());
-        } catch (SQLiteException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          WebLogger.getLogger(getAppName())
-              .e(TAG, "[onClickSaveSettings][onClick] unable to update database");
-          Toast.makeText(getActivity(), "database failure during update", Toast.LENGTH_LONG).show();
-        } finally {
-          if (db != null) {
-            db.releaseReference();
-          }
-        }
-
-        // SS Oct 15: clear the auth token here.
-        // TODO if you change a user you can switch to their privileges
-        // without this.
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[onClickSaveSettings][onClick] invalidated authtoken");
-        invalidateAuthToken(getActivity(), getAppName());
-
-        authorizeAccount.setEnabled((verifiedUri != null));
+      SyncETagsUtils utils = new SyncETagsUtils();
+      utils.deleteAllSyncETagsExceptForServer(db,
+          (verifiedUri == null || verifiedUri.length() == 0) ? null : verifiedUri.toString());
+    } catch (SQLiteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName())
+          .e(TAG, "[onClickSaveSettings][onClick] unable to update database");
+      Toast.makeText(getActivity(), "database failure during update", Toast.LENGTH_LONG).show();
+    } finally {
+      if (db != null) {
+        db.releaseReference();
       }
-    });
+    }
 
-    msg.setNegativeButton(getString(R.string.cancel), null);
-    msg.show();
+    String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    if ( authType == null ) {
+      authType = getString(R.string.credential_type_none);
+    }
 
+    if ( getString(R.string.credential_type_google_account).equals(authType)) {
+      authenticateGoogleAccount();
+    } else {
+      tickleInterface();
+    }
   }
 
   /**
    * Hooked up to authorizeAccountButton's onClick in aggregate_activity.xml
    */
-  public void onClickAuthorizeAccount(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[onClickAuthorizeAccount] invalidated authtoken");
+  public void authenticateGoogleAccount() {
+    WebLogger.getLogger(getAppName()).d(TAG, "[authenticateGoogleAccount] invalidated authtoken");
     invalidateAuthToken(getActivity(), getAppName());
-    authorizeAccount.setEnabled(false);
+
     PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
     Intent i = new Intent(getActivity(), AccountInfoActivity.class);
     Account account = new Account(props.getProperty(CommonToolProperties.KEY_ACCOUNT), ACCOUNT_TYPE_G);
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
-    startActivityForResult(i, SyncActivity.AUTHORIZE_ACCOUNT_RESULT_ID);
+    startActivityForResult(i, SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE);
   }
 
   public void onActivityResult (int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
 
-    if ( requestCode == SyncActivity.AUTHORIZE_ACCOUNT_RESULT_ID ) {
+    if ( requestCode == SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE ) {
       if ( resultCode == Activity.RESULT_CANCELED ) {
         invalidateAuthToken(getActivity(), getAppName());
-        authorizeAccount.setEnabled(true);
-      } else {
-        authorizeAccount.setEnabled(false);
-        startSync.setEnabled(true);
-        resetServer.setEnabled(true);
+        syncAction = SyncActions.IDLE;
       }
+      tickleInterface();
     }
   }
 
@@ -462,7 +433,7 @@ public class SyncFragment extends Fragment {
         } else {
           disableButtons();
           syncAction = SyncActions.RESET_SERVER;
-          tickleInterface();
+          prepareForSyncAction();
         }
       }
     });
@@ -490,7 +461,7 @@ public class SyncFragment extends Fragment {
     } else {
       disableButtons();
       syncAction = SyncActions.SYNC;
-      tickleInterface();
+      prepareForSyncAction();
     }
   }
 
