@@ -244,6 +244,13 @@ public class ProcessAppAndTableLevelChanges {
               "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
       log.printStackTrace(he);
       return new ArrayList<TableResource>();
+    } catch (IOException ioe) {
+      // TODO: update a synchronization result to report back to them as well.
+      // Would it be more appropriate to exit here?
+      log.e(TAG,
+              "[synchronizeConfigurationAndContent] error trying to manipulate file.");
+      log.printStackTrace(ioe);
+      return new ArrayList<TableResource>();
     }
 
     // done with app-level file synchronization
@@ -324,6 +331,13 @@ public class ProcessAppAndTableLevelChanges {
                 "[synchronizeConfigurationAndContent] error trying to delete tables.");
             log.printStackTrace(e);
             return new ArrayList<TableResource>();
+          } catch (IOException ioe) {
+            // TODO: update a synchronization result to report back to them as well.
+            // Would it be more appropriate to exit here?
+            log.e(TAG, "[synchronizeConfigurationAndContent] error trying to delete table.");
+            log.printStackTrace(ioe);
+            return new ArrayList<TableResource>();
+
           }
         }
       }
@@ -754,6 +768,11 @@ public class ProcessAppAndTableLevelChanges {
         return null;
       } catch (InvalidAuthTokenException e) {
         clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
+        return null;
+      } catch (IOException ioe) {
+        // Would it be more appropriate to exit here
+        log.e(TAG, "synchronizeTableConfigurationAndContent");
+        exception("synchronizeTableConfigurationAndContent - error while uploading config files", tableId, ioe, tableResult);
         return null;
       }
 
