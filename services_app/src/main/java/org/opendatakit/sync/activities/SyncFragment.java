@@ -20,17 +20,12 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,6 +45,8 @@ import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.SyncStatus;
 import org.sqlite.database.sqlite.SQLiteException;
 
 /**
@@ -66,11 +63,11 @@ public class SyncFragment extends Fragment {
 
   private static final String SYNC_ATTACHMENT_TREATMENT = "syncAttachmentState";
 
+  private static final String SYNC_ACTION = "syncAction";
+
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
-  private static enum DialogState {
-    Progress, Alert, None
-  };
+  ;
 
   private String mAppName;
 
@@ -82,95 +79,18 @@ public class SyncFragment extends Fragment {
   private TextView accountIdentity;
 
   private Spinner syncInstanceAttachmentsSpinner;
-  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
 
   private Button startSync;
   private Button resetServer;
 
+  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
   private SyncActions syncAction = SyncActions.IDLE;
-
-  private class ServiceConnectionWrapper implements ServiceConnection {
-
-    @Override public void onServiceConnected(ComponentName name, IBinder service) {
-      if (!name.getClassName().equals("org.opendatakit.sync.service.OdkSyncService")) {
-        WebLogger.getLogger(getAppName()).e(TAG, "Unrecognized service");
-        return;
-      }
-      synchronized (odkSyncInterfaceBindComplete) {
-        odkSyncInterface = (service == null) ? null : OdkSyncServiceInterface.Stub.asInterface(service);
-        active = false;
-      }
-      tickleInterface();
-    }
-
-    @Override public void onServiceDisconnected(ComponentName name) {
-      synchronized (odkSyncInterfaceBindComplete) {
-        odkSyncInterface = null;
-        active = false;
-      }
-      tickleInterface();
-    }
-  }
-
-  private ServiceConnectionWrapper odkSyncServiceConnection = new ServiceConnectionWrapper();
-  private Object odkSyncInterfaceBindComplete = new Object();
-  private OdkSyncServiceInterface odkSyncInterface;
-  private boolean active = false;
-
-  private void tickleInterface() {
-    OdkSyncServiceInterface syncServiceInterface = null;
-
-    synchronized (odkSyncInterfaceBindComplete) {
-      if ( odkSyncInterface != null ) {
-        syncServiceInterface = odkSyncInterface;
-      }
-    }
-
-    try {
-      if (syncServiceInterface != null) {
-        switch (this.syncAction) {
-        case SYNC:
-          syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
-          syncAction = SyncActions.MONITOR_SYNC;
-          break;
-        case RESET_SERVER:
-          syncServiceInterface.resetServer(getAppName(), syncAttachmentState);
-          syncAction = SyncActions.MONITOR_RESET_SERVER;
-          break;
-        default:
-          break;
-        }
-      }
-
-      // Otherwise, set up a bind and attempt to re-tickle...
-      Log.i(TAG, "Attempting bind to Database service");
-      Intent bind_intent = new Intent();
-      bind_intent.setClassName("org.opendatakit.services",
-          "org.opendatakit.sync.service.OdkSyncService");
-
-      synchronized (odkSyncInterfaceBindComplete) {
-        if (!active) {
-          active = true;
-        }
-      }
-
-      getActivity().bindService(bind_intent, odkSyncServiceConnection,
-          Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
-              Context.BIND_ADJUST_WITH_ACTIVITY :
-              0));
-
-
-    } catch ( RemoteException e ) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG, "exception while invoking sync service");
-      Toast.makeText(getActivity(), "Exception while invoking sync service", Toast.LENGTH_LONG).show();
-    }
-  }
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     outState.putString(SYNC_ATTACHMENT_TREATMENT, syncAttachmentState.name());
+    outState.putString(SYNC_ACTION, syncAction.name());
   }
 
 
@@ -194,6 +114,15 @@ public class SyncFragment extends Fragment {
         syncAttachmentState = SyncAttachmentState.SYNC;
       }
     }
+
+    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION) ) {
+      String action = savedInstanceState.getString(SYNC_ACTION);
+      try {
+        syncAction = SyncActions.valueOf(action);
+      } catch ( IllegalArgumentException e ) {
+        syncAction = SyncActions.IDLE;
+      }
+    }
     disableButtons();
   }
 
@@ -214,6 +143,15 @@ public class SyncFragment extends Fragment {
         syncAttachmentState = SyncAttachmentState.valueOf(treatment);
       } catch ( IllegalArgumentException e ) {
         syncAttachmentState = SyncAttachmentState.SYNC;
+      }
+    }
+
+    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION) ) {
+      String action = savedInstanceState.getString(SYNC_ACTION);
+      try {
+        syncAction = SyncActions.valueOf(action);
+      } catch ( IllegalArgumentException e ) {
+        syncAction = SyncActions.IDLE;
       }
     }
 
@@ -308,16 +246,17 @@ public class SyncFragment extends Fragment {
       }
     }
 
-    perhapsEnableButtons(props);
+    perhapsEnableButtons();
 
-    showProgressDialog();
+    updateInterface();
   }
 
   private void disableButtons() {
     startSync.setEnabled(false);
     resetServer.setEnabled(false);
   }
-  private void perhapsEnableButtons(PropertiesSingleton props) {
+  private void perhapsEnableButtons() {
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     if ( url == null || url.length() == 0 ) {
       disableButtons();
@@ -406,6 +345,123 @@ public class SyncFragment extends Fragment {
     }
   }
 
+  private void tickleInterface() {
+    Activity activity = this.getActivity();
+    if ( activity == null ) {
+      // we are in transition -- do nothing
+      return;
+    }
+    ((ISyncServiceInterfaceActivity)activity)
+        .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+      @Override public void doAction(OdkSyncServiceInterface syncServiceInterface)
+          throws RemoteException {
+        if ( syncServiceInterface != null ) {
+          final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
+          final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
+          final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
+          if (status == SyncStatus.SYNCING) {
+            syncAction = SyncActions.MONITOR_SYNCING;
+
+            handler.post(new Runnable() {
+              @Override
+              public void run() {
+                showProgressDialog(status, progress, message);
+              }
+            });
+            return;
+          }
+
+          switch (syncAction) {
+          case SYNC:
+            syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
+            syncAction = SyncActions.MONITOR_SYNCING;
+
+            handler.post(new Runnable() {
+              @Override
+              public void run() {
+                showProgressDialog(SyncStatus.INIT, null, getString(R.string.sync_starting));
+              }
+            });
+            break;
+          case RESET_SERVER:
+            syncServiceInterface.resetServer(getAppName(), syncAttachmentState);
+            syncAction = SyncActions.MONITOR_SYNCING;
+
+            handler.post(new Runnable() {
+              @Override
+              public void run() {
+                showProgressDialog(SyncStatus.INIT, null, getString(R.string.sync_starting));
+              }
+            });
+            break;
+          default:
+            break;
+          }
+        } else {
+          // request cancelled
+          syncAction = SyncActions.IDLE;
+          handler.post(new Runnable() {
+            @Override
+            public void run() {
+              dismissProgressDialog();
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private void updateInterface() {
+    Activity activity = this.getActivity();
+    if ( activity == null ) {
+      // we are in transition -- do nothing
+      return;
+    }
+    ((ISyncServiceInterfaceActivity)activity)
+        .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+          @Override
+          public void doAction(OdkSyncServiceInterface syncServiceInterface)
+              throws RemoteException {
+            if ( syncServiceInterface != null ) {
+              final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
+              final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
+              final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
+              if (status == SyncStatus.SYNCING) {
+                syncAction = SyncActions.MONITOR_SYNCING;
+
+                handler.post(new Runnable() {
+                  @Override
+                  public void run() {
+                    showProgressDialog(status, progress, message);
+                  }
+                });
+                return;
+              } else {
+                // request completed
+                syncAction = SyncActions.IDLE;
+                handler.post(new Runnable() {
+                  @Override
+                  public void run() {
+                    dismissProgressDialog();
+                  }
+                });
+                return;
+              }
+            } else {
+              // request cancelled
+              syncAction = SyncActions.IDLE;
+              handler.post(new Runnable() {
+                @Override
+                public void run() {
+                  dismissProgressDialog();
+                }
+              });
+              return;
+            }
+          }
+        });
+  }
+
   /**
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
@@ -477,9 +533,12 @@ public class SyncFragment extends Fragment {
     super.onDestroy();
   }
 
-  private void showProgressDialog() {
-    if ( false ) {
-      String progress = "status string";
+  private void showProgressDialog( SyncStatus status, SyncProgressState progress, String message ) {
+    if ( getActivity() == null ) {
+      // we are tearing down or still initializing
+      return;
+    }
+    if ( syncAction == SyncActions.MONITOR_SYNCING ) {
 
       disableButtons();
 
@@ -487,31 +546,49 @@ public class SyncFragment extends Fragment {
       Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
 
       if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
-        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.conflict_resolving_all);
-        ((ProgressDialogFragment) dialog).setMessage(progress);
+        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.sync_in_progress);
+        ((ProgressDialogFragment) dialog).setMessage(message);
       } else if (progressDialog != null && progressDialog.getDialog() != null) {
-        progressDialog.getDialog().setTitle(R.string.conflict_resolving_all);
-        progressDialog.setMessage(progress);
+        progressDialog.getDialog().setTitle(R.string.sync_in_progress);
+        progressDialog.setMessage(message);
       } else {
         if (progressDialog != null) {
           dismissProgressDialog();
         }
-        progressDialog = ProgressDialogFragment.newInstance(getId(),
-            getString(R.string.conflict_resolving_all), progress);
+        progressDialog = ProgressDialogFragment.newInstance(getString(R.string.sync_in_progress), message);
         progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+      }
+      if ( status == SyncStatus.SYNCING || status == SyncStatus.INIT ) {
+        handler.postDelayed(new Runnable() {
+          @Override public void run() {
+            updateInterface();
+          }
+        }, 150);
       }
     }
   }
 
   private void dismissProgressDialog() {
+    if ( getActivity() == null ) {
+      // we are tearing down or still initializing
+      return;
+    }
+
+    // try to retrieve the active dialog
     final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+
     if (dialog != null && dialog != progressDialog) {
       // the UI may not yet have resolved the showing of the dialog.
       // use a handler to add the dismiss to the end of the queue.
       handler.post(new Runnable() {
         @Override
         public void run() {
-          ((ProgressDialogFragment) dialog).dismiss();
+          try {
+            ((ProgressDialogFragment) dialog).dismiss();
+          } catch (Exception e) {
+            // ignore... we tried!
+          }
+          perhapsEnableButtons();
         }
       });
     }
@@ -527,6 +604,7 @@ public class SyncFragment extends Fragment {
           } catch (Exception e) {
             // ignore... we tried!
           }
+          perhapsEnableButtons();
         }
       });
     }

@@ -130,6 +130,7 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
+    <string name="sync_in_progress">Sync in progress...</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
@@ -142,6 +143,8 @@
     <string name="sync_reset_app_server_warning">Resetting the App Server will clear all data currently on the server.</string>
     <string name="sync_reset">Reset</string>
 
+    <string name="sync_other_auth_fail">Authorization request failed %1$s</string>
+    <string name="sync_auth_unsuccessful">Please resolve the reported authorization issues and try again.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>
