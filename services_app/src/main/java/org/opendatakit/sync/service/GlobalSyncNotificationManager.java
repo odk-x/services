@@ -123,7 +123,7 @@ public final class GlobalSyncNotificationManager {
         .setAutoCancel(false).setOngoing(true).setContentIntent(pendIntent)
             .setSmallIcon(R.drawable.odk_services);
 
-    Notification runningNotification = builder.getNotification();
+    Notification runningNotification = builder.build();
     runningNotification.flags |= Notification.FLAG_NO_CLEAR;
 
     if (!test) {

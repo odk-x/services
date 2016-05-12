@@ -496,68 +496,6 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     }
   }
 
-  @Override
-  public final OdkConnectionInterface getSessionGroupInstanceConnection(String appName,
-                                                                        String sessionGroupQualifier, int instanceQualifier) {
-    String sessionQualifier =
-            sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    return getConnectionImpl(appName, sessionQualifier);
-  }
-
-  @Override
-  public final void removeSessionGroupInstanceConnection(String appName,
-                                                         String sessionGroupQualifier, int instanceQualifier) {
-    String sessionQualifier =
-            sessionGroupQualifier + GROUP_TYPE_DIVIDER + Integer.toString(instanceQualifier);
-    removeConnectionImpl(appName, sessionQualifier);
-  }
-
-  @Override
-  public final boolean removeSessionGroupConnections(String appName, String sessionGroupQualifier,
-                                                     boolean removeNonMatchingGroupsOnly) {
-    AppNameSharedStateContainer appNameSharedStateContainer = null;
-    synchronized (mutex) {
-      appNameSharedStateContainer = appNameSharedStateMap.get(appName);
-    }
-    if (appNameSharedStateContainer == null) {
-      // nothing to do...
-      return false;
-    }
-    TreeSet<String> allSessionQualifiers = appNameSharedStateContainer.getAllSessionQualifiers();
-    if ( allSessionQualifiers.isEmpty() ) {
-      // nothing to do...
-      return false;
-    }
-
-    TreeSet<String> sessionQualifiers = new TreeSet<String>();
-    for (String sessionQualifier : allSessionQualifiers) {
-      int idx = sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER);
-      if (idx != -1) {
-        String sessionGroup = sessionQualifier.substring(0, idx);
-        if (removeNonMatchingGroupsOnly) {
-          if (sessionGroupQualifier == null || !sessionGroup.equals(sessionGroupQualifier)) {
-            sessionQualifiers.add(sessionQualifier);
-          }
-        } else {
-          if (sessionGroupQualifier != null && sessionGroup.equals(sessionGroupQualifier)) {
-            sessionQualifiers.add(sessionQualifier);
-          }
-        }
-      }
-    }
-
-    for (String sessionQualifier : sessionQualifiers) {
-      logInfo(appName, "removeSessionGroupConnections " + sessionQualifier);
-      try {
-        removeConnectionImpl(appName, sessionQualifier);
-      } catch (Exception e) {
-        logError(appName, "removeSessionGroupConnections when releasing " + sessionQualifier);
-        printStackTrace(appName, e);
-      }
-    }
-    return !sessionQualifiers.isEmpty();
-  }
-
   /**
    * Removes all database handles under the specified appName
    * that are created for the database service; i.e., have a
@@ -583,12 +521,10 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
 
     TreeSet<String> sessionQualifiers = new TreeSet<String>();
     for (String sessionQualifier : allSessionQualifiers) {
-      // not a group (no group divider)
       // not the base (appName) session
       // not an internal session
-      if ((sessionQualifier.lastIndexOf(GROUP_TYPE_DIVIDER) == -1) &&
-              !sessionQualifier.equals(appName) &&
-              !sessionQualifier.endsWith(INTERNAL_TYPE_SUFFIX)) {
+      if (!sessionQualifier.equals(appName) &&
+          !sessionQualifier.endsWith(INTERNAL_TYPE_SUFFIX)) {
         sessionQualifiers.add(sessionQualifier);
       }
     }
@@ -652,23 +588,6 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       }
     }
     return !sessionQualifiers.isEmpty();
-  }
-
-  @Override
-  public final boolean removeAllSessionGroupConnections(String appName) {
-    return removeSessionGroupConnections(appName, null, true);
-  }
-
-  @Override
-  public final boolean removeAllSessionGroupConnections() {
-    HashSet<String> appNames = new HashSet<String>();
-    synchronized (mutex) {
-      appNames.addAll(appNameSharedStateMap.keySet());
-    }
-    for (String appName : appNames) {
-      removeSessionGroupConnections(appName, null, true);
-    }
-    return !appNames.isEmpty();
   }
 
   @Override
