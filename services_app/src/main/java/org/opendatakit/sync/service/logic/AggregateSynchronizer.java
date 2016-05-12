@@ -23,7 +23,6 @@ import android.util.Log;
 import org.apache.commons.fileupload.MultipartStream;
 import org.apache.commons.lang3.CharEncoding;
 //import org.apache.http.HeaderElement;
-import org.apache.http.HttpStatus;
 //import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicHeaderValueParser;
 import org.apache.http.message.HeaderValueParser;
@@ -112,7 +111,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -1703,7 +1701,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throw ioe;
     }
 
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+    if (response.getStatusLine().getStatusCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
       // signal this by returning null;
       return null;
     }
@@ -1782,7 +1780,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = httpClientExecute(request);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+      if (response.getStatusLine().getStatusCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
@@ -2015,7 +2013,7 @@ public class AggregateSynchronizer implements Synchronizer {
         // filesToDL.add(localFile);
         try {
           int statusCode = downloadFile(localFile, uri);
-          if (statusCode == HttpStatus.SC_OK) {
+          if (statusCode == HttpURLConnection.HTTP_OK) {
             updateFileSyncETag(uri, tableId, localFile.lastModified(),
                 entry.md5hash);
             return true;
@@ -2049,7 +2047,8 @@ public class AggregateSynchronizer implements Synchronizer {
           // it's not up to date, we need to download it.
           try {
             int statusCode = downloadFile(localFile, uri);
-            if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NOT_MODIFIED) {
+            if (statusCode == HttpURLConnection.HTTP_OK ||
+                statusCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
               updateFileSyncETag(uri, tableId, localFile.lastModified(),
                   md5hash);
               return true;
@@ -2108,9 +2107,9 @@ public class AggregateSynchronizer implements Synchronizer {
         response = httpClientExecute(request);
         int statusCode = response.getStatusLine().getStatusCode();
 
-        if (statusCode != HttpStatus.SC_OK) {
+        if (statusCode != HttpURLConnection.HTTP_OK) {
           response.close();
-          if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+          if (statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
             // clear the cookies -- should not be necessary?
             // ss: might just be a collect thing?
           }
@@ -2204,7 +2203,7 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       }
     }
-    return HttpStatus.SC_OK;
+    return HttpURLConnection.HTTP_OK;
   }
 
   static final class CommonFileAttachmentTerms {

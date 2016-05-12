@@ -5,7 +5,6 @@ import android.test.ApplicationTestCase;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpStatus;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -20,7 +19,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.sync.service.SyncExecutionContext;
@@ -29,7 +27,7 @@ import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SynchronizationResult;
 
 import java.io.File;
-import java.net.URI;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,8 +138,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
   /*
    * Test get table definitions when no tables exist
    */
-  public void testGetTableDefinitionsWhenNoTablesExist_ExpectFail() {
-    boolean thrown = false;
+  public void testGetTableDefinitions_ExpectPass() {
     SyncNotification syncProg = new SyncNotification(getContext(), appName);
     SynchronizationResult syncRes = new SynchronizationResult();
     AppAwareApplication appAwareContext = getApplication();
@@ -153,16 +150,45 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
     sharedContext.setODKPassword(password);
     sharedContext.setAggregateUri(agg_url);
 
+    String testTableId = "test0";
+    String colName = "test_col1";
+    String colKey = "test_col1";
+    String colType = "string";
+
+    String testTableSchemaETag = "testGetTableDefinitions_ExpectPass";
+    String listOfChildElements = "[]";
+
+    ArrayList<Column> columns = new ArrayList<Column>();
+
+    columns.add(new Column(colKey, colName, colType, listOfChildElements));
+
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
-      TableDefinitionResource tables = synchronizer.getTableDefinition(null);
+      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
+
+      assertNotNull(testTableRes);
+
+      assertEquals(testTableRes.getTableId(), testTableId);
+
+
+      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
+
+      ArrayList<Column> cols = tableDefRes.getColumns();
+
+      for (int i = 0; i < cols.size(); i++) {
+        Column col = cols.get(i);
+        assertEquals(col.getElementKey(), colKey);
+      }
+
+      assertEquals(tableDefRes.getTableId(), testTableId);
+
+      synchronizer.deleteTable(testTableRes);
 
     } catch (Exception e) {
       e.printStackTrace();
-      thrown = true;
+      TestCase.fail("testGetTableDefinitions_ExpectPass: expected pass but got exception");
     }
-    assertTrue(thrown);
   }
 
   /*
@@ -1011,7 +1037,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
       File destFile2 = new File(destDir2, fileName2);
       int downloadSuccessful = synchronizer.downloadFile(destFile2, cat1.instanceFileDownloadUri);
 
-      assertEquals(downloadSuccessful, HttpStatus.SC_OK);
+      assertEquals(downloadSuccessful, HttpURLConnection.HTTP_OK);
 
       synchronizer.deleteTable(testTableRes);
     } catch (Exception e) {
