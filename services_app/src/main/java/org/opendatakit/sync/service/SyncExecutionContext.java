@@ -204,7 +204,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
     } else {
       PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
-      return props.getProperty(CommonToolProperties.KEY_ODK_USER);
+      //return props.getProperty(CommonToolProperties.KEY_ODK_USER);
+      return props.getProperty(CommonToolProperties.KEY_USERNAME);
     }
   }
 

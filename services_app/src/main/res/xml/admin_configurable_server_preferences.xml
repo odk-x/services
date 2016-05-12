@@ -1,0 +1,30 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/user_access_preferences" >
+        <CheckBoxPreference
+            android:id="@+id/change_server"
+            android:defaultValue="true"
+            android:key="common.change_sync_server"
+            android:title="@string/server_url"
+            android:persistent="false" />
+        <CheckBoxPreference
+            android:id="@+id/change_credential"
+            android:defaultValue="true"
+            android:key="common.change_auth_credentials"
+            android:title="@string/credential"
+            android:persistent="false" />
+        <CheckBoxPreference
+            android:id="@+id/change_username_password"
+            android:defaultValue="true"
+            android:key="common.change_username_password"
+            android:title="@string/username_password"
+            android:persistent="false" />
+        <CheckBoxPreference
+            android:id="@+id/change_google_account"
+            android:defaultValue="true"
+            android:key="common.change_google_account"
+            android:title="@string/selected_google_account_text" 
+            android:persistent="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

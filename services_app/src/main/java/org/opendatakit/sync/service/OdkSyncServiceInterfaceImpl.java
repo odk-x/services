@@ -41,10 +41,10 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
   }
 
   @Override
-  public boolean push(String appName) throws RemoteException {
+  public boolean resetServer(String appName, SyncAttachmentState attachmentState) throws RemoteException {
     try {
-      WebLogger.getLogger(appName).i(LOGTAG, "SERVICE INTERFACE: push WITH appName:" + appName);
-      return syncService.push(appName);
+      WebLogger.getLogger(appName).i(LOGTAG, "SERVICE INTERFACE: resetServer WITH appName:" + appName);
+      return syncService.resetServer(appName, attachmentState);
     } catch (Throwable throwable) {
       WebLogger.getLogger(appName).printStackTrace(throwable);
       throw new RemoteException();
@@ -52,11 +52,11 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
   }
 
   @Override
-  public boolean synchronize(String appName, SyncAttachmentState attachmentState) throws RemoteException {
+  public boolean synchronizeWithServer(String appName, SyncAttachmentState attachmentState) throws RemoteException {
     try {
       WebLogger.getLogger(appName).i(LOGTAG,
-          "SERVICE INTERFACE: synchronize WITH appName:" + appName);
-      return syncService.synchronize(appName, attachmentState);
+          "SERVICE INTERFACE: synchronizeWithServer WITH appName:" + appName);
+      return syncService.synchronizeWithServer(appName, attachmentState);
     } catch (Throwable throwable) {
       WebLogger.getLogger(appName).printStackTrace(throwable);
       throw new RemoteException();

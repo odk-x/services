@@ -29,7 +29,11 @@ import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
+import org.opendatakit.common.android.activities.AppPropertiesActivity;
 
 /**
  * An activity for handling server conflicts.
@@ -40,13 +44,16 @@ import org.opendatakit.services.R;
  * @author mitchellsundt@gmail.com
  *
  */
-public class SyncActivity extends Activity implements IAppAwareActivity {
+public class SyncActivity extends Activity implements IAppAwareActivity, IOdkAppPropertiesActivity {
 
   private static final String TAG = SyncActivity.class.getSimpleName();
   
-  public static final int AUTHORIZE_ACCOUNT_RESULT_ID = 1;
+  public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
+  private int SYNC_ACTIVITY_RESULT_CODE = 10;
+  private int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
   private String mAppName;
+  private PropertiesSingleton mProps;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -107,8 +114,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity {
     // as you specify a parent activity in AndroidManifest.xml.
     int id = item.getItemId();
     if (id == R.id.action_sync) {
+      Intent i = new Intent(this, SyncActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
       return true;
     }
+
     if (id == R.id.action_about) {
 
       FragmentManager mgr = getFragmentManager();
@@ -117,10 +128,18 @@ public class SyncActivity extends Activity implements IAppAwareActivity {
         newFragment = new AboutMenuFragment();
       }
       FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.sync_activity_view, newFragment, AboutMenuFragment.NAME);
+      trans.replace(R.id.main_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 
+      return true;
+    }
+
+    if (id == R.id.action_settings) {
+
+      Intent intent = new Intent(this, AppPropertiesActivity.class);
+      intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
       return true;
     }
     return super.onOptionsItemSelected(item);
@@ -128,5 +147,14 @@ public class SyncActivity extends Activity implements IAppAwareActivity {
 
   @Override public String getAppName() {
     return mAppName;
+  }
+
+  @Override
+  public PropertiesSingleton getProps() {
+
+    if ( mProps == null ) {
+      mProps = CommonToolProperties.get(this, mAppName);
+    }
+    return mProps;
   }
 }

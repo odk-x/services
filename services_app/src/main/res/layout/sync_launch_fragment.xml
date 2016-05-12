@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/aggregate_activity_layout"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:fillViewport="true" >
 
     <LinearLayout
@@ -12,47 +12,42 @@
 
         <TextView
             android:id="@+id/sync_uri_label"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/sync_server_url" />
-
-        <EditText
-            android:id="@+id/sync_uri_field"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textUri"
-            android:text="@string/sync_default_server_url" />
-
-        <TextView
-            android:id="@+id/sync_account_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sync_account" />
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="5dp"
+            android:text="@string/sync_details" />
 
-        <Spinner
-            android:id="@+id/sync_account_list_spinner"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/sync_save_settings_button"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/sync_uri_field"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sync_save_settings" />
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="5dp"/>
 
-        <Button
-            android:id="@+id/sync_authorize_account_button"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/sync_account_auth_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sync_auth_account" />
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="5dp" />
 
-        <!-- TODO: Add this back when it works
+        <TextView
+                android:id="@+id/sync_account"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="5dp"/>
+
         <Spinner
             android:id="@+id/sync_instance_attachments"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             />
-            -->
 
         <Button
             android:id="@+id/sync_start_button"
