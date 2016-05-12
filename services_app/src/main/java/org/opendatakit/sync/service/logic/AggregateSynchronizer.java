@@ -54,10 +54,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.httpclientandroidlib.Header;
-import org.opendatakit.httpclientandroidlib.HeaderElement;
-import org.opendatakit.httpclientandroidlib.HttpEntity;
-import org.opendatakit.httpclientandroidlib.NameValuePair;
+import org.opendatakit.httpclientandroidlib.*;
 import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
 import org.opendatakit.httpclientandroidlib.client.methods.CloseableHttpResponse;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpDelete;
@@ -97,7 +94,6 @@ import org.opendatakit.httpclientandroidlib.client.config.RequestConfig;
 import org.opendatakit.httpclientandroidlib.client.config.CookieSpecs;
 import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -557,11 +553,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
     this.resources = new HashMap<String, TableResource>();
 
-    String accessToken = sc.getAccessToken();
-    // CAL: For now don't worry about access token
-    //checkAccessToken(accessToken);
-    this.accessToken = accessToken;
-
     // client initialization
     int CONNECTION_TIMEOUT = 60000;
 
@@ -573,19 +564,45 @@ public class AggregateSynchronizer implements Synchronizer {
     cookieStore = new BasicCookieStore();
     credsProvider = new BasicCredentialsProvider();
 
-    AuthScope a = new AuthScope(this.baseUri.getHost(), -1, null, AuthSchemes.DIGEST);
+    String host = this.baseUri.getHost();
+    String authenticationType = sc.getAuthenticationType();
 
-    // Potentially we should be able to get these from the properties
-    // Interim solution until merge
-    sc.setODKUsername("");
-    String userName = sc.getODKUsername(true);
+    if ( sc.getString(R.string.credential_type_google_account)
+        .equals(authenticationType)) {
 
-    // Interim solution until merge
-    sc.setODKPassword("");
-    String password = sc.getODKPassword(true);
+      String accessToken = sc.getAccessToken();
+      checkAccessToken(accessToken);
+      this.accessToken = accessToken;
 
-    Credentials c = new UsernamePasswordCredentials(userName, password);
-    credsProvider.setCredentials(a, c);
+
+    } else if ( sc.getString(R.string.credential_type_username_password)
+        .equals(authenticationType)) {
+      String username = sc.getUsername();
+      String password = sc.getPassword();
+
+      List<AuthScope> asList = new ArrayList<AuthScope>();
+      {
+        AuthScope a;
+        // allow digest auth on any port...
+        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
+        asList.add(a);
+        // and allow basic auth on the standard TLS/SSL ports...
+        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
+        asList.add(a);
+        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
+        asList.add(a);
+      }
+
+      // add username
+      if (username != null && username.trim().length() != 0) {
+        log.i(LOGTAG, "adding credential for host: " + host + " username:" + username);
+        Credentials c = new UsernamePasswordCredentials(username, password);
+
+        for (AuthScope a : asList) {
+          credsProvider.setCredentials(a, c);
+        }
+      }
+    }
 
     localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
     localContext.setAttribute(HttpClientContext.CREDS_PROVIDER, credsProvider);
@@ -690,14 +707,38 @@ public class AggregateSynchronizer implements Synchronizer {
     return res;
   }
 
-  private CloseableHttpResponse httpClientExecute(HttpRequestBase request) throws IOException {
+  private CloseableHttpResponse httpClientExecute(HttpRequestBase request)
+      throws IOException, InvalidAuthTokenException {
 
     CloseableHttpResponse response = null;
+    String authenticationType = sc.getAuthenticationType();
 
-    if (localContext != null) {
+    boolean isGoogleAccount = false;
+    if ( sc.getString(R.string.credential_type_google_account)
+        .equals(authenticationType)) {
+
+      isGoogleAccount = true;
+      request.addHeader("Authorization", "Bearer " + accessToken);
+    }
+
+      if (localContext != null) {
       response = httpClient.execute(request, localContext);
     } else {
       response = httpClient.execute(request);
+    }
+
+    if ( isGoogleAccount &&
+         response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+      request.removeHeaders("Authorization");
+      updateAccessToken();
+      request.addHeader("Authorization", "Bearer " + accessToken);
+
+      // re-issue the request with new access token
+      if (localContext != null) {
+        response = httpClient.execute(request, localContext);
+      } else {
+        response = httpClient.execute(request);
+      }
     }
 
     return response;

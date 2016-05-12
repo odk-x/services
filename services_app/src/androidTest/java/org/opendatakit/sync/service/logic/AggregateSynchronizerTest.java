@@ -19,7 +19,10 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.services.R;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncNotification;
@@ -57,6 +60,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
   protected void setUp() throws Exception {
     super.setUp();
 
+
     agg_url = "https://test.appspot.com";
     appId = "odktables/default";
     absolutePathOfTestFiles = "testfiles/test/";
@@ -68,6 +72,30 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
     host = url.getHost();
     version = 2;
     createApplication();
+  }
+
+  private SyncExecutionContext getSyncExecutionContext() {
+    SyncNotification syncProg = new SyncNotification(getContext(), appName);
+    SynchronizationResult syncRes = new SynchronizationResult();
+
+    PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
+    props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, agg_url);
+    if ( userName.length() == 0 ) {
+      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+          getApplication().getString(R.string.credential_type_none));
+      props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
+      props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
+    } else {
+      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+          getApplication().getString(R.string.credential_type_username_password));
+      props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
+      props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
+    }
+
+    SyncExecutionContext syncExecutionContext = new SyncExecutionContext(getApplication(),
+        appName, syncProg, syncRes);
+
+    return syncExecutionContext;
   }
 
   /*
@@ -82,16 +110,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test getting the app level file manifest with no files
    */
   public void testGetAppLevelFileManifestWithNoFiles_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -111,16 +130,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get list of tables when no tables exist
    */
   public void testGetTablesWhenNoTablesExist_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -139,16 +149,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get table definitions when no tables exist
    */
   public void testGetTableDefinitions_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test0";
     String colName = "test_col1";
@@ -195,16 +196,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test upload config file
    */
   public void testUploadConfigFileWithTextFile_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -236,16 +228,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test delete config file
    */
   public void testDeleteConfigFile_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -277,17 +260,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test create table with string
    */
   public void testCreateTableWithString_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test0";
     String colName = "test_col1";
@@ -332,17 +305,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test delete table
    */
   public void testDeleteTable_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test1";
     String colName = "test_col1";
@@ -386,17 +349,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get change sets
    */
 //  public void testGetChangeSetsWhenThereAreNoChanges_ExpectPass() {
-//
-//    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-//    SynchronizationResult syncRes = new SynchronizationResult();
-//    AppAwareApplication appAwareContext = getApplication();
-//
-//    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-//            appName, syncProg, syncRes);
-//
-//    sharedContext.setODKUsername(userName);
-//    sharedContext.setODKPassword(password);
-//    sharedContext.setAggregateUri(agg_url);
+//    SyncExecutionContext sharedContext = getSyncExecutionContext();
 //
 //    String testTableId = "test2";
 //    String colName = "test_col1";
@@ -452,17 +405,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get change set
    */
 //  public void testGetChangeSetWhenThereAreNoChanges_ExpectPass() {
-//
-//    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-//    SynchronizationResult syncRes = new SynchronizationResult();
-//    AppAwareApplication appAwareContext = getApplication();
-//
-//    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-//            appName, syncProg, syncRes);
-//
-//    sharedContext.setODKUsername(userName);
-//    sharedContext.setODKPassword(password);
-//    sharedContext.setAggregateUri(agg_url);
+//    SyncExecutionContext sharedContext = getSyncExecutionContext();
 //
 //    String testTableId = "test3";
 //    String colName = "test_col1";
@@ -515,17 +458,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get updates when there are no changes
    */
   public void testGetUpdatesWhenThereAreNoChanges_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test4";
     String colName = "test_col1";
@@ -579,17 +512,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test get updates when there are changes
    */
   public void testGetUpdatesWhenThereAreUpdates_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test41";
     String colName = "test_col1";
@@ -660,16 +583,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test alter rows with an inserted row
    */
   public void testAlterRowsWithInsertedRow_ExpectPass() {
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test5";
     String colName = "test_col1";
@@ -736,17 +650,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test getting the table level file manifest with no files
    */
   public void testGetTableLevelFileManifest_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test6";
     String colName = "test_col1";
@@ -795,17 +699,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test getting the row level file manifest with no files
    */
   public void testGetRowLevelFileManifestWhenThereAreNoFiles_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test7";
     String colName = "test_col1";
@@ -871,17 +765,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test upload instance file
    */
   public void testUploadInstanceFile_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test8";
     String colName = "test_col1";
@@ -956,17 +840,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test downloading file
    */
   public void testDownloadFile_ExpectPass() {
-
-    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
-    AppAwareApplication appAwareContext = getApplication();
-
-    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-            appName, syncProg, syncRes);
-
-    sharedContext.setODKUsername(userName);
-    sharedContext.setODKPassword(password);
-    sharedContext.setAggregateUri(agg_url);
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     String testTableId = "test9";
     String colName = "test_col1";
@@ -1050,17 +924,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test upload batch
    */
 //  public void testUploadBatch_ExpectPass() {
-//
-//    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-//    SynchronizationResult syncRes = new SynchronizationResult();
-//    AppAwareApplication appAwareContext = getApplication();
-//
-//    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-//            appName, syncProg, syncRes);
-//
-//    sharedContext.setODKUsername(userName);
-//    sharedContext.setODKPassword(password);
-//    sharedContext.setAggregateUri(agg_url);
+//    SyncExecutionContext sharedContext = getSyncExecutionContext();
 //
 //    String testTableId = "test10";
 //    String colName = "test_col1";
@@ -1148,17 +1012,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
    * Test batch downloading of files
    */
 //  public void testDownloadBatch_ExpectPass() {
-//
-//    SyncNotification syncProg = new SyncNotification(getContext(), appName);
-//    SynchronizationResult syncRes = new SynchronizationResult();
-//    AppAwareApplication appAwareContext = getApplication();
-//
-//    SyncExecutionContext sharedContext = new SyncExecutionContext(appAwareContext,
-//            appName, syncProg, syncRes);
-//
-//    sharedContext.setODKUsername(userName);
-//    sharedContext.setODKPassword(password);
-//    sharedContext.setAggregateUri(agg_url);
+//    SyncExecutionContext sharedContext = getSyncExecutionContext();
 //
 //    String testTableId = "test11";
 //    String colName = "test_col1";

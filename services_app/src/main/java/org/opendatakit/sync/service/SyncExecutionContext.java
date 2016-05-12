@@ -89,10 +89,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String appName;
   private final String odkClientApiVersion;
   private final String userAgent;
-  // CAL: change for testing
-  private String aggregateUri;
-  private String odkUserName;
-  private String odkPassword;
+
+  private final String aggregateUri;
+  private final String authenticationType;
+  private final String googleAccount;
+  private final String username;
+  private final String password;
+
   private final SyncNotification syncProgress;
 
   // set this later
@@ -115,16 +118,16 @@ public class SyncExecutionContext implements SynchronizerStatus {
     PropertiesSingleton props = CommonToolProperties.get(context, appName);
 
     this.aggregateUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    this.authenticationType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
+    this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
+    this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
 
     this.nMajorSyncSteps = 1;
     this.GRAINS_PER_MAJOR_SYNC_STEP = (OVERALL_PROGRESS_BAR_LENGTH / nMajorSyncSteps);
     this.iMajorSyncStep = 0;
-
   }
 
-  public void setAggregateUri(String aggUri) {
-    this.aggregateUri = aggUri;
-  }
   public void setSynchronizer(Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
   }
@@ -167,8 +170,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   }
 
   public Account getAccount() {
-    PropertiesSingleton props = CommonToolProperties.get(application, getAppName());
-    Account account = new Account(props.getProperty(CommonToolProperties.KEY_ACCOUNT), ACCOUNT_TYPE_G);
+    Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
     return account;
   }
 
@@ -178,35 +180,20 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return props.getProperty(CommonToolProperties.KEY_AUTH);
   }
 
-  public void setODKUsername(String username) {
-    this.odkUserName = username;
+  public String getAuthenticationType() {
+    return authenticationType;
   }
 
-  public String getODKUsername(boolean mocked) {
-    // CAL: For testing - should be done differently
-    if(mocked) {
-      return this.odkUserName;
-    } else {
-      PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-      return props.getProperty(CommonToolProperties.KEY_PASSWORD);
-    }
+  public String getGoogleAccount() {
+    return googleAccount;
   }
 
-  public void setODKPassword(String password) {
-    this.odkPassword = password;
+  public String getUsername() {
+    return username;
   }
 
-  public String getODKPassword(boolean mocked) {
-    // CAL: For testing - should be done differently
-    if (mocked) {
-      return this.odkPassword;
-    } else {
-      PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-      //return props.getProperty(CommonToolProperties.KEY_ODK_USER);
-      return props.getProperty(CommonToolProperties.KEY_USERNAME);
-    }
+  public String getPassword() {
+    return password;
   }
 
   private int refCount = 1;

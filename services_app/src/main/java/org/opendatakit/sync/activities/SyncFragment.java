@@ -87,7 +87,6 @@ public class SyncFragment extends Fragment {
   private Button startSync;
   private Button resetServer;
 
-  private enum SyncActions { IDLE, MONITOR_SYNC, MONITOR_RESET_SERVER, SYNC, RESET_SERVER };
   private SyncActions syncAction = SyncActions.IDLE;
 
   private class ServiceConnectionWrapper implements ServiceConnection {
