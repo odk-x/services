@@ -36,6 +36,7 @@ import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
@@ -238,7 +239,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
         return;
       }
       synchronized (odkDbInterfaceBindComplete) {
-        odkDbInterface = (service == null) ? null : OdkDbInterface.Stub.asInterface(service);
+        try {
+          odkDbInterface = (service == null) ? null : new OdkDbSerializedInterface(OdkDbInterface
+              .Stub.asInterface(service));
+        } catch (IllegalArgumentException e) {
+          odkDbInterface = null;
+        }
+
         active = false;
         odkDbInterfaceBindComplete.notify();
       }
@@ -255,10 +262,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private ServiceConnectionWrapper odkDbServiceConnection = new ServiceConnectionWrapper();
   private Object odkDbInterfaceBindComplete = new Object();
-  private OdkDbInterface odkDbInterface;
+  private OdkDbSerializedInterface odkDbInterface;
   private boolean active = false;
 
-  public OdkDbInterface getDatabaseService() {
+  public OdkDbSerializedInterface getDatabaseService() {
 
     synchronized (odkDbInterfaceBindComplete) {
       if ( odkDbInterface != null ) {

@@ -15,6 +15,7 @@ import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.OdkDatabaseService;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
@@ -54,7 +55,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
     @Override
     protected void tearDown() throws Exception {
-        OdkDbInterface serviceInterface = bindToDbService();
+       OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
            Log.i("openDatabase", "tearDown: " + db
@@ -111,7 +112,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
         assertEquals(row.getRawDataOrMetadataByElementKey(COL_NUMBER_ID), Double.toString(TEST_NUM_2));
     }
 
-    private void verifyNoTablesExistNCleanAllTables(OdkDbInterface serviceInterface, OdkDbHandle db) throws RemoteException {
+    private void verifyNoTablesExistNCleanAllTables(
+        OdkDbSerializedInterface serviceInterface, OdkDbHandle db) throws RemoteException {
         List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
 
         boolean tablesGone = (tableIds.size() == 0);
@@ -125,28 +127,36 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     @Nullable
-    private OdkDbInterface bindToDbService() {
+    private OdkDbSerializedInterface bindToDbService() {
         Intent bind_intent = new Intent();
         bind_intent.setClass(getContext(), OdkDatabaseService.class);
         IBinder service = this.bindService(bind_intent);
-        return OdkDbInterface.Stub.asInterface(service);
+
+       OdkDbSerializedInterface dbInterface;
+       try {
+          dbInterface = new OdkDbSerializedInterface(OdkDbInterface.Stub.asInterface(service));
+       } catch (IllegalArgumentException e) {
+          dbInterface = null;
+       }
+        return dbInterface;
     }
 
-    private boolean hasNoTablesInDb(OdkDbInterface serviceInterface, OdkDbHandle db) throws RemoteException {
+    private boolean hasNoTablesInDb(OdkDbSerializedInterface serviceInterface, OdkDbHandle db)
+        throws RemoteException {
         List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
         return (tableIds.size() == 0);
     }
 
     public void testBinding() {
-        OdkDbInterface serviceInterface = bindToDbService();
-        assertNotNull(serviceInterface);
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
+        assertNotNull(serviceInterface.getDbInterface());
         // TODO: database check function?
 
         // TODO: add a bind with bind_intent.setClassName instead
     }
 
     public void testDbCreateNDeleteTable() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             ColumnList columnList = new ColumnList(createColumnList());
 
@@ -174,7 +184,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbCreateNDeleteTableWTransactions() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             ColumnList columnList = new ColumnList(createColumnList());
 
@@ -201,7 +211,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertSingleRowIntoTable() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -243,7 +253,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
 
     public void testDbInsertSingleRowIntoTableWSingleTransaction() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -280,7 +290,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertSingleRowIntoTableWTwoTransactions() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -319,7 +329,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertTwoRowsIntoTable() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -359,7 +369,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertTwoRowsIntoTableWSingleTransaction() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -398,7 +408,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertTwoRowsIntoTableWTwoTransactions() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -440,7 +450,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbQueryWNoParams() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -478,7 +488,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 /*
     public void testDbQueryRowWNoColumnsSpecified() {
-        OdkDbInterface serviceInterface = bindToDbService();
+        OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -515,7 +525,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 */
     public void testDbUpdateAllValues() {
-        OdkDbInterface serviceInterface = bindToDbService();
+       OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
@@ -561,7 +571,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbUpdateAllValuesWTransactions() {
-        OdkDbInterface serviceInterface = bindToDbService();
+       OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
@@ -607,7 +617,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbUpdateSingleValue() {
-        OdkDbInterface serviceInterface = bindToDbService();
+       OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
             List<Column> columnList = createColumnList();
             ColumnList colList = new ColumnList(columnList);
@@ -667,7 +677,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbInsertNDeleteSingleRowIntoTable() {
-        OdkDbInterface serviceInterface = bindToDbService();
+       OdkDbSerializedInterface serviceInterface = bindToDbService();
         try {
 
             List<Column> columnList = createColumnList();
@@ -716,8 +726,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
     }
 
     public void testDbUpdateWTwoServiceConnections() {
-        OdkDbInterface serviceInterface1 = bindToDbService();
-        OdkDbInterface serviceInterface2 = bindToDbService();
+       OdkDbSerializedInterface serviceInterface1 = bindToDbService();
+       OdkDbSerializedInterface serviceInterface2 = bindToDbService();
 
         try {
             List<Column> columnList = createColumnList();

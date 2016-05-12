@@ -43,6 +43,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -478,9 +479,9 @@ public class ProcessRowDataChanges {
             rowsToPushFileAttachments, hasAttachments, tableResult);
 
         String[] empty = {};
+
         localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db,
-            tableId,
-            orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
+            tableId, orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
 
         // TODO: fix this for synced_pending_files
         // We likely need to relax this constraint on the
@@ -612,8 +613,10 @@ public class ProcessRowDataChanges {
               try {
                 db = sc.getDatabase();
                 String[] empty = {};
-                localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db, tableId,
-                    orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
+
+                localDataTable = sc.getDatabaseService()
+                    .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty,
+                        null, DataTableColumns.ID, "ASC");
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
