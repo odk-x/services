@@ -16,7 +16,6 @@ package org.opendatakit.sync.service.logic;
 
 import android.os.RemoteException;
 
-import org.apache.http.HttpStatus;
 import org.apache.wink.client.ClientWebException;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -47,6 +46,7 @@ import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,7 +125,7 @@ public class ProcessAppAndTableLevelChanges {
                 + e.toString());
         return new ArrayList<TableResource>();
       } catch (ClientWebException e) {
-        if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+        if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED ) {
           sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
         } else {
           sc.setAppLevelStatus(Status.EXCEPTION);
@@ -224,7 +224,7 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<TableResource>();
     } catch (ClientWebException e) {
       // TODO: update a synchronization result to report back to them as well.
-      if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+      if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED ) {
         sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
       } else {
         sc.setAppLevelStatus(Status.EXCEPTION);
@@ -235,7 +235,8 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<TableResource>();
     } catch (HttpClientWebException he) {
       // TODO: update a synchronization result to report back to them as well.
-      if ( he.getResponse() != null && he.getResponse().getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+      if ( he.getResponse() != null && he.getResponse().getStatusLine().getStatusCode() ==
+              HttpURLConnection.HTTP_UNAUTHORIZED ) {
         sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
       } else {
         sc.setAppLevelStatus(Status.EXCEPTION);
@@ -243,6 +244,13 @@ public class ProcessAppAndTableLevelChanges {
       log.e(TAG,
               "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
       log.printStackTrace(he);
+      return new ArrayList<TableResource>();
+    } catch (IOException ioe) {
+      // TODO: update a synchronization result to report back to them as well.
+      // Would it be more appropriate to exit here?
+      log.e(TAG,
+              "[synchronizeConfigurationAndContent] error trying to manipulate file.");
+      log.printStackTrace(ioe);
       return new ArrayList<TableResource>();
     }
 
@@ -315,7 +323,8 @@ public class ProcessAppAndTableLevelChanges {
             return new ArrayList<TableResource>();
           } catch (ClientWebException e) {
             // TODO: update a synchronization result to report back to them as well.
-            if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+            if ( e.getResponse() != null && e.getResponse().getStatusCode() ==
+                    HttpURLConnection.HTTP_UNAUTHORIZED ) {
               sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
             } else {
               sc.setAppLevelStatus(Status.EXCEPTION);
@@ -324,6 +333,13 @@ public class ProcessAppAndTableLevelChanges {
                 "[synchronizeConfigurationAndContent] error trying to delete tables.");
             log.printStackTrace(e);
             return new ArrayList<TableResource>();
+          } catch (IOException ioe) {
+            // TODO: update a synchronization result to report back to them as well.
+            // Would it be more appropriate to exit here?
+            log.e(TAG, "[synchronizeConfigurationAndContent] error trying to delete table.");
+            log.printStackTrace(ioe);
+            return new ArrayList<TableResource>();
+
           }
         }
       }
@@ -402,7 +418,7 @@ public class ProcessAppAndTableLevelChanges {
               }
             }
           } catch (ClientWebException e) {
-            if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+            if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED ) {
               clientAuthException("synchronizeConfigurationAndContent", serverTableId, e, tableResult);
             } else {
               clientWebException("synchronizeConfigurationAndContent - Unexpected exception parsing table definition exception",
@@ -569,7 +585,7 @@ public class ProcessAppAndTableLevelChanges {
           resource = sc.getSynchronizer().createTable(tableId, schemaETag,
               orderedDefns.getColumns());
         } catch (ClientWebException e) {
-          if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+          if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED ) {
             clientAuthException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
           } else {
             clientWebException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
@@ -617,7 +633,8 @@ public class ProcessAppAndTableLevelChanges {
         try {
           definitionResource = sc.getSynchronizer().getTableDefinition(resource.getDefinitionUri());
         } catch (ClientWebException e) {
-          if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+          if ( e.getResponse() != null && e.getResponse().getStatusCode() ==
+                  HttpURLConnection.HTTP_UNAUTHORIZED ) {
             clientAuthException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
           } else {
             clientWebException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
@@ -745,7 +762,8 @@ public class ProcessAppAndTableLevelChanges {
               }
             }, pushLocalTableLevelFiles, sc);
       } catch (ClientWebException e) {
-        if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+        if ( e.getResponse() != null && e.getResponse().getStatusCode() ==
+                HttpURLConnection.HTTP_UNAUTHORIZED ) {
           clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
         } else {
           clientWebException("synchronizeTableConfigurationAndContent - Unexpected exception parsing table definition exception",
@@ -754,6 +772,11 @@ public class ProcessAppAndTableLevelChanges {
         return null;
       } catch (InvalidAuthTokenException e) {
         clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
+        return null;
+      } catch (IOException ioe) {
+        // Would it be more appropriate to exit here
+        log.e(TAG, "synchronizeTableConfigurationAndContent");
+        exception("synchronizeTableConfigurationAndContent - error while uploading config files", tableId, ioe, tableResult);
         return null;
       }
 

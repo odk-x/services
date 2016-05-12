@@ -89,7 +89,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String appName;
   private final String odkClientApiVersion;
   private final String userAgent;
-  private final String aggregateUri;
+  // CAL: change for testing
+  private String aggregateUri;
+  private String odkUserName;
+  private String odkPassword;
   private final SyncNotification syncProgress;
 
   // set this later
@@ -119,6 +122,9 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   }
 
+  public void setAggregateUri(String aggUri) {
+    this.aggregateUri = aggUri;
+  }
   public void setSynchronizer(Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
   }
@@ -172,16 +178,35 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return props.getProperty(CommonToolProperties.KEY_AUTH);
   }
 
-  public String getODKUsername() {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-    return props.getProperty(CommonToolProperties.KEY_PASSWORD);
+  public void setODKUsername(String username) {
+    this.odkUserName = username;
   }
 
-  public String getODKPassword() {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+  public String getODKUsername(boolean mocked) {
+    // CAL: For testing - should be done differently
+    if(mocked) {
+      return this.odkUserName;
+    } else {
+      PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
-    return props.getProperty(CommonToolProperties.KEY_USERNAME);
+      return props.getProperty(CommonToolProperties.KEY_PASSWORD);
+    }
+  }
+
+  public void setODKPassword(String password) {
+    this.odkPassword = password;
+  }
+
+  public String getODKPassword(boolean mocked) {
+    // CAL: For testing - should be done differently
+    if (mocked) {
+      return this.odkPassword;
+    } else {
+      PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+      //return props.getProperty(CommonToolProperties.KEY_ODK_USER);
+      return props.getProperty(CommonToolProperties.KEY_USERNAME);
+    }
   }
 
   private int refCount = 1;

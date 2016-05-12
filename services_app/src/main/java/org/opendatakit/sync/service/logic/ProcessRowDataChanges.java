@@ -21,7 +21,6 @@ import android.os.RemoteException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.http.HttpStatus;
 import org.apache.wink.client.ClientWebException;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -56,6 +55,7 @@ import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -658,7 +658,7 @@ public class ProcessRowDataChanges {
                 }
               } catch (ClientWebException e) {
                 if (e.getResponse() != null
-                    && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+                    && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                   clientAuthException("synchronizeTable - pulling data down from server", tableId,
                       e, tableResult);
                 } else {
@@ -876,7 +876,7 @@ public class ProcessRowDataChanges {
             // our processing is complete.
             updateToServerSuccessful = true;
           } catch (ClientWebException e) {
-            if (e.getResponse().getStatusCode() == HttpStatus.SC_CONFLICT) {
+            if (e.getResponse().getStatusCode() == HttpURLConnection.HTTP_CONFLICT) {
               // expected -- there were row updates by another client
               // re-pull changes from the server. Return to the start
               // of the for(;;) loop.
@@ -884,7 +884,7 @@ public class ProcessRowDataChanges {
             }
             // otherwise it is an error...
             if (e.getResponse() != null
-                && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+                && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
               clientAuthException("synchronizeTable - pushing data up to server", tableId, e,
                   tableResult);
             } else {
@@ -946,7 +946,7 @@ public class ProcessRowDataChanges {
               }
             } catch (ClientWebException e) {
               if (e.getResponse() != null
-                  && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+                  && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 clientAuthException("synchronizeTable - auth error synchronizing attachments", tableId, e, tableResult);
                 log.e(TAG, "[synchronizeTableRest] auth failure synchronizing attachments " + e.toString());
               } else {
