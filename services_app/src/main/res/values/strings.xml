@@ -3,6 +3,7 @@
     <string name="app_name">ODK Services</string>
 
     <string name="services_notice">ODK Services provides database, file access, and data synchronization services to all ODK 2.0 applications.</string>
+    <string name="action_admin_settings">Admin Settings</string>
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
     <string name="action_sync">Sync</string>
@@ -81,8 +82,23 @@
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
 
     <!-- Sync Service and Notifications stuff -->
-    <string name="sync_starting">Starting sync&#8230;</string>
 
+    <!-- progress dialog titles -->
+    <string name="sync_in_progress">Syncing in progress&#8230;</string>
+    <string name="sync_app_level_files">Syncing application configuration&#8230;</string>
+    <string name="sync_table_level_files">Syncing table and form configuration&#8230;</string>
+    <string name="sync_row_data">Syncing data&#8230;</string>
+
+    <!-- outcome dialog titles -->
+    <string name="sync_network_error">An unspecified error occurred</string>
+    <string name="sync_file_transmission_error">An unspecified error occurred relating to files</string>
+    <string name="sync_user_authorization_failure">User authorization failure</string>
+    <string name="sync_conflicts_need_resolving">Conflicts detected</string>
+    <string name="sync_successful">Sync successful</string>
+    <string name="sync_complete_pending_attachments">Sync (without attachments) successful</string>
+
+    <!-- intermediate progress messages -->
+    <string name="sync_starting">Starting sync&#8230;</string>
     <string name="sync_getting_app_level_manifest">Retrieving list of application files from server.</string>
 
     <string name="sync_uploading_local_file">Uploading %1$s to server.</string>
@@ -117,6 +133,7 @@
     <string name="sync_marking_conflicting_local_row">Mark conflicting %1$s local dataset row %2$d of %3$d.</string>
 
     <!-- Sync User Interface stuff -->
+    <string name="sync_details">Sync Configuration:</string>
     <string name="sync_server_url">Aggregate URL:</string>
     <string name="sync_default_server_url">http://opendatakit-2.appspot.com</string>
     <string name="sync_account">Account:</string>
@@ -140,5 +157,98 @@
     <string name="sync_reset_app_server_warning">Resetting the App Server will clear all data currently on the server.</string>
     <string name="sync_reset">Reset</string>
 
+    <string name="sync_other_auth_fail">Authorization request failed %1$s</string>
+    <string name="sync_auth_unsuccessful">Please resolve the reported authorization issues and try again.</string>
+    <!-- settings screen stuff -->
+    <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
+    <string name="admin_settings">Admin Settings</string>
 
+    <string name="admin_access_settings">Tap for admin access to settings</string>
+    <string name="user_access_preferences">User can change General Settings items:</string>
+
+    <string name="admin_password_settings_summary">Admin password Enabled. Click to change admin password</string>
+    <string name="admin_password_disabled_click_to_set">No Admin password. Click to enable.</string>
+    <string name="admin_password_settings">Admin Password</string>
+    <string name="admin_password">Admin Password</string>
+    <string name="change_admin_password">Change admin password</string>
+    <string name="enable_admin_password">Enable user restrictions</string>
+
+    <string name="enter_admin_password">Enter Admin password:</string>
+
+    <string name="click_to_change_password">Click to change password</string>
+    <string name="enter_new_password">Enter new password</string>
+    <string name="verify_new_password">Re-enter new password</string>
+    <string name="password_changed">Password successfully changed</string>
+    <string name="admin_password_disabled">Admin password disabled</string>
+    <string name="admin_password_enabled">Admin password enabled</string>
+    <string name="password_mismatch">Sorry, passwords do not match!</string>
+
+    <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
+    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>
+    <string name="general_settings">General Settings</string>
+    <string name="admin_general_settings">Admin Access to Settings</string>
+    <string name="opendatakit_website">Open Data Kit user documentation</string>
+    <string name="click_to_web">Tap to visit http://opendatakit.org</string>
+
+    <string name="server_settings_summary">User Identity, Authentication and Server Configuration</string>
+    <string name="server">Server Settings</string>
+    <string name="server_restrictions_apply">Server Settings (non-Admin restrictions apply)</string>
+    <string name="server_url">Server URL</string>
+    <string name="change_server_url">Server URL</string>
+    <string name="url_error">Sorry, invalid URL!</string>
+    <string name="url_error_whitespace">whitespace is not allowed in urls</string>
+
+    <string name="restrict_server_settings_summary">Limit non-Admin ability to change Server Settings</string>
+    <string name="restrict_server">Manage ability to change Server Settings</string>
+
+    <string name="credential">Server Sign-on Credential</string>
+    <string name="change_credential">Change Sign-on Credential</string>
+    <string name="credential_none">None (anonymous access)</string>
+    <string name="credential_username_password">Username</string>
+    <string name="credential_google_account">Google Account</string>
+
+    <string name="username_password">Username and/or Password</string>
+    <string name="username">Username</string>
+    <string name="change_username">ODK Username</string>
+    <string name="password">Server Password</string>
+    <string name="change_server_password">Server Password</string>
+    <string name="google_account">Select Google Account</string>
+    <string name="selected_google_account_text">Google Account</string>
+    <string name="no_account">No account</string>
+
+    <string name="restrict_device_settings_summary">Limit non-Admin ability to change Device Settings</string>
+    <string name="restrict_device">Manage ability to change Device Settings</string>
+
+    <string name="device_settings_summary">Device-specific Configuration</string>
+    <string name="device">Device Settings</string>
+    <string name="device_restrictions_apply">Device Settings (non-Admin restrictions apply)</string>
+
+    <string name="font_size">Text Font Size</string>
+    <string name="change_font_size">Text Font Size</string>
+    <string name="font_size_extra_large">Extra Large</string>
+    <string name="font_size_large">Large</string>
+    <string name="font_size_medium">Medium</string>
+    <string name="font_size_small">Small</string>
+    <string name="font_size_extra_small">Extra Small</string>
+
+    <string name="show_splash">Show Splash Screen</string>
+    <string name="show_splash_summary">Shows when application starts</string>
+    <string name="splash_path">Selected Splash Image</string>
+    <string name="default_splash_path">ODK Default</string>
+    <string name="select_another_image">Select Another Image</string>
+    <string name="use_odk_default">Use Default Image</string>
+    <string name="change_splash_path">Change Image</string>
+    <string name="admin_change_splash_settings">Change Splash Screen settings</string>
+    <string name="splash_media_save_failed">Unable to copy selected splash screen image</string>
+
+    <string name="tool_tables_settings">Tables-specific Settings</string>
+    <string name="tool_tables_restrictions_apply">Tables-specific settings (non-Admin restrictions apply)</string>
+    <string name="tool_tables_settings_summary">ODK Tables-specific settings</string>
+    <string name="custom_home_screen">Use custom home screen</string>
+    <string name="admin_tool_tables_settings">Manage ability to change Tables-specific Settings</string>
+    <string name="admin_tool_tables_settings_summary">Limit non-Admin ability to change Tables-specific Settings</string>
+    <string name="change_custom_home_screen">Change use of custom home screen</string>
+
+    <!-- legacy submission logic -->
+    <string name="success">Success</string>
 </resources>

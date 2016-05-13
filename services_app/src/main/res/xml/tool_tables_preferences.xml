@@ -1,0 +1,11 @@
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:key="group.common.tables" android:title="@string/tool_tables_settings">
+		<CheckBoxPreference
+				android:id="@+id/custom_home_screen"
+				android:defaultValue="false"
+				android:key="tables.custom_home_screen"
+				android:title="@string/custom_home_screen"
+				android:persistent="false" />
+	</PreferenceCategory>
+</PreferenceScreen>

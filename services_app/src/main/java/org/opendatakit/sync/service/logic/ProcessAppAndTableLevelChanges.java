@@ -16,8 +16,6 @@ package org.opendatakit.sync.service.logic;
 
 import android.os.RemoteException;
 
-import org.apache.http.HttpStatus;
-import org.apache.wink.client.ClientWebException;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -34,12 +32,14 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.OdkSyncService;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SynchronizationResult.Status;
 import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
@@ -119,16 +119,6 @@ public class ProcessAppAndTableLevelChanges {
         }
       } catch (InvalidAuthTokenException e) {
         sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
-        log.i(TAG,
-            "[synchronizeConfigurationAndContent] Could not retrieve server table list exception: "
-                + e.toString());
-        return new ArrayList<TableResource>();
-      } catch (ClientWebException e) {
-        if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-          sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
-        } else {
-          sc.setAppLevelStatus(Status.EXCEPTION);
-        }
         log.i(TAG,
             "[synchronizeConfigurationAndContent] Could not retrieve server table list exception: "
                 + e.toString());
@@ -221,16 +211,24 @@ public class ProcessAppAndTableLevelChanges {
           "[synchronizeConfigurationAndContent] auth token failure while trying to synchronize app-level files.");
       log.printStackTrace(e);
       return new ArrayList<TableResource>();
-    } catch (ClientWebException e) {
+    } catch (HttpClientWebException he) {
       // TODO: update a synchronization result to report back to them as well.
-      if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+      if ( he.getResponse() != null && he.getResponse().getStatusLine().getStatusCode() ==
+              HttpStatus.SC_UNAUTHORIZED ) {
         sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
       } else {
         sc.setAppLevelStatus(Status.EXCEPTION);
       }
       log.e(TAG,
-          "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
-      log.printStackTrace(e);
+              "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
+      log.printStackTrace(he);
+      return new ArrayList<TableResource>();
+    } catch (IOException ioe) {
+      // TODO: update a synchronization result to report back to them as well.
+      // Would it be more appropriate to exit here?
+      log.e(TAG,
+              "[synchronizeConfigurationAndContent] error trying to manipulate file.");
+      log.printStackTrace(ioe);
       return new ArrayList<TableResource>();
     }
 
@@ -301,17 +299,13 @@ public class ProcessAppAndTableLevelChanges {
                 "[synchronizeConfigurationAndContent] auth token failure while trying to delete tables.");
             log.printStackTrace(e);
             return new ArrayList<TableResource>();
-          } catch (ClientWebException e) {
+          } catch (IOException ioe) {
             // TODO: update a synchronization result to report back to them as well.
-            if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-              sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
-            } else {
-              sc.setAppLevelStatus(Status.EXCEPTION);
-            }
-            log.e(TAG,
-                "[synchronizeConfigurationAndContent] error trying to delete tables.");
-            log.printStackTrace(e);
+            // Would it be more appropriate to exit here?
+            log.e(TAG, "[synchronizeConfigurationAndContent] error trying to delete table.");
+            log.printStackTrace(ioe);
             return new ArrayList<TableResource>();
+
           }
         }
       }
@@ -389,14 +383,6 @@ public class ProcessAppAndTableLevelChanges {
                 db = null;
               }
             }
-          } catch (ClientWebException e) {
-            if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-              clientAuthException("synchronizeConfigurationAndContent", serverTableId, e, tableResult);
-            } else {
-              clientWebException("synchronizeConfigurationAndContent - Unexpected exception parsing table definition exception",
-                serverTableId, e, tableResult);
-            }
-            continue;
           } catch (InvalidAuthTokenException e) {
             clientAuthException("synchronizeConfigurationAndContent", serverTableId, e, tableResult);
             continue;
@@ -556,13 +542,6 @@ public class ProcessAppAndTableLevelChanges {
         try {
           resource = sc.getSynchronizer().createTable(tableId, schemaETag,
               orderedDefns.getColumns());
-        } catch (ClientWebException e) {
-          if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-            clientAuthException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
-          } else {
-            clientWebException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
-          }
-          return null;
         } catch (InvalidAuthTokenException e) {
           clientAuthException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
           return null;
@@ -604,13 +583,6 @@ public class ProcessAppAndTableLevelChanges {
         TableDefinitionResource definitionResource;
         try {
           definitionResource = sc.getSynchronizer().getTableDefinition(resource.getDefinitionUri());
-        } catch (ClientWebException e) {
-          if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-            clientAuthException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
-          } else {
-            clientWebException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
-          }
-          return null;
         } catch (InvalidAuthTokenException e) {
           clientAuthException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
           return null;
@@ -732,16 +704,13 @@ public class ProcessAppAndTableLevelChanges {
                 }
               }
             }, pushLocalTableLevelFiles, sc);
-      } catch (ClientWebException e) {
-        if ( e.getResponse() != null && e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-          clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
-        } else {
-          clientWebException("synchronizeTableConfigurationAndContent - Unexpected exception parsing table definition exception",
-              tableId, e, tableResult);
-        }
-        return null;
       } catch (InvalidAuthTokenException e) {
         clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
+        return null;
+      } catch (IOException ioe) {
+        // Would it be more appropriate to exit here
+        log.e(TAG, "synchronizeTableConfigurationAndContent");
+        exception("synchronizeTableConfigurationAndContent - error while uploading config files", tableId, ioe, tableResult);
         return null;
       }
 
@@ -872,18 +841,18 @@ public class ProcessAppAndTableLevelChanges {
    * @param e
    * @param tableResult
    */
-  private void clientWebException(String method, String tableId, ClientWebException e,
-      TableResult tableResult) {
-    String msg = e.getMessage();
-    if (msg == null) {
-      msg = e.toString();
-    }
-    log.printStackTrace(e);
-    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
-        tableId, msg));
-    tableResult.setStatus(Status.EXCEPTION);
-    tableResult.setMessage(msg);
-  }
+//  private void clientWebException(String method, String tableId, ClientWebException e,
+//      TableResult tableResult) {
+//    String msg = e.getMessage();
+//    if (msg == null) {
+//      msg = e.toString();
+//    }
+//    log.printStackTrace(e);
+//    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
+//        tableId, msg));
+//    tableResult.setStatus(Status.EXCEPTION);
+//    tableResult.setMessage(msg);
+//  }
 
   /**
    * Common error reporting...

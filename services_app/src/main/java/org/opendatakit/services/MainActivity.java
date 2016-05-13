@@ -30,10 +30,14 @@ import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.sync.activities.SyncActivity;
+import org.opendatakit.common.android.activities.AppPropertiesActivity;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 
   private static final String TAG = "MainActivity";
+
+  private int SYNC_ACTIVITY_RESULT_CODE = 10;
+  private int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
   private String mAppName;
 
@@ -85,7 +89,7 @@ public class MainActivity extends Activity implements IAppAwareActivity {
     if (id == R.id.action_sync) {
       Intent i = new Intent(this, SyncActivity.class);
       i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-      startActivityForResult(i, 3);
+      startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
       return true;
     }
 
@@ -101,6 +105,14 @@ public class MainActivity extends Activity implements IAppAwareActivity {
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 
+      return true;
+    }
+
+    if (id == R.id.action_settings) {
+
+      Intent intent = new Intent(this, AppPropertiesActivity.class);
+      intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
       return true;
     }
     return super.onOptionsItemSelected(item);

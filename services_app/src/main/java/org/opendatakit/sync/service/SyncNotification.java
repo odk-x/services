@@ -52,7 +52,7 @@ public final class SyncNotification {
         .setOngoing(true);
     builder.setSmallIcon(android.R.drawable.ic_popup_sync);
     builder.setProgress(maxProgress, progress, indeterminateProgress);
-    Notification syncNotif = builder.getNotification();
+    Notification syncNotif = builder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
     WebLogger.getLogger(appName).i(
@@ -78,7 +78,7 @@ public final class SyncNotification {
         .setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
 
-    Notification syncNotif = finalBuilder.getNotification();
+    Notification syncNotif = finalBuilder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
     WebLogger.getLogger(appName).e(LOGTAG,
@@ -99,7 +99,7 @@ public final class SyncNotification {
         .setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
 
-    Notification syncNotif = finalBuilder.getNotification();
+    Notification syncNotif = finalBuilder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
   }

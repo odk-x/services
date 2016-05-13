@@ -14,6 +14,7 @@
 
 package org.sqlite.database.sqlite;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.database.*;
 import android.net.Uri;
@@ -239,13 +240,17 @@ public class SQLiteCursor implements CrossProcessCursor {
       }
    }
 
-   @Override public void deactivate() {
+   @Override
+   @SuppressLint("Deprecation")
+   public void deactivate() {
       synchronized (impl) {
          impl.deactivate();
       }
    }
 
-   @Override public boolean requery() {
+   @Override
+   @SuppressLint("Deprecation")
+   public boolean requery() {
       synchronized (impl) {
          return impl.requery();
       }

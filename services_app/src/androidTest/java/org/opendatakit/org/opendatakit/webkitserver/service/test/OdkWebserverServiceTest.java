@@ -9,6 +9,7 @@ import android.test.ServiceTestCase;
 
 import org.opendatakit.TestConsts;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.webkitserver.service.OdkWebkitServerInterface;
 import org.opendatakit.webkitserver.service.OdkWebkitServerService;
 
@@ -118,7 +119,7 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
             String urlStr = "http://localhost:8635/" + directory + "/" + TEST_FILE_NAME;
             URL url = new URL(urlStr);
             connection = (HttpURLConnection) url.openConnection();
-            if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+            if(connection.getResponseCode() != HttpStatus.SC_OK) {
                 fail("Response code was NOT HTTP_OK");
             }
             BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));

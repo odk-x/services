@@ -72,12 +72,12 @@ public class OdkSyncService extends Service {
 
   }
 
-  public boolean push(String appName) {
+  public boolean resetServer(String appName, SyncAttachmentState attachmentState) {
     AppSynchronizer sync = getSync(appName);
-    return sync.synchronize(true, SyncAttachmentState.NONE);
+    return sync.synchronize(true, attachmentState);
   }
 
-  public boolean synchronize(String appName, SyncAttachmentState attachmentState) {
+  public boolean synchronizeWithServer(String appName, SyncAttachmentState attachmentState) {
     AppSynchronizer sync = getSync(appName);
     return sync.synchronize(false, attachmentState);
   }

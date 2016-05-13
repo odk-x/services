@@ -1,0 +1,30 @@
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:key="group.common.device" android:title="@string/device">
+		<ListPreference
+			android:id="@+id/font_size"
+			android:key="common.font_size"
+			android:title="@string/font_size"
+			android:dialogTitle="@string/change_font_size"
+			android:defaultValue="21"
+			android:entries="@array/font_size_entries"
+			android:entryValues="@array/font_size_entry_values" 
+			android:persistent="false"/>
+
+		<CheckBoxPreference
+				android:id="@+id/show_splash"
+				android:key="common.show_splash"
+				android:title="@string/show_splash"
+				android:summary="@string/show_splash_summary"
+				android:persistent="false"/>
+
+		<PreferenceScreen
+				android:id="@+id/splash_path"
+				android:key="common.splash_path"
+				android:defaultValue="@string/default_splash_path"
+				android:title="@string/splash_path"
+				android:dependency="common.show_splash"
+				android:layout="?android:attr/preferenceLayoutChild"
+				android:persistent="false"/>
+	</PreferenceCategory>
+</PreferenceScreen>
