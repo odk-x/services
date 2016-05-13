@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.wink.client.ClientWebException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
@@ -63,10 +62,9 @@ public interface Synchronizer {
    *
    * @param webSafeResumeCursor null or a non-empty string if we are issuing a resume query
    * @return a list of the table resources on the server
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
-  public TableResourceList getTables(String webSafeResumeCursor) throws ClientWebException,
+  public TableResourceList getTables(String webSafeResumeCursor) throws
       InvalidAuthTokenException, URISyntaxException, IOException;
 
   /**
@@ -74,11 +72,10 @@ public interface Synchronizer {
    *
    * @param tableDefinitionUri
    * @return the table definition
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public TableDefinitionResource getTableDefinition(String tableDefinitionUri) 
-      throws ClientWebException, InvalidAuthTokenException, IOException;
+      throws InvalidAuthTokenException, IOException;
 
   /**
    * Assert that a table with the given id and schema exists on the server.
@@ -91,7 +88,6 @@ public interface Synchronizer {
    *          an array of the columns for this table.
    * @return the TableResource for the table (the server may return different
    *         SyncTag values)
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public TableResource createTable(String tableId, String schemaETag, ArrayList<Column> columns)
@@ -102,10 +98,9 @@ public interface Synchronizer {
    *
    * @param table
    *          the realizedTable resource to delete
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
-  public void deleteTable(TableResource table) throws ClientWebException, InvalidAuthTokenException,
+  public void deleteTable(TableResource table) throws InvalidAuthTokenException,
       IOException;
 
   /**
@@ -114,10 +109,9 @@ public interface Synchronizer {
    * @param tableResource
    * @param dataETag
    * @return
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException
    */
-  public ChangeSetList getChangeSets(TableResource tableResource, String dataETag) throws ClientWebException,
+  public ChangeSetList getChangeSets(TableResource tableResource, String dataETag) throws
           InvalidAuthTokenException, IOException, URISyntaxException;
 
   /**
@@ -128,11 +122,10 @@ public interface Synchronizer {
    * @param activeOnly
    * @param websafeResumeCursor
    * @return
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException
    */
   public RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly, String websafeResumeCursor)
-      throws ClientWebException, InvalidAuthTokenException, URISyntaxException, IOException;
+      throws InvalidAuthTokenException, URISyntaxException, IOException;
 
   /**
    * Retrieve changes in the server state since the last synchronization.
@@ -146,11 +139,10 @@ public interface Synchronizer {
    *          either null or a value used to resume a prior query.
    *          
    * @return an RowResourceList of the changes on the server since that dataETag.
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public RowResourceList getUpdates(TableResource tableResource, String dataETag, String websafeResumeCursor)
-      throws ClientWebException, InvalidAuthTokenException, URISyntaxException, IOException;
+      throws InvalidAuthTokenException, URISyntaxException, IOException;
 
   /**
    * Apply inserts, updates and deletes in a collection up to the server.
@@ -162,11 +154,10 @@ public interface Synchronizer {
    *          the TableResource from the server for a tableId
    * @param rowsToInsertUpdateOrDelete
    * @return
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public RowOutcomeList alterRows(TableResource tableResource,
-      List<SyncRow> rowsToInsertUpdateOrDelete) throws ClientWebException, InvalidAuthTokenException,
+      List<SyncRow> rowsToInsertUpdateOrDelete) throws InvalidAuthTokenException,
       IOException;
 
   /**
@@ -181,11 +172,10 @@ public interface Synchronizer {
    * @param syncStatus
    *          for reporting detailed progress of app-level file sync
    * @return true if successful
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public boolean syncAppLevelFiles(boolean pushLocalFiles, String serverReportedAppLevelETag, SynchronizerStatus syncStatus)
-      throws ClientWebException, InvalidAuthTokenException,IOException;
+      throws InvalidAuthTokenException,IOException;
 
   /**
    * Sync only the files associated with the specified table. This does NOT sync
@@ -197,11 +187,10 @@ public interface Synchronizer {
    *          callback if the config/assets/csv/tableId.properties.csv file changes
    * @param pushLocal
    *          true if the local files should be pushed
-   * @throws ClientWebException
    * @throws InvalidAuthTokenException 
    */
   public void syncTableLevelFiles(String tableId, String serverReportedTableLevelETag, OnTablePropertiesChanged onChange,
-      boolean pushLocal, SynchronizerStatus syncStatus) throws ClientWebException, InvalidAuthTokenException,
+      boolean pushLocal, SynchronizerStatus syncStatus) throws InvalidAuthTokenException,
       IOException;
 
   /**
@@ -214,11 +203,9 @@ public interface Synchronizer {
    * @param localRow
    * @param attachmentState -- whether to upload, download, both, or neither the attachments
    * @return true if successful
-   * @throws ClientWebException
    */
   public boolean syncFileAttachments(String instanceFileUri, String tableId, SyncRowPending
-      localRow, SyncAttachmentState attachmentState)
-      throws ClientWebException;
+      localRow, SyncAttachmentState attachmentState);
   
   /**
    * Use to purge ETags of any instance attachments when server does not remember this schemaETag

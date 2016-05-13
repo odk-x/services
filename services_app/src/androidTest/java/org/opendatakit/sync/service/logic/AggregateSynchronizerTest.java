@@ -22,6 +22,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.services.R;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.sync.service.SyncExecutionContext;
@@ -30,7 +31,6 @@ import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SynchronizationResult;
 
 import java.io.File;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -911,7 +911,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
       File destFile2 = new File(destDir2, fileName2);
       int downloadSuccessful = synchronizer.downloadFile(destFile2, cat1.instanceFileDownloadUri);
 
-      assertEquals(downloadSuccessful, HttpURLConnection.HTTP_OK);
+      assertEquals(downloadSuccessful, HttpStatus.SC_OK);
 
       synchronizer.deleteTable(testTableRes);
     } catch (Exception e) {
@@ -923,184 +923,184 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
   /*
    * Test upload batch
    */
-//  public void testUploadBatch_ExpectPass() {
-//    SyncExecutionContext sharedContext = getSyncExecutionContext();
-//
-//    String testTableId = "test10";
-//    String colName = "test_col1";
-//    String colKey = "test_col1";
-//    String colType = "string";
-//
-//    String RowId = "uuid:" + UUID.randomUUID().toString();
-//
-//    String utf_val = "तुरंत अस्पताल रेफर करें व रास्ते मैं शिशु को ओ. आर. एस देतेरहें";
-//
-//    String testTableSchemaETag = "testUploadInstanceFile_ExpectPass";
-//    String listOfChildElements = "[]";
-//
-//    ArrayList<Column> columns = new ArrayList<Column>();
-//
-//    columns.add(new Column(colKey, colName, colType, listOfChildElements));
-//
-//    try {
-//      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
-//
-//      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
-//
-//      assertNotNull(testTableRes);
-//
-//      assertEquals(testTableRes.getTableId(), testTableId);
-//
-//      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
-//
-//      ArrayList<Column> cols = tableDefRes.getColumns();
-//
-//      for (int i = 0; i < cols.size(); i++) {
-//        Column col = cols.get(i);
-//        assertEquals(col.getElementKey(), colKey);
-//      }
-//
-//      // Create a row of data to attach the batch of files
-//      DataKeyValue dkv = new DataKeyValue(colKey, utf_val);
-//      ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
-//      dkvl.add(dkv);
-//
-//      ArrayList<SyncRow> listOfRowsToCreate = new ArrayList<SyncRow>();
-//
-//      ArrayList<ColumnDefinition> colDefs = new ArrayList<ColumnDefinition>();
-//
-//      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
-//      SyncRow syncRow = new SyncRow(RowId, null, false, null, null, null, ts, null, null, dkvl, colDefs);
-//
-//      listOfRowsToCreate.add(syncRow);
-//
-//      synchronizer.alterRows(testTableRes, listOfRowsToCreate);
-//
-//      ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms> listOfCats =
-//              new ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms>();
-//
-//      // Create two test files
-//      String fileName = "testFile.txt";
-//      String destDir = ODKFileUtils.getInstanceFolder(appName, testTableId, RowId);
-//      File destFile = new File(destDir, fileName);
-//      FileUtils.writeStringToFile(destFile, "This is a test");
-//      AggregateSynchronizer.CommonFileAttachmentTerms cat1 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
-//              testTableId, RowId, fileName);
-//      listOfCats.add(cat1);
-//
-//
-//      String fileName2 = "testFile2.txt";
-//      String destDir2 = ODKFileUtils.getInstanceFolder(appName, testTableId, RowId);
-//      File destFile2 = new File(destDir2, fileName2);
-//      FileUtils.writeStringToFile(destFile2, "This is a test 2");
-//      AggregateSynchronizer.CommonFileAttachmentTerms cat2 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
-//              testTableId, RowId, fileName2);
-//      listOfCats.add(cat2);
-//
-//      boolean batchUploadedSuccessfully = synchronizer.uploadBatch(listOfCats, testTableRes.getInstanceFilesUri(), RowId, testTableId);
-//
-//      assertTrue(batchUploadedSuccessfully);
-//
-//      synchronizer.deleteTable(testTableRes);
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//      TestCase.fail("testDownloadFile_ExpectPass: expected pass but got exception");
-//    }
-//  }
+  public void testUploadBatch_ExpectPass() {
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
+
+    String testTableId = "test10";
+    String colName = "test_col1";
+    String colKey = "test_col1";
+    String colType = "string";
+
+    String RowId = "uuid:" + UUID.randomUUID().toString();
+
+    String utf_val = "तुरंत अस्पताल रेफर करें व रास्ते मैं शिशु को ओ. आर. एस देतेरहें";
+
+    String testTableSchemaETag = "testUploadBatch_ExpectPass";
+    String listOfChildElements = "[]";
+
+    ArrayList<Column> columns = new ArrayList<Column>();
+
+    columns.add(new Column(colKey, colName, colType, listOfChildElements));
+
+    try {
+      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
+
+      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
+
+      assertNotNull(testTableRes);
+
+      assertEquals(testTableRes.getTableId(), testTableId);
+
+      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
+
+      ArrayList<Column> cols = tableDefRes.getColumns();
+
+      for (int i = 0; i < cols.size(); i++) {
+        Column col = cols.get(i);
+        assertEquals(col.getElementKey(), colKey);
+      }
+
+      // Create a row of data to attach the batch of files
+      DataKeyValue dkv = new DataKeyValue(colKey, utf_val);
+      ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
+      dkvl.add(dkv);
+
+      ArrayList<SyncRow> listOfRowsToCreate = new ArrayList<SyncRow>();
+
+      ArrayList<ColumnDefinition> colDefs = new ArrayList<ColumnDefinition>();
+
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      SyncRow syncRow = new SyncRow(RowId, null, false, null, null, null, ts, null, null, dkvl, colDefs);
+
+      listOfRowsToCreate.add(syncRow);
+
+      synchronizer.alterRows(testTableRes, listOfRowsToCreate);
+
+      ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms> listOfCats =
+              new ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms>();
+
+      // Create two test files
+      String fileName = "testFile.txt";
+      String destDir = ODKFileUtils.getInstanceFolder(appName, testTableId, RowId);
+      File destFile = new File(destDir, fileName);
+      FileUtils.writeStringToFile(destFile, "This is a test");
+      AggregateSynchronizer.CommonFileAttachmentTerms cat1 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
+              testTableId, RowId, fileName);
+      listOfCats.add(cat1);
+
+
+      String fileName2 = "testFile2.txt";
+      String destDir2 = ODKFileUtils.getInstanceFolder(appName, testTableId, RowId);
+      File destFile2 = new File(destDir2, fileName2);
+      FileUtils.writeStringToFile(destFile2, "This is a test 2");
+      AggregateSynchronizer.CommonFileAttachmentTerms cat2 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
+              testTableId, RowId, fileName2);
+      listOfCats.add(cat2);
+
+      boolean batchUploadedSuccessfully = synchronizer.uploadBatch(listOfCats, testTableRes.getInstanceFilesUri(), RowId, testTableId);
+
+      assertTrue(batchUploadedSuccessfully);
+
+      synchronizer.deleteTable(testTableRes);
+    } catch (Exception e) {
+      e.printStackTrace();
+      TestCase.fail("testUploadBatch_ExpectPass: expected pass but got exception");
+    }
+  }
 
   /*
    * Test batch downloading of files
    */
-//  public void testDownloadBatch_ExpectPass() {
-//    SyncExecutionContext sharedContext = getSyncExecutionContext();
-//
-//    String testTableId = "test11";
-//    String colName = "test_col1";
-//    String colKey = "test_col1";
-//    String colType = "string";
-//
-//    String testTableSchemaETag = "testUploadInstanceFile_ExpectPass";
-//    String listOfChildElements = "[]";
-//
-//    ArrayList<Column> columns = new ArrayList<Column>();
-//
-//    ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms> listOfCats =
-//            new ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms>();
-//
-//    columns.add(new Column(colKey, colName, colType, listOfChildElements));
-//
-//    try {
-//      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
-//
-//      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
-//
-//      assertNotNull(testTableRes);
-//
-//      assertEquals(testTableRes.getTableId(), testTableId);
-//
-//      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
-//
-//      ArrayList<Column> cols = tableDefRes.getColumns();
-//
-//      for (int i = 0; i < cols.size(); i++) {
-//        Column col = cols.get(i);
-//        assertEquals(col.getElementKey(), colKey);
-//      }
-//
-//      // Insert a row
-//      String val = "test value for table " + testTableId;
-//      DataKeyValue dkv = new DataKeyValue(colKey, val);
-//      ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
-//      dkvl.add(dkv);
-//
-//      ArrayList<SyncRow> listOfRowsToCreate = new ArrayList<SyncRow>();
-//
-//      ArrayList<ColumnDefinition> colDefs = new ArrayList<ColumnDefinition>();
-//
-//      String rowId = "uuid:" + UUID.randomUUID().toString();
-//      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
-//      SyncRow syncRow = new SyncRow(rowId, null, false, null, null, null, ts, null, null, dkvl, colDefs);
-//
-//      listOfRowsToCreate.add(syncRow);
-//
-//      synchronizer.alterRows(testTableRes, listOfRowsToCreate);
-//
-//      String fileName = "testFile.txt";
-//      String destDir = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
-//      File destFile = new File(destDir, fileName);
-//      FileUtils.writeStringToFile(destFile, "This is a test");
-//
-//
-//      AggregateSynchronizer.CommonFileAttachmentTerms cat1 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
-//              testTableId, rowId, fileName);
-//      listOfCats.add(cat1);
-//
-//      boolean uploadSuccessful = synchronizer.uploadInstanceFile(destFile, cat1.instanceFileDownloadUri);
-//
-//      assertTrue(uploadSuccessful);
-//
-//      String fileName2 = "testFile2.txt";
-//      String destDir2 = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
-//      File destFile2 = new File(destDir2, fileName2);
-//      FileUtils.writeStringToFile(destFile2, "This is a test 2");
-//      AggregateSynchronizer.CommonFileAttachmentTerms cat2 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
-//              testTableId, rowId, fileName2);
-//      listOfCats.add(cat2);
-//
-//      uploadSuccessful = synchronizer.uploadInstanceFile(destFile2, cat2.instanceFileDownloadUri);
-//
-//      assertTrue(uploadSuccessful);
-//
-//      boolean downloadSuccessful = synchronizer.downloadBatch(listOfCats, testTableRes.getInstanceFilesUri(),
-//              rowId, testTableId);
-//
-//      assertTrue(downloadSuccessful);
-//
-//      synchronizer.deleteTable(testTableRes);
-//
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//      TestCase.fail("testDownloadFile_ExpectPass: expected pass but got exception");
-//    }
-//  }
+  public void testDownloadBatch_ExpectPass() {
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
+
+    String testTableId = "test11";
+    String colName = "test_col1";
+    String colKey = "test_col1";
+    String colType = "string";
+
+    String testTableSchemaETag = "testDownloadBatch_ExpectPass";
+    String listOfChildElements = "[]";
+
+    ArrayList<Column> columns = new ArrayList<Column>();
+
+    ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms> listOfCats =
+            new ArrayList<AggregateSynchronizer.CommonFileAttachmentTerms>();
+
+    columns.add(new Column(colKey, colName, colType, listOfChildElements));
+
+    try {
+      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
+
+      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
+
+      assertNotNull(testTableRes);
+
+      assertEquals(testTableRes.getTableId(), testTableId);
+
+      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
+
+      ArrayList<Column> cols = tableDefRes.getColumns();
+
+      for (int i = 0; i < cols.size(); i++) {
+        Column col = cols.get(i);
+        assertEquals(col.getElementKey(), colKey);
+      }
+
+      // Insert a row
+      String val = "test value for table " + testTableId;
+      DataKeyValue dkv = new DataKeyValue(colKey, val);
+      ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
+      dkvl.add(dkv);
+
+      ArrayList<SyncRow> listOfRowsToCreate = new ArrayList<SyncRow>();
+
+      ArrayList<ColumnDefinition> colDefs = new ArrayList<ColumnDefinition>();
+
+      String rowId = "uuid:" + UUID.randomUUID().toString();
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      SyncRow syncRow = new SyncRow(rowId, null, false, null, null, null, ts, null, null, dkvl, colDefs);
+
+      listOfRowsToCreate.add(syncRow);
+
+      synchronizer.alterRows(testTableRes, listOfRowsToCreate);
+
+      String fileName = "testFile.txt";
+      String destDir = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
+      File destFile = new File(destDir, fileName);
+      FileUtils.writeStringToFile(destFile, "This is a test");
+
+
+      AggregateSynchronizer.CommonFileAttachmentTerms cat1 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
+              testTableId, rowId, fileName);
+      listOfCats.add(cat1);
+
+      boolean uploadSuccessful = synchronizer.uploadInstanceFile(destFile, cat1.instanceFileDownloadUri);
+
+      assertTrue(uploadSuccessful);
+
+      String fileName2 = "testFile2.txt";
+      String destDir2 = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
+      File destFile2 = new File(destDir2, fileName2);
+      FileUtils.writeStringToFile(destFile2, "This is a test 2");
+      AggregateSynchronizer.CommonFileAttachmentTerms cat2 = synchronizer.computeCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
+              testTableId, rowId, fileName2);
+      listOfCats.add(cat2);
+
+      uploadSuccessful = synchronizer.uploadInstanceFile(destFile2, cat2.instanceFileDownloadUri);
+
+      assertTrue(uploadSuccessful);
+
+      boolean downloadSuccessful = synchronizer.downloadBatch(listOfCats, testTableRes.getInstanceFilesUri(),
+              rowId, testTableId);
+
+      assertTrue(downloadSuccessful);
+
+      synchronizer.deleteTable(testTableRes);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      TestCase.fail("testDownloadBatch_ExpectPass: expected pass but got exception");
+    }
+  }
 }

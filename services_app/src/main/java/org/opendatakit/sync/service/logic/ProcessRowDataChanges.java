@@ -21,7 +21,6 @@ import android.os.RemoteException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.wink.client.ClientWebException;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
@@ -55,7 +54,6 @@ import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,17 +119,17 @@ public class ProcessRowDataChanges {
    * @param e
    * @param tableResult
    */
-  private void clientWebException(String method, String tableId, ClientWebException e,
-      TableResult tableResult) {
-    String msg = e.getMessage();
-    if (msg == null) {
-      msg = e.toString();
-    }
-    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
-        tableId, msg));
-    tableResult.setStatus(Status.EXCEPTION);
-    tableResult.setMessage(msg);
-  }
+//  private void clientWebException(String method, String tableId, ClientWebException e,
+//      TableResult tableResult) {
+//    String msg = e.getMessage();
+//    if (msg == null) {
+//      msg = e.toString();
+//    }
+//    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
+//        tableId, msg));
+//    tableResult.setStatus(Status.EXCEPTION);
+//    tableResult.setMessage(msg);
+//  }
 
   /**
    * Common error reporting...
@@ -234,8 +232,8 @@ public class ProcessRowDataChanges {
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
       SyncAttachmentState attachmentState, ArrayList<ColumnDefinition> fileAttachmentColumns,
       List<SyncRowPending> rowsToPushFileAttachments, UserTable localDataTable, RowResourceList rows)
-      throws IOException, ClientWebException, RemoteException {
-
+      throws IOException, RemoteException
+  {
     String tableId = tableResource.getTableId();
     TableResult tableResult = sc.getTableResult(tableId);
 
@@ -656,16 +654,6 @@ public class ProcessRowDataChanges {
                 if (firstDataETag == null) {
                   firstDataETag = rows.getDataETag();
                 }
-              } catch (ClientWebException e) {
-                if (e.getResponse() != null
-                    && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                  clientAuthException("synchronizeTable - pulling data down from server", tableId,
-                      e, tableResult);
-                } else {
-                  clientWebException("synchronizeTable - pulling data down from server", tableId,
-                      e, tableResult);
-                }
-                break;
               } catch (InvalidAuthTokenException e) {
                 clientAuthException("synchronizeTable - pulling data down from server", tableId, e,
                     tableResult);
@@ -875,23 +863,6 @@ public class ProcessRowDataChanges {
             // server, we know that our data records are consistent and
             // our processing is complete.
             updateToServerSuccessful = true;
-          } catch (ClientWebException e) {
-            if (e.getResponse().getStatusCode() == HttpURLConnection.HTTP_CONFLICT) {
-              // expected -- there were row updates by another client
-              // re-pull changes from the server. Return to the start
-              // of the for(;;) loop.
-              continue;
-            }
-            // otherwise it is an error...
-            if (e.getResponse() != null
-                && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-              clientAuthException("synchronizeTable - pushing data up to server", tableId, e,
-                  tableResult);
-            } else {
-              clientWebException("synchronizeTable - pushing data up to server", tableId, e,
-                  tableResult);
-            }
-            break;
           } catch (InvalidAuthTokenException e) {
             clientAuthException("synchronizeTable - pushing data up to server", tableId, e, tableResult);
             break;
@@ -943,15 +914,6 @@ public class ProcessRowDataChanges {
                     attachmentSyncFailed = false;
                   }
                 }
-              }
-            } catch (ClientWebException e) {
-              if (e.getResponse() != null
-                  && e.getResponse().getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                clientAuthException("synchronizeTable - auth error synchronizing attachments", tableId, e, tableResult);
-                log.e(TAG, "[synchronizeTableRest] auth failure synchronizing attachments " + e.toString());
-              } else {
-                clientWebException("synchronizeTableRest", tableId, e, tableResult);
-                log.e(TAG, "[synchronizeTableRest] error synchronizing attachments " + e.toString());
               }
             } catch (Exception e) {
               exception("synchronizeTableRest", tableId, e, tableResult);
@@ -1180,13 +1142,12 @@ public class ProcessRowDataChanges {
    * @param rowsToSyncFileAttachments
    * @param hasAttachments
    * @param tableResult
-   * @throws ClientWebException
    * @throws RemoteException 
    */
   private void conflictRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       List<SyncRowPending> rowsToSyncFileAttachments, boolean hasAttachments,
-      TableResult tableResult) throws ClientWebException, RemoteException {
+      TableResult tableResult) throws RemoteException {
 
     int count = 0;
     for (SyncRowDataChanges change : changes) {
@@ -1295,13 +1256,12 @@ public class ProcessRowDataChanges {
    * @param rowsToPushFileAttachments
    * @param hasAttachments
    * @param tableResult
-   * @throws ClientWebException
    * @throws RemoteException 
    */
   private void insertRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       List<SyncRowPending> rowsToPushFileAttachments, boolean hasAttachments,
-      TableResult tableResult) throws ClientWebException, RemoteException {
+      TableResult tableResult) throws RemoteException {
     int count = 0;
     for (SyncRowDataChanges change : changes) {
       SyncRow serverRow = change.serverRow;
@@ -1350,13 +1310,12 @@ public class ProcessRowDataChanges {
    * @param rowsToSyncFileAttachments
    * @param hasAttachments
    * @param tableResult
-   * @throws ClientWebException
    * @throws RemoteException 
    */
   private void updateRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       List<SyncRowPending> rowsToSyncFileAttachments, boolean hasAttachments,
-      TableResult tableResult) throws ClientWebException, RemoteException {
+      TableResult tableResult) throws RemoteException {
     int count = 0;
     for (SyncRowDataChanges change : changes) {
       // if the localRow sync state was synced_pending_files,
