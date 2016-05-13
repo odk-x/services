@@ -82,7 +82,7 @@ public class OutcomeDialogFragment extends DialogFragment implements ICancelOutc
     mProgressDialog.setIndeterminate(true);
     mProgressDialog.setCancelable(false);
     mProgressDialog.setCanceledOnTouchOutside(false);
-    mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.cancel),
+    mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.ok),
         loadingButtonListener);
     mProgressDialog.setOnShowListener(showButtonListener);
 
