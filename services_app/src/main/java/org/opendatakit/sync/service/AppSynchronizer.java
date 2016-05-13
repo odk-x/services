@@ -214,7 +214,7 @@ public class AppSynchronizer {
               SyncStatus.SYNC_COMPLETE;
           syncProgress.clearNotification(attachmentsFailed);
         } else {
-          syncProgress.finalErrorNotification("Conflicts exist.  Please resolve.");
+          syncProgress.finalErrorNotification("Conflicts exist. Please resolve.");
         }
 
         WebLogger.getLogger(appName).i(TAG,

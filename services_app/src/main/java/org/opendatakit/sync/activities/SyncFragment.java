@@ -67,12 +67,13 @@ public class SyncFragment extends Fragment {
 
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
-  ;
+  private static final String OUTCOME_DIALOG_TAG = "outcomeDialog";
 
   private String mAppName;
 
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
+  private OutcomeDialogFragment outcomeDialog = null;
 
   private TextView uriField;
   private TextView accountAuthType;
@@ -394,6 +395,16 @@ public class SyncFragment extends Fragment {
               }
             });
             break;
+          case IDLE:
+            if ( progress == SyncProgressState.COMPLETE ||
+                 progress == SyncProgressState.ERROR ) {
+              handler.post(new Runnable() {
+                @Override
+                public void run() {
+                  showOutcomeDialog(status, progress);
+                }
+              });
+            }
           default:
             break;
           }
@@ -443,6 +454,10 @@ public class SyncFragment extends Fragment {
                   @Override
                   public void run() {
                     dismissProgressDialog();
+                    if ( progress == SyncProgressState.COMPLETE ||
+                        progress == SyncProgressState.ERROR ) {
+                      showOutcomeDialog(status, progress);
+                    }
                   }
                 });
                 return;
@@ -542,20 +557,39 @@ public class SyncFragment extends Fragment {
 
       disableButtons();
 
+      if ( progress == null ) {
+        progress = SyncProgressState.INIT;
+      }
+
+      int id_title;
+      switch ( progress ) {
+      case APP_FILES:
+        id_title = R.string.sync_app_level_files;
+        break;
+      case TABLE_FILES:
+        id_title = R.string.sync_table_level_files;
+        break;
+      case ROWS:
+        id_title = R.string.sync_row_data;
+        break;
+      default:
+        id_title = R.string.sync_in_progress;
+      }
+
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
 
       if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
-        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.sync_in_progress);
+        ((ProgressDialogFragment) dialog).getDialog().setTitle(id_title);
         ((ProgressDialogFragment) dialog).setMessage(message);
       } else if (progressDialog != null && progressDialog.getDialog() != null) {
-        progressDialog.getDialog().setTitle(R.string.sync_in_progress);
+        progressDialog.getDialog().setTitle(id_title);
         progressDialog.setMessage(message);
       } else {
         if (progressDialog != null) {
           dismissProgressDialog();
         }
-        progressDialog = ProgressDialogFragment.newInstance(getString(R.string.sync_in_progress), message);
+        progressDialog = ProgressDialogFragment.newInstance(getString(id_title), message);
         progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
       }
       if ( status == SyncStatus.SYNCING || status == SyncStatus.INIT ) {
@@ -595,6 +629,114 @@ public class SyncFragment extends Fragment {
     if (progressDialog != null) {
       final ProgressDialogFragment scopedReference = progressDialog;
       progressDialog = null;
+      // the UI may not yet have resolved the showing of the dialog.
+      // use a handler to add the dismiss to the end of the queue.
+      handler.post(new Runnable() {
+        @Override public void run() {
+          try {
+            scopedReference.dismiss();
+          } catch (Exception e) {
+            // ignore... we tried!
+          }
+          perhapsEnableButtons();
+        }
+      });
+    }
+  }
+
+  private void showOutcomeDialog( SyncStatus status, SyncProgressState progress ) {
+    if ( getActivity() == null ) {
+      // we are tearing down or still initializing
+      return;
+    }
+    if ( syncAction == SyncActions.IDLE ) {
+
+      disableButtons();
+
+      String message;
+      int id_title;
+      switch ( status ) {
+      case INIT:
+      case SYNCING:
+      default:
+        throw new IllegalStateException("Should be in a complete or error state");
+
+      case NETWORK_ERROR:
+        id_title = R.string.sync_network_error;
+        message = "Please verify your device browser can access the server";
+        break;
+      case FILE_ERROR:
+        id_title = R.string.sync_file_transmission_error;
+        message = "There were problems writing files to your application folder.";
+        break;
+      case AUTH_RESOLUTION:
+        id_title = R.string.sync_user_authorization_failure;
+        message = "Please verify your user credentials and privileges to the server";
+        break;
+      case CONFLICT_RESOLUTION:
+        id_title = R.string.sync_conflicts_need_resolving;
+        message = "Other users have modified the same entries that you have.\r\n" +
+            "You now will be directed to merge your changes with theirs";
+        break;
+      case SYNC_COMPLETE:
+        id_title = R.string.sync_successful;
+        message = "Success! Your application content (data and configuration) matches that on the server.";
+        break;
+      case SYNC_COMPLETE_PENDING_ATTACHMENTS:
+        id_title = R.string.sync_complete_pending_attachments;
+        message = "Configuration and data have been sync'd, but attachments have not been sync'd.";
+        break;
+      }
+      // try to retrieve the active dialog
+      Fragment dialog = getFragmentManager().findFragmentByTag(OUTCOME_DIALOG_TAG);
+
+      if (dialog != null && ((OutcomeDialogFragment) dialog).getDialog() != null) {
+        ((OutcomeDialogFragment) dialog).getDialog().setTitle(id_title);
+        ((OutcomeDialogFragment) dialog).setMessage(message);
+      } else if (outcomeDialog != null && outcomeDialog.getDialog() != null) {
+        outcomeDialog.getDialog().setTitle(id_title);
+        outcomeDialog.setMessage(message);
+      } else {
+        if (outcomeDialog != null) {
+          dismissOutcomeDialog();
+        }
+        outcomeDialog = OutcomeDialogFragment.newInstance(getString(id_title),
+            message,
+            (progress == SyncProgressState.COMPLETE &&
+                (status == SyncStatus.SYNC_COMPLETE ||
+                 status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS)));
+        outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
+      }
+    }
+  }
+
+  private void dismissOutcomeDialog() {
+    if ( getActivity() == null ) {
+      // we are tearing down or still initializing
+      return;
+    }
+
+    // try to retrieve the active dialog
+    final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+
+    if (dialog != null && dialog != outcomeDialog) {
+      // the UI may not yet have resolved the showing of the dialog.
+      // use a handler to add the dismiss to the end of the queue.
+      handler.post(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            ((OutcomeDialogFragment) dialog).dismiss();
+          } catch (Exception e) {
+            // ignore... we tried!
+          }
+          perhapsEnableButtons();
+        }
+      });
+    }
+    if (outcomeDialog != null) {
+      final OutcomeDialogFragment scopedReference = outcomeDialog;
+      outcomeDialog = null;
       // the UI may not yet have resolved the showing of the dialog.
       // use a handler to add the dismiss to the end of the queue.
       handler.post(new Runnable() {

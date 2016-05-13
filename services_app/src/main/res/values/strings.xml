@@ -82,8 +82,23 @@
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
 
     <!-- Sync Service and Notifications stuff -->
-    <string name="sync_starting">Starting sync&#8230;</string>
 
+    <!-- progress dialog titles -->
+    <string name="sync_in_progress">Syncing in progress&#8230;</string>
+    <string name="sync_app_level_files">Syncing application configuration&#8230;</string>
+    <string name="sync_table_level_files">Syncing table and form configuration&#8230;</string>
+    <string name="sync_row_data">Syncing data&#8230;</string>
+
+    <!-- outcome dialog titles -->
+    <string name="sync_network_error">An unspecified error occurred</string>
+    <string name="sync_file_transmission_error">An unspecified error occurred relating to files</string>
+    <string name="sync_user_authorization_failure">User authorization failure</string>
+    <string name="sync_conflicts_need_resolving">Conflicts detected</string>
+    <string name="sync_successful">Sync successful</string>
+    <string name="sync_complete_pending_attachments">Sync (without attachments) successful</string>
+
+    <!-- intermediate progress messages -->
+    <string name="sync_starting">Starting sync&#8230;</string>
     <string name="sync_getting_app_level_manifest">Retrieving list of application files from server.</string>
 
     <string name="sync_uploading_local_file">Uploading %1$s to server.</string>
@@ -130,7 +145,6 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
-    <string name="sync_in_progress">Sync in progress...</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
