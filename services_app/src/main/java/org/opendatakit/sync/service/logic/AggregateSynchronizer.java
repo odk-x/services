@@ -631,7 +631,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
       String res = convertResponseToString(response);
 
-      android.os.
       tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
     } catch (IOException e) {
       log.e(LOGTAG, "getTables: Exception while trying to read response");
