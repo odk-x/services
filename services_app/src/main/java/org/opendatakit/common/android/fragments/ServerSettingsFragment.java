@@ -106,6 +106,10 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
             if (isValid) {
               preference.setSummary(newValue.toString());
+
+              PropertiesSingleton props =
+                  ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
+              props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
               return true;
             } else {
               Toast.makeText(getActivity().getApplicationContext(),
