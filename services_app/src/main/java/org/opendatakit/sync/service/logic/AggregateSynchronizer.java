@@ -42,6 +42,7 @@ import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HeaderElement;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
+import org.opendatakit.httpclientandroidlib.HttpHeaders;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.httpclientandroidlib.NameValuePair;
@@ -64,6 +65,7 @@ import org.opendatakit.httpclientandroidlib.client.protocol.HttpClientContext;
 import org.opendatakit.httpclientandroidlib.client.utils.URIBuilder;
 import org.opendatakit.httpclientandroidlib.config.SocketConfig;
 import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
+import org.opendatakit.httpclientandroidlib.entity.ContentType;
 import org.opendatakit.httpclientandroidlib.entity.StringEntity;
 import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
@@ -72,6 +74,7 @@ import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
 import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
 import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
 import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
+import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.httpclientandroidlib.protocol.BasicHttpContext;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.services.R;
@@ -117,9 +120,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
@@ -354,29 +354,25 @@ public class AggregateSynchronizer implements Synchronizer {
 //    }
   }
 
-  private void buildRequest(URI uri, MediaType contentType, HttpRequestBase request) throws InvalidAuthTokenException {
+  private void buildRequest(URI uri, ContentType contentType, HttpRequestBase request) throws InvalidAuthTokenException {
 
     buildBasicRequest(uri, request);
 
     request.addHeader("content-type", contentType.toString());
 
     // set our preferred response media type to json using quality parameters
-    Map<String, String> mediaTypeParams;
-    // we really like JSON
-    mediaTypeParams = new HashMap<String, String>();
-    mediaTypeParams.put("q", "1.0");
-    MediaType json = new MediaType(MediaType.APPLICATION_JSON_TYPE.getType(),
-            MediaType.APPLICATION_JSON_TYPE.getSubtype(), mediaTypeParams);
+    NameValuePair param1 = (new BasicNameValuePair("q", "1.0"));
+    ContentType json = ContentType.create(ContentType.APPLICATION_JSON.getMimeType(), param1);
+
     // don't really want plaintext...
-    mediaTypeParams = new HashMap<String, String>();
-    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
-    mediaTypeParams.put("q", "0.4");
-    MediaType tplainUtf8 = new MediaType(MediaType.TEXT_PLAIN_TYPE.getType(),
-            MediaType.TEXT_PLAIN_TYPE.getSubtype(), mediaTypeParams);
+    NameValuePair param2 = new BasicNameValuePair("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
+    NameValuePair param3 = new BasicNameValuePair("q", "0.4");
+
+    ContentType tplainUtf8 = ContentType.create(ContentType.TEXT_PLAIN.getMimeType(), param2, param3);
 
     // accept either json or plain text (no XML to device)
-    //rsc.accept(json, tplainUtf8);
     request.addHeader("accept", json.toString());
+
     request.addHeader("accept", tplainUtf8.toString());
 
     // set the response entity character set to CharEncoding.UTF_8
@@ -397,7 +393,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private void buildRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
 
     // select our preferred protocol...
-    MediaType protocolType = MediaType.APPLICATION_JSON_TYPE;
+    //MediaType protocolType = MediaType.APPLICATION_JSON_TYPE;
+    ContentType protocolType = ContentType.APPLICATION_JSON;
 
     buildRequest(uri, protocolType, request);
   }
@@ -634,6 +631,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
       String res = convertResponseToString(response);
 
+      android.os.
       tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
     } catch (IOException e) {
       log.e(LOGTAG, "getTables: Exception while trying to read response");
@@ -1693,7 +1691,8 @@ public class AggregateSynchronizer implements Synchronizer {
     URI filesUri = normalizeUri(sc.getAggregateUri(), getFilePathURI() + escapedPath);
     log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
     String ct = determineContentType(localFile.getName());
-    MediaType contentType = MediaType.valueOf(ct);
+    //MediaType contentType = MediaType.valueOf(ct);
+    ContentType contentType = ContentType.create(ct);
 
     // Change to use httpClient
     CloseableHttpResponse response = null;
@@ -1751,7 +1750,8 @@ public class AggregateSynchronizer implements Synchronizer {
   {
     log.i(LOGTAG, "[uploadInstanceFile] filePostUri: " + instanceFileUri.toString());
     String ct = determineContentType(file.getName());
-    MediaType contentType = MediaType.valueOf(ct);
+    //MediaType contentType = MediaType.valueOf(ct);
+    ContentType contentType = ContentType.create(ct);
 
     HttpPost request = new HttpPost();
     buildRequest(instanceFileUri, request);
@@ -2271,8 +2271,10 @@ public class AggregateSynchronizer implements Synchronizer {
     URI instanceFilesUploadUri = normalizeUri(serverInstanceFileUri, instanceId + "/upload");
     String boundary = "ref" + UUID.randomUUID();
 
-    Map<String, String> params = Collections.singletonMap("boundary", boundary);
-    MediaType mt = new MediaType(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), params);
+    //Map<String, String> params = Collections.singletonMap("boundary", boundary);
+    NameValuePair params = new BasicNameValuePair("boundary", boundary);
+    //MediaType mt = new MediaType(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), params);
+    ContentType mt = ContentType.create(ContentType.MULTIPART_FORM_DATA.getMimeType(), params);
 
     HttpPost request = new HttpPost();
     CloseableHttpResponse response = null;
@@ -2365,7 +2367,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
     buildBasicRequest(instanceFilesDownloadUri, request);
     request.setURI(instanceFilesDownloadUri);
-    request.addHeader("Content-Type", MediaType.APPLICATION_JSON);
+    //request.addHeader("Content-Type", MediaType.APPLICATION_JSON);
+    request.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
     String fileManifestEntries = ODKFileUtils.mapper.writeValueAsString(manifest);
 
