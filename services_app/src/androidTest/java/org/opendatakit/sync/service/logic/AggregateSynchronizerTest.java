@@ -580,6 +580,95 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
 //  }
 //
 //  /*
+// * Test get updates when there are over 2000 changes
+// */
+//  public void testGetUpdatesWhenThereAre2001Updates_ExpectPass() {
+//    SyncExecutionContext sharedContext = getSyncExecutionContext();
+//
+//    String testTableId = "test42";
+//    String colName = "test_col1";
+//    String colKey = "test_col1";
+//    String colType = "string";
+//
+//    String testTableSchemaETag = "testGetUpdatesWhenThereAre2001Updates_ExpectPass";
+//    String tableDataETag = null;
+//    String listOfChildElements = "[]";
+//
+//    ArrayList<Column> columns = new ArrayList<Column>();
+//
+//    columns.add(new Column(colKey, colName, colType, listOfChildElements));
+//
+//    try {
+//      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
+//
+//      TableResource testTableRes = synchronizer.createTable(testTableId, testTableSchemaETag, columns);
+//
+//      assertNotNull(testTableRes);
+//
+//      assertEquals(testTableRes.getTableId(), testTableId);
+//
+//      TableDefinitionResource tableDefRes = synchronizer.getTableDefinition(testTableRes.getDefinitionUri());
+//
+//      ArrayList<Column> cols = tableDefRes.getColumns();
+//
+//      for (int i = 0; i < cols.size(); i++) {
+//        Column col = cols.get(i);
+//        assertEquals(col.getElementKey(), colKey);
+//      }
+//
+//      tableDataETag = testTableRes.getDataETag();
+//
+//      // Insert over 2001 rows
+//
+//      ArrayList<SyncRow> listOfRowsToCreate = new ArrayList<SyncRow>();
+//
+//      ArrayList<ColumnDefinition> colDefs = new ArrayList<ColumnDefinition>();
+//
+//      DataKeyValue dkv = null;
+//      String val, rowId, ts;
+//      SyncRow syncRow = null;
+//      for (int i = 0; i < 2001; i++) {
+//        ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
+//        val = "test value for table " + i + " for table " + testTableId;
+//        dkv = new DataKeyValue(colKey, val);
+//        dkvl.add(dkv);
+//
+//        rowId = "uuid:" + UUID.randomUUID().toString();
+//        ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+//        syncRow = new SyncRow(rowId, null, false, null, null, null, ts, null, null, dkvl, colDefs);
+//
+//        listOfRowsToCreate.add(syncRow);
+//      }
+//
+//      synchronizer.alterRows(testTableRes, listOfRowsToCreate);
+//
+//      RowResourceList rowResourceList = synchronizer.getUpdates(testTableRes, tableDataETag, null);
+//
+//      ArrayList<RowResource> rowRes = rowResourceList.getRows();
+//
+//      assertEquals(rowRes.size(), 2000);
+//
+//      assertEquals(rowResourceList.isHasMoreResults(), true);
+//
+//      String webSafeCursor = rowResourceList.getWebSafeResumeCursor();
+//
+//      RowResourceList rowResourceList2 = synchronizer.getUpdates(testTableRes, "5", webSafeCursor);
+//
+//      ArrayList<RowResource> rowRes2 = rowResourceList2.getRows();
+//
+//      assertEquals(rowRes2.size(), 1);
+//
+//      assertEquals(rowResourceList2.isHasMoreResults(), false);
+//
+//      synchronizer.deleteTable(testTableRes);
+//
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//      TestCase.fail("testGetUpdatesWhenThereAre2001Updates_ExpectPass: expected pass but got exception");
+//    }
+//  }
+//
+//  /*
 //   * Test alter rows with an inserted row
 //   */
 //  public void testAlterRowsWithInsertedRow_ExpectPass() {

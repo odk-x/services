@@ -858,10 +858,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
       if ((table.getDataETag() == null) || dataETag == null) {
         uri = URI.create(table.getDataUri());
-        buildRequest(uri, request);
       } else {
         uri = URI.create(table.getDiffUri());
-        buildRequest(uri, request);
         uri = new URIBuilder(uri.toString())
                 .addParameter(QUERY_DATA_ETAG, dataETag)
                 .build();
@@ -872,6 +870,8 @@ public class AggregateSynchronizer implements Synchronizer {
                 .addParameter(CURSOR_PARAMETER, websafeResumeCursor)
                 .build();
       }
+
+      buildRequest(uri, request);
 
       response = httpClientExecute(request);
 
