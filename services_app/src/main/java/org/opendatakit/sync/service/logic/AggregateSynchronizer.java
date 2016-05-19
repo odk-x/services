@@ -162,8 +162,10 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String FORWARD_SLASH = "/";
 
   private CloseableHttpClient httpClient = null;
+  private CloseableHttpClient httpAuthClient = null;
 
   private HttpContext localContext = null;
+  private HttpContext localAuthContext = null;
 
   private CookieStore cookieStore = null;
 
@@ -422,6 +424,28 @@ public class AggregateSynchronizer implements Synchronizer {
     // client initialization
     int CONNECTION_TIMEOUT = 60000;
 
+    // HttpClient for auth tokens
+    localAuthContext = new BasicHttpContext();
+
+    SocketConfig socketAuthConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
+
+    RequestConfig requestAuthConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+            .setConnectTimeout(CONNECTION_TIMEOUT)
+            // support authenticating
+            .setAuthenticationEnabled(true)
+            // support redirecting to handle http: => https: transition
+            .setRedirectsEnabled(true)
+            // max redirects is set to 4
+            .setMaxRedirects(4)
+            .setCircularRedirectsAllowed(true)
+            //.setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
+            .setCookieSpec(CookieSpecs.DEFAULT)
+            .build();
+
+    httpAuthClient = HttpClientBuilder.create()
+            .setDefaultSocketConfig(socketAuthConfig)
+            .setDefaultRequestConfig(requestAuthConfig).build();
+
     // Context
     // context holds authentication state machine, so it cannot be
     // shared across independent activities.
@@ -522,10 +546,10 @@ public class AggregateSynchronizer implements Synchronizer {
       URI tokenUri = new URI(tokenStr);
       request.setURI(tokenUri);
 
-      if (localContext != null) {
-        response = httpClient.execute(request, localContext);
+      if (localAuthContext != null) {
+        response = httpAuthClient.execute(request, localAuthContext);
       } else {
-        response = httpClient.execute(request);
+        response = httpAuthClient.execute(request);
       }
     } catch (Exception e) {
       log.e(LOGTAG, "HttpClientErrorException in checkAccessToken");

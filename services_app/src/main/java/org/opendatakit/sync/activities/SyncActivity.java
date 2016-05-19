@@ -43,9 +43,6 @@ import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.activities.AppPropertiesActivity;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
-import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.sync.service.SyncStatus;
 
 /**
  * An activity for handling server conflicts.
@@ -62,171 +59,111 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   private static final String TAG = SyncActivity.class.getSimpleName();
 
   public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
-  private int SYNC_ACTIVITY_RESULT_CODE = 10;
-  private int SETTINGS_ACTIVITY_RESULT_CODE = 100;
+  private final int SYNC_ACTIVITY_RESULT_CODE = 10;
+  private final int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
   private String mAppName;
   private PropertiesSingleton mProps;
 
   // odkSyncInterfaceBindComplete guards access to all of the following...
-  private Object odkSyncInterfaceBindComplete = new Object();
-  private volatile OdkSyncServiceInterface odkSyncInterface;
-  private volatile DoSyncActionCallback doSyncActionCallback = null;
-  private volatile boolean active = false;
-  private volatile boolean deactivate = true;
+  private OdkSyncServiceInterface odkSyncInterface;
+  private boolean mBound = false;
   // end guarded access.
 
   @Override public void onServiceConnected(ComponentName name, IBinder service) {
     if (!name.getClassName().equals("org.opendatakit.sync.service.OdkSyncService")) {
-      WebLogger.getLogger(getAppName()).e(TAG, "Unrecognized service");
+      WebLogger.getLogger(getAppName()).e(TAG, "[onServiceConnected] Unrecognized service");
       return;
     }
-    boolean isDeactivated = true;
-    synchronized (odkSyncInterfaceBindComplete) {
-      odkSyncInterface = (service == null) ? null : OdkSyncServiceInterface.Stub.asInterface(service);
-      active = false;
-      isDeactivated = deactivate;
-    }
-    if ( !isDeactivated ) {
-      verifySyncInterface();
-    }
+
+    odkSyncInterface = (service == null) ? null : OdkSyncServiceInterface.Stub.asInterface(service);
+    setBound(true);
+    WebLogger.getLogger(getAppName()).i(TAG, "[onServiceConnected] Bound to sync service");
   }
 
   @Override public void onServiceDisconnected(ComponentName name) {
-    boolean isDeactivated = true;
-    synchronized (odkSyncInterfaceBindComplete) {
-      odkSyncInterface = null;
-      active = false;
-      isDeactivated = deactivate;
-    }
-    if ( !isDeactivated ) {
-      verifySyncInterface();
-    }
-  }
-
-
-  private void verifySyncInterface() {
-    OdkSyncServiceInterface syncServiceInterface = null;
-    DoSyncActionCallback callback = null;
-
-    synchronized (odkSyncInterfaceBindComplete) {
-      if ( odkSyncInterface != null ) {
-        syncServiceInterface = odkSyncInterface;
-        callback = doSyncActionCallback;
-      }
-    }
-
-    try {
-      if (syncServiceInterface != null && callback != null ) {
-        doSyncInterfaceAction(syncServiceInterface, callback);
-      }
-    } catch ( RemoteException e ) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG, "exception while invoking sync service");
-      Toast.makeText(this, "Exception while invoking sync service", Toast.LENGTH_LONG).show();
-      syncServiceInterface = null;
-    }
-
-    if ( syncServiceInterface == null ) {
-      boolean alreadyActive = true;
-      synchronized (odkSyncInterfaceBindComplete) {
-        alreadyActive = active;
-        if (!active) {
-          active = true;
-        }
-      }
-
-      if ( !alreadyActive ) {
-        try {
-          // Otherwise, set up a bind and attempt to re-tickle...
-          WebLogger.getLogger(getAppName()).i(TAG, "Attempting bind to Database service");
-          Intent bind_intent = new Intent();
-          bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
-              IntentConsts.Sync.SERVICE_NAME);
-
-          bindService(bind_intent, this,
-              Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
-                  Context.BIND_ADJUST_WITH_ACTIVITY :
-                  0));
-        } catch ( Exception e ) {
-          synchronized (odkSyncInterfaceBindComplete) {
-            active = false;
-          }
-        }
-      }
-    }
+    mBound = false;
   }
 
   private void doSyncInterfaceAction(OdkSyncServiceInterface syncServiceInterface,
-      DoSyncActionCallback doSyncActionCallback) throws RemoteException {
+                                     DoSyncActionCallback doSyncActionCallback) throws RemoteException {
     doSyncActionCallback.doAction(syncServiceInterface);
+    WebLogger.getLogger(getAppName()).i(TAG, "[onServiceDisconnected] Unbound to sync service in ");
   }
 
   /**
    * called by fragments that want to do something on the sync service connection.
    *
-   * @param callback
-    */
+   * @param callback - callback for fragments that want to use sync service
+   */
   public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
-    DoSyncActionCallback oldCallback = null;
-    boolean isDeactivated = true;
-    synchronized (odkSyncInterfaceBindComplete) {
-      oldCallback = doSyncActionCallback;
-      doSyncActionCallback = callback;
-      active = false;
-      isDeactivated = deactivate;
-    }
-    if ( oldCallback != null ) {
-//      try {
-//        oldCallback.doAction(null);
-//      } catch (RemoteException e) {
-//        // never happens
-//      }
-    }
-    if ( !isDeactivated ) {
-      // and trigger firing of callback
-      verifySyncInterface();
+    try {
+      if (odkSyncInterface != null && callback != null ) {
+        WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] odkSyncInterface != null && callback != null");
+        doSyncInterfaceAction(odkSyncInterface, callback);
+      }
+
+      WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] odkSyncInterface == null || callback == null");
+    } catch ( RemoteException e ) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName()).e(TAG, " [invokeSyncInterfaceAction] exception while invoking sync service");
+      Toast.makeText(this, " [invokeSyncInterfaceAction] Exception while invoking sync service", Toast.LENGTH_LONG).show();
     }
   }
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onCreate]");
     setContentView(R.layout.sync_activity);
 
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
     AndroidConnectFactory.configure();
+
+    try {
+      WebLogger.getLogger(getAppName()).i(TAG, "[onCreate] Attempting bind to sync service");
+      Intent bind_intent = new Intent();
+      bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
+              IntentConsts.Sync.SERVICE_NAME);
+      bindService(bind_intent, this,
+              Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
+                      Context.BIND_ADJUST_WITH_ACTIVITY :
+                      0));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
 
-    synchronized (odkSyncInterfaceBindComplete) {
-      deactivate = false;
-    }
+    WebLogger.getLogger(getAppName()).i(TAG, " [onResume]");
 
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
-    mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-    if (mAppName == null) {
-      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
+    if (getAppName() == null) {
+      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " [onResume] not supplied on intent");
       setResult(Activity.RESULT_CANCELED);
       finish();
       return;
     }
 
+    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting SyncFragment");
+
     FragmentManager mgr = getFragmentManager();
-    String newFragmentName = null;
-    Fragment newFragment = null;
+    String newFragmentName;
+    Fragment newFragment;
 
     // we want the list fragment
     newFragmentName = SyncFragment.NAME;
     newFragment = mgr.findFragmentByTag(newFragmentName);
     if ( newFragment == null ) {
       newFragment = new SyncFragment();
+      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
     }
 
     FragmentTransaction trans = mgr.beginTransaction();
@@ -234,13 +171,45 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     trans.commit();
   }
 
-  @Override protected void onPause() {
-    super.onPause();
-    // release the stale interface (and let it get cleaned up eventually)
-    synchronized (odkSyncInterfaceBindComplete) {
-      deactivate = true;
-      odkSyncInterface = null;
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy]");
+
+    if (getBound()) {
+      unbindService(this);
+      setBound(false);
+      WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service in onDestroy");
     }
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onStop]");
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onStart]");
+  }
+
+  @Override
+  protected void onRestart() {
+    super.onRestart();
+
+    WebLogger.getLogger(getAppName()).i(TAG, " [onRestart]");
   }
 
   @Override
@@ -289,7 +258,18 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   }
 
   @Override public String getAppName() {
+    if (mAppName == null) {
+      mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+    }
     return mAppName;
+  }
+
+  private void setBound (boolean bound) {
+    mBound = bound;
+  }
+
+  private boolean getBound() {
+    return mBound;
   }
 
   @Override
