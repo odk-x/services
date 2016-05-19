@@ -81,6 +81,7 @@
 
     <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
 
+    <string name="resolve_row_display_name">Form: %1$s Instance: %2$s</string>
     <!-- Sync Service and Notifications stuff -->
 
     <!-- progress dialog titles -->
@@ -249,6 +250,13 @@
     <string name="admin_tool_tables_settings_summary">Limit non-Admin ability to change Tables-specific Settings</string>
     <string name="change_custom_home_screen">Change use of custom home screen</string>
 
+    <string name="clear_configuration_settings">Reset configuration</string>
+    <string name="click_to_clear_settings">Click to clear settings</string>
+
+    <string name="reset_settings">Configuration Reset</string>
+    <string name="confirm_reset_settings">Device-specific and
+        user identity settings will be cleared and all tools will re-run their
+        initialization logic.\n\nDo you wish to proceed?</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
 </resources>
