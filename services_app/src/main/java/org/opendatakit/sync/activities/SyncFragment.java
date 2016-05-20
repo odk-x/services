@@ -548,9 +548,6 @@ public class SyncFragment extends Fragment {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
     // ask whether to sync app files and table-level files
 
-    startSync.setEnabled(false);
-    resetServer.setEnabled(false);
-
     // show warning message
     AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
         getString(R.string.sync_reset_app_server_warning));
@@ -561,7 +558,7 @@ public class SyncFragment extends Fragment {
         String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
         WebLogger.getLogger(getAppName())
             .e(TAG, "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
-        if (accountName == null) {
+        if (accountName == null || accountName.length() == 0) {
           Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT)
               .show();
         } else {
@@ -582,15 +579,12 @@ public class SyncFragment extends Fragment {
   public void onClickSyncNow(View v) {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickSyncNow]");
 
-    startSync.setEnabled(false);
-    resetServer.setEnabled(false);
-
     // ask whether to sync app files and table-level files
     PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
     String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     WebLogger.getLogger(getAppName()).e(TAG,
         "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
-    if (accountName == null) {
+    if (accountName == null || accountName.length() == 0) {
       Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT).show();
     } else {
       disableButtons();
