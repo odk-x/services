@@ -96,6 +96,11 @@ public class OutcomeDialogFragment extends DialogFragment implements ICancelOutc
     } else {
       this.getActivity().setResult(Activity.RESULT_CANCELED);
     }
-    this.getActivity().finish();
+
+    // Notify the syncFragment that this sync has completed
+    SyncFragment syncFragment = (SyncFragment)getFragmentManager().findFragmentByTag(SyncFragment.NAME);
+    if (syncFragment != null) {
+      syncFragment.onSyncCompleted();
+    }
   }
 }

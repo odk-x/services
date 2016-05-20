@@ -99,4 +99,12 @@ public class OdkSyncService extends Service {
     return sync.getSyncUpdateText();
   }
 
+  public boolean clearAppSynchronizer(String appName) {
+    AppSynchronizer appSync = syncs.remove(appName);
+    if (appSync == null) {
+      return false;
+    } else {
+      return true;
+    }
+  }
 }

@@ -86,4 +86,14 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
       throw new RemoteException();
     }
   }
+
+  @Override
+  public boolean clearAppSynchronizer(String appName) throws RemoteException {
+    try {
+      return syncService.clearAppSynchronizer(appName);
+    } catch (Throwable throwable) {
+      WebLogger.getLogger(appName).printStackTrace(throwable);
+      throw new RemoteException();
+    }
+  }
 }

@@ -499,6 +499,48 @@ public class SyncFragment extends Fragment {
         });
   }
 
+  void onSyncCompleted() {
+    Activity activity = getActivity();
+    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] after getActivity");
+    if ( activity == null ) {
+      // we are in transition -- do nothing
+      WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] activity == null = return");
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          onSyncCompleted();
+        }
+      }, 100);
+      return;
+    }
+
+    ((ISyncServiceInterfaceActivity)activity)
+            .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+              @Override
+              public void doAction(OdkSyncServiceInterface syncServiceInterface)
+                      throws RemoteException {
+                WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] called");
+                if ( syncServiceInterface != null ) {
+                  WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is not null");
+                  boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
+                  if (completed == false) {
+                    throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
+                  }
+                  getActivity().finish();
+                  return;
+                } else {
+                  WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");
+                  handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                      onSyncCompleted();
+                    }
+                  }, 100);
+                }
+              }
+            });
+  }
+
   /**
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
