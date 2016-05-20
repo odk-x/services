@@ -650,7 +650,14 @@ public class SyncFragment extends Fragment {
           dismissProgressDialog();
         }
         progressDialog = ProgressDialogFragment.newInstance(getString(id_title), message);
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+
+        // If fragment is not visible an exception could be thrown
+        // TODO: Investigate a better way to handle this
+        try {
+          progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+        } catch (IllegalStateException ise) {
+          ise.printStackTrace();
+        }
       }
       if ( status == SyncStatus.SYNCING || status == SyncStatus.INIT ) {
         handler.postDelayed(new Runnable() {
@@ -765,7 +772,14 @@ public class SyncFragment extends Fragment {
             (progress == SyncProgressState.COMPLETE &&
                 (status == SyncStatus.SYNC_COMPLETE ||
                  status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS)));
-        outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
+
+        // If fragment is not visible an exception could be thrown
+        // TODO: Investigate a better way to handle this
+        try {
+          outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
+        } catch (IllegalStateException ise) {
+          ise.printStackTrace();
+        }
       }
     }
   }
