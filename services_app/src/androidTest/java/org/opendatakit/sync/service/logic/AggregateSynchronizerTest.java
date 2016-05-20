@@ -27,8 +27,8 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncNotification;
+import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.data.SyncRow;
-import org.opendatakit.sync.service.data.SynchronizationResult;
 
 import java.io.File;
 import java.net.URL;
@@ -76,7 +76,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
 
   private SyncExecutionContext getSyncExecutionContext() {
     SyncNotification syncProg = new SyncNotification(getContext(), appName);
-    SynchronizationResult syncRes = new SynchronizationResult();
+    SyncOverallResult syncRes = new SyncOverallResult();
 
     PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
     props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, agg_url);
