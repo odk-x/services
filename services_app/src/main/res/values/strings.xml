@@ -160,6 +160,13 @@
 
     <string name="sync_other_auth_fail">Authorization request failed %1$s</string>
     <string name="sync_auth_unsuccessful">Please resolve the reported authorization issues and try again.</string>
+
+    <string name="sync_configure_username_password">Username authentication was selected but
+        a username and password are not configured. Please update your settings.</string>
+    <string name="sync_configure_google_account">Google account authentication was selected but
+        a Google account has not been configured. Please update your settings.</string>
+    <string name="sync_configure_credentials">No authentication type has been selected.
+        Please update your settings.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>

@@ -541,6 +541,38 @@ public class SyncFragment extends Fragment {
             });
   }
 
+  public boolean areCredentialsConfigured() {
+    // verify that we have the necessary credentials
+    PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
+    String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    if ( getString(R.string.credential_type_none).equals(authType) ) {
+      return true;
+    }
+    if ( getString(R.string.credential_type_username_password).equals(authType) ) {
+      String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
+      String password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
+      if ( username == null || username.length() == 0 ||
+          password == null || password.length() == 0 ) {
+        Toast.makeText(getActivity(), getString(R.string.sync_configure_username_password),
+            Toast.LENGTH_LONG).show();
+        return false;
+      }
+      return true;
+    }
+    if ( getString(R.string.credential_type_google_account).equals(authType) ) {
+      String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
+      if (accountName == null || accountName.length() == 0) {
+        Toast.makeText(getActivity(), getString(R.string.sync_configure_google_account),
+            Toast.LENGTH_LONG).show();
+        return false;
+      }
+      return true;
+    }
+    Toast.makeText(getActivity(), getString(R.string.sync_configure_credentials),
+        Toast.LENGTH_LONG).show();
+    return false;
+  }
+
   /**
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
@@ -548,45 +580,33 @@ public class SyncFragment extends Fragment {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
     // ask whether to sync app files and table-level files
 
-    // show warning message
-    AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
-        getString(R.string.sync_reset_app_server_warning));
+    if (areCredentialsConfigured()) {
+      // show warning message
+      AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
+          getString(R.string.sync_reset_app_server_warning));
 
-    msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
-      @Override public void onClick(DialogInterface dialog, int which) {
-        PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
-        String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-        WebLogger.getLogger(getAppName())
-            .e(TAG, "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
-        if (accountName == null || accountName.length() == 0) {
-          Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT)
-              .show();
-        } else {
+      msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
+        @Override public void onClick(DialogInterface dialog, int which) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
           disableButtons();
           syncAction = SyncActions.RESET_SERVER;
           prepareForSyncAction();
         }
-      }
-    });
+      });
 
-    msg.setNegativeButton(getString(R.string.cancel), null);
-    msg.show();
+      msg.setNegativeButton(getString(R.string.cancel), null);
+      msg.show();
+    }
   }
 
   /**
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
   public void onClickSyncNow(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickSyncNow]");
-
-    // ask whether to sync app files and table-level files
-    PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
-    String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-    WebLogger.getLogger(getAppName()).e(TAG,
+    WebLogger.getLogger(getAppName()).d(TAG,
         "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
-    if (accountName == null || accountName.length() == 0) {
-      Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT).show();
-    } else {
+    if (areCredentialsConfigured()) {
       disableButtons();
       syncAction = SyncActions.SYNC;
       prepareForSyncAction();
