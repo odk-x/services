@@ -86,6 +86,13 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
         }
       }
 
+      if ( header.id == R.id.clear_configuration_settingss ) {
+        // omit this if we have admin mode configured but are not in admin mode
+        if ( mAdminConfigured && !mAdminMode ) {
+          continue;
+        }
+      }
+
       target.add(header);
     }
 
@@ -94,6 +101,13 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
         // TODO: change to challenge for admin password and then
         // TODO: launch the general settings in admin mode.
         Intent intent = new Intent(this, AdminPasswordChallengeActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+        header.intent = intent;
+      }
+
+      if ( header.id == R.id.clear_configuration_settingss ) {
+        Intent intent = new Intent(this, ClearAppPropertiesActivity.class);
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
             this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
         header.intent = intent;

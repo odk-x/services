@@ -84,4 +84,13 @@
             android:summary="@string/admin_access_settings">
     </header>
 
+    <header android:id="@+id/clear_configuration_settingss"
+            android:icon="@drawable/ic_action_content_discard"
+            android:title="@string/clear_configuration_settings"
+            android:summary="@string/click_to_clear_settings">
+        <intent android:action="android.intent.action.EDIT"
+                android:targetPackage="org.opendatakit.services"
+                android:targetClass="org.opendatakit.common.android.activities.ClearAppPropertiesActivity" />
+    </header>
+
 </preference-headers>
