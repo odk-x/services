@@ -27,6 +27,8 @@ public class OdkSyncService extends Service {
 
   private static final String LOGTAG = OdkSyncService.class.getSimpleName();
 
+  private static final Map<String, AppSynchronizer> syncs = new HashMap<String, AppSynchronizer>();
+
   /**
    * change to true expression if you want to debug the dbShim service
    */
@@ -39,14 +41,12 @@ public class OdkSyncService extends Service {
     return false;
   }
 
-  private Map<String, AppSynchronizer> syncs;
   private OdkSyncServiceInterfaceImpl serviceInterface;
   private GlobalSyncNotificationManager notificationManager;
 
   @Override
   public void onCreate() {
     serviceInterface = new OdkSyncServiceInterfaceImpl(this);
-    syncs = new HashMap<String, AppSynchronizer>();
     notificationManager = new GlobalSyncNotificationManager(this);
   }
 
@@ -63,13 +63,15 @@ public class OdkSyncService extends Service {
   }
 
   private AppSynchronizer getSync(String appName) {
-    AppSynchronizer sync = syncs.get(appName);
-    if (sync == null) {
-      sync = new AppSynchronizer(this, appName, notificationManager);
-      syncs.put(appName, sync);
-    }
-    return sync;
+    synchronized (syncs) {
+      AppSynchronizer sync = syncs.get(appName);
+      if (sync == null) {
+        sync = new AppSynchronizer(this, appName, notificationManager);
+        syncs.put(appName, sync);
+      }
+      return sync;
 
+    }
   }
 
   public boolean resetServer(String appName, SyncAttachmentState attachmentState) {

@@ -82,13 +82,14 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   }
 
   @Override public void onServiceDisconnected(ComponentName name) {
-    mBound = false;
+    WebLogger.getLogger(getAppName()).i(TAG, "[onServiceDisconnected] Unbound to sync service");
+    setBound(false);
   }
 
   private void doSyncInterfaceAction(OdkSyncServiceInterface syncServiceInterface,
                                      DoSyncActionCallback doSyncActionCallback) throws RemoteException {
     doSyncActionCallback.doAction(syncServiceInterface);
-    WebLogger.getLogger(getAppName()).i(TAG, "[onServiceDisconnected] Unbound to sync service in ");
+    WebLogger.getLogger(getAppName()).i(TAG, "[doSyncInterfaceAction] called");
   }
 
   /**
@@ -97,14 +98,17 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
    * @param callback - callback for fragments that want to use sync service
    */
   public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
+    WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] called");
     try {
-      if (odkSyncInterface != null && callback != null ) {
-        WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] odkSyncInterface != null && callback != null");
+      boolean bound = getBound();
+      if (odkSyncInterface != null && callback != null && bound == true) {
         doSyncInterfaceAction(odkSyncInterface, callback);
+      } else {
+        if (callback != null) {
+          doSyncInterfaceAction(odkSyncInterface, callback);
+        }
       }
-
-      WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] odkSyncInterface == null || callback == null");
-    } catch ( RemoteException e ) {
+    } catch (RemoteException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG, " [invokeSyncInterfaceAction] exception while invoking sync service");
       Toast.makeText(this, " [invokeSyncInterfaceAction] Exception while invoking sync service", Toast.LENGTH_LONG).show();
@@ -168,20 +172,22 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
 
     FragmentTransaction trans = mgr.beginTransaction();
     trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
+    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
     trans.commit();
   }
 
   @Override
   protected void onDestroy() {
-    super.onDestroy();
 
     WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy]");
 
     if (getBound()) {
       unbindService(this);
       setBound(false);
-      WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service in onDestroy");
+      WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service");
     }
+
+    super.onDestroy();
   }
 
   @Override

@@ -201,9 +201,12 @@ public class SyncFragment extends Fragment {
   public void onResume() {
     super.onResume();
 
+    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
+
     Intent incomingIntent = getActivity().getIntent();
     mAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if ( mAppName == null || mAppName.length() == 0 ) {
+      WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] mAppName is null so calling finish");
       getActivity().setResult(Activity.RESULT_CANCELED);
       getActivity().finish();
       return;
@@ -323,7 +326,7 @@ public class SyncFragment extends Fragment {
    * Hooked up to authorizeAccountButton's onClick in aggregate_activity.xml
    */
   public void authenticateGoogleAccount() {
-    WebLogger.getLogger(getAppName()).d(TAG, "[authenticateGoogleAccount] invalidated authtoken");
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [authenticateGoogleAccount] invalidated authtoken");
     invalidateAuthToken(getActivity(), getAppName());
 
     PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
@@ -347,9 +350,18 @@ public class SyncFragment extends Fragment {
   }
 
   private void tickleInterface() {
-    Activity activity = this.getActivity();
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] started");
+    Activity activity = getActivity();
     if ( activity == null ) {
       // we are in transition -- do nothing
+      WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] activity == null");
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          tickleInterface();
+        }
+      }, 100);
+
       return;
     }
     ((ISyncServiceInterfaceActivity)activity)
@@ -357,6 +369,7 @@ public class SyncFragment extends Fragment {
       @Override public void doAction(OdkSyncServiceInterface syncServiceInterface)
           throws RemoteException {
         if ( syncServiceInterface != null ) {
+          WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] syncServiceInterface != null");
           final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
           final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
           final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
@@ -409,23 +422,31 @@ public class SyncFragment extends Fragment {
             break;
           }
         } else {
-          // request cancelled
-          syncAction = SyncActions.IDLE;
-          handler.post(new Runnable() {
+          WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] syncServiceInterface == null");
+          // The service is not bound yet so now we need to try again
+          handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-              dismissProgressDialog();
+              tickleInterface();
             }
-          });
+          }, 100);
         }
       }
     });
   }
 
   private void updateInterface() {
-    Activity activity = this.getActivity();
+    Activity activity = getActivity();
+    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] after getActivity");
     if ( activity == null ) {
       // we are in transition -- do nothing
+      WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          updateInterface();
+        }
+      }, 100);
       return;
     }
     ((ISyncServiceInterfaceActivity)activity)
@@ -433,10 +454,12 @@ public class SyncFragment extends Fragment {
           @Override
           public void doAction(OdkSyncServiceInterface syncServiceInterface)
               throws RemoteException {
+            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] called");
             if ( syncServiceInterface != null ) {
               final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
               final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
               final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
+              WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] and status = " + status);
               if (status == SyncStatus.SYNCING) {
                 syncAction = SyncActions.MONITOR_SYNCING;
 
@@ -463,15 +486,14 @@ public class SyncFragment extends Fragment {
                 return;
               }
             } else {
-              // request cancelled
-              syncAction = SyncActions.IDLE;
-              handler.post(new Runnable() {
+              // The service is not bound yet so now we need to try again
+              WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] and syncServiceInterface is null");
+              handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                  dismissProgressDialog();
+                  updateInterface();
                 }
-              });
-              return;
+              }, 100);
             }
           }
         });
@@ -481,7 +503,7 @@ public class SyncFragment extends Fragment {
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
   public void onClickResetServer(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "in onClickResetServer");
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
     // ask whether to sync app files and table-level files
 
     startSync.setEnabled(false);
@@ -496,7 +518,7 @@ public class SyncFragment extends Fragment {
         PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
         String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
         WebLogger.getLogger(getAppName())
-            .e(TAG, "[onClickResetServer] timestamp: " + System.currentTimeMillis());
+            .e(TAG, "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
         if (accountName == null) {
           Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT)
               .show();
@@ -516,7 +538,7 @@ public class SyncFragment extends Fragment {
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
   public void onClickSyncNow(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "in onClickSyncNow");
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickSyncNow]");
 
     startSync.setEnabled(false);
     resetServer.setEnabled(false);
@@ -525,7 +547,7 @@ public class SyncFragment extends Fragment {
     PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
     String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     WebLogger.getLogger(getAppName()).e(TAG,
-        "[onClickSyncNow] timestamp: " + System.currentTimeMillis());
+        "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
     if (accountName == null) {
       Toast.makeText(getActivity(), getString(R.string.sync_choose_account), Toast.LENGTH_SHORT).show();
     } else {
@@ -546,6 +568,8 @@ public class SyncFragment extends Fragment {
 
   @Override public void onDestroy() {
     super.onDestroy();
+    handler.removeCallbacksAndMessages(null);
+    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
   }
 
   private void showProgressDialog( SyncStatus status, SyncProgressState progress, String message ) {
