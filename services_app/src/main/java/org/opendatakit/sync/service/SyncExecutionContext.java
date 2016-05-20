@@ -40,9 +40,6 @@ import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.service.data.SynchronizationResult;
-import org.opendatakit.sync.service.data.SynchronizationResult.Status;
-import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
 
@@ -80,7 +77,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   /**
    * The results of the synchronization that we will pass back to the user.
    */
-  private final SynchronizationResult mUserResult;
+  private final SyncResult mUserResult;
 
   private int nMajorSyncSteps;
   private int iMajorSyncStep;
@@ -106,7 +103,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public SyncExecutionContext(AppAwareApplication context, String appName,
       SyncNotification syncProgress,
-      SynchronizationResult syncResult) {
+      SyncResult syncResult) {
     this.application = context;
     this.appName = appName;
     String versionCode = application.getVersionCodeString();
@@ -137,12 +134,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return application.getString(resId);
   }
   
-  public void setAppLevelStatus(Status status) {
-    mUserResult.setAppLevelStatus(status);
+  public void setAppLevelSyncOutcome(SyncOutcome syncOutcome) {
+    mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
   
-  public TableResult getTableResult(String tableId) {
-    return mUserResult.getTableResult(tableId);
+  public TableLevelResult getTableLevelResult(String tableId) {
+    return mUserResult.fetchTableLevelResult(tableId);
   }
   
   public String getAppName() {

@@ -34,11 +34,7 @@ import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.OdkSyncService;
-import org.opendatakit.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.sync.service.data.SynchronizationResult.Status;
-import org.opendatakit.sync.service.data.TableResult;
+import org.opendatakit.sync.service.*;
 import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.SchemaMismatchException;
@@ -118,13 +114,13 @@ public class ProcessAppAndTableLevelChanges {
           tables.addAll(tableList.getTables());
         }
       } catch (InvalidAuthTokenException e) {
-        sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
+        sc.setAppLevelSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
         log.i(TAG,
             "[synchronizeConfigurationAndContent] Could not retrieve server table list exception: "
                 + e.toString());
         return new ArrayList<TableResource>();
       } catch (Exception e) {
-        sc.setAppLevelStatus(Status.EXCEPTION);
+        sc.setAppLevelSyncOutcome(SyncOutcome.EXCEPTION);
         log.e(TAG,
             "[synchronizeConfigurationAndContent] Unexpected exception getting server table list exception: "
                 + e.toString());
@@ -144,7 +140,7 @@ public class ProcessAppAndTableLevelChanges {
       db = sc.getDatabase();
       localTableIds = sc.getDatabaseService().getAllTableIds(sc.getAppName(), db);
     } catch (RemoteException e) {
-      sc.setAppLevelStatus(Status.EXCEPTION);
+      sc.setAppLevelSyncOutcome(SyncOutcome.EXCEPTION);
       log.e(TAG,
           "[synchronizeConfigurationAndContent] Unexpected exception getting local tableId list exception: "
               + e.toString());
@@ -203,10 +199,10 @@ public class ProcessAppAndTableLevelChanges {
     try {
       boolean success = sc.getSynchronizer().syncAppLevelFiles(pushToServer,
           tableList.getAppLevelManifestETag(), sc);
-      sc.setAppLevelStatus(success ? Status.SUCCESS : Status.FAILURE);
+      sc.setAppLevelSyncOutcome(success ? SyncOutcome.SUCCESS : SyncOutcome.FAILURE);
     } catch (InvalidAuthTokenException e) {
       // TODO: update a synchronization result to report back to them as well.
-      sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
+      sc.setAppLevelSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
       log.e(TAG,
           "[synchronizeConfigurationAndContent] auth token failure while trying to synchronize app-level files.");
       log.printStackTrace(e);
@@ -215,9 +211,9 @@ public class ProcessAppAndTableLevelChanges {
       // TODO: update a synchronization result to report back to them as well.
       if ( he.getResponse() != null && he.getResponse().getStatusLine().getStatusCode() ==
               HttpStatus.SC_UNAUTHORIZED ) {
-        sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
+        sc.setAppLevelSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
       } else {
-        sc.setAppLevelStatus(Status.EXCEPTION);
+        sc.setAppLevelSyncOutcome(SyncOutcome.EXCEPTION);
       }
       log.e(TAG,
               "[synchronizeConfigurationAndContent] error trying to synchronize app-level files.");
@@ -294,7 +290,7 @@ public class ProcessAppAndTableLevelChanges {
             sc.getSynchronizer().deleteTable(tableToDelete);
           } catch (InvalidAuthTokenException e) {
             // TODO: update a synchronization result to report back to them as well.
-            sc.setAppLevelStatus(Status.AUTH_EXCEPTION);
+            sc.setAppLevelSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
             log.e(TAG,
                 "[synchronizeConfigurationAndContent] auth token failure while trying to delete tables.");
             log.printStackTrace(e);
@@ -334,7 +330,7 @@ public class ProcessAppAndTableLevelChanges {
 
         String serverTableId = table.getTableId();
 
-        TableResult tableResult = sc.getTableResult(serverTableId);
+        TableLevelResult tableLevelResult = sc.getTableLevelResult(serverTableId);
 
         boolean doesNotExistLocally = true;
         boolean isLocalMatch = false;
@@ -354,7 +350,7 @@ public class ProcessAppAndTableLevelChanges {
               isLocalMatch = true;
             }
           } catch (RemoteException e) {
-            exception("synchronizeConfigurationAndContent - database exception", serverTableId, e, tableResult);
+            exception("synchronizeConfigurationAndContent - database exception", serverTableId, e, tableLevelResult);
             continue;
           } finally {
             sc.releaseDatabase(db);
@@ -384,15 +380,15 @@ public class ProcessAppAndTableLevelChanges {
               }
             }
           } catch (InvalidAuthTokenException e) {
-            clientAuthException("synchronizeConfigurationAndContent", serverTableId, e, tableResult);
+            clientAuthException("synchronizeConfigurationAndContent", serverTableId, e, tableLevelResult);
             continue;
           } catch (SchemaMismatchException e) {
             exception("synchronizeConfigurationAndContent - schema for this table does not match that on the server",
-                serverTableId, e, tableResult);
+                serverTableId, e, tableLevelResult);
             continue;
           } catch (Exception e) {
             exception("synchronizeConfigurationAndContent - Unexpected exception accessing table definition",
-                serverTableId, e, tableResult);
+                serverTableId, e, tableLevelResult);
             continue;
           }
         }
@@ -419,20 +415,20 @@ public class ProcessAppAndTableLevelChanges {
             new Object[] { localTableId }, 0.0, false);
         // eventually might not be true if there are multiple syncs running
         // simultaneously...
-        TableResult tableResult = sc.getTableResult(localTableId);
+        TableLevelResult tableLevelResult = sc.getTableLevelResult(localTableId);
         try {
           db = sc.getDatabase();
           // this is an atomic action -- no need to gain transaction before invoking it
           sc.getDatabaseService().deleteDBTableAndAllData(sc.getAppName(), db, localTableId);
         } catch (RemoteException e) {
-          exception("synchronizeConfigurationAndContent - database exception deleting table", localTableId, e, tableResult);
+          exception("synchronizeConfigurationAndContent - database exception deleting table", localTableId, e, tableLevelResult);
         } catch (Exception e) {
-          exception("synchronizeConfigurationAndContent - unexpected exception deleting table", localTableId, e, tableResult);
+          exception("synchronizeConfigurationAndContent - unexpected exception deleting table", localTableId, e, tableLevelResult);
         } finally {
           if (db != null) {
             try {
               sc.releaseDatabase(db);
-              tableResult.setStatus(Status.SUCCESS);
+              tableLevelResult.setSyncOutcome(SyncOutcome.SUCCESS);
             } finally {
               db = null;
             }
@@ -491,17 +487,17 @@ public class ProcessAppAndTableLevelChanges {
     // think of one. one thing is that if it fails you'll see a table but won't
     // be able to open it, as there won't be any KVS stuff appropriate for it.
     boolean success = false;
-    // Prepare the tableResult. We'll start it as failure, and only update it
+    // Prepare the tableLevelResult. We'll start it as failure, and only update it
     // if we're successful at the end.
 
     String tableId = te.getTableId();
 
     sc.updateNotification(SyncProgressState.TABLE_FILES,
         R.string.sync_verifying_table_schema_on_server, new Object[] { tableId }, 0.0, false);
-    final TableResult tableResult = sc.getTableResult(tableId);
+    final TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
     String displayName;
     displayName = sc.getTableDisplayName(tableId);
-    tableResult.setTableDisplayName(displayName);
+    tableLevelResult.setTableDisplayName(displayName);
 
     OdkDbHandle db = null;
     try {
@@ -543,10 +539,10 @@ public class ProcessAppAndTableLevelChanges {
           resource = sc.getSynchronizer().createTable(tableId, schemaETag,
               orderedDefns.getColumns());
         } catch (InvalidAuthTokenException e) {
-          clientAuthException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
+          clientAuthException("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableLevelResult);
           return null;
         } catch (Exception e) {
-          exception("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableResult);
+          exception("synchronizeTableConfigurationAndContent - createTable on server", tableId, e, tableLevelResult);
           return null;
         }
 
@@ -577,22 +573,22 @@ public class ProcessAppAndTableLevelChanges {
         // the server's.
 
         log.d(TAG, "updateDbFromServer setServerHadSchemaChanges(true)");
-        tableResult.setServerHadSchemaChanges(true);
+        tableLevelResult.setServerHadSchemaChanges(true);
 
         // fetch the table definition
         TableDefinitionResource definitionResource;
         try {
           definitionResource = sc.getSynchronizer().getTableDefinition(resource.getDefinitionUri());
         } catch (InvalidAuthTokenException e) {
-          clientAuthException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
+          clientAuthException("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableLevelResult);
           return null;
         } catch (Exception e) {
-          exception("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableResult);
+          exception("synchronizeTableConfigurationAndContent - get table definition from server", tableId, e, tableLevelResult);
           return null;
         }
 
         // record that we have pulled it
-        tableResult.setPulledServerSchema(true);
+        tableLevelResult.setPulledServerSchema(true);
         try {
           db = sc.getDatabase();
           // apply changes
@@ -605,11 +601,11 @@ public class ProcessAppAndTableLevelChanges {
           log.w(TAG, "database properties have changed. "
               + "structural modifications were not successful. You must delete the table"
               + " and download it to receive the updates.");
-          tableResult.setMessage(e.toString());
-          tableResult.setStatus(Status.FAILURE);
+          tableLevelResult.setMessage(e.toString());
+          tableLevelResult.setSyncOutcome(SyncOutcome.FAILURE);
           return null;
         } catch (Exception e) {
-          exception("synchronizeTableConfigurationAndContent - create table locally", tableId, e, tableResult);
+          exception("synchronizeTableConfigurationAndContent - create table locally", tableId, e, tableLevelResult);
           return null;
         } finally {
           if (db != null) {
@@ -692,25 +688,25 @@ public class ProcessAppAndTableLevelChanges {
                   String msg = e.getMessage();
                   if (msg == null)
                     msg = e.toString();
-                  tableResult.setMessage(msg);
-                  tableResult.setStatus(Status.EXCEPTION);
+                  tableLevelResult.setMessage(msg);
+                  tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
                 } catch (RemoteException e) {
                   log.printStackTrace(e);
                   String msg = e.getMessage();
                   if (msg == null)
                     msg = e.toString();
-                  tableResult.setMessage(msg);
-                  tableResult.setStatus(Status.EXCEPTION);
+                  tableLevelResult.setMessage(msg);
+                  tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
                 }
               }
             }, pushLocalTableLevelFiles, sc);
       } catch (InvalidAuthTokenException e) {
-        clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableResult);
+        clientAuthException("synchronizeTableConfigurationAndContent", tableId, e, tableLevelResult);
         return null;
       } catch (IOException ioe) {
         // Would it be more appropriate to exit here
         log.e(TAG, "synchronizeTableConfigurationAndContent");
-        exception("synchronizeTableConfigurationAndContent - error while uploading config files", tableId, ioe, tableResult);
+        exception("synchronizeTableConfigurationAndContent - error while uploading config files", tableId, ioe, tableLevelResult);
         return null;
       }
 
@@ -720,9 +716,9 @@ public class ProcessAppAndTableLevelChanges {
       // we should be up-to-date on the schema and properties
       success = true;
     } finally {
-      if (success && tableResult.getStatus() != Status.WORKING) {
-        log.e(TAG, "tableResult status for table: " + tableId + " was "
-            + tableResult.getStatus().name()
+      if (success && tableLevelResult.getSyncOutcome() != SyncOutcome.WORKING) {
+        log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
+            + tableLevelResult.getSyncOutcome().name()
             + ", and yet success returned true. This shouldn't be possible.");
       }
     }
@@ -818,10 +814,10 @@ public class ProcessAppAndTableLevelChanges {
    * @param method
    * @param tableId
    * @param e
-   * @param tableResult
+   * @param tableLevelResult
    */
   private void clientAuthException(String method, String tableId, Exception e,
-      TableResult tableResult) {
+      TableLevelResult tableLevelResult) {
     String msg = e.getMessage();
     if (msg == null) {
       msg = e.toString();
@@ -829,8 +825,8 @@ public class ProcessAppAndTableLevelChanges {
     log.printStackTrace(e);
     log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
         tableId, msg));
-    tableResult.setStatus(Status.AUTH_EXCEPTION);
-    tableResult.setMessage(msg);
+    tableLevelResult.setSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
+    tableLevelResult.setMessage(msg);
   }
 
   /**
@@ -839,10 +835,10 @@ public class ProcessAppAndTableLevelChanges {
    * @param method
    * @param tableId
    * @param e
-   * @param tableResult
+   * @param tableLevelResult
    */
 //  private void clientWebException(String method, String tableId, ClientWebException e,
-//      TableResult tableResult) {
+//      TableLevelResult tableLevelResult) {
 //    String msg = e.getMessage();
 //    if (msg == null) {
 //      msg = e.toString();
@@ -850,8 +846,8 @@ public class ProcessAppAndTableLevelChanges {
 //    log.printStackTrace(e);
 //    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
 //        tableId, msg));
-//    tableResult.setStatus(Status.EXCEPTION);
-//    tableResult.setMessage(msg);
+//    tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
+//    tableLevelResult.setMessage(msg);
 //  }
 
   /**
@@ -860,9 +856,9 @@ public class ProcessAppAndTableLevelChanges {
    * @param method
    * @param tableId
    * @param e
-   * @param tableResult
+   * @param tableLevelResult
    */
-  private void exception(String method, String tableId, Exception e, TableResult tableResult) {
+  private void exception(String method, String tableId, Exception e, TableLevelResult tableLevelResult) {
     String msg = e.getMessage();
     if (msg == null) {
       msg = e.toString();
@@ -870,8 +866,8 @@ public class ProcessAppAndTableLevelChanges {
     log.printStackTrace(e);
     log.e(TAG, String.format("Unexpected exception in %s on table: %s exception: %s", method,
         tableId, msg));
-    tableResult.setStatus(Status.EXCEPTION);
-    tableResult.setMessage(msg);
+    tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
+    tableLevelResult.setMessage(msg);
   }
 
 }

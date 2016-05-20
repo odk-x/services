@@ -22,9 +22,6 @@ import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.data.SynchronizationResult;
-import org.opendatakit.sync.service.data.SynchronizationResult.Status;
-import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.sync.service.logic.AggregateSynchronizer;
@@ -47,6 +44,7 @@ public class AppSynchronizer {
   private Thread curThread;
   private SyncTask curTask;
   private SyncNotification syncProgress;
+  private SyncResult syncResult;
 
   AppSynchronizer(Service srvc, String appName, GlobalSyncNotificationManager notificationManager) {
     this.service = srvc;
@@ -55,6 +53,7 @@ public class AppSynchronizer {
     this.curThread = null;
     this.globalNotifManager = notificationManager;
     this.syncProgress = new SyncNotification(srvc, appName);
+    this.syncResult = new SyncResult();
   }
 
   public boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
@@ -79,6 +78,10 @@ public class AppSynchronizer {
 
   public SyncProgressState getProgressState() {
     return syncProgress.getProgressState();
+  }
+
+  public SyncResult getSyncResult() {
+    return syncResult;
   }
 
   private class SyncTask implements Runnable {
@@ -137,8 +140,6 @@ public class AppSynchronizer {
         //
         // NOTE: server limits this string to 10 characters
 
-        SynchronizationResult syncResult = new SynchronizationResult();
-
         SyncExecutionContext sharedContext = new SyncExecutionContext( application,
             appName, syncProgress, syncResult);
 
@@ -156,7 +157,7 @@ public class AppSynchronizer {
         // sync the app-level files, table schemas and table-level files
         List<TableResource> workingListOfTables = appAndTableLevelProcessor.synchronizeConfigurationAndContent(push);
         
-        if (syncResult.getAppLevelStatus() != Status.SUCCESS) {
+        if (syncResult.getAppLevelSyncOutcome() != SyncOutcome.SUCCESS) {
           WebLogger.getLogger(appName).e(TAG, "Abandoning data row update -- app-level sync was not successful!");
         } else {
           // and now sync the data rows. This does not proceed if there
@@ -170,25 +171,25 @@ public class AppSynchronizer {
 
         String reason = "none";
         // examine results
-        if (syncResult.getAppLevelStatus() != Status.SUCCESS) {
-          authProblems = (syncResult.getAppLevelStatus() == Status.AUTH_EXCEPTION);
+        if (syncResult.getAppLevelSyncOutcome() != SyncOutcome.SUCCESS) {
+          authProblems = (syncResult.getAppLevelSyncOutcome() == SyncOutcome.AUTH_EXCEPTION);
           reason = "overall results";
           status = SyncStatus.NETWORK_ERROR;
         }
 
         int attachmentsFailed = 0;
-        for (TableResult result : syncResult.getTableResults()) {
-          SynchronizationResult.Status tableStatus = result.getStatus();
+        for (TableLevelResult result : syncResult.getTableLevelResults()) {
+          SyncOutcome tableStatus = result.getSyncOutcome();
           // TODO: decide how to handle the status
-          if (tableStatus != Status.SUCCESS) {
-            if (tableStatus == Status.AUTH_EXCEPTION) {
+          if (tableStatus != SyncOutcome.SUCCESS) {
+            if (tableStatus == SyncOutcome.AUTH_EXCEPTION) {
               authProblems = true;
-            } else if (tableStatus == Status.TABLE_PENDING_ATTACHMENTS) {
+            } else if (tableStatus == SyncOutcome.TABLE_PENDING_ATTACHMENTS) {
               ++attachmentsFailed;
               continue;
-            } else if (tableStatus == Status.TABLE_CONTAINS_CHECKPOINTS
-                || tableStatus == Status.TABLE_CONTAINS_CONFLICTS
-                || tableStatus == Status.TABLE_REQUIRES_APP_LEVEL_SYNC) {
+            } else if (tableStatus == SyncOutcome.TABLE_CONTAINS_CHECKPOINTS
+                || tableStatus == SyncOutcome.TABLE_CONTAINS_CONFLICTS
+                || tableStatus == SyncOutcome.TABLE_REQUIRES_APP_LEVEL_SYNC) {
               status = SyncStatus.CONFLICT_RESOLUTION;
             } else {
               status = SyncStatus.NETWORK_ERROR;
@@ -203,7 +204,7 @@ public class AppSynchronizer {
 
         // if rows aren't successful, fail.
         if (status != SyncStatus.SYNCING && status != SyncStatus.CONFLICT_RESOLUTION) {
-          syncProgress.finalErrorNotification("There were failures. Status: " + status + " Reason:"
+          syncProgress.finalErrorNotification("There were failures. SyncOutcome: " + status + " Reason:"
               + reason);
           return;
         }
