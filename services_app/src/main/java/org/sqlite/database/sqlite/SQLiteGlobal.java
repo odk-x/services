@@ -54,6 +54,7 @@ public final class SQLiteGlobal {
             if (sDefaultPageSize == 0) {
                 sDefaultPageSize = new StatFs("/data").getBlockSize();
             }
+            // TODO: is this correct? why not return sDefaultPageSize?
             return 1024;
         }
     }

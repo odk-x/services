@@ -35,6 +35,7 @@ import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
+import org.opendatakit.services.R;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -62,11 +63,17 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
     this.mHaveResolvedMetadataConflicts = haveResolvedMetadataConflicts;
   }
 
-  @Override public ArrayList<ResolveRowEntry> loadInBackground() {
-
-    OdkConnectionInterface db = null;
+  @Override
+  public ArrayList<ResolveRowEntry> loadInBackground() {
 
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+
+    return doWork(dbHandleName);
+  }
+
+  public ArrayList<ResolveRowEntry> doWork(OdkDbHandle dbHandleName) {
+
+    OdkConnectionInterface db = null;
 
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
@@ -208,7 +215,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       Row row = table.getRowAtIndex(i);
       String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
       String instanceName = row.getRawDataOrMetadataByElementKey(nameToUse.instanceName);
-      ResolveRowEntry re = new ResolveRowEntry(rowId, formDisplayName + ": " + instanceName);
+      ResolveRowEntry re = new ResolveRowEntry(rowId,
+          getContext().getString(R.string.resolve_row_display_name, formDisplayName, instanceName));
       results.add(re);
     }
     return results;
