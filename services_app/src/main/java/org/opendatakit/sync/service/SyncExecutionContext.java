@@ -77,7 +77,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   /**
    * The results of the synchronization that we will pass back to the user.
    */
-  private final SyncResult mUserResult;
+  private final SyncOverallResult mUserResult;
 
   private int nMajorSyncSteps;
   private int iMajorSyncStep;
@@ -103,7 +103,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public SyncExecutionContext(AppAwareApplication context, String appName,
       SyncNotification syncProgress,
-      SyncResult syncResult) {
+      SyncOverallResult syncResult) {
     this.application = context;
     this.appName = appName;
     String versionCode = application.getVersionCodeString();

@@ -44,7 +44,7 @@ public class AppSynchronizer {
   private Thread curThread;
   private SyncTask curTask;
   private SyncNotification syncProgress;
-  private SyncResult syncResult;
+  private SyncOverallResult syncResult;
 
   AppSynchronizer(Service srvc, String appName, GlobalSyncNotificationManager notificationManager) {
     this.service = srvc;
@@ -53,7 +53,7 @@ public class AppSynchronizer {
     this.curThread = null;
     this.globalNotifManager = notificationManager;
     this.syncProgress = new SyncNotification(srvc, appName);
-    this.syncResult = new SyncResult();
+    this.syncResult = new SyncOverallResult();
   }
 
   public boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
@@ -80,7 +80,7 @@ public class AppSynchronizer {
     return syncProgress.getProgressState();
   }
 
-  public SyncResult getSyncResult() {
+  public SyncOverallResult getSyncResult() {
     return syncResult;
   }
 

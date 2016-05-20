@@ -99,7 +99,7 @@ public class OdkSyncService extends Service {
     return sync.getSyncUpdateText();
   }
 
-  public SyncResult getSyncResult(String appName) {
+  public SyncOverallResult getSyncResult(String appName) {
     AppSynchronizer sync = getSync(appName);
     if ( sync.getStatus() == SyncStatus.INIT || sync.getStatus() == SyncStatus.SYNCING ) {
       return null;

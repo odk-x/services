@@ -88,7 +88,8 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
   }
 
   @Override
-  public SyncResult getSyncResult(String appName) throws RemoteException {
+  public SyncOverallResult getSyncResult(String appName) throws
+      RemoteException {
     try {
       return syncService.getSyncResult(appName);
     } catch (Throwable throwable) {
