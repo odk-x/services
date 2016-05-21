@@ -15,19 +15,27 @@
 package org.opendatakit.database.service;
 
 import android.content.ContentValues;
+import android.os.Parcel;
+import android.os.ParcelUuid;
+import android.os.Parcelable;
 import android.os.RemoteException;
+import android.util.Log;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
+import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.SyncETagsUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.DatabaseConsts;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
+
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
@@ -250,7 +258,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public OrderedColumns createOrOpenDBTableWithColumns(String appName,
+  @Override public OdkDbChunk createOrOpenDBTableWithColumns(String appName,
       OdkDbHandle dbHandleName, String tableId, ColumnList columns) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -259,8 +267,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get()
+      OrderedColumns results = ODKDatabaseImplUtils.get()
           .createOrOpenDBTableWithColumns(db, appName, tableId, columns.getColumns());
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -282,7 +292,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public OrderedColumns createOrOpenDBTableWithColumnsAndProperties(String appName,
+  @Override public OdkDbChunk createOrOpenDBTableWithColumnsAndProperties(String appName,
       OdkDbHandle dbHandleName, String tableId, ColumnList columns,
       List<KeyValueStoreEntry> metaData, boolean clear) throws RemoteException {
 
@@ -292,9 +302,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get()
+      OrderedColumns results =
+          ODKDatabaseImplUtils.get()
           .createOrOpenDBTableWithColumnsAndProperties(db, appName, tableId, columns.getColumns(),
               metaData, clear);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -316,7 +329,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable deleteAllCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName,
+  @Override public OdkDbChunk deleteAllCheckpointRowsWithId(String appName, OdkDbHandle dbHandleName,
       String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -330,7 +343,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
           orderedDefns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -353,7 +366,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName,
+  @Override public OdkDbChunk deleteLastCheckpointRowWithId(String appName, OdkDbHandle dbHandleName,
       String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -367,7 +380,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
           orderedDefns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -452,7 +465,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable deleteRowWithId(String appName,
+  @Override public OdkDbChunk deleteRowWithId(String appName,
       OdkDbHandle dbHandleName,
       String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
 
@@ -467,7 +480,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, appName, tableId,
           orderedDefns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -490,14 +503,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public String[] getAdminColumns() throws RemoteException {
+  @Override public OdkDbChunk getAdminColumns() throws RemoteException {
 
     List<String> cols = ODKDatabaseImplUtils.get().getAdminColumns();
-    return cols.toArray(new String[cols.size()]);
+    String[] results = cols.toArray(new String[cols.size()]);
 
+    return getAndCacheChunks(results);
   }
 
-  @Override public String[] getAllColumnNames(String appName, OdkDbHandle dbHandleName,
+  @Override public OdkDbChunk getAllColumnNames(String appName, OdkDbHandle dbHandleName,
       String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -506,7 +520,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
+      String[] results =  ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -529,7 +545,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
   }
 
-  @Override public List<String> getAllTableIds(String appName, OdkDbHandle dbHandleName)
+  @Override public OdkDbChunk getAllTableIds(String appName, OdkDbHandle dbHandleName)
       throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -538,7 +554,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().getAllTableIds(db);
+      List<String> results = ODKDatabaseImplUtils.get().getAllTableIds(db);
+
+      return getAndCacheChunks((Serializable)results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -560,7 +578,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable getRowsWithId(String appName,
+  @Override public OdkDbChunk getRowsWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedDefns, String rowId)
       throws RemoteException {
 
@@ -570,8 +588,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get()
+      UserTable results = ODKDatabaseImplUtils.get()
           .getRowsWithId(db, appName, tableId, orderedDefns, rowId);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -593,7 +613,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable getMostRecentRowWithId(String appName,
+  @Override public OdkDbChunk getMostRecentRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedDefns, String rowId)
       throws RemoteException {
 
@@ -603,8 +623,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get()
+      UserTable results =  ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedDefns, rowId);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -626,7 +648,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public List<KeyValueStoreEntry> getDBTableMetadata(String appName,
+  @Override public OdkDbChunk getDBTableMetadata(String appName,
       OdkDbHandle dbHandleName, String tableId, String partition, String aspect, String key)
       throws RemoteException {
 
@@ -659,10 +681,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       }
     }
 
-    return kvsEntries;
+    return getAndCacheChunks(kvsEntries);
   }
 
-  @Override public List<TableHealthInfo> getTableHealthStatuses(String appName,
+  @Override public OdkDbChunk getTableHealthStatuses(String appName,
       OdkDbHandle dbHandleName) throws RemoteException {
 
     long now = System.currentTimeMillis();
@@ -704,7 +726,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
               "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed)
               + " ms");
 
-      return problems;
+      return getAndCacheChunks(problems);
     } catch (Throwable t) {
       WebLogger.getLogger(appName).e("getTableHealthStatuses", "exception during processing");
       WebLogger.getLogger(appName).printStackTrace(t);
@@ -719,9 +741,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public String[] getExportColumns() throws RemoteException {
+  @Override public OdkDbChunk getExportColumns() throws RemoteException {
     List<String> exports = ODKDatabaseImplUtils.get().getExportColumns();
-    return exports.toArray(new String[exports.size()]);
+    String[] results =  exports.toArray(new String[exports.size()]);
+
+    return getAndCacheChunks(results);
   }
 
   @Override public String getSyncState(String appName, OdkDbHandle dbHandleName, String tableId,
@@ -756,7 +780,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public TableDefinitionEntry getTableDefinitionEntry(String appName,
+  @Override public OdkDbChunk getTableDefinitionEntry(String appName,
       OdkDbHandle dbHandleName, String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -765,7 +789,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().getTableDefinitionEntry(db, tableId);
+      TableDefinitionEntry results = ODKDatabaseImplUtils.get()
+          .getTableDefinitionEntry(db, tableId);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -787,7 +814,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public OrderedColumns getUserDefinedColumns(String appName, OdkDbHandle dbHandleName,
+  @Override public OdkDbChunk getUserDefinedColumns(String appName, OdkDbHandle dbHandleName,
       String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -796,7 +823,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns results = ODKDatabaseImplUtils.get()
+          .getUserDefinedColumns(db, appName, tableId);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -849,7 +879,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable insertCheckpointRowWithId(String appName,
+  @Override public OdkDbChunk insertCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -865,7 +895,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -888,7 +918,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable insertRowWithId(String appName,
+  @Override public OdkDbChunk insertRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -904,7 +934,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -927,7 +957,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable placeRowIntoServerConflictWithId(String appName, OdkDbHandle
+  @Override public OdkDbChunk placeRowIntoServerConflictWithId(String appName, OdkDbHandle
       dbHandleName,
       String tableId, OrderedColumns orderedColumns, ContentValues cvValues,
       String rowId, int localRowConflictType) throws RemoteException {
@@ -945,7 +975,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get().getConflictingRowsInExistingDBTableWithId(db,
           appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -969,7 +999,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
   }
 
-  @Override public UserTable rawSqlQuery(String appName, OdkDbHandle dbHandleName, String tableId,
+  @Override public OdkDbChunk rawSqlQuery(String appName, OdkDbHandle dbHandleName, String tableId,
       OrderedColumns columnDefns, String whereClause, String[] selectionArgs, String[] groupBy,
       String having, String orderByElementKey, String orderByDirection) throws RemoteException {
 
@@ -979,9 +1009,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get()
+      UserTable results = ODKDatabaseImplUtils.get()
           .rawSqlQuery(db, appName, tableId, columnDefns, whereClause, selectionArgs, groupBy,
               having, orderByElementKey, orderByDirection);
+
+      return getAndCacheChunks(results);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1003,7 +1035,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public RawUserTable arbitraryQuery(String appName, OdkDbHandle dbHandleName,
+  @Override public OdkDbChunk arbitraryQuery(String appName, OdkDbHandle dbHandleName,
       String sqlCommand, String[] sqlBindArgs) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1012,7 +1044,10 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().arbitraryQuery(db, appName, sqlCommand, sqlBindArgs);
+      RawUserTable result = ODKDatabaseImplUtils.get()
+          .arbitraryQuery(db, appName, sqlCommand, sqlBindArgs);
+
+      return getAndCacheChunks(result);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1129,7 +1164,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable saveAsIncompleteMostRecentCheckpointRowWithId(String appName,
+  @Override public OdkDbChunk saveAsIncompleteMostRecentCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1145,7 +1180,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1168,7 +1203,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable saveAsCompleteMostRecentCheckpointRowWithId(String appName,
+  @Override public OdkDbChunk saveAsCompleteMostRecentCheckpointRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1184,7 +1219,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1269,7 +1304,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
-  @Override public UserTable updateRowWithId(String appName,
+  @Override public OdkDbChunk updateRowWithId(String appName,
       OdkDbHandle dbHandleName, String tableId, OrderedColumns orderedColumns,
       ContentValues cvValues, String rowId) throws RemoteException {
 
@@ -1285,7 +1320,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
-      return t;
+      return getAndCacheChunks(t);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -1701,6 +1736,47 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         db.releaseReference();
       }
     }
+  }
+
+
+  @Override public OdkDbChunk getChunk(ParcelUuid chunkID) {
+    return OdkDatabaseService.removeParceledChunk(chunkID.getUuid());
+  }
+
+  private OdkDbChunk getAndCacheChunks(Parcelable data) {
+    // Break the results into pieces that will fit over the wire
+    List<OdkDbChunk> chunkList = OdkDbChunkUtil.convertToChunks(data, DatabaseConsts.PARCEL_SIZE);
+
+    return getAndCacheChunksHelper(chunkList);
+  }
+
+  private OdkDbChunk getAndCacheChunks(Serializable data) {
+    List<OdkDbChunk> chunkList;
+    try {
+      chunkList = OdkDbChunkUtil.convertToChunks(data, DatabaseConsts.PARCEL_SIZE);
+    } catch (IOException e) {
+      Log.e(TAG, "Invalid state. Failed to convert chunks");
+      return null;
+    }
+
+    return getAndCacheChunksHelper(chunkList);
+  }
+
+  private OdkDbChunk getAndCacheChunksHelper(List<OdkDbChunk> chunkList) {
+
+    if (chunkList == null || chunkList.size() == 0) {
+      Log.e(TAG, "Invalid state. Failed to convert chunks");
+      return null;
+    }
+
+    // Return the first chunk and store the rest for later retrieval
+    OdkDbChunk firstChunk = chunkList.remove(0);
+
+    if (chunkList.size() > 0) {
+      OdkDatabaseService.putParceledChunks(chunkList);
+    }
+
+    return firstChunk;
   }
 
 }

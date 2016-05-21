@@ -1,9 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Copyright (C) 2016 University of Washington Licensed under the Apache
+	License, Version 2.0 (the "License"); you may not use this file except in
+	compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+	Unless required by applicable law or agreed to in writing, software distributed
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for
+	the specific language governing permissions and limitations under the License. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- DO NOT alter sync_attachment_option_values - used internally in sync activity -->
+    <!-- must map to SyncAttachmentState enum names -->
+    <string-array tools:ignore="MissingTranslation"
+                  name="sync_attachment_option_values">
+        <item>SYNC</item>
+        <item>UPLOAD</item>
+        <item>DOWNLOAD</item>
+        <item>NONE</item>
+    </string-array>
     <string-array name="sync_attachment_option_names">
         <item>Fully Sync Attachments</item>
         <item>Upload Attachments Only</item>
         <item>Download Attachments Only</item>
         <item>Do Not Sync Attachments</item>
+    </string-array>
+    <!-- DO NOT alter font_size_entry_values - used internally in preferences activity -->
+    <string-array tools:ignore="MissingTranslation"
+                  name="font_size_entry_values">
+        <item>29</item>
+        <item>25</item>
+        <item>21</item>
+        <item>17</item>
+        <item>13</item>
+    </string-array>
+    <string-array
+            name="font_size_entries">
+        <item>@string/font_size_extra_large</item>
+        <item>@string/font_size_large</item>
+        <item>@string/font_size_medium</item>
+        <item>@string/font_size_small</item>
+        <item>@string/font_size_extra_small</item>
+    </string-array>
+
+    <string name="credential_type_none" tools:ignore="MissingTranslation">none</string>
+    <string name="credential_type_username_password" tools:ignore="MissingTranslation">username_password</string>
+    <string name="credential_type_google_account" tools:ignore="MissingTranslation">google_account</string>
+    <!-- DO NOT alter credential_entry_values - used internally in preferences activity -->
+    <!-- DO NOT REORDER assumed ordering in SyncFragment -->
+    <string-array tools:ignore="MissingTranslation"
+                  name="credential_entry_values">
+        <item>@string/credential_type_none</item>
+        <item>@string/credential_type_username_password</item>
+        <item>@string/credential_type_google_account</item>
+    </string-array>
+    <string-array
+            name="credential_entries">
+        <item>@string/credential_none</item>
+        <item>@string/credential_username_password</item>
+        <item>@string/credential_google_account</item>
     </string-array>
 </resources>

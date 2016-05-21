@@ -19,15 +19,6 @@ public interface OdkConnectionFactoryInterface {
    static final String INTERNAL_TYPE_SUFFIX = "-internal";
 
    /**
-    * the divider used to construct the session qualifier from
-    * a session group qualifier and an instance qualifier.
-    * This is currently only used through the DbShim interface,
-    * and will presumably go away once that interface is removed.
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   static final String GROUP_TYPE_DIVIDER = "--";
-
-   /**
     * Generate a database handle (a wrapper for a session qualifier)
     * that is suitable for non-service uses. e.g., content providers.
     *
@@ -95,64 +86,4 @@ public interface OdkConnectionFactoryInterface {
     * See {removeConnection(String, OdkDbHandle)}
     */
    public void removeAllConnections();
-
-   /**
-    * Retrieve (or open) the connection for the given sessionGroupQualifier and instanceQualifier.
-    *
-    * @param appName
-    * @param sessionGroupQualifier
-    * @param instanceQualifier
-    * @return
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   public OdkConnectionInterface getSessionGroupInstanceConnection(String appName,
-       String sessionGroupQualifier, int instanceQualifier);
-
-   /**
-    * Remove the connection for the given sessionGroupQualifier and instanceQualifier
-    *
-    * @param appName
-    * @param sessionGroupQualifier
-    * @param instanceQualifier
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   public void removeSessionGroupInstanceConnection(String appName, String sessionGroupQualifier,
-       int instanceQualifier);
-
-   /**
-    * Remove any database handles for groups that don't match or that do match the indicated
-    * session group qualifier (depending upon the value of removeNonMatchingGroupsOnly).
-    * <p/>
-    * Database sessions are group sessions if they contain {GROUP_TYPE_DIVIDER}.
-    * Everything up to the last occurrence of {GROUP_TYPE_DIVIDER} in the
-    * sessionQualifier is considered the session group qualifier.
-    *
-    * @param appName
-    * @param sessionGroupQualifier may be null
-    * @param removeNonMatchingGroupsOnly true if only removing non-matching
-    *                                     sessionGroupQualifiers.
-    *                                     false if only removing matching sessionGroupQualifiers.
-    * @return true if anything was removed. false otherwise.
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   public boolean removeSessionGroupConnections(String appName, String sessionGroupQualifier,
-       boolean removeNonMatchingGroupsOnly);
-
-   /**
-    * Remove all session group connections for the given appName.
-    *
-    * @param appName
-    * @return true if we removed something. false otherwise.
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   public boolean removeAllSessionGroupConnections(String appName);
-
-   /**
-    * Remove all session group connections across all appNames.
-    *
-    * @return true if we removed something. false otherwise.
-    * @deprecated will be removed when DbShim interface goes away
-    */
-   public boolean removeAllSessionGroupConnections();
-
 }

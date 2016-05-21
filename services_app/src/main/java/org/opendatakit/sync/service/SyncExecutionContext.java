@@ -36,12 +36,10 @@ import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.service.data.SynchronizationResult;
-import org.opendatakit.sync.service.data.SynchronizationResult.Status;
-import org.opendatakit.sync.service.data.TableResult;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
 
@@ -79,7 +77,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   /**
    * The results of the synchronization that we will pass back to the user.
    */
-  private final SynchronizationResult mUserResult;
+  private final SyncOverallResult mUserResult;
 
   private int nMajorSyncSteps;
   private int iMajorSyncStep;
@@ -89,7 +87,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String appName;
   private final String odkClientApiVersion;
   private final String userAgent;
+
   private final String aggregateUri;
+  private final String authenticationType;
+  private final String googleAccount;
+  private final String username;
+  private final String password;
+
   private final SyncNotification syncProgress;
 
   // set this later
@@ -99,7 +103,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public SyncExecutionContext(AppAwareApplication context, String appName,
       SyncNotification syncProgress,
-      SynchronizationResult syncResult) {
+      SyncOverallResult syncResult) {
     this.application = context;
     this.appName = appName;
     String versionCode = application.getVersionCodeString();
@@ -112,11 +116,14 @@ public class SyncExecutionContext implements SynchronizerStatus {
     PropertiesSingleton props = CommonToolProperties.get(context, appName);
 
     this.aggregateUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    this.authenticationType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
+    this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
+    this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
 
     this.nMajorSyncSteps = 1;
     this.GRAINS_PER_MAJOR_SYNC_STEP = (OVERALL_PROGRESS_BAR_LENGTH / nMajorSyncSteps);
     this.iMajorSyncStep = 0;
-
   }
 
   public void setSynchronizer(Synchronizer synchronizer) {
@@ -127,12 +134,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return application.getString(resId);
   }
   
-  public void setAppLevelStatus(Status status) {
-    mUserResult.setAppLevelStatus(status);
+  public void setAppLevelSyncOutcome(SyncOutcome syncOutcome) {
+    mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
   
-  public TableResult getTableResult(String tableId) {
-    return mUserResult.getTableResult(tableId);
+  public TableLevelResult getTableLevelResult(String tableId) {
+    return mUserResult.fetchTableLevelResult(tableId);
   }
   
   public String getAppName() {
@@ -161,8 +168,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   }
 
   public Account getAccount() {
-    PropertiesSingleton props = CommonToolProperties.get(application, getAppName());
-    Account account = new Account(props.getProperty(CommonToolProperties.KEY_ACCOUNT), ACCOUNT_TYPE_G);
+    Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
     return account;
   }
 
@@ -170,6 +176,22 @@ public class SyncExecutionContext implements SynchronizerStatus {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
     return props.getProperty(CommonToolProperties.KEY_AUTH);
+  }
+
+  public String getAuthenticationType() {
+    return authenticationType;
+  }
+
+  public String getGoogleAccount() {
+    return googleAccount;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public String getPassword() {
+    return password;
   }
 
   private int refCount = 1;
@@ -238,7 +260,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
         return;
       }
       synchronized (odkDbInterfaceBindComplete) {
-        odkDbInterface = (service == null) ? null : OdkDbInterface.Stub.asInterface(service);
+        try {
+          odkDbInterface = (service == null) ? null : new OdkDbSerializedInterface(OdkDbInterface
+              .Stub.asInterface(service));
+        } catch (IllegalArgumentException e) {
+          odkDbInterface = null;
+        }
+
         active = false;
         odkDbInterfaceBindComplete.notify();
       }
@@ -255,10 +283,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private ServiceConnectionWrapper odkDbServiceConnection = new ServiceConnectionWrapper();
   private Object odkDbInterfaceBindComplete = new Object();
-  private OdkDbInterface odkDbInterface;
+  private OdkDbSerializedInterface odkDbInterface;
   private boolean active = false;
 
-  public OdkDbInterface getDatabaseService() {
+  public OdkDbSerializedInterface getDatabaseService() {
 
     synchronized (odkDbInterfaceBindComplete) {
       if ( odkDbInterface != null ) {
