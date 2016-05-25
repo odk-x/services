@@ -211,9 +211,6 @@
 
     <string name="credential">Server Sign-on Credential</string>
     <string name="change_credential">Change Sign-on Credential</string>
-    <string name="credential_none">None (anonymous access)</string>
-    <string name="credential_username_password">Username</string>
-    <string name="credential_google_account">Google Account</string>
 
     <string name="username_password">Username and/or Password</string>
     <string name="username">Username</string>
@@ -233,11 +230,6 @@
 
     <string name="font_size">Text Font Size</string>
     <string name="change_font_size">Text Font Size</string>
-    <string name="font_size_extra_large">Extra Large</string>
-    <string name="font_size_large">Large</string>
-    <string name="font_size_medium">Medium</string>
-    <string name="font_size_small">Small</string>
-    <string name="font_size_extra_small">Extra Small</string>
 
     <string name="show_splash">Show Splash Screen</string>
     <string name="show_splash_summary">Shows when application starts</string>

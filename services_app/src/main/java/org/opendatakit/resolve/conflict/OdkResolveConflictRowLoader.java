@@ -26,6 +26,8 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
@@ -67,6 +69,11 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
     OdkConnectionInterface db = null;
 
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String activeUser = props.getActiveUser();
+    String locale = props.getLocale();
+
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
@@ -104,7 +111,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
-                mTableId, rowId);
+                mTableId, rowId, activeUser, locale);
           }
         }
 

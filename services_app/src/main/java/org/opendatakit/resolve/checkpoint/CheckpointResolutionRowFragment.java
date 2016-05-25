@@ -33,8 +33,13 @@ import android.widget.Toast;
 
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
+import org.opendatakit.common.android.logic.PropertyManager;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -191,6 +196,17 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             }
           }
 
+          String activeUser;
+          String locale;
+
+          {
+            PropertiesSingleton props =
+              CommonToolProperties.get(getActivity(), mAppName);
+
+            activeUser = props.getActiveUser();
+            locale = props.getLocale();
+          }
+
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -200,7 +216,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
                 mAppName, mTableId);
             ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
-                values, mRowId);
+                values, mRowId, activeUser, locale);
 
             // and save that checkpoint as incomplete
             ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,

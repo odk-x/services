@@ -13,12 +13,14 @@
             android:id="@+id/action_settings"
             android:orderInCategory="50"
             android:showAsAction="never"
+            android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/action_settings"/>
 
     <item
             android:id="@+id/action_about"
             android:orderInCategory="100"
             android:showAsAction="never"
+            android:icon="@drawable/ic_info_outline_black_24dp"
             android:title="@string/action_about"/>
 
 </menu>

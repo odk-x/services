@@ -111,7 +111,6 @@ public class AppSynchronizer {
         syncProgress.updateNotification(SyncProgressState.ERROR, "There were failures...", 100, 0,
             false);
       } finally {
-        SyncExecutionContext.refreshActivityUINeeded(appName);
         try {
           globalNotifManager.stoppingSync(appName);
         } catch (NoAppNameSpecifiedException e) {
@@ -151,6 +150,8 @@ public class AppSynchronizer {
         
         ProcessRowDataChanges rowDataProcessor = new ProcessRowDataChanges(sharedContext);
 
+        boolean authProblems = false;
+        int tablesWithProblems = 0;
         status = SyncStatus.SYNCING;
         ODKFileUtils.assertDirectoryStructure(appName);
 
@@ -158,6 +159,9 @@ public class AppSynchronizer {
         List<TableResource> workingListOfTables = appAndTableLevelProcessor.synchronizeConfigurationAndContent(push);
         
         if (syncResult.getAppLevelSyncOutcome() != SyncOutcome.SUCCESS) {
+          authProblems = (syncResult.getAppLevelSyncOutcome() == SyncOutcome.AUTH_EXCEPTION);
+          // TODO: split out types of exceptions to distinguish network vs local
+          status = SyncStatus.NETWORK_ERROR;
           WebLogger.getLogger(appName).e(TAG, "Abandoning data row update -- app-level sync was not successful!");
         } else {
           // and now sync the data rows. This does not proceed if there
@@ -167,63 +171,80 @@ public class AppSynchronizer {
           rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState);
         }
 
-        boolean authProblems = false;
-
-        String reason = "none";
-        // examine results
-        if (syncResult.getAppLevelSyncOutcome() != SyncOutcome.SUCCESS) {
-          authProblems = (syncResult.getAppLevelSyncOutcome() == SyncOutcome.AUTH_EXCEPTION);
-          reason = "overall results";
-          status = SyncStatus.NETWORK_ERROR;
-        }
-
         int attachmentsFailed = 0;
         for (TableLevelResult result : syncResult.getTableLevelResults()) {
           SyncOutcome tableStatus = result.getSyncOutcome();
-          // TODO: decide how to handle the status
-          if (tableStatus != SyncOutcome.SUCCESS) {
-            if (tableStatus == SyncOutcome.AUTH_EXCEPTION) {
-              authProblems = true;
-            } else if (tableStatus == SyncOutcome.TABLE_PENDING_ATTACHMENTS) {
-              ++attachmentsFailed;
-              continue;
-            } else if (tableStatus == SyncOutcome.TABLE_CONTAINS_CHECKPOINTS
-                || tableStatus == SyncOutcome.TABLE_CONTAINS_CONFLICTS
-                || tableStatus == SyncOutcome.TABLE_REQUIRES_APP_LEVEL_SYNC) {
-              status = SyncStatus.CONFLICT_RESOLUTION;
-            } else {
-              status = SyncStatus.NETWORK_ERROR;
-              reason = "table " + result.getTableDisplayName();
-            }
+          switch (tableStatus) {
+          case SUCCESS:
+            break;
+          case WORKING:
+          case EXCEPTION:
+          case FAILURE:
+            // TODO: split out the types of exceptions to distinguish network vs local
+            status = SyncStatus.NETWORK_ERROR;
+            ++tablesWithProblems;
+            break;
+          case AUTH_EXCEPTION:
+            // this will trump everything...
+            authProblems = true;
+            break;
+          case TABLE_PENDING_ATTACHMENTS:
+            ++attachmentsFailed;
+            break;
+          case TABLE_REQUIRES_APP_LEVEL_SYNC:
+            // TODO: communicate this better with different status value (e.g., resync)
+            status = SyncStatus.FILE_ERROR;
+            ++tablesWithProblems;
+            break;
+          case TABLE_DOES_NOT_EXIST_ON_SERVER:
+          case TABLE_CONTAINS_CHECKPOINTS:
+          case TABLE_CONTAINS_CONFLICTS:
+            status = SyncStatus.CONFLICT_RESOLUTION;
+            ++tablesWithProblems;
+            break;
           }
         }
 
-        if (authProblems) {
-          throw new InvalidAuthTokenException("Synthesized");
-        }
-
-        // if rows aren't successful, fail.
-        if (status != SyncStatus.SYNCING && status != SyncStatus.CONFLICT_RESOLUTION) {
-          syncProgress.finalErrorNotification("There were failures. SyncOutcome: " + status + " Reason:"
-              + reason);
-          return;
-        }
-
-        // success
-        if (status != SyncStatus.CONFLICT_RESOLUTION) {
+        // if everything succeeded, the overall state will still be SYNCING
+        // determine the final status.
+        if (status == SyncStatus.SYNCING) {
           status = (attachmentsFailed > 0) ? SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS :
               SyncStatus.SYNC_COMPLETE;
+        }
+
+        // and if anywhere in the process, we had an auth failure, flag that as the cause.
+        if (authProblems) {
+          status = SyncStatus.AUTH_RESOLUTION;
+        }
+
+        // stop the in-progress notification and report an overall success/failure
+        switch ( status ) {
+        case NETWORK_ERROR:
+          syncProgress.finalErrorNotification("Network Error. Please verify your server URL.");
+          break;
+        default:
+        case FILE_ERROR:
+          syncProgress.finalErrorNotification("Unknown Error. Please contact opendatakit@.");
+          break;
+        case AUTH_RESOLUTION:
+          syncProgress.finalErrorNotification("Authentication Error. Please verify credentials.");
+          break;
+        case CONFLICT_RESOLUTION:
+          syncProgress.finalConflictNotification(tablesWithProblems);
+          break;
+        case SYNC_COMPLETE:
           syncProgress.clearNotification(attachmentsFailed);
-        } else {
-          syncProgress.finalErrorNotification("Conflicts exist. Please resolve.");
+          break;
+        case SYNC_COMPLETE_PENDING_ATTACHMENTS:
+          syncProgress.clearNotification(attachmentsFailed);
+          break;
         }
 
         WebLogger.getLogger(appName).i(TAG,
             "[SyncThread] timestamp: " + System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
-        SyncExecutionContext.invalidateAuthToken(application, appName);
         status = SyncStatus.AUTH_RESOLUTION;
-        syncProgress.finalErrorNotification("Account Re-Authorization Required");
+        syncProgress.finalErrorNotification("Authentication Error. Please verify credentials.");
       } catch (Exception e) {
         WebLogger.getLogger(appName).i(
             TAG,
@@ -236,6 +257,7 @@ public class AppSynchronizer {
         if (msg == null) {
           msg = e.toString();
         }
+        // TODO: improve the identification of the type of the error (network vs local)
         status = SyncStatus.NETWORK_ERROR;
         syncProgress.finalErrorNotification("Failed Sync: " + msg);
       }

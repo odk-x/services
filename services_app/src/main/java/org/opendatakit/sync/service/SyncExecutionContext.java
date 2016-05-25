@@ -59,19 +59,11 @@ public class SyncExecutionContext implements SynchronizerStatus {
     mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
   }
 
-  static final AtomicBoolean refreshRequired = new AtomicBoolean(false);
-
-  public static final void refreshActivityUINeeded(String appName) {
-    refreshRequired.set(true);
-    WebLogger.getLogger(appName).e(TAG, "FROM UI THREAD: triggering another polling cycle");
-  }
-
   public static void invalidateAuthToken(AppAwareApplication application, String appName) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
     AccountManager.get(application).invalidateAuthToken(ACCOUNT_TYPE_G, props.getProperty(CommonToolProperties.KEY_AUTH));
     props.removeProperty(CommonToolProperties.KEY_AUTH);
     props.writeProperties();
-    refreshActivityUINeeded(appName);
   }
 
   /**

@@ -252,6 +252,8 @@ public class SubmissionProvider extends ContentProvider {
     PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
+    String activeUser = props.getActiveUser();
+    String currentLocale = props.getLocale();
 
     OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
@@ -523,7 +525,7 @@ public class SubmissionProvider extends ContentProvider {
               d.appendChild(e);
               e.setAttribute("id", tableId);
               DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
-                  tableId, instanceId, username, userEmail);
+                  tableId, instanceId, activeUser, currentLocale, username, userEmail);
 
               int idx = 0;
               Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");

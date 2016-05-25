@@ -20,6 +20,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import org.opendatakit.services.R;
 
 public final class SyncNotification {
   private static final String LOGTAG = SyncNotification.class.getSimpleName();
@@ -76,13 +77,28 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle("ODK SYNC ERROR " + appName).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
+    finalBuilder.setSmallIcon(R.drawable.ic_error_black_24dp);
 
     Notification syncNotif = finalBuilder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
     WebLogger.getLogger(appName).e(LOGTAG,
         messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
+  }
+
+  public synchronized void finalConflictNotification(int tablesWithProblems) {
+    this.progressState = SyncProgressState.ERROR;
+    this.updateText = Integer.toString(tablesWithProblems) + " tables have problems.";
+    Notification.Builder finalBuilder = new Notification.Builder(cntxt);
+    finalBuilder.setContentTitle("ODK SYNC CONFLICT " + appName).setContentText(updateText)
+        .setAutoCancel(true).setOngoing(false);
+    finalBuilder.setSmallIcon(R.drawable.ic_warning_black_24dp);
+
+    Notification syncNotif = finalBuilder.build();
+
+    notificationManager.notify(appName, messageNum, syncNotif);
+    WebLogger.getLogger(appName).w(LOGTAG,
+        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + updateText);
   }
 
   public synchronized void clearNotification(int pendingAttachments) {
@@ -97,11 +113,13 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle("ODK SYNC SUCESS " + appName).setContentText(updateText)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(android.R.drawable.ic_dialog_alert);
+    finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
 
     Notification syncNotif = finalBuilder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
+    WebLogger.getLogger(appName).i(LOGTAG,
+        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + updateText);
   }
 
 }

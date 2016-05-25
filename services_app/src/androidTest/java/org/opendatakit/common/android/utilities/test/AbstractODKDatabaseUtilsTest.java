@@ -57,6 +57,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   private static final String elemKey = "_element_key";
   private static final String elemName = "_element_name";
   private static final String listChildElemKeys = "_list_child_element_keys";
+  private static final String activeUser = "anonymous";
+  private static final String currentLocale = "en_US";
 
   protected OdkConnectionInterface db;
 
@@ -1166,7 +1168,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
 
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, null, null);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, null, null,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1194,7 +1197,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1233,7 +1237,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
 
     String uuid = UUID.randomUUID().toString();
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1275,7 +1280,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
 
     String uuid = UUID.randomUUID().toString();
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1305,7 +1311,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues2.put(testCol, testVal2);
 
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues2, uuid);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues2, uuid,
+          activeUser, currentLocale);
     } catch (IllegalArgumentException e) {
       thrown = true;
       e.printStackTrace();
@@ -1359,7 +1366,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
 
     String uuid = UUID.randomUUID().toString();
-    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1401,7 +1409,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
 
     String uuid = UUID.randomUUID().toString();
-    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1424,7 +1433,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues2 = new ContentValues();
     cvValues2.put(testCol, testVal2);
 
-    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues2, uuid);
+    ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValues2, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
@@ -1467,7 +1477,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String uuid = null;
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1508,7 +1519,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
 
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
@@ -1558,7 +1570,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
 
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, nullString);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, nullString,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1602,7 +1615,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
 
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1645,7 +1659,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
 
     try {
-      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+      ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -1677,7 +1692,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1715,7 +1731,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1753,7 +1770,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1791,7 +1809,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1844,7 +1863,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testColAcc, pos_acc);
 
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColLat + " = ?";
@@ -1903,7 +1923,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -1952,7 +1973,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testColUriFragment, testUriFragment);
     cvValues.put(testColContentType, testContentType);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColUriFragment + " = ?";
@@ -1997,7 +2019,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2035,7 +2058,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2084,7 +2108,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID());
+        ODKDataUtils.genUUID(),
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2124,7 +2149,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2144,7 +2170,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues updatedCvValues = new ContentValues();
     updatedCvValues.put(testCol, testVal2);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns,
-        updatedCvValues, rowId);
+        updatedCvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
@@ -2205,7 +2232,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-        rowId);
+        rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2250,7 +2278,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-        rowId);
+        rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2308,7 +2337,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-          rowId);
+          rowId,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -2341,7 +2371,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-          rowId);
+          rowId,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -2374,7 +2405,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-          rowId);
+          rowId,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -2405,7 +2437,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-          rowId);
+          rowId,
+          activeUser, currentLocale);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -2435,7 +2468,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2455,7 +2489,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues updatedCvValues = new ContentValues();
     updatedCvValues.put(testCol, testVal2);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns,
-        updatedCvValues, rowId);
+        updatedCvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
@@ -2550,7 +2585,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2570,7 +2606,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues updatedCvValues = new ContentValues();
     updatedCvValues.put(testCol, testVal2);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns,
-        updatedCvValues, rowId);
+        updatedCvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
@@ -2665,7 +2702,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-        rowId);
+        rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2923,7 +2961,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-        rowId);
+        rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -2976,7 +3015,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues,
-        rowId);
+        rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -3097,7 +3137,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
     cvValues.put(DataTableColumns.ROW_ETAG, ODKDataUtils.genUUID());
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ? ORDER BY "
@@ -3132,7 +3173,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Place row in conflict
     int conflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;
     ODKDatabaseImplUtils.get().placeRowIntoServerConflictWithId(db, tableId, orderedColumns,
-          updates, rowId, conflictType);
+          updates, rowId, conflictType,
+        activeUser, currentLocale);
 
     // Run the query again and make sure that the place row in conflict worked as expected
     UserTable table = ODKDatabaseImplUtils.get().rawSqlQuery(db, getAppName(), tableId,
@@ -3547,7 +3589,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -3616,7 +3659,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -3658,7 +3702,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -3679,7 +3724,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues updatedCvValues = new ContentValues();
     updatedCvValues.put(testCol, testVal2);
     ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, tableId, orderedColumns,
-        updatedCvValues, rowId);
+        updatedCvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
@@ -3970,7 +4016,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testCol, testVal);
 
     String uuid = UUID.randomUUID().toString();
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -3999,7 +4046,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues2 = new ContentValues();
     cvValues2.put(testCol, testVal);
 
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues2, uuid2);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues2, uuid2,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
@@ -4391,7 +4439,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -4465,7 +4514,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -4536,7 +4586,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
@@ -4618,7 +4669,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
             cvValues = new ContentValues();
             cvValues.put(testCol, i);
             ODKDatabaseImplUtils.get().updateRowWithId(dbToUse, tableId, orderedColumns, cvValues,
-                rowId);
+                rowId,
+                activeUser, currentLocale);
             try {
               Thread.sleep(0);
             } catch (Exception e) {
@@ -4629,7 +4681,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
           cvValues = new ContentValues();
           cvValues.put(testCol, testVal);
           ODKDatabaseImplUtils.get().updateRowWithId(dbToUse, tableId, orderedColumns, cvValues,
-              rowId);
+              rowId,
+              activeUser, currentLocale);
         }
 
 
@@ -4686,7 +4739,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -4759,7 +4813,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -4861,7 +4916,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(prevDb, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(prevDb, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -4957,7 +5013,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -5053,7 +5110,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -5145,7 +5203,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -5178,7 +5237,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       db.beginTransactionExclusive();
       ContentValues cvValuesAgain = new ContentValues();
       cvValuesAgain.put(setupTestCol, testValAgain);
-      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValuesAgain, rowId);
+      ODKDatabaseImplUtils.get().updateRowWithId(db, tableId, orderedColumns, cvValuesAgain, rowId,
+          activeUser, currentLocale);
       db.setTransactionSuccessful();
       db.endTransaction();
     }
@@ -5246,7 +5306,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
@@ -5349,7 +5410,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId;
@@ -5449,7 +5511,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     String rowId = ODKDataUtils.genUUID();
     cvValues.put(testCol, testVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Have both query the table
     // Query with db1
@@ -5491,7 +5554,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues = new ContentValues();
     rowId = ODKDataUtils.genUUID();
     cvValues.put(newTestCol, newTestVal);
-    ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId);
+    ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId,
+        activeUser, currentLocale);
 
     // Have both connections re-query the table
     // Query with db1
@@ -5571,7 +5635,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       }
 
       ODKDatabaseImplUtils.get()
-          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+              activeUser, currentLocale);
 
       // Select everything out of the table
       String queryCol = "testColumn_" + Integer.toString(j % maxCols);

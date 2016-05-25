@@ -22,39 +22,4 @@
         <item>Download Attachments Only</item>
         <item>Do Not Sync Attachments</item>
     </string-array>
-    <!-- DO NOT alter font_size_entry_values - used internally in preferences activity -->
-    <string-array tools:ignore="MissingTranslation"
-                  name="font_size_entry_values">
-        <item>29</item>
-        <item>25</item>
-        <item>21</item>
-        <item>17</item>
-        <item>13</item>
-    </string-array>
-    <string-array
-            name="font_size_entries">
-        <item>@string/font_size_extra_large</item>
-        <item>@string/font_size_large</item>
-        <item>@string/font_size_medium</item>
-        <item>@string/font_size_small</item>
-        <item>@string/font_size_extra_small</item>
-    </string-array>
-
-    <string name="credential_type_none" tools:ignore="MissingTranslation">none</string>
-    <string name="credential_type_username_password" tools:ignore="MissingTranslation">username_password</string>
-    <string name="credential_type_google_account" tools:ignore="MissingTranslation">google_account</string>
-    <!-- DO NOT alter credential_entry_values - used internally in preferences activity -->
-    <!-- DO NOT REORDER assumed ordering in SyncFragment -->
-    <string-array tools:ignore="MissingTranslation"
-                  name="credential_entry_values">
-        <item>@string/credential_type_none</item>
-        <item>@string/credential_type_username_password</item>
-        <item>@string/credential_type_google_account</item>
-    </string-array>
-    <string-array
-            name="credential_entries">
-        <item>@string/credential_none</item>
-        <item>@string/credential_username_password</item>
-        <item>@string/credential_google_account</item>
-    </string-array>
 </resources>
