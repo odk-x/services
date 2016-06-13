@@ -30,6 +30,7 @@ public class SyncRowPending {
   final private String rowId;
   final private String rowETag;
   final private List<String> uriFragments;
+  final private String uriFragmentHash;
   final private boolean getOnly;
   final private boolean shouldDeleteFiles;
   final private boolean updateState;
@@ -38,6 +39,7 @@ public class SyncRowPending {
     this.rowId = syncRow.getRowId();
     this.rowETag = syncRow.getRowETag();
     this.uriFragments = syncRow.getUriFragments();
+    this.uriFragmentHash = syncRow.getUriFragmentHash();
     this.getOnly = getOnly;
     this.shouldDeleteFiles = shouldDeleteFiles;
     this.updateState = updateState;
@@ -53,6 +55,10 @@ public class SyncRowPending {
   
   public List<String> getUriFragments() {
     return uriFragments;
+  }
+
+  public String getUriFragmentHash() {
+    return uriFragmentHash;
   }
   
   public boolean onlyGetFiles() {

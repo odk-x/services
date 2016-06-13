@@ -15,29 +15,34 @@
  */
 package org.opendatakit.sync.service.logic;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
-import org.opendatakit.sync.service.data.SyncRowPending;
-import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
  *
+ * This is a lower-level interface with somewhat atomic interactions with the
+ * remote server and the database. Higher level interactions are managed in the
+ * various Process... classes.
+ *
  * @author the.dylan.price@gmail.com
  * @author sudar.sam@gmail.com
+ * @author mitchellsundt@gmail.com
  *
  */
 public interface Synchronizer {
 
-  public interface SynchronizerStatus {
+  interface SynchronizerStatus {
     /**
      * Status of this action.
      *
@@ -53,29 +58,38 @@ public interface Synchronizer {
         Double progressPercentage, boolean indeterminateProgress);
   }
 
-  public interface OnTablePropertiesChanged {
+  interface OnTablePropertiesChanged {
     void onTablePropertiesChanged(String tableId);
   }
+
+  /**
+   * Verifies that the device's application name is supported by the server.
+   *
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
 
   /**
    * Get a list of all tables in the server.
    *
    * @param webSafeResumeCursor null or a non-empty string if we are issuing a resume query
    * @return a list of the table resources on the server
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public TableResourceList getTables(String webSafeResumeCursor) throws
-      InvalidAuthTokenException, URISyntaxException, IOException;
+  TableResourceList getTables(String webSafeResumeCursor) throws HttpClientWebException, IOException;
 
   /**
    * Discover the schema for a table resource.
    *
    * @param tableDefinitionUri
    * @return the table definition
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public TableDefinitionResource getTableDefinition(String tableDefinitionUri) 
-      throws InvalidAuthTokenException, IOException;
+  TableDefinitionResource getTableDefinition(String tableDefinitionUri)
+      throws HttpClientWebException, IOException;
 
   /**
    * Assert that a table with the given id and schema exists on the server.
@@ -88,20 +102,21 @@ public interface Synchronizer {
    *          an array of the columns for this table.
    * @return the TableResource for the table (the server may return different
    *         SyncTag values)
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public TableResource createTable(String tableId, String schemaETag, ArrayList<Column> columns)
-      throws IOException, InvalidAuthTokenException;
+  TableResource createTable(String tableId, String schemaETag, ArrayList<Column> columns)
+      throws HttpClientWebException, IOException;
 
   /**
    * Delete the table with the given id from the server.
    *
    * @param table
    *          the realizedTable resource to delete
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public void deleteTable(TableResource table) throws InvalidAuthTokenException,
-      IOException;
+  void deleteTable(TableResource table) throws HttpClientWebException, IOException;
 
   /**
    * Retrieve the changeSets applied after the changeSet with the specified dataETag
@@ -109,10 +124,11 @@ public interface Synchronizer {
    * @param tableResource
    * @param dataETag
    * @return
-   * @throws InvalidAuthTokenException
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public ChangeSetList getChangeSets(TableResource tableResource, String dataETag) throws
-          InvalidAuthTokenException, IOException, URISyntaxException;
+  ChangeSetList getChangeSets(TableResource tableResource, String dataETag) throws
+      HttpClientWebException, IOException;
 
   /**
    * Retrieve the change set for the indicated dataETag
@@ -122,10 +138,11 @@ public interface Synchronizer {
    * @param activeOnly
    * @param websafeResumeCursor
    * @return
-   * @throws InvalidAuthTokenException
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly, String websafeResumeCursor)
-      throws InvalidAuthTokenException, URISyntaxException, IOException;
+  RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly, String websafeResumeCursor)
+      throws HttpClientWebException, IOException;
 
   /**
    * Retrieve changes in the server state since the last synchronization.
@@ -139,10 +156,11 @@ public interface Synchronizer {
    *          either null or a value used to resume a prior query.
    *          
    * @return an RowResourceList of the changes on the server since that dataETag.
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public RowResourceList getUpdates(TableResource tableResource, String dataETag, String websafeResumeCursor)
-      throws InvalidAuthTokenException, URISyntaxException, IOException;
+  RowResourceList getUpdates(TableResource tableResource, String dataETag, String websafeResumeCursor)
+      throws HttpClientWebException, IOException;
 
   /**
    * Apply inserts, updates and deletes in a collection up to the server.
@@ -154,66 +172,221 @@ public interface Synchronizer {
    *          the TableResource from the server for a tableId
    * @param rowsToInsertUpdateOrDelete
    * @return
-   * @throws InvalidAuthTokenException 
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public RowOutcomeList alterRows(TableResource tableResource,
-      List<SyncRow> rowsToInsertUpdateOrDelete) throws InvalidAuthTokenException,
-      IOException;
+  RowOutcomeList alterRows(TableResource tableResource,
+      List<SyncRow> rowsToInsertUpdateOrDelete) throws HttpClientWebException, IOException;
 
   /**
-   * Synchronizes the app level files. This includes any files that are not
-   * associated with a particular table--i.e. those that are not in the
-   * directory appid/tables/. It also excludes those files that are in a set of
-   * directories that do not sync--appid/metadata, appid/logging, etc.
+   * Request the app-level manifest. This uses a NOT_MODIFIED header to detect
+   * not-changed status. However, it does not update that value. The caller is
+   * expected to update the ETag after they have made the device match the
+   * content reported by the server (or vice-versa on a push).
    *
-   * @param pushLocalFiles true if local files should be pushed. Otherwise they are only pulled
-   *        down.
-   * @param serverReportedAppLevelETag may be null. The server's app-level manifest ETag if known.
-   * @param syncStatus
-   *          for reporting detailed progress of app-level file sync
-   * @return true if successful
-   * @throws InvalidAuthTokenException 
+   * @param pushLocalFiles
+   * @param serverReportedAppLevelETag
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public boolean syncAppLevelFiles(boolean pushLocalFiles, String serverReportedAppLevelETag, SynchronizerStatus syncStatus)
-      throws InvalidAuthTokenException,IOException;
+  FileManifestDocument getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
+      throws HttpClientWebException, IOException;
 
   /**
-   * Sync only the files associated with the specified table. This does NOT sync
-   * any media files associated with individual rows of the table.
+   * Get the config manifest for a given tableId. This uses a NOT_MODIFIED header to detect
+   * not-changed status. However, it does not update that value. The caller is
+   * expected to update the ETag after they have made the device match the
+   * content reported by the server (or vice-versa on a push).
    *
    * @param tableId
-   * @param serverReportedTableLevelETag may be null. The server's table-level manifest ETag if known.
-   * @param onChange
-   *          callback if the config/assets/csv/tableId.properties.csv file changes
-   * @param pushLocal
-   *          true if the local files should be pushed
-   * @throws InvalidAuthTokenException 
+   * @param serverReportedTableLevelETag
+   * @param pushLocalFiles
+   * @return
+   * @throws IOException
+   * @throws HttpClientWebException
    */
-  public void syncTableLevelFiles(String tableId, String serverReportedTableLevelETag, OnTablePropertiesChanged onChange,
-      boolean pushLocal, SynchronizerStatus syncStatus) throws InvalidAuthTokenException,
+  FileManifestDocument getTableLevelFileManifest(String tableId, String serverReportedTableLevelETag,
+      boolean pushLocalFiles) throws IOException, HttpClientWebException;
+
+  /**
+   * Get the manifest for the row attachments for the given tableId and row (instance) Id.
+   * Use the attachmentState and localRowAttachmentHash to qualify the ETag to use.
+   *
+   * This uses a NOT_MODIFIED header to detect
+   * not-changed status. However, it does not update that value. The caller is
+   * expected to update the ETag after they have made the device match the
+   * content reported by the server (or vice-versa on a push).
+   *
+   * @param serverInstanceFileUri
+   * @param tableId
+   * @param instanceId
+   * @param attachmentState that we are trying to enforce.
+   * @param localRowAttachmentHash
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
+      String tableId, String instanceId, SyncAttachmentState attachmentState,
+      String localRowAttachmentHash) throws
+      HttpClientWebException,
       IOException;
 
   /**
-   * Ensure that the file attachments for the indicated row values match between the
-   * server and the client. File attachments are immutable on the server -- never updated and
-   * never destroyed.
+   * Download a file from the given Uri and store it in the destFile.
    *
+   * @param destFile
+   * @param downloadUrl
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void downloadFile(File destFile, URI downloadUrl) throws HttpClientWebException, IOException;
+
+  /**
+   * Delete the given config file on the server.
+   *
+   * @param localFile
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void deleteConfigFile(File localFile) throws HttpClientWebException, IOException;
+
+  /**
+   *
+   * @param localFile
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void uploadConfigFile(File localFile) throws HttpClientWebException, IOException;
+
+  /**
+   *
+   * @param file
    * @param instanceFileUri
-   * @param tableId
-   * @param localRow
-   * @param attachmentState -- whether to upload, download, both, or neither the attachments
-   * @return true if successful
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  public boolean syncFileAttachments(String instanceFileUri, String tableId, SyncRowPending
-      localRow, SyncAttachmentState attachmentState);
-  
+  void uploadInstanceFile(File file, URI instanceFileUri) throws HttpClientWebException, IOException;
+
   /**
-   * Use to purge ETags of any instance attachments when server does not remember this schemaETag
-   * 
+   *
+   * @param serverInstanceFileUri
    * @param tableId
-   * @param schemaETag
+   * @param instanceId
+   * @param rowpathUri
    * @return
    */
-  public URI constructTableInstanceFileUri(String tableId, String schemaETag);
+  CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri,
+      String tableId, String instanceId, String rowpathUri);
+
+  /**
+   *
+   * @param batch
+   * @param serverInstanceFileUri
+   * @param instanceId
+   * @param tableId
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void uploadInstanceFileBatch(List<CommonFileAttachmentTerms> batch,
+      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
+
+  /**
+   *
+   * @param filesToDownload
+   * @param serverInstanceFileUri
+   * @param instanceId
+   * @param tableId
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
+      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
+
+  /**
+   *
+   * @param fileDownloadUri
+   * @param tableId
+   * @param lastModified
+   * @return
+   * @throws RemoteException
+   */
+  String getFileSyncETag(URI
+      fileDownloadUri, String tableId, long lastModified) throws RemoteException;
+
+  /**
+   * Updates this config file download URI with the indicated ETag
+   *
+   * @param fileDownloadUri
+   * @param tableId
+   * @param lastModified
+   * @param documentETag
+   * @throws RemoteException
+   */
+  void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String
+      documentETag) throws RemoteException;
+
+  /**
+   *
+   * @param tableId
+   * @return
+   * @throws RemoteException
+   */
+  String getManifestSyncETag(String tableId) throws RemoteException;
+
+  /**
+   * Update the manifest content ETag with the indicated value. This should be done
+   * AFTER the device matches the content on the server. Until then, the ETag should
+   * not be recorded.
+   *
+   * @param tableId
+   * @param documentETag
+   * @throws RemoteException
+   */
+  void updateManifestSyncETag(String tableId, String documentETag) throws
+      RemoteException;
+
+
+  /**
+   *
+   * @param serverInstanceFileUri
+   * @param tableId
+   * @param rowId
+   * @param attachmentState
+   * @param uriFragmentHash
+   * @return
+   * @throws RemoteException
+   */
+  String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
+      SyncAttachmentState attachmentState, String uriFragmentHash) throws RemoteException;
+
+  /**
+   * Update the manifest content ETag with the indicated value. This should be done
+   * AFTER the device matches the content on the server. Until then, the ETag should
+   * not be recorded.
+   *
+   * @param serverInstanceFileUri
+   * @param tableId
+   * @param rowId
+   * @param attachmentState
+   * @param uriFragmentHash
+   * @param documentETag
+   * @throws RemoteException
+   */
+  void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
+      SyncAttachmentState attachmentState, String uriFragmentHash, String documentETag) throws
+      RemoteException;
+
+    /**
+       * Invoked when the schema of a table has changed or we have never before synced with the server.
+       *
+       * @param tableId
+       * @param newSchemaETag
+       * @param oldSchemaETag
+       */
+  void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
+      String newSchemaETag, String oldSchemaETag)  throws RemoteException;
 
 }

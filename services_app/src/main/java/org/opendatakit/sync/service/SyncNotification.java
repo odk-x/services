@@ -29,9 +29,7 @@ public final class SyncNotification {
   private final String appName;
   private final NotificationManager notificationManager;
 
-  private int messageNum;
-  private String updateText;
-  private SyncProgressState progressState;
+  private SyncProgressEvent progressStatus;
   private Notification.Builder builder;
 
   public SyncNotification(Context context, String appName) {
@@ -39,17 +37,15 @@ public final class SyncNotification {
     this.appName = appName;
     this.notificationManager = (NotificationManager) cntxt
         .getSystemService(Context.NOTIFICATION_SERVICE);
-    this.messageNum = 0;
-    this.updateText = null;
-    this.progressState = null;
+    this.progressStatus = new SyncProgressEvent(0, null, SyncProgressState.INACTIVE, -1, 0);
     this.builder = new Notification.Builder(cntxt);
   }
 
   public synchronized void updateNotification(SyncProgressState pgrState, String text,
       int maxProgress, int progress, boolean indeterminateProgress) {
-    this.progressState = pgrState;
-    this.updateText = text;
-    builder.setContentTitle("ODK syncing " + appName).setContentText(text).setAutoCancel(false)
+    int messageNum = 0;
+    this.progressStatus = new SyncProgressEvent(messageNum, text, pgrState, progress, maxProgress);
+    builder.setContentTitle(cntxt.getString(R.string.sync_notification_syncing, appName)).setContentText(text).setAutoCancel(false)
         .setOngoing(true);
     builder.setSmallIcon(android.R.drawable.ic_popup_sync);
     builder.setProgress(maxProgress, progress, indeterminateProgress);
@@ -63,19 +59,15 @@ public final class SyncNotification {
 
   }
 
-  public synchronized String getUpdateText() {
-    return updateText;
-  }
-
-  public synchronized SyncProgressState getProgressState() {
-    return progressState;
+  public synchronized SyncProgressEvent getProgressStatus() {
+    return progressStatus;
   }
 
   public synchronized void finalErrorNotification(String text) {
-    this.progressState = SyncProgressState.ERROR;
-    this.updateText = text;
+    int messageNum = 0;
+    this.progressStatus = new SyncProgressEvent(messageNum, text, SyncProgressState.FINISHED, -1, 0);
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
-    finalBuilder.setContentTitle("ODK SYNC ERROR " + appName).setContentText(text)
+    finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_failure, appName)).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(R.drawable.ic_error_black_24dp);
 
@@ -87,10 +79,11 @@ public final class SyncNotification {
   }
 
   public synchronized void finalConflictNotification(int tablesWithProblems) {
-    this.progressState = SyncProgressState.ERROR;
-    this.updateText = Integer.toString(tablesWithProblems) + " tables have problems.";
+    int messageNum = 0;
+    String text = cntxt.getString(R.string.sync_notification_conflicts_text, tablesWithProblems);
+    this.progressStatus = new SyncProgressEvent(messageNum, text, SyncProgressState.FINISHED, -1, 0);
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
-    finalBuilder.setContentTitle("ODK SYNC CONFLICT " + appName).setContentText(updateText)
+    finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_conflicts, appName)).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(R.drawable.ic_warning_black_24dp);
 
@@ -98,28 +91,31 @@ public final class SyncNotification {
 
     notificationManager.notify(appName, messageNum, syncNotif);
     WebLogger.getLogger(appName).w(LOGTAG,
-        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + updateText);
+        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
   }
 
   public synchronized void clearNotification(int pendingAttachments) {
-    this.progressState = SyncProgressState.COMPLETE;
-    if ( pendingAttachments > 0 ) {
-      this.updateText = "Sync Table Data Completed Successfully. Failed to Sync " +
-          pendingAttachments + " attached files.";
-    } else {
-      this.updateText = "Sync Completed Successfully";
-    }
-
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
-    finalBuilder.setContentTitle("ODK SYNC SUCESS " + appName).setContentText(updateText)
-        .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
+    int messageNum = 0;
+    String text;
+    if ( pendingAttachments > 0 ) {
+      text = cntxt.getString(R.string.sync_notification_success_pending_attachments_text, pendingAttachments);
+      finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_success_pending_attachments, appName)).setContentText(text)
+              .setAutoCancel(true).setOngoing(false);
+      finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
+    } else {
+      text = cntxt.getString(R.string.sync_notification_success_complete_text);
+      finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_success_complete, appName)).setContentText(text)
+              .setAutoCancel(true).setOngoing(false);
+      finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
+    }
+    this.progressStatus = new SyncProgressEvent(messageNum, text, SyncProgressState.FINISHED, -1, 0);
 
     Notification syncNotif = finalBuilder.build();
 
     notificationManager.notify(appName, messageNum, syncNotif);
     WebLogger.getLogger(appName).i(LOGTAG,
-        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + updateText);
+        messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
   }
 
 }

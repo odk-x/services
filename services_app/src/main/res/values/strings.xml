@@ -91,12 +91,18 @@
     <string name="sync_row_data">Syncing data&#8230;</string>
 
     <!-- outcome dialog titles -->
-    <string name="sync_network_error">An unspecified error occurred</string>
-    <string name="sync_file_transmission_error">An unspecified error occurred relating to files</string>
+    <string name="sync_communications_error">A communications error occurred</string>
+    <string name="sync_device_internal_error">An internal error occurred</string>
+    <string name="sync_resync_because_config_reset_error">The server config was reset during this sync. Please restart.</string>
     <string name="sync_user_authorization_failure">User authorization failure</string>
+    <string name="sync_server_configuration_failure">Server configuration failure</string>
+    <string name="sync_device_configuration_failure">Device configuration failure</string>
     <string name="sync_conflicts_need_resolving">Conflicts detected</string>
+    <string name="sync_conflicts_text">Other users have modified the same entries that you have.\r\nYou now will be directed to merge your changes with theirs.</string>
     <string name="sync_successful">Sync successful</string>
+    <string name="sync_successful_text">Success! Your application content (data and configuration) matches that on the server.</string>
     <string name="sync_complete_pending_attachments">Sync (without attachments) successful</string>
+    <string name="sync_complete_pending_attachments_text">Configuration and data have been sync\'d, but attachments have not been sync\'d.</string>
 
     <!-- intermediate progress messages -->
     <string name="sync_starting">Starting sync&#8230;</string>
@@ -119,6 +125,7 @@
     <string name="sync_creating_local_table">Creating %1$s&#8230;</string>
     <string name="sync_dropping_local_table">Deleting %1$s from device&#8230;</string>
     <string name="sync_table_level_file_sync_complete">Completed sync of all %1$s configuration files.</string>
+    <string name="sync_table_level_sync_failed">Failed table %1$s configuration sync.</string>
 
     <string name="sync_getting_changed_rows_on_server">Fetching %1$s dataset changes from server.</string>
     <string name="sync_anaylzing_row_changes">Analyzing %1$s dataset changes.</string>
@@ -148,7 +155,7 @@
     <string name="sync_reset_server">Reset App Server</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
-    <string name="sync_change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
+    <string name="sync_change_settings_warning">If you change your settings, tables you have sync\'d now may no longer be able to be sync\'d.</string>
     <string name="sync_save">Save</string>
 
     <string name="sync_choose_account">Please choose an account</string>
@@ -167,6 +174,25 @@
         a Google account has not been configured. Please update your settings.</string>
     <string name="sync_configure_credentials">No authentication type has been selected.
         Please update your settings.</string>
+
+    <!-- sync service layer messages -->
+    <string name="sync_notification_syncing">"ODK Syncing %1$s</string>
+    <string name="sync_notification_failure">"ODK Sync %1$s Error</string>
+    <string name="sync_notification_conflicts">"ODK Sync %1$s Conflicts Exist</string>
+    <string name="sync_notification_conflicts_text">"%1$d tables have data conflicts or checkpoints and were not completely synced.</string>
+    <string name="sync_notification_success_complete">"ODK Sync %1$s Completed Successfully</string>
+    <string name="sync_notification_success_complete_text">Sync Completed Successfully</string>
+    <string name="sync_notification_success_pending_attachments">"ODK Sync %1$s Completed Pending Attachments</string>
+    <string name="sync_notification_success_pending_attachments_text">"Sync Completed with %1$d tables having out-of-date row attachments.</string>
+    <string name="sync_status_network_transport_error">Network Error. Please verify your device browser can access your server.</string>
+    <string name="sync_status_device_internal_error">Internal Error. Please submit a bug report</string>
+    <string name="sync_status_authentication_error">Authentication Error. Please verify your account and server access.</string>
+    <string name="sync_status_internal_server_error">Internal Server Error (out of quota?). Please notify your server administrator.</string>
+    <string name="sync_status_request_or_protocol_error">Protocol Error. Please verify that the server and device are compatible.</string>
+    <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName. Please verify server configuration.</string>
+    <string name="sync_status_server_missing_config_files">Server does not have any configuration for this APK version. Did you intend to reset the server?</string>
+    <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration. Did you intend to sync to server?</string>
+    <string name="sync_status_resync_because_config_has_been_reset_error">Sync was interrupted by another device. Please re-start sync.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>

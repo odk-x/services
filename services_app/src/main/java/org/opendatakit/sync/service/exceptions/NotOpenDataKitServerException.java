@@ -15,23 +15,17 @@
  */
 package org.opendatakit.sync.service.exceptions;
 
+import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 
-import java.io.IOException;
-
-public class AccessDeniedException extends HttpClientWebException {
+public class NotOpenDataKitServerException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public AccessDeniedException(String message, Exception e,
-      HttpRequest request, HttpResponse response) {
-    super(message, e, request, response);
-  }
-
-  public AccessDeniedException(String message,
-      HttpRequest request, HttpResponse response) {
-    super(message, request, response);
+  public NotOpenDataKitServerException(HttpRequest request, HttpResponse response) {
+    super("Response is missing required header: " + ApiConstants.OPEN_DATA_KIT_VERSION_HEADER,
+        request, response);
   }
 
 }

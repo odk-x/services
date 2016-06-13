@@ -31,9 +31,35 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
   @Override
   public SyncStatus getSyncStatus(String appName) throws RemoteException {
     try {
-      WebLogger.getLogger(appName).i(LOGTAG,
-          "SERVICE INTERFACE: getSyncStatus WITH appName:" + appName);
-      return syncService.getStatus(appName);
+      SyncStatus status = syncService.getStatus(appName);
+      // WebLogger.getLogger(appName).d(LOGTAG,
+      //     "SERVICE INTERFACE: getSyncStatus WITH appName:" + appName + " : " + status.name());
+      return status;
+    } catch (Throwable throwable) {
+      WebLogger.getLogger(appName).printStackTrace(throwable);
+      throw new RemoteException();
+    }
+  }
+
+  @Override
+  public SyncProgressEvent getSyncProgressEvent(String appName) throws RemoteException {
+    try {
+      // WebLogger.getLogger(appName).v(LOGTAG,
+      // "SERVICE INTERFACE: getSyncProgress WITH appName:" + appName);
+      return syncService.getSyncProgress(appName);
+    } catch (Throwable throwable) {
+      WebLogger.getLogger(appName).printStackTrace(throwable);
+      throw new RemoteException();
+    }
+  }
+
+  @Override
+  public SyncOverallResult getSyncResult(String appName) throws
+      RemoteException {
+    WebLogger.getLogger(appName).i(LOGTAG,
+        "SERVICE INTERFACE: getSyncResult WITH appName:" + appName);
+    try {
+      return syncService.getSyncResult(appName);
     } catch (Throwable throwable) {
       WebLogger.getLogger(appName).printStackTrace(throwable);
       throw new RemoteException();
@@ -57,41 +83,6 @@ public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
       WebLogger.getLogger(appName).i(LOGTAG,
           "SERVICE INTERFACE: synchronizeWithServer WITH appName:" + appName);
       return syncService.synchronizeWithServer(appName, attachmentState);
-    } catch (Throwable throwable) {
-      WebLogger.getLogger(appName).printStackTrace(throwable);
-      throw new RemoteException();
-    }
-  }
-
-  @Override
-  public SyncProgressState getSyncProgress(String appName) throws RemoteException {
-    try {
-      // WebLogger.getLogger(appName).v(LOGTAG,
-      // "SERVICE INTERFACE: getSyncProgress WITH appName:" + appName);
-      return syncService.getSyncProgress(appName);
-    } catch (Throwable throwable) {
-      WebLogger.getLogger(appName).printStackTrace(throwable);
-      throw new RemoteException();
-    }
-  }
-
-  @Override
-  public String getSyncUpdateMessage(String appName) throws RemoteException {
-    try {
-      // WebLogger.getLogger(appName).v(LOGTAG,
-      // "SERVICE INTERFACE: getSyncUpdateMessage WITH appName:" + appName);
-      return syncService.getSyncUpdateMessage(appName);
-    } catch (Throwable throwable) {
-      WebLogger.getLogger(appName).printStackTrace(throwable);
-      throw new RemoteException();
-    }
-  }
-
-  @Override
-  public SyncOverallResult getSyncResult(String appName) throws
-      RemoteException {
-    try {
-      return syncService.getSyncResult(appName);
     } catch (Throwable throwable) {
       WebLogger.getLogger(appName).printStackTrace(throwable);
       throw new RemoteException();

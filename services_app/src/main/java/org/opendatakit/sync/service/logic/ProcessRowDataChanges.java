@@ -47,6 +47,7 @@ import org.opendatakit.sync.service.*;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowDataChanges;
 import org.opendatakit.sync.service.data.SyncRowPending;
+import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 
 import java.io.IOException;
@@ -81,55 +82,17 @@ public class ProcessRowDataChanges {
 
   private Double perRowIncrement;
   private int rowsProcessed;
+  private ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataChanges(SyncExecutionContext sharedContext) {
     this.sc = sharedContext;
     this.log = WebLogger.getLogger(sc.getAppName());
+    this.manifestProcessor = new ProcessManifestContentAndFileChanges(sc);
   }
 
   /**
    * Common error reporting...
-   * 
-   * @param method
-   * @param tableId
-   * @param e
-   * @param tableLevelResult
-   */
-  private void clientAuthException(String method, String tableId, Exception e,
-      TableLevelResult tableLevelResult) {
-    String msg = e.getMessage();
-    if (msg == null) {
-      msg = e.toString();
-    }
-    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
-        tableId, msg));
-    tableLevelResult.setSyncOutcome(SyncOutcome.AUTH_EXCEPTION);
-    tableLevelResult.setMessage(msg);
-  }
-
-  /**
-   * Common error reporting...
-   * 
-   * @param method
-   * @param tableId
-   * @param e
-   * @param tableLevelResult
-   */
-//  private void clientWebException(String method, String tableId, ClientWebException e,
-//      TableLevelResult tableLevelResult) {
-//    String msg = e.getMessage();
-//    if (msg == null) {
-//      msg = e.toString();
-//    }
-//    log.e(TAG, String.format("ResourceAccessException in %s for table: %s exception: %s", method,
-//        tableId, msg));
-//    tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
-//    tableLevelResult.setMessage(msg);
-//  }
-
-  /**
-   * Common error reporting...
-   * 
+   *
    * @param method
    * @param tableId
    * @param e
@@ -140,10 +103,16 @@ public class ProcessRowDataChanges {
     if (msg == null) {
       msg = e.toString();
     }
-    log.e(TAG, String.format("Unexpected exception in %s on table: %s exception: %s", method,
-        tableId, msg));
-    tableLevelResult.setSyncOutcome(SyncOutcome.EXCEPTION);
-    tableLevelResult.setMessage(msg);
+
+    String fmtMsg = String.format("Exception in %s on table: %s exception: %s", method, tableId,
+        msg);
+
+    log.e(TAG, fmtMsg);
+    log.printStackTrace(e);
+
+    SyncOutcome outcome = sc.exceptionEquivalentOutcome(e);
+    tableLevelResult.setSyncOutcome(outcome);
+    tableLevelResult.setMessage(fmtMsg);
   }
 
   /**
@@ -457,7 +426,7 @@ public class ProcessRowDataChanges {
         // this will individually move some files to the locally-deleted state
         // if we cannot sync file attachments in those rows.
         pushLocalAttachmentsBeforeDeleteRowsInDb(db, tableResource, rowsToDeleteLocally,
-            fileAttachmentColumns, attachmentState, tableLevelResult);
+            fileAttachmentColumns, tableLevelResult);
 
         deleteRowsInDb(db, tableResource, rowsToDeleteLocally, fileAttachmentColumns,
             attachmentState, tableLevelResult);
@@ -652,10 +621,6 @@ public class ProcessRowDataChanges {
                 if (firstDataETag == null) {
                   firstDataETag = rows.getDataETag();
                 }
-              } catch (InvalidAuthTokenException e) {
-                clientAuthException("synchronizeTable - pulling data down from server", tableId, e,
-                    tableLevelResult);
-                break;
               } catch (Exception e) {
                 exception("synchronizeTable -  pulling data down from server", tableId, e,
                     tableLevelResult);
@@ -861,9 +826,6 @@ public class ProcessRowDataChanges {
             // server, we know that our data records are consistent and
             // our processing is complete.
             updateToServerSuccessful = true;
-          } catch (InvalidAuthTokenException e) {
-            clientAuthException("synchronizeTable - pushing data up to server", tableId, e, tableLevelResult);
-            break;
           } catch (Exception e) {
             exception("synchronizeTable - pushing data up to server", tableId, e, tableLevelResult);
             break;
@@ -888,7 +850,7 @@ public class ProcessRowDataChanges {
               SyncAttachmentState filteredAttachmentState = (syncRowPending.onlyGetFiles() ?
                   SyncAttachmentState.DOWNLOAD : attachmentState);
 
-              outcome = sc.getSynchronizer().syncFileAttachments(
+              outcome = manifestProcessor.syncRowLevelFileAttachments(
                   tableResource.getInstanceFilesUri(), tableId, syncRowPending, filteredAttachmentState);
 
               if (outcome) {
@@ -1374,15 +1336,15 @@ public class ProcessRowDataChanges {
     * @param resource
     * @param changes
     * @param fileAttachmentColumns
-    * @param attachmentState
     * @param tableLevelResult
+    * @throws HttpClientWebException
     * @throws IOException
     * @throws RemoteException
     */
   private void pushLocalAttachmentsBeforeDeleteRowsInDb(OdkDbHandle db, TableResource resource,
       List<SyncRowDataChanges> changes, ArrayList<ColumnDefinition> fileAttachmentColumns,
-      SyncAttachmentState attachmentState, TableLevelResult tableLevelResult) throws IOException,
-      RemoteException {
+      TableLevelResult tableLevelResult) throws
+      HttpClientWebException, IOException, RemoteException {
 
     // try first to push any attachments of the soon-to-be-deleted
     // local row up to the server
@@ -1397,8 +1359,8 @@ public class ProcessRowDataChanges {
           // since we are directly calling putFileAttachments, the flags in this
           // constructor are never accessed. Use false for their values.
           SyncRowPending srp = new SyncRowPending(change.localRow, false, false, false);
-          boolean outcome = sc.getSynchronizer().syncFileAttachments(resource.getInstanceFilesUri(),
-              resource.getTableId(), srp, attachmentState);
+          boolean outcome = manifestProcessor.syncRowLevelFileAttachments(resource.getInstanceFilesUri(),
+              resource.getTableId(), srp, SyncAttachmentState.UPLOAD);
           if (outcome) {
             // successful
             change.isSyncedPendingFiles = false;

@@ -15,6 +15,7 @@
  */
 package org.opendatakit.sync.service.data;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,6 +27,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 /**
  * A SyncRow is an in-between class to map rows in the database to rows in the
@@ -79,6 +81,11 @@ public class SyncRow {
   
   private List<String> uriFragments;
 
+  /**
+   * Tracks the state of the file attachments on the local system
+   */
+  private String uriFragmentHash;
+
   public SyncRow(final String rowId, final String rowETag, final boolean deleted,
       final String formId, final String locale, final String savepointType,
       final String savepointTimestamp, final String savepointCreator, final Scope filterScope,
@@ -108,6 +115,8 @@ public class SyncRow {
     // build up the uriFragments value...
     // the common case is that this is empty.
     // Use the static immutable list for that condition.
+    StringBuilder b = new StringBuilder();
+    b.append(fileAttachmentColumns.size());
     if ( !fileAttachmentColumns.isEmpty() ) {
       ArrayList<String> uriFragments = new ArrayList<String>();
       // extract the non-null uriFragments here...
@@ -117,6 +126,9 @@ public class SyncRow {
         if ( dkv.column.equals(facName) ) {
           if ( dkv.value != null ) {
             uriFragments.add(dkv.value);
+            b.append("<").append(dkv.column).append("|").append(dkv.value).append(">");
+          } else {
+            b.append("<").append(dkv.column).append("|").append(">");
           }
           ++idxAttachment;
           if ( idxAttachment >= fileAttachmentColumns.size() ) {
@@ -134,6 +146,7 @@ public class SyncRow {
     } else {
       this.uriFragments = emptyUriFragmentsList;
     }
+    uriFragmentHash = Integer.toHexString(b.toString().hashCode());
   }
 
   public String getRowId() {
@@ -230,6 +243,10 @@ public class SyncRow {
   
   public List<String> getUriFragments() {
     return this.uriFragments;
+  }
+
+  public String getUriFragmentHash() {
+    return uriFragmentHash;
   }
 
   @java.lang.Override

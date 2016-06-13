@@ -18,20 +18,13 @@ package org.opendatakit.sync.service.exceptions;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 
-import java.io.IOException;
-
-public class AccessDeniedException extends HttpClientWebException {
+public class NetworkTransmissionException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public AccessDeniedException(String message, Exception e,
+  public NetworkTransmissionException(String message, Exception e,
       HttpRequest request, HttpResponse response) {
     super(message, e, request, response);
-  }
-
-  public AccessDeniedException(String message,
-      HttpRequest request, HttpResponse response) {
-    super(message, request, response);
   }
 
 }
