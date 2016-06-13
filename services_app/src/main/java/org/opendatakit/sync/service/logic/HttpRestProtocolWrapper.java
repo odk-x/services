@@ -119,6 +119,7 @@ public class HttpRestProtocolWrapper {
 
   static List<Integer> SC_OK_ONLY;
   static List<Integer> SC_OK_SC_NOT_MODIFIED;
+  static List<Integer> SC_OK_SC_CONFLICT;
 
   static {
 
@@ -172,6 +173,11 @@ public class HttpRestProtocolWrapper {
     al.add(HttpStatus.SC_OK);
     al.add(HttpStatus.SC_NOT_MODIFIED);
     SC_OK_SC_NOT_MODIFIED = al;
+
+    al = new ArrayList<Integer>();
+    al.add(HttpStatus.SC_OK);
+    al.add(HttpStatus.SC_CONFLICT);
+    SC_OK_SC_CONFLICT = al;
   }
 
   private SyncExecutionContext sc;

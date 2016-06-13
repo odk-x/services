@@ -320,6 +320,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     RowOutcomeList outcomes;
 
+    // TODO: response can be HttpStatus.SC_CONFLICT to indicate dataETag change
     response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
     String res = wrapper.convertResponseToString(response);
     outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
