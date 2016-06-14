@@ -1772,7 +1772,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
 
   @Override public OdkDbChunk getChunk(ParcelUuid chunkID) {
-    return OdkDatabaseService.removeParceledChunk(chunkID.getUuid());
+    return odkDatabaseService.removeParceledChunk(chunkID.getUuid());
   }
 
   private OdkDbChunk getAndCacheChunks(Parcelable data) {
@@ -1805,7 +1805,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkDbChunk firstChunk = chunkList.remove(0);
 
     if (chunkList.size() > 0) {
-      OdkDatabaseService.putParceledChunks(chunkList);
+      odkDatabaseService.putParceledChunks(chunkList);
     }
 
     return firstChunk;
