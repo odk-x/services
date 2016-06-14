@@ -702,6 +702,7 @@ public class ProcessManifestContentAndFileChanges {
 
      // 1) Get this row's instanceId (rowId)
     String instanceId = localRow.getRowId();
+    log.i(LOGTAG, "syncRowLevelFileAttachments requesting a row-level manifest for " + instanceId);
 
     // 2) get the list of file attachments in this row
     List<String> localRowPathUris = localRow.getUriFragments();
@@ -720,6 +721,7 @@ public class ProcessManifestContentAndFileChanges {
       // have not changed since the last time we sync'd using the same
       // attachmentState, then we are in the same outcome state as we were before.
       // i.e., we remain in sync_pending_files.
+      log.i(LOGTAG, "syncRowLevelFileAttachments no change short-circuit at row-level manifest for " + instanceId);
       return false;
     }
 
@@ -749,10 +751,10 @@ public class ProcessManifestContentAndFileChanges {
         if (entry.md5hash == null || entry.md5hash.length() == 0) {
           // server doesn't know about it
           if (cat.localFile.exists()) {
+            log.i(LOGTAG, "syncRowLevelFileAttachments local file exists; server has entry but not file. Add to uploads list for " + instanceId);
             filesToUpload.add(cat);
           } else {
-            log.w(LOGTAG, "Row-level Manifest: row has reference to file that is not available on"
-                + " server");
+            log.w(LOGTAG, "syncRowLevelFileAttachments local file does not exist; file is not available on server for " + instanceId);
             impossibleToFullySyncDownloadsServerMissingFileToDownload = true;
           }
         } else {
@@ -763,10 +765,11 @@ public class ProcessManifestContentAndFileChanges {
 
             if (!localMd5.equals(entry.md5hash)) {
               // Found, but it is wrong locally, so we need to pull it
-              log.e(LOGTAG, "Row-level Manifest: md5Hash on server does not match local file hash!");
+              log.e(LOGTAG, "syncRowLevelFileAttachments Row-level Manifest: md5Hash on server does not match local file hash!");
               filesToDownloadSizes.put(cat, entry.contentLength);
             }
           } else {
+            log.i(LOGTAG, "syncRowLevelFileAttachments local file does not exist; server has entry and file. Add to downloads list for " + instanceId);
             // we don't have it -- we need to download it.
             filesToDownloadSizes.put(cat, entry.contentLength);
           }
@@ -789,10 +792,10 @@ public class ProcessManifestContentAndFileChanges {
           serverInstanceFileUri, tableId, instanceId, rowPathUri);
 
       if (cat.localFile.exists()) {
+        log.i(LOGTAG, "syncRowLevelFileAttachments local file exists; server does not have entry. Add to uploads list for " + instanceId);
         filesToUpload.add(cat);
       } else {
-        log.w(LOGTAG, "Row-level Manifest: row has reference to file that is not available on"
-            + " server");
+        log.w(LOGTAG, "syncRowLevelFileAttachments local file does not exist; file is not available on server for " + instanceId);
         impossibleToFullySyncDownloadsServerMissingFileToDownload = true;
       }
     }
@@ -822,6 +825,7 @@ public class ProcessManifestContentAndFileChanges {
         // Note: If the batch is empty then this is just one giant file and it will get uploaded
         // on the next iteration.
         if (batchSize + fileAttachment.localFile.length() > MAX_BATCH_SIZE && !batch.isEmpty()) {
+          log.i(LOGTAG, "syncRowLevelFileAttachments uploading batch for " + instanceId);
           sc.getSynchronizer().uploadInstanceFileBatch(batch, serverInstanceFileUri,
               instanceId, tableId);
           batch.clear();
@@ -832,9 +836,12 @@ public class ProcessManifestContentAndFileChanges {
         batchSize += fileAttachment.localFile.length();
       }
 
-      // Upload the final batch
-      sc.getSynchronizer().uploadInstanceFileBatch(batch, serverInstanceFileUri,
-          instanceId, tableId);
+      if ( !batch.isEmpty() ) {
+        // Upload the final batch
+        log.i(LOGTAG, "syncRowLevelFileAttachments uploading batch for " + instanceId);
+        sc.getSynchronizer().uploadInstanceFileBatch(batch, serverInstanceFileUri,
+                instanceId, tableId);
+      }
 
       fullySyncedUploads = true;
     }
@@ -856,6 +863,7 @@ public class ProcessManifestContentAndFileChanges {
         // downloaded on the next iteration.
         if (batchSize + filesToDownloadSizes.get(fileAttachment) > MAX_BATCH_SIZE &&
             !batch.isEmpty()) {
+          log.i(LOGTAG, "syncRowLevelFileAttachments downloading batch for " + instanceId);
           sc.getSynchronizer().downloadInstanceFileBatch(batch,
               serverInstanceFileUri, instanceId, tableId);
           batch.clear();
@@ -866,8 +874,12 @@ public class ProcessManifestContentAndFileChanges {
         batchSize += filesToDownloadSizes.get(fileAttachment);
       }
 
-      sc.getSynchronizer().downloadInstanceFileBatch(batch, serverInstanceFileUri,
-          instanceId, tableId);
+      if ( !batch.isEmpty() ) {
+        // download the final batch
+        log.i(LOGTAG, "syncRowLevelFileAttachments downloading batch for " + instanceId);
+        sc.getSynchronizer().downloadInstanceFileBatch(batch, serverInstanceFileUri,
+                instanceId, tableId);
+      }
 
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     }
@@ -887,10 +899,12 @@ public class ProcessManifestContentAndFileChanges {
         log.e(LOGTAG, "database access error (ignoring)");
       }
 
+      log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
       return true;
     } else {
       // we are fully sync'd if we were able to fully sync both the uploads and the downloads
       // we were not able to do this.
+      log.i(LOGTAG, "syncRowLevelFileAttachments PENDING file attachments for " + instanceId);
       return false;
     }
   }

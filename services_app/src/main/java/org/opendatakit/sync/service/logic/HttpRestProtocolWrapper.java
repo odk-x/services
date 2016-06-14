@@ -45,6 +45,7 @@ import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
 import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.httpclientandroidlib.protocol.BasicHttpContext;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.exceptions.*;
@@ -778,107 +779,124 @@ public class HttpRestProtocolWrapper {
       request.addHeader("Authorization", "Bearer " + accessToken);
     }
 
+    // we set success to true when we return the response.
+    // When we exit the outer try, if success is false,
+    // consume any response entity and close the response.
+    boolean success = false;
     try {
-      if (localContext != null) {
-        response = httpClient.execute(request, localContext);
-      } else {
-        response = httpClient.execute(request);
-      }
-
-      if (isGoogleAccount && response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-        request.removeHeaders("Authorization");
-        updateAccessToken();
-        request.addHeader("Authorization", "Bearer " + accessToken);
-
-        // re-issue the request with new access token
+      try {
         if (localContext != null) {
           response = httpClient.execute(request, localContext);
         } else {
           response = httpClient.execute(request);
         }
+
+        if (isGoogleAccount && response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+          request.removeHeaders("Authorization");
+          updateAccessToken();
+          request.addHeader("Authorization", "Bearer " + accessToken);
+
+          // re-issue the request with new access token
+          if (localContext != null) {
+            response = httpClient.execute(request, localContext);
+          } else {
+            response = httpClient.execute(request);
+          }
+        }
+      } catch (MalformedURLException e) {
+        log.e(LOGTAG, "Bad client config -- malformed URL");
+        log.printStackTrace(e);
+        // bad client config
+        throw new BadClientConfigException("malformed URL", e, request, response);
+      } catch (UnknownHostException e) {
+        log.e(LOGTAG, "Bad client config -- Unknown host");
+        log.printStackTrace(e);
+        // bad client config
+        throw new BadClientConfigException("Unknown Host", e, request, response);
+      } catch (ClientProtocolException e) {
+        log.e(LOGTAG, "Bad request construction - " + e.toString());
+        log.printStackTrace(e);
+        // bad request construction
+        throw new ServerDetectedVersionMismatchedClientRequestException("Bad request construction - " + e.toString(), e,
+                request, response);
+      } catch (UnknownServiceException e) {
+        log.e(LOGTAG, "Bad request construction - " + e.toString());
+        log.printStackTrace(e);
+        // bad request construction
+        throw new ServerDetectedVersionMismatchedClientRequestException("Bad request construction - " + e.toString(), e,
+                request, response);
+      } catch (InvalidAuthTokenException e) {
+        log.e(LOGTAG, "updating of Google access token failed");
+        log.printStackTrace(e);
+        // problem interacting with Google to update Auth token.
+        // this should be treated as an authentication failure
+        throw new AccessDeniedReauthException("updating of Google access token failed", e,
+                request, response);
+      } catch (Exception e) {
+        log.e(LOGTAG, "Network failure - " + e.toString());
+        log.printStackTrace(e);
+        // network transmission or SSL or other comm failure
+        throw new NetworkTransmissionException("Network failure - " + e.toString(), e,
+                request, response);
       }
-    } catch ( MalformedURLException e ) {
-      log.e(LOGTAG, "Bad client config -- malformed URL");
-      log.printStackTrace(e);
-      // bad client config
-      throw new BadClientConfigException("malformed URL", e, request, response);
-    } catch ( UnknownHostException e ) {
-      log.e(LOGTAG, "Bad client config -- Unknown host");
-      log.printStackTrace(e);
-      // bad client config
-      throw new BadClientConfigException("Unknown Host", e, request, response);
-    } catch ( ClientProtocolException e ) {
-      log.e(LOGTAG, "Bad request construction - " + e.toString());
-      log.printStackTrace(e);
-      // bad request construction
-      throw new ServerDetectedVersionMismatchedClientRequestException("Bad request construction - " + e.toString(), e,
-          request, response);
-    } catch ( UnknownServiceException e ) {
-      log.e(LOGTAG, "Bad request construction - " + e.toString());
-      log.printStackTrace(e);
-      // bad request construction
-      throw new ServerDetectedVersionMismatchedClientRequestException("Bad request construction - " + e.toString(), e,
-          request, response);
-    } catch ( InvalidAuthTokenException e ) {
-      log.e(LOGTAG, "updating of Google access token failed");
-      log.printStackTrace(e);
-      // problem interacting with Google to update Auth token.
-      // this should be treated as an authentication failure
-      throw new AccessDeniedReauthException("updating of Google access token failed", e,
-          request, response);
-    } catch ( Exception e ) {
-      log.e(LOGTAG, "Network failure - " + e.toString());
-      log.printStackTrace(e);
-      // network transmission or SSL or other comm failure
-      throw new NetworkTransmissionException("Network failure - " + e.toString(), e,
-          request, response);
-    }
 
-    // if we do not find our header in the response, then this is most likely a
-    // wifi network login screen.
-    if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-      throw new NotOpenDataKitServerException(request, response);
-    }
+      // if we do not find our header in the response, then this is most likely a
+      // wifi network login screen.
+      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
+        throw new NotOpenDataKitServerException(request, response);
+      }
 
-    int statusCode = response.getStatusLine().getStatusCode();
-    if ( handledReturnCodes.contains(statusCode) ) {
-      return response;
-    }
+      int statusCode = response.getStatusLine().getStatusCode();
+      if (handledReturnCodes.contains(statusCode)) {
+        success = true;
+        return response;
+      }
 
-    String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
-    if ( statusCode >= 200 && statusCode < 300 ) {
+      String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
+      if (statusCode >= 200 && statusCode < 300) {
+        log.e(LOGTAG, errorText);
+        // server returned an unexpected success response --
+        // mismatched client and server implementations
+        throw new ClientDetectedVersionMismatchedServerResponseException(errorText,
+                request, response);
+      }
+
+      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+        log.e(LOGTAG, errorText);
+        // server rejected our request -- mismatched client and server implementations
+        throw new AccessDeniedException(errorText, request, response);
+      }
+
+      if (statusCode >= 400 && statusCode < 500) {
+        log.e(LOGTAG, errorText);
+        // server rejected our request -- mismatched client and server implementations
+        throw new ServerDetectedVersionMismatchedClientRequestException(errorText,
+                request, response);
+      }
+
+      if (statusCode >= 500 && statusCode < 600) {
+        log.e(LOGTAG, errorText);
+        // internal error within the server -- admin should check server logs
+        throw new InternalServerFailureException(errorText,
+                request, response);
+      }
+
       log.e(LOGTAG, errorText);
-      // server returned an unexpected success response --
-      // mismatched client and server implementations
-      throw new ClientDetectedVersionMismatchedServerResponseException(errorText,
-          request, response);
+      // some sort of 300 (or impossible) response that we were
+      // not expecting and don't know how to handle
+      throw new UnexpectedServerRedirectionStatusCodeException(errorText,
+              request, response);
+    } finally {
+      if ( response != null && !success ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        try {
+          response.close();
+        } catch (IOException e) {
+          log.e(LOGTAG, "failed to close response");
+          log.printStackTrace(e);
+        }
+      }
     }
-
-    if ( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
-      log.e(LOGTAG, errorText);
-      // server rejected our request -- mismatched client and server implementations
-      throw new AccessDeniedException(errorText, request, response);
-    }
-
-    if ( statusCode >= 400 && statusCode < 500 ) {
-      log.e(LOGTAG, errorText);
-      // server rejected our request -- mismatched client and server implementations
-      throw new ServerDetectedVersionMismatchedClientRequestException(errorText,
-          request, response);
-    }
-
-    if ( statusCode >= 500 && statusCode < 600 ) {
-      log.e(LOGTAG, errorText);
-      // internal error within the server -- admin should check server logs
-      throw new InternalServerFailureException(errorText,
-          request, response);
-    }
-
-    log.e(LOGTAG, errorText);
-    // some sort of 300 (or impossible) response that we were
-    // not expecting and don't know how to handle
-    throw new UnexpectedServerRedirectionStatusCodeException(errorText,
-        request, response);
   }
 
   public String determineContentType(String fileName) {

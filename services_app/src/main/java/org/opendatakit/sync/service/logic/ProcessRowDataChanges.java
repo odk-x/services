@@ -889,6 +889,8 @@ public class ProcessRowDataChanges {
                 SyncAttachmentState filteredAttachmentState = (syncRowPending.onlyGetFiles() ?
                         SyncAttachmentState.DOWNLOAD : attachmentState);
 
+                log.i(TAG, "synchronizeDataRowsAndAttachments beginning processing for " + syncRowPending.getRowId());
+
                 outcome = manifestProcessor.syncRowLevelFileAttachments(
                         tableResource.getInstanceFilesUri(), tableId, syncRowPending, filteredAttachmentState);
 
@@ -916,6 +918,9 @@ public class ProcessRowDataChanges {
                 log.e(TAG, "[synchronizeTableRest] error synchronizing attachments " + e.toString());
               }
               tableLevelResult.incLocalAttachmentRetries();
+
+              log.i(TAG, "synchronizeDataRowsAndAttachments completed processing for " + syncRowPending.getRowId());
+
               ++count;
               ++rowsProcessed;
               int idString;
@@ -949,7 +954,9 @@ public class ProcessRowDataChanges {
             }
           }
         }
-        
+
+        log.i(TAG, "synchronizeDataRowsAndAttachments completed processing for all attachments");
+
         if ( rowDataSyncSuccessful && attachmentSyncSuccessful ) {
           // no need to retry...
           break;
@@ -976,25 +983,34 @@ public class ProcessRowDataChanges {
       if (rowDataSyncSuccessful) {
         // Then we should have updated the db and shouldn't have set the
         // TableLevelResult to be exception.
-        if (tableLevelResult.getSyncOutcome() != SyncOutcome.WORKING) {
-          log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
-              + tableLevelResult.getSyncOutcome().name()
-              + ", and yet success returned true. This shouldn't be possible.");
-        } else {
-          if (containsConflicts) {
-            tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_CONTAINS_CONFLICTS);
-            sc.updateNotification(SyncProgressState.ROWS,
-                R.string.sync_table_data_sync_with_conflicts,
-                new Object[] { tableId }, 100.0, false);
-          } else if (outstandingAttachmentsToSync || !attachmentSyncSuccessful) {
-            tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_PENDING_ATTACHMENTS);
-            sc.updateNotification(SyncProgressState.ROWS,
-                R.string.sync_table_data_sync_pending_attachments, new Object[] { tableId }, 100.0,
-                false);
+        if (attachmentSyncSuccessful ) {
+          if (tableLevelResult.getSyncOutcome() != SyncOutcome.WORKING) {
+            log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
+                    + tableLevelResult.getSyncOutcome().name()
+                    + ", and yet row and attachment sync was successful. This shouldn't be possible.");
           } else {
-            tableLevelResult.setSyncOutcome(SyncOutcome.SUCCESS);
-            sc.updateNotification(SyncProgressState.ROWS, R.string.sync_table_data_sync_complete,
-                new Object[] { tableId }, 100.0, false);
+            if (containsConflicts) {
+              tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_CONTAINS_CONFLICTS);
+              sc.updateNotification(SyncProgressState.ROWS,
+                      R.string.sync_table_data_sync_with_conflicts,
+                      new Object[]{tableId}, 100.0, false);
+            } else if (outstandingAttachmentsToSync || !attachmentSyncSuccessful) {
+              tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_PENDING_ATTACHMENTS);
+              sc.updateNotification(SyncProgressState.ROWS,
+                      R.string.sync_table_data_sync_pending_attachments, new Object[]{tableId}, 100.0,
+                      false);
+            } else {
+              tableLevelResult.setSyncOutcome(SyncOutcome.SUCCESS);
+              sc.updateNotification(SyncProgressState.ROWS, R.string.sync_table_data_sync_complete,
+                      new Object[]{tableId}, 100.0, false);
+            }
+          }
+        } else {
+          if (tableLevelResult.getSyncOutcome() == SyncOutcome.WORKING) {
+            log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
+                    + tableLevelResult.getSyncOutcome().name()
+                    + ", and yet attachmentSync was not successful. This shouldn't be possible.");
+            tableLevelResult.setSyncOutcome(SyncOutcome.FAILURE);
           }
         }
       }

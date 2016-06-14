@@ -545,6 +545,10 @@ public class AggregateSynchronizer implements Synchronizer {
     CloseableHttpResponse response = null;
     wrapper.buildNoContentJsonResponseRequest(instanceFileManifestUri, request);
 
+    if ( eTag != null ) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
+    }
+
     List<OdkTablesFileManifestEntry> theList = null;
 
     try {
@@ -570,6 +574,7 @@ public class AggregateSynchronizer implements Synchronizer {
       if (theList == null) {
         theList = Collections.emptyList();
       }
+      log.i(LOGTAG, "returning a row-level manifest for " + instanceId);
 
       // and return the list of values...
       return new FileManifestDocument(eTag, theList);
