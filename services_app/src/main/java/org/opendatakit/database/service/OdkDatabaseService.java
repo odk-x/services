@@ -57,6 +57,11 @@ public class OdkDatabaseService extends Service {
   public IBinder onBind(Intent intent) {
     possiblyWaitForDatabaseServiceDebugger();
     Log.i(LOGTAG, "onBind -- returning interface.");
+
+    if (parceledChunks == null) {
+      parceledChunks = new HashMap<>();
+    }
+
     return servInterface; 
   }
 
@@ -69,6 +74,9 @@ public class OdkDatabaseService extends Service {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
+
+    parceledChunks = null;
+
     return false;
   }
   
@@ -76,11 +84,12 @@ public class OdkDatabaseService extends Service {
   public synchronized void onDestroy() {
     Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
     super.onDestroy();
-    parceledChunks = null;
     // release all non-group instances
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
     WebLogger.closeAll();
+
+    parceledChunks = null;
   }
 
   /**
