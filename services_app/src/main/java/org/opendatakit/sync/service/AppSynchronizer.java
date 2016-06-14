@@ -157,7 +157,7 @@ public class AppSynchronizer {
 
     private SyncStatus resolveOutcome(SyncOutcome outcome) {
       SyncStatus status = SyncStatus.SYNCING;
-      switch (syncResult.getAppLevelSyncOutcome()) {
+      switch (outcome) {
       case WORKING:
       case SUCCESS:
         break;
