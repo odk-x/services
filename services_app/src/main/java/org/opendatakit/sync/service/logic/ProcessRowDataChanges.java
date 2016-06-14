@@ -49,7 +49,6 @@ import org.opendatakit.sync.service.data.SyncRowDataChanges;
 import org.opendatakit.sync.service.data.SyncRowPending;
 import org.opendatakit.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
 import org.opendatakit.sync.service.exceptions.HttpClientWebException;
-import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -540,6 +539,7 @@ public class ProcessRowDataChanges {
       return;
     }
 
+    boolean outstandingAttachmentsToSync = false;
     boolean containsConflicts = false;
 
     try {
@@ -893,29 +893,26 @@ public class ProcessRowDataChanges {
                         tableResource.getInstanceFilesUri(), tableId, syncRowPending, filteredAttachmentState);
 
                 if (outcome) {
-
                   if (syncRowPending.updateSyncState()) {
-                    if (outcome) {
-                      // OK -- we succeeded in putting/getting all attachments
-                      // update our state to the synced state.
-                      OdkDbHandle db = null;
-                      try {
-                        db = sc.getDatabase();
-                        sc.getDatabaseService().updateRowETagAndSyncState(sc.getAppName(), db, tableId,
-                                syncRowPending.getRowId(), syncRowPending.getRowETag(), SyncState.synced.name());
-                      } finally {
-                        sc.releaseDatabase(db);
-                        db = null;
-                      }
-                    } else {
-                      // only care about instance file status if we are trying
-                      // to update state
-                      attachmentSyncFailed = false;
+                    // OK -- we succeeded in putting/getting all attachments
+                    // update our state to the synced state.
+                    OdkDbHandle db = null;
+                    try {
+                      db = sc.getDatabase();
+                      sc.getDatabaseService().updateRowETagAndSyncState(sc.getAppName(), db, tableId,
+                              syncRowPending.getRowId(), syncRowPending.getRowETag(), SyncState.synced.name());
+                    } finally {
+                      sc.releaseDatabase(db);
+                      db = null;
                     }
                   }
+                } else {
+                  outstandingAttachmentsToSync = true;
                 }
-              } catch (Exception e) {
+              } catch (Throwable e) {
+                log.printStackTrace(e);
                 tableLevelSyncOutcome = sc.exceptionEquivalentOutcome(e);
+                attachmentSyncFailed = true;
                 log.e(TAG, "[synchronizeTableRest] error synchronizing attachments " + e.toString());
               }
               tableLevelResult.incLocalAttachmentRetries();
@@ -941,6 +938,9 @@ public class ProcessRowDataChanges {
                               rowsToPushFileAttachments.size()}, 10.0 + rowsProcessed * perRowIncrement,
                       false);
             }
+          } catch ( Throwable e) {
+            log.printStackTrace(e);
+            tableLevelSyncOutcome = sc.exceptionEquivalentOutcome(e);
           } finally {
             attachmentSyncSuccessful = !attachmentSyncFailed;
             if ( tableLevelSyncOutcome != SyncOutcome.WORKING ) {
@@ -986,7 +986,7 @@ public class ProcessRowDataChanges {
             sc.updateNotification(SyncProgressState.ROWS,
                 R.string.sync_table_data_sync_with_conflicts,
                 new Object[] { tableId }, 100.0, false);
-          } else if (!attachmentSyncSuccessful) {
+          } else if (outstandingAttachmentsToSync || !attachmentSyncSuccessful) {
             tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_PENDING_ATTACHMENTS);
             sc.updateNotification(SyncProgressState.ROWS,
                 R.string.sync_table_data_sync_pending_attachments, new Object[] { tableId }, 100.0,

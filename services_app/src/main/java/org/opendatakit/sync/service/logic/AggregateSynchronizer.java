@@ -41,10 +41,9 @@ import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
 import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.services.R;
+import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.exceptions.*;
 
@@ -52,7 +51,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -63,11 +61,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -114,15 +109,22 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    appNameList = ODKFileUtils.mapper.readValue(res, AppNameList.class);
+      appNameList = ODKFileUtils.mapper.readValue(res, AppNameList.class);
 
-    if ( !appNameList.contains(sc.getAppName()) ) {
-      throw new ServerDoesNotRecognizeAppNameException("server does not recognize this appName",
-          request, response);
+      if (!appNameList.contains(sc.getAppName())) {
+        throw new ServerDoesNotRecognizeAppNameException("server does not recognize this appName",
+                request, response);
+      }
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
     }
   }
 
@@ -138,13 +140,20 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
+      tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
 
-    return tableResources;
+      return tableResources;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -159,13 +168,20 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    definitionRes = ODKFileUtils.mapper.readValue(res, TableDefinitionResource.class);
+      definitionRes = ODKFileUtils.mapper.readValue(res, TableDefinitionResource.class);
 
-    return definitionRes;
+      return definitionRes;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -187,15 +203,22 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpEntity entity = new GzipCompressingEntity(new StringEntity(tableDefinitionJSON, Charset.forName("UTF-8")));
     request.setEntity(entity);
 
-    // TODO: we also need to put up the key value store/properties.
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      // TODO: we also need to put up the key value store/properties.
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    resource = ODKFileUtils.mapper.readValue(res, TableResource.class);
-    // save resource
-    this.resources.put(resource.getTableId(), resource);
-    return resource;
+      resource = ODKFileUtils.mapper.readValue(res, TableResource.class);
+      // save resource
+      this.resources.put(resource.getTableId(), resource);
+      return resource;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -208,10 +231,15 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    // TODO: CAL: response should be used?
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-
-    response.close();
+    try {
+      // TODO: CAL: response should be used?
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
 
     this.resources.remove(table.getTableId());
   }
@@ -230,12 +258,19 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    String res = wrapper.convertResponseToString(response);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      String res = wrapper.convertResponseToString(response);
 
-    ChangeSetList changeSets = ODKFileUtils.mapper.readValue(res,ChangeSetList.class);
+      ChangeSetList changeSets = ODKFileUtils.mapper.readValue(res, ChangeSetList.class);
 
-    return changeSets;
+      return changeSets;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   
@@ -255,13 +290,20 @@ public class AggregateSynchronizer implements Synchronizer {
     CloseableHttpResponse response = null;
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
+      RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
-    return rows;
+      return rows;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -282,13 +324,20 @@ public class AggregateSynchronizer implements Synchronizer {
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-    String res = wrapper.convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
-    RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
+      RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
-    return rows;
+      return rows;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -320,11 +369,18 @@ public class AggregateSynchronizer implements Synchronizer {
 
     RowOutcomeList outcomes;
 
-    // TODO: response can be HttpStatus.SC_CONFLICT to indicate dataETag change
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    String res = wrapper.convertResponseToString(response);
-    outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
-    return outcomes;
+    try {
+      // TODO: response can be HttpStatus.SC_CONFLICT to indicate dataETag change
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      String res = wrapper.convertResponseToString(response);
+      outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
+      return outcomes;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -357,41 +413,48 @@ public class AggregateSynchronizer implements Synchronizer {
     CloseableHttpResponse response = null;
     List<OdkTablesFileManifestEntry> theList = null;
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-      // signal this by returning null;
-      return null;
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        // signal this by returning null;
+        return null;
+      }
+
+      // update the manifest ETag record...
+      eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
+
+      String res = wrapper.convertResponseToString(response);
+
+      // retrieve the manifest...
+      OdkTablesFileManifest manifest;
+
+      manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
+
+      if (manifest != null) {
+        theList = manifest.getFiles();
+      }
+
+      if (theList == null) {
+        theList = Collections.emptyList();
+      }
+
+      // if the server has no configuration for our client version, then we should
+      // fail. It is likely that the user wanted to reset the app server to upload
+      // a configuration.
+      if (!pushLocalFiles && theList.isEmpty()) {
+        throw new ClientDetectedVersionMismatchedServerResponseException(
+                "server has no configuration for this client version", request, response);
+      }
+
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
     }
-
-    // update the manifest ETag record...
-    eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
-
-    String res = wrapper.convertResponseToString(response);
-
-    // retrieve the manifest...
-    OdkTablesFileManifest manifest;
-
-    manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
-
-    if (manifest != null) {
-      theList = manifest.getFiles();
-    }
-
-    if (theList == null) {
-      theList = Collections.emptyList();
-    }
-
-    // if the server has no configuration for our client version, then we should
-    // fail. It is likely that the user wanted to reset the app server to upload
-    // a configuration.
-    if ( !pushLocalFiles && theList.isEmpty() ) {
-      throw new ClientDetectedVersionMismatchedServerResponseException(
-          "server has no configuration for this client version", request, response);
-    }
-
-    // and return the list of values...
-    return new FileManifestDocument(eTag, theList);
   }
 
   @Override
@@ -425,32 +488,39 @@ public class AggregateSynchronizer implements Synchronizer {
       }
     }
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-      // signal this by returning null;
-      return null;
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        // signal this by returning null;
+        return null;
+      }
+
+      // retrieve the manifest...
+      List<OdkTablesFileManifestEntry> theList = null;
+
+      // update the manifest ETag record...
+      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
+      eTag = eTagHdr.getValue();
+
+      String res = wrapper.convertResponseToString(response);
+      OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
+
+      if (manifest != null) {
+        theList = manifest.getFiles();
+      }
+      if (theList == null) {
+        theList = Collections.emptyList();
+      }
+
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
     }
-
-    // retrieve the manifest...
-    List<OdkTablesFileManifestEntry> theList = null;
-
-    // update the manifest ETag record...
-    Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-    eTag = eTagHdr.getValue();
-
-    String res = wrapper.convertResponseToString(response);
-    OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
-
-    if (manifest != null) {
-      theList = manifest.getFiles();
-    }
-    if (theList == null) {
-      theList = Collections.emptyList();
-    }
-
-    // and return the list of values...
-    return new FileManifestDocument(eTag, theList);
   }
 
   @Override
@@ -477,31 +547,38 @@ public class AggregateSynchronizer implements Synchronizer {
 
     List<OdkTablesFileManifestEntry> theList = null;
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-      // signal this by returning null;
-      return null;
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        // signal this by returning null;
+        return null;
+      }
+
+      // update the manifest ETag record...
+      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
+      eTag = eTagHdr.getValue();
+
+      // retrieve the manifest...
+      String res = wrapper.convertResponseToString(response);
+      OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
+
+      if (manifest != null) {
+        theList = manifest.getFiles();
+      }
+
+      if (theList == null) {
+        theList = Collections.emptyList();
+      }
+
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
     }
-
-    // update the manifest ETag record...
-    Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-    eTag = eTagHdr.getValue();
-
-    // retrieve the manifest...
-    String res = wrapper.convertResponseToString(response);
-    OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
-
-    if (manifest != null) {
-      theList = manifest.getFiles();
-    }
-
-    if (theList == null) {
-      theList = Collections.emptyList();
-    }
-
-    // and return the list of values...
-    return new FileManifestDocument(eTag, theList);
   }
 
   /**
@@ -620,6 +697,7 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       } finally {
         if ( response != null ) {
+          EntityUtils.consumeQuietly(response.getEntity());
           response.close();
         }
       }
@@ -637,8 +715,14 @@ public class AggregateSynchronizer implements Synchronizer {
     CloseableHttpResponse response = null;
     wrapper.buildNoContentJsonResponseRequest(filesUri, request);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    response.close();
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -657,8 +741,14 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpEntity entity = wrapper.makeHttpEntity(localFile);
     request.setEntity(entity);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    response.close();
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -676,8 +766,14 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpEntity entity = wrapper.makeHttpEntity(file);
     request.setEntity(entity);
 
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    response.close();
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -758,8 +854,15 @@ public class AggregateSynchronizer implements Synchronizer {
 
     HttpEntity mpFormEntity = mpEntBuilder.build();
     request.setEntity(mpFormEntity);
-    response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-    response.close();
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
   }
 
   @Override
@@ -863,6 +966,7 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       }
       if (response != null) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }

@@ -132,7 +132,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
     mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
 
-  public SyncOutcome exceptionEquivalentOutcome(Exception e) {
+  public SyncOutcome exceptionEquivalentOutcome(Throwable e) {
     if ( e instanceof IOException ) {
       // this occurs when JSON parser of response fails
        return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);

@@ -16,27 +16,14 @@
 package org.opendatakit.sync.service.logic;
 
 import android.os.RemoteException;
-import android.util.Log;
-import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.httpclientandroidlib.*;
-import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
-import org.opendatakit.httpclientandroidlib.client.methods.*;
-import org.opendatakit.httpclientandroidlib.entity.ContentType;
-import org.opendatakit.httpclientandroidlib.entity.StringEntity;
-import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
-import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
-import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
-import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowPending;
 import org.opendatakit.sync.service.exceptions.*;
 
@@ -45,7 +32,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
