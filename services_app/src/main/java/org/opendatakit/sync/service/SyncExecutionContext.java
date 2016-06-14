@@ -144,6 +144,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
       return (SyncOutcome.BAD_CLIENT_CONFIG_EXCEPTION);
     } else if ( e instanceof ClientDetectedVersionMismatchedServerResponseException) {
       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof ClientDetectedMissingConfigForClientVersionException) {
+      return (SyncOutcome.CLIENT_VERSION_FILES_DO_NOT_EXIST_ON_SERVER);
     } else if ( e instanceof InternalServerFailureException) {
       return (SyncOutcome.INTERNAL_SERVER_FAILURE_EXCEPTION);
     } else if ( e instanceof NetworkTransmissionException ) {

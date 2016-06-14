@@ -32,18 +32,18 @@ public class HttpClientWebException extends RuntimeException {
     this.response = response;
   }
 
-  public HttpClientWebException(String message, Exception e,
+  public HttpClientWebException(String message, Throwable e,
                                 HttpRequest request, HttpResponse response) {
     super(message, e);
     this.request = request;
     this.response = response;
   }
 
-  private HttpRequest getRequest() {
+  public HttpRequest getRequest() {
     return this.request;
   }
 
-  private HttpResponse getResponse() {
+  public HttpResponse getResponse() {
     return this.response;
   }
 }

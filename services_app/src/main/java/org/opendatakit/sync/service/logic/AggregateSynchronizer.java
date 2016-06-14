@@ -35,6 +35,7 @@ import org.opendatakit.httpclientandroidlib.client.methods.HttpDelete;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpPut;
+import org.opendatakit.httpclientandroidlib.conn.ConnectTimeoutException;
 import org.opendatakit.httpclientandroidlib.entity.ContentType;
 import org.opendatakit.httpclientandroidlib.entity.StringEntity;
 import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
@@ -110,7 +111,12 @@ public class AggregateSynchronizer implements Synchronizer {
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
     try {
-      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        throw new BadClientConfigException("server does not implement ODK 2.0 REST api",
+                request, response);
+      }
 
       String res = wrapper.convertResponseToString(response);
 
@@ -119,6 +125,13 @@ public class AggregateSynchronizer implements Synchronizer {
       if (!appNameList.contains(sc.getAppName())) {
         throw new ServerDoesNotRecognizeAppNameException("server does not recognize this appName",
                 request, response);
+      }
+    } catch ( NetworkTransmissionException e ) {
+      if ( e.getCause() != null && e.getCause() instanceof ConnectTimeoutException ) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+                e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
       }
     } finally {
       if ( response != null ) {
@@ -443,7 +456,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // fail. It is likely that the user wanted to reset the app server to upload
       // a configuration.
       if (!pushLocalFiles && theList.isEmpty()) {
-        throw new ClientDetectedVersionMismatchedServerResponseException(
+        throw new ClientDetectedMissingConfigForClientVersionException(
                 "server has no configuration for this client version", request, response);
       }
 
@@ -511,6 +524,14 @@ public class AggregateSynchronizer implements Synchronizer {
       }
       if (theList == null) {
         theList = Collections.emptyList();
+      }
+
+      // if the server has no configuration for our client version, then we should
+      // fail. It is likely that the user wanted to reset the app server to upload
+      // a configuration.
+      if (!pushLocalFiles && theList.isEmpty()) {
+        throw new ClientDetectedMissingConfigForClientVersionException(
+                "server has no configuration for table at this client version", request, response);
       }
 
       // and return the list of values...

@@ -18,18 +18,17 @@ package org.opendatakit.sync.service.exceptions;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 
-public class BadClientConfigException extends HttpClientWebException {
+public class ClientDetectedMissingConfigForClientVersionException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public BadClientConfigException(String message,
-                                  HttpRequest request, HttpResponse response) {
-    super(message, request, response);
+  public ClientDetectedMissingConfigForClientVersionException(String message) {
+    super(message, null, null);
   }
 
-  public BadClientConfigException(String message, Throwable e,
-      HttpRequest request, HttpResponse response) {
-    super(message, e, request, response);
+  public ClientDetectedMissingConfigForClientVersionException(String message,
+                                                              HttpRequest request, HttpResponse response) {
+    super(message, request, response);
   }
 
 }

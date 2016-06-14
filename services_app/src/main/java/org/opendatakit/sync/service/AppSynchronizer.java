@@ -169,14 +169,16 @@ public class AppSynchronizer {
         status = SyncStatus.AUTHENTICATION_ERROR;
         break;
       case BAD_CLIENT_CONFIG_EXCEPTION:
+      case NOT_OPEN_DATA_KIT_SERVER_EXCEPTION:
+      case UNEXPECTED_REDIRECT_EXCEPTION:
+        status = SyncStatus.SERVER_IS_NOT_ODK_SERVER;
+        break;
       case LOCAL_DATABASE_EXCEPTION:
         status = SyncStatus.DEVICE_ERROR;
         break;
       case NETWORK_TRANSMISSION_EXCEPTION:
         status = SyncStatus.NETWORK_TRANSPORT_ERROR;
         break;
-      case NOT_OPEN_DATA_KIT_SERVER_EXCEPTION:
-      case UNEXPECTED_REDIRECT_EXCEPTION:
       case INCOMPATIBLE_SERVER_VERSION_EXCEPTION:
         status = SyncStatus.REQUEST_OR_PROTOCOL_ERROR;
         break;
@@ -346,6 +348,10 @@ public class AppSynchronizer {
       case
           /** earlier sync ended with a 500 error from server */ SERVER_INTERNAL_ERROR:
         syncProgress.finalErrorNotification(service.getString(R.string.sync_status_internal_server_error));
+        break;
+      case
+          /** the server is not an ODK Server - bad client config */ SERVER_IS_NOT_ODK_SERVER:
+        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_bad_gateway_or_client_config));
         break;
       case
           /** earlier sync ended with a 400 error that wasn't Authorization denied */ REQUEST_OR_PROTOCOL_ERROR:

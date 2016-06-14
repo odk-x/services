@@ -755,6 +755,10 @@ public class SyncFragment extends Fragment {
           id_title = R.string.sync_communications_error;
           message = getString(R.string.sync_status_internal_server_error);
           break;
+        case /** the server is not an ODK Server - bad client config */ SERVER_IS_NOT_ODK_SERVER:
+          id_title = R.string.sync_device_configuration_failure;
+          message = getString(R.string.sync_status_bad_gateway_or_client_config);
+          break;
         case
                 /** earlier sync ended with a 400 error that wasn't Authorization denied */ REQUEST_OR_PROTOCOL_ERROR:
           id_title = R.string.sync_communications_error;
