@@ -1004,6 +1004,19 @@ public class AggregateSynchronizer implements Synchronizer {
    **********************************************************************************/
 
   @Override
+  public void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException {
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().deleteAllSyncETagsExceptForServer(sc.getAppName(), db,
+              sc.getAggregateUri());
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
   public String getFileSyncETag(URI
       fileDownloadUri, String tableId, long lastModified) throws RemoteException {
     OdkDbHandle db = null;
@@ -1102,7 +1115,7 @@ public class AggregateSynchronizer implements Synchronizer {
                                   fileManifestUri.toString(), tableId);
       String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
       if ( qualifiedETag != null && qualifiedETag.startsWith(restrictivePrefix) ) {
-        return qualifiedETag.substring(qualifiedETag.length());
+        return qualifiedETag.substring(restrictivePrefix.length());
       } else {
         return null;
       }

@@ -283,29 +283,6 @@ public class SyncFragment extends Fragment {
     // remove any settings for a URL other than the server URL...
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    String verifiedUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(ODKDataUtils.genUUID());
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(getAppName(), dbHandleName);
-
-      SyncETagsUtils utils = new SyncETagsUtils();
-      utils.deleteAllSyncETagsExceptForServer(db,
-          (verifiedUri == null || verifiedUri.length() == 0) ? null : verifiedUri.toString());
-    } catch (SQLiteException e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "[onClickSaveSettings][onClick] unable to update database");
-      Toast.makeText(getActivity(), "database failure during update", Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        db.releaseReference();
-      }
-    }
 
     String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
     if ( authType == null ) {

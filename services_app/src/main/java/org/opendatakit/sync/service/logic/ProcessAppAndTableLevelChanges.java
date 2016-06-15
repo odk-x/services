@@ -140,6 +140,12 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<TableResource>();
     }
 
+    // Everything was successful-enough to warrant deleting any sync
+    // ETags from syncing to a different server. This ensures that we
+    // only ever have the sync etags from the current server in case
+    // the user is switching servers for some reason.
+    sc.getSynchronizer().deleteAllSyncETagsExceptForCurrentServer();
+
     // working list of tables -- the list we will construct and return...
     List<TableResource> workingListOfTables = new ArrayList<TableResource>();
 

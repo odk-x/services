@@ -306,6 +306,13 @@ public interface Synchronizer {
       String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
 
   /**
+   * Delete file and manifest SyncETags that are not for the current server.
+   *
+   * @throws RemoteException
+   */
+  void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException;
+
+  /**
    *
    * @param fileDownloadUri
    * @param tableId

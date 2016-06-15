@@ -45,7 +45,7 @@ public class SyncETagsUtils {
     StringBuilder b = new StringBuilder();
     //@formatter:off
     b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.TABLE_ID);
     //@formatter:on
     if ( tableId == null ) {
@@ -71,7 +71,7 @@ public class SyncETagsUtils {
     StringBuilder b = new StringBuilder();
     //@formatter:off
     b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.URL);
     //@formatter:on
     if ( serverUriPrefix == null ) {
@@ -86,23 +86,23 @@ public class SyncETagsUtils {
       bindArgs.add(Integer.toString(serverUriPrefix.length()));
       bindArgs.add(serverUriPrefix);
     }
-
-     boolean inTransaction = db.inTransaction();
-     try {
-        if (!inTransaction) {
-           db.beginTransactionNonExclusive();
-        }
-
-        db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
-
-        if ( !inTransaction ) {
-           db.setTransactionSuccessful();
-        }
-     } finally {
-        if ( !inTransaction ) {
-           db.endTransaction();
-        }
-     }
+//
+//     boolean inTransaction = db.inTransaction();
+//     try {
+//        if (!inTransaction) {
+//           db.beginTransactionNonExclusive();
+//        }
+//
+//        db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+//
+//        if ( !inTransaction ) {
+//           db.setTransactionSuccessful();
+//        }
+//     } finally {
+//        if ( !inTransaction ) {
+//           db.endTransaction();
+//        }
+//     }
   }
 
   /**
@@ -123,7 +123,7 @@ public class SyncETagsUtils {
     StringBuilder b = new StringBuilder();
     //@formatter:off
     b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.URL).append(" IS NOT NULL");
     // delete anything not beginning with this prefix...
     // ...long enough
@@ -135,7 +135,22 @@ public class SyncETagsUtils {
     bindArgs.add(serverUriPrefix);
     //@formatter:on
 
-    db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+    boolean inTransaction = db.inTransaction();
+    try {
+      if (!inTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+
+      if ( !inTransaction ) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if ( !inTransaction ) {
+        db.endTransaction();
+      }
+    }
   }
   
   public String getManifestSyncETag(OdkConnectionInterface db, String url, String tableId) {
@@ -143,8 +158,8 @@ public class SyncETagsUtils {
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
     //@formatter:off
-    b.append("SELECT ").append(SyncETagColumns.ETAG_MD5_HASH).append(" FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+    b.append("SELECT * FROM ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.TABLE_ID);
     //@formatter:on
     if ( tableId == null ) {
@@ -193,7 +208,7 @@ public class SyncETagsUtils {
     StringBuilder b = new StringBuilder();
     //@formatter:off
     b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.TABLE_ID);
     //@formatter:on
     if ( tableId == null ) {
@@ -218,7 +233,7 @@ public class SyncETagsUtils {
         b.setLength(0);
         bindArgs.clear();
         //@formatter:off
-        b.append("INSERT INTO \"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" (")
+        b.append("INSERT INTO ").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" (")
          .append(SyncETagColumns.TABLE_ID).append(",")
          .append(SyncETagColumns.IS_MANIFEST).append(",")
          .append(SyncETagColumns.URL).append(",")
@@ -262,9 +277,8 @@ public class SyncETagsUtils {
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
     //@formatter:off
-    b.append("SELECT ").append(SyncETagColumns.ETAG_MD5_HASH).append(",")
-     .append(SyncETagColumns.LAST_MODIFIED_TIMESTAMP).append(" FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+    b.append("SELECT * FROM ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.TABLE_ID);
     //@formatter:on
     if ( tableId == null ) {
@@ -319,7 +333,7 @@ public class SyncETagsUtils {
     StringBuilder b = new StringBuilder();
     //@formatter:off
     b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" WHERE ")
+     .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.TABLE_ID);
     //@formatter:on
     if ( tableId == null ) {
@@ -344,7 +358,7 @@ public class SyncETagsUtils {
         b.setLength(0);
         bindArgs.clear();
         //@formatter:off
-        b.append("INSERT INTO \"").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append("\" (")
+        b.append("INSERT INTO ").append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" (")
          .append(SyncETagColumns.TABLE_ID).append(",")
          .append(SyncETagColumns.IS_MANIFEST).append(",")
          .append(SyncETagColumns.URL).append(",")
