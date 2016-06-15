@@ -135,10 +135,10 @@
     <string name="sync_upserting_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
     <string name="sync_altering_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
     <string name="sync_deleting_server_row">Deleting %1$s dataset row %2$d of %3$d on server.</string>
-    <string name="sync_skipping_attachments_server_row">Skipping %1$s dataset attachments for row %2$d of %3$d on server.</string>
-    <string name="sync_uploading_attachments_server_row">Uploading %1$s dataset attachments for row %2$d of %3$d to server.</string>
-    <string name="sync_downloading_attachments_server_row">Downloading %1$s dataset attachments for row %2$d of %3$d from server.</string>
-    <string name="sync_syncing_attachments_server_row">Syncing %1$s dataset attachments for row %2$d of %3$d with server.</string>
+    <string name="sync_skipping_attachments_server_row">Skipping %1$s attachments for row %2$d of %3$d on server.</string>
+    <string name="sync_uploading_attachments_server_row">Uploading %1$s attachments for row %2$d of %3$d to server.</string>
+    <string name="sync_downloading_attachments_server_row">Downloading %1$s attachments for row %2$d of %3$d from server.</string>
+    <string name="sync_syncing_attachments_server_row">Syncing %1$s attachments for row %2$d of %3$d with server.</string>
 
     <string name="sync_deleting_local_row">Deleting %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_updating_local_row">Updating %1$s local dataset row %2$d of %3$d.</string>
