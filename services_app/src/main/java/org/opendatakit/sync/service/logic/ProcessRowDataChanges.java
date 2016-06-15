@@ -849,9 +849,13 @@ public class ProcessRowDataChanges {
                 }
 
                 // process outcomes...
-                count = processRowOutcomes(te, tableResource, tableLevelResult, orderedColumns,
+                RowOutcomeSummary outcomeSummary = processRowOutcomes(te, tableResource,
+                    tableLevelResult, orderedColumns,
                     fileAttachmentColumns, hasAttachments, count,
                     allAlteredRows.size(), segmentAlter, outcomes.getRows(), specialCases);
+
+                count = outcomeSummary.countSoFar;
+                containsConflicts = containsConflicts || outcomeSummary.hasNewConflicts;
 
                 // NOTE: specialCases should probably be deleted?
                 // This is the case if the user doesn't have permissions...
@@ -1095,6 +1099,16 @@ public class ProcessRowDataChanges {
     }
   }
 
+  private static class RowOutcomeSummary {
+    final int countSoFar;
+    final boolean hasNewConflicts;
+
+    RowOutcomeSummary(int countSoFar, boolean hasNewConflicts) {
+      this.countSoFar = countSoFar;
+      this.hasNewConflicts = hasNewConflicts;
+    }
+  }
+
   /**
    * We pushed changes up to the server and now need to update the local rowETags to match
    * the rowETags assigned to those changes by the server.
@@ -1112,10 +1126,10 @@ public class ProcessRowDataChanges {
    * @param segmentAlter  changes that were pushed to server
    * @param outcomes      result of pushing those changes to server
    * @param specialCases
-   * @return
+   * @return RowOutcomeSummary of new count and whether or not conflicts were introduced.
    * @throws RemoteException
    */
-  private int processRowOutcomes(TableDefinitionEntry te, TableResource resource,
+  private RowOutcomeSummary processRowOutcomes(TableDefinitionEntry te, TableResource resource,
       TableLevelResult tableLevelResult, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns, boolean hasAttachments,
       int countSoFar, int totalOutcomesSize,
@@ -1236,7 +1250,7 @@ public class ProcessRowDataChanges {
       }
     }
 
-    return countSoFar;
+    return new RowOutcomeSummary(countSoFar, !rowsToMoveToInConflictLocally.isEmpty());
   }
 
   /**
