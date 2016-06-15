@@ -812,7 +812,7 @@ public class ProcessManifestContentAndFileChanges {
 
     // 4) Split that list of files to upload into 10MB batches and upload those to the server
     if (filesToUpload.isEmpty()) {
-      log.i(LOGTAG, "Put attachments: no files to send to server -- they are all synced");
+      log.i(LOGTAG, "syncRowLevelFileAttachments no files to send to server -- they are all synced");
       fullySyncedUploads = true;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
                attachmentState.equals(SyncAttachmentState.UPLOAD)) {
@@ -845,10 +845,9 @@ public class ProcessManifestContentAndFileChanges {
 
       fullySyncedUploads = true;
     }
-
     // 5) Download the files from the server
     if (filesToDownloadSizes.isEmpty()){
-      log.i(LOGTAG, "Put attachments: no files to fetch from server -- they are all synced");
+      log.i(LOGTAG, "syncRowLevelFileAttachments no files to fetch from server -- they are all synced");
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
                attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
@@ -884,8 +883,15 @@ public class ProcessManifestContentAndFileChanges {
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     }
 
-    if ( fullySyncedUploads && fullySyncedDownloads ) {
-      // Invoke AFTER caller makes device and server content fully match.
+    if ( attachmentState == SyncAttachmentState.NONE ||
+            ((fullySyncedUploads || (attachmentState == SyncAttachmentState.DOWNLOAD)) &&
+             (fullySyncedDownloads || (attachmentState == SyncAttachmentState.UPLOAD))) ) {
+      // there may be synced_pending_files rows, but all of the uploads we want to do
+      // have been uploaded, and all of the downloads we want to do have been downloaded.
+      //
+      // Therefore, we can update our eTag for the manifest incorporating our local state
+      // so that we can short-circuit the file checks the next time we sync. We'll still
+      // request the manifest, but if it hasn't changed, we call it good enough.
       try {
         // One might think that the uriFragmentHash needs to be updated here, but it does not.
         // Upon entering this routine, it tracked the content of the columns containing
@@ -893,12 +899,14 @@ public class ProcessManifestContentAndFileChanges {
         // locally or on the server). That content has not changed, so the uriFragmentHash
         // value continues to be valid now, once all the file attachments have been synced.
         sc.getSynchronizer().updateRowLevelManifestSyncETag(serverInstanceFileUri, tableId,
-            instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
+                instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
       } catch (RemoteException e) {
         log.printStackTrace(e);
         log.e(LOGTAG, "database access error (ignoring)");
       }
+    }
 
+    if ( fullySyncedUploads && fullySyncedDownloads ) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
       return true;
     } else {

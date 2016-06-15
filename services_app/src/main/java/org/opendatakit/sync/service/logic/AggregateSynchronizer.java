@@ -1138,9 +1138,11 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       db = sc.getDatabase();
       String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
+      if ( documentETag != null ) {
+        documentETag = restrictivePrefix + documentETag;
+      }
       sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db,
-          fileManifestUri.toString(), tableId,
-          restrictivePrefix + documentETag);
+          fileManifestUri.toString(), tableId, documentETag);
     } finally {
       sc.releaseDatabase(db);
       db = null;
