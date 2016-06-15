@@ -129,15 +129,16 @@
     <string name="sync_table_level_sync_failed">Failed table %1$s configuration sync.</string>
 
     <string name="sync_getting_changed_rows_on_server">Fetching %1$s dataset changes from server.</string>
-    <string name="sync_anaylzing_row_changes">Analyzing %1$s dataset changes.</string>
+    <string name="sync_anaylzing_local_row_changes">Collecting %1$s local row changes to send to server.</string>
+    <string name="sync_applying_batch_server_row_changes">Applying a batch of %1$s row updates from server.</string>
 
     <string name="sync_upserting_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
     <string name="sync_altering_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
     <string name="sync_deleting_server_row">Deleting %1$s dataset row %2$d of %3$d on server.</string>
-    <string name="sync_skipping_attachments_server_row">Skipping %1$s dataset attachment %2$d of %3$d on server.</string>
-    <string name="sync_uploading_attachments_server_row">Uploading %1$s dataset attachment %2$d of %3$d to server.</string>
-    <string name="sync_downloading_attachments_server_row">Downloading %1$s dataset attachment %2$d of %3$d from server.</string>
-    <string name="sync_syncing_attachments_server_row">Syncing %1$s dataset attachment %2$d of %3$d with server.</string>
+    <string name="sync_skipping_attachments_server_row">Skipping %1$s dataset attachments for row %2$d of %3$d on server.</string>
+    <string name="sync_uploading_attachments_server_row">Uploading %1$s dataset attachments for row %2$d of %3$d to server.</string>
+    <string name="sync_downloading_attachments_server_row">Downloading %1$s dataset attachments for row %2$d of %3$d from server.</string>
+    <string name="sync_syncing_attachments_server_row">Syncing %1$s dataset attachments for row %2$d of %3$d with server.</string>
 
     <string name="sync_deleting_local_row">Deleting %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_updating_local_row">Updating %1$s local dataset row %2$d of %3$d.</string>
