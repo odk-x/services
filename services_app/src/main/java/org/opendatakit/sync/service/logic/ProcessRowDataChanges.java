@@ -917,38 +917,41 @@ public class ProcessRowDataChanges {
           // It is easiest to just re-fetch the localRowTable so...
           // get all the rows in the data table -- we will iterate through
           // them all.
-          UserTable localDataTable = null;
-          {
-            OdkDbHandle db = null;
-            try {
-              db = sc.getDatabase();
-              String[] empty = {};
-              String[] syncStates = { SyncState.in_conflict.name(), SyncState.synced_pending_files.name() };
-
-              localDataTable = sc.getDatabaseService()
-                      .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
-                              DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
-                              null, DataTableColumns.ID, "ASC");
-            } finally {
-              sc.releaseDatabase(db);
-              db = null;
-            }
-          }
 
           // file attachments we should sync with the server...
           List<SyncRowPending> rowsToSyncFileAttachments = new ArrayList<SyncRowPending>();
+          {
+            // place localDataTable in this scope so it can be garbage collected...
+            UserTable localDataTable = null;
+            {
+              OdkDbHandle db = null;
+              try {
+                db = sc.getDatabase();
+                String[] empty = {};
+                String[] syncStates = {SyncState.in_conflict.name(), SyncState.synced_pending_files.name()};
 
-          // loop through the localRow table
-          for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-            Row localRow = localDataTable.getRowAtIndex(i);
-            String stateStr = localRow
-                    .getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
-            SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
+                localDataTable = sc.getDatabaseService()
+                        .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
+                                DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
+                                null, DataTableColumns.ID, "ASC");
+              } finally {
+                sc.releaseDatabase(db);
+                db = null;
+              }
+            }
 
-            // the local row wasn't impacted by a server change
-            // see if this local row should be pushed to the server.
-            perhapsAddToRowsToSyncFileAttachments(rowsToSyncFileAttachments, orderedColumns,
+            // loop through the localRow table
+            for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
+              Row localRow = localDataTable.getRowAtIndex(i);
+              String stateStr = localRow
+                      .getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
+              SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
+
+              // the local row wasn't impacted by a server change
+              // see if this local row should be pushed to the server.
+              perhapsAddToRowsToSyncFileAttachments(rowsToSyncFileAttachments, orderedColumns,
                       fileAttachmentColumns, localRow, state);
+            }
           }
 
           attachmentSyncSuccessful = (rowsToSyncFileAttachments.isEmpty());
