@@ -768,7 +768,7 @@ public class AggregateSynchronizer implements Synchronizer {
     request.setEntity(entity);
 
     try {
-      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED_SC_ACCEPTED);
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());
@@ -793,7 +793,7 @@ public class AggregateSynchronizer implements Synchronizer {
     request.setEntity(entity);
 
     try {
-      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED);
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());
@@ -882,7 +882,7 @@ public class AggregateSynchronizer implements Synchronizer {
     request.setEntity(mpFormEntity);
 
     try {
-      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED);
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());

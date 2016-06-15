@@ -107,6 +107,8 @@ public class HttpRestProtocolWrapper {
   static List<Integer> SC_OK_SC_NOT_MODIFIED;
   static List<Integer> SC_OK_SC_CONFLICT;
   static List<Integer> SC_OK_SC_NOT_FOUND;
+  static List<Integer> SC_CREATED;
+  static List<Integer> SC_CREATED_SC_ACCEPTED;
 
   static {
 
@@ -170,6 +172,15 @@ public class HttpRestProtocolWrapper {
     al.add(HttpStatus.SC_OK);
     al.add(HttpStatus.SC_NOT_FOUND);
     SC_OK_SC_NOT_FOUND = al;
+
+    al = new ArrayList<Integer>();
+    al.add(HttpStatus.SC_CREATED);
+    SC_CREATED = al;
+
+    al = new ArrayList<Integer>();
+    al.add(HttpStatus.SC_CREATED);
+    al.add(HttpStatus.SC_ACCEPTED);
+    SC_CREATED_SC_ACCEPTED = al;
   }
 
   private SyncExecutionContext sc;
