@@ -791,8 +791,11 @@ public class ProcessRowDataChanges {
               // see if this local row should be pushed to the server.
               if (state == SyncState.new_row || state == SyncState.changed
                   || state == SyncState.deleted) {
-                allAlteredRows.add(SyncRow.convertToSyncRow(orderedColumns, fileAttachmentColumns,
-                        localRow));
+                SyncRow sRow = SyncRow.convertToSyncRow(orderedColumns, fileAttachmentColumns, localRow);
+                if (state == SyncState.deleted) {
+                  sRow.setDeleted(true);
+                }
+                allAlteredRows.add(sRow);
               } else {
                 rowsToSyncCount += countRowToSyncFileAttachments(fileAttachmentColumns, state);
               }
