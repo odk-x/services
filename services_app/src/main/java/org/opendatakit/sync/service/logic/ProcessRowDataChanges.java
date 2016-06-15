@@ -700,6 +700,8 @@ public class ProcessRowDataChanges {
               localDataTable = updateLocalRowsFromServerChanges(tableResource, te, orderedColumns,
                   displayName, attachmentState, fileAttachmentColumns, localDataTable, rows);
 
+              containsConflicts = localDataTable.hasConflictRows();
+
               if (rows.isHasMoreResults()) {
                 websafeResumeCursor = rows.getWebSafeResumeCursor();
               } else {
