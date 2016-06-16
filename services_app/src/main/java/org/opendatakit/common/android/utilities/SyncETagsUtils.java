@@ -22,6 +22,7 @@ import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.SyncETagColumns;
 
+import java.net.URI;
 import java.util.ArrayList;
 
 public class SyncETagsUtils {
@@ -61,11 +62,20 @@ public class SyncETagsUtils {
   /**
    * Remove all ETags for anything other than the given server. 
    * Invoked when we change the target sync server...
+   *
+   * Because the server may return urls that include the port specification, the uri
+   * needs to be truncated to the scheme and hostname (e.g., https://hostname or http://hostname
    * 
    * @param db
    * @param serverUriPrefix
    */
   public void deleteAllSyncETagsExceptForServer(OdkConnectionInterface db, String serverUriPrefix) {
+
+    String uriPrefix = null;
+    if ( serverUriPrefix != null ) {
+      URI uriBase = URI.create(serverUriPrefix).normalize();
+      uriPrefix = uriBase.getScheme() + "://" + uriBase.getHost();
+    }
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -74,41 +84,53 @@ public class SyncETagsUtils {
      .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
      .append(SyncETagColumns.URL);
     //@formatter:on
-    if ( serverUriPrefix == null ) {
+    if ( uriPrefix == null ) {
       // i.e., delete everything
       b.append(" IS NOT NULL");
     } else {
       // delete anything not beginning with this prefix
       b.append(" IS NULL")
-       .append(" OR length(").append(SyncETagColumns.URL).append(") < ?");
-      bindArgs.add(Integer.toString(serverUriPrefix.length()));
-      b.append(" OR substr(").append(SyncETagColumns.URL).append(",1,?) != ?");
-      bindArgs.add(Integer.toString(serverUriPrefix.length()));
-      bindArgs.add(serverUriPrefix);
+       .append(" OR length(").append(SyncETagColumns.URL).append(") < abs(?)");
+      // wrap with abs() to convert the string to a numeric value
+      bindArgs.add(Integer.toString(uriPrefix.length()));
+
+      String likePrefix = uriPrefix;
+      likePrefix = likePrefix.replace("\\", "\\\\");
+      likePrefix = likePrefix.replace("%", "\\%");
+      likePrefix = likePrefix.replace("_", "\\_");
+
+      likePrefix = likePrefix + "%";
+
+      b.append(" OR ").append(SyncETagColumns.URL).append(" NOT LIKE ? ESCAPE ?");
+      bindArgs.add(likePrefix);
+      bindArgs.add("\\");
     }
-//
-//     boolean inTransaction = db.inTransaction();
-//     try {
-//        if (!inTransaction) {
-//           db.beginTransactionNonExclusive();
-//        }
-//
-//        db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
-//
-//        if ( !inTransaction ) {
-//           db.setTransactionSuccessful();
-//        }
-//     } finally {
-//        if ( !inTransaction ) {
-//           db.endTransaction();
-//        }
-//     }
+
+     boolean inTransaction = db.inTransaction();
+     try {
+        if (!inTransaction) {
+           db.beginTransactionNonExclusive();
+        }
+
+        db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+
+        if ( !inTransaction ) {
+           db.setTransactionSuccessful();
+        }
+     } finally {
+        if ( !inTransaction ) {
+           db.endTransaction();
+        }
+     }
   }
 
   /**
    * Remove all ETags for the given server.
    * Invoked when we are resetting the app server (to ensure
    * everything we have locally is pushed to the server).
+   *
+   * Because the server may return urls that include the port specification, the uri
+   * needs to be truncated to the scheme and hostname (e.g., https://hostname or http://hostname
    *
    * @param db
    * @param serverUriPrefix
@@ -118,7 +140,9 @@ public class SyncETagsUtils {
     if ( serverUriPrefix == null ) {
       throw new IllegalArgumentException("must specify a serverUriPrefix");
     }
-    
+    URI uriBase = URI.create(serverUriPrefix).normalize();
+    String uriPrefix = uriBase.getScheme() + "://" + uriBase.getHost();
+
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
     //@formatter:off
@@ -127,12 +151,21 @@ public class SyncETagsUtils {
      .append(SyncETagColumns.URL).append(" IS NOT NULL");
     // delete anything not beginning with this prefix...
     // ...long enough
-    b.append(" AND length(").append(SyncETagColumns.URL).append(") >= ?");
-    bindArgs.add(Integer.toString(serverUriPrefix.length()));
+    b.append(" AND length(").append(SyncETagColumns.URL).append(") >= abs(?)");
+    // wrap with abs() to convert the string to a numeric value
+    bindArgs.add(Integer.toString(uriPrefix.length()));
     // ...shares prefix
-    b.append(" AND substr(").append(SyncETagColumns.URL).append(",1,?) = ?");
-    bindArgs.add(Integer.toString(serverUriPrefix.length()));
-    bindArgs.add(serverUriPrefix);
+
+    String likePrefix = uriPrefix;
+    likePrefix = likePrefix.replace("\\", "\\\\");
+    likePrefix = likePrefix.replace("%", "\\%");
+    likePrefix = likePrefix.replace("_", "\\_");
+
+    likePrefix = likePrefix + "%";
+
+    b.append(" AND ").append(SyncETagColumns.URL).append(" LIKE ? ESCAPE ?");
+    bindArgs.add(likePrefix);
+    bindArgs.add("\\");
     //@formatter:on
 
     boolean inTransaction = db.inTransaction();
