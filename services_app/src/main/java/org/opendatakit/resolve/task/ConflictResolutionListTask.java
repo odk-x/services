@@ -6,6 +6,8 @@ import android.widget.ArrayAdapter;
 
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -42,6 +44,13 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
     StringBuilder exceptions = null;
 
+    String activeUser;
+    String locale;
+
+    PropertiesSingleton props = CommonToolProperties.get(mContext, mAppName);
+    activeUser = props.getActiveUser();
+    locale = props.getLocale();
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -56,10 +65,12 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
           if ( mTakeLocal ) {
             ODKDatabaseImplUtils.get()
-                .resolveServerConflictTakeLocalRowWithId(db, mAppName, mTableId, entry.rowId);
+                .resolveServerConflictTakeLocalRowWithId(db, mAppName, mTableId, entry.rowId,
+                    activeUser, locale);
           } else {
             ODKDatabaseImplUtils.get()
-                .resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId, entry.rowId);
+                .resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId, entry.rowId,
+                    activeUser, locale);
           }
 
         } catch (Exception e) {

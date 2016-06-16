@@ -34,7 +34,6 @@ import android.widget.*;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.fragment.ProgressDialogFragment;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -43,10 +42,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
-import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.sync.service.SyncStatus;
+import org.opendatakit.sync.service.*;
 import org.sqlite.database.sqlite.SQLiteException;
 
 /**
@@ -72,8 +68,8 @@ public class SyncFragment extends Fragment {
   private String mAppName;
 
   private Handler handler = new Handler();
-  private ProgressDialogFragment progressDialog = null;
-  private OutcomeDialogFragment outcomeDialog = null;
+  private DismissableProgressDialogFragment progressDialog = null;
+  private DismissableOutcomeDialogFragment outcomeDialog = null;
 
   private TextView uriField;
   private TextView accountAuthType;
@@ -259,6 +255,7 @@ public class SyncFragment extends Fragment {
     startSync.setEnabled(false);
     resetServer.setEnabled(false);
   }
+
   private void perhapsEnableButtons() {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
@@ -286,29 +283,6 @@ public class SyncFragment extends Fragment {
     // remove any settings for a URL other than the server URL...
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    String verifiedUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-
-    OdkDbHandle dbHandleName = new OdkDbHandle(ODKDataUtils.genUUID());
-    OdkConnectionInterface db = null;
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(getAppName(), dbHandleName);
-
-      SyncETagsUtils utils = new SyncETagsUtils();
-      utils.deleteAllSyncETagsExceptForServer(db,
-          (verifiedUri == null || verifiedUri.length() == 0) ? null : verifiedUri.toString());
-    } catch (SQLiteException e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "[onClickSaveSettings][onClick] unable to update database");
-      Toast.makeText(getActivity(), "database failure during update", Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        db.releaseReference();
-      }
-    }
 
     String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
     if ( authType == null ) {
@@ -369,17 +343,17 @@ public class SyncFragment extends Fragment {
       @Override public void doAction(OdkSyncServiceInterface syncServiceInterface)
           throws RemoteException {
         if ( syncServiceInterface != null ) {
-          WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] syncServiceInterface != null");
+//          WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [tickleInterface] syncServiceInterface != null");
           final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
-          final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
-          final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
+          final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
           if (status == SyncStatus.SYNCING) {
             syncAction = SyncActions.MONITOR_SYNCING;
 
             handler.post(new Runnable() {
               @Override
               public void run() {
-                showProgressDialog(status, progress, message);
+                showProgressDialog(status, event.progressState,
+                    event.progressMessageText, event.curProgressBar, event.maxProgressBar);
               }
             });
             return;
@@ -393,7 +367,7 @@ public class SyncFragment extends Fragment {
             handler.post(new Runnable() {
               @Override
               public void run() {
-                showProgressDialog(SyncStatus.INIT, null, getString(R.string.sync_starting));
+                showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1, 0);
               }
             });
             break;
@@ -404,17 +378,17 @@ public class SyncFragment extends Fragment {
             handler.post(new Runnable() {
               @Override
               public void run() {
-                showProgressDialog(SyncStatus.INIT, null, getString(R.string.sync_starting));
+                showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1, 0);
               }
             });
             break;
           case IDLE:
-            if ( progress == SyncProgressState.COMPLETE ||
-                 progress == SyncProgressState.ERROR ) {
+            if ( event.progressState == SyncProgressState.FINISHED ) {
+              final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
               handler.post(new Runnable() {
                 @Override
                 public void run() {
-                  showOutcomeDialog(status, progress);
+                  showOutcomeDialog(status, result);
                 }
               });
             }
@@ -437,10 +411,10 @@ public class SyncFragment extends Fragment {
 
   private void updateInterface() {
     Activity activity = getActivity();
-    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] after getActivity");
     if ( activity == null ) {
       // we are in transition -- do nothing
-      WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+      WebLogger.getLogger(getAppName())
+          .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
       handler.postDelayed(new Runnable() {
         @Override
         public void run() {
@@ -454,32 +428,30 @@ public class SyncFragment extends Fragment {
           @Override
           public void doAction(OdkSyncServiceInterface syncServiceInterface)
               throws RemoteException {
-            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] called");
             if ( syncServiceInterface != null ) {
               final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
-              final SyncProgressState progress = syncServiceInterface.getSyncProgress(getAppName());
-              final String message = syncServiceInterface.getSyncUpdateMessage(getAppName());
-              WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] and status = " + status);
+              final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
               if (status == SyncStatus.SYNCING) {
                 syncAction = SyncActions.MONITOR_SYNCING;
 
                 handler.post(new Runnable() {
                   @Override
                   public void run() {
-                    showProgressDialog(status, progress, message);
+                    showProgressDialog(status, event.progressState, event.progressMessageText,
+                        event.curProgressBar, event.maxProgressBar);
                   }
                 });
                 return;
               } else {
                 // request completed
                 syncAction = SyncActions.IDLE;
+                final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                 handler.post(new Runnable() {
                   @Override
                   public void run() {
                     dismissProgressDialog();
-                    if ( progress == SyncProgressState.COMPLETE ||
-                        progress == SyncProgressState.ERROR ) {
-                      showOutcomeDialog(status, progress);
+                    if ( event.progressState == SyncProgressState.FINISHED ) {
+                      showOutcomeDialog(status, result);
                     }
                   }
                 });
@@ -487,7 +459,6 @@ public class SyncFragment extends Fragment {
               }
             } else {
               // The service is not bound yet so now we need to try again
-              WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [updateInterface] and syncServiceInterface is null");
               handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -628,7 +599,8 @@ public class SyncFragment extends Fragment {
     WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
   }
 
-  private void showProgressDialog( SyncStatus status, SyncProgressState progress, String message ) {
+  private void showProgressDialog( SyncStatus status, SyncProgressState progress, String message,
+      int progressStep, int maxStep ) {
     if ( getActivity() == null ) {
       // we are tearing down or still initializing
       return;
@@ -638,7 +610,7 @@ public class SyncFragment extends Fragment {
       disableButtons();
 
       if ( progress == null ) {
-        progress = SyncProgressState.INIT;
+        progress = SyncProgressState.INACTIVE;
       }
 
       int id_title;
@@ -659,17 +631,17 @@ public class SyncFragment extends Fragment {
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
 
-      if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
-        ((ProgressDialogFragment) dialog).getDialog().setTitle(id_title);
-        ((ProgressDialogFragment) dialog).setMessage(message);
+      if (dialog != null && ((DismissableProgressDialogFragment) dialog).getDialog() != null) {
+        ((DismissableProgressDialogFragment) dialog).getDialog().setTitle(id_title);
+        ((DismissableProgressDialogFragment) dialog).setMessage(message, progressStep, maxStep);
       } else if (progressDialog != null && progressDialog.getDialog() != null) {
         progressDialog.getDialog().setTitle(id_title);
-        progressDialog.setMessage(message);
+        progressDialog.setMessage(message, progressStep, maxStep);
       } else {
         if (progressDialog != null) {
           dismissProgressDialog();
         }
-        progressDialog = ProgressDialogFragment.newInstance(getString(id_title), message);
+        progressDialog = DismissableProgressDialogFragment.newInstance(getString(id_title), message);
 
         // If fragment is not visible an exception could be thrown
         // TODO: Investigate a better way to handle this
@@ -679,7 +651,7 @@ public class SyncFragment extends Fragment {
           ise.printStackTrace();
         }
       }
-      if ( status == SyncStatus.SYNCING || status == SyncStatus.INIT ) {
+      if ( status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
           @Override public void run() {
             updateInterface();
@@ -705,7 +677,7 @@ public class SyncFragment extends Fragment {
         @Override
         public void run() {
           try {
-            ((ProgressDialogFragment) dialog).dismiss();
+            ((DismissableProgressDialogFragment) dialog).dismiss();
           } catch (Exception e) {
             // ignore... we tried!
           }
@@ -714,7 +686,7 @@ public class SyncFragment extends Fragment {
       });
     }
     if (progressDialog != null) {
-      final ProgressDialogFragment scopedReference = progressDialog;
+      final DismissableProgressDialogFragment scopedReference = progressDialog;
       progressDialog = null;
       // the UI may not yet have resolved the showing of the dialog.
       // use a handler to add the dismiss to the end of the queue.
@@ -731,7 +703,7 @@ public class SyncFragment extends Fragment {
     }
   }
 
-  private void showOutcomeDialog( SyncStatus status, SyncProgressState progress ) {
+  private void showOutcomeDialog( SyncStatus status, SyncOverallResult result ) {
     if ( getActivity() == null ) {
       // we are tearing down or still initializing
       return;
@@ -743,43 +715,81 @@ public class SyncFragment extends Fragment {
       String message;
       int id_title;
       switch ( status ) {
-      case INIT:
-      case SYNCING:
-      default:
-        throw new IllegalStateException("Should be in a complete or error state");
-
-      case NETWORK_ERROR:
-        id_title = R.string.sync_network_error;
-        message = "Please verify your device browser can access the server";
-        break;
-      case FILE_ERROR:
-        id_title = R.string.sync_file_transmission_error;
-        message = "There were problems writing files to your application folder.";
-        break;
-      case AUTH_RESOLUTION:
-        id_title = R.string.sync_user_authorization_failure;
-        message = "Please verify your user credentials and privileges to the server";
-        break;
-      case CONFLICT_RESOLUTION:
-        id_title = R.string.sync_conflicts_need_resolving;
-        message = "Other users have modified the same entries that you have.\r\n" +
-            "You now will be directed to merge your changes with theirs";
-        break;
-      case SYNC_COMPLETE:
-        id_title = R.string.sync_successful;
-        message = "Success! Your application content (data and configuration) matches that on the server.";
-        break;
-      case SYNC_COMPLETE_PENDING_ATTACHMENTS:
-        id_title = R.string.sync_complete_pending_attachments;
-        message = "Configuration and data have been sync'd, but attachments have not been sync'd.";
-        break;
+        default:
+          throw new IllegalStateException("Unexpected missing case statement");
+        case
+                /** earlier sync ended with socket or lower level transport or protocol error (e.g., 300's) */ NETWORK_TRANSPORT_ERROR:
+          id_title = R.string.sync_communications_error;
+          message = getString(R.string.sync_status_network_transport_error);
+          break;
+        case
+                /** earlier sync ended with Authorization denied (authentication and/or access) error */ AUTHENTICATION_ERROR:
+          id_title = R.string.sync_user_authorization_failure;
+          message = getString(R.string.sync_status_authentication_error);
+          break;
+        case
+                /** earlier sync ended with a 500 error from server */ SERVER_INTERNAL_ERROR:
+          id_title = R.string.sync_communications_error;
+          message = getString(R.string.sync_status_internal_server_error);
+          break;
+        case /** the server is not an ODK Server - bad client config */ SERVER_IS_NOT_ODK_SERVER:
+          id_title = R.string.sync_device_configuration_failure;
+          message = getString(R.string.sync_status_bad_gateway_or_client_config);
+          break;
+        case
+                /** earlier sync ended with a 400 error that wasn't Authorization denied */ REQUEST_OR_PROTOCOL_ERROR:
+          id_title = R.string.sync_communications_error;
+          message = getString(R.string.sync_status_request_or_protocol_error);
+          break;
+        case /** no earlier sync and no active sync */ NONE:
+        case /** active sync -- get SyncProgressEvent to see current status */ SYNCING:
+        case
+                /** error accessing or updating database */ DEVICE_ERROR:
+          id_title = R.string.sync_device_internal_error;
+          message = getString(R.string.sync_status_device_internal_error);
+          break;
+        case
+                /** the server is not configured for this appName -- Site Admin / Preferences */ APPNAME_NOT_SUPPORTED_BY_SERVER:
+          id_title = R.string.sync_server_configuration_failure;
+          message = getString(R.string.sync_status_appname_not_supported_by_server);
+          break;
+        case
+                /** the server does not have any configuration, or no configuration for this client version */ SERVER_MISSING_CONFIG_FILES:
+          id_title = R.string.sync_server_configuration_failure;
+          message = getString(R.string.sync_status_server_missing_config_files);
+          break;
+        case
+                /** the device does not have any configuration to push to server */ SERVER_RESET_FAILED_DEVICE_HAS_NO_CONFIG_FILES:
+          id_title = R.string.sync_device_configuration_failure;
+          message = getString(R.string.sync_status_server_reset_failed_device_has_no_config_files);
+          break;
+        case
+                /** while a sync was in progress, another device reset the app config, requiring a restart of
+                 * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
+          id_title = R.string.sync_resync_because_config_reset_error;
+          message = getString(R.string.sync_status_resync_because_config_has_been_reset_error);
+          break;
+        case
+                /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
+          id_title = R.string.sync_conflicts_need_resolving;
+          message = getString(R.string.sync_conflicts_text);
+          break;
+        case
+                /** earlier sync ended successfully without conflicts and all row-level attachments sync'd */ SYNC_COMPLETE:
+          id_title = R.string.sync_successful;
+          message = getString(R.string.sync_successful_text);
+          break;
+        case
+                /** earlier sync ended successfully without conflicts but needs row-level attachments sync'd */ SYNC_COMPLETE_PENDING_ATTACHMENTS:
+          id_title = R.string.sync_complete_pending_attachments;
+          message = getString(R.string.sync_complete_pending_attachments_text);
       }
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(OUTCOME_DIALOG_TAG);
 
-      if (dialog != null && ((OutcomeDialogFragment) dialog).getDialog() != null) {
-        ((OutcomeDialogFragment) dialog).getDialog().setTitle(id_title);
-        ((OutcomeDialogFragment) dialog).setMessage(message);
+      if (dialog != null && ((DismissableOutcomeDialogFragment) dialog).getDialog() != null) {
+        ((DismissableOutcomeDialogFragment) dialog).getDialog().setTitle(id_title);
+        ((DismissableOutcomeDialogFragment) dialog).setMessage(message);
       } else if (outcomeDialog != null && outcomeDialog.getDialog() != null) {
         outcomeDialog.getDialog().setTitle(id_title);
         outcomeDialog.setMessage(message);
@@ -787,11 +797,10 @@ public class SyncFragment extends Fragment {
         if (outcomeDialog != null) {
           dismissOutcomeDialog();
         }
-        outcomeDialog = OutcomeDialogFragment.newInstance(getString(id_title),
+        outcomeDialog = DismissableOutcomeDialogFragment.newInstance(getString(id_title),
             message,
-            (progress == SyncProgressState.COMPLETE &&
-                (status == SyncStatus.SYNC_COMPLETE ||
-                 status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS)));
+            (status == SyncStatus.SYNC_COMPLETE ||
+             status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS));
 
         // If fragment is not visible an exception could be thrown
         // TODO: Investigate a better way to handle this
@@ -820,7 +829,7 @@ public class SyncFragment extends Fragment {
         @Override
         public void run() {
           try {
-            ((OutcomeDialogFragment) dialog).dismiss();
+            ((DismissableOutcomeDialogFragment) dialog).dismiss();
           } catch (Exception e) {
             // ignore... we tried!
           }
@@ -829,7 +838,7 @@ public class SyncFragment extends Fragment {
       });
     }
     if (outcomeDialog != null) {
-      final OutcomeDialogFragment scopedReference = outcomeDialog;
+      final DismissableOutcomeDialogFragment scopedReference = outcomeDialog;
       outcomeDialog = null;
       // the UI may not yet have resolved the showing of the dialog.
       // use a handler to add the dismiss to the end of the queue.

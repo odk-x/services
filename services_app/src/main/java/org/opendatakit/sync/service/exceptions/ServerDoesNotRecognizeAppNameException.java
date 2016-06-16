@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 University of Washington
+ * Copyright (C) 2016 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,21 +15,21 @@
  */
 package org.opendatakit.sync.service.exceptions;
 
-import java.io.IOException;
+import org.opendatakit.httpclientandroidlib.HttpRequest;
+import org.opendatakit.httpclientandroidlib.HttpResponse;
 
-public class RequestFailureException extends IOException {
+public class ServerDoesNotRecognizeAppNameException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public RequestFailureException() {
-    super();
+  public ServerDoesNotRecognizeAppNameException(String message, Exception e,
+      HttpRequest request, HttpResponse response) {
+    super(message, e, request, response);
   }
 
-  /**
-   * @param detailMessage
-   */
-  public RequestFailureException(String detailMessage) {
-    super(detailMessage);
+  public ServerDoesNotRecognizeAppNameException(String message,
+      HttpRequest request, HttpResponse response) {
+    super(message, request, response);
   }
 
 }
