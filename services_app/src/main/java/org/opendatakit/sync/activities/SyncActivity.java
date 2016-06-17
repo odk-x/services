@@ -86,26 +86,19 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     setBound(false);
   }
 
-  private void doSyncInterfaceAction(OdkSyncServiceInterface syncServiceInterface,
-                                     DoSyncActionCallback doSyncActionCallback) throws RemoteException {
-    doSyncActionCallback.doAction(syncServiceInterface);
-    WebLogger.getLogger(getAppName()).i(TAG, "[doSyncInterfaceAction] called");
-  }
-
   /**
    * called by fragments that want to do something on the sync service connection.
    *
    * @param callback - callback for fragments that want to use sync service
    */
   public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
-    WebLogger.getLogger(getAppName()).i(TAG, "[invokeSyncInterfaceAction] called");
     try {
       boolean bound = getBound();
       if (odkSyncInterface != null && callback != null && bound == true) {
-        doSyncInterfaceAction(odkSyncInterface, callback);
+        callback.doAction(odkSyncInterface);
       } else {
         if (callback != null) {
-          doSyncInterfaceAction(odkSyncInterface, callback);
+          callback.doAction(odkSyncInterface);
         }
       }
     } catch (RemoteException e) {
@@ -168,12 +161,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     if ( newFragment == null ) {
       newFragment = new SyncFragment();
       WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
+      
+      FragmentTransaction trans = mgr.beginTransaction();
+      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
+      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
+      trans.commit();
     }
-
-    FragmentTransaction trans = mgr.beginTransaction();
-    trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-    trans.commit();
   }
 
   @Override
@@ -188,6 +181,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     }
 
     super.onDestroy();
+  }
+
+  @Override public void onBackPressed() {
+    super.onBackPressed();
+    setResult(RESULT_CANCELED);
+    finish();
   }
 
   @Override
@@ -246,7 +245,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
         newFragment = new AboutMenuFragment();
       }
       FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.main_activity_view, newFragment, AboutMenuFragment.NAME);
+      trans.replace(R.id.sync_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 

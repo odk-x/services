@@ -107,8 +107,8 @@ dependencies {
     } else {
         demoCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
                 version: latestVersion, ext: 'aar')
-        masterCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
-                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: libraryMasterArtifactName, classifier: masterRelease,
+                version: masterArtifactVersion, ext: 'aar')
         snapshotCompile(group: groupId, name: librarySnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
         uitestCompile(group: groupId, name: librarySnapshotArtifactName,

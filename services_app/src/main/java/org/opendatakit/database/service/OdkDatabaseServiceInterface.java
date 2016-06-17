@@ -15,7 +15,6 @@
 package org.opendatakit.database.service;
 
 import android.content.ContentValues;
-import android.os.Parcel;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -23,18 +22,17 @@ import android.util.Log;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
-import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.DatabaseConsts;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
@@ -47,12 +45,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   private final OdkDatabaseService odkDatabaseService;
 
   /**
-   * @param odkDatabaseService
+   * @param odkDatabaseService -- service under which this interface was created
    */
   OdkDatabaseServiceInterface(OdkDatabaseService odkDatabaseService) {
     this.odkDatabaseService = odkDatabaseService;
     // Used to ensure that the singleton has been initialized properly
     AndroidConnectFactory.configure();
+  }
+
+  private String getActiveUser(String appName) {
+    PropertiesSingleton props =
+        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
+    return props.getActiveUser();
+  }
+
+  private String getLocale(String appName) {
+    PropertiesSingleton props =
+        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
+    return props.getLocale();
   }
 
   @Override public OdkDbHandle openDatabase(String appName) throws RemoteException {
@@ -183,8 +193,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    * and register the tuple of (choiceListId, choiceListJSON).
    * Return choiceListId.
    *
-   * @param appName
-   * @param dbHandleName
+   * @param appName -- application name
+   * @param dbHandleName -- database handle
    * @param choiceListJSON -- the actual JSON choice list text.
    * @return choiceListId -- the unique code mapping to the choiceListJSON
    */
@@ -222,8 +232,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   /**
    * Return the choice list JSON corresponding to the choiceListId
    *
-   * @param appName
-   * @param dbHandleName
+   * @param appName -- application name
+   * @param dbHandleName -- database handle
    * @param choiceListId -- the md5 hash of the choiceListJSON
    * @return choiceListJSON -- the actual JSON choice list text.
    */
@@ -692,7 +702,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         .i("getTableHealthStatuses", appName + " " + dbHandleName.getDatabaseHandle() + " " +
             "getTableHealthStatuses -- searching for conflicts and checkpoints ");
 
-    ArrayList<TableHealthInfo> problems = new ArrayList<TableHealthInfo>();
+    ArrayList<TableHealthInfo> problems = new ArrayList<>();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -885,13 +895,17 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
+              locale);
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
@@ -924,13 +938,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, locale);
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
@@ -964,6 +981,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -971,7 +991,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
 
       ODKDatabaseImplUtils.get().placeRowIntoServerConflictWithId(db, tableId, orderedColumns,
-          cvValues, rowId, localRowConflictType);
+          cvValues, rowId, localRowConflictType, activeUser, locale);
       UserTable t = ODKDatabaseImplUtils.get().getConflictingRowsInExistingDBTableWithId(db,
           appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
@@ -1310,13 +1330,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+          .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, locale);
       UserTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, appName, tableId, orderedColumns, rowId);
       db.setTransactionSuccessful();
@@ -1382,13 +1405,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalRowWithId(db, appName, tableId, rowId);
+          .resolveServerConflictTakeLocalRowWithId(db, appName, tableId, rowId, activeUser, locale);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1417,6 +1443,9 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -1424,7 +1453,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       ODKDatabaseImplUtils.get()
           .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, appName, tableId, cvValues,
-              rowId);
+              rowId, activeUser, locale);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1452,13 +1481,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String locale = getLocale(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeServerRowWithId(db, appName, tableId, rowId);
+          .resolveServerConflictTakeServerRowWithId(db, appName, tableId, rowId, activeUser, locale);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1740,7 +1772,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
 
   @Override public OdkDbChunk getChunk(ParcelUuid chunkID) {
-    return OdkDatabaseService.removeParceledChunk(chunkID.getUuid());
+    return odkDatabaseService.removeParceledChunk(chunkID.getUuid());
   }
 
   private OdkDbChunk getAndCacheChunks(Parcelable data) {
@@ -1773,7 +1805,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     OdkDbChunk firstChunk = chunkList.remove(0);
 
     if (chunkList.size() > 0) {
-      OdkDatabaseService.putParceledChunks(chunkList);
+      odkDatabaseService.putParceledChunks(chunkList);
     }
 
     return firstChunk;

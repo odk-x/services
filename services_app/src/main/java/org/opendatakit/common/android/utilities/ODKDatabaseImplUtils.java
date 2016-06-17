@@ -2063,7 +2063,7 @@ public class ODKDatabaseImplUtils {
    */
   public void placeRowIntoServerConflictWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
-      int localRowConflictType) {
+      int localRowConflictType, String activeUser, String locale) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2073,7 +2073,8 @@ public class ODKDatabaseImplUtils {
 
       this.deleteServerConflictRowWithId(db, tableId, rowId);
       this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
-      this.insertRowWithId(db, tableId, orderedColumns, cvValues, rowId);
+      this.insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+          activeUser, locale);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2476,9 +2477,12 @@ public class ODKDatabaseImplUtils {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void updateRowWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
+      String activeUser, String locale) {
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -2488,7 +2492,8 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.put(DataTableColumns.ID, rowId);
     cvDataTableVal.putAll(cvValues);
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true);
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true,
+        activeUser, locale);
   }
 
   /**
@@ -2554,9 +2559,11 @@ public class ODKDatabaseImplUtils {
    * @param appName
    * @param tableId
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String appName,
-      String tableId, String rowId) {
+      String tableId, String rowId, String activeUser, String locale) {
 
     boolean inTransaction = false;
     try {
@@ -2657,7 +2664,8 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, finalSyncState, localConflictType);
 
       // update local with the changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
+          activeUser, locale);
 
       // and reset the sync state to whatever it should be (update will make it changed)
       restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
@@ -2686,9 +2694,12 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param cvValues key-value pairs from the server record that we should incorporate.
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface db,
-      String appName, String tableId, ContentValues cvValues, String rowId) {
+      String appName, String tableId, ContentValues cvValues, String rowId,
+      String activeUser, String locale) {
 
     boolean inTransaction = false;
     try {
@@ -2777,7 +2788,8 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with server's changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
+          activeUser, locale);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2798,9 +2810,11 @@ public class ODKDatabaseImplUtils {
    * @param appName
    * @param tableId
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db, String appName,
-      String tableId, String rowId) {
+      String tableId, String rowId, String activeUser, String locale) {
 
     boolean inTransaction = false;
     try {
@@ -2929,7 +2943,8 @@ public class ODKDatabaseImplUtils {
 
         // update local with server's changes
 
-        updateRowWithId(db, tableId, orderedColumns, updateValues, rowId);
+        updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
+            activeUser, locale);
 
         // and reset the sync state to whatever it should be (update will make it changed)
         restoreRowFromConflict(db, tableId, rowId, newState, null);
@@ -2958,9 +2973,12 @@ public class ODKDatabaseImplUtils {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
+      String activeUser, String locale) {
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(
@@ -3017,7 +3035,8 @@ public class ODKDatabaseImplUtils {
         currValues.putAll(cvValues);
         currValues.put(DataTableColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
+            activeUser, locale);
         return;
       }
 
@@ -3036,7 +3055,8 @@ public class ODKDatabaseImplUtils {
       if (c.getCount() <= 0) {
         cvValues.put(DataTableColumns._ID, rowId);
         cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues,
+            activeUser, locale);
         return;
       } else {
         // Make sure that the conflict_type of any existing row
@@ -3098,7 +3118,8 @@ public class ODKDatabaseImplUtils {
           insertValueIntoContentValues(currValues, theClass, name, object);
         }
 
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues);
+        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
+            activeUser, locale);
       }
     } finally {
       if (c != null && !c.isClosed()) {
@@ -3154,9 +3175,12 @@ public class ODKDatabaseImplUtils {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @param activeUser
+   * @param locale
    */
   public void insertRowWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String rowId) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
+      String activeUser, String locale) {
 
     if (cvValues == null || cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -3166,14 +3190,22 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.put(DataTableColumns.ID, rowId);
     cvDataTableVal.putAll(cvValues);
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false);
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false,
+        activeUser, locale);
   }
 
   /**
    * Write checkpoint into the database
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param activeUser
+   * @param locale
    */
   private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String locale) {
     String whereClause = null;
     String[] whereArgs = new String[1];
     String rowId = null;
@@ -3226,7 +3258,7 @@ public class ODKDatabaseImplUtils {
 
     if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
         cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
-      cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+      cvDataTableVal.put(DataTableColumns.LOCALE, locale);
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) || (
@@ -3243,7 +3275,7 @@ public class ODKDatabaseImplUtils {
     if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
         cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
       cvDataTableVal
-          .put(DataTableColumns.SAVEPOINT_CREATOR, DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+          .put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
     }
 
     cleanUpValuesMap(orderedColumns, cvDataTableVal);
@@ -3273,7 +3305,8 @@ public class ODKDatabaseImplUtils {
    * TODO: This is broken w.r.t. updates of partial fields
    */
   private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate) {
+      OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
+      String activeUser, String locale) {
     String rowId = null;
     String whereClause = null;
     boolean specifiesConflictType = cvValues.containsKey(DataTableColumns.CONFLICT_TYPE);
@@ -3396,7 +3429,7 @@ public class ODKDatabaseImplUtils {
 
         if (cvDataTableVal.containsKey(DataTableColumns.LOCALE) && (
             cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
-          cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+          cvDataTableVal.put(DataTableColumns.LOCALE, locale);
         }
 
         if (cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) && (
@@ -3413,7 +3446,7 @@ public class ODKDatabaseImplUtils {
         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
             cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
           cvDataTableVal
-              .put(DataTableColumns.SAVEPOINT_CREATOR, DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+              .put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
         }
       } else {
 
@@ -3447,7 +3480,7 @@ public class ODKDatabaseImplUtils {
 
         if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
             cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
-          cvDataTableVal.put(DataTableColumns.LOCALE, DataTableColumns.DEFAULT_LOCALE);
+          cvDataTableVal.put(DataTableColumns.LOCALE, locale);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) || (
@@ -3464,7 +3497,7 @@ public class ODKDatabaseImplUtils {
         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
             cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
           cvDataTableVal
-              .put(DataTableColumns.SAVEPOINT_CREATOR, DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
+              .put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
         }
       }
 

@@ -40,9 +40,11 @@ import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.sync.service.exceptions.*;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -59,19 +61,11 @@ public class SyncExecutionContext implements SynchronizerStatus {
     mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
   }
 
-  static final AtomicBoolean refreshRequired = new AtomicBoolean(false);
-
-  public static final void refreshActivityUINeeded(String appName) {
-    refreshRequired.set(true);
-    WebLogger.getLogger(appName).e(TAG, "FROM UI THREAD: triggering another polling cycle");
-  }
-
   public static void invalidateAuthToken(AppAwareApplication application, String appName) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
     AccountManager.get(application).invalidateAuthToken(ACCOUNT_TYPE_G, props.getProperty(CommonToolProperties.KEY_AUTH));
     props.removeProperty(CommonToolProperties.KEY_AUTH);
     props.writeProperties();
-    refreshActivityUINeeded(appName);
   }
 
   /**
@@ -137,7 +131,46 @@ public class SyncExecutionContext implements SynchronizerStatus {
   public void setAppLevelSyncOutcome(SyncOutcome syncOutcome) {
     mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
-  
+
+  public SyncOutcome exceptionEquivalentOutcome(Throwable e) {
+    if ( e instanceof IOException ) {
+      // this occurs when JSON parser of response fails
+       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof AccessDeniedException ) {
+      return (SyncOutcome.ACCESS_DENIED_EXCEPTION);
+    } else if ( e instanceof AccessDeniedReauthException) {
+      return (SyncOutcome.ACCESS_DENIED_REAUTH_EXCEPTION);
+    } else if ( e instanceof BadClientConfigException) {
+      return (SyncOutcome.BAD_CLIENT_CONFIG_EXCEPTION);
+    } else if ( e instanceof ClientDetectedVersionMismatchedServerResponseException) {
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof ClientDetectedMissingConfigForClientVersionException) {
+      return (SyncOutcome.CLIENT_VERSION_FILES_DO_NOT_EXIST_ON_SERVER);
+    } else if ( e instanceof InternalServerFailureException) {
+      return (SyncOutcome.INTERNAL_SERVER_FAILURE_EXCEPTION);
+    } else if ( e instanceof NetworkTransmissionException ) {
+      return (SyncOutcome.NETWORK_TRANSMISSION_EXCEPTION);
+    } else if ( e instanceof NotOpenDataKitServerException ) {
+      return (SyncOutcome.NOT_OPEN_DATA_KIT_SERVER_EXCEPTION);
+    } else if ( e instanceof ServerDetectedVersionMismatchedClientRequestException ) {
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof UnexpectedServerRedirectionStatusCodeException ) {
+      return (SyncOutcome.UNEXPECTED_REDIRECT_EXCEPTION);
+    } else if ( e instanceof RemoteException ) {
+      return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
+    } else if ( e instanceof SchemaMismatchException ) {
+      return (SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
+    } else if ( e instanceof ServerDoesNotRecognizeAppNameException ) {
+      return (SyncOutcome.APPNAME_DOES_NOT_EXIST_ON_SERVER);
+    } else if ( e instanceof IncompleteServerConfigFileBodyMissingException ) {
+      return (SyncOutcome.INCOMPLETE_SERVER_CONFIG_MISSING_FILE_BODY);
+    } else {
+      WebLogger.getLogger(appName).e(TAG, "Unrecognized exception");
+      WebLogger.getLogger(appName).printStackTrace(e);
+      return (SyncOutcome.FAILURE);
+    }
+  }
+
   public TableLevelResult getTableLevelResult(String tableId) {
     return mUserResult.fetchTableLevelResult(tableId);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 University of Washington
+ * Copyright (C) 2016 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,21 +15,23 @@
  */
 package org.opendatakit.sync.service.exceptions;
 
+import org.opendatakit.httpclientandroidlib.HttpRequest;
+import org.opendatakit.httpclientandroidlib.HttpResponse;
+
 import java.io.IOException;
 
-public class AccessDeniedException extends IOException {
+public class AccessDeniedException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public AccessDeniedException() {
-    super();
+  public AccessDeniedException(String message, Exception e,
+      HttpRequest request, HttpResponse response) {
+    super(message, e, request, response);
   }
 
-  /**
-   * @param detailMessage
-   */
-  public AccessDeniedException(String detailMessage) {
-    super(detailMessage);
+  public AccessDeniedException(String message,
+      HttpRequest request, HttpResponse response) {
+    super(message, request, response);
   }
 
 }

@@ -15,26 +15,10 @@
  */
 package org.opendatakit.sync.service.logic;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.os.RemoteException;
-import android.util.Log;
 
 import org.apache.commons.fileupload.MultipartStream;
-import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.Row;
-import org.opendatakit.aggregate.odktables.rest.entity.RowList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
@@ -43,82 +27,43 @@ import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HeaderElement;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpHeaders;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.httpclientandroidlib.NameValuePair;
-import org.opendatakit.httpclientandroidlib.auth.AuthScope;
-import org.opendatakit.httpclientandroidlib.auth.Credentials;
-import org.opendatakit.httpclientandroidlib.auth.UsernamePasswordCredentials;
-import org.opendatakit.httpclientandroidlib.client.CookieStore;
-import org.opendatakit.httpclientandroidlib.client.CredentialsProvider;
-import org.opendatakit.httpclientandroidlib.client.config.AuthSchemes;
-import org.opendatakit.httpclientandroidlib.client.config.CookieSpecs;
-import org.opendatakit.httpclientandroidlib.client.config.RequestConfig;
 import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
 import org.opendatakit.httpclientandroidlib.client.methods.CloseableHttpResponse;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpDelete;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpPut;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpRequestBase;
-import org.opendatakit.httpclientandroidlib.client.protocol.HttpClientContext;
-import org.opendatakit.httpclientandroidlib.client.utils.URIBuilder;
-import org.opendatakit.httpclientandroidlib.config.SocketConfig;
-import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
+import org.opendatakit.httpclientandroidlib.conn.ConnectTimeoutException;
 import org.opendatakit.httpclientandroidlib.entity.ContentType;
 import org.opendatakit.httpclientandroidlib.entity.StringEntity;
 import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
-import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
-import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
-import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
-import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
 import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.httpclientandroidlib.protocol.BasicHttpContext;
-import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
-import org.opendatakit.services.R;
+import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
-import org.opendatakit.sync.service.data.SyncRowPending;
-import org.opendatakit.sync.service.exceptions.HttpClientWebException;
-import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.sync.service.exceptions.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
 /**
@@ -131,591 +76,133 @@ import java.util.UUID;
 public class AggregateSynchronizer implements Synchronizer {
 
   private static final String LOGTAG = AggregateSynchronizer.class.getSimpleName();
-  private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
-  public static final int CONNECTION_TIMEOUT = 45000;
+  public static final int DEFAULT_BOUNDARY_BUFSIZE = 4096;
 
+  /**
+   * Maximum number of bytes to put within one bulk upload/download request for
+   * row-level instance files.
+   */
   public static final long MAX_BATCH_SIZE = 10485760;
 
-  // parameters for queries that could return a lot of data...
-  public static final String CURSOR_PARAMETER = "cursor";
-  public static final String FETCH_LIMIT = "fetchLimit";
-
-  // parameter for file downloads -- if we want to have it come down as an attachment.
-  public static final String PARAM_AS_ATTACHMENT = "as_attachment";
-
-  // parameters for data/diff/query APIs.
-  public static final String QUERY_DATA_ETAG = "data_etag";
-  public static final String QUERY_SEQUENCE_VALUE = "sequence_value";
-  public static final String QUERY_ACTIVE_ONLY = "active_only";
-  // parameters for query API
-  public static final String QUERY_START_TIME = "startTime";
-  public static final String QUERY_END_TIME = "endTime";
-
-  public static final String BOUNDARY = "boundary";
-  public static final int DEFAULT_BOUNDARY_BUFSIZE = 4096;
-  public static final String multipartFileHeader = "filename=\"";
-
-  /** Timeout (in ms) we specify for each http request */
-  public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
-  /** Path to the file servlet on the Aggregate server. */
-
-  private static final String FORWARD_SLASH = "/";
-
-  private CloseableHttpClient httpClient = null;
-  private CloseableHttpClient httpAuthClient = null;
-
-  private HttpContext localContext = null;
-  private HttpContext localAuthContext = null;
-
-  private CookieStore cookieStore = null;
-
-  private CredentialsProvider credsProvider = null;
-
-  static Map<String, String> mimeMapping;
-  static {
-
-    Map<String, String> m = new HashMap<String, String>();
-    m.put("jpeg", "image/jpeg");
-    m.put("jpg", "image/jpeg");
-    m.put("png", "image/png");
-    m.put("gif", "image/gif");
-    m.put("pbm", "image/x-portable-bitmap");
-    m.put("ico", "image/x-icon");
-    m.put("bmp", "image/bmp");
-    m.put("tiff", "image/tiff");
-
-    m.put("mp2", "audio/mpeg");
-    m.put("mp3", "audio/mpeg");
-    m.put("wav", "audio/x-wav");
-
-    m.put("asf", "video/x-ms-asf");
-    m.put("avi", "video/x-msvideo");
-    m.put("mov", "video/quicktime");
-    m.put("mpa", "video/mpeg");
-    m.put("mpeg", "video/mpeg");
-    m.put("mpg", "video/mpeg");
-    m.put("mp4", "video/mp4");
-    m.put("qt", "video/quicktime");
-
-    m.put("css", "text/css");
-    m.put("htm", "text/html");
-    m.put("html", "text/html");
-    m.put("csv", "text/csv");
-    m.put("txt", "text/plain");
-    m.put("log", "text/plain");
-    m.put("rtf", "application/rtf");
-    m.put("pdf", "application/pdf");
-    m.put("zip", "application/zip");
-    m.put("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    m.put("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-    m.put("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
-    m.put("xml", "application/xml");
-    m.put("js", "application/x-javascript");
-    m.put("json", "application/x-javascript");
-    mimeMapping = m;
-  }
 
   private SyncExecutionContext sc;
-  private String accessToken;
+  private HttpRestProtocolWrapper wrapper;
   private final Map<String, TableResource> resources;
-  /** normalized aggregateUri */
-  private final URI baseUri;
   private final WebLoggerIf log;
-  // cookie manager 
-  private final CookieManager cm;
-
-
-  private final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
-    URI uriBase = URI.create(aggregateUri).normalize();
-    String term = uriBase.getPath();
-    if (term.endsWith(FORWARD_SLASH)) {
-      if (additionalPathPortion.startsWith(FORWARD_SLASH)) {
-        term = term.substring(0, term.length() - 1);
-      }
-    } else if (!additionalPathPortion.startsWith(FORWARD_SLASH)) {
-      term = term + FORWARD_SLASH;
-    }
-    term = term + additionalPathPortion;
-    URI uri = uriBase.resolve(term).normalize();
-    log.d(LOGTAG, "normalizeUri: " + uri.toString());
-    return uri;
-  }
-
-  private static final String escapeSegment(String segment) {
-    return segment;
-    // String encoding = CharEncoding.UTF_8;
-    // String encodedSegment;
-    // try {
-    // encodedSegment = URLEncoder.encode(segment, encoding)
-    // .replaceAll("\\+", "%20")
-    // .replaceAll("\\%21", "!")
-    // .replaceAll("\\%27", "'")
-    // .replaceAll("\\%28", "(")
-    // .replaceAll("\\%29", ")")
-    // .replaceAll("\\%7E", "~");
-    //
-    // } catch (UnsupportedEncodingException e) {
-    // log.printStackTrace(e);
-    // throw new IllegalStateException("Should be able to encode with " +
-    // encoding);
-    // }
-    // return encodedSegment;
-  }
-
-  /**
-   * Format a file path to be pushed up to aggregate. Essentially escapes the
-   * string as for an html url, but leaves forward slashes. The path must begin
-   * with a forward slash, as if starting at the root directory.
-   * 
-   * @return a properly escaped url, with forward slashes remaining.
-   */
-  private String uriEncodeSegments(String path) {
-    String[] parts = path.split("/");
-    StringBuilder b = new StringBuilder();
-    for (int i = 0; i < parts.length; ++i) {
-      if (i != 0) {
-        b.append("/");
-      }
-      b.append(escapeSegment(parts[i]));
-    }
-    String escaped = b.toString();
-    return escaped;
-  }
-
-  private String getTablesUriFragment() {
-    /**
-     * Path to the tables servlet (the one that manages table definitions) on
-     * the Aggregate server.
-     */
-    return "/odktables/" + escapeSegment(sc.getAppName()) + "/tables/";
-  }
-
-  private String getManifestUriFragment() {
-    /**
-     * Path to the tables servlet (the one that manages table definitions) on
-     * the Aggregate server.
-     */
-    return "/odktables/" + escapeSegment(sc.getAppName()) + "/manifest/"
-        + escapeSegment(sc.getOdkClientApiVersion()) + "/";
-  }
-
-  /**
-   * Get the URI for the file servlet on the Aggregate server located at
-   * aggregateUri.
-    *
-    * @return
-    */
-  private String getFilePathURI() {
-    return "/odktables/" + escapeSegment(sc.getAppName()) + "/files/"
-        + escapeSegment(sc.getOdkClientApiVersion()) + "/";
-  }
-
-  /**
-   * Simple Request for all server interactions.
-   * 
-   * @param uri
-   * @param request
-   * @return
-   * @throws InvalidAuthTokenException 
-   */
-  private void buildBasicRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
-
-    String agg_uri = uri.toString();
-    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
-
-    if (uri == null) {
-      throw new IllegalArgumentException("buildBasicRequest: URI cannot be null");
-    }
-
-    if (request == null) {
-      throw new IllegalArgumentException("buildBasicRequest: HttpRequest cannot be null");
-    }
-
-    request.setURI(uri);
-
-    // report our locale... (not currently used by server)
-    request.addHeader("Accept-Language", Locale.getDefault().getLanguage());
-    request.addHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER, ApiConstants.OPEN_DATA_KIT_VERSION);
-    request.addHeader(ApiConstants.ACCEPT_CONTENT_ENCODING_HEADER, ApiConstants.GZIP_CONTENT_ENCODING);
-    request.addHeader(HttpHeaders.USER_AGENT, sc.getUserAgent());
-
-    GregorianCalendar g = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-    Date now = new Date();
-    g.setTime(now);
-    SimpleDateFormat formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss zz", Locale.US);
-    formatter.setCalendar(g);
-    request.addHeader(ApiConstants.DATE_HEADER, formatter.format(now));
-
-    // set the access token...
-    // CAL: For now take this out to ensure that we aren't using it
-//    if (accessToken != null && baseUri != null) {
-//      if (uri.getHost().equals(baseUri.getHost()) && uri.getPort() == baseUri.getPort()) {
-//        //rsc.header("Authorization", "Bearer " + accessToken);
-//        request.addHeader("Authorization", "Bearer " + accessToken);
-//      }
-//    }
-  }
-
-  private void buildRequest(URI uri, ContentType contentType, HttpRequestBase request) throws InvalidAuthTokenException {
-
-    buildBasicRequest(uri, request);
-
-    request.addHeader("content-type", contentType.toString());
-
-    // set our preferred response media type to json using quality parameters
-    NameValuePair param1 = (new BasicNameValuePair("q", "1.0"));
-    ContentType json = ContentType.create(ContentType.APPLICATION_JSON.getMimeType(), param1);
-
-    // don't really want plaintext...
-    NameValuePair param2 = new BasicNameValuePair("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
-    NameValuePair param3 = new BasicNameValuePair("q", "0.4");
-
-    ContentType tplainUtf8 = ContentType.create(ContentType.TEXT_PLAIN.getMimeType(), param2, param3);
-
-    // accept either json or plain text (no XML to device)
-    request.addHeader("accept", json.toString());
-
-    request.addHeader("accept", tplainUtf8.toString());
-
-    // set the response entity character set to CharEncoding.UTF_8
-    request.addHeader("Accept-Charset", CharEncoding.UTF_8);
-  }
-
-  /**
-   * Simple Resource for file download.
-   *
-   * @param uri
-   * @return
-   * @throws InvalidAuthTokenException
-   */
-  private void buildFileDownloadRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
-    buildBasicRequest(uri, request);
-  }
-
-  private void buildRequest(URI uri, HttpRequestBase request) throws InvalidAuthTokenException {
-
-    // select our preferred protocol...
-    //MediaType protocolType = MediaType.APPLICATION_JSON_TYPE;
-    ContentType protocolType = ContentType.APPLICATION_JSON;
-
-    buildRequest(uri, protocolType, request);
-  }
-
 
   public AggregateSynchronizer(SyncExecutionContext sc) throws
       InvalidAuthTokenException {
     this.sc = sc;
+    this.wrapper = new HttpRestProtocolWrapper(sc);
     this.log = WebLogger.getLogger(sc.getAppName());
-    log.e(LOGTAG, "AggregateUri:" + sc.getAggregateUri());
-    this.baseUri = normalizeUri(sc.getAggregateUri(), "/");
-    log.e(LOGTAG, "baseUri:" + baseUri);
-
-    // This is technically not correct, as we should really have a global
-    // that we manage for this... If there are two or more service threads
-    // running, we could forget other session cookies. But, by creating a 
-    // new cookie manager here, we ensure that we don't have any stale 
-    // session cookies at the start of each sync.
-    
-    cm = new CookieManager();
-    CookieHandler.setDefault(cm);
 
     this.resources = new HashMap<String, TableResource>();
-
-    // client initialization
-    int CONNECTION_TIMEOUT = 60000;
-
-    // HttpClient for auth tokens
-    localAuthContext = new BasicHttpContext();
-
-    SocketConfig socketAuthConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
-
-    RequestConfig requestAuthConfig = RequestConfig.copy(RequestConfig.DEFAULT)
-            .setConnectTimeout(CONNECTION_TIMEOUT)
-            // support authenticating
-            .setAuthenticationEnabled(true)
-            // support redirecting to handle http: => https: transition
-            .setRedirectsEnabled(true)
-            // max redirects is set to 4
-            .setMaxRedirects(4)
-            .setCircularRedirectsAllowed(true)
-            //.setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
-            .setCookieSpec(CookieSpecs.DEFAULT)
-            .build();
-
-    httpAuthClient = HttpClientBuilder.create()
-            .setDefaultSocketConfig(socketAuthConfig)
-            .setDefaultRequestConfig(requestAuthConfig).build();
-
-    // Context
-    // context holds authentication state machine, so it cannot be
-    // shared across independent activities.
-    localContext = new BasicHttpContext();
-
-    cookieStore = new BasicCookieStore();
-    credsProvider = new BasicCredentialsProvider();
-
-    String host = this.baseUri.getHost();
-    String authenticationType = sc.getAuthenticationType();
-
-    if ( sc.getString(R.string.credential_type_google_account)
-        .equals(authenticationType)) {
-
-      String accessToken = sc.getAccessToken();
-      checkAccessToken(accessToken);
-      this.accessToken = accessToken;
-
-
-    } else if ( sc.getString(R.string.credential_type_username_password)
-        .equals(authenticationType)) {
-      String username = sc.getUsername();
-      String password = sc.getPassword();
-
-      List<AuthScope> asList = new ArrayList<AuthScope>();
-      {
-        AuthScope a;
-        // allow digest auth on any port...
-        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
-        asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
-      }
-
-      // add username
-      if (username != null && username.trim().length() != 0) {
-        log.i(LOGTAG, "adding credential for host: " + host + " username:" + username);
-        Credentials c = new UsernamePasswordCredentials(username, password);
-
-        for (AuthScope a : asList) {
-          credsProvider.setCredentials(a, c);
-        }
-      }
-    }
-
-    localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
-    localContext.setAttribute(HttpClientContext.CREDS_PROVIDER, credsProvider);
-
-    SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
-
-    // if possible, bias toward digest auth (may not be in 4.0 beta 2)
-    List<String> targetPreferredAuthSchemes = new ArrayList<String>();
-    targetPreferredAuthSchemes.add(AuthSchemes.DIGEST);
-    targetPreferredAuthSchemes.add(AuthSchemes.BASIC);
-
-    RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
-            .setConnectTimeout(CONNECTION_TIMEOUT)
-            // support authenticating
-            .setAuthenticationEnabled(true)
-            // support redirecting to handle http: => https: transition
-            .setRedirectsEnabled(true)
-            // max redirects is set to 4
-            .setMaxRedirects(4)
-            .setCircularRedirectsAllowed(true)
-            .setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
-            .setCookieSpec(CookieSpecs.DEFAULT)
-            .build();
-
-    httpClient = HttpClientBuilder.create()
-            .setDefaultSocketConfig(socketConfig)
-            .setDefaultRequestConfig(requestConfig).build();
-
   }
 
-  private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
+  @Override
+  public void verifyServerSupportsAppName() throws HttpClientWebException, IOException {
 
-  public String updateAccessToken() throws InvalidAuthTokenException {
-    try {
-      AccountManager accountManager = sc.getAccountManager();
-      Account account = sc.getAccount();
-      this.accessToken = accountManager.blockingGetAuthToken(account, authString, true);
-      return accessToken;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new InvalidAuthTokenException("unable to update access token -- please re-authorize");
-    }
-  }
-  
-  private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
-
+    AppNameList appNameList = null;
+    HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
-    try {
-      HttpGet request = new HttpGet();
-      String tokenStr =  TOKEN_INFO + URLEncoder.encode(accessToken, ApiConstants.UTF8_ENCODE);
-      URI tokenUri = new URI(tokenStr);
-      request.setURI(tokenUri);
 
-      if (localAuthContext != null) {
-        response = httpAuthClient.execute(request, localAuthContext);
-      } else {
-        response = httpAuthClient.execute(request);
+    URI uri = wrapper.constructListOfAppNamesUri();
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        throw new BadClientConfigException("server does not implement ODK 2.0 REST api",
+                request, response);
       }
-    } catch (Exception e) {
-      log.e(LOGTAG, "HttpClientErrorException in checkAccessToken");
-      log.printStackTrace(e);
-      throw new InvalidAuthTokenException("Invalid auth token (): " + accessToken, e);
+
+      String res = wrapper.convertResponseToString(response);
+
+      appNameList = ODKFileUtils.mapper.readValue(res, AppNameList.class);
+
+      if (!appNameList.contains(sc.getAppName())) {
+        throw new ServerDoesNotRecognizeAppNameException("server does not recognize this appName",
+                request, response);
+      }
+    } catch ( NetworkTransmissionException e ) {
+      if ( e.getCause() != null && e.getCause() instanceof ConnectTimeoutException ) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+                e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
+      }
     } finally {
-      try {
-        if (response != null) {
-          response.close();
-        }
-      } catch (Exception e) {
-        log.e(LOGTAG, "checkAccessToken: error when trying to close response");
-        log.printStackTrace(e);
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
       }
     }
-  }
-
-  private String convertResponseToString(HttpResponse response) throws IOException {
-
-    if (response == null) {
-      throw new IllegalArgumentException("Can't convert null response to string!!");
-    }
-
-//    InputStream gzipStream = new GZIPInputStream(response.getEntity().getContent());
-//    Reader decoder = new InputStreamReader(gzipStream, Charset.forName("UTF-8"));
-//    BufferedReader rd = new BufferedReader(decoder);
-
-//    BufferedReader rd = new BufferedReader(new InputStreamReader(new GZIPInputStream(response.getEntity()
-//            .getContent()), Charset.forName("UTF-8")));
-
-    BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity()
-            .getContent(), Charset.forName("UTF-8")));
-
-    StringBuilder strLine = new StringBuilder();
-    String resLine;
-    while ((resLine = rd.readLine()) != null) {
-      strLine.append(resLine);
-    }
-    String res = strLine.toString();
-
-    return res;
-  }
-
-  private CloseableHttpResponse httpClientExecute(HttpRequestBase request)
-      throws IOException, InvalidAuthTokenException {
-
-    CloseableHttpResponse response = null;
-    String authenticationType = sc.getAuthenticationType();
-
-    boolean isGoogleAccount = false;
-    if ( sc.getString(R.string.credential_type_google_account)
-        .equals(authenticationType)) {
-
-      isGoogleAccount = true;
-      request.addHeader("Authorization", "Bearer " + accessToken);
-    }
-
-      if (localContext != null) {
-      response = httpClient.execute(request, localContext);
-    } else {
-      response = httpClient.execute(request);
-    }
-
-    if ( isGoogleAccount &&
-         response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
-      request.removeHeaders("Authorization");
-      updateAccessToken();
-      request.addHeader("Authorization", "Bearer " + accessToken);
-
-      // re-issue the request with new access token
-      if (localContext != null) {
-        response = httpClient.execute(request, localContext);
-      } else {
-        response = httpClient.execute(request);
-      }
-    }
-
-    return response;
   }
 
   @Override
   public TableResourceList getTables(String webSafeResumeCursor) throws
-          InvalidAuthTokenException, IOException, URISyntaxException {
+      HttpClientWebException, IOException {
 
     TableResourceList tableResources = null;
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
 
+    URI uri = wrapper.constructListOfTablesUri(webSafeResumeCursor);
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
     try {
-      String tableFrag = getTablesUriFragment();
-      tableFrag = tableFrag.substring(0, tableFrag.length() - 1);
-      URI uri = normalizeUri(sc.getAggregateUri(), tableFrag);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      if (webSafeResumeCursor != null) {
-        uri = new URIBuilder(uri.toString())
-                .addParameter(CURSOR_PARAMETER, webSafeResumeCursor)
-                .build();
-      }
-
-      buildRequest(uri, request);
-
-      response = httpClientExecute(request);
-
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
-    } catch (IOException e) {
-      log.e(LOGTAG, "getTables: Exception while trying to read response");
-      log.printStackTrace(e);
-      throw e;
-    } catch (URISyntaxException urise) {
-      log.e(LOGTAG, "getTable: exception while trying to add query parameter");
-      log.printStackTrace(urise);
-      throw urise;
+
+      return tableResources;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-
-    return tableResources;
   }
 
   @Override
   public TableDefinitionResource getTableDefinition(String tableDefinitionUri)
-          throws InvalidAuthTokenException, IOException {
+          throws HttpClientWebException, IOException {
+
     URI uri = URI.create(tableDefinitionUri).normalize();
+
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
     TableDefinitionResource definitionRes = null;
 
-    buildRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
 
     try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      response = httpClientExecute(request);
-
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       definitionRes = ODKFileUtils.mapper.readValue(res, TableDefinitionResource.class);
-    }  catch (IOException e) {
-      log.e(LOGTAG, "getTableDefinition: Exception while trying to read response");
-      log.printStackTrace(e);
-      throw e;
+
+      return definitionRes;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-
-    return definitionRes;
   }
 
-  @Override
-  public URI constructTableInstanceFileUri(String tableId, String schemaETag) {
-    // e.g., https://msundt-test.appspot.com:443/odktables/tables/tables/Milk_bank/ref/uuid:bb26cdaf-9ccf-4a4f-8e28-c114fe30358a/attachments
-    URI instanceFileUri = normalizeUri(sc.getAggregateUri(), getTablesUriFragment() + tableId + "/ref/" + schemaETag + "/attachments");
-    return instanceFileUri;
-  }
-  
   @Override
   public TableResource createTable(String tableId, String schemaETag, ArrayList<Column> columns)
-      throws IOException, InvalidAuthTokenException {
+      throws HttpClientWebException, IOException {
 
     // build request
-    URI uri = normalizeUri(sc.getAggregateUri(), getTablesUriFragment() + tableId);
+    URI uri = wrapper.constructTableIdUri(tableId);
     TableDefinition definition = new TableDefinition(tableId, schemaETag, columns);
     String tableDefinitionJSON = ODKFileUtils.mapper.writeValueAsString(definition);
 
@@ -724,48 +211,45 @@ public class AggregateSynchronizer implements Synchronizer {
 
     CloseableHttpResponse response = null;
     HttpPut request = new HttpPut();
-    buildRequest(uri, request);
+    wrapper.buildJsonContentJsonResponseRequest(uri, request);
 
     HttpEntity entity = new GzipCompressingEntity(new StringEntity(tableDefinitionJSON, Charset.forName("UTF-8")));
     request.setEntity(entity);
 
     try {
       // TODO: we also need to put up the key value store/properties.
-      response = httpClientExecute(request);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       resource = ODKFileUtils.mapper.readValue(res, TableResource.class);
       // save resource
       this.resources.put(resource.getTableId(), resource);
-
-    } catch (IOException e) {
-      log.e(LOGTAG,
-              "IOException in createTable: " + tableId + " exception: " + e.toString());
-      throw e;
+      return resource;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-    return resource;
   }
 
   @Override
-  public void deleteTable(TableResource table) throws InvalidAuthTokenException,
+  public void deleteTable(TableResource table) throws HttpClientWebException,
           IOException {
     URI uri = URI.create(table.getDefinitionUri()).normalize();
 
     HttpDelete request = new HttpDelete();
     CloseableHttpResponse response = null;
 
-    buildRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
 
-    // CAL: response should be used?
     try {
-      response = httpClientExecute(request);
+      // TODO: CAL: response should be used?
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
@@ -774,43 +258,29 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public ChangeSetList getChangeSets(TableResource table, String dataETag) throws InvalidAuthTokenException,
-          IOException, URISyntaxException{
+  public ChangeSetList getChangeSets(TableResource table, String dataETag) throws HttpClientWebException,
+          IOException {
 
     String tableId = table.getTableId();
-    URI uri;
-    uri = normalizeUri(table.getDiffUri(), "/changeSets");
+    // if we have not yet synced, get the changesets from the beginning of time.
+    String effectiveDataETag = (table.getDataETag() != null) ? dataETag : null;
+    URI uri = wrapper.constructTableDiffChangeSetsUri(table.getDiffUri(), effectiveDataETag);
 
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
 
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
     try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      String res = wrapper.convertResponseToString(response);
 
-      if ((table.getDataETag() != null) && dataETag != null) {
-        uri = new URIBuilder(uri.toString())
-                .addParameter(QUERY_DATA_ETAG, dataETag)
-                .build();
-      }
-
-      buildRequest(uri, request);
-
-      response = httpClientExecute(request);
-
-      String res = convertResponseToString(response);
-
-      ChangeSetList changeSets = ODKFileUtils.mapper.readValue(res,ChangeSetList.class);
+      ChangeSetList changeSets = ODKFileUtils.mapper.readValue(res, ChangeSetList.class);
 
       return changeSets;
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Exception while requesting list of changeSets from server: " + tableId
-              + " exception: " + ioe.toString());
-      throw ioe;
-    } catch (URISyntaxException urise) {
-      log.printStackTrace(urise);
-      log.e(LOGTAG, "Exception while creating uri for changeSets from server: " + tableId);
-      throw urise;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
@@ -819,50 +289,31 @@ public class AggregateSynchronizer implements Synchronizer {
   
   @Override
   public RowResourceList getChangeSet(TableResource table, String dataETag, boolean activeOnly, String websafeResumeCursor)
-      throws InvalidAuthTokenException, URISyntaxException, IOException {
+      throws HttpClientWebException, IOException {
 
     String tableId = table.getTableId();
-    URI uri;
 
     if ((table.getDataETag() == null) || dataETag == null) {
       throw new IllegalArgumentException("dataETag cannot be null!");
     }
+    URI uri = wrapper.constructTableDiffChangeSetsForDataETagUri(table.getDiffUri(), dataETag,
+        activeOnly, websafeResumeCursor);
 
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
-    
-    uri = normalizeUri(table.getDiffUri(), "/changeSets/" + dataETag);
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
     try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      if ( activeOnly ) {
-        uri = new URIBuilder(uri.toString())
-                .addParameter(QUERY_DATA_ETAG, "true")
-               .build();
-      }
-
-      // and apply the cursor...
-      if ( websafeResumeCursor != null ) {
-        uri = new URIBuilder(uri.toString())
-                .addParameter(CURSOR_PARAMETER, websafeResumeCursor)
-                .build();
-      }
-
-      buildRequest(uri, request);
-
-      response = httpClientExecute(request);
-
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
       return rows;
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Exception while executing http request for changeSet rows from server: "
-          + tableId);
-      log.printStackTrace(ioe);
-      throw ioe;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
@@ -870,7 +321,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public RowResourceList getUpdates(TableResource table, String dataETag, String websafeResumeCursor)
-          throws InvalidAuthTokenException, URISyntaxException, IOException {
+          throws HttpClientWebException, IOException {
 
     String tableId = table.getTableId();
     URI uri;
@@ -878,44 +329,25 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
 
+    if ((table.getDataETag() == null) || dataETag == null) {
+      uri = wrapper.constructTableDataUri(table.getDataUri(), websafeResumeCursor);
+    } else {
+      uri = wrapper.constructTableDataDiffUri(table.getDiffUri(), dataETag, websafeResumeCursor);
+    }
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
     try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      if ((table.getDataETag() == null) || dataETag == null) {
-        uri = URI.create(table.getDataUri());
-      } else {
-        uri = URI.create(table.getDiffUri());
-        uri = new URIBuilder(uri.toString())
-                .addParameter(QUERY_DATA_ETAG, dataETag)
-                .build();
-      }
-      // and apply the cursor...
-      if ( websafeResumeCursor != null ) {
-        uri = new URIBuilder(uri.toString())
-                .addParameter(CURSOR_PARAMETER, websafeResumeCursor)
-                .build();
-      }
-
-      buildRequest(uri, request);
-
-      response = httpClientExecute(request);
-
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
       return rows;
-    } catch (URISyntaxException urise) {
-      log.e(LOGTAG, "Exception while creating uri for requesting list of rows form server: "
-              + tableId);
-      log.printStackTrace(urise);
-      throw urise;
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Exception while executing http requesting list of rows form server: "
-              + tableId);
-      log.printStackTrace(ioe);
-      throw ioe;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
@@ -923,7 +355,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public RowOutcomeList alterRows(TableResource resource,
-      List<SyncRow> rowsToInsertUpdateOrDelete) throws IOException, InvalidAuthTokenException {
+      List<SyncRow> rowsToInsertUpdateOrDelete) throws IOException, HttpClientWebException {
 
     ArrayList<Row> rows = new ArrayList<Row>();
     for (SyncRow rowToAlter : rowsToInsertUpdateOrDelete) {
@@ -945,507 +377,40 @@ public class AggregateSynchronizer implements Synchronizer {
             Charset.forName("UTF-8")));
 
     URI uri = URI.create(resource.getDataUri());
-    buildRequest(uri, request);
+    wrapper.buildJsonContentJsonResponseRequest(uri, request);
     request.setEntity(entity);
 
     RowOutcomeList outcomes;
+
     try {
-      response = httpClientExecute(request);
-      String res = convertResponseToString(response);
+      // TODO: response can be HttpStatus.SC_CONFLICT to indicate dataETag change
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      String res = wrapper.convertResponseToString(response);
       outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
-    } catch (IOException ioe) {
-      log.e(LOGTAG,
-              "Exception while executing http request for updating rows on server: "
-                      + resource.getTableId() + " exception: " + ioe.toString());
-      log.printStackTrace(ioe);
-      throw ioe;
+      return outcomes;
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-    return outcomes;
-  }
-
-  private List<String> getAppLevelFiles() {
-    File baseFolder = new File(ODKFileUtils.getAppFolder(sc.getAppName()));
-
-    // Return an empty list of the folder doesn't exist or is not a directory
-    if (!baseFolder.exists()) {
-      return new ArrayList<String>();
-    } else if (!baseFolder.isDirectory()) {
-      log.e(LOGTAG, "[getAppLevelFiles] application folder is not a directory: " +
-          baseFolder.getAbsolutePath());
-      return new ArrayList<String>();
-    }
-
-    baseFolder = new File(ODKFileUtils.getConfigFolder(sc.getAppName()));
-    // Return an empty list of the folder doesn't exist or is not a directory
-    if (!baseFolder.exists()) {
-      return new ArrayList<String>();
-    } else if (!baseFolder.isDirectory()) {
-      log.e(LOGTAG, "[getAppLevelFiles] config folder is not a directory: " +
-          baseFolder.getAbsolutePath());
-      return new ArrayList<String>();
-    }
-
-    LinkedList<File> unexploredDirs = new LinkedList<File>();
-    List<String> relativePaths = new ArrayList<String>();
-    
-    unexploredDirs.add(baseFolder);
-
-    boolean haveFilteredTablesDir = false;
-    boolean haveFilteredAssetsCsvDir = false;
-    boolean haveFilteredTableInitFile = false;
-    
-    while (!unexploredDirs.isEmpty()) {
-      File exploring = unexploredDirs.removeFirst();
-      File[] files = exploring.listFiles();
-      for (File f : files) {
-        if (f.isDirectory()) {
-
-          // ignore the config/tables dir
-          if ( !haveFilteredTablesDir ) {
-            File tablesDir = new File(ODKFileUtils.getTablesFolder(sc.getAppName()));
-            if ( f.equals(tablesDir) ) {
-              haveFilteredTablesDir = true;
-              continue;
-            }
-          }
-          // ignore the config/assets/csv dir
-          if ( !haveFilteredAssetsCsvDir ) {
-            File csvDir = new File(ODKFileUtils.getAssetsCsvFolder(sc.getAppName()));
-            if ( f.equals(csvDir) ) {
-              haveFilteredAssetsCsvDir = true;
-              continue;
-            }
-          }
-
-          // we'll need to explore it
-          unexploredDirs.add(f);
-        } else {
-
-          // ignore the config/assets/tables.init file -- never sync'd to server...
-          if ( !haveFilteredTableInitFile ) {
-            File tablesInitFile = new File(ODKFileUtils.getTablesInitializationFile(sc.getAppName()));
-            if ( f.equals(tablesInitFile) ) {
-              haveFilteredTableInitFile = true;
-              continue;
-            }
-          }
-
-          // we'll add it to our list of files.
-          relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), f));
-        }
-      }
-    }
-
-    return relativePaths; 
-  }
-
-  private static List<String> filterInTableIdFiles(List<String> relativePaths, String tableId) {
-    List<String> newList = new ArrayList<String>();
-    for (String relativePath : relativePaths) {
-      if (relativePath.startsWith("config/assets/csv/")) {
-        // by convention, the files here begin with their identifying tableId
-        String[] parts = relativePath.split("/");
-        if (parts.length >= 4) {
-          String[] nameElements = parts[3].split("\\.");
-          if (nameElements[0].equals(tableId)) {
-            newList.add(relativePath);
-          }
-        }
-      }
-    }
-    return newList;
-  }
-
-  /**
-   * Get all the files under the given folder, excluding those directories that
-   * are the concatenation of folder and a member of excluding. If the member of
-   * excluding is a directory, none of its children will be reported.
-   * <p>
-   * If the baseFolder doesn't exist it returns an empty list.
-   * <p>
-   * If the baseFolder exists but is not a directory, logs an error and returns an
-   * empty list.
-   * 
-   * @param baseFolder
-   * @param excludingNamedItemsUnderFolder
-   *          can be null--nothing will be excluded. Should be relative to the
-   *          given folder.
-   * @return list of app-relative paths of the files and directories that were found.
-   */
-  private List<String> getAllFilesUnderFolder(File baseFolder,
-      final Set<String> excludingNamedItemsUnderFolder) {
-    String appName = ODKFileUtils.extractAppNameFromPath(baseFolder);
-
-    // Return an empty list of the folder doesn't exist or is not a directory
-    if (!baseFolder.exists()) {
-      return new ArrayList<String>();
-    } else if (!baseFolder.isDirectory()) {
-      log.e(LOGTAG, "[getAllFilesUnderFolder] folder is not a directory: " + baseFolder.getAbsolutePath());
-      return new ArrayList<String>();
-    }
-
-    // construct the set of starting directories and files to process
-    File[] partials = baseFolder.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        if (excludingNamedItemsUnderFolder == null) {
-          return true;
-        } else {
-          return !excludingNamedItemsUnderFolder.contains(pathname.getName());
-        }
-      }
-    });
-
-    if (partials == null) {
-      return Collections.emptyList();
-    }
-
-    LinkedList<File> unexploredDirs = new LinkedList<File>();
-    List<File> nondirFiles = new ArrayList<File>();
-
-    // copy the starting set into a queue of unexploredDirs
-    // and a list of files to be sync'd
-    for (int i = 0; i < partials.length; ++i) {
-      if (partials[i].isDirectory()) {
-        unexploredDirs.add(partials[i]);
-      } else {
-        nondirFiles.add(partials[i]);
-      }
-    }
-
-    while (!unexploredDirs.isEmpty()) {
-      File exploring = unexploredDirs.removeFirst();
-      File[] files = exploring.listFiles();
-      for (File f : files) {
-        if (f.isDirectory()) {
-          // we'll need to explore it
-          unexploredDirs.add(f);
-        } else {
-          // we'll add it to our list of files.
-          nondirFiles.add(f);
-        }
-      }
-    }
-
-    List<String> relativePaths = new ArrayList<String>();
-    // we want the relative path, so drop the necessary bets.
-    for (File f : nondirFiles) {
-      // +1 to exclude the separator.
-      relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), f));
-    }
-    return relativePaths;
   }
 
   @Override
-  public boolean syncAppLevelFiles(boolean pushLocalFiles, String serverReportedAppLevelETag, SynchronizerStatus syncStatus)
-      throws HttpClientWebException, InvalidAuthTokenException, IOException {
-    // Get the app-level files on the server.
-    syncStatus.updateNotification(SyncProgressState.APP_FILES, R.string
-            .sync_getting_app_level_manifest,
-        null, 1.0, false);
-    List<OdkTablesFileManifestEntry> manifest = getAppLevelFileManifest(pushLocalFiles, serverReportedAppLevelETag);
+  public FileManifestDocument getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
+      throws HttpClientWebException, IOException {
 
-    if (manifest == null) {
-      log.i(LOGTAG, "no change in app-level manifest -- skipping!");
-      // short-circuited -- no change in manifest
-      syncStatus.updateNotification(SyncProgressState.APP_FILES,
-          R.string.sync_getting_app_level_manifest, null, 100.0, false);
-      return true;
-    }
-
-    // Get the app-level files on our device.
-    List<String> relativePathsOnDevice = getAppLevelFiles();
-
-    boolean success = true;
-    double stepSize = 100.0 / (1 + relativePathsOnDevice.size() + manifest.size());
-    int stepCount = 1;
-
-    if (pushLocalFiles) {
-      // if we are pushing, we want to push the local files that are different
-      // up to the server, then remove the files on the server that are not
-      // in the local set.
-      List<File> serverFilesToDelete = new ArrayList<File>();
-
-      for (OdkTablesFileManifestEntry entry : manifest) {
-        File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        if (!localFile.exists() || !localFile.isFile()) {
-          // we need to delete this file from the server.
-          serverFilesToDelete.add(localFile);
-        } else if (ODKFileUtils.getMd5Hash(sc.getAppName(), localFile).equals(entry.md5hash)) {
-          // we are ok -- no need to upload or delete
-          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), localFile));
-        }
-      }
-
-      // this is the actual step size when we are pushing...
-      stepSize = 100.0 / (1 + relativePathsOnDevice.size() + serverFilesToDelete.size());
-
-      for (String relativePath : relativePathsOnDevice) {
-
-        syncStatus.updateNotification(SyncProgressState.APP_FILES, R.string
-                .sync_uploading_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        File localFile = ODKFileUtils.asAppFile(sc.getAppName(), relativePath);
-        if (!uploadConfigFile(localFile)) {
-          success = false;
-          log.e(LOGTAG, "Unable to upload file to server: " + relativePath);
-        }
-
-        ++stepCount;
-      }
-
-      for (File localFile : serverFilesToDelete) {
-
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
-        syncStatus.updateNotification(SyncProgressState.APP_FILES,
-            R.string.sync_deleting_file_on_server,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        if (!deleteConfigFile(localFile)) {
-          success = false;
-          log.e(LOGTAG, "Unable to delete file on server: " + relativePath);
-        }
-
-        ++stepCount;
-      }
-    } else {
-      // if we are pulling, we want to pull the server files that are different
-      // down from the server, then remove the local files that are not present
-      // on the server.
-
-      for (OdkTablesFileManifestEntry entry : manifest) {
-        File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
-
-        syncStatus.updateNotification(SyncProgressState.APP_FILES,
-            R.string.sync_verifying_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        // make sure our copy is current
-        compareAndDownloadConfigFile(null, entry, localFile);
-        // remove it from the set of app-level files we found before the sync
-        relativePathsOnDevice.remove(relativePath);
-
-        // this is the corrected step size based upon matching files
-        stepSize = 100.0 / (1 + relativePathsOnDevice.size() + manifest.size());
-
-        ++stepCount;
-      }
-
-      for (String relativePath : relativePathsOnDevice) {
-
-        syncStatus.updateNotification(SyncProgressState.APP_FILES,
-            R.string.sync_deleting_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        // and remove any remaining files, as these do not match anything on
-        // the server.
-        File localFile = ODKFileUtils.asAppFile(sc.getAppName(), relativePath);
-        if (!localFile.delete()) {
-          success = false;
-          log.e(LOGTAG, "Unable to delete " + localFile.getAbsolutePath());
-        }
-
-        ++stepCount;
-      }
-    }
-
-    return success;
-  }
-
-  private String determineContentType(String fileName) {
-    int ext = fileName.lastIndexOf('.');
-    if (ext == -1) {
-      return "application/octet-stream";
-    }
-    String type = fileName.substring(ext + 1);
-    String mimeType = mimeMapping.get(type);
-    if (mimeType == null) {
-      return "application/octet-stream";
-    }
-    return mimeType;
-  }
-
-  @Override
-  public void syncTableLevelFiles(String tableId, String serverReportedTableLevelETag, OnTablePropertiesChanged onChange,
-      boolean pushLocalFiles, SynchronizerStatus syncStatus) throws InvalidAuthTokenException, IOException {
-
-    syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-        R.string.sync_getting_table_manifest,
-        new Object[] { tableId }, 1.0, false);
-
-    // get the table files on the server
-    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId,
-        serverReportedTableLevelETag, pushLocalFiles);
-
-    if (manifest == null) {
-      log.i(LOGTAG, "no change in table manifest -- skipping!");
-      // short-circuit because our files should match those on the server
-      syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-          R.string.sync_getting_table_manifest,
-          new Object[] { tableId }, 100.0, false);
-
-      return;
-    }
-    String tableIdDefinitionFile = ODKFileUtils.asRelativePath(sc.getAppName(),
-        new File(ODKFileUtils.getTableDefinitionCsvFile(sc.getAppName(), tableId)));
-
-    String tableIdPropertiesFile = ODKFileUtils.asRelativePath(sc.getAppName(),
-        new File(ODKFileUtils.getTablePropertiesCsvFile(sc.getAppName(), tableId)));
-
-    boolean tablePropertiesChanged = false;
-
-    // Get any config/assets/csv files that begin with tableId
-    Set<String> dirsToExclude = new HashSet<String>();
-    File assetsCsvFolder = new File(ODKFileUtils.getAssetsCsvFolder(sc.getAppName()));
-    List<String> relativePathsToTableIdAssetsCsvOnDevice = getAllFilesUnderFolder(assetsCsvFolder,
-        dirsToExclude);
-    relativePathsToTableIdAssetsCsvOnDevice = filterInTableIdFiles(
-        relativePathsToTableIdAssetsCsvOnDevice, tableId);
-
-    // instance directory is now under the data tree, so we don't have to worry about it...
-    File tableFolder = new File(ODKFileUtils.getTablesFolder(sc.getAppName(), tableId));
-    List<String> relativePathsOnDevice = getAllFilesUnderFolder(tableFolder, dirsToExclude);
-
-    // mix in the assets files for this tableId, if any...
-    relativePathsOnDevice.addAll(relativePathsToTableIdAssetsCsvOnDevice);
-
-    double stepSize = 100.0 / (1 + relativePathsOnDevice.size() + manifest.size());
-    int stepCount = 1;
-
-    if (pushLocalFiles) {
-      // if we are pushing, we want to push the local files that are different
-      // up to the server, then remove the files on the server that are not
-      // in the local set.
-      List<File> serverFilesToDelete = new ArrayList<File>();
-
-      for (OdkTablesFileManifestEntry entry : manifest) {
-        File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        if (!localFile.exists() || !localFile.isFile()) {
-          // we need to delete this file from the server.
-          serverFilesToDelete.add(localFile);
-        } else if (ODKFileUtils.getMd5Hash(sc.getAppName(), localFile).equals(entry.md5hash)) {
-          // we are ok -- no need to upload or delete
-          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), localFile));
-        }
-      }
-
-      // this is the actual step size when we are pushing...
-      stepSize = 100.0 / (1 + relativePathsOnDevice.size() + serverFilesToDelete.size());
-
-      boolean success = true;
-      for (String relativePath : relativePathsOnDevice) {
-
-        syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-            R.string.sync_uploading_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        File localFile = ODKFileUtils.asAppFile(sc.getAppName(), relativePath);
-        if (!uploadConfigFile(localFile)) {
-          success = false;
-          log.e(LOGTAG, "Unable to upload file to server: " + relativePath);
-        }
-
-        ++stepCount;
-      }
-
-      for (File localFile : serverFilesToDelete) {
-
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
-        syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-            R.string.sync_deleting_file_on_server,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        if (!deleteConfigFile(localFile)) {
-          success = false;
-          log.e(LOGTAG, "Unable to delete file on server: " + relativePath);
-        }
-
-        ++stepCount;
-      }
-
-      if (!success) {
-        log.i(LOGTAG, "unable to delete one or more files!");
-      }
-
-    } else {
-      // if we are pulling, we want to pull the server files that are different
-      // down from the server, then remove the local files that are not present
-      // on the server.
-
-      for (OdkTablesFileManifestEntry entry : manifest) {
-        File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
-
-        syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-            R.string.sync_verifying_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        // make sure our copy is current
-        boolean outcome = compareAndDownloadConfigFile(tableId, entry, localFile);
-        // and if it was the table properties file, remember whether it changed.
-        if (relativePath.equals(tableIdPropertiesFile)) {
-          tablePropertiesChanged = outcome;
-        }
-        // remove it from the set of app-level files we found before the sync
-        relativePathsOnDevice.remove(relativePath);
-
-        // this is the corrected step size based upon matching files
-        stepSize = 100.0 / (1 + relativePathsOnDevice.size() + manifest.size());
-
-        ++stepCount;
-      }
-
-      boolean success = true;
-      for (String relativePath : relativePathsOnDevice) {
-
-        syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
-            R.string.sync_deleting_local_file,
-            new Object[] { relativePath }, stepCount * stepSize, false);
-
-        // and remove any remaining files, as these do not match anything on
-        // the server.
-        File localFile = ODKFileUtils.asAppFile(sc.getAppName(), relativePath);
-        if (!localFile.delete()) {
-          success = false;
-          log.e(LOGTAG, "Unable to delete " + localFile.getAbsolutePath());
-        }
-
-        ++stepCount;
-      }
-
-      if (tablePropertiesChanged && (onChange != null)) {
-        // update this table's KVS values...
-        onChange.onTablePropertiesChanged(tableId);
-      }
-
-      if (!success) {
-        log.i(LOGTAG, "unable to delete one or more files!");
-      }
-
-      // should we return our status?
-    }
-  }
-
-  public List<OdkTablesFileManifestEntry> getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
-    throws HttpClientWebException, InvalidAuthTokenException, IOException {
-
-    URI fileManifestUri = normalizeUri(sc.getAggregateUri(), getManifestUriFragment());
+    URI fileManifestUri = wrapper.constructAppLevelFileManifestUri();
     String eTag = null;
     try {
-      eTag = getManifestSyncETag(fileManifestUri, null);
+      eTag = getManifestSyncETag(null);
     } catch (RemoteException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
 
     HttpGet request = new HttpGet();
-    buildRequest(fileManifestUri, request);
+    wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
 
     // don't short-circuit manifest if we are pushing local files,
     // as we need to know exactly what is on the server to minimize
@@ -1462,21 +427,17 @@ public class AggregateSynchronizer implements Synchronizer {
     List<OdkTablesFileManifestEntry> theList = null;
 
     try {
-      response = httpClientExecute(request);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
-      if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
-        throw new HttpClientWebException(null, response);
-      }
 
-      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-        throw new HttpClientWebException(null, response);
-      }
+      // update the manifest ETag record...
+      eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
 
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
 
       // retrieve the manifest...
       OdkTablesFileManifest manifest;
@@ -1491,45 +452,42 @@ public class AggregateSynchronizer implements Synchronizer {
         theList = Collections.emptyList();
       }
 
-      // update the manifest ETag record...
-      eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
-      try {
-        updateManifestSyncETag(fileManifestUri, null, eTag);
-      } catch (RemoteException e) {
-        log.e(LOGTAG, "Error while trying to update the manifest sync etag");
-        log.printStackTrace(e);
+      // if the server has no configuration for our client version, then we should
+      // fail. It is likely that the user wanted to reset the app server to upload
+      // a configuration.
+      if (!pushLocalFiles && theList.isEmpty()) {
+        throw new ClientDetectedMissingConfigForClientVersionException(
+                "server has no configuration for this client version", request, response);
       }
 
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Error while trying to get app level file manifest");
-      log.printStackTrace(ioe);
-      throw ioe;
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-    // and return the list of values...
-    return theList;
   }
 
-  public List<OdkTablesFileManifestEntry> getTableLevelFileManifest(String tableId,
-                                                                    String serverReportedTableLevelETag,
-                                                                    boolean pushLocalFiles)
-          throws InvalidAuthTokenException, IOException,
-          HttpClientWebException {
+  @Override
+  public FileManifestDocument getTableLevelFileManifest(String tableId,
+      String serverReportedTableLevelETag,
+      boolean pushLocalFiles)
+      throws IOException,
+      HttpClientWebException {
 
-    URI fileManifestUri = normalizeUri(sc.getAggregateUri(), getManifestUriFragment() + tableId);
+    URI fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
     String eTag = null;
     try {
-      eTag = getManifestSyncETag(fileManifestUri, tableId);
+      eTag = getManifestSyncETag(tableId);
     } catch (RemoteException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
 
     HttpGet request = new HttpGet();
-    buildRequest(fileManifestUri, request);
+    wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
     CloseableHttpResponse response = null;
 
     // don't short-circuit manifest if we are pushing local files,
@@ -1544,30 +502,21 @@ public class AggregateSynchronizer implements Synchronizer {
     }
 
     try {
-      response = httpClientExecute(request);
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "getTableLevelFileManifest: Exception while executing http request for tableId: "
-              + tableId);
-      log.printStackTrace(ioe);
-      throw ioe;
-    }
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-      // signal this by returning null;
-      return null;
-    }
-    if (response.getStatusLine().getStatusCode() < 200 ||
-        response.getStatusLine().getStatusCode() >= 300) {
-      throw new HttpClientWebException(null, response);
-    }
-    if (response.getFirstHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-      throw new HttpClientWebException(null, response);
-    }
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        // signal this by returning null;
+        return null;
+      }
 
-    // retrieve the manifest...
-    List<OdkTablesFileManifestEntry> theList = null;
-    try {
-      String res = convertResponseToString(response);
+      // retrieve the manifest...
+      List<OdkTablesFileManifestEntry> theList = null;
+
+      // update the manifest ETag record...
+      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
+      eTag = eTagHdr.getValue();
+
+      String res = wrapper.convertResponseToString(response);
       OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
 
       if (manifest != null) {
@@ -1576,34 +525,38 @@ public class AggregateSynchronizer implements Synchronizer {
       if (theList == null) {
         theList = Collections.emptyList();
       }
-      // update the manifest ETag record...
-      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-      eTag = eTagHdr.getValue();
+
+      // if the server has no configuration for our client version, then we should
+      // fail. It is likely that the user wanted to reset the app server to upload
+      // a configuration.
+      if (!pushLocalFiles && theList.isEmpty()) {
+        throw new ClientDetectedMissingConfigForClientVersionException(
+                "server has no configuration for table at this client version", request, response);
+      }
+
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-
-    try {
-      updateManifestSyncETag(fileManifestUri, tableId, eTag);
-    } catch (RemoteException e) {
-      log.printStackTrace(e);
-      log.e(LOGTAG, "database access error (ignoring)");
-    }
-    // and return the list of values...
-    return theList;
   }
 
-  public List<OdkTablesFileManifestEntry> getRowLevelFileManifest(String serverInstanceFileUri,
-                                                                  String tableId, String instanceId)
-          throws InvalidAuthTokenException, IOException{
+  @Override
+  public FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
+      String tableId, String instanceId, SyncAttachmentState attachmentState,
+      String uriFragmentHash)
+      throws HttpClientWebException, IOException {
 
-    URI instanceFileManifestUri = normalizeUri(serverInstanceFileUri, instanceId + "/manifest");
+    URI instanceFileManifestUri =
+        wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, instanceId);
 
     String eTag = null;
     try {
-      eTag = getManifestSyncETag(instanceFileManifestUri, tableId);
+      eTag = getRowLevelManifestSyncETag(serverInstanceFileUri, tableId, instanceId,
+          attachmentState, uriFragmentHash);
     } catch (RemoteException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
@@ -1611,42 +564,28 @@ public class AggregateSynchronizer implements Synchronizer {
 
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
-    buildRequest(instanceFileManifestUri, request);
+    wrapper.buildNoContentJsonResponseRequest(instanceFileManifestUri, request);
+
+    if ( eTag != null ) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
+    }
 
     List<OdkTablesFileManifestEntry> theList = null;
 
-    /* TODO: Do we need to add pushLocalFiles and uncomment this?
-    // don't short-circuit manifest if we are pushing local files,
-    // as we need to know exactly what is on the server to minimize
-    // transmissions of files being pushed up to the server.
-    if (!pushLocalFiles && eTag != null) {
-      rsc.header(HttpHeaders.IF_NONE_MATCH, eTag);
-      if ( serverReportedTableLevelETag != null && serverReportedTableLevelETag.equals(eTag) ) {
-        // no change -- we can skip the request to the server
-        return null;
-      }
-    }
-    */
-
     try {
-      response = httpClientExecute(request);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
 
-      if (response.getStatusLine().getStatusCode() < 200 ||
-              response.getStatusLine().getStatusCode() >= 300) {
-        throw new HttpClientWebException(null, response);
-      }
-
-      if (response.getFirstHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-        throw new HttpClientWebException(null, response);
-      }
+      // update the manifest ETag record...
+      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
+      eTag = eTagHdr.getValue();
 
       // retrieve the manifest...
-      String res = convertResponseToString(response);
+      String res = wrapper.convertResponseToString(response);
       OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
 
       if (manifest != null) {
@@ -1656,287 +595,29 @@ public class AggregateSynchronizer implements Synchronizer {
       if (theList == null) {
         theList = Collections.emptyList();
       }
+      log.i(LOGTAG, "returning a row-level manifest for " + instanceId);
 
-      // update the manifest ETag record...
-      Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-      eTag = eTagHdr.getValue();
-
-      updateManifestSyncETag(instanceFileManifestUri, tableId, eTag);
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "getRowLevelFileManifest: Exception during http execution for : " + tableId);
-      log.printStackTrace(ioe);
-      throw ioe;
-    } catch (RemoteException e) {
-      log.printStackTrace(e);
-      log.e(LOGTAG, "database access error (ignoring)");
-    }finally {
-      if (response != null) {
-        response.close();
-      }
-    }
-
-    // and return the list of values...
-    return theList;
-  }
-
-  boolean deleteConfigFile(File localFile) throws InvalidAuthTokenException, IOException {
-    String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
-            localFile);
-    String escapedPath = uriEncodeSegments(pathRelativeToConfigFolder);
-    URI filesUri = normalizeUri(sc.getAggregateUri(), getFilePathURI() + escapedPath);
-    log.i(LOGTAG, "CLARICE:[deleteConfigFile] fileDeleteUri: " + filesUri.toString());
-
-    HttpDelete request = new HttpDelete();
-    CloseableHttpResponse response = null;
-    buildRequest(filesUri, request);
-
-    try {
-      response = httpClientExecute(request);
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Error while executing delete request");
-      log.printStackTrace(ioe);
-      throw ioe;
+      // and return the list of values...
+      return new FileManifestDocument(eTag, theList);
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
-      }
-    }
-
-    // TODO: verify whether or not this worked.
-    return true;
-  }
-
-  boolean uploadConfigFile(File localFile) throws
-          InvalidAuthTokenException, IOException {
-    String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
-            localFile);
-    String escapedPath = uriEncodeSegments(pathRelativeToConfigFolder);
-    URI filesUri = normalizeUri(sc.getAggregateUri(), getFilePathURI() + escapedPath);
-    log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
-    String ct = determineContentType(localFile.getName());
-    //MediaType contentType = MediaType.valueOf(ct);
-    ContentType contentType = ContentType.create(ct);
-
-    // Change to use httpClient
-    CloseableHttpResponse response = null;
-    HttpPost request = new HttpPost();
-    buildRequest(filesUri, contentType, request);
-
-    HttpEntity entity = makeHttpEntity(localFile);
-    request.setEntity(entity);
-
-    try {
-     response = httpClientExecute(request);
-
-      if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
-        return false;
-      }
-      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-        return false;
-      }
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "Error while executing post request");
-      log.printStackTrace(ioe);
-      throw ioe;
-    } finally {
-      if (response != null) {
-        response.close();
-      }
-    }
-
-    return true;
-  }
-
-  private HttpEntity makeHttpEntity(File localFile) throws IOException {
-    if (localFile == null) {
-      throw new IllegalArgumentException("makeHttpEntity: localFile cannot be null");
-    }
-
-    int size = (int) localFile.length();
-    byte[] bytes = new byte[size];
-    try {
-      BufferedInputStream buf = new BufferedInputStream(new FileInputStream(localFile));
-      buf.read(bytes, 0, bytes.length);
-      buf.close();
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "makeHttpEntity: exception while tyring to read file");
-      log.printStackTrace(ioe);
-      throw ioe;
-    }
-
-    return new GzipCompressingEntity(new ByteArrayEntity(bytes));
-    //return new ByteArrayEntity(bytes);
-  }
-
-  boolean uploadInstanceFile(File file, URI instanceFileUri) throws InvalidAuthTokenException,
-          IOException
-  {
-    log.i(LOGTAG, "[uploadInstanceFile] filePostUri: " + instanceFileUri.toString());
-    String ct = determineContentType(file.getName());
-    //MediaType contentType = MediaType.valueOf(ct);
-    ContentType contentType = ContentType.create(ct);
-
-    HttpPost request = new HttpPost();
-    buildRequest(instanceFileUri, request);
-    CloseableHttpResponse response = null;
-
-    try {
-      HttpEntity entity = makeHttpEntity(file);
-      request.setEntity(entity);
-      response = httpClientExecute(request);
-
-
-      if (response.getStatusLine().getStatusCode() < 200 ||
-              response.getStatusLine().getStatusCode() >= 300) {
-        return false;
-      }
-      if (response.getFirstHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-        return false;
-      }
-    } catch (IOException ioe) {
-      log.e(LOGTAG, "uploadInstanceFile: Error while executing post request");
-      log.printStackTrace(ioe);
-      throw ioe;
-    } finally {
-      if (response != null) {
-        response.close();
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Get the URI to which to post in order to upload the file.
-   *
-   * @param pathRelativeToAppFolder
-   * @return
-   */
-  public URI getFilePostUri(String pathRelativeToAppFolder) {
-    String escapedPath = uriEncodeSegments(pathRelativeToAppFolder);
-    URI filesUri = normalizeUri(sc.getAggregateUri(), getFilePathURI() + escapedPath);
-    return filesUri;
-  }
-
-  /**
-   *
-   * @param entry
-   * @return
-   */
-  private boolean compareAndDownloadConfigFile(String tableId, OdkTablesFileManifestEntry entry,
-      File localFile) {
-    String basePath = ODKFileUtils.getAppFolder(sc.getAppName());
-
-    // if the file is a placeholder on the server, then don't do anything...
-    if (entry.contentLength == 0) {
-      return false;
-    }
-    // now we need to look through the manifest and see where the files are
-    // supposed to be stored. Make sure you don't return a bad string.
-    if (entry.filename == null || entry.filename.equals("")) {
-      log.i(LOGTAG, "returned a null or empty filename");
-      return false;
-    } else {
-
-      URI uri = null;
-      URL urlFile = null;
-      try {
-        log.i(LOGTAG, "[compareAndDownloadConfigFile] downloading at url: " + entry.downloadUrl);
-        urlFile = new URL(entry.downloadUrl);
-        uri = urlFile.toURI();
-      } catch (MalformedURLException e) {
-        log.e(LOGTAG, e.toString());
-        log.printStackTrace(e);
-        return false;
-      } catch (URISyntaxException e) {
-        log.e(LOGTAG, e.toString());
-        log.printStackTrace(e);
-        return false;
-      }
-
-      // Before we try dl'ing the file, we have to make the folder,
-      // b/c otherwise if the folders down to the path have too many non-
-      // existent folders, we'll get a FileNotFoundException when we open
-      // the FileOutputStream.
-      String folderPath = localFile.getParent();
-      ODKFileUtils.createFolder(folderPath);
-      if (!localFile.exists()) {
-        // the file doesn't exist on the system
-        // filesToDL.add(localFile);
-        try {
-          int statusCode = downloadFile(localFile, uri);
-          if (statusCode == HttpStatus.SC_OK) {
-            updateFileSyncETag(uri, tableId, localFile.lastModified(),
-                entry.md5hash);
-            return true;
-          } else {
-            return false;
-          }
-        } catch (Exception e) {
-          log.printStackTrace(e);
-          log.e(LOGTAG, "trouble downloading file for first time");
-          return false;
-        }
-      } else {
-        boolean hasUpToDateEntry = true;
-        String md5hash = null;
-        try {
-          md5hash = getFileSyncETag(uri, tableId, localFile.lastModified());
-        } catch (RemoteException e1) {
-          log.printStackTrace(e1);
-          log.e(LOGTAG, "database access error (ignoring)");
-        }
-        if (md5hash == null) {
-          // file exists, but no record of what is on the server
-          // compute local value
-          hasUpToDateEntry = false;
-          md5hash = ODKFileUtils.getMd5Hash(sc.getAppName(), localFile);
-        }
-        // so as it comes down from the manifest, the md5 hash includes a
-        // "md5:" prefix. Add that and then check.
-        if (!md5hash.equals(entry.md5hash)) {
-          hasUpToDateEntry = false;
-          // it's not up to date, we need to download it.
-          try {
-            int statusCode = downloadFile(localFile, uri);
-            if (statusCode == HttpStatus.SC_OK ||
-                statusCode == HttpStatus.SC_NOT_MODIFIED) {
-              updateFileSyncETag(uri, tableId, localFile.lastModified(),
-                  md5hash);
-              return true;
-            } else {
-              return false;
-            }
-          } catch (Exception e) {
-            log.printStackTrace(e);
-            // TODO throw correct exception
-            log.e(LOGTAG, "trouble downloading new version of existing file");
-            return false;
-          }
-        } else {
-          if (!hasUpToDateEntry) {
-            try {
-              updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
-            } catch (RemoteException e) {
-              log.printStackTrace(e);
-              log.e(LOGTAG, "database access error (ignoring)");
-            }
-          }
-          // no change
-          return false;
-        }
       }
     }
   }
 
   /**
+   * Download the file at the given URI to the specified local file.
    *
    * @param destFile
    * @param downloadUrl
-   * @return true if the download was successful
-   * @throws Exception
+   * @throws HttpClientWebException
+   * @throws IOException
    */
-  int downloadFile(File destFile, URI downloadUrl) throws Exception {
+  @Override
+  public void downloadFile(File destFile, URI downloadUrl) throws HttpClientWebException,
+      IOException {
 
     // WiFi network connections can be renegotiated during a large form download
     // sequence.
@@ -1948,7 +629,8 @@ public class AggregateSynchronizer implements Synchronizer {
     while (!success && attemptCount++ <= 2) {
 
       HttpGet request = new HttpGet();
-      buildFileDownloadRequest(downloadUrl, request);
+      // no body content-type and no response content-type requested
+      wrapper.buildBasicRequest(downloadUrl, request);
       if ( destFile.exists() ) {
         String md5Hash = ODKFileUtils.getMd5Hash(sc.getAppName(), destFile);
         request.addHeader(HttpHeaders.IF_NONE_MATCH, md5Hash);
@@ -1956,23 +638,12 @@ public class AggregateSynchronizer implements Synchronizer {
 
       CloseableHttpResponse response = null;
       try {
-        response = httpClientExecute(request);
+        response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
         int statusCode = response.getStatusLine().getStatusCode();
 
-        if (statusCode != HttpStatus.SC_OK) {
-          response.close();
-          if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-            // clear the cookies -- should not be necessary?
-            // ss: might just be a collect thing?
-          }
-          log.w(LOGTAG, "downloading " + downloadUrl.toString() + " returns " + statusCode);
-          return statusCode;
-        }
-
-        if (response.getFirstHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-          response.close();
-          log.w(LOGTAG, "downloading " + downloadUrl.toString() + " appears to have been redirected.");
-          return 302;
+        if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
+          log.i(LOGTAG, "downloading " + downloadUrl.toString() + " returns non-modified -- No-Op");
+          return;
         }
 
         File tmp = new File(destFile.getParentFile(), destFile.getName() + ".tmp");
@@ -2047,261 +718,124 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       } catch (Exception e) {
         log.printStackTrace(e);
-        if ( response != null ) {
-          response.close();
-        }
         if (attemptCount != 1) {
           throw e;
         }
+      } finally {
+        if ( response != null ) {
+          EntityUtils.consumeQuietly(response.getEntity());
+          response.close();
+        }
       }
-    }
-    return HttpStatus.SC_OK;
-  }
-
-  static final class CommonFileAttachmentTerms {
-    String rowPathUri;
-    File localFile;
-    URI instanceFileDownloadUri;
-  }
-
-  CommonFileAttachmentTerms computeCommonFileAttachmentTerms(String serverInstanceFileUri,
-      String tableId, String instanceId, String rowpathUri) {
-    
-    File localFile = 
-        ODKFileUtils.getRowpathFile(sc.getAppName(), tableId, instanceId, rowpathUri);
-
-    // use a cleaned-up rowpathUri in case there are leading slashes, instance paths, etc.
-    String cleanRowpathUri = ODKFileUtils.asRowpathUri(sc.getAppName(), tableId, instanceId, localFile);
-    
-    URI instanceFileDownloadUri = normalizeUri(serverInstanceFileUri, instanceId + "/file/"
-        + cleanRowpathUri);
-
-  
-    CommonFileAttachmentTerms cat = new CommonFileAttachmentTerms();
-    cat.rowPathUri = rowpathUri;
-    cat.localFile = localFile;
-    cat.instanceFileDownloadUri = instanceFileDownloadUri;
-    
-    return cat;
-  }
-
-  private String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws RemoteException {
-    OdkDbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      return sc.getDatabaseService().getFileSyncETag(sc.getAppName(), db,
-          fileDownloadUri.toString(), tableId,
-          lastModified);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  private void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws RemoteException {
-    OdkDbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      sc.getDatabaseService().updateFileSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
-          lastModified, documentETag);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  private String getManifestSyncETag(URI fileDownloadUri, String tableId) throws RemoteException {
-    OdkDbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      return sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  private void updateManifestSyncETag(URI fileDownloadUri, String tableId, String documentETag) throws RemoteException {
-    OdkDbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
-          documentETag);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
     }
   }
 
   @Override
-  public boolean syncFileAttachments(String serverInstanceFileUri, String tableId,
-      SyncRowPending localRow, SyncAttachmentState attachmentState)  {
+  public void deleteConfigFile(File localFile) throws HttpClientWebException, IOException {
+    String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
+        localFile);
+    URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
+    log.i(LOGTAG, "CLARICE:[deleteConfigFile] fileDeleteUri: " + filesUri.toString());
 
-    if (localRow.getUriFragments().isEmpty()) {
-      throw new IllegalStateException("should never get here!");
-    }
+    HttpDelete request = new HttpDelete();
+    CloseableHttpResponse response = null;
+    wrapper.buildNoContentJsonResponseRequest(filesUri, request);
 
-    // If we are not syncing instance files, then return
-    if (attachmentState.equals(SyncAttachmentState.NONE)) {
-      return false;
-    }
-
-    boolean fullySynced = true;
     try {
-       // 1) Get this row's instanceId (rowId)
-      String instanceId = localRow.getRowId();
-
-      // 2) Get the list of files on the server
-      List<OdkTablesFileManifestEntry> entries = getRowLevelFileManifest(serverInstanceFileUri,
-          tableId, instanceId);
-
-      // 3) Create a list of files to that need to be uploaded to or downloaded from the server.
-      List<String> localRowPathUris = localRow.getUriFragments();
-      List<CommonFileAttachmentTerms> filesToUpload = new ArrayList<CommonFileAttachmentTerms>();
-      HashMap<CommonFileAttachmentTerms, Long> filesToDownloadSizes = new HashMap<>();
-
-      // First, iterate over the files that exist on the server, noting any that are missing
-      // or changed on either end
-      for (OdkTablesFileManifestEntry entry : entries) {
-
-        // Remove files that exist on the server from our list of local files, leaving us with a
-        // list of files that only exist locally.
-        localRowPathUris.remove(entry.filename);
-
-        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri,
-            tableId, instanceId, entry.filename);
-
-        if (!cat.localFile.exists()) {
-          // File exists on the server but not locally; queue it for download
-          filesToDownloadSizes.put(cat, entry.contentLength);
-          continue;
-        }
-
-        // Check if the server and local versions match
-        String localMd5 = ODKFileUtils.getMd5Hash(sc.getAppName(), cat.localFile);
-        if (entry.md5hash == null || entry.md5hash.length() == 0) {
-          // Recorded but not present on server -- upload
-          filesToUpload.add(cat);
-        } else if (!localMd5.equals(entry.md5hash)) {
-          // Found, but it is wrong locally, so we need to pull it
-          log.e(LOGTAG, "Put attachments: md5Hash on server does not match local file hash!");
-          filesToDownloadSizes.put(cat, entry.contentLength);
-          continue;
-        } else {
-          // Server matches local; don't upload or download
-        }
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
       }
-
-       // TODO: I am uncertain of this logic. I think this will find and ensure
-       // TODO: that all local content files are pushed to the server for a given row
-       // TODO: but I don't know how that interacts with the rowETag. If these were
-       // TODO: attachments from an earlier rowETag, do they get correctly associated
-       // TODO: and visible at the other rowETag level?
-       // TODO: this needs testing.
-      // Next, account for any files that exist locally but aren't referenced on the server
-      for (String rowPathUri : localRowPathUris) {
-
-        CommonFileAttachmentTerms cat = computeCommonFileAttachmentTerms(serverInstanceFileUri,
-            tableId, instanceId, rowPathUri);
-
-        if (!cat.localFile.exists()) {
-          Log.e(LOGTAG, "Put attachments: row has reference to non-existant file");
-          fullySynced = false;
-          continue;
-        }
-
-        filesToUpload.add(cat);
-      }
-
-      // 4) Split that list of files to upload into 10MB batches and upload those to the server
-      // TODO: Fix attachment state bug. For now just always sync all attachments
-      //if ((attachmentState.equals(SyncAttachmentState.SYNC) ||
-      //    attachmentState.equals(SyncAttachmentState.UPLOAD))) {
-      if (false) {
-        // If we are not set to upload files, then don't.
-        fullySynced = false;
-      } else if (filesToUpload.isEmpty()) {
-        log.i(LOGTAG, "Put attachments: no files to send to server -- they are all synced");
-      } else {
-        long batchSize = 0;
-        List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
-        for (CommonFileAttachmentTerms fileAttachment : filesToUpload) {
-
-          // Check if adding the file exceeds the batch limit. If so, upload the current batch and
-          // start a new one.
-          // Note: If the batch is empty then this is just one giant file and it will get uploaded
-          // on the next iteration.
-          if (batchSize + fileAttachment.localFile.length() > MAX_BATCH_SIZE && !batch.isEmpty()) {
-            fullySynced &= uploadBatch(batch, serverInstanceFileUri, instanceId, tableId);
-            batch.clear();
-            batchSize = 0;
-          }
-
-          batch.add(fileAttachment);
-          batchSize += fileAttachment.localFile.length();
-        }
-
-        // Upload the final batch
-        fullySynced &= uploadBatch(batch, serverInstanceFileUri, instanceId, tableId);
-
-      }
-
-      // 5) Download the files from the server
-      // TODO: Fix attachment state bug. For now just always sync all attachments
-      //if (!(attachmentState.equals(SyncAttachmentState.SYNC) ||
-      //    attachmentState.equals(SyncAttachmentState.DOWNLOAD))) {
-      if (false) {
-      } else if (filesToDownloadSizes.isEmpty()){
-        log.i(LOGTAG, "Put attachments: no files to fetch from server -- they are all synced");
-      } else {
-        long batchSize = 0;
-        List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
-
-        for (CommonFileAttachmentTerms fileAttachment : filesToDownloadSizes.keySet()) {
-
-          // Check if adding the file exceeds the batch limit. If so, download the current batch
-          // and start a new one.
-          // Note : If the batch is empty, then this is just one giant file and it will get
-          // downloaded on the next iteration.
-          if (batchSize + filesToDownloadSizes.get(fileAttachment) > MAX_BATCH_SIZE &&
-              !batch.isEmpty()) {
-            fullySynced &= downloadBatch(batch, serverInstanceFileUri, instanceId, tableId);
-            batch.clear();
-            batchSize = 0;
-          }
-
-          batch.add(fileAttachment);
-          batchSize += filesToDownloadSizes.get(fileAttachment);
-        }
-
-        fullySynced &= downloadBatch(batch, serverInstanceFileUri, instanceId,
-            tableId);
-      }
-
-      return fullySynced;
-
-    } catch (Exception e) {
-      log.e(LOGTAG, "Exception during sync: " + e.toString());
-      return false;
     }
-
   }
 
-  boolean uploadBatch(List<CommonFileAttachmentTerms> batch,
-                              String serverInstanceFileUri, String instanceId, String tableId) throws Exception {
+  @Override
+  public void uploadConfigFile(File localFile) throws HttpClientWebException, IOException {
+    String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
+        localFile);
+    URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
+    log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
+    String ct = wrapper.determineContentType(localFile.getName());
+    ContentType contentType = ContentType.create(ct);
 
-    URI instanceFilesUploadUri = normalizeUri(serverInstanceFileUri, instanceId + "/upload");
+    CloseableHttpResponse response = null;
+    HttpPost request = new HttpPost();
+    wrapper.buildSpecifiedContentJsonResponseRequest(filesUri, contentType, request);
+
+    HttpEntity entity = wrapper.makeHttpEntity(localFile);
+    request.setEntity(entity);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED_SC_ACCEPTED);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
+  public void uploadInstanceFile(File file, URI instanceFileUri) throws HttpClientWebException,
+      IOException
+  {
+    log.i(LOGTAG, "[uploadInstanceFile] filePostUri: " + instanceFileUri.toString());
+    String ct = wrapper.determineContentType(file.getName());
+    ContentType contentType = ContentType.create(ct);
+
+    CloseableHttpResponse response = null;
+    HttpPost request = new HttpPost();
+    wrapper.buildSpecifiedContentJsonResponseRequest(instanceFileUri, contentType, request);
+
+    HttpEntity entity = wrapper.makeHttpEntity(file);
+    request.setEntity(entity);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED);
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
+  public CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri,
+      String tableId, String instanceId, String rowpathUri) {
+
+    File localFile =
+        ODKFileUtils.getRowpathFile(sc.getAppName(), tableId, instanceId, rowpathUri);
+
+    // use a cleaned-up rowpathUri in case there are leading slashes, instance paths, etc.
+    String cleanRowpathUri = ODKFileUtils.asRowpathUri(sc.getAppName(), tableId, instanceId, localFile);
+
+    URI instanceFileDownloadUri = wrapper.constructInstanceFileUri(serverInstanceFileUri,
+        instanceId, cleanRowpathUri);
+
+    CommonFileAttachmentTerms cat = new CommonFileAttachmentTerms();
+    cat.rowPathUri = rowpathUri;
+    cat.localFile = localFile;
+    cat.instanceFileDownloadUri = instanceFileDownloadUri;
+
+    return cat;
+  }
+
+  @Override
+  public void uploadInstanceFileBatch(List<CommonFileAttachmentTerms> batch,
+      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException {
+
+    URI instanceFilesUploadUri = wrapper.constructInstanceFileBulkUploadUri(serverInstanceFileUri, instanceId);
     String boundary = "ref" + UUID.randomUUID();
 
-    //Map<String, String> params = Collections.singletonMap("boundary", boundary);
     NameValuePair params = new BasicNameValuePair("boundary", boundary);
-    //MediaType mt = new MediaType(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), params);
     ContentType mt = ContentType.create(ContentType.MULTIPART_FORM_DATA.getMimeType(), params);
 
     HttpPost request = new HttpPost();
     CloseableHttpResponse response = null;
-    buildRequest(instanceFilesUploadUri, mt, request);
+    wrapper.buildSpecifiedContentJsonResponseRequest(instanceFilesUploadUri, mt, request);
 
     MultipartEntityBuilder mpEntBuilder = MultipartEntityBuilder.create();
 
@@ -2309,10 +843,10 @@ public class AggregateSynchronizer implements Synchronizer {
 
     for (CommonFileAttachmentTerms cat : batch) {
       log.i(LOGTAG, "[uploadFile] filePostUri: " + cat.instanceFileDownloadUri.toString());
-      String ct = determineContentType(cat.localFile.getName());
+      String ct = wrapper.determineContentType(cat.localFile.getName());
 
       String filename = ODKFileUtils
-              .asRowpathUri(sc.getAppName(), tableId, instanceId, cat.localFile);
+          .asRowpathUri(sc.getAppName(), tableId, instanceId, cat.localFile);
       filename = filename.replace("\"", "\"\"");
 
       FormBodyPartBuilder formPartBodyBld = FormBodyPartBuilder.create();
@@ -2344,32 +878,25 @@ public class AggregateSynchronizer implements Synchronizer {
       mpEntBuilder.addPart(formPartBodyBld.build());
     }
 
+    HttpEntity mpFormEntity = mpEntBuilder.build();
+    request.setEntity(mpFormEntity);
+
     try {
-      HttpEntity mpFormEntity = mpEntBuilder.build();
-      request.setEntity(mpFormEntity);
-      response = httpClientExecute(request);
-      if (response.getStatusLine().getStatusCode() < 200 ||
-          response.getStatusLine().getStatusCode() >= 300) {
-        return false;
-      }
-      if (response.getFirstHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
-        return false;
-      }
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_CREATED);
     } finally {
-      if (response != null) {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
-
-    return true;
   }
 
-  boolean downloadBatch(List<CommonFileAttachmentTerms> filesToDownload,
-                                   String serverInstanceFileUri, String instanceId, String tableId) throws Exception {
-    boolean downloadedAllFiles = true;
+  @Override
+  public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
+      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException {
+    // boolean downloadedAllFiles = true;
 
-    URI instanceFilesDownloadUri = normalizeUri(serverInstanceFileUri, instanceId +
-            "/download");
+    URI instanceFilesDownloadUri = wrapper.constructInstanceFileBulkDownloadUri(serverInstanceFileUri, instanceId);
 
     ArrayList<OdkTablesFileManifestEntry> entries = new ArrayList<OdkTablesFileManifestEntry>();
     for (CommonFileAttachmentTerms cat : filesToDownload) {
@@ -2388,28 +915,19 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpPost request = new HttpPost();
     CloseableHttpResponse response = null;
 
-    buildBasicRequest(instanceFilesDownloadUri, request);
-    request.setURI(instanceFilesDownloadUri);
-    //request.addHeader("Content-Type", MediaType.APPLICATION_JSON);
+    // no body content-type and no response content-type requested
+    wrapper.buildBasicRequest(instanceFilesDownloadUri, request);
     request.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
     String fileManifestEntries = ODKFileUtils.mapper.writeValueAsString(manifest);
 
-//    HttpEntity entity = new GzipCompressingEntity(new StringEntity(fileManifestEntries,
-//            Charset.forName("UTF-8")));
-
     HttpEntity entity = new StringEntity(fileManifestEntries,
-            Charset.forName("UTF-8"));
+        Charset.forName("UTF-8"));
 
     request.setEntity(entity);
 
     try {
-      response = httpClientExecute(request);
-
-      if (response.getStatusLine().getStatusCode() < 200 ||
-              response.getStatusLine().getStatusCode() >= 300) {
-        return false;
-      }
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
       Header hdr = response.getEntity().getContentType();
       hdr.getElements();
@@ -2420,7 +938,7 @@ public class AggregateSynchronizer implements Synchronizer {
           NameValuePair nvp = elm.getParameter(i);
           String nvp_name = nvp.getName();
           String nvp_value = nvp.getValue();
-          if (nvp_name.equals(BOUNDARY)) {
+          if (nvp_name.equals(HttpRestProtocolWrapper.BOUNDARY)) {
             boundaryVal = nvp_value;
             break;
           }
@@ -2430,7 +948,8 @@ public class AggregateSynchronizer implements Synchronizer {
       // Best to return at this point if we can't
       // determine the boundary to parse the multi-part form
       if (boundaryVal == null) {
-        return false;
+        throw new ClientDetectedVersionMismatchedServerResponseException(
+            "unable to extract boundary parameter", request, response);
       }
 
       inStream = response.getEntity().getContent();
@@ -2444,18 +963,16 @@ public class AggregateSynchronizer implements Synchronizer {
         String header = multipartStream.readHeaders();
         System.out.println("Headers: " + header);
 
-        // Get the file name
-        int firstIndex = header.indexOf(multipartFileHeader) + multipartFileHeader.length();
-        int lastIndex = header.lastIndexOf("\"");
-        String partialPath = header.substring(firstIndex, lastIndex);
+        String partialPath = wrapper.extractInstanceFileRelativeFilename(header);
 
         if (partialPath == null) {
           log.e("putAttachments", "Server did not identify the rowPathUri for the file");
-          return false;
+          throw new ClientDetectedVersionMismatchedServerResponseException(
+              "server did not specify rowPathUri for file", request, response);
         }
 
         File instFile = ODKFileUtils
-                .getRowpathFile(sc.getAppName(), tableId, instanceId, partialPath);
+            .getRowpathFile(sc.getAppName(), tableId, instanceId, partialPath);
 
         os = new BufferedOutputStream(new FileOutputStream(instFile));
 
@@ -2465,10 +982,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
         nextPart = multipartStream.readBoundary();
       }
-    } catch (IOException e) {
-      e.printStackTrace();
-      System.out.println("batchGetFilesForRow: Download file batches: Unable to read attachment");
-      return false;
     } finally {
       if (os != null) {
         try {
@@ -2479,10 +992,197 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       }
       if (response != null) {
+        EntityUtils.consumeQuietly(response.getEntity());
         response.close();
       }
     }
+  }
 
-    return downloadedAllFiles;
+  /**********************************************************************************
+   *
+   * Database interactions
+   **********************************************************************************/
+
+  @Override
+  public void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException {
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().deleteAllSyncETagsExceptForServer(sc.getAppName(), db,
+              sc.getAggregateUri());
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public String getFileSyncETag(URI
+      fileDownloadUri, String tableId, long lastModified) throws RemoteException {
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      return sc.getDatabaseService().getFileSyncETag(sc.getAppName(), db,
+          fileDownloadUri.toString(), tableId,
+          lastModified);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws RemoteException {
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().updateFileSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
+          lastModified, documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public String getManifestSyncETag(String tableId) throws RemoteException {
+
+    URI fileManifestUri;
+
+    if ( tableId == null ) {
+      fileManifestUri = wrapper.constructAppLevelFileManifestUri();
+    } else {
+      fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
+    }
+
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      return sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public void updateManifestSyncETag(String tableId, String documentETag) throws RemoteException {
+
+    URI fileManifestUri;
+
+    if ( tableId == null ) {
+      fileManifestUri = wrapper.constructAppLevelFileManifestUri();
+    } else {
+      fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
+    }
+
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId,
+          documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
+      RemoteException {
+
+    URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
+
+    /**
+     * When we are obtaining the manifest from the server, we need to:
+     *
+     * (1) If the current attachmentState does not match the previous fetch's state, we
+     * need to pull the server manifest in its entirety.
+     * (2) If the list of attachment filenames has changed since the previous fetch, we
+     * need to pull the server manifest in its entirety.
+     * (3) Otherwise, if we are using the same attachmentState and have the same list of
+     * attachment filenames, we can short-circuit the processing if there is no change
+     * to the manifest on the server.
+     *
+     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
+     * returning the eTag if that prefix matches.
+     */
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      String qualifiedETag = sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db,
+                                  fileManifestUri.toString(), tableId);
+      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
+      if ( qualifiedETag != null && qualifiedETag.startsWith(restrictivePrefix) ) {
+        return qualifiedETag.substring(restrictivePrefix.length());
+      } else {
+        return null;
+      }
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
+      String documentETag)
+      throws RemoteException {
+
+    URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
+
+    /**
+     * When we are obtaining the manifest from the server, we need to:
+     *
+     * (1) If the current attachmentState does not match the previous fetch's state, we
+     * need to pull the server manifest in its entirety.
+     * (2) If the list of attachment filenames has changed since the previous fetch, we
+     * need to pull the server manifest in its entirety.
+     * (3) Otherwise, if we are using the same attachmentState and have the same list of
+     * attachment filenames, we can short-circuit the processing if there is no change
+     * to the manifest on the server.
+     *
+     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
+     * returning the eTag if that prefix matches.
+     */
+    OdkDbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
+      if ( documentETag != null ) {
+        documentETag = restrictivePrefix + documentETag;
+      }
+      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db,
+          fileManifestUri.toString(), tableId, documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  @Override
+  public void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
+      String newSchemaETag, String oldSchemaETag) throws
+      RemoteException {
+    // we are creating data on the server
+    OdkDbHandle db = null;
+
+    try {
+      String tableInstanceFilesUriString = null;
+
+      if ( oldSchemaETag != null) {
+        URI uri = wrapper.constructRealizedTableIdUri(tableId, oldSchemaETag);
+        tableInstanceFilesUriString = uri.toString();
+      }
+
+      db = sc.getDatabase();
+      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(), db,
+          tableId, newSchemaETag, tableInstanceFilesUriString);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
   }
 }
