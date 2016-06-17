@@ -161,12 +161,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     if ( newFragment == null ) {
       newFragment = new SyncFragment();
       WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
+      
+      FragmentTransaction trans = mgr.beginTransaction();
+      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
+      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
+      trans.commit();
     }
-
-    FragmentTransaction trans = mgr.beginTransaction();
-    trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-    trans.commit();
   }
 
   @Override
@@ -245,7 +245,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
         newFragment = new AboutMenuFragment();
       }
       FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.main_activity_view, newFragment, AboutMenuFragment.NAME);
+      trans.replace(R.id.sync_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 
