@@ -69,7 +69,7 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_failure, appName)).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_error_black_24dp);
+    finalBuilder.setSmallIcon(R.drawable.ic_error_white_24dp);
 
     Notification syncNotif = finalBuilder.build();
 
@@ -85,7 +85,7 @@ public final class SyncNotification {
     Notification.Builder finalBuilder = new Notification.Builder(cntxt);
     finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_conflicts, appName)).setContentText(text)
         .setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_warning_black_24dp);
+    finalBuilder.setSmallIcon(R.drawable.ic_warning_white_24dp);
 
     Notification syncNotif = finalBuilder.build();
 
@@ -102,12 +102,12 @@ public final class SyncNotification {
       text = cntxt.getString(R.string.sync_notification_success_pending_attachments_text, pendingAttachments);
       finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_success_pending_attachments, appName)).setContentText(text)
               .setAutoCancel(true).setOngoing(false);
-      finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
+      finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
     } else {
       text = cntxt.getString(R.string.sync_notification_success_complete_text);
       finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_success_complete, appName)).setContentText(text)
               .setAutoCancel(true).setOngoing(false);
-      finalBuilder.setSmallIcon(R.drawable.ic_done_black_24dp);
+      finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
     }
     this.progressStatus = new SyncProgressEvent(messageNum, text, SyncProgressState.FINISHED, -1, 0);
 
