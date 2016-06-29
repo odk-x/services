@@ -320,9 +320,24 @@ public class ProcessRowDataChanges {
               orderedColumns, fileAttachmentColumns, localRow),
               (state == SyncState.synced_pending_files)));
         } else {
-          rowsToUpdateLocally.add(new SyncRowDataChanges(serverRow, SyncRow.convertToSyncRow(
-              orderedColumns, fileAttachmentColumns, localRow),
-              (state == SyncState.synced_pending_files)));
+          // When a prior sync ends with conflicts, we will not update the table's "lastDataETag"
+          // and when we next sync, we will pull the same server row updates as when the
+          // conflicts were raised (elsewhere in the table).
+          //
+          // Therefore, we can expect many server row updates to have already been locally
+          // applied (for the rows were not in conflict). Detect and ignore these already-
+          // processed changes by testing for the server and device having identical field values.
+          //
+          SyncRowDataChanges syncRow = new SyncRowDataChanges(serverRow, SyncRow.convertToSyncRow(
+                  orderedColumns, fileAttachmentColumns, localRow), false, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+
+          if (!syncRow.identicalValues(orderedColumns)) {
+            // Only add a local-update if the server and device rows have different values.
+            //
+            rowsToUpdateLocally.add(new SyncRowDataChanges(serverRow, SyncRow.convertToSyncRow(
+                      orderedColumns, fileAttachmentColumns, localRow),
+                      (state == SyncState.synced_pending_files)));
+          }
         }
       } else if (serverRow.isDeleted()
           && (state == SyncState.deleted || (state == SyncState.in_conflict && localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES))) {
@@ -345,6 +360,38 @@ public class ProcessRowDataChanges {
         // SyncState.new_row and record exists on server
         // SyncState.changed and new change on server
         // SyncState.in_conflict and new change on server
+
+        // ALSO: this case can occur when our prior sync attempt pulled down changes that
+        // placed local row(s) in conflict -- which we have since resolved -- and we are now
+        // issuing a sync to push those changes up to the server.
+        //
+        // This is because we do not update our local table's "lastDataETag" until we have
+        // sync'd and applied all changes from the server and have no local conflicts or
+        // checkpoints on the table. Because of this, when we issue a sync after resolving
+        // a conflict, we will get the set of server row changes that include the row(s)
+        // that were previously in conflict. This will appear as one of:
+        //    changed | changed
+        //    changed | deleted
+        //    deleted | changed
+        //    deleted | deleted
+        //
+        // BUT, this time, however, the local records will have the same rowETag as the
+        // server record, indicating that they are valid changes (or deletions) on top of
+        // the server's current version of this same row.
+        //
+        // If this is the case (the rowETags match), then we should not place the row into
+        // conflict, but should instead ignore the reported content from the server and push
+        // the local row's change or delete up to the server in the next section.
+        //
+        // If not, when we reach this point in the code, the rowETag of the server row
+        // should **not match** our local row -- indicating that the server has a change from
+        // another source, and that we should place the row into conflict.
+        //
+        String localRowETag = localRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
+        if ( localRowETag != null && localRowETag.equals(serverRow.getRowETag()) ) {
+          // ignore the server record. This is an update we will push to the server.
+          continue;
+        }
 
         // no need to worry about server in_conflict records.
         // any server in_conflict rows will be cleaned up during the

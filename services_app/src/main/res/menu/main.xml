@@ -10,6 +10,13 @@
         android:title="@string/action_sync"/>
 
     <item
+        android:id="@+id/action_resolve_conflict"
+        android:orderInCategory="30"
+        android:showAsAction="never"
+        android:icon="@drawable/ic_sync_problem_black_24dp"
+        android:title="@string/action_resolve_conflict"/>
+
+    <item
             android:id="@+id/action_settings"
             android:orderInCategory="50"
             android:showAsAction="never"

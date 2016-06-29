@@ -51,6 +51,13 @@ public final class SyncRowDataChanges {
     this.localRowConflictType = localRowConflictType;
   }
 
+  /**
+   * Compares user and metadata field values, but excludes sync_state, rowETag,
+   * filter type and filter value.
+   *
+   * @param orderedDefns
+   * @return true if the fields are identical
+     */
   public boolean identicalValuesExceptRowETagAndFilterScope(OrderedColumns orderedDefns) {
     if ((serverRow.getSavepointTimestamp() == null) ? (localRow.getSavepointTimestamp() != null)
         : !serverRow.getSavepointTimestamp().equals(localRow.getSavepointTimestamp())) {
@@ -157,12 +164,22 @@ public final class SyncRowDataChanges {
         return false;
       }
     }
-    if (!localValues.containsAll(serverValues)) {
-      return false;
-    }
+    // because we ensure that (localValues.size() == serverValues.size())
+    // and we ensure inside the loop that (local.column.equals(server.column))
+    // and we test for semantic equivalence of the fields (handling numbers specially)
+    // we should NOT test for containment of the server field-value list in the
+    // local field-value list.  That is too restrictive because it rejects
+    // semantically-equivalent field-value entries (which is the entire point of
+    // the above loop).
     return true;
   }
 
+  /**
+   * Compares user and metadata values, excluding the sync state.
+   *
+   * @param orderedDefns
+   * @return
+     */
   public boolean identicalValues(OrderedColumns orderedDefns) {
     if ((serverRow.getFilterScope() == null) ? (localRow.getFilterScope() != null) : !serverRow
         .getFilterScope().equals(localRow.getFilterScope())) {
