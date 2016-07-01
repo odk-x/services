@@ -39,6 +39,7 @@ import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.activities.AppPropertiesActivity;
@@ -59,8 +60,9 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   private static final String TAG = SyncActivity.class.getSimpleName();
 
   public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
-  private final int SYNC_ACTIVITY_RESULT_CODE = 10;
-  private final int SETTINGS_ACTIVITY_RESULT_CODE = 100;
+  private static final int SYNC_ACTIVITY_RESULT_CODE = 10;
+  private static final int RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE = 30;
+  private static final int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
   private String mAppName;
   private PropertiesSingleton mProps;
@@ -225,6 +227,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   }
 
   @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    menu.findItem(R.id.action_sync).setVisible(false);
+    return super.onPrepareOptionsMenu(menu);
+  }
+
+  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
     // automatically handle clicks on the Home/Up button, so long
@@ -234,6 +242,13 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
       Intent i = new Intent(this, SyncActivity.class);
       i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
       startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
+      return true;
+    }
+
+    if (id == R.id.action_resolve_conflict) {
+      Intent i = new Intent(this, AllConflictsResolutionActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
       return true;
     }
 
