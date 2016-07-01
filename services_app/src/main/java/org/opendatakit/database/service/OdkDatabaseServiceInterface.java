@@ -1219,7 +1219,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      RawUserTable result = ODKDatabaseImplUtils.get()
+      OdkDbTable result = ODKDatabaseImplUtils.get()
           .arbitraryQuery(db, appName, sqlCommand, sqlBindArgs);
 
       return getAndCacheChunks(result);

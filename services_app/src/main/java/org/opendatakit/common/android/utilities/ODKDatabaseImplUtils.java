@@ -42,6 +42,8 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.database.service.OdkDbTable;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -430,12 +432,12 @@ public class ODKDatabaseImplUtils {
     return userTable;
   }
 
-  public RawUserTable arbitraryQuery(OdkConnectionInterface db, String appName, String sqlCommand,
+  public OdkDbTable arbitraryQuery(OdkConnectionInterface db, String appName, String sqlCommand,
       String[] sqlBindArgs) {
     Cursor c = null;
     try {
       c = db.rawQuery(sqlCommand, sqlBindArgs);
-      RawUserTable table = buildRawUserTable(c, sqlCommand, sqlBindArgs);
+      OdkDbTable table = buildOdkDbTable(c, sqlCommand, sqlBindArgs);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -444,10 +446,11 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private RawUserTable buildRawUserTable(Cursor c, String sqlCommand, String[] sqlBindArgs) {
+  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, String[] sqlBindArgs) {
+
+    String[] mElementKeyForIndex = null;
 
     if (!c.moveToFirst()) {
-      String[] mElementKeyForIndex = null;
 
       // Attempt to retrieve the columns from the cursor.
       // These may not be available if there were no rows returned.
@@ -472,13 +475,13 @@ public class ODKDatabaseImplUtils {
       c.close();
 
       // we have no idea what the table should contain because it has no rows...
-      return new RawUserTable(sqlCommand, sqlBindArgs, mElementKeyForIndex, 0);
+      return new OdkDbTable(sqlCommand, sqlBindArgs, mElementKeyForIndex, 0);
     }
 
     int rowCount = c.getCount();
     int columnCount = c.getColumnCount();
 
-    RawUserTable userTable = null;
+    OdkDbTable table = null;
 
     // may be -1 if there is no _id column in the result set.
     int rowIdIndex = c.getColumnIndex(DataTableColumns.ID);
@@ -489,7 +492,8 @@ public class ODKDatabaseImplUtils {
     // array, dataKeyToIndex would then have a mapping of _my_data:5.
     // The sync_state column, if present at index 7, would have a mapping
     // in metadataKeyToIndex of sync_state:7.
-    String[] mElementKeyForIndex = new String[columnCount];
+    mElementKeyForIndex = new String[columnCount];
+
     int i;
 
     for (i = 0; i < columnCount; ++i) {
@@ -497,31 +501,21 @@ public class ODKDatabaseImplUtils {
       mElementKeyForIndex[i] = columnName;
     }
 
-    userTable = new RawUserTable(sqlCommand, sqlBindArgs, mElementKeyForIndex, rowCount);
+    table = new OdkDbTable(sqlCommand, sqlBindArgs, mElementKeyForIndex,
+        rowCount);
 
-    rowCount = 0;
     String[] rowData = new String[columnCount];
     do {
-      String rowId;
-      if (rowIdIndex == -1) {
-        rowId = Integer.toString(rowCount);
-      } else {
-        if (c.isNull(rowIdIndex)) {
-          throw new IllegalStateException("Unexpected null value for rowId");
-        }
-        rowId = ODKCursorUtils.getIndexAsString(c, rowIdIndex);
-      }
-      ++rowCount;
       // First get the user-defined data for this row.
       for (i = 0; i < columnCount; i++) {
         String value = ODKCursorUtils.getIndexAsString(c, i);
         rowData[i] = value;
       }
-      RawRow nextRow = new RawRow(userTable, rowId, rowData.clone());
-      userTable.addRow(nextRow);
+      OdkDbRow nextRow = new OdkDbRow(rowData.clone(), table);
+      table.addRow(nextRow);
     } while (c.moveToNext());
     c.close();
-    return userTable;
+    return table;
   }
 
   /**
