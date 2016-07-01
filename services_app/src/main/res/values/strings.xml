@@ -105,7 +105,7 @@
     <string name="sync_successful">Sync successful</string>
     <string name="sync_successful_text">Success! Your application content (data and configuration) matches that on the server.</string>
     <string name="sync_complete_pending_attachments">Sync (without attachments) successful</string>
-    <string name="sync_complete_pending_attachments_text">Configuration and data have been sync\'d, but attachments have not been sync\'d.</string>
+    <string name="sync_complete_pending_attachments_text">Configuration and data have been sync\'d, but not all attachments have been sync\'d. Most common reasons include:\n\t-You or another user elected not to fully sync attachments\n\t-There was a problem transferring the files</string>
 
     <!-- intermediate progress messages -->
     <string name="sync_starting">Starting sync&#8230;</string>
