@@ -152,11 +152,18 @@ public class ProcessManifestContentAndFileChanges {
     for (String relativePath : relativePaths) {
       if (relativePath.startsWith("config/assets/csv/")) {
         // by convention, the files here begin with their identifying tableId
+        // and the directory matches the tableId if there are media attachments for that tableId
         String[] parts = relativePath.split("/");
         if (parts.length >= 4) {
-          String[] nameElements = parts[3].split("\\.");
-          if (nameElements[0].equals(tableId)) {
+          if ( parts[3].equals(tableId) ) {
+            // directory...
             newList.add(relativePath);
+          } else {
+            String[] nameElements = parts[3].split("\\.");
+            // .csv or .qualifier.csv file for tableId
+            if (nameElements[0].equals(tableId)) {
+              newList.add(relativePath);
+            }
           }
         }
       }
