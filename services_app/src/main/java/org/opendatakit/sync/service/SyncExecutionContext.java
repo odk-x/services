@@ -26,6 +26,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -139,7 +140,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
   public SyncOutcome exceptionEquivalentOutcome(Throwable e) {
     if ( e instanceof IOException ) {
       // this occurs when JSON parser of response fails
-       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof JsonProcessingException ) {
+      // something wrong with Jackson parser / serializer
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
     } else if ( e instanceof AccessDeniedException ) {
       return (SyncOutcome.ACCESS_DENIED_EXCEPTION);
     } else if ( e instanceof AccessDeniedReauthException) {
@@ -229,6 +233,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getPassword() {
     return password;
+  }
+
+  public void setRolesList(String value) {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setProperty(CommonToolProperties.KEY_ROLES_LIST, value);
   }
 
   private int refCount = 1;

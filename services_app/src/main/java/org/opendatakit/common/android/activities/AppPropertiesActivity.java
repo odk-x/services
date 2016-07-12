@@ -234,6 +234,33 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     mProps.writeProperties();
   }
 
+  /**
+   * If we are exiting the non-privileged settings screen and the user roles are not
+   * set, then launch the verify user permissions activity (in place of this activity).
+   *
+   * Otherwise, exit the settings screen.
+   */
+  @Override
+  public void onBackPressed() {
+    if ( !mAdminMode ) {
+      String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+      boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
+              getString(R.string.credential_type_none).equals(authType);
+      if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
+              !isAnonymous ) {
+
+        mProps.writeProperties();
+        // this will swap to the new activity and close this one
+        Intent i = new Intent(this, VerifyServerSettingsActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+        startActivity(i);
+        return;
+      }
+    }
+    super.onBackPressed();
+  }
+
   @Override
   public void finish() {
     mProps.writeProperties();

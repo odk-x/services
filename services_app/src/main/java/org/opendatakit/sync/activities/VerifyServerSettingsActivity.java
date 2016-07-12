@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -186,9 +187,24 @@ public class VerifyServerSettingsActivity extends Activity implements IAppAwareA
   }
 
   @Override public void onBackPressed() {
+    PropertiesSingleton props = getProps();
+    String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
+            getString(R.string.credential_type_none).equals(authType);
+    if ( props.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
+            !isAnonymous ) {
+
+      Handler h = new Handler();
+      Toast.makeText(this, R.string.warning_no_user_roles, Toast.LENGTH_LONG).show();
+      h.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          finish();
+        }
+      }, Toast.LENGTH_LONG);
+      return;
+    }
     super.onBackPressed();
-    setResult(RESULT_CANCELED);
-    finish();
   }
 
   @Override

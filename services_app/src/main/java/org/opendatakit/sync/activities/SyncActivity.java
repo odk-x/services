@@ -181,12 +181,6 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
     super.onDestroy();
   }
 
-  @Override public void onBackPressed() {
-    super.onBackPressed();
-    setResult(RESULT_CANCELED);
-    finish();
-  }
-
   @Override
   protected void onPause() {
     super.onPause();

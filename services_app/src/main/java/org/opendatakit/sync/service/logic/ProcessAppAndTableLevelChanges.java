@@ -16,6 +16,8 @@ package org.opendatakit.sync.service.logic;
 
 import android.os.RemoteException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -123,8 +125,6 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    // TODO: clear existing privileges
-
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
 
@@ -139,18 +139,19 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    // TODO: store reported privileges
-
-    StringBuilder b = new StringBuilder();
-    boolean first = true;
-    for ( String role : roleList ) {
-      if ( !first ) {
-        b.append(", ");
+    try {
+      if ( roleList.isEmpty() ) {
+        sc.setRolesList("");
+      } else {
+        sc.setRolesList(ODKFileUtils.mapper.writeValueAsString(roleList));
       }
-      first = false;
-      b.append(role);
+    } catch (JsonProcessingException e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception saving user roles. exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
     }
-    log.i(TAG, "[verifyServerConfiguration] roles from server: " + b.toString());
 
     // don't set app-level outcome -- indicating we have no errors
     return;

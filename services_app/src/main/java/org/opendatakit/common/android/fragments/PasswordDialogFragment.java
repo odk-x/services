@@ -70,13 +70,15 @@ public class PasswordDialogFragment extends DialogFragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
 
+    final boolean isAdminPassword = passwordPropertyName.equals(CommonToolProperties.KEY_ADMIN_PW);
+
     View view = inflater.inflate(R.layout.password_dialog_layout, container);
 
     props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     int fontSize = props.getIntegerProperty(CommonToolProperties.KEY_FONT_SIZE);
 
     TextView heading = (TextView) view.findViewById(R.id.change_password_heading);
-    heading.setText((passwordPropertyName.equals(CommonToolProperties.KEY_ADMIN_PW) ?
+    heading.setText((isAdminPassword ?
         R.string.change_admin_password : R.string.change_server_password));
     passwordEditText = (EditText) view.findViewById(R.id.pwd_field);
     verifyEditText = (EditText) view.findViewById(R.id.verify_field);
@@ -104,6 +106,9 @@ public class PasswordDialogFragment extends DialogFragment {
         if (!pw.equalsIgnoreCase("") && !ver.equalsIgnoreCase("") && pw.equals(ver)) {
           // passwords are the same
           props.setProperty(passwordPropertyName, pw);
+          if ( !isAdminPassword ) {
+            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
+          }
           props.writeProperties();
 
           Toast.makeText(PasswordDialogFragment.this.getActivity(),
@@ -114,9 +119,12 @@ public class PasswordDialogFragment extends DialogFragment {
           }
         } else if (pw.equalsIgnoreCase("") && ver.equalsIgnoreCase("")) {
           props.setProperty(passwordPropertyName, "");
+          if ( !isAdminPassword ) {
+            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
+          }
           props.writeProperties();
 
-          if ( passwordPropertyName.equalsIgnoreCase(CommonToolProperties.KEY_ADMIN_PW) ) {
+          if ( isAdminPassword ) {
             Toast.makeText(PasswordDialogFragment.this.getActivity(),
                 R.string.admin_password_disabled, Toast.LENGTH_SHORT).show();
           }
