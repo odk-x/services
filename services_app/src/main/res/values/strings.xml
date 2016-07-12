@@ -8,6 +8,7 @@
     <string name="action_about">About</string>
     <string name="action_sync">Sync</string>
     <string name="action_resolve_conflict">Resolve Conflicts</string>
+    <string name="action_verify_server_settings">Update User Permissions</string>
 
 	<!-- Checkpoint and Conflict Resolution Stuff -->
     <string name="all_conflicts_notice">Please wait - scanning for conflicts&#8230;</string>
@@ -124,6 +125,8 @@
     <string name="sync_table_data_sync_with_conflicts">Partially completed sync of %1$s dataset with server. Resolve conflicts and resync.</string>
     <string name="sync_table_contains_checkpoints">Checkpoints must be resolved before sync can proceed.</string>
 
+    <string name="sync_verifying_app_name_on_server">Verifying server supports this user application name.</string>
+    <string name="sync_obtaining_user_permissions_from_server">Retrieving user permissions from server.</string>
     <string name="sync_retrieving_tables_list_from_server">Retrieving list of tables from server.</string>
     <string name="sync_verifying_table_schema_on_server">Verifying %1$s schema matches that on server.</string>
     <string name="sync_creating_local_table">Creating %1$s&#8230;</string>
@@ -183,11 +186,20 @@
     <string name="sync_configure_credentials">No authentication type has been selected.
         Please update your settings.</string>
 
+    <string name="verify_server_settings_start">Verify User Permissions</string>
+    <string name="verify_server_settings_starting">Starting fetch of user permissions&#8230;</string>
+    <string name="verifying_server_settings">Verifying User Permissions&#8230;</string>
+    <string name="verify_server_setttings_successful">Verification successful</string>
+    <string name="verify_server_setttings_successful_text">Success! User permissions have been updated.</string>
+    <string name="verify_server_settings_header">Verify User Permissions</string>
+    <string name="click_to_verify_server_settings">Click to Verify User Permissions</string>
     <!-- sync service layer messages -->
     <string name="sync_notification_syncing">"ODK Sync In Progress %1$s</string>
     <string name="sync_notification_failure">"ODK Sync %1$s Error</string>
     <string name="sync_notification_conflicts">"ODK Sync %1$s Conflicts Exist</string>
     <string name="sync_notification_conflicts_text">"%1$d tables have data conflicts or checkpoints and were not completely synced.</string>
+    <string name="sync_notification_success_verify_complete">"ODK Sync %1$s Server Settings Verified</string>
+    <string name="sync_notification_success_verify_complete_text">ODK User Credentials and Permissions Updated</string>
     <string name="sync_notification_success_complete">"ODK Sync %1$s Completed Successfully</string>
     <string name="sync_notification_success_complete_text">Sync Completed Successfully</string>
     <string name="sync_notification_success_pending_attachments">"ODK Sync %1$s Completed Pending Attachments</string>

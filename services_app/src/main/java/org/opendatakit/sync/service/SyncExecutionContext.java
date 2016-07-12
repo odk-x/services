@@ -132,6 +132,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
     mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
 
+  public SyncOutcome getAppLevelSyncOutcome() {
+    return mUserResult.getAppLevelSyncOutcome();
+  }
+
   public SyncOutcome exceptionEquivalentOutcome(Throwable e) {
     if ( e instanceof IOException ) {
       // this occurs when JSON parser of response fails

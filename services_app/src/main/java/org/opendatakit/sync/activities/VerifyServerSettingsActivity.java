@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 University of Washington
+ * Copyright (C) 2016 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,12 +28,14 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+
 import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.activities.AppPropertiesActivity;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
+import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.logic.CommonToolProperties;
@@ -41,20 +43,22 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
-import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.common.android.activities.AppPropertiesActivity;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 
 /**
- * An activity for syncing the local content with the server.
+ * An activity for verifying the server setings and
+ * updating the configured user's permissions.handling server conflicts.
+ * If an IntentConsts.INTENT_KEY_INSTANCE_ID is provided,
+ * opens the row resolution fragment. Otherwise, opens
+ * the list resolution fragment.
  *
  * @author mitchellsundt@gmail.com
  *
  */
-public class SyncActivity extends Activity implements IAppAwareActivity,
+public class VerifyServerSettingsActivity extends Activity implements IAppAwareActivity,
     IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity, ServiceConnection {
 
-  private static final String TAG = SyncActivity.class.getSimpleName();
+  private static final String TAG = VerifyServerSettingsActivity.class.getSimpleName();
 
   public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
   private static final int RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE = 30;
@@ -147,18 +151,18 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
       return;
     }
 
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting SyncFragment");
+    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting VerifyServerSettingsFragment");
 
     FragmentManager mgr = getFragmentManager();
     String newFragmentName;
     Fragment newFragment;
 
     // we want the list fragment
-    newFragmentName = SyncFragment.NAME;
+    newFragmentName = VerifyServerSettingsFragment.NAME;
     newFragment = mgr.findFragmentByTag(newFragmentName);
     if ( newFragment == null ) {
-      newFragment = new SyncFragment();
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
+      newFragment = new VerifyServerSettingsFragment();
+      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new VerifyServerSettingsFragment");
       
       FragmentTransaction trans = mgr.beginTransaction();
       trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);

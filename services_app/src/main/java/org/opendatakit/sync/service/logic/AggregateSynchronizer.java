@@ -17,6 +17,8 @@ package org.opendatakit.sync.service.logic;
 
 import android.os.RemoteException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -133,6 +135,49 @@ public class AggregateSynchronizer implements Synchronizer {
       } else {
         throw e;
       }
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
+  public ArrayList<String> getUserRoles() throws HttpClientWebException, IOException {
+
+    HttpGet request = new HttpGet();
+    CloseableHttpResponse response = null;
+
+    URI uri = wrapper.constructListOfUserRolesUri();
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // perhaps an older server (pre-v1.4.11) ?
+        return new ArrayList<String>();
+      }
+
+      String res = wrapper.convertResponseToString(response);
+      TypeReference ref = new TypeReference<ArrayList<String>>() { };
+
+      ArrayList<String> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+
+      return rolesList;
+
+    } catch ( NetworkTransmissionException e ) {
+      if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+                e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
+      }
+    } catch ( AccessDeniedException e ) {
+      // this must be an anonymousUser
+      return new ArrayList<String>();
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());

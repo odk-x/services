@@ -17,7 +17,6 @@ package org.opendatakit.sync.activities;
 import android.app.*;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.View;
 import org.opendatakit.androidlibrary.R;
 
 /**
@@ -28,12 +27,13 @@ import org.opendatakit.androidlibrary.R;
 public class DismissableOutcomeDialogFragment extends DialogFragment {
   private static final String OK_INVOKED = "ok_invoked";
 
-  public static DismissableOutcomeDialogFragment newInstance(String title, String message, boolean isOk) {
+  public static DismissableOutcomeDialogFragment newInstance(String title, String message, boolean isOk, String handlerTag) {
     DismissableOutcomeDialogFragment frag = new DismissableOutcomeDialogFragment();
     Bundle args = new Bundle();
     args.putString("title", title);
     args.putString("message", message);
     args.putBoolean("isOk", isOk);
+    args.putString("handlerTag", handlerTag);
     frag.setArguments(args);
     return frag;
   }
@@ -101,11 +101,13 @@ public class DismissableOutcomeDialogFragment extends DialogFragment {
       this.getActivity().setResult(Activity.RESULT_CANCELED);
     }
 
+    String handlerTag = getArguments().getString("handlerTag");
     // Notify the syncFragment that this sync has completed
     // so as to release the details of the sync within the service.
-    SyncFragment syncFragment = (SyncFragment)getFragmentManager().findFragmentByTag(SyncFragment.NAME);
-    if (syncFragment != null) {
-      syncFragment.onSyncCompleted();
+    Fragment fragment = getFragmentManager().findFragmentByTag(handlerTag);
+    if (fragment != null) {
+      ISyncOutcomeHandler syncHandler = (ISyncOutcomeHandler) fragment;
+      syncHandler.onSyncCompleted();
     }
   }
 }

@@ -99,6 +99,62 @@ public class ProcessAppAndTableLevelChanges {
     }
   };
 
+  public void verifyServerConfiguration() throws RemoteException {
+    log.i(TAG, "entered verifyServerConfiguration()");
+
+    if (OdkSyncService.possiblyWaitForSyncServiceDebugger()) {
+      log.i(TAG, "running under debugger: verifyServerConfiguration()");
+    }
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_verifying_app_name_on_server, null, 0.0, false);
+
+    // fail if the server is not configured for this appName.
+    // we test this before updating privileges to reduce the likelihood
+    // that a screwed-up server settings will cause the user's privileges
+    // to be downgraded to not_verified status.
+    try {
+      sc.getSynchronizer().verifyServerSupportsAppName();
+    } catch (Exception e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception verifying support of appName exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
+    }
+
+    // TODO: clear existing privileges
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
+
+    ArrayList<String> roleList;
+    try {
+      roleList = sc.getSynchronizer().getUserRoles();
+    } catch (Exception e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception obtaining user roles exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
+    }
+
+    // TODO: store reported privileges
+
+    StringBuilder b = new StringBuilder();
+    boolean first = true;
+    for ( String role : roleList ) {
+      if ( !first ) {
+        b.append(", ");
+      }
+      first = false;
+      b.append(role);
+    }
+    log.i(TAG, "[verifyServerConfiguration] roles from server: " + b.toString());
+
+    // don't set app-level outcome -- indicating we have no errors
+    return;
+  }
 
   /**
    * Synchronize all app-level files and all data table schemas and table-level
@@ -126,18 +182,16 @@ public class ProcessAppAndTableLevelChanges {
       issueDeletes = true;
     }
 
-    sc.updateNotification(SyncProgressState.STARTING,
-        R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
+    /**
+     * Verify that the server configuration is good and
+     * update this user's permissions to correspond to those on that server.
+     */
+    verifyServerConfiguration();
 
-    // fail if the server is not configured for this appName
-    try {
-      sc.getSynchronizer().verifyServerSupportsAppName();
-    } catch (Exception e) {
-      log.e(TAG,
-          "[synchronizeConfigurationAndContent] exception verifying support of appName exception: "
-              + e.toString());
-      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
-      return new ArrayList<TableResource>();
+    // if the verification failed, it will have set the app-level outcome.
+    // otherwise, the outcome will remain in the WORKING state and we can proceed.
+    if ( sc.getAppLevelSyncOutcome() != SyncOutcome.WORKING ) {
+      return new ArrayList<>();
     }
 
     // Everything was successful-enough to warrant deleting any sync
@@ -145,6 +199,9 @@ public class ProcessAppAndTableLevelChanges {
     // only ever have the sync etags from the current server in case
     // the user is switching servers for some reason.
     sc.getSynchronizer().deleteAllSyncETagsExceptForCurrentServer();
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
 
     // working list of tables -- the list we will construct and return...
     List<TableResource> workingListOfTables = new ArrayList<TableResource>();

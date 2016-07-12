@@ -71,6 +71,18 @@ public interface Synchronizer {
   void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
 
   /**
+   * Returns the roles assigned to the user. The server requires that the
+   * user be authenticated during this call. By using the local context on
+   * all subsequent interactions, we are able to use the negotiated identity
+   * when accessing subsequent APIs.
+   *
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+     */
+  ArrayList<String>  getUserRoles() throws HttpClientWebException, IOException;
+
+  /**
    * Get a list of all tables in the server.
    *
    * @param webSafeResumeCursor null or a non-empty string if we are issuing a resume query

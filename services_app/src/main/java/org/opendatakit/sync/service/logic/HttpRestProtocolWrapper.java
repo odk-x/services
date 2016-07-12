@@ -282,6 +282,11 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
+  public URI constructListOfUserRolesUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/granted");
+    return uri;
+  }
+
   /**
    * Uri that will return the list of tables on the server.
    *

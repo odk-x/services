@@ -23,6 +23,7 @@ import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
+import org.opendatakit.sync.activities.VerifyServerSettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,6 +111,13 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
         Intent intent = new Intent(this, ClearAppPropertiesActivity.class);
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
             this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+        header.intent = intent;
+      }
+
+      if ( header.id == R.id.verify_server_settingss ) {
+        Intent intent = new Intent(this, VerifyServerSettingsActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+                this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
         header.intent = intent;
       }
 
