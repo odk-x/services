@@ -32,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opendatakit.IntentConsts;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
@@ -197,6 +198,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
           }
 
           String activeUser;
+          String rolesList;
           String locale;
 
           {
@@ -204,6 +206,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
               CommonToolProperties.get(getActivity(), mAppName);
 
             activeUser = props.getActiveUser();
+            rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
             locale = props.getLocale();
           }
 
@@ -216,7 +219,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
                 mAppName, mTableId);
             ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
-                values, mRowId, activeUser, locale);
+                values, mRowId, activeUser, rolesList, locale);
 
             // and save that checkpoint as incomplete
             ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,

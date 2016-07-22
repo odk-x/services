@@ -24,14 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome.OutcomeType;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
-import org.opendatakit.aggregate.odktables.rest.entity.Scope;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
@@ -227,7 +221,7 @@ public class ProcessRowDataChanges {
     for (RowResource row : rows.getRows()) {
       SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowETag(), row.isDeleted(),
           row.getFormId(), row.getLocale(), row.getSavepointType(), row.getSavepointTimestamp(),
-          row.getSavepointCreator(), row.getFilterScope(), row.getValues(), fileAttachmentColumns);
+          row.getSavepointCreator(), row.getRowFilterScope(), row.getValues(), fileAttachmentColumns);
       changedServerRows.put(row.getRowId(), syncRow);
     }
 
@@ -489,7 +483,8 @@ public class ProcessRowDataChanges {
         // if we cannot sync file attachments in those rows.
         pushLocalAttachmentsBeforeDeleteRowsInDb(db, tableResource, rowsToDeleteLocally);
 
-        deleteRowsInDb(db, tableResource, rowsToDeleteLocally, tableLevelResult);
+        deleteRowsInDb(db, tableResource, orderedColumns, rowsToDeleteLocally,
+                tableLevelResult);
 
         insertRowsInDb(db, tableResource, orderedColumns, rowsToInsertLocally,
                 hasAttachments, tableLevelResult);
@@ -772,7 +767,7 @@ public class ProcessRowDataChanges {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
                     // of the fetch queries, above.
-                    sc.getDatabaseService().updateDBTableETags(sc.getAppName(), db, 
+                    sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), firstDataETag);
                     // the above will throw a RemoteException if the change is not committed
@@ -927,7 +922,7 @@ public class ProcessRowDataChanges {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
                     // of the fetch queries, above.
-                    sc.getDatabaseService().updateDBTableETags(sc.getAppName(), db, 
+                    sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), outcomes.getDataETag());
                     // the above will throw a RemoteException if the changed were not committed.
@@ -1035,7 +1030,8 @@ public class ProcessRowDataChanges {
                     OdkDbHandle db = null;
                     try {
                       db = sc.getDatabase();
-                      sc.getDatabaseService().updateRowETagAndSyncState(sc.getAppName(), db, tableId,
+                      sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(sc.getAppName
+                          (), db, tableId,
                               syncRowPending.getRowId(), syncRowPending.getRowETag(), SyncState.synced.name());
                     } finally {
                       sc.releaseDatabase(db);
@@ -1106,7 +1102,8 @@ public class ProcessRowDataChanges {
         OdkDbHandle db = null;
         try {
           db = sc.getDatabase();
-          sc.getDatabaseService().updateDBTableLastSyncTime(sc.getAppName(), db, tableId);
+          sc.getDatabaseService().privilegedUpdateDBTableLastSyncTime(sc.getAppName(), db,
+              tableId);
         } finally {
           sc.releaseDatabase(db);
           db = null;
@@ -1214,16 +1211,15 @@ public class ProcessRowDataChanges {
 
           if (r.isDeleted()) {
             // DELETE
-            // same as a conflict resolution to accept server-side changes
-            sc.getDatabaseService().resolveServerConflictWithDeleteRowWithId(sc
-                .getAppName(), db, resource.getTableId(), r.getRowId());
+            sc.getDatabaseService().privilegedDeleteRowWithId(sc.getAppName(), db,
+                    resource.getTableId(), orderedColumns, r.getRowId());
             // !!Important!! update the rowETag in our copy of this row.
             syncRow.setRowETag(r.getRowETag());
             tableLevelResult.incServerDeletes();
           } else {
             SyncState newSyncState = (hasAttachments && !syncRow.getUriFragments().isEmpty())
                     ? SyncState.synced_pending_files : SyncState.synced;
-           sc.getDatabaseService().updateRowETagAndSyncState(
+           sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(
                       sc.getAppName(), db,
                       resource.getTableId(),
                       r.getRowId(),
@@ -1264,7 +1260,7 @@ public class ProcessRowDataChanges {
           // figure out what the localRow conflict type sh
           SyncRow serverRow = new SyncRow(r.getRowId(), r.getRowETag(), r.isDeleted(),
               r.getFormId(), r.getLocale(), r.getSavepointType(), r.getSavepointTimestamp(),
-              r.getSavepointCreator(), r.getFilterScope(), r.getValues(), fileAttachmentColumns);
+              r.getSavepointCreator(), r.getRowFilterScope(), r.getValues(), fileAttachmentColumns);
           SyncRowDataChanges conflictRow = new SyncRowDataChanges(serverRow, syncRow, false,
               localRowConflictType);
 
@@ -1352,8 +1348,8 @@ public class ProcessRowDataChanges {
 
         // this is the same action as during conflict-resolution when we choose
         // to accept the server delete status over any local changes.
-        sc.getDatabaseService().resolveServerConflictWithDeleteRowWithId(
-            sc.getAppName(), db, resource.getTableId(), serverRow.getRowId());
+        sc.getDatabaseService().privilegedDeleteRowWithId(
+            sc.getAppName(), db, resource.getTableId(), orderedColumns, serverRow.getRowId());
 
         tableLevelResult.incLocalDeletes();
       } else {
@@ -1373,12 +1369,12 @@ public class ProcessRowDataChanges {
         values.put(DataTableColumns.LOCALE, serverRow.getLocale());
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
         values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
-        Scope.Type type = serverRow.getFilterScope().getType();
+        RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
         values.put(DataTableColumns.FILTER_TYPE,
-            (type == null) ? Scope.Type.DEFAULT.name() : type.name());
-        values.put(DataTableColumns.FILTER_VALUE, serverRow.getFilterScope().getValue());
+            (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
+        values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
 
-        sc.getDatabaseService().placeRowIntoServerConflictWithId(sc.getAppName(), db,
+        sc.getDatabaseService().privilegedPlaceRowIntoConflictWithId(sc.getAppName(), db,
             resource.getTableId(), orderedColumns, values, serverRow.getRowId(),
             localRowConflictType);
 
@@ -1428,6 +1424,7 @@ public class ProcessRowDataChanges {
       SyncRow serverRow = change.serverRow;
       ContentValues values = new ContentValues();
 
+      // set all the metadata fields
       values.put(DataTableColumns.ID, serverRow.getRowId());
       values.put(DataTableColumns.ROW_ETAG, serverRow.getRowETag());
       values.put(DataTableColumns.SYNC_STATE, (hasAttachments && !serverRow.getUriFragments()
@@ -1436,13 +1433,17 @@ public class ProcessRowDataChanges {
       values.put(DataTableColumns.LOCALE, serverRow.getLocale());
       values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
       values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+      values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
+      values.put(DataTableColumns.FILTER_TYPE, serverRow.getRowFilterScope().getType().name());
+      values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+      values.putNull(DataTableColumns.CONFLICT_TYPE);
 
       for (DataKeyValue entry : serverRow.getValues()) {
         String colName = entry.column;
         values.put(colName, entry.value);
       }
 
-      sc.getDatabaseService().insertRowWithId(sc.getAppName(), db,
+      sc.getDatabaseService().privilegedInsertRowWithId(sc.getAppName(), db,
           resource.getTableId(),
           orderedColumns, values, serverRow.getRowId());
       tableLevelResult.incLocalInserts();
@@ -1492,20 +1493,21 @@ public class ProcessRowDataChanges {
       values.put(DataTableColumns.ROW_ETAG, serverRow.getRowETag());
       values.put(DataTableColumns.SYNC_STATE, (hasAttachments && !serverRow.getUriFragments()
           .isEmpty()) ? SyncState.synced_pending_files.name() : SyncState.synced.name());
-      values.put(DataTableColumns.FILTER_TYPE, serverRow.getFilterScope().getType().name());
-      values.put(DataTableColumns.FILTER_VALUE, serverRow.getFilterScope().getValue());
       values.put(DataTableColumns.FORM_ID, serverRow.getFormId());
       values.put(DataTableColumns.LOCALE, serverRow.getLocale());
       values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
       values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
       values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+      values.put(DataTableColumns.FILTER_TYPE, serverRow.getRowFilterScope().getType().name());
+      values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+      values.putNull(DataTableColumns.CONFLICT_TYPE);
 
       for (DataKeyValue entry : serverRow.getValues()) {
         String colName = entry.column;
         values.put(colName, entry.value);
       }
 
-      sc.getDatabaseService().updateRowWithId(sc.getAppName(), db,
+      sc.getDatabaseService().privilegedUpdateRowWithId(sc.getAppName(), db,
           resource.getTableId(),
           orderedColumns, values, serverRow.getRowId());
       tableLevelResult.incLocalUpdates();
@@ -1561,7 +1563,7 @@ public class ProcessRowDataChanges {
             // this list. Whenever we next sync files, we will push
             // any local files that are not on the server then delete
             // the local record.
-            sc.getDatabaseService().updateRowETagAndSyncState(sc.getAppName(), db, 
+            sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(sc.getAppName(), db,
                 resource.getTableId(),
                 change.localRow.getRowId(), change.serverRow.getRowETag(), SyncState.deleted.name());
             changes.remove(i);
@@ -1581,13 +1583,14 @@ public class ProcessRowDataChanges {
    * 
    * @param db
    * @param resource
+   * @param orderedColumns
    * @param changes
    * @param tableLevelResult
    * @throws IOException
    * @throws RemoteException 
    */
-  private void deleteRowsInDb(OdkDbHandle db, TableResource resource,
-      List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
+  private void deleteRowsInDb(OdkDbHandle db, TableResource resource, OrderedColumns orderedColumns,
+                              List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
       RemoteException {
     int count = 0;
 
@@ -1597,10 +1600,11 @@ public class ProcessRowDataChanges {
         // DELETE
         // this is equivalent to the conflict-resolution action where we accept the server delete
         // this ensures there are no server conflict rows, and that the local row is removed.
-        sc.getDatabaseService().resolveServerConflictWithDeleteRowWithId(
-            sc.getAppName(), db, resource.getTableId(), change.serverRow.getRowId());
+        sc.getDatabaseService().privilegedDeleteRowWithId(
+            sc.getAppName(), db, resource.getTableId(), orderedColumns, change.serverRow.getRowId());
         tableLevelResult.incLocalDeletes();
       }
+
       ++count;
       ++rowsProcessed;
       sc.updateNotification(SyncProgressState.ROWS, R.string.sync_deleting_local_row, new Object[] {

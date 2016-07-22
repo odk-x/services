@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
 
+import org.opendatakit.RoleConsts;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.CommonToolProperties;
@@ -45,10 +46,12 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     StringBuilder exceptions = null;
 
     String activeUser;
+    String rolesList;
     String locale;
 
     PropertiesSingleton props = CommonToolProperties.get(mContext, mAppName);
     activeUser = props.getActiveUser();
+    rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
     locale = props.getLocale();
 
     try {
@@ -66,7 +69,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
           if ( mTakeLocal ) {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeLocalRowWithId(db, mAppName, mTableId, entry.rowId,
-                    activeUser, locale);
+                    activeUser, rolesList, locale);
           } else {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId, entry.rowId,

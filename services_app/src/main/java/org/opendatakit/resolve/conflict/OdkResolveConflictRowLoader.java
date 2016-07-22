@@ -18,6 +18,7 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
@@ -110,6 +111,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
+            // Use privileged user roles since we are taking the server's values
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
                 mTableId, rowId, activeUser, locale);
           }

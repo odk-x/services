@@ -20,10 +20,12 @@ import android.database.Cursor;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
@@ -32,6 +34,7 @@ import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
@@ -911,7 +914,8 @@ public class ODKDatabaseImplUtils {
    * @param schemaETag
    * @param lastDataETag
    */
-  public void updateDBTableETags(OdkConnectionInterface db, String tableId, String schemaETag,
+  public void privilegedUpdateDBTableETags(OdkConnectionInterface db, String tableId, String
+      schemaETag,
       String lastDataETag) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
@@ -947,7 +951,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void updateDBTableLastSyncTime(OdkConnectionInterface db, String tableId) {
+  public void privilegedUpdateDBTableLastSyncTime(OdkConnectionInterface db, String tableId) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
@@ -1998,7 +2002,7 @@ public class ODKDatabaseImplUtils {
 
       changeDataRowsToNewRowState(db, tableId);
 
-      updateDBTableETags(db, tableId, schemaETag, null);
+      privilegedUpdateDBTableETags(db, tableId, schemaETag, null);
 
       if (tableInstanceFilesUri != null) {
         SyncETagsUtils seu = new SyncETagsUtils();
@@ -2060,10 +2064,20 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    * @param localRowConflictType
+   * @param activeUser
+   * @param locale
    */
-  public void placeRowIntoServerConflictWithId(OdkConnectionInterface db, String tableId,
+  public void privilegedPlaceRowIntoConflictWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
       int localRowConflictType, String activeUser, String locale) {
+
+    // TODO: confirm insert of row that is in conflict does special treatment
+    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
+
+    // and that rolesList of user does not impact this change.
+    // I.e., if the user is super-user or higher, we should take local FilterScope.
+    // otherwise, we should take server FilterScope. Or should we allow user to select
+    // which to take?
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2074,7 +2088,7 @@ public class ODKDatabaseImplUtils {
       this.deleteServerConflictRowWithId(db, tableId, rowId);
       this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
       this.insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
-          activeUser, locale);
+          activeUser, rolesList, locale);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2139,6 +2153,8 @@ public class ODKDatabaseImplUtils {
    */
   public void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
       SyncState syncState, Integer conflictType) {
+
+    // TODO: is roleList applicable here?
 
     String whereClause;
     String[] whereArgs;
@@ -2235,9 +2251,18 @@ public class ODKDatabaseImplUtils {
    * @param appName
    * @param tableId
    * @param rowId
+   * @param roleList
    */
   public void deleteRowWithId(OdkConnectionInterface db, String appName, String tableId,
-      String rowId) {
+      String rowId, String roleList) {
+
+
+    // TODO: rolesList of user may impact whether we can delete the record.
+    // Particularly with sync'd records, is there anything special to do here?
+    // consider sync path vs. tools path.
+    // I.e., if the user is super-user or higher, we should take local FilterScope.
+    // otherwise, we should take server FilterScope. Or should we allow user to select
+    // which to take?
 
     boolean shouldPhysicallyDelete = false;
 
@@ -2406,6 +2431,10 @@ public class ODKDatabaseImplUtils {
    */
   public void saveAsIncompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db,
       String tableId, String rowId) {
+
+    // TODO: if user becomes unverified, we still allow them to save-as-incomplete ths record.
+    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
+
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -2442,6 +2471,10 @@ public class ODKDatabaseImplUtils {
    */
   public void saveAsCompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db, String tableId,
       String rowId) {
+
+    // TODO: if user becomes unverified, we still allow them to save-as-complete ths record.
+    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
+
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -2478,11 +2511,15 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   public void updateRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
-      String activeUser, String locale) {
+      String activeUser, String rolesList, String locale) {
+
+    // TODO: make sure caller passes in the correct roleList for the use case.
+    // TODO: for multi-step sync actions, we probably need an internal variant of this.
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -2492,8 +2529,91 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.put(DataTableColumns.ID, rowId);
     cvDataTableVal.putAll(cvValues);
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true,
-        activeUser, locale);
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, false,
+        activeUser, rolesList, locale);
+  }
+
+  /**
+   * Update the given rowId with the values in the cvValues. All field
+   * values are specified in the cvValues. This is a server-induced update
+   * of the row to match all fields from the server. An error is thrown if
+   * there isn't a row matching this rowId or if there are checkpoint or
+   * conflict entries for this rowId.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @param activeUser
+   * @param locale
+   */
+  public void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
+                              OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
+                              String activeUser, String locale) {
+
+    // TODO: make sure caller passes in the correct roleList for the use case.
+    // TODO: for multi-step sync actions, we probably need an internal variant of this.
+
+    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
+
+    if (cvValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    ContentValues cvDataTableVal = new ContentValues();
+    cvDataTableVal.put(DataTableColumns.ID, rowId);
+    cvDataTableVal.putAll(cvValues);
+
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
+            activeUser, rolesList, locale);
+  }
+
+  /**
+   * SYNC Only. ADMIN Privileges!
+   *
+   * Delete the local row.
+   *
+   * @param db
+   * @param appName
+   * @param tableId
+   * @param rowId
+   */
+  public void privilegedDeleteRowWithId(OdkConnectionInterface db, String appName,
+                                                       String tableId, String rowId ) {
+
+    // TODO: make sure caller passes in the correct roleList for the use case.
+    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
+
+    boolean inTransaction = false;
+    try {
+
+      inTransaction = db.inTransaction();
+      if (!inTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      // delete the record of the server row
+      deleteServerConflictRowWithId(db, tableId, rowId);
+
+      // move the local record into the 'new_row' sync state
+      // so it can be physically deleted.
+
+      privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
+
+      // move the local conflict back into the normal (null) state
+      deleteRowWithId(db, appName, tableId, rowId, rolesList );
+
+      if (!inTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (db != null) {
+        if (!inTransaction) {
+          db.endTransaction();
+        }
+      }
+    }
   }
 
   /**
@@ -2515,9 +2635,12 @@ public class ODKDatabaseImplUtils {
    * @param appName
    * @param tableId
    * @param rowId
+   * @param rolesList
    */
   public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db, String appName,
-      String tableId, String rowId) {
+      String tableId, String rowId, String rolesList ) {
+
+    // TODO: make sure caller passes in the correct roleList for the use case.
 
     boolean inTransaction = false;
     try {
@@ -2533,10 +2656,10 @@ public class ODKDatabaseImplUtils {
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
 
-      updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
+      privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
 
       // move the local conflict back into the normal (null) state
-      deleteRowWithId(db, appName, tableId, rowId);
+      deleteRowWithId(db, appName, tableId, rowId, rolesList );
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2560,10 +2683,18 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String appName,
-      String tableId, String rowId, String activeUser, String locale) {
+      String tableId, String rowId, String activeUser, String rolesList, String locale) {
+
+    // TODO: if rolesList contains RoleConsts.ROLE_ADMINISTRATOR or  RoleConsts.ROLE_SUPER_USER
+    // TODO: then we should take the local rowFilterScope values. Otherwise use server values.
+
+    // I.e., if the user is super-user or higher, we should take local FilterScope.
+    // otherwise, we should take server FilterScope. Or should we allow user to select
+    // which to take?
 
     boolean inTransaction = false;
     try {
@@ -2665,7 +2796,7 @@ public class ODKDatabaseImplUtils {
 
       // update local with the changes
       updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
-          activeUser, locale);
+          activeUser, rolesList, locale);
 
       // and reset the sync state to whatever it should be (update will make it changed)
       restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
@@ -2695,11 +2826,21 @@ public class ODKDatabaseImplUtils {
    * @param cvValues key-value pairs from the server record that we should incorporate.
    * @param rowId
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface db,
       String appName, String tableId, ContentValues cvValues, String rowId,
-      String activeUser, String locale) {
+      String activeUser, String rolesList, String locale) {
+
+
+    // TODO: if rolesList does not contain RoleConsts.ROLE_SUPER_USER or RoleConsts.ROLE_ADMINISTRATOR
+    // TODO: then take the server's rowFilterScope rather than the user's values of those.
+    // TODO: and apply the update only if the user roles support that update.
+
+    // I.e., if the user is super-user or higher, we should take local FilterScope.
+    // otherwise, we should take server FilterScope. Or should we allow user to select
+    // which to take?
 
     boolean inTransaction = false;
     try {
@@ -2789,7 +2930,7 @@ public class ODKDatabaseImplUtils {
 
       // update local with server's changes
       updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
-          activeUser, locale);
+          activeUser, rolesList, locale);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2815,6 +2956,15 @@ public class ODKDatabaseImplUtils {
    */
   public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db, String appName,
       String tableId, String rowId, String activeUser, String locale) {
+
+
+    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
+    // TODO: incoming rolesList should be the privileged user roles because we are
+    // TODO: overwriting our local row with everything from the server.
+
+    // we have no way in the resolve conflicts screen to choose which filter scope
+    // to take. Need to allow super-user and above to choose the local filter scope
+    // vs just taking what the server has.
 
     boolean inTransaction = false;
     try {
@@ -2866,10 +3016,10 @@ public class ODKDatabaseImplUtils {
         // move the local record into the 'new_row' sync state
         // so it can be physically deleted.
 
-        updateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
+        privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row);
 
         // and delete the local conflict and all of its associated attachments
-        deleteRowWithId(db, appName, tableId, rowId);
+        deleteRowWithId(db, appName, tableId, rowId, rolesList);
 
       } else {
         // update the local conflict record with the server's changes
@@ -2944,7 +3094,7 @@ public class ODKDatabaseImplUtils {
         // update local with server's changes
 
         updateRowWithId(db, tableId, orderedColumns, updateValues, rowId,
-            activeUser, locale);
+            activeUser, rolesList, locale);
 
         // and reset the sync state to whatever it should be (update will make it changed)
         restoreRowFromConflict(db, tableId, rowId, newState, null);
@@ -2974,11 +3124,12 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   public void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
-      String activeUser, String locale) {
+      String activeUser, String rolesList, String locale) {
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(
@@ -3030,13 +3181,16 @@ public class ODKDatabaseImplUtils {
       // Allow the user to pass in no rowId if this is the first
       // checkpoint row that the user is adding
       if (rowId == null) {
+
+        // TODO: is this even valid any more? I think we disallow this in the AIDL flow.
+
         String rowIdToUse = ODKDataUtils.genUUID();
         ContentValues currValues = new ContentValues();
         currValues.putAll(cvValues);
         currValues.put(DataTableColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
-            activeUser, locale);
+            activeUser, rolesList, locale);
         return;
       }
 
@@ -3056,7 +3210,7 @@ public class ODKDatabaseImplUtils {
         cvValues.put(DataTableColumns._ID, rowId);
         cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues,
-            activeUser, locale);
+            activeUser, rolesList, locale);
         return;
       } else {
         // Make sure that the conflict_type of any existing row
@@ -3119,7 +3273,7 @@ public class ODKDatabaseImplUtils {
         }
 
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
-            activeUser, locale);
+            activeUser, rolesList, locale);
       }
     } finally {
       if (c != null && !c.isClosed()) {
@@ -3163,6 +3317,41 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
+   * Insert the given rowId with the values in the cvValues. All metadata field
+   * values must be specified in the cvValues. This is called from Sync for inserting
+   * a row verbatim from the server.
+   * <p/>
+   * If a row with this rowId is present, then an exception is thrown.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues
+   * @param rowId
+   * @param activeUser
+   * @param rolesList
+   * @param locale
+   */
+  public void privilegedInsertRowWithId(OdkConnectionInterface db, String tableId,
+                              OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
+                              String activeUser, String locale) {
+
+    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
+
+    if (cvValues == null || cvValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    ContentValues cvDataTableVal = new ContentValues();
+    cvDataTableVal.put(DataTableColumns.ID, rowId);
+    cvDataTableVal.putAll(cvValues);
+
+    // TODO: verify that all fields are specified
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
+            activeUser, rolesList, locale);
+  }
+
+  /**
    * Insert the given rowId with the values in the cvValues. If certain metadata
    * values are not specified in the cvValues, then suitable default values may
    * be supplied for them.
@@ -3176,11 +3365,12 @@ public class ODKDatabaseImplUtils {
    * @param cvValues
    * @param rowId
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   public void insertRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId,
-      String activeUser, String locale) {
+      String activeUser, String rolesList, String locale) {
 
     if (cvValues == null || cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -3190,8 +3380,8 @@ public class ODKDatabaseImplUtils {
     cvDataTableVal.put(DataTableColumns.ID, rowId);
     cvDataTableVal.putAll(cvValues);
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false,
-        activeUser, locale);
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, false,
+        activeUser, rolesList, locale);
   }
 
   /**
@@ -3202,10 +3392,11 @@ public class ODKDatabaseImplUtils {
    * @param orderedColumns
    * @param cvValues
    * @param activeUser
+   * @param rolesList
    * @param locale
    */
   private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String locale) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList, String locale) {
     String whereClause = null;
     String[] whereArgs = new String[1];
     String rowId = null;
@@ -3305,8 +3496,9 @@ public class ODKDatabaseImplUtils {
    * TODO: This is broken w.r.t. updates of partial fields
    */
   private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
-      String activeUser, String locale) {
+      OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate, boolean asServerRequestedChange,
+      String activeUser, String rolesList, String locale) {
+
     String rowId = null;
     String whereClause = null;
     boolean specifiesConflictType = cvValues.containsKey(DataTableColumns.CONFLICT_TYPE);
@@ -3315,6 +3507,8 @@ public class ODKDatabaseImplUtils {
     String[] whereArgs = new String[specifiesConflictType ? (1 + (nullConflictType ? 0 : 1)) : 1];
     boolean update = false;
     String updatedSyncState = SyncState.new_row.name();
+    String priorFilterType = DataTableColumns.DEFAULT_FILTER_TYPE;
+    String priorFilterValue = null;
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -3322,6 +3516,24 @@ public class ODKDatabaseImplUtils {
 
     ContentValues cvDataTableVal = new ContentValues();
     cvDataTableVal.putAll(cvValues);
+
+    // if this is a server-requested change, all the user fields and admin columns should be specified.
+    if ( asServerRequestedChange ) {
+      for ( String columnName : orderedColumns.getRetentionColumnNames() ) {
+        if ( !cvDataTableVal.containsKey(columnName) ) {
+          throw new IllegalArgumentException(t + ": Not all user field values are set during server " +
+                  (shouldUpdate ? "update" : "insert") + " in table " + tableId + " missing: " +
+              columnName);
+        }
+      }
+      for ( String columnName : ADMIN_COLUMNS ) {
+        if ( !cvDataTableVal.containsKey(columnName) ) {
+          throw new IllegalArgumentException(t + ": Not all metadata field values are set during server " +
+                  (shouldUpdate ? "update" : "insert") + " in table " + tableId + " missing: " +
+              columnName);
+        }
+      }
+    }
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -3379,6 +3591,12 @@ public class ODKDatabaseImplUtils {
           if (shouldUpdate) {
             if (cursor.getCount() == 1) {
               if (cursor.moveToFirst()) {
+                int filterTypeCursorIndex = cursor.getColumnIndex(DataTableColumns.FILTER_TYPE);
+                priorFilterType = cursor.isNull(filterTypeCursorIndex) ? DataTableColumns.DEFAULT_FILTER_TYPE :
+                        cursor.getString(filterTypeCursorIndex);
+                int filterValueCursorIndex = cursor.getColumnIndex(DataTableColumns.FILTER_VALUE);
+                priorFilterValue = cursor.isNull(filterValueCursorIndex) ? null :
+                        cursor.getString(filterValueCursorIndex);
                 int syncStateCursorIndex = cursor.getColumnIndex(DataTableColumns.SYNC_STATE);
                 updatedSyncState = cursor.getString(syncStateCursorIndex);
 
@@ -3399,7 +3617,7 @@ public class ODKDatabaseImplUtils {
           } else {
             if (cursor.getCount() > 0) {
               throw new IllegalArgumentException(
-                  t + ": id " + rowId + " is already present in table " + tableId);
+                  t + ": row id " + rowId + " is already present in table " + tableId);
             }
           }
         } finally {
@@ -3421,10 +3639,134 @@ public class ODKDatabaseImplUtils {
         cvDataTableVal.put(DataTableColumns.ID, rowId);
       }
 
+      ArrayList<String> rolesArray = null;
+      {
+        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
+        };
+        if (rolesList != null && rolesList.length() != 0) {
+          try {
+            rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
+          } catch (IOException e) {
+            WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+          }
+        }
+      }
+
+      if ( !asServerRequestedChange ) {
+        // do not allow filterType or filterValue to be modified in normal workflow
+        if ( cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE) ||
+                cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE) ) {
+
+          if ( rolesArray == null ) {
+            // unverified user
+
+            // throw an exception
+            throw new IllegalArgumentException(
+                    t + ": unverified users cannot modify filterType or filterValue fields in (any) table " + tableId);
+
+          } else if ( !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
+            // not (super-user or administrator)
+
+            // throw an exception
+            throw new IllegalArgumentException(
+                    t + ": user does not have the privileges (super-user or administrator) to modify filterType or filterValue fields in table " + tableId);
+          }
+        }
+      }
+
       if (update) {
+
+        // MODIFYING
+
         if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE) || (
             cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
           cvDataTableVal.put(DataTableColumns.SYNC_STATE, updatedSyncState);
+        }
+
+        if ( !asServerRequestedChange ) {
+
+          // get the security settings
+          List<KeyValueStoreEntry> entries =
+                  getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
+                          LocalKeyValueStoreConstants.TableSecurity.ASPECT, null);
+
+          KeyValueStoreEntry locked = null;
+          KeyValueStoreEntry filterTypeOnCreation = null;
+          KeyValueStoreEntry unverifiedUserCanCreate = null;
+          for ( KeyValueStoreEntry entry : entries ) {
+            if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_FILTER_TYPE_ON_CREATION) ) {
+              filterTypeOnCreation = entry;
+            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE) ) {
+              unverifiedUserCanCreate = entry;
+            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED) ) {
+              locked = entry;
+            }
+          }
+
+          // if SyncState is new_row then allow edits in both locked and unlocked tables
+          if ( !updatedSyncState.equals(SyncState.new_row) ) {
+
+            if (locked != null && KeyValueStoreUtils.getBoolean(db.getAppName(), locked)) {
+              // modifying a LOCKED table
+
+              // disallow edits if:
+              // 1. user is unverified
+              // 2. existing filterValue is null or does not match the activeUser AND
+              //    the activeUser is neither a super-user nor an administrator.
+
+              if (rolesList == null) {
+                // unverified user
+
+                // throw an exception
+                throw new IllegalArgumentException(
+                        t + ": unverified users cannot modify rows in a locked table " + tableId);
+              }
+
+              // allow if prior filterValue matches activeUser
+              if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+                // otherwise...
+                // reject if the activeUser is not a super-user or administrator
+
+                if (rolesArray == null ||
+                        !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                                rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                  // bad JSON or
+                  // not a super-user and not an administrator
+
+                  // throw an exception
+                  throw new IllegalArgumentException(
+                          t + ": user does not have the privileges (super-user or administrator) to modify rows in a locked table " + tableId);
+                }
+              }
+            } else {
+              // modifying an UNLOCKED table
+
+              // allow if filterType is MODIFY or DEFAULT
+              if ( priorFilterType == null ||
+                      !(priorFilterType.equals(RowFilterScope.Type.MODIFY) || priorFilterType.equals(RowFilterScope.Type.DEFAULT)) ) {
+                // otherwise...
+
+                // allow if prior filterValue matches activeUser
+                if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+                  // otherwise...
+                  // reject if the activeUser is not a super-user or administrator
+
+                  if (rolesArray == null ||
+                          !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                                  rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                    // bad JSON or
+                    // not a super-user and not an administrator
+
+                    // throw an exception
+                    throw new IllegalArgumentException(
+                            t + ": user does not have the privileges (super-user or administrator) to modify hidden or read-only rows in an unlocked table " + tableId);
+                  }
+                }
+              }
+            }
+          }
+
         }
 
         if (cvDataTableVal.containsKey(DataTableColumns.LOCALE) && (
@@ -3450,6 +3792,8 @@ public class ODKDatabaseImplUtils {
         }
       } else {
 
+        // INSERTING
+
         if (!cvDataTableVal.containsKey(DataTableColumns.ROW_ETAG)
             || cvDataTableVal.get(DataTableColumns.ROW_ETAG) == null) {
           cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
@@ -3464,14 +3808,72 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE) || (
-            cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
-          cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
-        }
+        if ( !asServerRequestedChange ) {
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE) || (
-            cvDataTableVal.get(DataTableColumns.FILTER_VALUE) == null)) {
-          cvDataTableVal.put(DataTableColumns.FILTER_VALUE, DataTableColumns.DEFAULT_FILTER_VALUE);
+          // get the security settings
+          List<KeyValueStoreEntry> entries =
+                  getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
+                          LocalKeyValueStoreConstants.TableSecurity.ASPECT, null);
+
+          KeyValueStoreEntry locked = null;
+          KeyValueStoreEntry filterTypeOnCreation = null;
+          KeyValueStoreEntry unverifiedUserCanCreate = null;
+          for ( KeyValueStoreEntry entry : entries ) {
+            if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_FILTER_TYPE_ON_CREATION) ) {
+              filterTypeOnCreation = entry;
+            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE) ) {
+              unverifiedUserCanCreate = entry;
+            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED) ) {
+              locked = entry;
+            }
+          }
+
+          if ( filterTypeOnCreation == null ) {
+            cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
+          } else {
+            cvDataTableVal.put(DataTableColumns.FILTER_TYPE, filterTypeOnCreation.value);
+          }
+
+          // activeUser
+          cvDataTableVal.put(DataTableColumns.FILTER_VALUE, activeUser);
+
+          // enforce restrictions:
+          // 1. if locked, only super-user and administrator can create rows.
+          // 2. otherwise, if unverified user, allow creation based upon unverifedUserCanCreate flag
+          if ( locked != null && KeyValueStoreUtils.getBoolean(db.getAppName(), locked) ) {
+            // inserting into a LOCKED table
+
+            if ( rolesList == null ) {
+              // unverified user
+
+              // throw an exception
+              throw new IllegalArgumentException(
+                      t + ": unverified users cannot create a rows in a locked table " + tableId);
+            }
+
+            if ( rolesArray == null ||
+                    !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                            rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
+              // bad JSON
+              // not a super-user and not an administrator
+
+              // throw an exception
+              throw new IllegalArgumentException(
+                      t + ": user does not have the privileges (super-user or administrator) to create a row in a locked table " + tableId);
+            }
+
+          } else if ( rolesList == null ) {
+            // inserting into an UNLOCKED table
+
+            // unverified user
+            if ( unverifiedUserCanCreate != null &&
+                    !KeyValueStoreUtils.getBoolean(db.getAppName(), unverifiedUserCanCreate) ) {
+
+              // throw an exception
+              throw new IllegalArgumentException(
+                      t + ": unverified users do not have the privileges to create a row in this unlocked table " + tableId);
+            }
+          }
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
@@ -3529,7 +3931,8 @@ public class ODKDatabaseImplUtils {
    * @param rowETag
    * @param state
    */
-  public void updateRowETagAndSyncState(OdkConnectionInterface db, String tableId, String rowId,
+  public void privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db, String tableId,
+      String rowId,
       String rowETag, SyncState state) {
 
     String whereClause = DataTableColumns.ID + " = ?";
@@ -3591,8 +3994,6 @@ public class ODKDatabaseImplUtils {
 
     for (String key : values.keySet()) {
       if (DataTableColumns.CONFLICT_TYPE.equals(key)) {
-        continue;
-      } else if (DataTableColumns.FILTER_TYPE.equals(key)) {
         continue;
       } else if (DataTableColumns.FILTER_TYPE.equals(key)) {
         continue;

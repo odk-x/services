@@ -407,7 +407,7 @@ public class AggregateSynchronizer implements Synchronizer {
       Row row = Row.forUpdate(rowToAlter.getRowId(), rowToAlter.getRowETag(),
           rowToAlter.getFormId(), rowToAlter.getLocale(),
           rowToAlter.getSavepointType(), rowToAlter.getSavepointTimestamp(),
-          rowToAlter.getSavepointCreator(), rowToAlter.getFilterScope(),
+          rowToAlter.getSavepointCreator(), rowToAlter.getRowFilterScope(),
           rowToAlter.getValues());
       row.setDeleted(rowToAlter.isDeleted());
       rows.add(row);
@@ -1223,7 +1223,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
 
       db = sc.getDatabase();
-      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(), db,
+      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(), db,
           tableId, newSchemaETag, tableInstanceFilesUriString);
     } finally {
       sc.releaseDatabase(db);

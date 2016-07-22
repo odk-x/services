@@ -16,7 +16,7 @@
 package org.opendatakit.sync.service.data;
 
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
-import org.opendatakit.aggregate.odktables.rest.entity.Scope;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
@@ -58,7 +58,7 @@ public class SyncRow {
   /**
    * Filtering field
    */
-  private Scope filterScope;
+  private RowFilterScope rowFilterScope;
 
   /**
    * The savepoint type of the file.
@@ -86,7 +86,8 @@ public class SyncRow {
 
   public SyncRow(final String rowId, final String rowETag, final boolean deleted,
       final String formId, final String locale, final String savepointType,
-      final String savepointTimestamp, final String savepointCreator, final Scope filterScope,
+      final String savepointTimestamp, final String savepointCreator, final RowFilterScope
+      filterScope,
       final ArrayList<DataKeyValue> values, final ArrayList<ColumnDefinition> fileAttachmentColumns) {
     this.rowId = rowId;
     this.rowETag = rowETag;
@@ -96,7 +97,7 @@ public class SyncRow {
     this.savepointType = savepointType;
     this.savepointTimestamp = savepointTimestamp;
     this.savepointCreator = savepointCreator;
-    this.filterScope = filterScope;
+    this.rowFilterScope = filterScope;
     if (values == null) {
       this.orderedValues = new ArrayList<DataKeyValue>();
     } else {
@@ -188,12 +189,12 @@ public class SyncRow {
     this.locale = locale;
   }
 
-  public Scope getFilterScope() {
-    return filterScope;
+  public RowFilterScope getRowFilterScope() {
+    return rowFilterScope;
   }
 
-  public void setFilterScope(Scope filterScope) {
-    this.filterScope = filterScope;
+  public void setRowFilterScope(RowFilterScope rowFilterScope) {
+    this.rowFilterScope = rowFilterScope;
   }
 
   public String getSavepointType() {
@@ -269,7 +270,7 @@ public class SyncRow {
     if (this.isDeleted() != other.isDeleted())
       return false;
 
-    if (this.getFilterScope() != other.getFilterScope())
+    if (this.getRowFilterScope() != other.getRowFilterScope())
       return false;
 
     // sync'd metadata
@@ -311,7 +312,7 @@ public class SyncRow {
     result = result * PRIME + (this.isDeleted() ? 1231 : 1237);
     // sync'd metadata
     result = result * PRIME
-        + (this.getFilterScope() == null ? 0 : this.getFilterScope().hashCode());
+        + (this.getRowFilterScope() == null ? 0 : this.getRowFilterScope().hashCode());
     result = result * PRIME + (this.getFormId() == null ? 0 : this.getFormId().hashCode());
     result = result * PRIME + (this.getLocale() == null ? 0 : this.getLocale().hashCode());
     result = result * PRIME
@@ -328,7 +329,7 @@ public class SyncRow {
   @java.lang.Override
   public java.lang.String toString() {
     return "SyncRow[rowId=" + this.getRowId() + ", rowETag=" + this.getRowETag() + ", deleted="
-        + this.isDeleted() + ", filterScope=" + this.getFilterScope().toString() + ", formId="
+        + this.isDeleted() + ", rowFilterScope=" + this.getRowFilterScope().toString() + ", formId="
         + this.getFormId() + ", locale=" + this.getLocale() + ", savepointType="
         + this.getSavepointType() + ", savepointTimestamp=" + this.getSavepointTimestamp()
         + ", savepointCreator=" + this.getSavepointCreator() + ", values=" + this.getValues() + "[";
@@ -355,7 +356,8 @@ public class SyncRow {
         localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE),
         localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
         localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR),
-        Scope.asScope(localRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_TYPE),
+        RowFilterScope.asRowFilter(localRow.getRawDataOrMetadataByElementKey(DataTableColumns
+            .FILTER_TYPE),
             localRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_VALUE)), values,
         fileAttachmentColumns);
     return syncRow;

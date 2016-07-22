@@ -646,7 +646,8 @@ public class ProcessAppAndTableLevelChanges {
         try {
           db = sc.getDatabase();
           // update schemaETag to that on server (dataETag is null already).
-          sc.getDatabaseService().updateDBTableETags(sc.getAppName(), db, tableId, schemaETag, null);
+          sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db, tableId,
+              schemaETag, null);
         } finally {
           sc.releaseDatabase(db);
           db = null;
@@ -810,7 +811,7 @@ public class ProcessAppAndTableLevelChanges {
           definitionResource.getTableId(), new ColumnList(definitionResource.getColumns()));
 
        // and update the schema, removing the old URI string
-      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(),
+      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(),
            db, definitionResource.getTableId(), definitionResource.getSchemaETag(),
            oldTableInstanceFilesUriString);
 
