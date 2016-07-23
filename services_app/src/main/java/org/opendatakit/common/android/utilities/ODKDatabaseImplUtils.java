@@ -3190,7 +3190,7 @@ public class ODKDatabaseImplUtils {
         currValues.put(DataTableColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
-            activeUser, rolesList, locale);
+            activeUser, rolesList, locale, true, null, null);
         return;
       }
 
@@ -3210,7 +3210,7 @@ public class ODKDatabaseImplUtils {
         cvValues.put(DataTableColumns._ID, rowId);
         cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues,
-            activeUser, rolesList, locale);
+            activeUser, rolesList, locale, true, null, null);
         return;
       } else {
         // Make sure that the conflict_type of any existing row
@@ -3228,6 +3228,9 @@ public class ODKDatabaseImplUtils {
         // This is unnecessary
         // We should only have one row at this point
         //c.moveToFirst();
+
+        String priorFilterType = null;
+        String priorFilterValue = null;
 
         // Get the number of columns to iterate over and add
         // those values to the content values
@@ -3270,10 +3273,18 @@ public class ODKDatabaseImplUtils {
           Class<?> theClass = ODKCursorUtils.getIndexDataType(c, i);
           Object object = ODKCursorUtils.getIndexAsType(c, theClass, i);
           insertValueIntoContentValues(currValues, theClass, name, object);
+
+          if (name.equals(DataTableColumns.FILTER_TYPE)) {
+            priorFilterType = c.getString(i);
+          }
+
+          if (name.equals(DataTableColumns.FILTER_VALUE)) {
+            priorFilterValue = c.getString(i);
+          }
         }
 
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues,
-            activeUser, rolesList, locale);
+            activeUser, rolesList, locale, false, priorFilterType, priorFilterValue);
       }
     } finally {
       if (c != null && !c.isClosed()) {
@@ -3394,9 +3405,12 @@ public class ODKDatabaseImplUtils {
    * @param activeUser
    * @param rolesList
    * @param locale
+   * @param isNewRow
    */
   private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList, String locale) {
+      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList,
+      String locale,
+      boolean isNewRow, String priorFilterType, String priorFilterValue) {
     String whereClause = null;
     String[] whereArgs = new String[1];
     String rowId = null;
@@ -3424,23 +3438,8 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
     }
 
-    if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE) || (
-        cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
-      cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-    }
-
     if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
       cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
-    }
-
-    if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE) || (
-        cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
-      cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
-    }
-
-    if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE) || (
-        cvDataTableVal.get(DataTableColumns.FILTER_VALUE) == null)) {
-      cvDataTableVal.put(DataTableColumns.FILTER_VALUE, DataTableColumns.DEFAULT_FILTER_VALUE);
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
@@ -3477,6 +3476,53 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
+      ArrayList<String> rolesArray = null;
+      {
+        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
+        };
+        if (rolesList != null && rolesList.length() != 0) {
+          try {
+            rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
+          } catch (IOException e) {
+            WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+          }
+        }
+      }
+
+      // get the security settings
+      TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
+
+      if ( isNewRow ) {
+
+        // ensure that filter type and value are defined. Use defaults if not.
+
+        if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE) || (
+            cvDataTableVal.get(DataTableColumns.FILTER_TYPE) == null)) {
+          cvDataTableVal.put(DataTableColumns.FILTER_TYPE, tss.filterTypeOnCreation );
+        }
+
+        if (!cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE)) {
+          cvDataTableVal.put(DataTableColumns.FILTER_VALUE, activeUser );
+        }
+
+        cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
+
+        tss.allowRowChange(activeUser, rolesArray, SyncState.new_row.name(), priorFilterType,
+            priorFilterValue, RowChange.NEW_ROW);
+
+      } else {
+
+        // don't allow changes to filter type or value or syncState when inserting checkpoints
+        cvDataTableVal.put(DataTableColumns.FILTER_TYPE, priorFilterType);
+
+        cvDataTableVal.put(DataTableColumns.FILTER_VALUE, priorFilterValue);
+
+        cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
+
+        tss.allowRowChange(activeUser, rolesArray, SyncState.changed.name(), priorFilterType,
+            priorFilterValue, RowChange.CHANGE_ROW);
+      }
+
       db.insertOrThrow(tableId, null, cvDataTableVal);
 
       if (!dbWithinTransaction) {
@@ -3488,6 +3534,272 @@ public class ODKDatabaseImplUtils {
       }
     }
 
+  }
+
+  private enum RowChange {
+    NEW_ROW,
+    CHANGE_ROW,
+    DELETE_ROW
+  };
+
+  private class TableSecuritySettings {
+    final String tableId;
+    final boolean isLocked;
+    final boolean canUnverifiedUserCreateRow;
+    final String filterTypeOnCreation;
+
+    public TableSecuritySettings( final String tableId,
+        final boolean isLocked,
+        final boolean canUnverifiedUserCreateRow,
+        final String filterTypeOnCreation) {
+      this.tableId = tableId;
+      this.isLocked = isLocked;
+      this.canUnverifiedUserCreateRow = canUnverifiedUserCreateRow;
+      this.filterTypeOnCreation = filterTypeOnCreation;
+    }
+
+    public void canModifyFilterTypeAndValue(ArrayList<String> rolesArray)
+        throws IllegalArgumentException {
+
+      if ( rolesArray == null ) {
+        // unverified user
+
+        // throw an exception
+        throw new IllegalArgumentException(
+            t + ": unverified users cannot modify filterType or filterValue fields in (any) table " + tableId);
+
+      } else if ( !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+          rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
+        // not (super-user or administrator)
+
+        // throw an exception
+        throw new IllegalArgumentException(
+            t + ": user does not have the privileges (super-user or administrator) to modify filterType or filterValue fields in table " + tableId);
+      }
+    }
+
+    public void allowRowChange(String activeUser, ArrayList<String> rolesArray,
+        String updatedSyncState, String priorFilterType, String priorFilterValue,
+        RowChange rowChange) {
+
+      switch ( rowChange ) {
+      case NEW_ROW:
+
+        // enforce restrictions:
+        // 1. if locked, only super-user and administrator can create rows.
+        // 2. otherwise, if unverified user, allow creation based upon unverifedUserCanCreate flag
+        if ( isLocked ) {
+          // inserting into a LOCKED table
+
+          if ( rolesArray == null ) {
+            // unverified user
+
+            // throw an exception
+            throw new IllegalArgumentException(
+                t + ": unverified users cannot create a rows in a locked table " + tableId);
+          }
+
+          if ( !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                  rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
+            // bad JSON
+            // not a super-user and not an administrator
+
+            // throw an exception
+            throw new IllegalArgumentException(
+                t + ": user does not have the privileges (super-user or administrator) to create a row in a locked table " + tableId);
+          }
+
+        } else if ( rolesArray == null ) {
+          // inserting into an UNLOCKED table
+
+          // unverified user
+          if ( !canUnverifiedUserCreateRow ) {
+
+            // throw an exception
+            throw new IllegalArgumentException(
+                t + ": unverified users do not have the privileges to create a row in this unlocked table " + tableId);
+          }
+        }
+        break;
+      case CHANGE_ROW:
+
+        // if SyncState is new_row then allow edits in both locked and unlocked tables
+        if ( !updatedSyncState.equals(SyncState.new_row) ) {
+
+          if (isLocked) {
+            // modifying a LOCKED table
+
+            // disallow edits if:
+            // 1. user is unverified
+            // 2. existing filterValue is null or does not match the activeUser AND
+            //    the activeUser is neither a super-user nor an administrator.
+
+            if (rolesArray == null) {
+              // unverified user
+
+              // throw an exception
+              throw new IllegalArgumentException(
+                  t + ": unverified users cannot modify rows in a locked table " + tableId);
+            }
+
+            // allow if prior filterValue matches activeUser
+            if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+              // otherwise...
+              // reject if the activeUser is not a super-user or administrator
+
+              if (rolesArray == null ||
+                  !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                      rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                // bad JSON or
+                // not a super-user and not an administrator
+
+                // throw an exception
+                throw new IllegalArgumentException(
+                    t + ": user does not have the privileges (super-user or administrator) to modify rows in a locked table " + tableId);
+              }
+            }
+          } else {
+            // modifying an UNLOCKED table
+
+            // allow if filterType is MODIFY or DEFAULT
+            if ( priorFilterType == null ||
+                !(priorFilterType.equals(RowFilterScope.Type.MODIFY) || priorFilterType.equals(RowFilterScope.Type.DEFAULT)) ) {
+              // otherwise...
+
+              // allow if prior filterValue matches activeUser
+              if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+                // otherwise...
+                // reject if the activeUser is not a super-user or administrator
+
+                if (rolesArray == null ||
+                    !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                  // bad JSON or
+                  // not a super-user and not an administrator
+
+                  // throw an exception
+                  throw new IllegalArgumentException(
+                      t + ": user does not have the privileges (super-user or administrator) to modify hidden or read-only rows in an unlocked table " + tableId);
+                }
+              }
+            }
+          }
+        }
+        break;
+      case DELETE_ROW:
+
+        // if SyncState is new_row then allow deletes in both locked and unlocked tables
+        if ( !updatedSyncState.equals(SyncState.new_row) ) {
+
+          if (isLocked) {
+            // modifying a LOCKED table
+
+            // disallow deletes if:
+            // 1. user is unverified
+            // 2. existing filterValue is null or does not match the activeUser AND
+            //    the activeUser is neither a super-user nor an administrator.
+
+            if (rolesArray == null) {
+              // unverified user
+
+              // throw an exception
+              throw new IllegalArgumentException(
+                  t + ": unverified users cannot delete rows in a locked table " + tableId);
+            }
+
+            // allow if prior filterValue matches activeUser
+            if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+              // otherwise...
+              // reject if the activeUser is not a super-user or administrator
+
+              if (rolesArray == null ||
+                  !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                      rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                // bad JSON or
+                // not a super-user and not an administrator
+
+                // throw an exception
+                throw new IllegalArgumentException(
+                    t + ": user does not have the privileges (super-user or administrator) to delete rows in a locked table " + tableId);
+              }
+            }
+          } else {
+            // delete in an UNLOCKED table
+
+            // allow if filterType is DEFAULT
+            if ( priorFilterType == null ||
+                !(priorFilterType.equals(RowFilterScope.Type.DEFAULT)) ) {
+              // otherwise...
+
+              // allow if prior filterValue matches activeUser
+              if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+                // otherwise...
+                // reject if the activeUser is not a super-user or administrator
+
+                if (rolesArray == null ||
+                    !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                  // bad JSON or
+                  // not a super-user and not an administrator
+
+                  // throw an exception
+                  throw new IllegalArgumentException(
+                      t + ": user does not have the privileges (super-user or administrator) to delete hidden or read-only rows in an unlocked table " + tableId);
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Get the table's security settings.
+   *
+   * @param db
+   * @param tableId
+   * @return
+    */
+  private TableSecuritySettings getTableSecuritySettings(OdkConnectionInterface db, String tableId) {
+
+    // get the security settings
+    List<KeyValueStoreEntry> entries =
+        getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
+            LocalKeyValueStoreConstants.TableSecurity.ASPECT, null);
+
+    KeyValueStoreEntry locked = null;
+    KeyValueStoreEntry filterTypeOnCreation = null;
+    KeyValueStoreEntry unverifiedUserCanCreate = null;
+    for ( KeyValueStoreEntry entry : entries ) {
+      if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_FILTER_TYPE_ON_CREATION) ) {
+        filterTypeOnCreation = entry;
+      } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE) ) {
+        unverifiedUserCanCreate = entry;
+      } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED) ) {
+        locked = entry;
+      }
+    }
+
+    Boolean isLocked = (locked != null) ? KeyValueStoreUtils.getBoolean(db.getAppName(),
+        locked) : null;
+    if ( isLocked == null ) {
+      isLocked = false;
+    }
+
+    Boolean canUnverifiedUserCreateRow = (unverifiedUserCanCreate != null) ?
+        KeyValueStoreUtils.getBoolean(db.getAppName(), unverifiedUserCanCreate) : null;
+    if ( canUnverifiedUserCreateRow == null ) {
+      canUnverifiedUserCreateRow = true;
+    }
+
+    String filterType = (filterTypeOnCreation != null) ? filterTypeOnCreation.value : null;
+    if ( filterType == null ) {
+      filterType = DataTableColumns.DEFAULT_FILTER_TYPE;
+    }
+
+    return new TableSecuritySettings(tableId, isLocked, canUnverifiedUserCreateRow, filterType);
   }
 
   /*
@@ -3652,26 +3964,15 @@ public class ODKDatabaseImplUtils {
         }
       }
 
+      // get the security settings
+      TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
+
       if ( !asServerRequestedChange ) {
         // do not allow filterType or filterValue to be modified in normal workflow
         if ( cvDataTableVal.containsKey(DataTableColumns.FILTER_TYPE) ||
                 cvDataTableVal.containsKey(DataTableColumns.FILTER_VALUE) ) {
 
-          if ( rolesArray == null ) {
-            // unverified user
-
-            // throw an exception
-            throw new IllegalArgumentException(
-                    t + ": unverified users cannot modify filterType or filterValue fields in (any) table " + tableId);
-
-          } else if ( !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
-            // not (super-user or administrator)
-
-            // throw an exception
-            throw new IllegalArgumentException(
-                    t + ": user does not have the privileges (super-user or administrator) to modify filterType or filterValue fields in table " + tableId);
-          }
+          tss.canModifyFilterTypeAndValue(rolesArray);
         }
       }
 
@@ -3686,86 +3987,10 @@ public class ODKDatabaseImplUtils {
 
         if ( !asServerRequestedChange ) {
 
-          // get the security settings
-          List<KeyValueStoreEntry> entries =
-                  getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
-                          LocalKeyValueStoreConstants.TableSecurity.ASPECT, null);
-
-          KeyValueStoreEntry locked = null;
-          KeyValueStoreEntry filterTypeOnCreation = null;
-          KeyValueStoreEntry unverifiedUserCanCreate = null;
-          for ( KeyValueStoreEntry entry : entries ) {
-            if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_FILTER_TYPE_ON_CREATION) ) {
-              filterTypeOnCreation = entry;
-            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE) ) {
-              unverifiedUserCanCreate = entry;
-            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED) ) {
-              locked = entry;
-            }
-          }
-
-          // if SyncState is new_row then allow edits in both locked and unlocked tables
-          if ( !updatedSyncState.equals(SyncState.new_row) ) {
-
-            if (locked != null && KeyValueStoreUtils.getBoolean(db.getAppName(), locked)) {
-              // modifying a LOCKED table
-
-              // disallow edits if:
-              // 1. user is unverified
-              // 2. existing filterValue is null or does not match the activeUser AND
-              //    the activeUser is neither a super-user nor an administrator.
-
-              if (rolesList == null) {
-                // unverified user
-
-                // throw an exception
-                throw new IllegalArgumentException(
-                        t + ": unverified users cannot modify rows in a locked table " + tableId);
-              }
-
-              // allow if prior filterValue matches activeUser
-              if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
-                // otherwise...
-                // reject if the activeUser is not a super-user or administrator
-
-                if (rolesArray == null ||
-                        !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                                rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
-                  // bad JSON or
-                  // not a super-user and not an administrator
-
-                  // throw an exception
-                  throw new IllegalArgumentException(
-                          t + ": user does not have the privileges (super-user or administrator) to modify rows in a locked table " + tableId);
-                }
-              }
-            } else {
-              // modifying an UNLOCKED table
-
-              // allow if filterType is MODIFY or DEFAULT
-              if ( priorFilterType == null ||
-                      !(priorFilterType.equals(RowFilterScope.Type.MODIFY) || priorFilterType.equals(RowFilterScope.Type.DEFAULT)) ) {
-                // otherwise...
-
-                // allow if prior filterValue matches activeUser
-                if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
-                  // otherwise...
-                  // reject if the activeUser is not a super-user or administrator
-
-                  if (rolesArray == null ||
-                          !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                                  rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
-                    // bad JSON or
-                    // not a super-user and not an administrator
-
-                    // throw an exception
-                    throw new IllegalArgumentException(
-                            t + ": user does not have the privileges (super-user or administrator) to modify hidden or read-only rows in an unlocked table " + tableId);
-                  }
-                }
-              }
-            }
-          }
+          // apply row access restrictions
+          // this will throw an IllegalArgumentException
+          tss.allowRowChange( activeUser, rolesArray,
+              updatedSyncState, priorFilterType, priorFilterValue, RowChange.CHANGE_ROW );
 
         }
 
@@ -3810,70 +4035,13 @@ public class ODKDatabaseImplUtils {
 
         if ( !asServerRequestedChange ) {
 
-          // get the security settings
-          List<KeyValueStoreEntry> entries =
-                  getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
-                          LocalKeyValueStoreConstants.TableSecurity.ASPECT, null);
-
-          KeyValueStoreEntry locked = null;
-          KeyValueStoreEntry filterTypeOnCreation = null;
-          KeyValueStoreEntry unverifiedUserCanCreate = null;
-          for ( KeyValueStoreEntry entry : entries ) {
-            if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_FILTER_TYPE_ON_CREATION) ) {
-              filterTypeOnCreation = entry;
-            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE) ) {
-              unverifiedUserCanCreate = entry;
-            } else if ( entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED) ) {
-              locked = entry;
-            }
-          }
-
-          if ( filterTypeOnCreation == null ) {
-            cvDataTableVal.put(DataTableColumns.FILTER_TYPE, DataTableColumns.DEFAULT_FILTER_TYPE);
-          } else {
-            cvDataTableVal.put(DataTableColumns.FILTER_TYPE, filterTypeOnCreation.value);
-          }
+          cvDataTableVal.put(DataTableColumns.FILTER_TYPE, tss.filterTypeOnCreation);
 
           // activeUser
           cvDataTableVal.put(DataTableColumns.FILTER_VALUE, activeUser);
 
-          // enforce restrictions:
-          // 1. if locked, only super-user and administrator can create rows.
-          // 2. otherwise, if unverified user, allow creation based upon unverifedUserCanCreate flag
-          if ( locked != null && KeyValueStoreUtils.getBoolean(db.getAppName(), locked) ) {
-            // inserting into a LOCKED table
-
-            if ( rolesList == null ) {
-              // unverified user
-
-              // throw an exception
-              throw new IllegalArgumentException(
-                      t + ": unverified users cannot create a rows in a locked table " + tableId);
-            }
-
-            if ( rolesArray == null ||
-                    !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                            rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ) {
-              // bad JSON
-              // not a super-user and not an administrator
-
-              // throw an exception
-              throw new IllegalArgumentException(
-                      t + ": user does not have the privileges (super-user or administrator) to create a row in a locked table " + tableId);
-            }
-
-          } else if ( rolesList == null ) {
-            // inserting into an UNLOCKED table
-
-            // unverified user
-            if ( unverifiedUserCanCreate != null &&
-                    !KeyValueStoreUtils.getBoolean(db.getAppName(), unverifiedUserCanCreate) ) {
-
-              // throw an exception
-              throw new IllegalArgumentException(
-                      t + ": unverified users do not have the privileges to create a row in this unlocked table " + tableId);
-            }
-          }
+          tss.allowRowChange( activeUser, rolesArray,
+              updatedSyncState, priorFilterType, priorFilterValue, RowChange.NEW_ROW );
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
