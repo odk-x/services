@@ -28,7 +28,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome.OutcomeType;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
@@ -252,11 +252,12 @@ public class ProcessRowDataChanges {
 
     // loop through the localRow table
     for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-      Row localRow = localDataTable.getRowAtIndex(i);
-      String stateStr = localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
+      OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+      String stateStr = localDataTable
+          .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
       SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
-      String rowId = localRow.getRowId();
+      String rowId = localDataTable.getRowId(i);
 
       // see if there is a change to this row from our current
       // server change set.
@@ -277,8 +278,8 @@ public class ProcessRowDataChanges {
       if (state == SyncState.in_conflict) {
         // we need to remove the in_conflict records that refer to the
         // prior state of the server
-        String localRowConflictTypeBeforeSyncStr = localRow
-            .getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
+        String localRowConflictTypeBeforeSyncStr = localDataTable
+            .getRawDataOrMetadataByElementKey(i, DataTableColumns.CONFLICT_TYPE);
         localRowConflictTypeBeforeSync = localRowConflictTypeBeforeSyncStr == null ? null : Integer
             .parseInt(localRowConflictTypeBeforeSyncStr);
         if (localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES
@@ -381,8 +382,9 @@ public class ProcessRowDataChanges {
         // should **not match** our local row -- indicating that the server has a change from
         // another source, and that we should place the row into conflict.
         //
-        String localRowETag = localRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
-        if ( localRowETag != null && localRowETag.equals(serverRow.getRowETag()) ) {
+        String localRowETag = localDataTable
+            .getRawDataOrMetadataByElementKey(i, DataTableColumns.ROW_ETAG);
+        if (localRowETag != null && localRowETag.equals(serverRow.getRowETag())) {
           // ignore the server record. This is an update we will push to the server.
           continue;
         }
@@ -498,7 +500,8 @@ public class ProcessRowDataChanges {
         String[] empty = {};
 
         localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db,
-            tableId, orderedColumns, null, empty, empty, null, DataTableColumns.ID, "ASC");
+            tableId, orderedColumns, null, empty, empty, null, new String[] {DataTableColumns
+                .ID}, new String[] {"ASC"});
 
         // TODO: fix this for synced_pending_files
         // We likely need to relax this constraint on the
@@ -540,7 +543,7 @@ public class ProcessRowDataChanges {
   private void perhapsAddToRowsToSyncFileAttachments(List<SyncRowPending> rowsToSyncFileAttachments,
                                                       OrderedColumns orderedColumns,
                                                       ArrayList<ColumnDefinition> fileAttachmentColumns,
-                                                      Row localRow,
+                                                      OdkDbRow localRow,
                                                       SyncState state) {
     if (state == SyncState.in_conflict) {
       if ( !fileAttachmentColumns.isEmpty() ) {
@@ -688,7 +691,7 @@ public class ProcessRowDataChanges {
 
                 localDataTable = sc.getDatabaseService()
                     .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty,
-                        null, DataTableColumns.ID, "ASC");
+                        null, new String[] {DataTableColumns.ID}, new String[]{"ASC"});
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
@@ -822,12 +825,12 @@ public class ProcessRowDataChanges {
 
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-              Row localRow = localDataTable.getRowAtIndex(i);
-              String stateStr = localRow
-                  .getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
+              OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+              String stateStr = localDataTable
+                  .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
-              String rowId = localRow.getRowId();
+              String rowId = localDataTable.getRowId(i);
 
               // the local row wasn't impacted by a server change
               // see if this local row should be pushed to the server.
@@ -984,7 +987,7 @@ public class ProcessRowDataChanges {
                 localDataTable = sc.getDatabaseService()
                         .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
                                 DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
-                                null, DataTableColumns.ID, "ASC");
+                                null, new String[] {DataTableColumns.ID}, new String[] {"ASC"});
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
@@ -993,9 +996,9 @@ public class ProcessRowDataChanges {
 
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-              Row localRow = localDataTable.getRowAtIndex(i);
-              String stateStr = localRow
-                      .getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
+              OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+              String stateStr = localDataTable
+                      .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
               // the local row wasn't impacted by a server change

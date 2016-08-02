@@ -19,13 +19,10 @@ import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.database.service.OdkDbRow;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A SyncRow is an in-between class to map rows in the database to rows in the
@@ -337,29 +334,30 @@ public class SyncRow {
   
 
   public static final SyncRow convertToSyncRow(OrderedColumns orderedColumns,
-      ArrayList<ColumnDefinition> fileAttachmentColumns, Row localRow) {
-    String rowId = localRow.getRowId();
-    String rowETag = localRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
+      ArrayList<ColumnDefinition> fileAttachmentColumns, OdkDbRow localRow) {
+    Map<String, Integer> elementKeyToIndex = localRow.getOwnerTable().generateElementKeyToIndex();
+    String rowId = localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.ID));
+    String rowETag = localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.ROW_ETAG));
 
     ArrayList<DataKeyValue> values = new ArrayList<DataKeyValue>();
     for (ColumnDefinition column : orderedColumns.getColumnDefinitions()) {
       if (column.isUnitOfRetention()) {
         String elementKey = column.getElementKey();
         values.add(new DataKeyValue(elementKey, localRow
-            .getRawDataOrMetadataByElementKey(elementKey)));
+            .getDataByIndex(elementKeyToIndex.get(elementKey))));
       }
     }
 
     SyncRow syncRow = new SyncRow(rowId, rowETag, false,
-        localRow.getRawDataOrMetadataByElementKey(DataTableColumns.FORM_ID),
-        localRow.getRawDataOrMetadataByElementKey(DataTableColumns.LOCALE),
-        localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE),
-        localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
-        localRow.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_CREATOR),
-        RowFilterScope.asRowFilter(localRow.getRawDataOrMetadataByElementKey(DataTableColumns
-            .FILTER_TYPE),
-            localRow.getRawDataOrMetadataByElementKey(DataTableColumns.FILTER_VALUE)), values,
-        fileAttachmentColumns);
+        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FORM_ID)),
+        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.LOCALE)),
+        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_TYPE)),
+        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_TIMESTAMP)),
+        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_CREATOR)),
+        RowFilterScope.asRowFilter(
+            localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FILTER_TYPE)),
+            localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FILTER_VALUE))), values,
+            fileAttachmentColumns);
     return syncRow;
   }
 }

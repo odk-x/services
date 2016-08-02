@@ -13,13 +13,13 @@ import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.OdkDatabaseService;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.database.service.OdkDbRow;
 
 import java.util.*;
 
@@ -98,19 +98,19 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       return cv;
    }
 
-   private void verifyRowTestSet1(Row row) {
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_STRING_ID), TEST_STR_1);
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_INTEGER_ID),
+   private void verifyRowTestSet1(OdkDbRow row) {
+      assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
+      assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(TEST_INT_1));
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_NUMBER_ID),
+      assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.toString(TEST_NUM_1));
    }
 
-   private void verifyRowTestSet2(Row row) {
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_STRING_ID), TEST_STR_2);
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_INTEGER_ID),
+   private void verifyRowTestSet2(OdkDbRow row) {
+      assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
+      assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(TEST_INT_2));
-      assertEquals(row.getRawDataOrMetadataByElementKey(COL_NUMBER_ID),
+      assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.toString(TEST_NUM_2));
    }
 
@@ -232,7 +232,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -271,7 +271,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -311,7 +311,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -350,8 +350,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId2.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID,
-                 "ASC");
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -393,8 +393,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId2.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID,
-                 "ASC");
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -439,8 +439,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId2.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, COL_STRING_ID,
-                 "ASC");
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -482,7 +482,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -655,7 +655,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
          verifyRowTestSet1(table.getRowAtIndex(0));
 
          List<Column> singleColumnArray = new ArrayList<Column>();
@@ -677,10 +677,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          row = table.getRowAtIndex(0);
 
-         assertEquals(row.getRawDataOrMetadataByElementKey(COL_STRING_ID), TEST_STR_1);
-         assertEquals(row.getRawDataOrMetadataByElementKey(COL_INTEGER_ID),
+         assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
+         assertEquals(row.getDataByKey(COL_INTEGER_ID),
              Integer.toString(changeValue));
-         assertEquals(row.getRawDataOrMetadataByElementKey(COL_NUMBER_ID),
+         assertEquals(row.getDataByKey(COL_NUMBER_ID),
              Double.toString(TEST_NUM_1));
 
          // clean up
@@ -720,7 +720,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -774,7 +774,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(NUM_ROWS, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         OdkDbRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 

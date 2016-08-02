@@ -22,17 +22,14 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.resolve.views.components.*;
 
 import java.util.*;
@@ -93,7 +90,13 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
         }
       }
 
-      table = ODKDatabaseImplUtils.get().getRowsWithId(db, mAppName, mTableId, orderedDefns, mRowId);
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
+
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().getRowsWithId(db, mTableId, mRowId);
+      table = new UserTable(baseTable, orderedDefns, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
+          OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
+          adminColArr, null);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -127,8 +130,9 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
     // save as incomplete. Otherwise, it is to roll back or update to
     // incomplete.
 
-    Row rowStarting = table.getRowAtIndex(table.getNumberOfRows() - 1);
-    String type = rowStarting.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
+    int startingRowIndex = table.getNumberOfRows() - 1;
+    String type = table
+        .getRawDataOrMetadataByElementKey(startingRowIndex, DataTableColumns.SAVEPOINT_TYPE);
     boolean deleteEntirely = (type == null || type.length() == 0);
 
     if (!deleteEntirely) {
@@ -142,7 +146,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       }
     }
 
-    Row rowEnding = table.getRowAtIndex(0);
+    int endingRowIndex = 0;
     //
     // And now we need to construct up the adapter.
 
@@ -169,10 +173,12 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
-      String localRawValue = rowEnding.getRawDataOrMetadataByElementKey(elementKey);
-      String localDisplayValue = rowEnding.getDisplayTextOfData(elementType, elementKey);
-      String serverRawValue = rowStarting.getRawDataOrMetadataByElementKey(elementKey);
-      String serverDisplayValue = rowStarting.getDisplayTextOfData(elementType, elementKey);
+      String localRawValue = table.getRawDataOrMetadataByElementKey(endingRowIndex, elementKey);
+      String localDisplayValue = table
+          .getDisplayTextOfData(endingRowIndex, elementType, elementKey);
+      String serverRawValue = table.getRawDataOrMetadataByElementKey(startingRowIndex, elementKey);
+      String serverDisplayValue = table
+          .getDisplayTextOfData(startingRowIndex, elementType, elementKey);
       if (deleteEntirely ||
           (localRawValue == null && serverRawValue == null) ||
           (localRawValue != null && serverRawValue != null &&

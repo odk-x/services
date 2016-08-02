@@ -23,18 +23,16 @@ import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.OdkDbSerializedInterface;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.resolve.views.components.ConcordantColumn;
 import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -105,10 +103,15 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId,
-          orderedDefns, DataTableColumns.ID + "=?" +
-              " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL",
-          new String[] { mRowId }, null, null, DataTableColumns.CONFLICT_TYPE, "ASC");
+      String whereClause = DataTableColumns.ID + "=?" +
+          " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL";
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+              .buildSqlStatement(mTableId, whereClause, null, null,
+                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
+          new String[] { mRowId });
+      table = new UserTable(baseTable, orderedDefns, whereClause, null, null, adminColArr, null);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -145,13 +148,15 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     }
 
     // the first row is the localRow, the second is the serverRow.
-    Row localRow = table.getRowAtIndex(0);
-    Row serverRow = table.getRowAtIndex(1);
+    int localRowIndex = 0;
+    int serverRowIndex = 1;
+    OdkDbRow localRow = table.getRowAtIndex(localRowIndex);
+    OdkDbRow serverRow = table.getRowAtIndex(serverRowIndex);
 
-    int localConflictType = Integer.parseInt(localRow.getRawDataOrMetadataByElementKey
-        (DataTableColumns.CONFLICT_TYPE));
-    int serverConflictType = Integer.parseInt(serverRow.getRawDataOrMetadataByElementKey
-        (DataTableColumns.CONFLICT_TYPE));
+    int localConflictType = Integer.parseInt(table.getRawDataOrMetadataByElementKey
+        (localRowIndex, DataTableColumns.CONFLICT_TYPE));
+    int serverConflictType = Integer.parseInt(table.getRawDataOrMetadataByElementKey
+        (serverRowIndex, DataTableColumns.CONFLICT_TYPE));
     //
     // And now we need to construct up the adapter.
 
@@ -178,10 +183,11 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
-      String localRawValue = localRow.getRawDataOrMetadataByElementKey(elementKey);
-      String localDisplayValue = localRow.getDisplayTextOfData(elementType, elementKey);
-      String serverRawValue = serverRow.getRawDataOrMetadataByElementKey(elementKey);
-      String serverDisplayValue = serverRow.getDisplayTextOfData(elementType, elementKey);
+      String localRawValue = table.getRawDataOrMetadataByElementKey(localRowIndex, elementKey);
+      String localDisplayValue = table.getDisplayTextOfData(localRowIndex, elementType, elementKey);
+      String serverRawValue = table.getRawDataOrMetadataByElementKey(serverRowIndex, elementKey);
+      String serverDisplayValue = table
+          .getDisplayTextOfData(serverRowIndex, elementType, elementKey);
       if ((localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ||
           (serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) ||
           (localRawValue == null && serverRawValue == null) ||

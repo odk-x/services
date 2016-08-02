@@ -31,6 +31,8 @@ import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.database.service.OdkDbTable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -3178,24 +3180,33 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         activeUser, currentLocale);
 
     // Run the query again and make sure that the place row in conflict worked as expected
-    UserTable table = ODKDatabaseImplUtils.get().rawSqlQuery(db, getAppName(), tableId,
-        orderedColumns, DataTableColumns.ID + "=?", new String[] { rowId }, null, null,
-            DataTableColumns.CONFLICT_TYPE, "ASC" );
+    String whereClause = DataTableColumns.ID + "=?";
+    String[] selectionArgs = new String[] { rowId };
+    String[] orderByKeys = new String[] { DataTableColumns.CONFLICT_TYPE };
+    String[] orderByDirs = new String[] { "ASC" };
+    List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+    String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
+
+    OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+            .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
+        selectionArgs);
+    UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr,
+        null);
 
     assertEquals(table.getNumberOfRows(), 2);
 
-    Row first = table.getRowAtIndex(0);
-    Row second = table.getRowAtIndex(1);
+    OdkDbRow first = table.getRowAtIndex(0);
+    OdkDbRow second = table.getRowAtIndex(1);
 
     String v;
     int conflictTypeVal;
 
-    v = first.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
+    v = first.getDataByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
     conflictTypeVal = Integer.valueOf(v);
     assertEquals(conflictType, conflictTypeVal);
 
-    v = second.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
+    v = second.getDataByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
     conflictTypeVal = Integer.valueOf(v);
     assertEquals(ConflictType.SERVER_UPDATED_UPDATED_VALUES, conflictTypeVal);
@@ -3205,9 +3216,11 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         rowId, RoleConsts.ADMIN_ROLES_LIST);
 
     // Run the query yet again to make sure that things worked as expected
-    table = ODKDatabaseImplUtils.get().rawSqlQuery(db, getAppName(), tableId,
-        orderedColumns, DataTableColumns.ID + "=?", new String[] { rowId }, null, null,
-        DataTableColumns.CONFLICT_TYPE, "ASC" );
+    baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+            .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
+        selectionArgs);
+    table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr,
+        null);
 
     assertEquals(table.getNumberOfRows(), 0);
 
