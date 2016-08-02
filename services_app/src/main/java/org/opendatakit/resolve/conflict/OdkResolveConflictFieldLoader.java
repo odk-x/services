@@ -33,6 +33,7 @@ import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbTable;
+import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.opendatakit.resolve.views.components.ConcordantColumn;
 import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.opendatakit.resolve.views.components.ResolveActionList;

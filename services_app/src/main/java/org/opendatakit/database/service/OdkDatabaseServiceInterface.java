@@ -30,6 +30,7 @@ import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.utilities.OdkDbChunkUtil;
 
 import java.io.IOException;
 import java.io.Serializable;

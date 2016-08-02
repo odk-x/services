@@ -44,6 +44,7 @@ import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFi
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
+import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
