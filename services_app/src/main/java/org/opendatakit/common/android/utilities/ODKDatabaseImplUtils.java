@@ -2449,7 +2449,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.putAll(cvValues);
 
       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, false,
-          activeUser, rolesList, locale);
+          activeUser, rolesList, locale, false);
    }
 
    /**
@@ -2466,10 +2466,11 @@ public class ODKDatabaseImplUtils {
     * @param rowId
     * @param activeUser
     * @param locale
+    * @param asCsvRequestedChange
     */
    public void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
-       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
-       String locale) {
+                                         OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
+                                         String locale, boolean asCsvRequestedChange) {
 
       // TODO: make sure caller passes in the correct roleList for the use case.
       // TODO: for multi-step sync actions, we probably need an internal variant of this.
@@ -2485,7 +2486,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.putAll(cvValues);
 
       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
-          activeUser, rolesList, locale);
+          activeUser, rolesList, locale, asCsvRequestedChange);
    }
 
    /**
@@ -3267,10 +3268,11 @@ public class ODKDatabaseImplUtils {
     * @param rowId
     * @param activeUser
     * @param locale
+    * @param asCsvRequestedChange
     */
    public void privilegedInsertRowWithId(OdkConnectionInterface db, String tableId,
-       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
-       String locale) {
+                                         OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
+                                         String locale, boolean asCsvRequestedChange) {
 
       String rolesList = RoleConsts.ADMIN_ROLES_LIST;
 
@@ -3284,7 +3286,7 @@ public class ODKDatabaseImplUtils {
 
       // TODO: verify that all fields are specified
       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
-          activeUser, rolesList, locale);
+          activeUser, rolesList, locale, asCsvRequestedChange);
    }
 
    /**
@@ -3317,7 +3319,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.putAll(cvValues);
 
       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, false,
-          activeUser, rolesList, locale);
+          activeUser, rolesList, locale, false);
    }
 
    /**
@@ -3591,8 +3593,8 @@ public class ODKDatabaseImplUtils {
 
                   // allow if filterType is MODIFY or DEFAULT
                   if (priorFilterType == null || !(
-                      priorFilterType.equals(RowFilterScope.Type.MODIFY) || priorFilterType
-                          .equals(RowFilterScope.Type.DEFAULT))) {
+                      priorFilterType.equals(RowFilterScope.Type.MODIFY.name()) || priorFilterType
+                          .equals(RowFilterScope.Type.DEFAULT.name()))) {
                      // otherwise...
 
                      // allow if prior filterValue matches activeUser
@@ -3742,8 +3744,8 @@ public class ODKDatabaseImplUtils {
    * TODO: This is broken w.r.t. updates of partial fields
    */
    private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-       OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
-       boolean asServerRequestedChange, String activeUser, String rolesList, String locale) {
+                                              OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
+                                              boolean asServerRequestedChange, String activeUser, String rolesList, String locale, boolean asCsvRequestedChange) {
 
       String rowId = null;
       String whereClause = null;
@@ -3764,7 +3766,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.putAll(cvValues);
 
       // if this is a server-requested change, all the user fields and admin columns should be specified.
-      if (asServerRequestedChange) {
+      if (asServerRequestedChange && !asCsvRequestedChange) {
          for (String columnName : orderedColumns.getRetentionColumnNames()) {
             if (!cvDataTableVal.containsKey(columnName)) {
                throw new IllegalArgumentException(

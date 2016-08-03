@@ -1065,11 +1065,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @param asCsvRequestedChange
    * @return
    * @throws RemoteException
    */
   @Override public OdkDbChunk privilegedInsertRowWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId)
+                                                        String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId, boolean asCsvRequestedChange)
       throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1084,7 +1085,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
-              locale);
+              locale, asCsvRequestedChange);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
@@ -1508,11 +1509,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    * @param orderedColumns
    * @param cvValues
    * @param rowId
+   * @param asCsvRequestedChange
    * @return
    * @throws RemoteException
    */
   @Override public OdkDbChunk privilegedUpdateRowWithId(String appName, OdkDbHandle dbHandleName,
-      String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId)
+                                                        String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId, boolean asCsvRequestedChange)
       throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1527,7 +1529,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
               .privilegedUpdateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
-                  locale);
+                  locale, asCsvRequestedChange);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);

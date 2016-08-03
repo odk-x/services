@@ -1448,7 +1448,7 @@ public class ProcessRowDataChanges {
 
       sc.getDatabaseService().privilegedInsertRowWithId(sc.getAppName(), db,
           resource.getTableId(),
-          orderedColumns, values, serverRow.getRowId());
+          orderedColumns, values, serverRow.getRowId(), false);
       tableLevelResult.incLocalInserts();
 
       ++count;
@@ -1512,7 +1512,7 @@ public class ProcessRowDataChanges {
 
       sc.getDatabaseService().privilegedUpdateRowWithId(sc.getAppName(), db,
           resource.getTableId(),
-          orderedColumns, values, serverRow.getRowId());
+          orderedColumns, values, serverRow.getRowId(), false);
       tableLevelResult.incLocalUpdates();
 
       ++count;
