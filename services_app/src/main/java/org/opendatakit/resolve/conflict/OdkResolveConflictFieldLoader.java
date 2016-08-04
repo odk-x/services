@@ -27,11 +27,13 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.OdkDbSerializedInterface;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.common.android.utilities.NameUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.opendatakit.resolve.views.components.ConcordantColumn;
@@ -112,7 +114,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new String[] { mRowId });
-      table = new UserTable(baseTable, orderedDefns, whereClause, null, null, adminColArr, null);
+      table = new UserTable(baseTable, orderedDefns, whereClause, null, null, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -154,10 +156,9 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     OdkDbRow localRow = table.getRowAtIndex(localRowIndex);
     OdkDbRow serverRow = table.getRowAtIndex(serverRowIndex);
 
-    int localConflictType = Integer.parseInt(table.getRawDataOrMetadataByElementKey
-        (localRowIndex, DataTableColumns.CONFLICT_TYPE));
-    int serverConflictType = Integer.parseInt(table.getRawDataOrMetadataByElementKey
-        (serverRowIndex, DataTableColumns.CONFLICT_TYPE));
+    int localConflictType = Integer.parseInt(localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
+    int serverConflictType = Integer
+        .parseInt(serverRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
     //
     // And now we need to construct up the adapter.
 
@@ -184,9 +185,9 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
-      String localRawValue = table.getRawDataOrMetadataByElementKey(localRowIndex, elementKey);
+      String localRawValue = localRow.getDataByKey(elementKey);
       String localDisplayValue = table.getDisplayTextOfData(localRowIndex, elementType, elementKey);
-      String serverRawValue = table.getRawDataOrMetadataByElementKey(serverRowIndex, elementKey);
+      String serverRawValue = serverRow.getDataByKey(elementKey);
       String serverDisplayValue = table
           .getDisplayTextOfData(serverRowIndex, elementType, elementKey);
       if ((localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ||

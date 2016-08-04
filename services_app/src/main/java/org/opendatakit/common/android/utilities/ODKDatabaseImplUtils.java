@@ -334,6 +334,7 @@ public class ODKDatabaseImplUtils {
    private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, String[] sqlBindArgs,
        String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
 
+      Map<String, Integer> mElementKeyToIndex = null;
       String[] mElementKeyForIndex = null;
 
       if (!c.moveToFirst()) {
@@ -344,11 +345,13 @@ public class ODKDatabaseImplUtils {
          try {
             int columnCount = c.getColumnCount();
             mElementKeyForIndex = new String[columnCount];
+            mElementKeyToIndex = new HashMap<>(columnCount);
             int i;
 
             for (i = 0; i < columnCount; ++i) {
                String columnName = c.getColumnName(i);
                mElementKeyForIndex[i] = columnName;
+               mElementKeyToIndex.put(columnName, i);
             }
          } catch (Exception e) {
             // ignore.
@@ -362,7 +365,7 @@ public class ODKDatabaseImplUtils {
 
          // we have no idea what the table should contain because it has no rows...
          return new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection,
-             primaryKey, mElementKeyForIndex, 0);
+             primaryKey, mElementKeyForIndex, mElementKeyToIndex, 0);
       }
 
       int rowCount = c.getCount();
@@ -377,16 +380,18 @@ public class ODKDatabaseImplUtils {
       // The sync_state column, if present at index 7, would have a mapping
       // in metadataKeyToIndex of sync_state:7.
       mElementKeyForIndex = new String[columnCount];
+      mElementKeyToIndex = new HashMap<>(columnCount);
 
       int i;
 
       for (i = 0; i < columnCount; ++i) {
          String columnName = c.getColumnName(i);
          mElementKeyForIndex[i] = columnName;
+         mElementKeyToIndex.put(columnName, i);
       }
 
       table = new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection,
-          primaryKey, mElementKeyForIndex, rowCount);
+          primaryKey, mElementKeyForIndex, mElementKeyToIndex, rowCount);
 
       String[] rowData = new String[columnCount];
       do {
@@ -453,23 +458,14 @@ public class ODKDatabaseImplUtils {
   }
 
   private boolean hasConflictRows(String appName, OdkDbTable table) {
-    Map<String, Integer> elementKeyToIndex = table.generateElementKeyToIndex();
-    Integer cell = elementKeyToIndex.get(DataTableColumns.CONFLICT_TYPE);
-    if (cell == null) {
-      WebLogger.getLogger(appName).e(t,
-          "elementKey [" + DataTableColumns.CONFLICT_TYPE + "] was not found in table");
-      return false;
-    }
-
-    List<OdkDbRow> rows = table.getRows();
-    for (int i = 0; i < rows.size(); i++) {
-      OdkDbRow row = rows.get(i);
-      String conflictType = row.getDataByIndex(cell);
-      if (conflictType != null && conflictType.length() != 0) {
-        return true;
-      }
-    }
-    return false;
+     List<OdkDbRow> rows = table.getRows();
+     for (OdkDbRow row : rows) {
+        String conflictType = row.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        if (conflictType != null && conflictType.length() != 0) {
+           return true;
+        }
+     }
+     return false;
   }
 
    public OdkDbTable getConflictingRowsInExistingDBTableWithId(OdkConnectionInterface db,
@@ -2633,7 +2629,6 @@ public class ODKDatabaseImplUtils {
                      " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
              new String[] { rowId });
-         Map<String, Integer> elementKeyForIndex = table.generateElementKeyToIndex();
 
          if (table.getNumberOfRows() != 2) {
             throw new IllegalStateException(
@@ -2643,10 +2638,10 @@ public class ODKDatabaseImplUtils {
          OdkDbRow serverRow = table.getRowAtIndex(1);
 
          int localConflictType = Integer.parseInt(
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          int serverConflictType = Integer.parseInt(
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             serverRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          if (localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES
              && localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES) {
@@ -2667,13 +2662,13 @@ public class ODKDatabaseImplUtils {
          // No need to specify them here.
          ContentValues updateValues = new ContentValues();
          updateValues.put(DataTableColumns.ROW_ETAG,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.ROW_ETAG)));
+             serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
          // take the server's filter metadata values ...
          updateValues.put(DataTableColumns.FILTER_TYPE,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_TYPE)));
+             serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
          updateValues.put(DataTableColumns.FILTER_VALUE,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_VALUE)));
+             serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
 
          // Figure out whether to take the server or local metadata fields.
          // and whether to take the server or local data fields.
@@ -2692,20 +2687,20 @@ public class ODKDatabaseImplUtils {
 
             // copy everything over from the server row
             updateValues.put(DataTableColumns.FORM_ID,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FORM_ID)));
+                serverRow.getDataByKey(DataTableColumns.FORM_ID));
             updateValues.put(DataTableColumns.LOCALE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.LOCALE)));
+                serverRow.getDataByKey(DataTableColumns.LOCALE));
             updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TYPE)));
+                serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE));
             updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow
-                .getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TIMESTAMP)));
+                .getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
             updateValues.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow
-                .getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_CREATOR)));
+                .getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
             // including the values of the user fields on the server
             for (String elementKey : orderedColumns.getRetentionColumnNames()) {
                updateValues
-                   .put(elementKey, serverRow.getDataByIndex(elementKeyForIndex.get(elementKey)));
+                   .put(elementKey, serverRow.getDataByKey(elementKey));
             }
          }
 
@@ -2781,7 +2776,6 @@ public class ODKDatabaseImplUtils {
                      " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
              new String[] { rowId });
-         Map<String, Integer> elementKeyForIndex = table.generateElementKeyToIndex();
 
          if (table.getNumberOfRows() != 2) {
             throw new IllegalStateException(
@@ -2791,10 +2785,10 @@ public class ODKDatabaseImplUtils {
          OdkDbRow serverRow = table.getRowAtIndex(1);
 
          int localConflictType = Integer.parseInt(
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          int serverConflictType = Integer.parseInt(
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             serverRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          if (localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES
              && localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES) {
@@ -2819,7 +2813,7 @@ public class ODKDatabaseImplUtils {
          // update the local conflict record with the local's changes
          ContentValues updateValues = cvValues;
          updateValues.put(DataTableColumns.ROW_ETAG,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.ROW_ETAG)));
+             serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
          // update what was the local conflict record with the local's changes
          // by the time we apply the update, the local conflict record will be
@@ -2829,22 +2823,22 @@ public class ODKDatabaseImplUtils {
 
          // take the server's filter metadata values ...
          updateValues.put(DataTableColumns.FILTER_TYPE,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_TYPE)));
+             serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
          updateValues.put(DataTableColumns.FILTER_VALUE,
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_VALUE)));
+             serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
 
          // but take the local's metadata values (i.e., do not change these
          // during the update) ...
          updateValues.put(DataTableColumns.FORM_ID,
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FORM_ID)));
+             localRow.getDataByKey(DataTableColumns.FORM_ID));
          updateValues.put(DataTableColumns.LOCALE,
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.LOCALE)));
+             localRow.getDataByKey(DataTableColumns.LOCALE));
          updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TYPE)));
+             localRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE));
          updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TIMESTAMP)));
+             localRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
          updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_CREATOR)));
+             localRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete the record of the server row
          deleteServerConflictRowWithId(db, tableId, rowId);
@@ -2907,7 +2901,6 @@ public class ODKDatabaseImplUtils {
                      " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
              new String[] { rowId });
-         Map<String, Integer> elementKeyForIndex = table.generateElementKeyToIndex();
 
          if (table.getNumberOfRows() != 2) {
             throw new IllegalStateException(
@@ -2917,10 +2910,10 @@ public class ODKDatabaseImplUtils {
          OdkDbRow serverRow = table.getRowAtIndex(1);
 
          int localConflictType = Integer.parseInt(
-             localRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          int serverConflictType = Integer.parseInt(
-             serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.CONFLICT_TYPE)));
+             serverRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
          if (localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES
              && localConflictType != ConflictType.LOCAL_DELETED_OLD_VALUES) {
@@ -2951,7 +2944,7 @@ public class ODKDatabaseImplUtils {
             // update the local conflict record with the server's changes
             ContentValues updateValues = new ContentValues();
             updateValues.put(DataTableColumns.ROW_ETAG,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.ROW_ETAG)));
+                serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
             // update what was the local conflict record with the server's changes
             // by the time we apply the update, the local conflict record will be
@@ -2961,24 +2954,24 @@ public class ODKDatabaseImplUtils {
 
             // take the server's metadata values too...
             updateValues.put(DataTableColumns.FILTER_TYPE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_TYPE)));
+                serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
             updateValues.put(DataTableColumns.FILTER_VALUE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FILTER_VALUE)));
+                serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
             updateValues.put(DataTableColumns.FORM_ID,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.FORM_ID)));
+                serverRow.getDataByKey(DataTableColumns.FORM_ID));
             updateValues.put(DataTableColumns.LOCALE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.LOCALE)));
+                serverRow.getDataByKey(DataTableColumns.LOCALE));
             updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
-                serverRow.getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TYPE)));
+                serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE));
             updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow
-                .getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_TIMESTAMP)));
+                .getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
             updateValues.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow
-                .getDataByIndex(elementKeyForIndex.get(DataTableColumns.SAVEPOINT_CREATOR)));
+                .getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
             // take all the data values from the server...
             for (String elementKey : orderedColumns.getRetentionColumnNames()) {
                updateValues
-                   .put(elementKey, serverRow.getDataByIndex(elementKeyForIndex.get(elementKey)));
+                   .put(elementKey, serverRow.getDataByKey(elementKey));
             }
 
             // determine whether we should flag this as pending files
@@ -3000,7 +2993,7 @@ public class ODKDatabaseImplUtils {
                      // not a file attachment
                      continue;
                   }
-                  String v = serverRow.getDataByIndex(elementKeyForIndex.get(cd.getElementKey()));
+                  String v = serverRow.getDataByKey(cd.getElementKey());
                   if (v != null && v.length() != 0) {
                      // non-null file attachment specified on server row
                      hasUriFragments = true;

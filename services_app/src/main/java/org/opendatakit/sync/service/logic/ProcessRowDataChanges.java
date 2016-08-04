@@ -28,7 +28,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome.OutcomeType;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
@@ -36,6 +35,7 @@ import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.*;
 import org.opendatakit.sync.service.data.SyncRow;
@@ -145,14 +145,14 @@ public class ProcessRowDataChanges {
    * TODO: This should also somehow account for zipped files, exploding them or
    * what have you.
    * </p>
-   * 
+   *
    * @param workingListOfTables
    *          -- the list of tables we should sync with the server. This will be
    *          a subset of the available local tables -- if there was any error
    *          during the sync'ing of the table-level files, or if the table
    *          schema does not match, the local table will be omitted from this
    *          list.
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public void synchronizeDataRowsAndAttachments(List<TableResource> workingListOfTables,
       SyncAttachmentState attachmentState) throws RemoteException {
@@ -172,7 +172,7 @@ public class ProcessRowDataChanges {
       String displayName;
       try {
         db = sc.getDatabase();
-        te = sc.getDatabaseService().getTableDefinitionEntry(sc.getAppName(), db, 
+        te = sc.getDatabaseService().getTableDefinitionEntry(sc.getAppName(), db,
             tableId);
         orderedDefns = sc.getDatabaseService().getUserDefinedColumns(sc.getAppName(), db, tableId);
         displayName = sc.getTableDisplayName(tableId);
@@ -199,9 +199,9 @@ public class ProcessRowDataChanges {
    * @param localDataTable
    * @param rows
    * @return
-     * @throws IOException
-     * @throws RemoteException
-     */
+   * @throws IOException
+   * @throws RemoteException
+   */
   private UserTable updateLocalRowsFromServerChanges(TableResource tableResource,
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
       SyncAttachmentState attachmentState, ArrayList<ColumnDefinition> fileAttachmentColumns,
@@ -253,8 +253,7 @@ public class ProcessRowDataChanges {
     // loop through the localRow table
     for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
       OdkDbRow localRow = localDataTable.getRowAtIndex(i);
-      String stateStr = localDataTable
-          .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
+      String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
       SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
       String rowId = localDataTable.getRowId(i);
@@ -278,8 +277,8 @@ public class ProcessRowDataChanges {
       if (state == SyncState.in_conflict) {
         // we need to remove the in_conflict records that refer to the
         // prior state of the server
-        String localRowConflictTypeBeforeSyncStr = localDataTable
-            .getRawDataOrMetadataByElementKey(i, DataTableColumns.CONFLICT_TYPE);
+        String localRowConflictTypeBeforeSyncStr = localRow
+            .getDataByKey(DataTableColumns.CONFLICT_TYPE);
         localRowConflictTypeBeforeSync = localRowConflictTypeBeforeSyncStr == null ? null : Integer
             .parseInt(localRowConflictTypeBeforeSyncStr);
         if (localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES
@@ -324,14 +323,14 @@ public class ProcessRowDataChanges {
           // processed changes by testing for the server and device having identical field values.
           //
           SyncRowDataChanges syncRow = new SyncRowDataChanges(serverRow, SyncRow.convertToSyncRow(
-                  orderedColumns, fileAttachmentColumns, localRow), false, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+              orderedColumns, fileAttachmentColumns, localRow), false, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
 
           if (!syncRow.identicalValues(orderedColumns)) {
             // Only add a local-update if the server and device rows have different values.
             //
             rowsToUpdateLocally.add(new SyncRowDataChanges(serverRow, SyncRow.convertToSyncRow(
-                      orderedColumns, fileAttachmentColumns, localRow),
-                      (state == SyncState.synced_pending_files)));
+                orderedColumns, fileAttachmentColumns, localRow),
+                (state == SyncState.synced_pending_files)));
           }
         }
       } else if (serverRow.isDeleted()
@@ -382,9 +381,8 @@ public class ProcessRowDataChanges {
         // should **not match** our local row -- indicating that the server has a change from
         // another source, and that we should place the row into conflict.
         //
-        String localRowETag = localDataTable
-            .getRawDataOrMetadataByElementKey(i, DataTableColumns.ROW_ETAG);
-        if (localRowETag != null && localRowETag.equals(serverRow.getRowETag())) {
+        String localRowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
+        if ( localRowETag != null && localRowETag.equals(serverRow.getRowETag()) ) {
           // ignore the server record. This is an update we will push to the server.
           continue;
         }
@@ -486,22 +484,22 @@ public class ProcessRowDataChanges {
         pushLocalAttachmentsBeforeDeleteRowsInDb(db, tableResource, rowsToDeleteLocally);
 
         deleteRowsInDb(db, tableResource, orderedColumns, rowsToDeleteLocally,
-                tableLevelResult);
+            tableLevelResult);
 
         insertRowsInDb(db, tableResource, orderedColumns, rowsToInsertLocally,
-                hasAttachments, tableLevelResult);
+            hasAttachments, tableLevelResult);
 
         updateRowsInDb(db, tableResource, orderedColumns, rowsToUpdateLocally,
-                hasAttachments, tableLevelResult);
+            hasAttachments, tableLevelResult);
 
         conflictRowsInDb(db, tableResource, orderedColumns, rowsToMoveToInConflictLocally,
-                tableLevelResult);
+            tableLevelResult);
 
         String[] empty = {};
 
-        localDataTable = sc.getDatabaseService().rawSqlQuery(sc.getAppName(), db,
-            tableId, orderedColumns, null, empty, empty, null, new String[] {DataTableColumns
-                .ID}, new String[] {"ASC"});
+        localDataTable = sc.getDatabaseService()
+            .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty, null,
+                new String[] { DataTableColumns.ID }, new String[] { "ASC" });
 
         // TODO: fix this for synced_pending_files
         // We likely need to relax this constraint on the
@@ -519,7 +517,7 @@ public class ProcessRowDataChanges {
   }
 
   private int countRowToSyncFileAttachments(ArrayList<ColumnDefinition> fileAttachmentColumns,
-                                            SyncState state) {
+      SyncState state) {
     if (state == SyncState.in_conflict) {
       if ( !fileAttachmentColumns.isEmpty() ) {
         return 1;
@@ -541,22 +539,22 @@ public class ProcessRowDataChanges {
    * @param state
    */
   private void perhapsAddToRowsToSyncFileAttachments(List<SyncRowPending> rowsToSyncFileAttachments,
-                                                      OrderedColumns orderedColumns,
-                                                      ArrayList<ColumnDefinition> fileAttachmentColumns,
-                                                      OdkDbRow localRow,
-                                                      SyncState state) {
+      OrderedColumns orderedColumns,
+      ArrayList<ColumnDefinition> fileAttachmentColumns,
+      OdkDbRow localRow,
+      SyncState state) {
     if (state == SyncState.in_conflict) {
       if ( !fileAttachmentColumns.isEmpty() ) {
         // fetch the file attachments for an in_conflict row but don't delete
         // anything and never update the state to synced (it must stay in in_conflict)
         rowsToSyncFileAttachments.add(new SyncRowPending(SyncRow.convertToSyncRow(
-                orderedColumns, fileAttachmentColumns, localRow), true, false, false));
+            orderedColumns, fileAttachmentColumns, localRow), true, false, false));
       }
     } else if (state == SyncState.synced_pending_files) {
       // if we succeed in fetching and deleting the local files to match the server
       // then update the state to synced.
       rowsToSyncFileAttachments.add(new SyncRowPending(SyncRow.convertToSyncRow(
-              orderedColumns, fileAttachmentColumns, localRow), false, true, true));
+          orderedColumns, fileAttachmentColumns, localRow), false, true, true));
     }
   }
 
@@ -609,8 +607,8 @@ public class ProcessRowDataChanges {
       // there was some sort of error...
       log.e(TAG, "Skipping data sync - error in table schema or file verification step " + tableId);
       sc.updateNotification(SyncProgressState.ROWS,
-              R.string.sync_table_data_sync_skipped,
-              new Object[] { tableId }, 100.0, false);
+          R.string.sync_table_data_sync_skipped,
+          new Object[] { tableId }, 100.0, false);
       return;
     }
 
@@ -642,7 +640,7 @@ public class ProcessRowDataChanges {
         tableLevelResult.setMessage((passNumber==1) ? "beginning row data sync" : "retrying row data sync");
 
         ++passNumber;
-        
+
         sc.updateNotification(SyncProgressState.ROWS,
             R.string.sync_verifying_table_schema_on_server,
             new Object[] { tableId }, 0.0, false);
@@ -759,10 +757,10 @@ public class ProcessRowDataChanges {
                 // put up new information.
                 //
                 // Note that we may have additional changes from
-                // subsequent dataETags (changeSets). We only 
-                // break out of this loop if the dataETag on the 
+                // subsequent dataETags (changeSets). We only
+                // break out of this loop if the dataETag on the
                 // last request matches the firstDataETag. Otherwise,
-                // we re-issue a fetch using the firstDataETag as 
+                // we re-issue a fetch using the firstDataETag as
                 // a starting point.
                 {
                   OdkDbHandle db = null;
@@ -783,9 +781,9 @@ public class ProcessRowDataChanges {
                     db = null;
                   }
                 }
-                
+
                 if ( (firstDataETag == rows.getDataETag()) ||
-                     firstDataETag.equals(rows.getDataETag() ) ) {
+                    firstDataETag.equals(rows.getDataETag() ) ) {
                   // success -- exit the update loop...
                   pullCompletedSuccessfully = true;
                   break;
@@ -826,8 +824,8 @@ public class ProcessRowDataChanges {
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
               OdkDbRow localRow = localDataTable.getRowAtIndex(i);
-              String stateStr = localDataTable
-                  .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
+              String stateStr = localRow
+                  .getDataByKey(DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
               String rowId = localDataTable.getRowId(i);
@@ -985,9 +983,9 @@ public class ProcessRowDataChanges {
                 String[] syncStates = {SyncState.in_conflict.name(), SyncState.synced_pending_files.name()};
 
                 localDataTable = sc.getDatabaseService()
-                        .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
-                                DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
-                                null, new String[] {DataTableColumns.ID}, new String[] {"ASC"});
+                    .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
+                        DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
+                        null, new String[] {DataTableColumns.ID}, new String[] {"ASC"});
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
@@ -997,14 +995,14 @@ public class ProcessRowDataChanges {
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
               OdkDbRow localRow = localDataTable.getRowAtIndex(i);
-              String stateStr = localDataTable
-                      .getRawDataOrMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
+              String stateStr = localRow
+                  .getDataByKey(DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
               // the local row wasn't impacted by a server change
               // see if this local row should be pushed to the server.
               perhapsAddToRowsToSyncFileAttachments(rowsToSyncFileAttachments, orderedColumns,
-                      fileAttachmentColumns, localRow, state);
+                  fileAttachmentColumns, localRow, state);
             }
           }
 
@@ -1019,12 +1017,12 @@ public class ProcessRowDataChanges {
                 boolean outcome = true;
 
                 SyncAttachmentState filteredAttachmentState = (syncRowPending.onlyGetFiles() ?
-                        SyncAttachmentState.DOWNLOAD : attachmentState);
+                    SyncAttachmentState.DOWNLOAD : attachmentState);
 
                 log.i(TAG, "synchronizeDataRowsAndAttachments beginning processing for " + syncRowPending.getRowId());
 
                 outcome = manifestProcessor.syncRowLevelFileAttachments(
-                        tableResource.getInstanceFilesUri(), tableId, syncRowPending, filteredAttachmentState);
+                    tableResource.getInstanceFilesUri(), tableId, syncRowPending, filteredAttachmentState);
 
                 if (outcome) {
                   if (syncRowPending.updateSyncState()) {
@@ -1034,8 +1032,8 @@ public class ProcessRowDataChanges {
                     try {
                       db = sc.getDatabase();
                       sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(sc.getAppName
-                          (), db, tableId,
-                              syncRowPending.getRowId(), syncRowPending.getRowETag(), SyncState.synced.name());
+                              (), db, tableId,
+                          syncRowPending.getRowId(), syncRowPending.getRowETag(), SyncState.synced.name());
                     } finally {
                       sc.releaseDatabase(db);
                       db = null;
@@ -1058,23 +1056,23 @@ public class ProcessRowDataChanges {
               ++rowsProcessed;
               int idString;
               switch (attachmentState) {
-                default:
-                case NONE:
-                  idString = R.string.sync_skipping_attachments_server_row;
-                  break;
-                case SYNC:
-                  idString = R.string.sync_syncing_attachments_server_row;
-                  break;
-                case UPLOAD:
-                  idString = R.string.sync_uploading_attachments_server_row;
-                  break;
-                case DOWNLOAD:
-                  idString = R.string.sync_downloading_attachments_server_row;
-                  break;
+              default:
+              case NONE:
+                idString = R.string.sync_skipping_attachments_server_row;
+                break;
+              case SYNC:
+                idString = R.string.sync_syncing_attachments_server_row;
+                break;
+              case UPLOAD:
+                idString = R.string.sync_uploading_attachments_server_row;
+                break;
+              case DOWNLOAD:
+                idString = R.string.sync_downloading_attachments_server_row;
+                break;
               }
               sc.updateNotification(SyncProgressState.ROWS, idString, new Object[]{tableId, count,
-                              rowsToSyncFileAttachments.size()}, 10.0 + rowsProcessed * perRowIncrement,
-                      false);
+                      rowsToSyncFileAttachments.size()}, 10.0 + rowsProcessed * perRowIncrement,
+                  false);
             }
           } catch ( Throwable e) {
             log.printStackTrace(e);
@@ -1120,30 +1118,30 @@ public class ProcessRowDataChanges {
         if (attachmentSyncSuccessful ) {
           if (tableLevelResult.getSyncOutcome() != SyncOutcome.WORKING) {
             log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
-                    + tableLevelResult.getSyncOutcome().name()
-                    + ", and yet row and attachment sync was successful. This shouldn't be possible.");
+                + tableLevelResult.getSyncOutcome().name()
+                + ", and yet row and attachment sync was successful. This shouldn't be possible.");
           } else {
             if (containsConflicts) {
               tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_CONTAINS_CONFLICTS);
               sc.updateNotification(SyncProgressState.ROWS,
-                      R.string.sync_table_data_sync_with_conflicts,
-                      new Object[]{tableId}, 100.0, false);
+                  R.string.sync_table_data_sync_with_conflicts,
+                  new Object[]{tableId}, 100.0, false);
             } else if (outstandingAttachmentsToSync || !attachmentSyncSuccessful) {
               tableLevelResult.setSyncOutcome(SyncOutcome.TABLE_PENDING_ATTACHMENTS);
               sc.updateNotification(SyncProgressState.ROWS,
-                      R.string.sync_table_data_sync_pending_attachments, new Object[]{tableId}, 100.0,
-                      false);
+                  R.string.sync_table_data_sync_pending_attachments, new Object[]{tableId}, 100.0,
+                  false);
             } else {
               tableLevelResult.setSyncOutcome(SyncOutcome.SUCCESS);
               sc.updateNotification(SyncProgressState.ROWS, R.string.sync_table_data_sync_complete,
-                      new Object[]{tableId}, 100.0, false);
+                  new Object[]{tableId}, 100.0, false);
             }
           }
         } else {
           if (tableLevelResult.getSyncOutcome() == SyncOutcome.WORKING) {
             log.e(TAG, "tableLevelResult status for table: " + tableId + " was "
-                    + tableLevelResult.getSyncOutcome().name()
-                    + ", and yet attachmentSync was not successful. This shouldn't be possible.");
+                + tableLevelResult.getSyncOutcome().name()
+                + ", and yet attachmentSync was not successful. This shouldn't be possible.");
             tableLevelResult.setSyncOutcome(SyncOutcome.FAILURE);
           }
         }
@@ -1215,19 +1213,19 @@ public class ProcessRowDataChanges {
           if (r.isDeleted()) {
             // DELETE
             sc.getDatabaseService().privilegedDeleteRowWithId(sc.getAppName(), db,
-                    resource.getTableId(), orderedColumns, r.getRowId());
+                resource.getTableId(), orderedColumns, r.getRowId());
             // !!Important!! update the rowETag in our copy of this row.
             syncRow.setRowETag(r.getRowETag());
             tableLevelResult.incServerDeletes();
           } else {
             SyncState newSyncState = (hasAttachments && !syncRow.getUriFragments().isEmpty())
-                    ? SyncState.synced_pending_files : SyncState.synced;
-           sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(
-                      sc.getAppName(), db,
-                      resource.getTableId(),
-                      r.getRowId(),
-                      r.getRowETag(),
-                      newSyncState.name());
+                ? SyncState.synced_pending_files : SyncState.synced;
+            sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(
+                sc.getAppName(), db,
+                resource.getTableId(),
+                r.getRowId(),
+                r.getRowETag(),
+                newSyncState.name());
             // !!Important!! update the rowETag in our copy of this row.
             syncRow.setRowETag(r.getRowETag());
             // UPDATE or INSERT
@@ -1281,8 +1279,8 @@ public class ProcessRowDataChanges {
         ++rowsProcessed;
         sc.updateNotification(SyncProgressState.ROWS, R.string.sync_altering_server_row,
             new Object[] {
-            resource.getTableId(), countSoFar, totalOutcomesSize }, 10.0 + rowsProcessed
-            * perRowIncrement, false);
+                resource.getTableId(), countSoFar, totalOutcomesSize }, 10.0 + rowsProcessed
+                * perRowIncrement, false);
       }
 
       if (badState) {
@@ -1311,13 +1309,13 @@ public class ProcessRowDataChanges {
    * (entirely). Otherwise, change the local row to the in_conflict state, and
    * insert a copy of the server row locally, configured as a server conflict
    * record.
-   * 
+   *
    * @param db
    * @param resource
    * @param orderedColumns
    * @param changes
    * @param tableLevelResult
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private void conflictRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
@@ -1410,14 +1408,14 @@ public class ProcessRowDataChanges {
    * Inserts the given list of rows (changes) into the local database. Adds
    * those rows to the rowsToPushFileAttachments list if they have any non-null
    * media attachments.
-   * 
+   *
    * @param db
    * @param resource
    * @param orderedColumns
    * @param changes
    * @param hasAttachments
    * @param tableLevelResult
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private void insertRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
@@ -1455,7 +1453,7 @@ public class ProcessRowDataChanges {
       ++rowsProcessed;
       sc.updateNotification(SyncProgressState.ROWS, R.string.sync_inserting_local_row, new
               Object[] {
-          resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
+              resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
           false);
     }
   }
@@ -1464,14 +1462,14 @@ public class ProcessRowDataChanges {
    * Updates the given list of rows (changes) in the local database. Adds those
    * rows to the rowsToPushFileAttachments list if they have any non-null media
    * attachments.
-   * 
+   *
    * @param db
    * @param resource
    * @param orderedColumns
    * @param changes
    * @param hasAttachments
    * @param tableLevelResult
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private void updateRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
@@ -1518,7 +1516,7 @@ public class ProcessRowDataChanges {
       ++count;
       ++rowsProcessed;
       sc.updateNotification(SyncProgressState.ROWS, R.string.sync_updating_local_row, new Object[] {
-          resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
+              resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
           false);
     }
   }
@@ -1529,14 +1527,14 @@ public class ProcessRowDataChanges {
    * server, the 'isSyncedPendingFiles' flag is cleared. This makes the local row
    * eligible for deletion. Otherwise, the localRow is removed from the
    * localRowplaced in the
-    *
-    * @param db
-    * @param resource
-    * @param changes
-    * @throws HttpClientWebException
-    * @throws IOException
-    * @throws RemoteException
-    */
+   *
+   * @param db
+   * @param resource
+   * @param changes
+   * @throws HttpClientWebException
+   * @throws IOException
+   * @throws RemoteException
+   */
   private void pushLocalAttachmentsBeforeDeleteRowsInDb(OdkDbHandle db, TableResource resource,
       List<SyncRowDataChanges> changes) throws
       HttpClientWebException, IOException, RemoteException {
@@ -1583,17 +1581,17 @@ public class ProcessRowDataChanges {
    * pushed to the server. I.e., those with 'isSyncedPendingFiles' false.
    * Otherwise, leave these rows in the local database until their files are
    * pushed and they can safely be removed.
-   * 
+   *
    * @param db
    * @param resource
    * @param orderedColumns
    * @param changes
    * @param tableLevelResult
    * @throws IOException
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private void deleteRowsInDb(OdkDbHandle db, TableResource resource, OrderedColumns orderedColumns,
-                              List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
+      List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
       RemoteException {
     int count = 0;
 
@@ -1611,7 +1609,7 @@ public class ProcessRowDataChanges {
       ++count;
       ++rowsProcessed;
       sc.updateNotification(SyncProgressState.ROWS, R.string.sync_deleting_local_row, new Object[] {
-          resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
+              resource.getTableId(), count, changes.size() }, 10.0 + rowsProcessed * perRowIncrement,
           false);
     }
   }

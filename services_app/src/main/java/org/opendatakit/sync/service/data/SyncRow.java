@@ -22,7 +22,10 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.database.service.OdkDbRow;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * A SyncRow is an in-between class to map rows in the database to rows in the
@@ -33,7 +36,7 @@ import java.util.*;
  */
 public class SyncRow {
   private static final List<String> emptyUriFragmentsList = Collections.unmodifiableList(new ArrayList<String>());
-  
+
   private String rowId;
   private String rowETag;
 
@@ -73,7 +76,7 @@ public class SyncRow {
   private String savepointCreator;
 
   private ArrayList<DataKeyValue> orderedValues;
-  
+
   private List<String> uriFragments;
 
   /**
@@ -237,7 +240,7 @@ public class SyncRow {
       this.orderedValues = values;
     }
   }
-  
+
   public List<String> getUriFragments() {
     return this.uriFragments;
   }
@@ -331,33 +334,32 @@ public class SyncRow {
         + this.getSavepointType() + ", savepointTimestamp=" + this.getSavepointTimestamp()
         + ", savepointCreator=" + this.getSavepointCreator() + ", values=" + this.getValues() + "[";
   }
-  
+
 
   public static final SyncRow convertToSyncRow(OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns, OdkDbRow localRow) {
-    Map<String, Integer> elementKeyToIndex = localRow.getOwnerTable().generateElementKeyToIndex();
-    String rowId = localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.ID));
-    String rowETag = localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.ROW_ETAG));
+    String rowId = localRow.getDataByKey(DataTableColumns.ID);
+    String rowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
 
     ArrayList<DataKeyValue> values = new ArrayList<DataKeyValue>();
     for (ColumnDefinition column : orderedColumns.getColumnDefinitions()) {
       if (column.isUnitOfRetention()) {
         String elementKey = column.getElementKey();
         values.add(new DataKeyValue(elementKey, localRow
-            .getDataByIndex(elementKeyToIndex.get(elementKey))));
+            .getDataByKey(elementKey)));
       }
     }
 
     SyncRow syncRow = new SyncRow(rowId, rowETag, false,
-        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FORM_ID)),
-        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.LOCALE)),
-        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_TYPE)),
-        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_TIMESTAMP)),
-        localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.SAVEPOINT_CREATOR)),
-        RowFilterScope.asRowFilter(
-            localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FILTER_TYPE)),
-            localRow.getDataByIndex(elementKeyToIndex.get(DataTableColumns.FILTER_VALUE))), values,
-            fileAttachmentColumns);
+        localRow.getDataByKey(DataTableColumns.FORM_ID),
+        localRow.getDataByKey(DataTableColumns.LOCALE),
+        localRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE),
+        localRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
+        localRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
+        RowFilterScope.asRowFilter(localRow.getDataByKey(DataTableColumns
+                .FILTER_TYPE),
+            localRow.getDataByKey(DataTableColumns.FILTER_VALUE)), values,
+        fileAttachmentColumns);
     return syncRow;
   }
 }

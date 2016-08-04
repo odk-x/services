@@ -26,9 +26,13 @@ import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.NameUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -84,20 +88,21 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
-          mAppName, mTableId);
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
+          .getUserDefinedColumns(db, mAppName, mTableId);
       String[] selectionArgs = {};
-      String whereClause =  DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
+      String whereClause = DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
       String[] orderByDir = new String[] { "DESC" };
+
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           selectionArgs);
-      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr, null);
+      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
 
@@ -105,7 +110,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for (int i = 0; i < table.getNumberOfRows(); ++i) {
-          String rowId = table.getRawDataOrMetadataByElementKey(i, DataTableColumns.ID);
+          OdkDbRow row = table.getRowAtIndex(i);
+          String rowId = row.getDataByKey(DataTableColumns.ID);
 
           OdkResolveCheckpointFieldLoader loader = new OdkResolveCheckpointFieldLoader(getContext(),
               mAppName, mTableId, rowId);
@@ -119,9 +125,9 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
-                  .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+              .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               selectionArgs);
-          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr, null);
+          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
         }
       }
 
@@ -218,8 +224,9 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      String rowId = table.getRawDataOrMetadataByElementKey(i, DataTableColumns.ID);
-      String instanceName = table.getRawDataOrMetadataByElementKey(i, nameToUse.instanceName);
+      OdkDbRow row = table.getRowAtIndex(i);
+      String rowId = row.getDataByKey(DataTableColumns.ID);
+      String instanceName = row.getDataByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId,
           getContext().getString(R.string.resolve_row_display_name, formDisplayName, instanceName));
       results.add(re);

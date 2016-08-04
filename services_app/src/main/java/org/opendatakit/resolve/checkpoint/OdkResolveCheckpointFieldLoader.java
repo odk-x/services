@@ -26,9 +26,13 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.NameUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.opendatakit.resolve.views.components.*;
@@ -97,7 +101,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().getRowsWithId(db, mTableId, mRowId);
       table = new UserTable(baseTable, orderedDefns, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
           OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
-          adminColArr, null);
+          adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -131,9 +135,9 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
     // save as incomplete. Otherwise, it is to roll back or update to
     // incomplete.
 
-    int startingRowIndex = table.getNumberOfRows() - 1;
-    String type = table
-        .getRawDataOrMetadataByElementKey(startingRowIndex, DataTableColumns.SAVEPOINT_TYPE);
+    int rowStartingIndex = table.getNumberOfRows() - 1;
+    OdkDbRow rowStarting = table.getRowAtIndex(rowStartingIndex);
+    String type = rowStarting.getDataByKey(DataTableColumns.SAVEPOINT_TYPE);
     boolean deleteEntirely = (type == null || type.length() == 0);
 
     if (!deleteEntirely) {
@@ -147,7 +151,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       }
     }
 
-    int endingRowIndex = 0;
+    OdkDbRow rowEnding = table.getRowAtIndex(0);
     //
     // And now we need to construct up the adapter.
 
@@ -174,12 +178,12 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
-      String localRawValue = table.getRawDataOrMetadataByElementKey(endingRowIndex, elementKey);
+      String localRawValue = rowEnding.getDataByKey(elementKey);
       String localDisplayValue = table
-          .getDisplayTextOfData(endingRowIndex, elementType, elementKey);
-      String serverRawValue = table.getRawDataOrMetadataByElementKey(startingRowIndex, elementKey);
+          .getDisplayTextOfData(rowStartingIndex, elementType, elementKey);
+      String serverRawValue = rowStarting.getDataByKey(elementKey);
       String serverDisplayValue = table
-          .getDisplayTextOfData(startingRowIndex, elementType, elementKey);
+          .getDisplayTextOfData(rowStartingIndex, elementType, elementKey);
       if (deleteEntirely ||
           (localRawValue == null && serverRawValue == null) ||
           (localRawValue != null && serverRawValue != null &&

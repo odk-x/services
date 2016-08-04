@@ -18,7 +18,6 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
-import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
@@ -30,7 +29,10 @@ import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.NameUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbRow;
@@ -87,8 +89,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
-          mAppName, mTableId);
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
+          .getUserDefinedColumns(db, mAppName, mTableId);
       String whereClause = DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)";
       String[] selectionArgs = new String[] {
           Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES) };
@@ -101,7 +103,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           selectionArgs);
-      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr, null);
+      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
 
@@ -109,7 +111,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for ( int i = 0 ; i < table.getNumberOfRows(); ++i ) {
-          String rowId = table.getRawDataOrMetadataByElementKey(i, DataTableColumns.ID);
+          OdkDbRow row = table.getRowAtIndex(i);
+          String rowId = row.getDataByKey(DataTableColumns.ID);
           OdkResolveConflictFieldLoader loader = new OdkResolveConflictFieldLoader(getContext()
               , mAppName, mTableId, rowId);
           ResolveActionList resolveActionList = loader.doWork(dbHandleName);
@@ -129,8 +132,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               selectionArgs);
-          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr,
-              null);
+          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
         }
       }
 
@@ -227,8 +229,9 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      String rowId = table.getRawDataOrMetadataByElementKey(i, DataTableColumns.ID);
-      String instanceName = table.getRawDataOrMetadataByElementKey(i, nameToUse.instanceName);
+      OdkDbRow row = table.getRowAtIndex(i);
+      String rowId = row.getDataByKey(DataTableColumns.ID);
+      String instanceName = row.getDataByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId, formDisplayName + ": " + instanceName);
       results.add(re);
     }

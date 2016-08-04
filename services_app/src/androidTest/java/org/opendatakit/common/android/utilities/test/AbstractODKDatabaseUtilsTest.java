@@ -3191,8 +3191,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs);
-    UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr,
-        null);
+    UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null,
+        adminColArr);
 
     assertEquals(table.getNumberOfRows(), 2);
 
@@ -3220,8 +3220,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs);
-    table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr,
-        null);
+    table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 0);
 
