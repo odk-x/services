@@ -49,6 +49,7 @@ import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class ODKDatabaseImplUtils {
@@ -4151,7 +4152,8 @@ public class ODKDatabaseImplUtils {
             }
             ColumnDefinition cp = orderedColumns.find(key);
             try {
-               Map<String, Object> struct = ODKFileUtils.mapper.readValue(json, Map.class);
+               TypeReference<Map<String,Object>> reference = new TypeReference<Map<String, Object>>() {};
+               Map<String, Object> struct = ODKFileUtils.mapper.readValue(json, reference);
                for (ColumnDefinition child : cp.getChildren()) {
                   String subkey = child.getElementKey();
                   ColumnDefinition subcp = orderedColumns.find(subkey);

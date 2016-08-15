@@ -241,6 +241,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     props.setProperty(CommonToolProperties.KEY_ROLES_LIST, value);
   }
 
+  public void setUsersList(String value) {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setProperty(CommonToolProperties.KEY_USERS_LIST, value);
+  }
+
   private int refCount = 1;
 
   public synchronized OdkDbHandle getDatabase() throws RemoteException {

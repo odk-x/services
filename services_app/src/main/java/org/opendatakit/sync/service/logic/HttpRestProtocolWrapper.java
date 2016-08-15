@@ -283,6 +283,11 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
+  public URI constructListOfUsersUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(), "/users/list");
+    return uri;
+  }
+
   /**
    * Uri that will return the list of tables on the server.
    *

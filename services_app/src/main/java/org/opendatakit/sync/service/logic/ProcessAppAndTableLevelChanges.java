@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -151,6 +152,33 @@ public class ProcessAppAndTableLevelChanges {
                       + e.toString());
       sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
       return;
+    }
+
+    if (roleList.isEmpty()) {
+      sc.setUsersList("");
+    } else {
+      ArrayList<Map<String,Object>> usersList;
+      try {
+        usersList = sc.getSynchronizer().getUsers();
+      } catch (Exception e) {
+        log.e(TAG, "[verifyServerConfiguration] exception obtaining list of users exception: " +
+            e.toString());
+        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+        return;
+      }
+
+      try {
+        if (usersList.isEmpty()) {
+          sc.setUsersList("");
+        } else {
+          sc.setUsersList(ODKFileUtils.mapper.writeValueAsString(usersList));
+        }
+      } catch (JsonProcessingException e) {
+        log.e(TAG, "[verifyServerConfiguration] exception saving list of users. exception: " +
+            e.toString());
+        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+        return;
+      }
     }
 
     // don't set app-level outcome -- indicating we have no errors

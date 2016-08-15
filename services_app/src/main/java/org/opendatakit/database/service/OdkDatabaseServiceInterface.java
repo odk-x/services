@@ -22,13 +22,18 @@ import android.util.Log;
 
 import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.common.android.data.*;
+import org.opendatakit.common.android.data.ColumnList;
+import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.SyncETagsUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.DatabaseConsts;
 import org.opendatakit.database.utilities.OdkDbChunkUtil;
 
@@ -68,6 +73,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     return props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
   }
 
+  private String getInternalUsersList(String appName) {
+    PropertiesSingleton props =
+        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
+    return props.getProperty(CommonToolProperties.KEY_USERS_LIST);
+  }
+
   private String getLocale(String appName) {
     PropertiesSingleton props =
         CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
@@ -86,6 +97,24 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    */
   @Override public String getRolesList(String appName) throws RemoteException {
     return getInternalRolesList(appName);
+  }
+
+  /**
+   * Return the users configured on the server if the current
+   * user is verified to have Tables Super-user, Administer Tables or
+   * Site Administrator roles. Otherwise, returns information about
+   * the current user. If the user is syncing anonymously with the
+   * server, this returns an empty string.
+   *
+   * @param appName
+   *
+   * @return empty string or JSON serialization of an array of objects
+   * structured as { "user_id": "...", "full_name": "...", "roles": ["...",...] }
+   */
+  @Override public String getUsersList(String appName) throws RemoteException {
+    // TODO: This is generally unbounded in size. Perhaps it should be chunked? (max 2000 users)
+    // Realistically, each user would be no more than 500 bytes. 1Mb = 2000 users.
+    return getInternalUsersList(appName);
   }
 
   @Override public OdkDbHandle openDatabase(String appName) throws RemoteException {

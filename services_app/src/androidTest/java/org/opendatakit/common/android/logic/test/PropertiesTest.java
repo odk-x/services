@@ -48,4 +48,38 @@ public class PropertiesTest extends AndroidTestCase {
                 "mitchs.test@gmail.com");
         assertEquals(props.getProperty(CommonToolProperties.KEY_PASSWORD), "asdf");
     }
+
+
+    /**
+     * Setting or removing secure properties from a
+     * non-privileged APK should fail.
+     */
+    public void testSecureSetProperties() {
+
+        StaticStateManipulator.get().reset();
+
+        PropertiesSingleton props = CommonToolProperties.get(getContext(), APPNAME);
+        String[] secureKeys = {
+            CommonToolProperties.KEY_AUTH,
+            CommonToolProperties.KEY_PASSWORD,
+            CommonToolProperties.KEY_ROLES_LIST,
+            CommonToolProperties.KEY_USERS_LIST,
+            CommonToolProperties.KEY_ADMIN_PW
+        };
+
+        for ( int i = 0 ; i < secureKeys.length ; ++i ) {
+            // this is stored in SharedPreferences
+            boolean threwError = false;
+
+            props.setProperty(secureKeys[i], "asdf" + secureKeys[i].hashCode());
+            assertEquals(props.getProperty(secureKeys[i]), "asdf" + secureKeys[i].hashCode());
+
+            // and verify remove works
+            props.removeProperty(secureKeys[i]);
+
+            assertNull("remove: " + secureKeys[i], props.getProperty(secureKeys[i]));
+
+        }
+    }
+
 }

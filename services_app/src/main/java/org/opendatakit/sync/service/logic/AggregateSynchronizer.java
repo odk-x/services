@@ -187,6 +187,49 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
+  public   ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException {
+
+    HttpGet request = new HttpGet();
+    CloseableHttpResponse response = null;
+
+    URI uri = wrapper.constructListOfUsersUri();
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // perhaps an older server (pre-v1.4.11) ?
+        return new ArrayList<Map<String,Object>>();
+      }
+
+      String res = wrapper.convertResponseToString(response);
+      TypeReference ref = new TypeReference<ArrayList<Map<String,Object>>>() { };
+
+      ArrayList<Map<String,Object>> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+
+      return rolesList;
+
+    } catch ( NetworkTransmissionException e ) {
+      if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+            e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
+      }
+    } catch ( AccessDeniedException e ) {
+      // this must be an anonymousUser
+      return new ArrayList<Map<String,Object>>();
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
   public TableResourceList getTables(String webSafeResumeCursor) throws
       HttpClientWebException, IOException {
 

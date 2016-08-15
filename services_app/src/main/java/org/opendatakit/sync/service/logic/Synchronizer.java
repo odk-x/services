@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
@@ -81,6 +82,20 @@ public interface Synchronizer {
    * @throws IOException
      */
   ArrayList<String>  getUserRoles() throws HttpClientWebException, IOException;
+
+  /**
+   * If this user is a registered user with Tables Super-user, Administer Tables,
+   * or Site Administrator privileges, this returns the list of all users configured
+   * on the server and their roles (including ourselves). If this user is a registered
+   * user without those privileges, it returns a singleton list with information about
+   * this user. If the device is using anonymousUser access to the server, an empty
+   * list is returned.
+   *
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+    */
+  ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException;
 
   /**
    * Get a list of all tables in the server.

@@ -108,6 +108,7 @@ public class PasswordDialogFragment extends DialogFragment {
           props.setProperty(passwordPropertyName, pw);
           if ( !isAdminPassword ) {
             props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
+            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
           }
           props.writeProperties();
 
@@ -121,6 +122,7 @@ public class PasswordDialogFragment extends DialogFragment {
           props.setProperty(passwordPropertyName, "");
           if ( !isAdminPassword ) {
             props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
+            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
           }
           props.writeProperties();
 
