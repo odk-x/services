@@ -14,8 +14,6 @@ applicationScripts.each {
 
 apply plugin: 'com.android.application'
 
-com.android.ddmlib.DdmPreferences.setTimeOut(60000)
-
 android {
     // The following are set in the common.gradle file
     compileSdkVersion(compileVersion)
