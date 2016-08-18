@@ -14,8 +14,6 @@
 
 package org.opendatakit.common.android.utilities.test;
 
-import android.content.ContentValues;
-import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
@@ -1026,7 +1024,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
       }
 
       // insert 2 checkpoints
-      privilegedInsert2Checkpoints(ap, oc);
+      insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
@@ -1065,7 +1063,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
       }
 
       // insert 2 checkpoints
-      privilegedInsert2Checkpoints(ap, oc);
+      insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
@@ -1104,7 +1102,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
       }
 
       // insert 2 checkpoints
-      privilegedInsert2Checkpoints(ap, oc);
+      insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
@@ -1143,7 +1141,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
       }
 
       // insert 2 checkpoints
-      privilegedInsert2Checkpoints(ap, oc);
+      insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType

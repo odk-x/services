@@ -528,8 +528,19 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         rowIdBase + adminUser, username, RoleConsts.ADMIN_ROLES_LIST, locale);
   }
 
+  /** write into an empty rowId */
+  protected void insertRowWIthAdminRights(AuthParamAndOutcome ap, OrderedColumns
+      orderedColumns) throws ActionNotAuthorizedException {
+    // insert 1 row
+    ContentValues cvValues = buildUnprivilegedInsertableRowContent(ap.tableId);
+
+    ODKDatabaseImplUtils.get()
+        .insertRowWithId(db, ap.tableId, orderedColumns, cvValues, ap.rowId,
+            commonUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
+  }
+
   /** write checkpoints into an empty rowId */
-  protected void privilegedInsert2Checkpoints(AuthParamAndOutcome ap, OrderedColumns
+  protected void insert2CheckpointsWithAdminRights(AuthParamAndOutcome ap, OrderedColumns
       orderedColumns) throws ActionNotAuthorizedException {
     // insert 2 checkpoints
       ContentValues cvValues = buildUnprivilegedInsertableRowContent(ap.tableId);
@@ -566,10 +577,20 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected boolean verifyRowSyncStateAndCheckpoints(String tableId, String rowId, int expectedRowCount,
       FirstSavepointTimestampType expectFirstRemainingType, String identifyingDescription) {
+
+    return verifyRowSyncStateFilterTypeAndCheckpoints(tableId, rowId, expectedRowCount,
+        expectFirstRemainingType, null, identifyingDescription);
+  }
+
+  protected boolean verifyRowSyncStateFilterTypeAndCheckpoints(String tableId, String rowId, int
+      expectedRowCount,
+      FirstSavepointTimestampType expectFirstRemainingType, RowFilterScope.Type type,
+      String identifyingDescription) {
     Cursor c = null;
     try {
       c = ODKDatabaseImplUtils.get().query(db, tableId,
-          new String[] { DataTableColumns.SYNC_STATE, DataTableColumns.SAVEPOINT_TYPE},
+          new String[] { DataTableColumns.FILTER_TYPE, DataTableColumns.FILTER_VALUE,
+              DataTableColumns.SYNC_STATE, DataTableColumns.SAVEPOINT_TYPE},
           DataTableColumns.ID + "=?",
           new String[] { rowId }, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
       c.moveToFirst();
@@ -582,6 +603,8 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
       int idxType = c.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
+      int idxFilterType = c.getColumnIndex(DataTableColumns.FILTER_TYPE);
+      int idxFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE);
 
       String syncState = c.getString(idxSyncState);
 
@@ -630,6 +653,11 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         }
       }
 
+      if ( type != null ) {
+        assertEquals("Expected first row to have filter type: " + identifyingDescription,
+            type.name(), c.getString(idxFilterType));
+      }
+
       // subsequent updates should all be checkpoints
       while ( c.moveToNext() ) {
         if ( !c.isNull(idxType) ) {
@@ -640,6 +668,11 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         assertEquals("Expected subsequent rows to be " + syncState + " sync state: " +
             identifyingDescription,
             syncState, c.getString(idxSyncState));
+
+        if ( type != null ) {
+          assertEquals("Expected subsequent rows to have filter type: " + identifyingDescription,
+              type.name(), c.getString(idxFilterType));
+        }
       }
 
       return true;
