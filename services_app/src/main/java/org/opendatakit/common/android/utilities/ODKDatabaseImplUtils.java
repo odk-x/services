@@ -39,6 +39,7 @@ import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
@@ -1756,6 +1757,8 @@ public class ODKDatabaseImplUtils {
     */
 
    /**
+    * SYNC only
+    *
     * Call this when the schema on the server has changed w.r.t. the schema on
     * the device. In this case, we do not know whether the rows on the device
     * match those on the server.
@@ -2008,6 +2011,9 @@ public class ODKDatabaseImplUtils {
          if (!dbWithinTransaction) {
             db.setTransactionSuccessful();
          }
+      } catch (ActionNotAuthorizedException e) {
+         WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+         throw new IllegalStateException(e);
       } finally {
          if (!dbWithinTransaction) {
             db.endTransaction();
@@ -2432,7 +2438,7 @@ public class ODKDatabaseImplUtils {
     */
    public void updateRowWithId(OdkConnectionInterface db, String tableId,
        OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
-       String rolesList, String locale) {
+       String rolesList, String locale) throws ActionNotAuthorizedException {
 
       // TODO: make sure caller passes in the correct roleList for the use case.
       // TODO: for multi-step sync actions, we probably need an internal variant of this.
@@ -2482,8 +2488,13 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(DataTableColumns.ID, rowId);
       cvDataTableVal.putAll(cvValues);
 
-      upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
-          activeUser, rolesList, locale, asCsvRequestedChange);
+      try {
+         upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
+             activeUser, rolesList, locale, asCsvRequestedChange);
+      } catch (ActionNotAuthorizedException e) {
+         WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+         throw new IllegalStateException(e);
+      }
    }
 
    /**
@@ -2604,7 +2615,8 @@ public class ODKDatabaseImplUtils {
     * @param locale
     */
    public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String appName,
-       String tableId, String rowId, String activeUser, String rolesList, String locale) {
+       String tableId, String rowId, String activeUser, String rolesList, String locale)
+       throws ActionNotAuthorizedException {
 
       // TODO: if rolesList contains RoleConsts.ROLE_ADMINISTRATOR or  RoleConsts.ROLE_SUPER_USER
       // TODO: then we should take the local rowFilterScope values. Otherwise use server values.
@@ -2750,7 +2762,7 @@ public class ODKDatabaseImplUtils {
     */
    public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface db,
        String appName, String tableId, ContentValues cvValues, String rowId, String activeUser,
-       String rolesList, String locale) {
+       String rolesList, String locale) throws ActionNotAuthorizedException {
 
       // TODO: if rolesList does not contain RoleConsts.ROLE_SUPER_USER or RoleConsts.ROLE_ADMINISTRATOR
       // TODO: then take the server's rowFilterScope rather than the user's values of those.
@@ -3024,6 +3036,9 @@ public class ODKDatabaseImplUtils {
          if (!inTransaction) {
             db.setTransactionSuccessful();
          }
+      } catch (ActionNotAuthorizedException e) {
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+        throw new IllegalStateException(e);
       } finally {
          if (db != null) {
             if (!inTransaction) {
@@ -3050,7 +3065,7 @@ public class ODKDatabaseImplUtils {
     */
    public void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
        OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
-       String rolesList, String locale) {
+       String rolesList, String locale) throws ActionNotAuthorizedException {
 
       if (cvValues.size() <= 0) {
          throw new IllegalArgumentException(
@@ -3128,11 +3143,13 @@ public class ODKDatabaseImplUtils {
 
          // Inserting a checkpoint for the first time
          if (c.getCount() <= 0) {
-            cvValues.put(DataTableColumns._ID, rowId);
-            cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-            insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, cvValues, activeUser,
+           ContentValues currValues = new ContentValues();
+           currValues.putAll(cvValues);
+           currValues.put(DataTableColumns._ID, rowId);
+           currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
+           insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
                 rolesList, locale, true, null, null);
-            return;
+           return;
          } else {
             // Make sure that the conflict_type of any existing row
             // is null, otherwise throw an exception
@@ -3279,8 +3296,13 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.putAll(cvValues);
 
       // TODO: verify that all fields are specified
-      upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
-          activeUser, rolesList, locale, asCsvRequestedChange);
+     try {
+       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
+           activeUser, rolesList, locale, asCsvRequestedChange);
+     } catch (ActionNotAuthorizedException e) {
+       WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+       throw new IllegalStateException(e);
+     }
    }
 
    /**
@@ -3302,7 +3324,7 @@ public class ODKDatabaseImplUtils {
     */
    public void insertRowWithId(OdkConnectionInterface db, String tableId,
        OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
-       String rolesList, String locale) {
+       String rolesList, String locale) throws ActionNotAuthorizedException {
 
       if (cvValues == null || cvValues.size() <= 0) {
          throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -3330,7 +3352,8 @@ public class ODKDatabaseImplUtils {
     */
    private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
        OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList,
-       String locale, boolean isNewRow, String priorFilterType, String priorFilterValue) {
+       String locale, boolean isNewRow, String priorFilterType, String priorFilterValue)
+       throws ActionNotAuthorizedException {
       String whereClause = null;
       String[] whereArgs = new String[1];
       String rowId = null;
@@ -3437,9 +3460,10 @@ public class ODKDatabaseImplUtils {
 
             cvDataTableVal.put(DataTableColumns.FILTER_VALUE, priorFilterValue);
 
-            cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
+            // for this call path, syncState is already updated by caller
 
-            tss.allowRowChange(activeUser, rolesArray, SyncState.changed.name(), priorFilterType,
+            tss.allowRowChange(activeUser, rolesArray,
+                cvDataTableVal.getAsString(DataTableColumns.SYNC_STATE), priorFilterType,
                 priorFilterValue, RowChange.CHANGE_ROW);
          }
 
@@ -3479,22 +3503,22 @@ public class ODKDatabaseImplUtils {
       }
 
       public void canModifyFilterTypeAndValue(ArrayList<String> rolesArray)
-          throws IllegalArgumentException {
+          throws ActionNotAuthorizedException {
 
          if (rolesArray == null) {
             // unverified user
 
             // throw an exception
-            throw new IllegalArgumentException(t
+            throw new ActionNotAuthorizedException(t
                 + ": unverified users cannot modify filterType or filterValue fields in (any) table "
                 + tableId);
 
-         } else if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
-             .contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+         } else if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                      rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
             // not (super-user or administrator)
 
             // throw an exception
-            throw new IllegalArgumentException(t
+            throw new ActionNotAuthorizedException(t
                 + ": user does not have the privileges (super-user or administrator) to modify filterType or filterValue fields in table "
                 + tableId);
          }
@@ -3502,7 +3526,7 @@ public class ODKDatabaseImplUtils {
 
       public void allowRowChange(String activeUser, ArrayList<String> rolesArray,
           String updatedSyncState, String priorFilterType, String priorFilterValue,
-          RowChange rowChange) {
+          RowChange rowChange) throws ActionNotAuthorizedException {
 
          switch (rowChange) {
          case NEW_ROW:
@@ -3517,17 +3541,17 @@ public class ODKDatabaseImplUtils {
                   // unverified user
 
                   // throw an exception
-                  throw new IllegalArgumentException(
+                  throw new ActionNotAuthorizedException(
                       t + ": unverified users cannot create a rows in a locked table " + tableId);
                }
 
-               if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
-                   .contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+               if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                     rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
                   // bad JSON
                   // not a super-user and not an administrator
 
                   // throw an exception
-                  throw new IllegalArgumentException(t
+                  throw new ActionNotAuthorizedException(t
                       + ": user does not have the privileges (super-user or administrator) to create a row in a locked table "
                       + tableId);
                }
@@ -3539,7 +3563,7 @@ public class ODKDatabaseImplUtils {
                if (!canUnverifiedUserCreateRow) {
 
                   // throw an exception
-                  throw new IllegalArgumentException(t
+                  throw new ActionNotAuthorizedException(t
                       + ": unverified users do not have the privileges to create a row in this unlocked table "
                       + tableId);
                }
@@ -3548,7 +3572,7 @@ public class ODKDatabaseImplUtils {
          case CHANGE_ROW:
 
             // if SyncState is new_row then allow edits in both locked and unlocked tables
-            if (!updatedSyncState.equals(SyncState.new_row)) {
+            if (!updatedSyncState.equals(SyncState.new_row.name())) {
 
                if (isLocked) {
                   // modifying a LOCKED table
@@ -3558,26 +3582,27 @@ public class ODKDatabaseImplUtils {
                   // 2. existing filterValue is null or does not match the activeUser AND
                   //    the activeUser is neither a super-user nor an administrator.
 
-                  if (rolesArray == null) {
+                  if (rolesArray == null || rolesArray.isEmpty()) {
                      // unverified user
 
                      // throw an exception
-                     throw new IllegalArgumentException(
+                     throw new ActionNotAuthorizedException(
                          t + ": unverified users cannot modify rows in a locked table " + tableId);
                   }
 
                   // allow if prior filterValue matches activeUser
-                  if (priorFilterValue == null || !activeUser.equals(priorFilterValue)) {
+                  if ( !(priorFilterValue != null && activeUser.equals(priorFilterValue)) ) {
                      // otherwise...
                      // reject if the activeUser is not a super-user or administrator
 
-                     if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                         || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                     if (rolesArray == null ||
+                         !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                           rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
                         // bad JSON or
                         // not a super-user and not an administrator
 
                         // throw an exception
-                        throw new IllegalArgumentException(t
+                        throw new ActionNotAuthorizedException(t
                             + ": user does not have the privileges (super-user or administrator) to modify rows in a locked table "
                             + tableId);
                      }
@@ -3586,9 +3611,9 @@ public class ODKDatabaseImplUtils {
                   // modifying an UNLOCKED table
 
                   // allow if filterType is MODIFY or DEFAULT
-                  if (priorFilterType == null || !(
-                      priorFilterType.equals(RowFilterScope.Type.MODIFY.name()) || priorFilterType
-                          .equals(RowFilterScope.Type.DEFAULT.name()))) {
+                  if (priorFilterType == null ||
+                      !(priorFilterType.equals(RowFilterScope.Type.MODIFY.name()) ||
+                        priorFilterType.equals(RowFilterScope.Type.DEFAULT.name()))) {
                      // otherwise...
 
                      // allow if prior filterValue matches activeUser
@@ -3596,13 +3621,14 @@ public class ODKDatabaseImplUtils {
                         // otherwise...
                         // reject if the activeUser is not a super-user or administrator
 
-                        if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                            || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                        if (rolesArray == null ||
+                            !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                              rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
                            // bad JSON or
                            // not a super-user and not an administrator
 
                            // throw an exception
-                           throw new IllegalArgumentException(t
+                           throw new ActionNotAuthorizedException(t
                                + ": user does not have the privileges (super-user or administrator) to modify hidden or read-only rows in an unlocked table "
                                + tableId);
                         }
@@ -3614,7 +3640,7 @@ public class ODKDatabaseImplUtils {
          case DELETE_ROW:
 
             // if SyncState is new_row then allow deletes in both locked and unlocked tables
-            if (!updatedSyncState.equals(SyncState.new_row)) {
+            if (!updatedSyncState.equals(SyncState.new_row.name())) {
 
                if (isLocked) {
                   // modifying a LOCKED table
@@ -3628,7 +3654,7 @@ public class ODKDatabaseImplUtils {
                      // unverified user
 
                      // throw an exception
-                     throw new IllegalArgumentException(
+                     throw new ActionNotAuthorizedException(
                          t + ": unverified users cannot delete rows in a locked table " + tableId);
                   }
 
@@ -3637,13 +3663,14 @@ public class ODKDatabaseImplUtils {
                      // otherwise...
                      // reject if the activeUser is not a super-user or administrator
 
-                     if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                         || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                     if (rolesArray == null ||
+                         !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                           rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
                         // bad JSON or
                         // not a super-user and not an administrator
 
                         // throw an exception
-                        throw new IllegalArgumentException(t
+                        throw new ActionNotAuthorizedException(t
                             + ": user does not have the privileges (super-user or administrator) to delete rows in a locked table "
                             + tableId);
                      }
@@ -3652,8 +3679,8 @@ public class ODKDatabaseImplUtils {
                   // delete in an UNLOCKED table
 
                   // allow if filterType is DEFAULT
-                  if (priorFilterType == null || !(priorFilterType
-                      .equals(RowFilterScope.Type.DEFAULT))) {
+                  if (priorFilterType == null ||
+                      !(priorFilterType.equals(RowFilterScope.Type.DEFAULT))) {
                      // otherwise...
 
                      // allow if prior filterValue matches activeUser
@@ -3661,13 +3688,14 @@ public class ODKDatabaseImplUtils {
                         // otherwise...
                         // reject if the activeUser is not a super-user or administrator
 
-                        if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                            || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                        if (rolesArray == null ||
+                            !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+                              rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
                            // bad JSON or
                            // not a super-user and not an administrator
 
                            // throw an exception
-                           throw new IllegalArgumentException(t
+                           throw new ActionNotAuthorizedException(t
                                + ": user does not have the privileges (super-user or administrator) to delete hidden or read-only rows in an unlocked table "
                                + tableId);
                         }
@@ -3739,7 +3767,8 @@ public class ODKDatabaseImplUtils {
    */
    private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
                                               OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
-                                              boolean asServerRequestedChange, String activeUser, String rolesList, String locale, boolean asCsvRequestedChange) {
+                                              boolean asServerRequestedChange, String activeUser, String rolesList, String locale, boolean asCsvRequestedChange)
+       throws ActionNotAuthorizedException {
 
       String rowId = null;
       String whereClause = null;
