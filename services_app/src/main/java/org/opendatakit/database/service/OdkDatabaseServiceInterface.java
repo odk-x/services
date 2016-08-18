@@ -407,12 +407,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, appName, tableId, rowId);
+      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, tableId, rowId,
+          activeUser, rolesList);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
@@ -443,12 +447,16 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, appName, tableId, rowId);
+      ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
@@ -541,6 +549,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
 
     try {
@@ -548,7 +557,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().deleteRowWithId(db, appName, tableId, rowId, rolesList);
+      ODKDatabaseImplUtils.get().deleteRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
@@ -590,12 +600,14 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
               .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, appName, tableId, rowId);
+      ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
       OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
@@ -1589,6 +1601,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
 
     try {
@@ -1598,7 +1611,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       ODKDatabaseImplUtils.get()
           .resolveServerConflictWithDeleteRowWithId(db, appName, tableId, rowId,
-              RoleConsts.ADMIN_ROLES_LIST);
+              activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1675,7 +1688,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, appName, tableId, cvValues,
+          .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, tableId, cvValues,
               rowId, activeUser, rolesList, locale);
 
     } catch (Exception e) {

@@ -44,6 +44,7 @@ import org.opendatakit.common.android.logic.PropertyManager;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.resolve.views.components.Resolution;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -287,12 +288,17 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
+
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+                mRowId, aul.activeUser, aul.rolesList );
+
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
             String msg = e.getLocalizedMessage();
@@ -357,12 +363,16 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
+
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+                mRowId, aul.activeUser, aul.rolesList );
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
             String msg = e.getLocalizedMessage();
@@ -418,12 +428,16 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, mRowId);
+      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId, mRowId,
+          aul.activeUser, aul.rolesList);
       getActivity().setResult(Activity.RESULT_OK);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

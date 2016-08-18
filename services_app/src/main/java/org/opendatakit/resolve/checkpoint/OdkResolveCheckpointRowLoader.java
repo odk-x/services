@@ -35,6 +35,7 @@ import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
+import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -83,6 +84,9 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
     Cursor forms = null;
     UserTable table = null;
 
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -119,7 +123,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId, rowId);
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+                rowId, aul.activeUser, aul.rolesList);
           }
         }
 

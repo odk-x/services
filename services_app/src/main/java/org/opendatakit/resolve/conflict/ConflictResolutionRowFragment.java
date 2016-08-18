@@ -41,6 +41,7 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.resolve.views.components.Resolution;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -99,28 +100,6 @@ public class ConflictResolutionRowFragment extends ListFragment implements
   private Map<String, String> mChosenValuesMap = new TreeMap<String, String>();
   private Map<String, Resolution> mUserResolutions = new TreeMap<String, Resolution>();
 
-  private class ActiveUserAndLocale {
-    final String activeUser;
-    final String rolesList;
-    final String locale;
-
-    ActiveUserAndLocale(String activeUser, String rolesList, String locale) {
-      this.activeUser = activeUser;
-      this.rolesList = rolesList;
-      this.locale = locale;
-    }
-  }
-
-  private ActiveUserAndLocale getActiveUserAndLocale() {
-
-    PropertiesSingleton props =
-        CommonToolProperties.get(getActivity(), mAppName);
-
-    return new ActiveUserAndLocale(props.getActiveUser(),
-                props.getProperty(CommonToolProperties.KEY_ROLES_LIST),
-                props.getLocale());
-  }
-
   private class DiscardChangesAndDeleteLocalListener implements View.OnClickListener {
 
     @Override
@@ -139,6 +118,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          ActiveUserAndLocale aul = ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
+
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -146,7 +127,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
             // This is elevated privileges since we are applying the server's change locally
             ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, mAppName,
-                mTableId, mRowId, RoleConsts.ADMIN_ROLES_LIST);
+                mTableId, mRowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -215,7 +196,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -289,7 +271,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -304,7 +287,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
             // Use local user's role when accepting local changes over server changes.
             ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db,
-                mAppName, mTableId, updateValues, mRowId,
+                mTableId, updateValues, mRowId,
                 aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -367,7 +350,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
@@ -440,7 +424,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
@@ -502,7 +487,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
   private void discardAllLocalChanges() {
     OdkConnectionInterface db = null;
 
-    ActiveUserAndLocale aul = getActiveUserAndLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 

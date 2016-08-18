@@ -2755,7 +2755,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
-    ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, getAppName(), tableId, rowId);
+    ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId,
+        activeUser, RoleConsts.ADMIN_ROLES_LIST);
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
@@ -3014,7 +3015,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
-    ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, getAppName(), tableId, rowId);
+    ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, tableId, rowId,
+        activeUser, RoleConsts.ADMIN_ROLES_LIST);
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
@@ -3072,7 +3074,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get()
-          .deleteAllCheckpointRowsWithId(db, getAppName(), tableId, invalidRowId);
+          .deleteAllCheckpointRowsWithId(db, tableId, invalidRowId, activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
+    } catch (ActionNotAuthorizedException ex) {
+      throw ex;
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -3238,7 +3243,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Now delete the row
     ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, getAppName(), tableId,
-        rowId, RoleConsts.ADMIN_ROLES_LIST);
+        rowId,
+        activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     // Run the query yet again to make sure that things worked as expected
     baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
@@ -5708,7 +5714,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       assertEquals(val, queryVal);
       cursor.close();
 
-      ODKDatabaseImplUtils.get().deleteRowWithId(db, getAppName(), tableId, rowId, RoleConsts.ADMIN_ROLES_LIST);
+      ODKDatabaseImplUtils.get().deleteRowWithId(db, tableId, rowId,
+          activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       // Select everything out of the table
       sel = "SELECT * FROM " + tableId;
