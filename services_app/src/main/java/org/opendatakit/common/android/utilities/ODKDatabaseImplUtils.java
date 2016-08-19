@@ -1967,24 +1967,18 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    * @param orderedColumns
-   * @param cvValues
+   * @param serverValues
    * @param rowId
    * @param localRowConflictType
    * @param activeUser
    * @param locale
    */
   public void privilegedPlaceRowIntoConflictWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String rowId, int localRowConflictType,
+      OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
+      int localRowConflictType,
       String activeUser, String locale) {
 
-    // TODO: confirm insert of row that is in conflict does special treatment
-    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
-
-    // and that rolesList of user does not impact this change.
-    // I.e., if the user is super-user or higher, we should take local FilterScope.
-    // otherwise, we should take server FilterScope. Or should we allow user to select
-    // which to take?
-
+    // The rolesList of the activeUser does not impact the execution of this action.
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -1993,15 +1987,12 @@ public class ODKDatabaseImplUtils {
 
       this.deleteServerConflictRowWithId(db, tableId, rowId);
       this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
-      this.insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
-          locale);
+      this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues,
+          rowId, activeUser, locale, false);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
-    } catch (ActionNotAuthorizedException e) {
-      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      throw new IllegalStateException(e);
     } finally {
       if (!dbWithinTransaction) {
         db.endTransaction();
