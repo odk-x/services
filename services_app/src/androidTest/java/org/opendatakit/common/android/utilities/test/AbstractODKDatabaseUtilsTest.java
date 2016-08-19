@@ -3219,7 +3219,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs);
+        selectionArgs, 0);
     UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null,
         adminColArr);
 
@@ -3249,7 +3249,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Run the query yet again to make sure that things worked as expected
     baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs);
+        selectionArgs, 0);
     table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 0);
