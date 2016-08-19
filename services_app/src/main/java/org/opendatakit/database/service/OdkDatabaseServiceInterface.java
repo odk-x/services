@@ -270,7 +270,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().setChoiceList(db, appName, choiceListJSON);
+      return ODKDatabaseImplUtils.get().setChoiceList(db, choiceListJSON);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -309,7 +309,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      return ODKDatabaseImplUtils.get().getChoiceList(db, appName, choiceListId);
+      return ODKDatabaseImplUtils.get().getChoiceList(db, choiceListId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -341,7 +341,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OrderedColumns results = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumns(db, appName, tableId, columns.getColumns());
+          .createOrOpenDBTableWithColumns(db, tableId, columns.getColumns());
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
@@ -377,7 +377,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       OrderedColumns results =
           ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, appName, tableId, columns.getColumns(),
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns.getColumns(),
               metaData, clear);
 
       return getAndCacheChunks(results);
@@ -491,7 +491,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, appName, tableId);
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)
@@ -889,7 +889,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, appName, tableId, rowId);
+      SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, tableId, rowId);
       return state.name();
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -956,7 +956,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OrderedColumns results = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, appName, tableId);
+          .getUserDefinedColumns(db, tableId);
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
@@ -1610,7 +1610,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictWithDeleteRowWithId(db, appName, tableId, rowId,
+          .resolveServerConflictWithDeleteRowWithId(db, tableId, rowId,
               activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     } catch (Exception e) {
@@ -1649,7 +1649,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalRowWithId(db, appName, tableId, rowId, activeUser, rolesList, locale);
+          .resolveServerConflictTakeLocalRowWithId(db, tableId, rowId, activeUser, rolesList, locale);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -1727,7 +1727,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
       // regardless of the roles available to the user, act as god.
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeServerRowWithId(db, appName, tableId, rowId, activeUser,
+          .resolveServerConflictTakeServerRowWithId(db, tableId, rowId, activeUser,
               locale);
 
     } catch (Exception e) {

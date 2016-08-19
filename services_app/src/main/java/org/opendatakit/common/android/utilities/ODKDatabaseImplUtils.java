@@ -451,13 +451,13 @@ public class ODKDatabaseImplUtils {
     // most recent savepoint timestamp...
     OdkDbTable t = new OdkDbTable(table, Collections.singletonList(Integer.valueOf(0)));
 
-    if (hasConflictRows(db.getAppName(), t)) {
+    if (hasConflictRows(t)) {
       throw new IllegalStateException("row is in conflict");
     }
     return t;
   }
 
-  private boolean hasConflictRows(String appName, OdkDbTable table) {
+  private boolean hasConflictRows(OdkDbTable table) {
     List<OdkDbRow> rows = table.getRows();
     for (OdkDbRow row : rows) {
       String conflictType = row.getDataByKey(DataTableColumns.CONFLICT_TYPE);
@@ -543,11 +543,10 @@ public class ODKDatabaseImplUtils {
    * (grouping) columns.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @return
    */
-  public OrderedColumns getUserDefinedColumns(OdkConnectionInterface db, String appName,
+  public OrderedColumns getUserDefinedColumns(OdkConnectionInterface db,
       String tableId) {
     ArrayList<Column> userDefinedColumns = new ArrayList<Column>();
     String selection = ColumnDefinitionsColumns.TABLE_ID + "=?";
@@ -584,7 +583,7 @@ public class ODKDatabaseImplUtils {
         c.close();
       }
     }
-    return new OrderedColumns(appName, tableId, userDefinedColumns);
+    return new OrderedColumns(db.getAppName(), tableId, userDefinedColumns);
   }
 
   /**
@@ -699,10 +698,9 @@ public class ODKDatabaseImplUtils {
    * data attachments) associated with that table.
    *
    * @param db
-   * @param appName
    * @param tableId
    */
-  public void deleteDBTableAndAllData(OdkConnectionInterface db, final String appName,
+  public void deleteDBTableAndAllData(OdkConnectionInterface db,
       final String tableId) {
 
     SyncETagsUtils seu = new SyncETagsUtils();
@@ -760,7 +758,7 @@ public class ODKDatabaseImplUtils {
     }
 
     // And delete the files from the SDCard...
-    String tableDir = ODKFileUtils.getTablesFolder(appName, tableId);
+    String tableDir = ODKFileUtils.getTablesFolder(db.getAppName(), tableId);
     try {
       FileUtils.deleteDirectory(new File(tableDir));
     } catch (IOException e1) {
@@ -768,7 +766,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
     }
 
-    String assetsCsvDir = ODKFileUtils.getAssetsCsvFolder(appName);
+    String assetsCsvDir = ODKFileUtils.getAssetsCsvFolder(db.getAppName());
     try {
       File file = new File(assetsCsvDir);
       if (file.exists()) {
@@ -1418,8 +1416,12 @@ public class ODKDatabaseImplUtils {
   /*
    * Create a user defined database table metadata - table definiton and KVS
    * values
+   *
+   * @param db
+   * @param tableId
+   * @param orderedDefs
    */
-  private void createDBTableWithColumns(OdkConnectionInterface db, String appName, String tableId,
+  private void createDBTableWithColumns(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedDefs) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
@@ -1501,14 +1503,13 @@ public class ODKDatabaseImplUtils {
    * Verifies that the schema the client has matches that of the given tableId.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param orderedDefs
    */
-  private void verifyTableSchema(OdkConnectionInterface db, String appName, String tableId,
+  private void verifyTableSchema(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedDefs) {
     // confirm that the column definitions are unchanged...
-    OrderedColumns existingDefns = getUserDefinedColumns(db, appName, tableId);
+    OrderedColumns existingDefns = getUserDefinedColumns(db, tableId);
     if (existingDefns.getColumnDefinitions().size() != orderedDefs.getColumnDefinitions().size()) {
       throw new IllegalStateException(
           "Unexpectedly found tableId with different column definitions that already exists!");
@@ -1554,11 +1555,10 @@ public class ODKDatabaseImplUtils {
    * Return choiceListId.
    *
    * @param db
-   * @param appName
    * @param choiceListJSON -- the actual JSON choice list text.
    * @return choiceListId -- the unique code mapping to the choiceListJSON
    */
-  public String setChoiceList(OdkConnectionInterface db, String appName, String choiceListJSON) {
+  public String setChoiceList(OdkConnectionInterface db, String choiceListJSON) {
     ChoiceListUtils utils = new ChoiceListUtils();
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -1570,7 +1570,7 @@ public class ODKDatabaseImplUtils {
         return null;
       }
 
-      String choiceListId = ODKFileUtils.getNakedMd5Hash(appName, choiceListJSON);
+      String choiceListId = ODKFileUtils.getNakedMd5Hash(db.getAppName(), choiceListJSON);
 
       utils.setChoiceList(db, choiceListId, choiceListJSON);
 
@@ -1585,7 +1585,7 @@ public class ODKDatabaseImplUtils {
       }
       if (success == false) {
 
-        WebLogger.getLogger(appName)
+        WebLogger.getLogger(db.getAppName())
             .e(t, "setChoiceList: Error while updating choiceList entry " + choiceListJSON);
       }
     }
@@ -1595,11 +1595,10 @@ public class ODKDatabaseImplUtils {
    * Return the choice list JSON corresponding to the choiceListId
    *
    * @param db
-   * @param appName
    * @param choiceListId -- the md5 hash of the choiceListJSON
    * @return choiceListJSON -- the actual JSON choice list text.
    */
-  public String getChoiceList(OdkConnectionInterface db, String appName, String choiceListId) {
+  public String getChoiceList(OdkConnectionInterface db, String choiceListId) {
     ChoiceListUtils utils = new ChoiceListUtils();
 
     if (choiceListId == null || choiceListId.trim().length() == 0) {
@@ -1616,25 +1615,24 @@ public class ODKDatabaseImplUtils {
    * If the tableId is present, then this is a no-op.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenDBTableWithColumns(OdkConnectionInterface db, String appName,
+  public OrderedColumns createOrOpenDBTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
     // TODO: Remove OrderedColumns
-    OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
+    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, appName, tableId, orderedDefs);
+        createDBTableWithColumns(db, tableId, orderedDefs);
       } else {
-        verifyTableSchema(db, appName, tableId, orderedDefs);
+        verifyTableSchema(db, tableId, orderedDefs);
       }
 
       if (!dbWithinTransaction) {
@@ -1656,12 +1654,12 @@ public class ODKDatabaseImplUtils {
           }
           if (colNames != null && colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
-            WebLogger.getLogger(appName).e(t,
+            WebLogger.getLogger(db.getAppName()).e(t,
                 "createOrOpenDBTableWithColumns: Error while adding table " + tableId
                     + " with columns:" + colNames.toString());
           }
         } else {
-          WebLogger.getLogger(appName).e(t,
+          WebLogger.getLogger(db.getAppName()).e(t,
               "createOrOpenDBTableWithColumns: Error while adding table " + tableId
                   + " with columns: null");
         }
@@ -1677,18 +1675,17 @@ public class ODKDatabaseImplUtils {
    * If the tableId is present, then this is a no-op.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
   public OrderedColumns createOrOpenDBTableWithColumnsAndProperties(OdkConnectionInterface db,
-      String appName, String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData,
+      String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData,
       boolean clear) throws JsonProcessingException {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
 
-    OrderedColumns orderedDefs = new OrderedColumns(appName, tableId, columns);
+    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
 
     try {
       if (!dbWithinTransaction) {
@@ -1696,11 +1693,11 @@ public class ODKDatabaseImplUtils {
       }
       boolean created = false;
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, appName, tableId, orderedDefs);
+        createDBTableWithColumns(db, tableId, orderedDefs);
         created = true;
       } else {
         // confirm that the column definitions are unchanged...
-        verifyTableSchema(db, appName, tableId, orderedDefs);
+        verifyTableSchema(db, tableId, orderedDefs);
       }
 
       replaceDBTableMetadata(db, tableId, metaData, (clear || created));
@@ -1725,12 +1722,12 @@ public class ODKDatabaseImplUtils {
           }
           if (colNames != null && colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
-            WebLogger.getLogger(appName).e(t,
+            WebLogger.getLogger(db.getAppName()).e(t,
                 "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
                     + " with columns:" + colNames.toString());
           }
         } else {
-          WebLogger.getLogger(appName).e(t,
+          WebLogger.getLogger(db.getAppName()).e(t,
               "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
                   + " with columns: null");
         }
@@ -2104,7 +2101,6 @@ public class ODKDatabaseImplUtils {
 
   /**
    * @param db
-   * @param appName
    * @param tableId
    * @param rowId
    * @return the sync state of the row (see {@link SyncState}), or null if the
@@ -2113,7 +2109,7 @@ public class ODKDatabaseImplUtils {
    *                               2+ conflicts or checkpoints and
    *                               those do not have matching sync states!
    */
-  public SyncState getSyncState(OdkConnectionInterface db, String appName, String tableId,
+  public SyncState getSyncState(OdkConnectionInterface db, String tableId,
       String rowId) throws IllegalStateException {
     Cursor c = null;
     try {
@@ -2242,7 +2238,7 @@ public class ODKDatabaseImplUtils {
       db.delete(tableId, whereClause, whereArgs);
 
       // this will return null if there are no rows.
-      SyncState syncState = getSyncState(db, db.getAppName(), tableId, rowId);
+      SyncState syncState = getSyncState(db, tableId, rowId);
 
       if (syncState == null) {
         // the rowId no longer exists (we deleted all checkpoints)
@@ -2292,7 +2288,6 @@ public class ODKDatabaseImplUtils {
     * Internal method to execute a delete checkpoint statement with the given where clause
     *
     * @param db
-    * @param appName
     * @param tableId
     * @param rowId
     * @param whereClause
@@ -2301,7 +2296,7 @@ public class ODKDatabaseImplUtils {
     * @param rolesList
     * @throws ActionNotAuthorizedException
    */
-  private void rawCheckpointDeleteDataInDBTable(OdkConnectionInterface db, String appName,
+  private void rawCheckpointDeleteDataInDBTable(OdkConnectionInterface db,
       String tableId, String rowId, String whereClause, String[] whereArgs, String activeUser,
       String rolesList) throws ActionNotAuthorizedException {
 
@@ -2387,14 +2382,14 @@ public class ODKDatabaseImplUtils {
     }
 
     if (shouldPhysicallyDelete) {
-      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(appName, tableId, rowId));
+      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
       try {
         FileUtils.deleteDirectory(instanceFolder);
       } catch (IOException e) {
         // TODO Auto-generated catch block
-        WebLogger.getLogger(appName)
+        WebLogger.getLogger(db.getAppName())
             .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
-        WebLogger.getLogger(appName).printStackTrace(e);
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
       }
     }
   }
@@ -2415,7 +2410,7 @@ public class ODKDatabaseImplUtils {
   public void deleteAllCheckpointRowsWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList)
       throws ActionNotAuthorizedException {
-    rawCheckpointDeleteDataInDBTable(db, db.getAppName(), tableId, rowId,
+    rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL",
         new String[] { rowId }, activeUser, rolesList);
   }
@@ -2436,7 +2431,7 @@ public class ODKDatabaseImplUtils {
   public void deleteLastCheckpointRowWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList)
       throws ActionNotAuthorizedException {
-    rawCheckpointDeleteDataInDBTable(db, db.getAppName(), tableId, rowId,
+    rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL " + " AND "
             + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX("
             + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId + "\" WHERE "
@@ -2666,14 +2661,13 @@ public class ODKDatabaseImplUtils {
    * deleteRowWithId(appName, dbHandleName, tableId, rowId);
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param rowId
    * @param activeUser
    * @param rolesList
    * @throws ActionNotAuthorizedException
    */
-  public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db, String appName,
+  public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList)
       throws ActionNotAuthorizedException {
 
@@ -2716,14 +2710,13 @@ public class ODKDatabaseImplUtils {
    * upon the next successful sync.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param rowId
    * @param activeUser
    * @param rolesList
    * @param locale
    */
-  public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String appName,
+  public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList, String locale)
       throws ActionNotAuthorizedException {
 
@@ -2742,7 +2735,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
@@ -2787,9 +2780,10 @@ public class ODKDatabaseImplUtils {
           .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
       // take the server's filter metadata values ...
-      updateValues
+      ContentValues privilegedUpdateValues = new ContentValues();
+      privilegedUpdateValues
           .put(DataTableColumns.FILTER_TYPE, serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
-      updateValues.put(DataTableColumns.FILTER_VALUE,
+      privilegedUpdateValues.put(DataTableColumns.FILTER_VALUE,
           serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
 
       // Figure out whether to take the server or local metadata fields.
@@ -2828,16 +2822,24 @@ public class ODKDatabaseImplUtils {
       deleteServerConflictRowWithId(db, tableId, rowId);
 
       // move the local conflict back into the normal non-conflict (null) state
-      // and set the final sync state.
+      // set the sync state to "changed" temporarily (otherwise we can't update)
 
-      restoreRowFromConflict(db, tableId, rowId, finalSyncState, localConflictType);
+      restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with the changes
       updateRowWithId(db, tableId, orderedColumns, updateValues, rowId, activeUser, rolesList,
           locale);
 
-      // and reset the sync state to whatever it should be (update will make it changed)
-      restoreRowFromConflict(db, tableId, rowId, finalSyncState, null);
+      // update as if user has admin privileges.
+      // do this so we can update the filter type and filter value
+      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues, rowId,
+          activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
+
+      // and if we are deleting, try to delete it.
+      // this may throw an ActionNotAuthorizedException
+      if ( finalSyncState == SyncState.deleted ) {
+        deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
+      }
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -2886,7 +2888,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = getUserDefinedColumns(db, db.getAppName(), tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
@@ -2983,13 +2985,12 @@ public class ODKDatabaseImplUtils {
    * Resolve the server conflict by taking the server changes.  This may delete the local row.
    *
    * @param db
-   * @param appName
    * @param tableId
    * @param rowId
    * @param activeUser
    * @param locale
    */
-  public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db, String appName,
+  public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String locale) {
 
     String rolesList = RoleConsts.ADMIN_ROLES_LIST;
@@ -3008,7 +3009,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      OrderedColumns orderedColumns = getUserDefinedColumns(db, appName, tableId);
+      OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)

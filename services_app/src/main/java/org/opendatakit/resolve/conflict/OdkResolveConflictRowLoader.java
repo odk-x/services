@@ -90,7 +90,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           .getConnection(mAppName, dbHandleName);
 
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, mAppName, mTableId);
+          .getUserDefinedColumns(db, mTableId);
       String whereClause = DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)";
       String[] selectionArgs = new String[] {
           Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES) };
@@ -120,7 +120,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
             // Use privileged user roles since we are taking the server's values
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
                 mTableId, rowId, activeUser, locale);
           }
         }

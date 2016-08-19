@@ -79,7 +79,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Drop any leftover table now that the test is done
     for(String id : tableIds) {
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
     }
 
     assertTrue(tablesGone);
@@ -110,7 +110,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableName, columns);
+            .createOrOpenDBTableWithColumns(db, tableName, columns);
 
     // Check that the table exists
     Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "'", null);
@@ -120,7 +120,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals("Name of user defined table does not match", cursor.getString(0), tableName);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableName);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableName);
     verifyNoTablesExist();
   }
 
@@ -154,7 +154,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Check that the user defined rows are in the table
     Cursor cursor = ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null,
@@ -197,7 +197,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -232,7 +232,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Check that the user defined rows are in the table
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null);
@@ -274,7 +274,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -288,9 +288,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -304,7 +304,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -318,11 +318,11 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     OrderedColumns orderedColumns2 = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -336,7 +336,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -349,7 +349,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = null;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, null);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, null);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -358,7 +358,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
    /*
@@ -373,7 +373,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       OrderedColumns orderedColumns = null;
 
       try {
-         orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+         orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       } catch (Exception e) {
          thrown = true;
          e.printStackTrace();
@@ -382,7 +382,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       assertFalse(thrown);
 
       // Drop the table now that the test is done
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
    }
   /*
    * Test creation of user defined database table with column when column is int
@@ -394,9 +394,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -410,7 +410,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -430,7 +430,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // no-op
@@ -438,7 +438,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -456,7 +456,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // no-op
@@ -464,7 +464,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -481,9 +481,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColItems + "\"]"));
     columns.add(new Column(testColItems, itemsStr, ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 2);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
     assertEquals(coldefs.getColumnDefinitions().get(1).getElementKey(), testColItems);
@@ -533,7 +533,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -547,9 +547,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -563,7 +563,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -577,9 +577,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -593,7 +593,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -607,9 +607,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -623,7 +623,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -637,9 +637,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -653,7 +653,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -667,9 +667,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
 
@@ -683,7 +683,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -714,7 +714,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -722,7 +722,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -753,7 +753,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -761,7 +761,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -792,7 +792,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -800,7 +800,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -835,7 +835,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -843,7 +843,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointBadChildKey_ExpectFail() {
@@ -870,7 +870,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -878,7 +878,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -909,7 +909,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -917,7 +917,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -945,9 +945,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColAlt, alt, testColResType, "[]"));
     columns.add(new Column(testColAcc, acc, testColResType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 5);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
     assertEquals(coldefs.getColumnDefinitions().get(1).getElementKey(), testColAcc);
@@ -977,7 +977,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -999,9 +999,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColUriFrag, "uriFragment", ElementDataType.rowpath.name(), "[]"));
     columns.add(new Column(testColContType, "contentType", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 3);
     assertEquals(coldefs.getColumnDefinitions().get(0).getElementKey(), testCol);
     assertEquals(coldefs.getColumnDefinitions().get(1).getElementKey(), testColContType);
@@ -1074,7 +1074,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1084,7 +1084,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String tableId = testTable;
     List<Column> columns = new ArrayList<Column>();
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String[] colNames = ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     boolean colLength = (colNames.length > 0);
@@ -1099,7 +1099,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1127,9 +1127,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("testCol", "testCol", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
 
     assertEquals(defns.getColumnDefinitions().size(), 1);
     assertEquals(columns.size(), 1);
@@ -1138,7 +1138,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cdref, cdalt);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1146,7 +1146,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
    */
   public void testGetUserDefinedColumnNamesWhenColumnDoesNotExist_ExpectPass() {
     String tableId = testTable;
-    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
 
     assertTrue(defns.getColumnDefinitions().isEmpty());
   }
@@ -1156,7 +1156,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
    */
   public void testGetUserDefinedColumnNamesWhenTableDoesNotExist_ExpectPass() {
     String tableId = testTable;
-    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, getAppName(), tableId);
+    OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertTrue(defns.getColumnDefinitions().isEmpty());
   }
 
@@ -1172,7 +1172,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     try {
       ODKDatabaseImplUtils.get()
@@ -1187,7 +1187,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1201,7 +1201,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -1226,7 +1226,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1240,7 +1240,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -1267,7 +1267,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1281,7 +1281,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1355,7 +1355,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1370,7 +1370,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
 
@@ -1398,7 +1398,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1412,7 +1412,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1465,7 +1465,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal2);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1479,7 +1479,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1501,7 +1501,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1515,7 +1515,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
@@ -1552,7 +1552,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1566,7 +1566,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1596,7 +1596,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1612,7 +1612,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
@@ -1643,7 +1643,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1659,7 +1659,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
 
@@ -1691,7 +1691,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1707,7 +1707,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testCol + "_items\"]"));
     columns.add(new Column(testCol + "_items", "items", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -1731,7 +1731,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1744,7 +1744,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 1;
 
@@ -1770,7 +1770,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1783,7 +1783,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1809,7 +1809,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1822,7 +1822,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1848,7 +1848,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1874,7 +1874,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColAlt, "altitude", ElementDataType.number.name(), "[]"));
     columns.add(new Column(testColAcc, "accuracy", ElementDataType.number.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testColLat, pos_lat);
@@ -1923,7 +1923,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(valAcc, pos_acc);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1936,7 +1936,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
 
@@ -1962,7 +1962,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -1982,7 +1982,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .add(new Column(testColUriFragment, "uriFragment", ElementDataType.rowpath.name(), "[]"));
     columns.add(new Column(testColContentType, "contentType", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
 
@@ -2019,7 +2019,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(valContentType, testContentType);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2032,7 +2032,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     double testVal = 5.5;
 
@@ -2058,7 +2058,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2071,7 +2071,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String testVal = "test";
 
@@ -2097,7 +2097,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2110,7 +2110,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     String interMed = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
     int pos = interMed.indexOf('T');
@@ -2147,7 +2147,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 
   }
 
@@ -2164,7 +2164,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
 
     ContentValues cvValues = new ContentValues();
@@ -2232,7 +2232,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertNotSame(saveptType, SavepointTypeManipulator.complete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2247,7 +2247,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2278,7 +2278,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2293,7 +2293,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2333,7 +2333,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2348,7 +2348,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2369,7 +2369,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2384,7 +2384,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2405,7 +2405,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2420,7 +2420,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2441,7 +2441,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2456,7 +2456,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
 
@@ -2475,7 +2475,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2491,7 +2491,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
 
     ContentValues cvValues = new ContentValues();
@@ -2592,7 +2592,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(saveptType, SavepointTypeManipulator.complete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2608,7 +2608,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
 
     ContentValues cvValues = new ContentValues();
@@ -2710,7 +2710,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(saveptType, SavepointTypeManipulator.incomplete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2725,7 +2725,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+            .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2765,7 +2765,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -2920,7 +2920,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         // stored type is a string -- the choiceListId
         entry.type = ElementDataType.string.name();
         if ((entry.value != null) && (entry.value.trim().length() != 0)) {
-          String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, getAppName(), entry
+          String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, entry
               .value);
           entry.value = choiceListId;
         } else {
@@ -2950,7 +2950,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -2969,7 +2969,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, null, null, null);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 
   }
 
@@ -2985,7 +2985,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -3025,7 +3025,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3040,7 +3040,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -3093,7 +3093,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3118,7 +3118,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3146,7 +3146,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3160,7 +3160,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     // local record that is synced and pending deletion...
@@ -3242,7 +3242,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(ConflictType.SERVER_UPDATED_UPDATED_VALUES, conflictTypeVal);
 
     // Now delete the row
-    ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, getAppName(), tableId,
+    ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, tableId,
         rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
@@ -3255,7 +3255,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(table.getNumberOfRows(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3269,7 +3269,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //  ContentValues cvValues = new ContentValues();
@@ -3321,7 +3321,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //  assertEquals(cursor.getCount(), 1);
 //
 //  // Drop the table now that the test is done
-//  ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//  ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //}
 
   /*
@@ -3335,7 +3335,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -3385,7 +3385,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(cursor.getCount(), 0);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -3399,7 +3399,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -3449,7 +3449,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(cursor.getCount(), 0);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -3475,7 +3475,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // createOrOpenDBTableWithColumnsAndProperties calls enforceTypesDBTableMetadata
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3518,7 +3518,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3542,10 +3542,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Set the choice list id
-    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, getAppName(), jsonChoiceList);
+    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, jsonChoiceList);
 
     // Get the choice list
-    String retJsonChoiceList = ODKDatabaseImplUtils.get().getChoiceList(db, getAppName(),
+    String retJsonChoiceList = ODKDatabaseImplUtils.get().getChoiceList(db,
         choiceListId);
 
     assertEquals(jsonChoiceList, retJsonChoiceList);
@@ -3590,7 +3590,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3614,7 +3614,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3627,7 +3627,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -3684,7 +3684,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(lastDataETagVal, tde.getLastDataETag());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3697,7 +3697,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -3727,7 +3727,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(health, ODKCursorUtils.TABLE_HEALTH_IS_CLEAN);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3740,7 +3740,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -3815,7 +3815,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -3828,7 +3828,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -3878,7 +3878,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CONFLICTS);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -3891,7 +3891,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -3981,7 +3981,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -3994,7 +3994,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -4036,7 +4036,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(conflictType, conflictTypeVal);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4051,7 +4051,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
     boolean thrown = false;
@@ -4130,7 +4130,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val3, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4155,7 +4155,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4197,7 +4197,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4222,7 +4222,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4262,7 +4262,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4287,7 +4287,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns,
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4330,7 +4330,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4357,7 +4357,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenDBTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
@@ -4418,7 +4418,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    }
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4447,7 +4447,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } catch (JsonProcessingException e) {
       e.printStackTrace();
     }
-    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, getAppName(), jsonChoiceList);
+    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, jsonChoiceList);
 
     // Select the _choice_list_id from the _choice_lists table
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
@@ -4477,7 +4477,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -4540,7 +4540,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4553,7 +4553,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -4612,7 +4612,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertNotSame(syncTime, defaultSyncTime);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4625,7 +4625,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
@@ -4672,7 +4672,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /**
@@ -4782,7 +4782,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -4836,7 +4836,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4856,7 +4856,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -4933,7 +4933,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -4959,7 +4959,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .getOdkConnectionFactoryInterface().getConnection(getAppName(), prevUniqueKey);
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(prevDb, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(prevDb, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5036,7 +5036,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5056,7 +5056,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5133,7 +5133,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     dbForQuery.releaseReference();
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5153,7 +5153,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5226,7 +5226,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5246,7 +5246,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5329,7 +5329,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5349,7 +5349,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5433,7 +5433,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5453,7 +5453,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5527,7 +5527,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
   /*
@@ -5555,7 +5555,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Create a table on db1
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db1, getAppName(), tableId, columns);
+        .createOrOpenDBTableWithColumns(db1, tableId, columns);
 
     // Insert a row using db1
     int testVal = 5;
@@ -5591,14 +5591,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Delete the table and recreate with a different row
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db1, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db1, tableId);
 
     // Create a table on db1
     String newTestCol = "testColumn0";
     List<Column> newColumns = new ArrayList<Column>();
     newColumns.add(new Column(newTestCol, newTestCol, testColType, "[]"));
     orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db1, getAppName(), tableId, newColumns);
+        .createOrOpenDBTableWithColumns(db1, tableId, newColumns);
 
     // Re-create the same table with different row
     int newTestVal = 200;
@@ -5644,7 +5644,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
  /*
@@ -5674,7 +5674,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         columns.add(new Column(testCol, testCol, testColType, "[]"));
       }
       OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+          .createOrOpenDBTableWithColumns(db, tableId, columns);
 
       String rowId = ODKDataUtils.genUUID();
 
@@ -5725,7 +5725,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       assertEquals(cursor.getCount(), 0);
 
       // Drop the table now that the test is done
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
 
       for ( int len = 1 ; len < maxBytes ; len += 4 ) {
         byte[] bytes = new byte[len];

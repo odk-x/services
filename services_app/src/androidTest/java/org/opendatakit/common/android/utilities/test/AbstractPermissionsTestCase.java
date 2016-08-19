@@ -20,6 +20,7 @@ import android.test.AndroidTestCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.RoleConsts;
 import org.opendatakit.TestConsts;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
@@ -135,7 +136,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       // Drop any leftover table now that the test is done
       for(String id : tableIds) {
-        ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+        ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
       }
     } else {
       verifyNoTablesExistNCleanAllTables();
@@ -167,7 +168,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     // Drop any leftover table now that the test is done
     for(String id : tableIds) {
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
     }
 
     tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
@@ -254,7 +255,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
       metaData.add(entry);
 
       return orderedColumns = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, getAppName(), tableId, columns, metaData, true);
+          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns, metaData, true);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
       throw new IllegalStateException("Unable to create table with properties");
@@ -276,21 +277,21 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     cvValues.put("col4", "this is a test"); // string
     // string with 500 varchars allocated to it
     cvValues.put("col5", "and a long string test"); // string(500)
-    File configFile = new File(ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId,
-        rowIdDefaultCommon), "sample.jpg");
+    File configFile = new File(
+        ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId, rowIdDefaultCommon),
+        "sample.jpg");
     cvValues.put("col6", ODKFileUtils.asConfigRelativePath(getAppName(), configFile)); // configpath
-    File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId,
-        rowIdDefaultCommon), "sample.jpg");
+    File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdDefaultCommon), "sample.jpg");
     try {
       Writer writer = new FileWriter(rowFile);
       writer.write("testFile");
       writer.flush();
       writer.close();
-    } catch ( IOException e) {
+    } catch (IOException e) {
       // ignore
     }
-    cvValues.put("col7", ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdDefaultCommon,
-        rowFile)); // rowpath
+    cvValues.put("col7",
+        ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdDefaultCommon, rowFile)); // rowpath
     // object type (geopoint)
     cvValues.put("col8_accuracy", 45.2); // number
     cvValues.put("col8_altitude", 45.3); // number
@@ -308,6 +309,57 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     cvValues.put(DataTableColumns.LOCALE, currentLocale);
 
     return cvValues;
+  }
+
+  protected OrderedColumns assertConflictPopulatedTestTable(String tableId, boolean isLocked,
+      boolean anonymousCanCreate, String defaultFilterType) {
+
+    OrderedColumns orderedColumns =
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+
+    // and now add rows to that table
+    ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
+
+    cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis
+        (System.currentTimeMillis()));
+    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
+
+    // no New rows are possible; always changed or deleted.
+
+    // start with local row
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+
+    // now insert rows that have been synced
+    cvValues.put(DataTableColumns.ROW_ETAG, "not_null_because_has_been_synced");
+    cvValues.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    spewConflictInsert(tableId, orderedColumns, cvValues,
+        rowIdDefaultNull, commonUser, currentLocale);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    spewConflictInsert(tableId, orderedColumns, cvValues,
+        rowIdDefaultCommon, commonUser, currentLocale);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    spewConflictInsert(tableId, orderedColumns, cvValues,
+        rowIdHiddenCommon, commonUser, currentLocale);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    spewConflictInsert(tableId, orderedColumns, cvValues,
+        rowIdReadOnlyCommon, commonUser, currentLocale);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    spewConflictInsert(tableId, orderedColumns, cvValues,
+        rowIdModifyCommon, commonUser, currentLocale);
+
+    return orderedColumns;
   }
 
   protected OrderedColumns assertPopulatedTestTable(String tableId, boolean isLocked,
@@ -573,7 +625,80 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         rowIdBase + adminUser, username, locale, false);
   }
 
-  protected enum FirstSavepointTimestampType { CHECKPOINT_NEW_ROW, NEW_ROW, CHANGED, SYNCED, DELETED };
+  protected void spewConflictInsert(String tableId, OrderedColumns orderedColumns, ContentValues
+      cvValues,
+      String rowIdBase, String username, String locale) {
+
+    ContentValues serverValues = new ContentValues(cvValues);
+
+    // have different status for form and savepoint info
+    serverValues.put(DataTableColumns.FORM_ID, "a_different_server_form");
+    serverValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis
+        (System.currentTimeMillis() - 864000000L));
+    serverValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    serverValues.put(DataTableColumns.SAVEPOINT_CREATOR, "server@gmail.com");
+
+    // server row has a different rowETag and is in conflict
+    serverValues.put(DataTableColumns.ROW_ETAG, "a different string");
+    serverValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+
+    // will change a user field and set the conflict type within the loop below
+
+    int localConflict;
+    int serverConflict;
+    for ( localConflict = ConflictType.LOCAL_DELETED_OLD_VALUES;
+          localConflict < ConflictType.SERVER_DELETED_OLD_VALUES ; ++ localConflict ) {
+
+      for ( serverConflict = ConflictType.SERVER_DELETED_OLD_VALUES ;
+            serverConflict <= ConflictType.SERVER_UPDATED_UPDATED_VALUES ; ++ serverConflict ) {
+
+        if ( localConflict == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+            serverConflict == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+          // automatically deleted when syncing
+          continue;
+        }
+
+        String rowIdConflictBase = rowIdBase + localConflict + serverConflict;
+
+        // to eliminate impacts of sequential tests, use a different rowId for each possible user
+        ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+            rowIdConflictBase + anonymousUser, username, locale, false);
+        ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+            rowIdConflictBase + commonUser, username, locale, false);
+        ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+            rowIdConflictBase + otherUser, username, locale, false);
+        ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+            rowIdConflictBase + superUser, username, locale, false);
+        ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+            rowIdConflictBase + adminUser, username, locale, false);
+
+
+        // change a user field
+        serverValues.put("col0", 100*(localConflict+1) + serverConflict );
+        // set the server conflict type
+        serverValues.put(DataTableColumns.CONFLICT_TYPE, serverConflict);
+
+        ODKDatabaseImplUtils.get().privilegedPlaceRowIntoConflictWithId(db, tableId,
+            orderedColumns,
+            serverValues, rowIdConflictBase + anonymousUser, localConflict, username, locale);
+        ODKDatabaseImplUtils.get().privilegedPlaceRowIntoConflictWithId(db, tableId,
+            orderedColumns,
+            serverValues, rowIdConflictBase + commonUser, localConflict, username, locale);
+        ODKDatabaseImplUtils.get().privilegedPlaceRowIntoConflictWithId(db, tableId,
+            orderedColumns,
+            serverValues, rowIdConflictBase + otherUser, localConflict, username, locale);
+        ODKDatabaseImplUtils.get().privilegedPlaceRowIntoConflictWithId(db, tableId,
+            orderedColumns,
+            serverValues, rowIdConflictBase + superUser, localConflict, username, locale);
+        ODKDatabaseImplUtils.get().privilegedPlaceRowIntoConflictWithId(db, tableId,
+            orderedColumns,
+            serverValues, rowIdConflictBase + adminUser, localConflict, username, locale);
+      }
+    }
+  }
+
+  protected enum FirstSavepointTimestampType { CHECKPOINT_NEW_ROW, NEW_ROW, CHANGED, SYNCED,
+    SYNCED_PENDING_FILES, IN_CONFLICT, DELETED };
 
   protected boolean verifyRowSyncStateAndCheckpoints(String tableId, String rowId, int expectedRowCount,
       FirstSavepointTimestampType expectFirstRemainingType, String identifyingDescription) {
@@ -592,7 +717,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
           new String[] { DataTableColumns.FILTER_TYPE, DataTableColumns.FILTER_VALUE,
               DataTableColumns.SYNC_STATE, DataTableColumns.SAVEPOINT_TYPE},
           DataTableColumns.ID + "=?",
-          new String[] { rowId }, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
+          new String[] { rowId }, null, null,
+                DataTableColumns.CONFLICT_TYPE + " ASC, "
+              + DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
       c.moveToFirst();
 
       assertEquals("Wrong row count: " + identifyingDescription, expectedRowCount, c.getCount());
@@ -646,6 +773,24 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         syncState = SyncState.changed.name();
       }
 
+      if ( expectFirstRemainingType == FirstSavepointTimestampType.SYNCED_PENDING_FILES ) {
+        if ( !syncState.equals(SyncState.synced_pending_files.name()) ) {
+          assertEquals("Expected first row to be a synced_pending_files sync state: " + identifyingDescription,
+              SyncState.synced_pending_files.name(), syncState);
+        }
+        // subsequent checkpoints we expect to be tagged as changed
+        syncState = SyncState.changed.name();
+      }
+
+      if ( expectFirstRemainingType == FirstSavepointTimestampType.IN_CONFLICT ) {
+        if ( !syncState.equals(SyncState.in_conflict.name()) ) {
+          assertEquals("Expected first row to be a in_conflict sync state: " + identifyingDescription,
+              SyncState.in_conflict.name(), syncState);
+        }
+        // subsequent entries are also in_conflict
+        syncState = SyncState.in_conflict.name();
+      }
+
       if ( expectFirstRemainingType == FirstSavepointTimestampType.DELETED ) {
         if ( !syncState.equals(SyncState.deleted.name()) ) {
           assertEquals("Expected first row to be a deleted sync state: " + identifyingDescription,
@@ -660,8 +805,13 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       // subsequent updates should all be checkpoints
       while ( c.moveToNext() ) {
-        if ( !c.isNull(idxType) ) {
+        if ( !syncState.equals(SyncState.in_conflict.name()) && !c.isNull(idxType) ) {
           assertTrue("Expected subsequent rows to be checkpoints: " + identifyingDescription,
+              false);
+          return false;
+        }
+        if ( syncState.equals(SyncState.in_conflict.name()) && c.isNull(idxType) ) {
+          assertTrue("Expected subsequent rows to not be checkpoints: " + identifyingDescription,
               false);
           return false;
         }
@@ -684,6 +834,175 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         c.close();
       }
     }
+  }
+
+
+  protected ArrayList<AuthParamAndOutcome> buildOutcomesListResolveTakeServer(String tableId) {
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+
+    int localConflict;
+    int serverConflict;
+    for ( localConflict = ConflictType.LOCAL_DELETED_OLD_VALUES;
+          localConflict < ConflictType.SERVER_DELETED_OLD_VALUES ; ++ localConflict ) {
+
+      for (serverConflict = ConflictType.SERVER_DELETED_OLD_VALUES;
+           serverConflict <= ConflictType.SERVER_UPDATED_UPDATED_VALUES; ++serverConflict) {
+
+        if ( localConflict == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+            serverConflict == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+          // automatically deleted when syncing
+          continue;
+        }
+
+        // anon user can't modify hidden or read-only entries
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+        // matching filter value user can do anything
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+        // non-matching filter value user can't modify hidden or read-only entries
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+        // super-user can do anything
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        // admin user can do anything
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+      }
+    }
+
+    return cases;
+  }
+
+  protected ArrayList<AuthParamAndOutcome> buildOutcomesListResolveTakeLocal(String tableId,
+      boolean isLocked) {
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+
+    int localConflict;
+    int serverConflict;
+    for ( localConflict = ConflictType.LOCAL_DELETED_OLD_VALUES;
+          localConflict < ConflictType.SERVER_DELETED_OLD_VALUES ; ++ localConflict ) {
+
+      boolean isLocalDelete = localConflict == ConflictType.LOCAL_DELETED_OLD_VALUES;
+
+      // matched users can't delete locally
+      boolean isLockedAndIsLocalDelete = isLocked && isLocalDelete;
+
+      for (serverConflict = ConflictType.SERVER_DELETED_OLD_VALUES;
+           serverConflict <= ConflictType.SERVER_UPDATED_UPDATED_VALUES; ++serverConflict) {
+
+        if ( localConflict == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+             serverConflict == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+          // automatically deleted when syncing
+          continue;
+        }
+
+        // anon user can't modify hidden or read-only entries
+        // only modify if not local change delete
+        // and can't do anything if locked table.
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked || isLocalDelete));
+        // matching filter value user can do anything
+        // except delete in a locked table
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, isLocked));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
+        // non-matching filter value user can't modify hidden or read-only entries
+        // only modify if not locked and not local change delete
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, isLocked));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, isLocked || isLockedAndIsLocalDelete));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            otherUser, RoleConsts.USER_ROLES_LIST, isLocked ? true : !isLocalDelete));
+        // super-user can do anything
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+        // admin user can do anything
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+        cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+      }
+    }
+
+    return cases;
   }
 
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateUnlockedNoAnonCreate() {

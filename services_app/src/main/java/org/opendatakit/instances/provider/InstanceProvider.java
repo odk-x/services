@@ -318,7 +318,7 @@ public class InstanceProvider extends ContentProvider {
     // Can't get away with dataTable.* because of collision with _ID column
     // get map of (elementKey -> ColumnDefinition)
     try {
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);

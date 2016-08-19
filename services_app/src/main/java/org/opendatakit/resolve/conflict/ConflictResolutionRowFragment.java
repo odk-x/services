@@ -126,7 +126,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // This is elevated privileges since we are applying the server's change locally
-            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, mAppName,
+            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db,
                 mTableId, mRowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -205,7 +205,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // run this with user permissions, since we are taking local changes over server values
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db,
                 mTableId, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -361,7 +361,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // use local user's rolesList
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db,
                 mTableId, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -435,7 +435,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // use privileged user roles since we are taking server's values
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
                 mTableId, mRowId, aul.activeUser, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -498,7 +498,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           .getConnection(mAppName, dbHandleName);
 
       // use privileged user roles since we are taking server's values
-      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId,
+      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mTableId,
           mRowId, aul.activeUser, aul.locale);
 
     } catch (Exception e) {

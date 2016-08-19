@@ -218,7 +218,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
             // create a new checkpoint with the revisions
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
-                mAppName, mTableId);
+                mTableId);
             ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
                 values, mRowId, activeUser, rolesList, locale);
 

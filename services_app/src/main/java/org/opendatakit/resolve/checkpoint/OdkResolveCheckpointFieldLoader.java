@@ -77,7 +77,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mAppName, mTableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mTableId);
 
 
       List<KeyValueStoreEntry> columnDisplayNames =

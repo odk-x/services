@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTestCase {
 
-  private static final String TAG = "ODKDatabaseUtilsInsertUpdatePermissionsTest";
+  private static final String TAG = "ODKDatabaseUtilsDeletePermissionsTest";
 
   public void testDeleteUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 

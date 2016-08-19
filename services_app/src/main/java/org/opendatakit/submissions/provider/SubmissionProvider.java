@@ -323,7 +323,7 @@ public class SubmissionProvider extends ContentProvider {
         }
 
         OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
-            .getUserDefinedColumns(db, appName, tableId);
+            .getUserDefinedColumns(db, tableId);
 
         // Retrieve the values of the record to be emitted...
 

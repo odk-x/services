@@ -93,7 +93,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
           .getConnection(mAppName, dbHandleName);
 
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
-          .getUserDefinedColumns(db, mAppName, mTableId);
+          .getUserDefinedColumns(db, mTableId);
       String[] selectionArgs = {};
       String whereClause = DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
       String[] groupBy = { DataTableColumns.ID };

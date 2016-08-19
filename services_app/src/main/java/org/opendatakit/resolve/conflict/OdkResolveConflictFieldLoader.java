@@ -85,7 +85,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mAppName, mTableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mTableId);
 
 
       List<KeyValueStoreEntry> columnDisplayNames =
