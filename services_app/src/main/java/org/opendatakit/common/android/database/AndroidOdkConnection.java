@@ -389,7 +389,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
       }
   }
 
-  public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
+  public int update(String table, ContentValues values, String whereClause, Object[] whereArgs) {
      StringBuilder b = new StringBuilder();
      b.append("delete(\"").append(table).append("\",...,");
      if ( whereClause == null ) {
@@ -420,7 +420,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
   }
 
-  public int delete(String table, String whereClause, String[] whereArgs) {
+  public int delete(String table, String whereClause, Object[] whereArgs) {
      StringBuilder b = new StringBuilder();
      b.append("delete(\"").append(table).append("\",");
      if ( whereClause == null ) {
@@ -531,7 +531,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
   }
 
-  public Cursor rawQuery(String sql, String[] selectionArgs) {
+  public Cursor rawQuery(String sql, Object[] selectionArgs) {
      StringBuilder b = new StringBuilder();
      b.append("rawQuery(\"").append(sql).append("\",");
      if ( selectionArgs == null ) {
@@ -557,7 +557,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
   }
 
-  public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
+  public Cursor query(String table, String[] columns, String selection, Object[] selectionArgs,
       String groupBy, String having, String orderBy, String limit) {
      StringBuilder b = new StringBuilder();
      b.append("query(\"").append(table).append("\",");
@@ -615,7 +615,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
   }
 
   public Cursor queryDistinct(String table, String[] columns, String selection,
-      String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+      Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
      StringBuilder b = new StringBuilder();
      b.append("queryDistinct(\"").append(table).append("\",");
      if ( columns == null ) {

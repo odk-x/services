@@ -76,20 +76,20 @@ public class ODKDatabaseImplUtils {
    * if the user attempts to do something differently, but correct
    * the error. This is largely for migration / forward compatibility.
    */
-  private static ArrayList<String[]> knownKVSValueTypeRestrictions = new ArrayList<String[]>();
+  private static ArrayList<Object[]> knownKVSValueTypeRestrictions = new ArrayList<Object[]>();
 
   /**
    * Same as above, but quick access via the key.
    * For now, we know that the keys are all unique.
    * Eventually this might need to be a MultiMap.
    */
-  private static TreeMap<String, ArrayList<String[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<String, ArrayList<String[]>>();
+  private static TreeMap<String, ArrayList<Object[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<String, ArrayList<Object[]>>();
 
-  private static void updateKeyToKnownKVSValueTypeRestrictions(String[] field) {
-    ArrayList<String[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
+  private static void updateKeyToKnownKVSValueTypeRestrictions(Object[] field) {
+    ArrayList<Object[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
     if (fields == null) {
-      fields = new ArrayList<String[]>();
-      keyToKnownKVSValueTypeRestrictions.put(field[2], fields);
+      fields = new ArrayList<Object[]>();
+      keyToKnownKVSValueTypeRestrictions.put((String) field[2], fields);
     }
     fields.add(field);
   }
@@ -126,38 +126,38 @@ public class ODKDatabaseImplUtils {
     // declare the KVS value_type restrictions we know about...
     // This is a list of triples: ( required value type, partition_label, key_label )
     {
-      String[] fields;
+      Object[] fields;
 
       // for columns
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.string.name();
       fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
       fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.string.name();
       fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
       fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.object.name();
       fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
       fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.bool.name();
       fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
       fields[2] = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.array.name();
       fields[1] = KeyValueStoreConstants.PARTITION_COLUMN;
       fields[2] = KeyValueStoreConstants.COLUMN_JOINS;
@@ -165,42 +165,42 @@ public class ODKDatabaseImplUtils {
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
       // and for the table...
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.array.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_COL_ORDER;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.object.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.array.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.string.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_INDEX_COL;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.object.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_SORT_COL;
       knownKVSValueTypeRestrictions.add(fields);
       updateKeyToKnownKVSValueTypeRestrictions(fields);
 
-      fields = new String[3];
+      fields = new Object[3];
       fields[0] = ElementDataType.object.name();
       fields[1] = KeyValueStoreConstants.PARTITION_TABLE;
       fields[2] = KeyValueStoreConstants.TABLE_SORT_ORDER;
@@ -271,7 +271,7 @@ public class ODKDatabaseImplUtils {
    * @param selectionArgs
    * @return
    */
-  public Cursor rawQuery(OdkConnectionInterface db, String sql, String[] selectionArgs) {
+  public Cursor rawQuery(OdkConnectionInterface db, String sql, Object[] selectionArgs) {
     Cursor c = db.rawQuery(sql, selectionArgs);
     return c;
   }
@@ -291,7 +291,7 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public Cursor queryDistinct(OdkConnectionInterface db, String table, String[] columns,
-      String selection, String[] selectionArgs, String groupBy, String having, String orderBy,
+      String selection, Object[] selectionArgs, String groupBy, String having, String orderBy,
       String limit) throws SQLiteException {
     Cursor c = db
         .queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
@@ -299,7 +299,7 @@ public class ODKDatabaseImplUtils {
   }
 
   public Cursor query(OdkConnectionInterface db, String table, String[] columns, String selection,
-      String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
+      Object[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     return c;
@@ -315,7 +315,7 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable rawSqlQuery(OdkConnectionInterface db, String sqlCommand,
-      String[] sqlBindArgs) {
+      Object[] sqlBindArgs) {
     Cursor c = null;
     try {
       c = db.rawQuery(sqlCommand, sqlBindArgs);
@@ -328,11 +328,11 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, String[] sqlBindArgs) {
+  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs) {
     return buildOdkDbTable(c, sqlCommand, sqlBindArgs, null, null, null);
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, String[] sqlBindArgs,
+  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs,
       String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
 
     Map<String, Integer> mElementKeyToIndex = null;
@@ -475,7 +475,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId });
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId });
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -550,7 +550,7 @@ public class ODKDatabaseImplUtils {
       String tableId) {
     ArrayList<Column> userDefinedColumns = new ArrayList<Column>();
     String selection = ColumnDefinitionsColumns.TABLE_ID + "=?";
-    String[] selectionArgs = { tableId };
+    Object[] selectionArgs = { tableId };
     //@formatter:off
     String[] cols = {
         ColumnDefinitionsColumns.ELEMENT_KEY,
@@ -599,7 +599,7 @@ public class ODKDatabaseImplUtils {
       //@formatter:off
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null,
           TableDefinitionsColumns.TABLE_ID + "=?",
-          new String[] { tableId }, null, null, null, null);
+          new Object[] { tableId }, null, null, null, null);
       //@formatter:on
       // we know about the table...
       // tableId is the database table name...
@@ -706,7 +706,7 @@ public class ODKDatabaseImplUtils {
     SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
 
-    String[] whereArgs = { tableId };
+    Object[] whereArgs = { tableId };
 
     try {
       if (!dbWithinTransaction) {
@@ -833,7 +833,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
-          TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
+          TableDefinitionsColumns.TABLE_ID + "=?", new Object[] { tableId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -868,7 +868,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
-          TableDefinitionsColumns.TABLE_ID + "=?", new String[] { tableId });
+          TableDefinitionsColumns.TABLE_ID + "=?", new Object[] { tableId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1015,19 +1015,19 @@ public class ODKDatabaseImplUtils {
       }
 
       // find subset matching the key...
-      ArrayList<String[]> kvsValueTypeRestrictions = keyToKnownKVSValueTypeRestrictions
+      ArrayList<Object[]> kvsValueTypeRestrictions = keyToKnownKVSValueTypeRestrictions
           .get(kvs.key);
 
       if (kvsValueTypeRestrictions != null) {
-        for (String[] restriction : kvsValueTypeRestrictions) {
+        for (Object[] restriction : kvsValueTypeRestrictions) {
           if (kvs.partition.equals(restriction[1]) && kvs.key.equals(restriction[2])) {
             // see if the client specified an incorrect type
             if (!kvs.type.equals(restriction[0])) {
               String type = kvs.type;
-              kvs.type = restriction[0];
+              kvs.type = (String) restriction[0];
 
               // TODO: detect whether the value conforms to the specified type.
-              enforceKVSValueType(kvs, ElementDataType.valueOf(restriction[0]));
+              enforceKVSValueType(kvs, ElementDataType.valueOf(kvs.type));
 
               WebLogger.getLogger(appName)
                   .w("validateKVSEntry", "Client Error: KVS value type reset from " + type +
@@ -1158,7 +1158,7 @@ public class ODKDatabaseImplUtils {
 
       if (clear) {
         db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
-            KeyValueStoreColumns.TABLE_ID + "=?", new String[] { tableId });
+            KeyValueStoreColumns.TABLE_ID + "=?", new Object[] { tableId });
       }
 
       for (KeyValueStoreEntry e : metadata) {
@@ -1179,7 +1179,7 @@ public class ODKDatabaseImplUtils {
       String partition, String aspect, List<KeyValueStoreEntry> metadata) {
 
     StringBuilder b = new StringBuilder();
-    ArrayList<String> whereArgsList = new ArrayList<String>();
+    ArrayList<Object> whereArgsList = new ArrayList<Object>();
 
     if (tableId == null || tableId.trim().length() == 0) {
       throw new IllegalArgumentException("tableId cannot be null or an empty string");
@@ -1195,7 +1195,7 @@ public class ODKDatabaseImplUtils {
       whereArgsList.add(aspect);
     }
     String whereClause = b.toString();
-    String[] whereArgs = whereArgsList.toArray(new String[whereArgsList.size()]);
+    Object[] whereArgs = whereArgsList.toArray(new Object[whereArgsList.size()]);
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -1380,7 +1380,7 @@ public class ODKDatabaseImplUtils {
 
       String sql = b.toString();
 
-      for (String[] fields : knownKVSValueTypeRestrictions) {
+      for (Object[] fields : knownKVSValueTypeRestrictions) {
         db.execSQL(sql, fields);
       }
 
@@ -1937,7 +1937,7 @@ public class ODKDatabaseImplUtils {
     // delete the old server-values in_conflict row if it exists
     String whereClause = String.format("%s = ? AND %s = ? AND %s IN ( ?, ? )", DataTableColumns.ID,
         DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
-    String[] whereArgs = { rowId, SyncState.in_conflict.name(),
+    Object[] whereArgs = { rowId, SyncState.in_conflict.name(),
         String.valueOf(ConflictType.SERVER_DELETED_OLD_VALUES),
         String.valueOf(ConflictType.SERVER_UPDATED_UPDATED_VALUES) };
 
@@ -2015,7 +2015,7 @@ public class ODKDatabaseImplUtils {
 
     String whereClause = String
         .format("%s = ? AND %s IS NULL", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
-    String[] whereArgs = { rowId };
+    Object[] whereArgs = { rowId };
 
     ContentValues cv = new ContentValues();
     cv.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
@@ -2057,16 +2057,16 @@ public class ODKDatabaseImplUtils {
     // TODO: is roleList applicable here?
 
     String whereClause;
-    String[] whereArgs;
+    Object[] whereArgs;
 
     if (conflictType == null) {
       whereClause = String
           .format("%s = ? AND %s IS NULL", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
-      whereArgs = new String[] { rowId };
+      whereArgs = new Object[] { rowId };
     } else {
       whereClause = String
           .format("%s = ? AND %s = ?", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
-      whereArgs = new String[] { rowId, String.valueOf(conflictType) };
+      whereArgs = new Object[] { rowId, conflictType };
     }
 
     ContentValues cv = new ContentValues();
@@ -2105,7 +2105,7 @@ public class ODKDatabaseImplUtils {
     Cursor c = null;
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
-          DataTableColumns.ID + " = ?", new String[] { rowId }, null, null, null, null);
+          DataTableColumns.ID + " = ?", new Object[] { rowId }, null, null, null, null);
 
       if (c.moveToFirst()) {
         int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
@@ -2171,7 +2171,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      String[] whereArgs = new String[] { rowId };
+      Object[] whereArgs = new Object[] { rowId };
       String whereClause = DataTableColumns.ID + " =?";
 
       // first need to test whether we can delete all the rows under this rowId.
@@ -2288,7 +2288,7 @@ public class ODKDatabaseImplUtils {
     * @throws ActionNotAuthorizedException
    */
   private void rawCheckpointDeleteDataInDBTable(OdkConnectionInterface db,
-      String tableId, String rowId, String whereClause, String[] whereArgs, String activeUser,
+      String tableId, String rowId, String whereClause, Object[] whereArgs, String activeUser,
       String rolesList) throws ActionNotAuthorizedException {
 
     boolean shouldPhysicallyDelete = false;
@@ -2353,7 +2353,7 @@ public class ODKDatabaseImplUtils {
       c = null;
       try {
         c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
-            DataTableColumns.ID + " = ?", new String[] { rowId }, null, null, null, null);
+            DataTableColumns.ID + " = ?", new Object[] { rowId }, null, null, null, null);
         c.moveToFirst();
         // the row is entirely removed -- delete the attachments
         shouldPhysicallyDelete = (c.getCount() == 0);
@@ -2403,7 +2403,7 @@ public class ODKDatabaseImplUtils {
       throws ActionNotAuthorizedException {
     rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL",
-        new String[] { rowId }, activeUser, rolesList);
+        new Object[] { rowId }, activeUser, rolesList);
   }
 
   /**
@@ -2426,7 +2426,7 @@ public class ODKDatabaseImplUtils {
         DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL " + " AND "
             + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX("
             + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId + "\" WHERE "
-            + DataTableColumns.ID + "=?)", new String[] { rowId, rowId }, activeUser, rolesList);
+            + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId }, activeUser, rolesList);
   }
 
   /**
@@ -2454,10 +2454,10 @@ public class ODKDatabaseImplUtils {
 
       db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
               + DataTableColumns.ID + "=?",
-          new String[] { SavepointTypeManipulator.incomplete(), rowId });
+          new Object[] { SavepointTypeManipulator.incomplete(), rowId });
       db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
           + " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-          + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId });
+          + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2494,10 +2494,10 @@ public class ODKDatabaseImplUtils {
 
       db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
               + DataTableColumns.ID + "=?",
-          new String[] { SavepointTypeManipulator.complete(), rowId });
+          new Object[] { SavepointTypeManipulator.complete(), rowId });
       db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
           + " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-          + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId });
+          + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2734,7 +2734,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { rowId });
+          new Object[] { rowId });
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -2776,6 +2776,10 @@ public class ODKDatabaseImplUtils {
           .put(DataTableColumns.FILTER_TYPE, serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
       privilegedUpdateValues.put(DataTableColumns.FILTER_VALUE,
           serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
+      privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+          serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
+      privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
+          serverRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       // Figure out whether to take the server or local metadata fields.
       // and whether to take the server or local data fields.
@@ -2887,7 +2891,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { rowId });
+          new Object[] { rowId });
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3008,7 +3012,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { rowId });
+          new Object[] { rowId });
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3226,7 +3230,7 @@ public class ODKDatabaseImplUtils {
       c = db.query(tableId, null,
           DataTableColumns.ID + "=?" + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
               + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-              + "\" WHERE " + DataTableColumns.ID + "=?)", new String[] { rowId, rowId }, null,
+              + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId }, null,
           null, null, null);
       c.moveToFirst();
 
@@ -3447,8 +3451,6 @@ public class ODKDatabaseImplUtils {
       OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList,
       String locale, boolean isNewRow, String priorFilterType, String priorFilterValue)
       throws ActionNotAuthorizedException {
-    String whereClause = null;
-    String[] whereArgs = new String[1];
     String rowId = null;
 
     if (cvValues.size() <= 0) {
@@ -3857,7 +3859,7 @@ public class ODKDatabaseImplUtils {
     boolean specifiesConflictType = cvValues.containsKey(DataTableColumns.CONFLICT_TYPE);
     boolean nullConflictType =
         specifiesConflictType && (cvValues.get(DataTableColumns.CONFLICT_TYPE) == null);
-    String[] whereArgs = new String[specifiesConflictType ? (1 + (nullConflictType ? 0 : 1)) : 1];
+    Object[] whereArgs = new Object[specifiesConflictType ? (1 + (nullConflictType ? 0 : 1)) : 1];
     boolean update = false;
     String updatedSyncState = SyncState.new_row.name();
     String priorFilterType = DataTableColumns.DEFAULT_FILTER_TYPE;
@@ -3928,7 +3930,7 @@ public class ODKDatabaseImplUtils {
             whereClause =
                 DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE + " = ?";
             whereArgs[0] = rowId;
-            whereArgs[1] = cvValues.getAsString(DataTableColumns.CONFLICT_TYPE);
+            whereArgs[1] = cvValues.get(DataTableColumns.CONFLICT_TYPE);
           }
         } else {
           whereClause = DataTableColumns.ID + " = ?";
@@ -3936,7 +3938,7 @@ public class ODKDatabaseImplUtils {
         }
 
         String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-        String[] selArgs = whereArgs;
+        Object[] selArgs = whereArgs;
         Cursor cursor = null;
         try {
           cursor = rawQuery(db, sel, selArgs);
@@ -4146,7 +4148,7 @@ public class ODKDatabaseImplUtils {
       String rowId, String rowETag, SyncState state) {
 
     String whereClause = DataTableColumns.ID + " = ?";
-    String[] whereArgs = { rowId };
+    Object[] whereArgs = { rowId };
 
     ContentValues cvDataTableVal = new ContentValues();
 
@@ -4161,7 +4163,7 @@ public class ODKDatabaseImplUtils {
       }
 
       String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-      String[] selArgs = whereArgs;
+      Object[] selArgs = whereArgs;
 
       try {
         cursor = rawQuery(db, sel, selArgs);

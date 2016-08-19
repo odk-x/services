@@ -119,9 +119,9 @@ public interface OdkConnectionInterface {
 
     public void endTransaction() throws SQLException;
 
-    public int update(String table, ContentValues values, String whereClause, String[] whereArgs) throws SQLException;
+    public int update(String table, ContentValues values, String whereClause, Object[] whereArgs) throws SQLException;
 
-    public int delete(String table, String whereClause, String[] whereArgs) throws SQLException;
+    public int delete(String table, String whereClause, Object[] whereArgs) throws SQLException;
 
     public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
             throws SQLException;
@@ -131,11 +131,11 @@ public interface OdkConnectionInterface {
 
     public void execSQL(String sql, Object[] bindArgs) throws SQLException;
 
-    public Cursor rawQuery(String sql, String[] selectionArgs) throws SQLException;
+    public Cursor rawQuery(String sql, Object[] selectionArgs) throws SQLException;
 
-    public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
+    public Cursor query(String table, String[] columns, String selection, Object[] selectionArgs,
                            String groupBy, String having, String orderBy, String limit) throws SQLException;
 
     public Cursor queryDistinct(String table, String[] columns, String selection,
-                                   String[] selectionArgs, String groupBy, String having, String orderBy, String limit) throws SQLException;
+        Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) throws SQLException;
 }

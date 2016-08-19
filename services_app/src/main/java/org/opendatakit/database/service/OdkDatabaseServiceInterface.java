@@ -1213,7 +1213,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override public OdkDbChunk rawSqlQuery(String appName, OdkDbHandle dbHandleName,
-      String sqlCommand, String[] sqlBindArgs) throws RemoteException {
+      String sqlCommand, BindArgs sqlBindArgs) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -1222,7 +1222,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OdkDbTable result = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, sqlCommand, sqlBindArgs);
+          .rawSqlQuery(db, sqlCommand, sqlBindArgs.bindArgs);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
