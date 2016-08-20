@@ -51,6 +51,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class InstanceProvider extends ContentProvider {
 
@@ -629,7 +630,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
+  public synchronized int update(Uri uri, ContentValues cv, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -696,18 +697,23 @@ public class InstanceProvider extends ContentProvider {
       }
 
       // update the values string...
-      if (values.containsKey(InstanceColumns.XML_PUBLISH_STATUS)) {
+      if (cv.containsKey(InstanceColumns.XML_PUBLISH_STATUS)) {
         Date xmlPublishDate = new Date();
-        values.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
+        cv.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(xmlPublishDate.getTime()));
-        String xmlPublishStatus = values.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
-        if (values.containsKey(InstanceColumns.DISPLAY_SUBTEXT) == false) {
+        String xmlPublishStatus = cv.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
+        if (cv.containsKey(InstanceColumns.DISPLAY_SUBTEXT) == false) {
           String text = getDisplaySubtext(xmlPublishStatus, xmlPublishDate);
-          values.put(InstanceColumns.DISPLAY_SUBTEXT, text);
+          cv.put(InstanceColumns.DISPLAY_SUBTEXT, text);
         }
       }
 
-      String[] args = new String[1];
+      Map<String,Object> values = new HashMap<String,Object>();
+      for ( String key : cv.keySet()) {
+        values.put(key, cv.get(key));
+      }
+
+      Object[] args = new String[1];
       for (IdStruct idStruct : idStructs) {
         args[0] = idStruct.idUploadsTable;
         count += db.update(DatabaseConstants.UPLOADS_TABLE_NAME, values,

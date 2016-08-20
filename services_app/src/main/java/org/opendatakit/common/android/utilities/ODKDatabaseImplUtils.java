@@ -50,8 +50,14 @@ import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 public class ODKDatabaseImplUtils {
 
@@ -335,7 +341,7 @@ public class ODKDatabaseImplUtils {
   private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs,
       String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
 
-    Map<String, Integer> mElementKeyToIndex = null;
+    HashMap<String, Integer> mElementKeyToIndex = null;
     String[] mElementKeyForIndex = null;
 
     if (!c.moveToFirst()) {
@@ -823,7 +829,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
 
-    ContentValues cvTableDef = new ContentValues();
+    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
     cvTableDef.put(TableDefinitionsColumns.SCHEMA_ETAG, schemaETag);
     cvTableDef.put(TableDefinitionsColumns.LAST_DATA_ETAG, lastDataETag);
 
@@ -858,7 +864,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
 
-    ContentValues cvTableDef = new ContentValues();
+    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
     cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME,
         TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 
@@ -1107,7 +1113,7 @@ public class ODKDatabaseImplUtils {
   public void replaceDBTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
     validateKVSEntry(db.getAppName(), e.tableId, e);
 
-    ContentValues values = new ContentValues();
+    TreeMap<String,Object> values = new TreeMap<String,Object>();
     values.put(KeyValueStoreColumns.TABLE_ID, e.tableId);
     values.put(KeyValueStoreColumns.PARTITION, e.partition);
     values.put(KeyValueStoreColumns.ASPECT, e.aspect);
@@ -1404,10 +1410,10 @@ public class ODKDatabaseImplUtils {
     }
 
     // Add the table id into table definitions
-    ContentValues cvTableDef = new ContentValues();
+    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
     cvTableDef.put(TableDefinitionsColumns.TABLE_ID, tableId);
-    cvTableDef.putNull(TableDefinitionsColumns.SCHEMA_ETAG);
-    cvTableDef.putNull(TableDefinitionsColumns.LAST_DATA_ETAG);
+    cvTableDef.put(TableDefinitionsColumns.SCHEMA_ETAG, null);
+    cvTableDef.put(TableDefinitionsColumns.LAST_DATA_ETAG, null);
     cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME, -1);
 
     db.replaceOrThrow(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, cvTableDef);
@@ -1487,7 +1493,7 @@ public class ODKDatabaseImplUtils {
     String colName = column.getElementKey();
 
     // Create column definition
-    ContentValues cvColDefVal = new ContentValues();
+    TreeMap<String,Object> cvColDefVal = new TreeMap<String,Object>();
     cvColDefVal.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_KEY, colName);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_NAME, column.getElementName());
@@ -2017,7 +2023,7 @@ public class ODKDatabaseImplUtils {
         .format("%s = ? AND %s IS NULL", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
     Object[] whereArgs = { rowId };
 
-    ContentValues cv = new ContentValues();
+    TreeMap<String,Object> cv = new TreeMap<String,Object>();
     cv.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
     cv.put(DataTableColumns.CONFLICT_TYPE, conflictType);
 
@@ -2069,8 +2075,8 @@ public class ODKDatabaseImplUtils {
       whereArgs = new Object[] { rowId, conflictType };
     }
 
-    ContentValues cv = new ContentValues();
-    cv.putNull(DataTableColumns.CONFLICT_TYPE);
+    TreeMap<String,Object> cv = new TreeMap<String,Object>();
+    cv.put(DataTableColumns.CONFLICT_TYPE, null);
     cv.put(DataTableColumns.SYNC_STATE, syncState.name());
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2244,7 +2250,7 @@ public class ODKDatabaseImplUtils {
 
       } else if (syncState != SyncState.in_conflict) {
 
-        ContentValues values = new ContentValues();
+        TreeMap<String,Object> values = new TreeMap<String,Object>();
         values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
@@ -2536,11 +2542,32 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    cvDataTableVal.putAll(cvValues);
+    for (String key: cvValues.keySet()) {
+      cvDataTableVal.put(key, cvValues.get(key));
+    }
 
     upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, false,
+        activeUser, rolesList, locale, false);
+  }
+
+  private void updateRowWithId(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, Map<String,Object> cvValues, String rowId, String activeUser,
+      String rolesList, String locale) throws ActionNotAuthorizedException {
+
+    // TODO: make sure caller passes in the correct roleList for the use case.
+    // TODO: for multi-step sync actions, we probably need an internal variant of this.
+
+    if (cvValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    if (!cvValues.containsKey(DataTableColumns.ID)) {
+      throw new IllegalArgumentException(t + ": No rowId in cvValues map " + tableId);
+    }
+
+    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvValues, true, false,
         activeUser, rolesList, locale, false);
   }
 
@@ -2573,9 +2600,11 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    cvDataTableVal.putAll(cvValues);
+    for (String key: cvValues.keySet()) {
+      cvDataTableVal.put(key, cvValues.get(key));
+    }
 
     try {
       upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
@@ -2766,12 +2795,14 @@ public class ODKDatabaseImplUtils {
       // restored to the proper (conflict_type, sync_state) values.
       //
       // No need to specify them here.
-      ContentValues updateValues = new ContentValues();
+      TreeMap<String,Object> updateValues = new TreeMap<String,Object>();
+      updateValues.put(DataTableColumns.ID, rowId);
       updateValues
           .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
       // take the server's filter metadata values ...
-      ContentValues privilegedUpdateValues = new ContentValues();
+      TreeMap<String,Object> privilegedUpdateValues = new TreeMap<String,Object>();
+      privilegedUpdateValues.put(DataTableColumns.ID, rowId);
       privilegedUpdateValues
           .put(DataTableColumns.FILTER_TYPE, serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
       privilegedUpdateValues.put(DataTableColumns.FILTER_VALUE,
@@ -2923,10 +2954,14 @@ public class ODKDatabaseImplUtils {
             "Local row is marked for deletion -- blending does not make sense for rowId: " + rowId);
       }
 
+      HashMap<String,Object> updateValues = new HashMap<String,Object>();
+      for (String key : cvValues.keySet()) {
+        updateValues.put(key, cvValues.get(key));
+      }
+
       // clean up the incoming map of server values to retain
-      cleanUpValuesMap(orderedColumns, cvValues);
-      // update the local conflict record with the local's changes
-      ContentValues updateValues = cvValues;
+      cleanUpValuesMap(orderedColumns, updateValues);
+      updateValues.put(DataTableColumns.ID, rowId);
       updateValues
           .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
@@ -2935,12 +2970,6 @@ public class ODKDatabaseImplUtils {
       // restored to the proper (conflict_type, sync_state) values.
       //
       // No need to specify them here.
-
-      // take the server's filter metadata values ...
-      updateValues
-          .put(DataTableColumns.FILTER_TYPE, serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
-      updateValues.put(DataTableColumns.FILTER_VALUE,
-          serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
 
       // but take the local's metadata values (i.e., do not change these
       // during the update) ...
@@ -2953,6 +2982,18 @@ public class ODKDatabaseImplUtils {
       updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
           localRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
+      // take the server's filter metadata values ...
+      TreeMap<String,Object> privilegedUpdateValues = new TreeMap<String,Object>();
+      privilegedUpdateValues.put(DataTableColumns.ID, rowId);
+      privilegedUpdateValues
+          .put(DataTableColumns.FILTER_TYPE, serverRow.getDataByKey(DataTableColumns.FILTER_TYPE));
+      privilegedUpdateValues.put(DataTableColumns.FILTER_VALUE,
+          serverRow.getDataByKey(DataTableColumns.FILTER_VALUE));
+      privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+          serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
+      privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
+          serverRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
+
       // delete the record of the server row
       deleteServerConflictRowWithId(db, tableId, rowId);
 
@@ -2963,6 +3004,11 @@ public class ODKDatabaseImplUtils {
       // update local with server's changes
       updateRowWithId(db, tableId, orderedColumns, updateValues, rowId, activeUser, rolesList,
           locale);
+
+      // update as if user has admin privileges.
+      // do this so we can update the filter type and filter value
+      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues, rowId,
+          activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -3054,7 +3100,8 @@ public class ODKDatabaseImplUtils {
 
       } else {
         // update the local conflict record with the server's changes
-        ContentValues updateValues = new ContentValues();
+        HashMap<String,Object> updateValues = new HashMap<String,Object>();
+        updateValues.put(DataTableColumns.ID, rowId);
         updateValues
             .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
@@ -3218,8 +3265,10 @@ public class ODKDatabaseImplUtils {
         // TODO: is this even valid any more? I think we disallow this in the AIDL flow.
 
         String rowIdToUse = ODKDataUtils.genUUID();
-        ContentValues currValues = new ContentValues();
-        currValues.putAll(cvValues);
+        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        for (String key : cvValues.keySet()) {
+          currValues.put(key, cvValues.get(key));
+        }
         currValues.put(DataTableColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
@@ -3240,8 +3289,10 @@ public class ODKDatabaseImplUtils {
 
       // Inserting a checkpoint for the first time
       if (c.getCount() <= 0) {
-        ContentValues currValues = new ContentValues();
-        currValues.putAll(cvValues);
+        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        for (String key : cvValues.keySet()) {
+          currValues.put(key, cvValues.get(key));
+        }
         currValues.put(DataTableColumns._ID, rowId);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
@@ -3256,9 +3307,10 @@ public class ODKDatabaseImplUtils {
               t + ":  A checkpoint cannot be added for a row that is in conflict");
         }
 
-        ContentValues currValues = new ContentValues();
-
-        currValues.putAll(cvValues);
+        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        for (String key : cvValues.keySet()) {
+          currValues.put(key, cvValues.get(key));
+        }
 
         // This is unnecessary
         // We should only have one row at this point
@@ -3283,7 +3335,7 @@ public class ODKDatabaseImplUtils {
 
           // set savepoint type to null to mark this as a checkpoint
           if (name.equals(DataTableColumns.SAVEPOINT_TYPE)) {
-            currValues.putNull(name);
+            currValues.put(name, null);
             continue;
           }
 
@@ -3300,7 +3352,7 @@ public class ODKDatabaseImplUtils {
           }
 
           if (c.isNull(i)) {
-            currValues.putNull(name);
+            currValues.put(name, null);
             continue;
           }
 
@@ -3328,11 +3380,11 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private void insertValueIntoContentValues(ContentValues cv, Class<?> theClass, String name,
+  private void insertValueIntoContentValues(Map<String,Object> cv, Class<?> theClass, String name,
       Object obj) {
 
     if (obj == null) {
-      cv.putNull(name);
+      cv.put(name, null);
       return;
     }
 
@@ -3388,9 +3440,11 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    cvDataTableVal.putAll(cvValues);
+    for ( String key : cvValues.keySet() ) {
+      cvDataTableVal.put(key, cvValues.get(key));
+    }
 
     // TODO: verify that all fields are specified
     try {
@@ -3427,9 +3481,11 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    cvDataTableVal.putAll(cvValues);
+    for ( String key : cvValues.keySet() ) {
+      cvDataTableVal.put(key, cvValues.get(key));
+    }
 
     upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, false,
         activeUser, rolesList, locale, false);
@@ -3448,7 +3504,7 @@ public class ODKDatabaseImplUtils {
    * @param isNewRow
    */
   private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, String activeUser, String rolesList,
+      OrderedColumns orderedColumns, HashMap<String,Object> cvValues, String activeUser, String rolesList,
       String locale, boolean isNewRow, String priorFilterType, String priorFilterValue)
       throws ActionNotAuthorizedException {
     String rowId = null;
@@ -3457,12 +3513,12 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.putAll(cvValues);
 
     if (cvDataTableVal.containsKey(DataTableColumns.ID)) {
 
-      rowId = cvDataTableVal.getAsString(DataTableColumns.ID);
+      rowId = (String) cvDataTableVal.get(DataTableColumns.ID);
       if (rowId == null) {
         throw new IllegalArgumentException(DataTableColumns.ID + ", if specified, cannot be null");
       }
@@ -3477,11 +3533,11 @@ public class ODKDatabaseImplUtils {
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
-      cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
+      cvDataTableVal.put(DataTableColumns.CONFLICT_TYPE, null);
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
-      cvDataTableVal.putNull(DataTableColumns.FORM_ID);
+      cvDataTableVal.put(DataTableColumns.FORM_ID, null);
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
@@ -3491,7 +3547,7 @@ public class ODKDatabaseImplUtils {
 
     if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) || (
         cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
-      cvDataTableVal.putNull(DataTableColumns.SAVEPOINT_TYPE);
+      cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, null);
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
@@ -3557,7 +3613,7 @@ public class ODKDatabaseImplUtils {
         // for this call path, syncState is already updated by caller
 
         tss.allowRowChange(activeUser, rolesArray,
-            cvDataTableVal.getAsString(DataTableColumns.SYNC_STATE), priorFilterType,
+            (String) cvDataTableVal.get(DataTableColumns.SYNC_STATE), priorFilterType,
             priorFilterValue, RowChange.CHANGE_ROW);
       }
 
@@ -3850,7 +3906,7 @@ public class ODKDatabaseImplUtils {
    * TODO: This is broken w.r.t. updates of partial fields
    */
   private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues cvValues, boolean shouldUpdate,
+      OrderedColumns orderedColumns, Map<String,Object> cvValues, boolean shouldUpdate,
       boolean asServerRequestedChange, String activeUser, String rolesList, String locale,
       boolean asCsvRequestedChange) throws ActionNotAuthorizedException {
 
@@ -3869,7 +3925,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
-    ContentValues cvDataTableVal = new ContentValues();
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.putAll(cvValues);
 
     // if this is a server-requested change, all the user fields and admin columns should be specified.
@@ -3915,7 +3971,7 @@ public class ODKDatabaseImplUtils {
         // and all local changes are flagged local. Remote only exists
         // if the server is in conflict.
 
-        rowId = cvDataTableVal.getAsString(DataTableColumns.ID);
+        rowId = (String) cvDataTableVal.get(DataTableColumns.ID);
         if (rowId == null) {
           throw new IllegalArgumentException(
               DataTableColumns.ID + ", if specified, cannot be null");
@@ -4076,7 +4132,7 @@ public class ODKDatabaseImplUtils {
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.CONFLICT_TYPE)) {
-          cvDataTableVal.putNull(DataTableColumns.CONFLICT_TYPE);
+          cvDataTableVal.put(DataTableColumns.CONFLICT_TYPE, null);
         }
 
         if (!asServerRequestedChange) {
@@ -4091,7 +4147,7 @@ public class ODKDatabaseImplUtils {
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
-          cvDataTableVal.putNull(DataTableColumns.FORM_ID);
+          cvDataTableVal.put(DataTableColumns.FORM_ID, null);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
@@ -4150,7 +4206,7 @@ public class ODKDatabaseImplUtils {
     String whereClause = DataTableColumns.ID + " = ?";
     Object[] whereArgs = { rowId };
 
-    ContentValues cvDataTableVal = new ContentValues();
+    TreeMap<String,Object> cvDataTableVal = new TreeMap<String,Object>();
 
     cvDataTableVal.put(DataTableColumns.ROW_ETAG, rowETag);
     cvDataTableVal.put(DataTableColumns.SYNC_STATE, state.name());
@@ -4200,9 +4256,9 @@ public class ODKDatabaseImplUtils {
    * @param orderedColumns
    * @param values
    */
-  private void cleanUpValuesMap(OrderedColumns orderedColumns, ContentValues values) {
+  private void cleanUpValuesMap(OrderedColumns orderedColumns, Map<String,Object> values) {
 
-    Map<String, String> toBeResolved = new HashMap<String, String>();
+    TreeMap<String, String> toBeResolved = new TreeMap<String, String>();
 
     for (String key : values.keySet()) {
       if (DataTableColumns.CONFLICT_TYPE.equals(key)) {
@@ -4233,7 +4289,7 @@ public class ODKDatabaseImplUtils {
       // OK it is one of the data columns
       ColumnDefinition cp = orderedColumns.find(key);
       if (!cp.isUnitOfRetention()) {
-        toBeResolved.put(key, values.getAsString(key));
+        toBeResolved.put(key, (String) values.get(key));
       }
     }
 
@@ -4244,9 +4300,9 @@ public class ODKDatabaseImplUtils {
 
     while (!toBeResolved.isEmpty()) {
 
-      Map<String, String> moreToResolve = new HashMap<String, String>();
+      TreeMap<String, String> moreToResolve = new TreeMap<String, String>();
 
-      for (Map.Entry<String, String> entry : toBeResolved.entrySet()) {
+      for (TreeMap.Entry<String, String> entry : toBeResolved.entrySet()) {
         String key = entry.getKey();
         String json = entry.getValue();
         if (json == null) {

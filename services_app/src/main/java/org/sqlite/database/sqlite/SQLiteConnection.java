@@ -21,7 +21,6 @@
 package org.sqlite.database.sqlite;
 
 /* import dalvik.system.BlockGuard; */
-import android.content.ContentValues;
 import android.text.TextUtils;
 import android.util.Log;
 import org.opendatakit.common.android.database.AppNameSharedStateContainer;
@@ -37,7 +36,6 @@ import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
-import android.os.ParcelFileDescriptor;
 import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
@@ -1220,7 +1218,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            column values
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
-   public long insert(String table, String nullColumnHack, ContentValues values) {
+   public long insert(String table, String nullColumnHack, Map<String,Object> values) {
       try {
          return insertWithOnConflict(table, nullColumnHack, values, CONFLICT_NONE);
       } catch (SQLException e) {
@@ -1246,7 +1244,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @throws SQLException
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
-   public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
+   public long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
        throws SQLException {
       return insertWithOnConflict(table, nullColumnHack, values, CONFLICT_NONE);
    }
@@ -1268,7 +1266,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
    public long replaceOrThrow(String table, String nullColumnHack,
-       ContentValues initialValues) throws SQLException {
+       Map<String,Object> initialValues) throws SQLException {
       return insertWithOnConflict(table, nullColumnHack, initialValues, CONFLICT_REPLACE);
    }
 
@@ -1293,7 +1291,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * OR -1 if any error
     */
    public long insertWithOnConflict(String table, String nullColumnHack,
-       ContentValues initialValues, int conflictAlgorithm) {
+       Map<String,Object> initialValues, int conflictAlgorithm) {
       StringBuilder sql = new StringBuilder();
       sql.append("INSERT");
       sql.append(CONFLICT_VALUES[conflictAlgorithm]);
@@ -1354,7 +1352,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            will be replaced by the values from whereArgs.
     * @return the number of rows affected
     */
-   public int update(String table, ContentValues values, String whereClause, Object[] whereArgs) {
+   public int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) {
       return updateWithOnConflict(table, values, whereClause, whereArgs, CONFLICT_NONE);
    }
 
@@ -1371,7 +1369,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param conflictAlgorithm for update conflict resolver
     * @return the number of rows affected
     */
-   public int updateWithOnConflict(String table, ContentValues values,
+   public int updateWithOnConflict(String table, Map<String,Object> values,
        String whereClause, Object[] whereArgs, int conflictAlgorithm) {
       if (values == null || values.size() == 0) {
          throw new IllegalArgumentException("Empty values");
@@ -1412,15 +1410,15 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * <p>
     * For INSERT statements, use any of the following instead.
     * <ul>
-    *   <li>{@link #insert(String, String, ContentValues)}</li>
-    *   <li>{@link #insertOrThrow(String, String, ContentValues)}</li>
-    *   <li>{@link #insertWithOnConflict(String, String, ContentValues, int)}</li>
+    *   <li>{@link #insert(String, String, Map<String,Object>)}</li>
+    *   <li>{@link #insertOrThrow(String, String, Map<String,Object>)}</li>
+    *   <li>{@link #insertWithOnConflict(String, String, Map<String,Object>, int)}</li>
     * </ul>
     * <p>
     * For UPDATE statements, use any of the following instead.
     * <ul>
-    *   <li>{@link #update(String, ContentValues, String, Object[])}</li>
-    *   <li>{@link #updateWithOnConflict(String, ContentValues, String, Object[], int)}</li>
+    *   <li>{@link #update(String, Map<String,Object>, String, Object[])}</li>
+    *   <li>{@link #updateWithOnConflict(String, Map<String,Object>, String, Object[], int)}</li>
     * </ul>
     * <p>
     * For DELETE statements, use any of the following instead.

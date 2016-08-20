@@ -1,9 +1,9 @@
 package org.opendatakit.common.android.database;
 
-import android.content.ContentValues;
 import android.database.Cursor;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.sqlite.database.SQLException;
+
+import java.util.Map;
 
 /**
  *  @author clarlars@gmail.com
@@ -119,14 +119,14 @@ public interface OdkConnectionInterface {
 
     public void endTransaction() throws SQLException;
 
-    public int update(String table, ContentValues values, String whereClause, Object[] whereArgs) throws SQLException;
+    public int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) throws SQLException;
 
     public int delete(String table, String whereClause, Object[] whereArgs) throws SQLException;
 
-    public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
+    public long replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
             throws SQLException;
 
-    public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
+    public long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
             throws SQLException;
 
     public void execSQL(String sql, Object[] bindArgs) throws SQLException;

@@ -19,9 +19,11 @@ import android.database.Cursor;
 import android.test.AndroidTestCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
+import org.apache.commons.lang3.SystemUtils;
 import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.*;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
@@ -3196,12 +3198,24 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
+    // NOTE: all metadata fields need to be specified
     // server has a change...
     ContentValues updates = new ContentValues();
+    // data value
+    updates.put(testCol, testVal + 6);
+    // metadata fields
     updates.put(DataTableColumns.CONFLICT_TYPE, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
     updates.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
     updates.put(DataTableColumns.ROW_ETAG, ODKDataUtils.genUUID());
-    updates.put(testCol, testVal + 6);
+    // insert in_conflict server row
+    updates.put(DataTableColumns.FORM_ID, "serverForm");
+    updates.put(DataTableColumns.LOCALE, currentLocale);
+    updates.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
+        TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+    updates.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    updates.put(DataTableColumns.SAVEPOINT_CREATOR, "mailto:server@gmail.com");
+    updates.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    updates.put(DataTableColumns.FILTER_VALUE, "mailto:server@gmail.com");
 
     // Place row in conflict
     int conflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;

@@ -1213,7 +1213,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override public OdkDbChunk rawSqlQuery(String appName, OdkDbHandle dbHandleName,
-      String sqlCommand, BindArgs sqlBindArgs) throws RemoteException {
+      String sqlCommand, BindArgs sqlBindArgs, int limit) throws RemoteException {
 
     OdkConnectionInterface db = null;
 

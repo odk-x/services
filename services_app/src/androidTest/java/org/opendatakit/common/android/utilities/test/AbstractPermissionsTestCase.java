@@ -970,13 +970,13 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, isLocked));
         cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
-            otherUser, RoleConsts.USER_ROLES_LIST, isLocked || isLockedAndIsLocalDelete));
+            otherUser, RoleConsts.USER_ROLES_LIST, isLocked));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, true));
         cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, true));
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
-            otherUser, RoleConsts.USER_ROLES_LIST, isLocked ? true : !isLocalDelete));
+            otherUser, RoleConsts.USER_ROLES_LIST, isLocked || isLocalDelete));
         // super-user can do anything
         cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));

@@ -14,7 +14,6 @@
 
 package org.opendatakit.common.android.database;
 
-import android.content.ContentValues;
 import android.database.Cursor;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -25,6 +24,7 @@ import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
+import java.util.Map;
 
 public class AndroidOdkConnection implements OdkConnectionInterface{
   final Object mutex;
@@ -389,7 +389,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
       }
   }
 
-  public int update(String table, ContentValues values, String whereClause, Object[] whereArgs) {
+  public int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) {
      StringBuilder b = new StringBuilder();
      b.append("delete(\"").append(table).append("\",...,");
      if ( whereClause == null ) {
@@ -451,7 +451,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
   }
 
-  public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
+  public long replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
       throws SQLException {
      StringBuilder b = new StringBuilder();
      b.append("replaceOrThrow(\"").append(table).append("\",");
@@ -478,7 +478,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      }
   }
 
-  public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
+  public long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
       throws SQLException {
      StringBuilder b = new StringBuilder();
      b.append("insertOrThrow(\"").append(table).append("\",");
