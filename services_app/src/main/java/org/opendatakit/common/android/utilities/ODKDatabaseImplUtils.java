@@ -321,7 +321,8 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable rawSqlQuery(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs) {
+      Object[] sqlBindArgs, int sqlLimit) {
+    // TODO: Use sqlLimit
     Cursor c = null;
     try {
       c = db.rawQuery(sqlCommand, sqlBindArgs);
@@ -429,7 +430,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId });
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0);
 
     return table;
   }
@@ -481,7 +482,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId });
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, 0);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -2763,7 +2764,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId });
+          new Object[] { rowId }, 0);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -2922,7 +2923,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId });
+          new Object[] { rowId }, 0);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3058,7 +3059,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId });
+          new Object[] { rowId }, 0);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
