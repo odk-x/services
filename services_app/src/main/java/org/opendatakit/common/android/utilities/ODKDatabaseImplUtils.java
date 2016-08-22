@@ -18,6 +18,7 @@ package org.opendatakit.common.android.utilities;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import android.util.Log;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -416,6 +417,238 @@ public class ODKDatabaseImplUtils {
     } while (c.moveToNext());
     c.close();
     return table;
+  }
+
+  /************** LOCAL ONLY TABLE OPERATIONS ***************/
+
+  /**
+   * Create a local only table and prepend the given id with an "L_"
+   *
+   * @param db
+   * @param tableId
+   * @param columns
+   * @return
+   */
+  public OrderedColumns createLocalOnlyDBTableWithColumns(OdkConnectionInterface db,
+      String tableId, List<Column> columns) {
+    // At least for now we are prepending all non-synchronized tables with a "L_" to mark them as
+    // such
+    tableId = "L_" + tableId;
+
+    boolean dbWithinTransaction = db.inTransaction();
+    boolean success = false;
+
+    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      createDBTableWithColumns(db, tableId, orderedDefs, false);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+      success = true;
+      return orderedDefs;
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+      if (success == false) {
+
+        // Get the names of the columns
+        StringBuilder colNames = new StringBuilder();
+        if (columns != null) {
+          for (Column column : columns) {
+            colNames.append(" ").append(column.getElementKey()).append(",");
+          }
+          if (colNames != null && colNames.length() > 0) {
+            colNames.deleteCharAt(colNames.length() - 1);
+            WebLogger.getLogger(db.getAppName()).e(t,
+                "createLocalOnlyDbTableWithColumns: Error while adding table " + tableId
+                    + " with columns:" + colNames.toString());
+          }
+        } else {
+          WebLogger.getLogger(db.getAppName()).e(t,
+              "createLocalOnlyDbTableWithColumns: Error while adding table " + tableId
+                  + " with columns: null");
+        }
+      }
+    }
+  }
+
+  /**
+   * Drop the given local only table
+   *
+   * @param db
+   * @param tableId
+   */
+  public void deleteLocalOnlyDBTable(OdkConnectionInterface db,
+      final String tableId) throws ActionNotAuthorizedException {
+
+    if (!tableId.startsWith("L_")) {
+      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
+          "Local only tables must start with 'L_'");
+      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw e;
+    }
+
+    boolean dbWithinTransaction = db.inTransaction();
+
+    Object[] whereArgs = { tableId };
+
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      // Drop the table used for the formId
+      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";", null);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Insert a row into a local only table
+   *
+   * @param db
+   * @param tableId
+   * @param rowValues
+   * @throws ActionNotAuthorizedException
+   */
+  public void insertLocalOnlyRow(OdkConnectionInterface db, String tableId,
+      ContentValues rowValues) throws ActionNotAuthorizedException {
+
+    if (!tableId.startsWith("L_")) {
+      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
+          "Local only tables must start with 'L_'");
+      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw e;
+    }
+
+    if (rowValues == null || rowValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    for ( String key : rowValues.keySet() ) {
+      cvDataTableVal.put(key, rowValues.get(key));
+    }
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.insertOrThrow(tableId, null, cvDataTableVal);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Update a row in a local only table
+   *
+   * @param db
+   * @param tableId
+   * @param rowValues
+   * @param whereClause
+   * @param whereArgs
+   * @throws ActionNotAuthorizedException
+   */
+  public void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
+      ContentValues rowValues, String whereClause, String[] whereArgs)
+      throws ActionNotAuthorizedException {
+
+    if (!tableId.startsWith("L_")) {
+      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
+          "Local only tables must start with 'L_'");
+      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw e;
+    }
+
+    if (rowValues == null || rowValues.size() <= 0) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
+    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    for ( String key : rowValues.keySet() ) {
+      cvDataTableVal.put(key, rowValues.get(key));
+    }
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.update(tableId, cvDataTableVal, whereClause, whereArgs);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Delete a row in a local only table
+   *
+   * @param db
+   * @param tableId
+   * @param whereClause
+   * @param whereArgs
+   * @throws ActionNotAuthorizedException
+   */
+  public void deleteLocalOnlyRow(OdkConnectionInterface db, String tableId, String whereClause,
+      String[] whereArgs) throws ActionNotAuthorizedException {
+
+    if (!tableId.startsWith("L_")) {
+      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
+          "Local only tables must start with 'L_'");
+      WebLogger.getLogger(db.getAppName()).e(t, "Unable to delete from this table: " + tableId);
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw e;
+    }
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.delete(tableId, whereClause, whereArgs);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
   }
 
   /**
@@ -1432,16 +1665,24 @@ public class ODKDatabaseImplUtils {
    * @param orderedDefs
    */
   private void createDBTableWithColumns(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedDefs) {
+      OrderedColumns orderedDefs, boolean isSynchronized) {
+
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
 
-    String createTableCmd = getUserDefinedTableCreationStatement(tableId);
+    String createTableCmd;
+    if (isSynchronized) {
+      createTableCmd = getUserDefinedTableCreationStatement(tableId);
+    } else {
+      createTableCmd  = "CREATE TABLE IF NOT EXISTS " + tableId + " (";
+    }
+
 
     StringBuilder createTableCmdWithCols = new StringBuilder();
     createTableCmdWithCols.append(createTableCmd);
 
+    boolean first = true;
     for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
       if (!column.isUnitOfRetention()) {
         continue;
@@ -1469,22 +1710,30 @@ public class ODKDatabaseImplUtils {
       } else {
         throw new IllegalStateException("unexpected ElementDataType: " + dataType.name());
       }
-      //@formatter:off
-      createTableCmdWithCols.append(", ").append(column.getElementKey())
-        .append(" ").append(dbType).append(" NULL");
-      //@formatter:on
+
+      if (!first) {
+        createTableCmdWithCols.append(", ");
+      }
+
+      createTableCmdWithCols.append(column.getElementKey()).append(" ").append(dbType)
+          .append(" NULL");
+      first = false;
     }
 
     createTableCmdWithCols.append(");");
+    String createTableCmdStr = createTableCmdWithCols.toString();
+    Log.i("BALA", createTableCmdStr);
 
     db.execSQL(createTableCmdWithCols.toString(), null);
 
-    // Create the metadata for the table - table def and KVS
-    createDBTableMetadata(db, tableId);
+    if (isSynchronized) {
+      // Create the metadata for the table - table def and KVS
+      createDBTableMetadata(db, tableId);
 
-    // Now need to call the function to write out all the column values
-    for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
-      createNewColumnMetadata(db, tableId, column);
+      // Now need to call the function to write out all the column values
+      for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
+        createNewColumnMetadata(db, tableId, column);
+      }
     }
   }
 
@@ -1633,14 +1882,14 @@ public class ODKDatabaseImplUtils {
       String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
-    // TODO: Remove OrderedColumns
+
     OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, tableId, orderedDefs);
+        createDBTableWithColumns(db, tableId, orderedDefs, true);
       } else {
         verifyTableSchema(db, tableId, orderedDefs);
       }
@@ -1703,7 +1952,7 @@ public class ODKDatabaseImplUtils {
       }
       boolean created = false;
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, tableId, orderedDefs);
+        createDBTableWithColumns(db, tableId, orderedDefs, true);
         created = true;
       } else {
         // confirm that the column definitions are unchanged...

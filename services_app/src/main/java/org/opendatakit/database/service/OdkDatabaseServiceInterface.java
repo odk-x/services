@@ -22,12 +22,14 @@ import android.util.Log;
 
 import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKCursorUtils;
@@ -42,7 +44,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
@@ -205,6 +207,218 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
            //    OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
            // }
         }
+      }
+    }
+  }
+
+  /**
+   * Create a local only table and prepend the given id with an "L_"
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param columns
+   * @return
+   */
+  @Override public OdkDbChunk createLocalOnlyDbTableWithColumns(String appName, OdkDbHandle dbHandleName,
+      String tableId, ColumnList columns) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      OrderedColumns results = ODKDatabaseImplUtils.get()
+          .createLocalOnlyDBTableWithColumns(db, tableId, columns.getColumns());
+
+      return getAndCacheChunks(results);
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("createLocalOnlyDbTableWithColumns",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  /**
+   * Drop the given local only table
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   */
+  @Override public void deleteLocalOnlyDBTable(String appName, OdkDbHandle dbHandleName,
+      String tableId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      ODKDatabaseImplUtils.get().deleteLocalOnlyDBTable(db, tableId);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("deleteLocalOnlyDbTable",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  /**
+   * Insert a row into a local only table
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowValues
+   * @throws ActionNotAuthorizedException
+   */
+  @Override
+  public void insertLocalOnlyRow(String appName, OdkDbHandle dbHandleName, String tableId,
+      ContentValues rowValues) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      ODKDatabaseImplUtils.get().insertLocalOnlyRow(db, tableId, rowValues);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("insertLocalOnlyRow",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  /**
+   * Update a row in a local only table
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param rowValues
+   * @param whereClause
+   * @param whereArgs
+   * @throws ActionNotAuthorizedException
+   */
+  @Override public void updateLocalOnlyRow(String appName, OdkDbHandle dbHandleName, String tableId,
+      ContentValues rowValues, String whereClause, String[] whereArgs)
+      throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      ODKDatabaseImplUtils.get()
+          .updateLocalOnlyRow(db, tableId, rowValues, whereClause, whereArgs);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("updateLocalOnlyRow",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  /**
+   * Delete a row in a local only table
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param whereClause
+   * @param whereArgs
+   * @throws ActionNotAuthorizedException
+   */
+  @Override public void deleteLocalOnlyRow(String appName, OdkDbHandle dbHandleName, String tableId,
+      String whereClause, String[] whereArgs) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      ODKDatabaseImplUtils.get()
+          .deleteLocalOnlyRow(db, tableId, whereClause, whereArgs);
+
+    } catch (Exception e) {
+      String msg = e.getLocalizedMessage();
+      if (msg == null)
+        msg = e.getMessage();
+      if (msg == null)
+        msg = e.toString();
+      msg = "Exception: " + msg;
+      WebLogger.getLogger(appName).e("deleteLocalOnlyRow",
+          appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+      WebLogger.getLogger(appName).printStackTrace(e);
+      throw new RemoteException(msg);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
       }
     }
   }
