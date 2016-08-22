@@ -100,9 +100,9 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, 0);
+          selectionArgs, 0, activeUser);
       table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -129,9 +129,9 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           selectionArgs = new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
               Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) };
 
-          baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, 0);
+              selectionArgs, 0, activeUser);
           table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
         }
       }

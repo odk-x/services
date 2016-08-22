@@ -24,6 +24,8 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
@@ -79,6 +81,10 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
     OdkConnectionInterface db = null;
 
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String activeUser = props.getActiveUser();
+
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
     Cursor forms = null;
@@ -103,9 +109,9 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, 0);
+          selectionArgs, 0, activeUser);
       table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -129,9 +135,9 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         }
 
         if ( tableSetChanged ) {
-          baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, 0);
+              selectionArgs, 0, activeUser);
           table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
         }
       }

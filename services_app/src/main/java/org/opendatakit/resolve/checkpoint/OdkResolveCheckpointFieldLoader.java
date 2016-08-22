@@ -25,6 +25,8 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -70,6 +72,10 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
 
     OdkConnectionInterface db = null;
 
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String activeUser = props.getActiveUser();
+
     UserTable table = null;
 
     try {
@@ -98,7 +104,8 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().getRowsWithId(db, mTableId, mRowId);
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, mTableId,
+          mRowId, activeUser);
       table = new UserTable(baseTable, orderedDefns, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
           OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
           adminColArr);

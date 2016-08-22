@@ -417,7 +417,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, tableId, rowId,
           activeUser, rolesList);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -457,7 +458,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId,
           activeUser, rolesList);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -559,7 +561,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().deleteRowWithId(db, tableId, rowId,
           activeUser, rolesList);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -608,7 +611,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
               .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
+          rowId, activeUser);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -714,12 +718,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OdkDbTable results = ODKDatabaseImplUtils.get()
-          .getRowsWithId(db, tableId, rowId);
+          .getRowsWithId(db, tableId, rowId, activeUser, rolesList);
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
@@ -751,12 +758,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OdkDbTable results = ODKDatabaseImplUtils.get()
-          .getMostRecentRowWithId(db, tableId, rowId);
+          .getMostRecentRowWithId(db, tableId, rowId, activeUser, rolesList);
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
@@ -1029,7 +1039,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
           .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
               rolesList, locale);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1072,7 +1083,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
           .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList, locale);
       OdkDbTable t = ODKDatabaseImplUtils.get()
-          .getMostRecentRowWithId(db, tableId, rowId);
+          .getMostRecentRowWithId(db, tableId, rowId, activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1127,7 +1138,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
               locale, asCsvRequestedChange);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
+          rowId, activeUser);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1185,8 +1197,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
           .privilegedPlaceRowIntoConflictWithId(db, tableId, orderedColumns, cvValues, rowId,
               localRowConflictType, activeUser, locale);
-      OdkDbTable t = ODKDatabaseImplUtils.get()
-          .getConflictingRowsInExistingDBTableWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().privilegedGetConflictingRowsWithId(db, tableId,
+          rowId, activeUser);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1217,12 +1229,15 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OdkDbTable result = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, sqlCommand, sqlBindArgs.bindArgs, sqlLimit);
+          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlLimit, activeUser, rolesList);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
@@ -1347,13 +1362,18 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, tableId,
+          rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1384,13 +1404,17 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
+    String activeUser = getActiveUser(appName);
+    String rolesList = getInternalRolesList(appName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get().saveAsCompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1516,7 +1540,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
           .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
               locale);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+          activeUser, rolesList);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {
@@ -1571,7 +1596,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       ODKDatabaseImplUtils.get()
               .privilegedUpdateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
                   locale, asCsvRequestedChange);
-      OdkDbTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId);
+      OdkDbTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
+          rowId, activeUser);
       db.setTransactionSuccessful();
       return getAndCacheChunks(t);
     } catch (Exception e) {

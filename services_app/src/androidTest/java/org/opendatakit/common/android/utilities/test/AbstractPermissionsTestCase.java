@@ -713,7 +713,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
       String identifyingDescription) {
     Cursor c = null;
     try {
-      c = ODKDatabaseImplUtils.get().query(db, tableId,
+      c = ODKDatabaseImplUtils.get().queryForTest(db, tableId,
           new String[] { DataTableColumns.FILTER_TYPE, DataTableColumns.FILTER_VALUE,
               DataTableColumns.SYNC_STATE, DataTableColumns.SAVEPOINT_TYPE},
           DataTableColumns.ID + "=?",

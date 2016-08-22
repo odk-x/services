@@ -137,7 +137,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       // this will not interact with the database if the
       // query string is found in the PreparedStatement cache.
       Cursor c = ODKDatabaseImplUtils.get()
-          .query(db, tableId, null, null, null, null, null, null, null);
+          .queryForTest(db, tableId, null, null, null, null, null, null, null);
       // we must get the count of rows to actually interact
       // with the database.
       c.getCount();
@@ -159,7 +159,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Check that the user defined rows are in the table
-    Cursor cursor = ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().queryForTest(db, tableId, null, null, null, null,
+        null,
         null, null);
     Cursor refCursor = db.query(tableId, null, null, null, null, null, null, null);
 
@@ -3231,9 +3232,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
     String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-    OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+    OdkDbTable baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, 0);
+        selectionArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null,
         adminColArr);
 
@@ -3261,9 +3262,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     // Run the query yet again to make sure that things worked as expected
-    baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+    baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, 0);
+        selectionArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 0);
@@ -4129,7 +4130,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // The moment of truth! test the queryDistinct
     // Get all of the rows of the database but only return testCol
     String [] retCols = {testCol};
-    Cursor cursor3 = ODKDatabaseImplUtils.get().queryDistinct(db, tableId, retCols, null, null,
+    Cursor cursor3 = ODKDatabaseImplUtils.get().queryDistinctForTest(db, tableId, retCols, null,
+        null,
         null, null, null, null);
     assertEquals(cursor3.getCount(), 1);
 

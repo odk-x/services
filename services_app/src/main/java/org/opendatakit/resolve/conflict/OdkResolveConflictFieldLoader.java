@@ -26,6 +26,8 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -76,6 +78,10 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
 
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String activeUser = props.getActiveUser();
+
     OdkConnectionInterface db = null;
 
     UserTable table = null;
@@ -110,10 +116,10 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
           " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL";
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { mRowId }, 0);
+          new String[] { mRowId }, 0, activeUser);
       table = new UserTable(baseTable, orderedDefns, whereClause, null, null, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

@@ -43,6 +43,7 @@ import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
@@ -283,6 +284,8 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
+   * TESTING ONLY
+   *
    * Perform a query with the given parameters.
    *
    * @param db
@@ -296,7 +299,7 @@ public class ODKDatabaseImplUtils {
    * @param limit
    * @return
    */
-  public Cursor queryDistinct(OdkConnectionInterface db, String table, String[] columns,
+  public Cursor queryDistinctForTest(OdkConnectionInterface db, String table, String[] columns,
       String selection, Object[] selectionArgs, String groupBy, String having, String orderBy,
       String limit) throws SQLiteException {
     Cursor c = db
@@ -304,7 +307,23 @@ public class ODKDatabaseImplUtils {
     return c;
   }
 
-  public Cursor query(OdkConnectionInterface db, String table, String[] columns, String selection,
+  /**
+   * TESTING ONLY
+   *
+   * @param db
+   * @param table
+   * @param columns
+   * @param selection
+   * @param selectionArgs
+   * @param groupBy
+   * @param having
+   * @param orderBy
+   * @param limit
+   * @return
+   * @throws SQLiteException
+   */
+  public Cursor queryForTest(OdkConnectionInterface db, String table, String[] columns, String
+      selection,
       Object[] selectionArgs, String groupBy, String having, String orderBy, String limit)
       throws SQLiteException {
     Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
@@ -313,20 +332,28 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Get a {@link OdkDbTable} for this table based on the given sql query. All
-   * columns from the table are returned.
+   * columns from the table are returned.  Up to sqlLimit rows are returned
+   * (zero is infinite).
+   *
+   * The result set is filtered according to the supplied rolesList if there
+   * is a FILTER_TYPE column present in the result set.
    *
    * @param db
    * @param sqlCommand  the query to run
    * @param sqlBindArgs the selection parameters
+   * @param sqlLimit max number of rows to return (zero is infinite)
+   * @param activeUser
+   * @param rolesList
    * @return
    */
-  public OdkDbTable rawSqlQuery(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, int sqlLimit) {
+  public OdkDbTable query(OdkConnectionInterface db, String sqlCommand,
+      Object[] sqlBindArgs, int sqlLimit, String activeUser, String rolesList) {
     // TODO: Use sqlLimit
     Cursor c = null;
     try {
       c = db.rawQuery(sqlCommand, sqlBindArgs);
-      OdkDbTable table = buildOdkDbTable(c, sqlCommand, sqlBindArgs);
+      OdkDbTable table = buildOdkDbTable(db, c, sqlCommand, sqlBindArgs, sqlLimit, activeUser,
+          rolesList);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -335,12 +362,35 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs) {
-    return buildOdkDbTable(c, sqlCommand, sqlBindArgs, null, null, null);
+  /**
+   * Get a {@link OdkDbTable} for this table based on the given sql query. All
+   * columns from the table are returned.
+   *
+   * The number of rows returned are limited to no greater than the sqlLimit (zero is infinite).
+   *
+   * @param db
+   * @param sqlCommand  the query to run
+   * @param sqlBindArgs the selection parameters
+   * @param sqlLimit the number of rows to return (zero is infinite)
+   * @param activeUser
+   * @return
+   */
+  public OdkDbTable privilegedQuery(OdkConnectionInterface db, String sqlCommand,
+      Object[] sqlBindArgs, int sqlLimit, String activeUser) {
+
+    return query(db, sqlCommand, sqlBindArgs, sqlLimit, activeUser, RoleConsts.ADMIN_ROLES_LIST);
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs,
-      String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
+  private OdkDbTable buildOdkDbTable(OdkConnectionInterface db, Cursor c, String sqlCommand, Object[] sqlBindArgs,
+      int sqlLimit, String activeUser, String rolesList) {
+    return buildOdkDbTable(db, c, sqlCommand, sqlBindArgs, null, null, null, sqlLimit, activeUser,
+        rolesList);
+  }
+
+  private OdkDbTable buildOdkDbTable(OdkConnectionInterface db, Cursor c, String sqlCommand, Object[]
+      sqlBindArgs,
+      String[] orderByElementKey, String[] orderByDirection, String[] primaryKey,
+      int sqlLimit, String activeUser, String rolesList) {
 
     HashMap<String, Integer> mElementKeyToIndex = null;
     String[] mElementKeyForIndex = null;
@@ -398,9 +448,38 @@ public class ODKDatabaseImplUtils {
       mElementKeyToIndex.put(columnName, i);
     }
 
+    // max row count is sqlLimit. If zero, don't specify anything.
     table = new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection, primaryKey,
-        mElementKeyForIndex, mElementKeyToIndex, rowCount);
+        mElementKeyForIndex, mElementKeyToIndex, (sqlLimit == 0) ? null : sqlLimit);
 
+    Integer idxFilterType = mElementKeyToIndex.get(DataTableColumns.FILTER_TYPE);
+    Integer idxFilterValue = mElementKeyToIndex.get(DataTableColumns.FILTER_VALUE);
+    Integer idxSyncState = mElementKeyToIndex.get(DataTableColumns.SYNC_STATE);
+    boolean filteringIsRequired = false;
+
+    if ( idxFilterType != null ) {
+
+      // figure out whether we have a privileged user or not
+      ArrayList<String> rolesArray = null;
+      {
+        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
+        };
+        if (rolesList != null && rolesList.length() != 0) {
+          try {
+            rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
+          } catch (IOException e) {
+            WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+          }
+        }
+      }
+      filteringIsRequired =
+             (rolesArray == null) ||
+                 !(rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
+                   rolesArray.contains(RoleConsts.ROLE_SUPER_USER));
+
+    }
+
+    int filteredRowCount = 0;
     String[] rowData = new String[columnCount];
     do {
       // First get the user-defined data for this row.
@@ -408,8 +487,43 @@ public class ODKDatabaseImplUtils {
         String value = ODKCursorUtils.getIndexAsString(c, i);
         rowData[i] = value;
       }
+
+      if (filteringIsRequired) {
+        // we need to apply filtering
+
+        String ft = rowData[idxFilterType];
+        boolean pass = (ft == null) || !ft.equals(RowFilterScope.Type.HIDDEN);
+
+        if ( !pass ) {
+          // FILTER_TYPE == HIDDEN
+          if ( idxFilterValue != null ) {
+            String value = rowData[idxFilterValue];
+            if ( value != null && value.equals(activeUser) ) {
+              // FILTER_VALUE == activeUser
+              pass = true;
+            }
+          }
+          if ( idxSyncState != null ) {
+            String value = rowData[idxSyncState];
+            if ( value != null && value.equals(SyncState.new_row.name()) ) {
+              // new_row is never hidden
+              pass = true;
+            }
+          }
+        }
+        if ( !pass ) {
+          // don't add the row to the table
+          continue;
+        }
+      }
+
       OdkDbRow nextRow = new OdkDbRow(rowData.clone(), table);
       table.addRow(nextRow);
+
+      ++filteredRowCount;
+      // stop when we reach the sqlLimit or end of dataset
+      if ( sqlLimit == filteredRowCount ) break;
+
     } while (c.moveToNext());
     c.close();
     return table;
@@ -423,14 +537,40 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    * @param rowId
+   * @param activeUser
+   * @param rolesList
    * @return
    */
-  public OdkDbTable getRowsWithId(OdkConnectionInterface db, String tableId, String rowId) {
-    OdkDbTable table = rawSqlQuery(db, OdkDbQueryUtil
+  public OdkDbTable getRowsWithId(OdkConnectionInterface db, String tableId, String rowId,
+      String activeUser, String rolesList   ) {
+    OdkDbTable table = query(db, OdkDbQueryUtil
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0,
+        activeUser, rolesList);
+
+    return table;
+  }
+
+  /**
+   * Return the row(s) for the given tableId and rowId. If the row has
+   * checkpoints or conflicts, the returned OdkDbTable will have more than one
+   * Row returned. Otherwise, it will contain a single row.
+   *
+   * @param db
+   * @param tableId
+   * @param rowId
+   * @param activeUser
+   * @return
+   */
+  public OdkDbTable privilegedGetRowsWithId(OdkConnectionInterface db, String tableId, String
+      rowId, String activeUser ) {
+    OdkDbTable table = privilegedQuery(db, OdkDbQueryUtil
+        .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0, activeUser);
 
     return table;
   }
@@ -447,9 +587,38 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable getMostRecentRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId) {
+      String rowId, String activeUser, String rolesList) {
 
-    OdkDbTable table = getRowsWithId(db, tableId, rowId);
+    OdkDbTable table = getRowsWithId(db, tableId, rowId, activeUser, rolesList);
+
+    if (table.getNumberOfRows() == 0) {
+      return table;
+    }
+
+    // most recent savepoint timestamp...
+    OdkDbTable t = new OdkDbTable(table, Collections.singletonList(Integer.valueOf(0)));
+
+    if (hasConflictRows(t)) {
+      throw new IllegalStateException("row is in conflict");
+    }
+    return t;
+  }
+
+  /**
+   * Return the row with the most recent changes for the given tableId and rowId.
+   * If the rowId does not exist, it returns an empty OdkDbTable for this tableId.
+   * If the row has conflicts, it throws an exception. Otherwise, it returns the
+   * most recent checkpoint or non-checkpoint value; it will contain a single row.
+   *
+   * @param db
+   * @param tableId
+   * @param rowId
+   * @return
+   */
+  public OdkDbTable privilegedGetMostRecentRowWithId(OdkConnectionInterface db, String tableId,
+      String rowId, String activeUser) {
+
+    OdkDbTable table = privilegedGetRowsWithId(db, tableId, rowId, activeUser);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -475,14 +644,14 @@ public class ODKDatabaseImplUtils {
     return false;
   }
 
-  public OdkDbTable getConflictingRowsInExistingDBTableWithId(OdkConnectionInterface db,
-      String tableId, String rowId) {
+  public OdkDbTable privilegedGetConflictingRowsWithId(OdkConnectionInterface db,
+      String tableId, String rowId, String activeUser) {
 
-    OdkDbTable table = rawSqlQuery(db, OdkDbQueryUtil
+    OdkDbTable table = privilegedQuery(db, OdkDbQueryUtil
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, 0);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, 0, activeUser);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -2760,11 +2929,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      OdkDbTable table = rawSqlQuery(db,
+      OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, 0, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -2919,11 +3088,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      OdkDbTable table = rawSqlQuery(db,
+      OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, 0, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3055,11 +3224,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      OdkDbTable table = rawSqlQuery(db,
+      OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, 0, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
