@@ -35,6 +35,7 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.service.queries.QueryBounds;
 import org.opendatakit.database.utilities.OdkDbChunkUtil;
 
 import java.io.IOException;
@@ -1213,7 +1214,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override public OdkDbChunk rawSqlQuery(String appName, OdkDbHandle dbHandleName,
-      String sqlCommand, BindArgs sqlBindArgs, int sqlLimit) throws RemoteException {
+      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -1222,7 +1223,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OdkDbTable result = ODKDatabaseImplUtils.get()
-          .rawSqlQuery(db, sqlCommand, sqlBindArgs.bindArgs, sqlLimit);
+          .rawSqlQuery(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {

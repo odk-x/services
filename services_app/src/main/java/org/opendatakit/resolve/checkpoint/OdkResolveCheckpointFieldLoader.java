@@ -99,9 +99,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().getRowsWithId(db, mTableId, mRowId);
-      table = new UserTable(baseTable, orderedDefns, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
-          OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
-          adminColArr);
+      table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)

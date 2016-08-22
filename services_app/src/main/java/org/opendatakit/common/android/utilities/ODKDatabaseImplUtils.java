@@ -45,6 +45,7 @@ import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFi
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
+import org.opendatakit.database.service.queries.QueryBounds;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -321,12 +322,13 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable rawSqlQuery(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, int sqlLimit) {
-    // TODO: Use sqlLimit
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds) {
+
     Cursor c = null;
+    String boundedSqlCommand = applyQueryBounds(sqlCommand, sqlQueryBounds);
     try {
-      c = db.rawQuery(sqlCommand, sqlBindArgs);
-      OdkDbTable table = buildOdkDbTable(c, sqlCommand, sqlBindArgs);
+      c = db.rawQuery(boundedSqlCommand, sqlBindArgs);
+      OdkDbTable table = buildOdkDbTable(c);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -335,12 +337,15 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs) {
-    return buildOdkDbTable(c, sqlCommand, sqlBindArgs, null, null, null);
+  private String applyQueryBounds(String sqlCommand, QueryBounds sqlQueryBounds) {
+    if (sqlCommand == null || sqlQueryBounds == null) {
+      return sqlCommand;
+    }
+
+    return sqlCommand + " LIMIT " + sqlQueryBounds.mLimit + " OFFSET " + sqlQueryBounds.mOffset;
   }
 
-  private OdkDbTable buildOdkDbTable(Cursor c, String sqlCommand, Object[] sqlBindArgs,
-      String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
+  private OdkDbTable buildOdkDbTable(Cursor c) {
 
     HashMap<String, Integer> mElementKeyToIndex = null;
     String[] mElementKeyForIndex = null;
@@ -372,8 +377,7 @@ public class ODKDatabaseImplUtils {
       c.close();
 
       // we have no idea what the table should contain because it has no rows...
-      return new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection,
-          primaryKey, mElementKeyForIndex, mElementKeyToIndex, 0);
+      return new OdkDbTable(null, mElementKeyForIndex, mElementKeyToIndex, 0);
     }
 
     int rowCount = c.getCount();
@@ -398,8 +402,7 @@ public class ODKDatabaseImplUtils {
       mElementKeyToIndex.put(columnName, i);
     }
 
-    table = new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection, primaryKey,
-        mElementKeyForIndex, mElementKeyToIndex, rowCount);
+    table = new OdkDbTable(null, mElementKeyForIndex, mElementKeyToIndex, rowCount);
 
     String[] rowData = new String[columnCount];
     do {
@@ -430,7 +433,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null);
 
     return table;
   }
@@ -482,7 +485,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, 0);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, null);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -2764,7 +2767,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, null);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -2923,7 +2926,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, null);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3059,7 +3062,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0);
+          new Object[] { rowId }, null);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(

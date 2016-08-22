@@ -105,8 +105,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, 0);
-      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
+          selectionArgs, null);
+      table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
 
@@ -131,8 +131,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().rawSqlQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, 0);
-          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
+              selectionArgs, null);
+          table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
 
