@@ -1901,7 +1901,7 @@ public class ODKDatabaseImplUtils {
         throw new IllegalStateException("unexpected ElementDataType: " + dataType.name());
       }
 
-      if (!first) {
+      if (!first || isSynchronized) {
         createTableCmdWithCols.append(", ");
       }
 
@@ -1911,8 +1911,6 @@ public class ODKDatabaseImplUtils {
     }
 
     createTableCmdWithCols.append(");");
-    String createTableCmdStr = createTableCmdWithCols.toString();
-    Log.i("BALA", createTableCmdStr);
 
     db.execSQL(createTableCmdWithCols.toString(), null);
 
