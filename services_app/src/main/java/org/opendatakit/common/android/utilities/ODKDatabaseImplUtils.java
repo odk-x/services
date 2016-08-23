@@ -46,6 +46,7 @@ import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.database.service.OdkDbTable;
+import org.opendatakit.database.service.queries.QueryBounds;
 import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -269,17 +270,25 @@ public class ODKDatabaseImplUtils {
   public List<String> getExportColumns() {
     return EXPORT_COLUMNS;
   }
+  
+  private String applyQueryBounds(String sqlCommand, QueryBounds sqlQueryBounds) {
+    if (sqlCommand == null || sqlQueryBounds == null) {
+      return sqlCommand;
+    }
+
+    return sqlCommand + " LIMIT " + sqlQueryBounds.mLimit + " OFFSET " + sqlQueryBounds.mOffset;
+  }
 
   /**
    * Perform a raw query with bind parameters.
    *
    * @param db
-   * @param sql
+   * @param sqlCommand
    * @param selectionArgs
    * @return
    */
-  public Cursor rawQuery(OdkConnectionInterface db, String sql, Object[] selectionArgs,
-      int sqlLimit, String activeUser, String rolesList) {
+  public Cursor rawQuery(OdkConnectionInterface db, String sqlCommand, Object[] selectionArgs,
+      QueryBounds sqlQueryBounds, String activeUser, String rolesList) {
 
     // figure out whether we have a privileged user or not
     ArrayList<String> rolesArray = null;
@@ -301,13 +310,13 @@ public class ODKDatabaseImplUtils {
 
     if ( filteringIsRequired ) {
       // test whether the resultset has a FILTER_TYPE column
-      Cursor c = db.rawQuery(sql + " LIMIT 1", selectionArgs);
+      Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
       if (c.moveToFirst() ) {
         if (c.getColumnIndex(DataTableColumns.FILTER_TYPE) == -1) {
           c.close();
           // no column -- no need to filter this resultset
-          c = db.rawQuery((sqlLimit == 0) ? sql :
-              (sql + " LIMIT " + sqlLimit), selectionArgs);
+		  String sql = applyQueryBounds(sqlCommand, sqlQueryBounds);
+          c = db.rawQuery(sql, selectionArgs);
           return c;
         }
         // otherwise, we need to apply filtering
@@ -317,10 +326,10 @@ public class ODKDatabaseImplUtils {
         String wrappedSql;
         Object wrappedSqlArgs[];
         if (hasFilterValue && hasSyncState) {
-          wrappedSql = "SELECT * FROM (" + sql + ") AS T WHERE T." +
+          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
               DataTableColumns.FILTER_TYPE + " != ? OR T." +
               DataTableColumns.FILTER_VALUE + " = ? OR T." +
-              DataTableColumns.SYNC_STATE + " = ?" + ((sqlLimit == 0) ? "" : (" LIMIT " + sqlLimit));
+              DataTableColumns.SYNC_STATE + " = ?";
           wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 3];
           int i = 0;
           if ( selectionArgs != null ) {
@@ -332,9 +341,9 @@ public class ODKDatabaseImplUtils {
           wrappedSqlArgs[i++] = activeUser;
           wrappedSqlArgs[i++] = SyncState.new_row.name();
         } else if (hasFilterValue) {
-          wrappedSql = "SELECT * FROM (" + sql + ") AS T WHERE T." +
+          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
               DataTableColumns.FILTER_TYPE + " != ? OR T." +
-              DataTableColumns.FILTER_VALUE + " = ?" + ((sqlLimit == 0) ? "" : (" LIMIT " + sqlLimit));
+              DataTableColumns.FILTER_VALUE + " = ?";
           wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 2];
           int i = 0;
           if ( selectionArgs != null ) {
@@ -345,9 +354,9 @@ public class ODKDatabaseImplUtils {
           wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
           wrappedSqlArgs[i++] = activeUser;
         } else if (hasSyncState) {
-          wrappedSql = "SELECT * FROM (" + sql + ") AS T WHERE T." +
+          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
               DataTableColumns.FILTER_TYPE + " != ? OR T." +
-              DataTableColumns.SYNC_STATE + " = ?" + ((sqlLimit == 0) ? "" : (" LIMIT " + sqlLimit));
+              DataTableColumns.SYNC_STATE + " = ?";
           wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 2];
           int i = 0;
           if ( selectionArgs != null ) {
@@ -358,8 +367,8 @@ public class ODKDatabaseImplUtils {
           wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
           wrappedSqlArgs[i++] = SyncState.new_row.name();
         } else {
-          wrappedSql = "SELECT * FROM (" + sql + ") AS T WHERE T." +
-              DataTableColumns.FILTER_TYPE + " != ?" + ((sqlLimit == 0) ? "" : (" LIMIT " + sqlLimit));
+          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
+              DataTableColumns.FILTER_TYPE + " != ?";
           wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 1];
           int i = 0;
           if ( selectionArgs != null ) {
@@ -369,15 +378,16 @@ public class ODKDatabaseImplUtils {
           }
           wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
         }
-        c = db.rawQuery(wrappedSql, wrappedSqlArgs);
+        String limitAppliedSql = applyQueryBounds(wrappedSql, sqlQueryBounds);
+        c = db.rawQuery(limitAppliedSql, wrappedSqlArgs);
         return c;
       } else {
         // cursor is empty!
         return c;
       }
     } else {
-      Cursor c = db.rawQuery((sqlLimit == 0) ? sql :
-          (sql + " LIMIT " + sqlLimit), selectionArgs);
+        String limitAppliedSql = applyQueryBounds(sqlCommand, sqlQueryBounds);
+      Cursor c = db.rawQuery(limitAppliedSql, selectionArgs);
       return c;
     }
   }
@@ -440,18 +450,19 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param sqlCommand  the query to run
    * @param sqlBindArgs the selection parameters
-   * @param sqlLimit    max number of rows to return (zero is infinite)
+   * @param sqlCommand    max number of rows to return (zero is infinite)
    * @param activeUser
    * @param rolesList
    * @return
    */
   public OdkDbTable query(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, int sqlLimit, String activeUser, String rolesList) {
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, String activeUser, String rolesList) {
     // TODO: Use sqlLimit
+
     Cursor c = null;
     try {
-      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlLimit, activeUser, rolesList);
-      OdkDbTable table = buildOdkDbTable(db, c, sqlCommand, sqlBindArgs);
+      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, activeUser, rolesList);
+      OdkDbTable table = buildOdkDbTable(c);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -469,22 +480,17 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param sqlCommand  the query to run
    * @param sqlBindArgs the selection parameters
-   * @param sqlLimit    the number of rows to return (zero is infinite)
+   * @param sqlQueryBounds the number of rows to return (zero is infinite)
    * @param activeUser
    * @return
    */
   public OdkDbTable privilegedQuery(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, int sqlLimit, String activeUser) {
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, String activeUser) {
 
-    return query(db, sqlCommand, sqlBindArgs, sqlLimit, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    return query(db, sqlCommand, sqlBindArgs, sqlQueryBounds, activeUser, RoleConsts.ADMIN_ROLES_LIST);
   }
 
-  private OdkDbTable buildOdkDbTable(OdkConnectionInterface db, Cursor c, String sqlCommand, Object[] sqlBindArgs) {
-    return buildOdkDbTable(db, c, sqlCommand, sqlBindArgs, null, null, null);
-  }
-
-  private OdkDbTable buildOdkDbTable(OdkConnectionInterface db, Cursor c, String sqlCommand, Object[]
-      sqlBindArgs, String[] orderByElementKey, String[] orderByDirection, String[] primaryKey) {
+  private OdkDbTable buildOdkDbTable(Cursor c) {
 
     HashMap<String, Integer> mElementKeyToIndex = null;
     String[] mElementKeyForIndex = null;
@@ -516,8 +522,7 @@ public class ODKDatabaseImplUtils {
       c.close();
 
       // we have no idea what the table should contain because it has no rows...
-      return new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection,
-          primaryKey, mElementKeyForIndex, mElementKeyToIndex, 0);
+      return new OdkDbTable(null, mElementKeyForIndex, mElementKeyToIndex, 0);
     }
 
     int rowCount = c.getCount();
@@ -542,9 +547,7 @@ public class ODKDatabaseImplUtils {
       mElementKeyToIndex.put(columnName, i);
     }
 
-    // max row count is sqlLimit. If zero, don't specify anything.
-    table = new OdkDbTable(sqlCommand, sqlBindArgs, orderByElementKey, orderByDirection, primaryKey,
-        mElementKeyForIndex, mElementKeyToIndex, rowCount);
+    table = new OdkDbTable(null, mElementKeyForIndex, mElementKeyToIndex, rowCount);
 
     String[] rowData = new String[columnCount];
     do {
@@ -579,7 +582,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0,
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
         activeUser, rolesList);
 
     return table;
@@ -602,7 +605,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, 0, activeUser);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null, activeUser);
 
     return table;
   }
@@ -683,7 +686,7 @@ public class ODKDatabaseImplUtils {
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, 0, activeUser);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, null, activeUser);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -2965,7 +2968,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0, activeUser);
+          new Object[] { rowId }, null, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3124,7 +3127,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0, activeUser);
+          new Object[] { rowId }, null, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3260,7 +3263,7 @@ public class ODKDatabaseImplUtils {
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, 0, activeUser);
+          new Object[] { rowId }, null, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -4197,7 +4200,7 @@ public class ODKDatabaseImplUtils {
         }
 
         String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-        OdkDbTable data = privilegedQuery(db, sel, whereArgs, 0, activeUser);
+        OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, activeUser);
 
         // There must be only one row in the db for the update to work
         if (shouldUpdate) {
@@ -4409,7 +4412,7 @@ public class ODKDatabaseImplUtils {
       }
 
       String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-      OdkDbTable data = privilegedQuery(db, sel, whereArgs, 0, activeUser);
+      OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, activeUser);
 
       // There must be only one row in the db
       if (data.getNumberOfRows() != 1) {

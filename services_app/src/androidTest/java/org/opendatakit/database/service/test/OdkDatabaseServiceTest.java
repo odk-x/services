@@ -351,7 +351,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          UserTable table = serviceInterface
              .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
-                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" }, null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -394,7 +394,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          UserTable table = serviceInterface
              .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
-                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" }, null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -440,7 +440,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          UserTable table = serviceInterface
              .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null,
-                 new String[] { COL_STRING_ID }, new String[] { "ASC" });
+                 new String[] { COL_STRING_ID }, new String[] { "ASC" }, null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(2, table.getNumberOfRows());
 
@@ -478,7 +478,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
@@ -555,7 +556,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
@@ -603,7 +605,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
@@ -651,7 +654,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  rowId.toString());
 
          UserTable table = serviceInterface
-             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
@@ -770,7 +774,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          }
 
          UserTable table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null);
+             null, null, null, null, null, null, null);
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(NUM_ROWS, table.getNumberOfRows());
@@ -786,7 +790,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          }
 
          table = serviceInterface.rawSqlQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null);
+             null, null, null, null, null, null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(0, table.getNumberOfRows());
 
@@ -830,14 +834,16 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          // use service connection 1 to verify db is in correct state
          table = serviceInterface1
-             .rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          verifyRowTestSet1(table.getRowAtIndex(0));
 
          // use service connection 2 to verify db is in correct state
          table = serviceInterface2
-             .rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          verifyRowTestSet1(table.getRowAtIndex(0));
@@ -849,14 +855,16 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          // use service connection 2 to verify db is in correct state
          table = serviceInterface1
-             .rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db2, DB_TABLE_ID, columns, null, null, null, null, null, null,
+                 null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          verifyRowTestSet2(table.getRowAtIndex(0));
 
          // use service connection 1 to verify db is in correct state
          table = serviceInterface1
-             .rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null, null, null, null, null);
+             .rawSqlQuery(APPNAME, db1, DB_TABLE_ID, columns, null, null, null, null, null, null,
+             null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          verifyRowTestSet2(table.getRowAtIndex(0));

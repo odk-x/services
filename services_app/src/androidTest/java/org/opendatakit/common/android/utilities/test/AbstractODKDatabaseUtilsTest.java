@@ -214,7 +214,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     try {
       // this will not interact with the database if the
       // query string is found in the PreparedStatement cache.
-      Cursor c = ODKDatabaseImplUtils.get().rawQuery(db, query, null, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      Cursor c = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
       // we must get the count of rows to actually interact
       // with the database.
       c.getCount();
@@ -238,7 +238,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
     // Check that the user defined rows are in the table
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     Cursor refCursor = db.rawQuery(query, null);
 
     if (cursor != null && refCursor != null) {
@@ -1215,7 +1215,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -1255,7 +1255,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1300,7 +1300,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String[] selArgs = { "" + testVal };
     Cursor cursor = null;
      try {
-        cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
         assertEquals(cursor.getCount(), 1);
 
         int val = 0;
@@ -1343,7 +1343,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor2.getCount(), 1);
 
     int val2 = 0;
@@ -1386,7 +1386,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1429,7 +1429,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1453,7 +1453,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor2.getCount(), 1);
 
     int val2 = 0;
@@ -1541,7 +1541,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs = { uuid };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
@@ -1720,7 +1720,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1759,7 +1759,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -1798,7 +1798,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1837,7 +1837,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1891,7 +1891,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColLat + " = ?";
     String[] selArgs = { "" + pos_lat };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     double valLat = 0;
     double valLong = 0;
@@ -1951,7 +1951,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -2001,7 +2001,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColUriFragment + " = ?";
     String[] selArgs = { "" + testUriFragment };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String valUriFragment = null;
     String valContentType = null;
@@ -2047,7 +2047,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     double val = 0;
     while (cursor.moveToNext()) {
@@ -2086,7 +2086,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2136,7 +2136,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2177,7 +2177,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2198,7 +2198,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2206,7 +2206,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val2 = null;
     String saveptType = null;
@@ -2260,7 +2260,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2306,7 +2306,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     String saveptType = null;
@@ -2504,7 +2504,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2525,7 +2525,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2533,7 +2533,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val2 = null;
     String saveptType = null;
@@ -2566,7 +2566,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -2621,7 +2621,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2642,7 +2642,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2650,7 +2650,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val2 = null;
     String saveptType = null;
@@ -2684,7 +2684,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -2738,7 +2738,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2762,7 +2762,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 0);
 
@@ -3006,7 +3006,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -3030,7 +3030,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 0);
 
@@ -3061,7 +3061,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -3098,7 +3098,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -3197,7 +3197,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     int val = 0;
     try {
-      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
       assertEquals(cursor.getCount(), 1);
 
       while (cursor.moveToNext()) {
@@ -3247,9 +3247,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     OdkDbTable baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
-    UserTable table = new UserTable(baseTable, orderedColumns, whereClause, null, null,
-        adminColArr);
+        selectionArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    UserTable table = new UserTable(baseTable, orderedColumns, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 2);
 
@@ -3277,8 +3276,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Run the query yet again to make sure that things worked as expected
     baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
-    table = new UserTable(baseTable, orderedColumns, whereClause, null, null, adminColArr);
+        selectionArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    table = new UserTable(baseTable, orderedColumns, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 0);
 
@@ -3514,7 +3513,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
@@ -3528,7 +3527,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(retKVSEntries.get(0).type, ElementDataType.object.name());
 
     // Now make sure that the table has the right value for displayName
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -3582,7 +3581,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -3629,7 +3628,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
@@ -3667,7 +3666,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -3684,7 +3683,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String syncTimeVal = null;
@@ -3737,7 +3736,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -3780,7 +3779,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -3802,7 +3801,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -3810,7 +3809,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val2 = 0;
     String saveptType = null;
@@ -4096,7 +4095,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String[] selArgs = { "" + testVal };
     Cursor cursor = null;
     try {
-      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
       assertEquals(cursor.getCount(), 1);
 
       int val = 0;
@@ -4124,7 +4123,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor2.getCount(), 2);
 
     System.out.println("testQueryDistinct_ExpectPass: after select *  query");
@@ -4195,7 +4194,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4213,7 +4212,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, newKVSEntries, true);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4262,7 +4261,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4278,7 +4277,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, newKVSEntry);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4327,7 +4326,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4346,7 +4345,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         newKVSEntries);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4482,7 +4481,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -4518,7 +4517,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -4535,7 +4534,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     while (cursor.moveToNext()) {
@@ -4553,7 +4552,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         newLastDataETag);
 
     // Select everything out of the table
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     while (cursor.moveToNext()) {
@@ -4594,7 +4593,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -4611,7 +4610,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String defaultSyncTime = "-1";
@@ -4626,7 +4625,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().privilegedUpdateDBTableLastSyncTime(db, tableId);
 
     // Select everything out of the table
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
     assertEquals(cursor.getCount(), 1);
 
     String syncTime = null;
@@ -4666,7 +4665,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -4684,7 +4683,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         SyncState.synced, activeUser);
 
     // Run the query again and make sure that the place row in conflict worked as expected
-    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(DataTableColumns.ROW_ETAG);
@@ -4825,7 +4824,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
 
     while (cursor.moveToNext()) {
@@ -4846,7 +4845,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs2 = { "" + rowId };
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -4899,7 +4898,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -4938,7 +4937,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5002,7 +5001,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5041,7 +5040,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5099,7 +5098,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5131,7 +5130,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .getOdkConnectionFactoryInterface().getConnection
         (getAppName(), uniqueKey);
 
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5196,7 +5195,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5223,7 +5222,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       db.beginTransactionExclusive();
       String sel2 = "SELECT * FROM " + tableId;
       String[] selArgs2 = null;
-      Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       assertEquals(cursor2.getCount(), 1);
 
@@ -5289,7 +5288,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5325,7 +5324,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5392,7 +5391,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5429,7 +5428,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5496,7 +5495,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
-    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5523,7 +5522,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     Cursor cursor2 = null;
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5598,7 +5597,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Query with db1
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
-    Cursor cursor1 = ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor1 = ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor1.moveToNext()) {
       int ind1 = cursor1.getColumnIndex(testCol);
@@ -5609,7 +5608,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Query with db2
-    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor2.moveToNext()) {
       int ind2 = cursor2.getColumnIndex(testCol);
@@ -5639,7 +5638,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Have both connections re-query the table
     // Query with db1
-    cursor1= ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor1= ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor1.moveToNext()) {
       int ind3 = cursor1.getColumnIndex(newTestCol);
@@ -5650,7 +5649,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Query with db2
-    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     while (cursor2.moveToNext()) {
       int ind4 = cursor2.getColumnIndex(testCol);
@@ -5723,7 +5722,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       String queryVal = "testVal_" + Integer.toString(j % maxCols);
       String sel = "SELECT * FROM " + tableId + " WHERE " + queryCol + " = ?";
       String[] selArgs = { queryVal };
-      Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       String val = null;
       while (cursor.moveToNext()) {
@@ -5749,7 +5748,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       // Select everything out of the table
       sel = "SELECT * FROM " + tableId;
       selArgs = new String[0];
-      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       assertEquals(cursor.getCount(), 0);
 

@@ -103,8 +103,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, 0, activeUser);
-      table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
+          selectionArgs, null, activeUser);
+      table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
 
@@ -132,8 +132,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, 0, activeUser);
-          table = new UserTable(baseTable, orderedDefns, whereClause, groupBy, null, adminColArr);
+              selectionArgs, null, activeUser);
+          table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
 
@@ -152,7 +152,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId }, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          new String[]{ mTableId }, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);

@@ -119,8 +119,8 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { mRowId }, 0, activeUser);
-      table = new UserTable(baseTable, orderedDefns, whereClause, null, null, adminColArr);
+          new String[] { mRowId }, null, activeUser);
+      table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
       if (msg == null)

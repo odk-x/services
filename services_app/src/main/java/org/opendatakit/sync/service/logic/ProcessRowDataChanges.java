@@ -499,7 +499,7 @@ public class ProcessRowDataChanges {
 
         localDataTable = sc.getDatabaseService()
             .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty, null,
-                new String[] { DataTableColumns.ID }, new String[] { "ASC" });
+                new String[] { DataTableColumns.ID }, new String[] { "ASC" }, null, null);
 
         // TODO: fix this for synced_pending_files
         // We likely need to relax this constraint on the
@@ -689,7 +689,7 @@ public class ProcessRowDataChanges {
 
                 localDataTable = sc.getDatabaseService()
                     .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty,
-                        null, new String[] {DataTableColumns.ID}, new String[]{"ASC"});
+                        null, new String[] {DataTableColumns.ID}, new String[]{"ASC"}, null, null);
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
@@ -985,7 +985,7 @@ public class ProcessRowDataChanges {
                 localDataTable = sc.getDatabaseService()
                     .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
                         DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
-                        null, new String[] {DataTableColumns.ID}, new String[] {"ASC"});
+                        null, new String[] {DataTableColumns.ID}, new String[] {"ASC"}, null, null);
               } finally {
                 sc.releaseDatabase(db);
                 db = null;
