@@ -33,6 +33,8 @@ import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.InstanceProviderAPI;
@@ -294,6 +296,10 @@ public class InstanceProvider extends ContentProvider {
       String[] projection, String selection, String[] selectionArgs,
       String sortOrder ) {
 
+    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
+    String activeUser = props.getActiveUser();
+    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+
     String fullQuery;
     String filterArgs[];
     Cursor c = null;
@@ -438,7 +444,7 @@ public class InstanceProvider extends ContentProvider {
 
     fullQuery = b.toString();
 
-    c = db.rawQuery(fullQuery, filterArgs);
+    c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, 0, activeUser, rolesList);
     return c;
   }
 

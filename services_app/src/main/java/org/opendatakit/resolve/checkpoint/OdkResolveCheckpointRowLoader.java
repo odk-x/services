@@ -157,7 +157,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId });
+          new String[]{ mTableId }, 0, aul.activeUser, aul.rolesList);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);

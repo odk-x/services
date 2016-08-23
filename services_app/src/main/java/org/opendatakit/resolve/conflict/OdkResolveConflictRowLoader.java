@@ -18,6 +18,7 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
@@ -151,7 +152,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId });
+          new String[]{ mTableId }, 0, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);
