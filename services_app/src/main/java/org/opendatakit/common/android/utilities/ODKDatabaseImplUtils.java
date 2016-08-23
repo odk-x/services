@@ -577,10 +577,6 @@ public class ODKDatabaseImplUtils {
    */
   public OrderedColumns createLocalOnlyDBTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
-    // We are prepending all non-synchronized tables with a "L_" to mark them as such
-    if (!tableId.startsWith("L_")) {
-      tableId = "L_" + tableId;
-    }
 
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -632,11 +628,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    */
   public void deleteLocalOnlyDBTable(OdkConnectionInterface db,
-      String tableId) throws ActionNotAuthorizedException {
-
-    if (!tableId.startsWith("L_")) {
-      tableId = "L_" + tableId;
-    }
+      String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
 
@@ -670,11 +662,7 @@ public class ODKDatabaseImplUtils {
    * @throws ActionNotAuthorizedException
    */
   public void insertLocalOnlyRow(OdkConnectionInterface db, String tableId,
-      ContentValues rowValues) throws ActionNotAuthorizedException {
-
-    if (!tableId.startsWith("L_")) {
-      tableId = "L_" + tableId;
-    }
+      ContentValues rowValues) throws IllegalArgumentException {
 
     if (rowValues == null || rowValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -715,11 +703,7 @@ public class ODKDatabaseImplUtils {
    */
   public void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
       ContentValues rowValues, String whereClause, String[] whereArgs)
-      throws ActionNotAuthorizedException {
-
-    if (!tableId.startsWith("L_")) {
-      tableId = "L_" + tableId;
-    }
+      throws IllegalArgumentException {
 
     if (rowValues == null || rowValues.size() <= 0) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
@@ -758,15 +742,7 @@ public class ODKDatabaseImplUtils {
    * @throws ActionNotAuthorizedException
    */
   public void deleteLocalOnlyRow(OdkConnectionInterface db, String tableId, String whereClause,
-      String[] whereArgs) throws ActionNotAuthorizedException {
-
-    if (!tableId.startsWith("L_")) {
-      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
-          "Local only tables must start with 'L_'");
-      WebLogger.getLogger(db.getAppName()).e(t, "Unable to delete from this table: " + tableId);
-      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      throw e;
-    }
+      String[] whereArgs) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
