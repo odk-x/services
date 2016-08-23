@@ -3,7 +3,6 @@ package org.opendatakit.database.service.test;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.test.ServiceTestCase;
@@ -14,6 +13,8 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.OdkDatabaseService;
@@ -61,7 +62,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          Log.i("openDatabase", "tearDown: " + db.getDatabaseHandle());
          verifyNoTablesExistNCleanAllTables(serviceInterface, db);
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
@@ -115,7 +116,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    private void verifyNoTablesExistNCleanAllTables(OdkDbSerializedInterface serviceInterface,
-       OdkDbHandle db) throws RemoteException {
+       OdkDbHandle db) throws ServicesAvailabilityException {
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
 
       boolean tablesGone = (tableIds.size() == 0);
@@ -143,7 +144,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    private boolean hasNoTablesInDb(OdkDbSerializedInterface serviceInterface, OdkDbHandle db)
-       throws RemoteException {
+       throws ServicesAvailabilityException {
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
       return (tableIds.size() == 0);
    }
@@ -177,7 +178,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail();
       }
@@ -203,13 +204,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail();
       }
    }
 
-   public void testDbInsertSingleRowIntoTable() {
+   public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -243,13 +244,48 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
          Log.i("closeDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertSingleRowIntoTableWSingleTransaction() {
+   public void testDbInsertThrowsIllegalArgumentException()
+       throws ActionNotAuthorizedException, ServicesAvailabilityException {
+      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      OdkDbHandle db = null;
+      try {
+
+         List<Column> columnList = createColumnList();
+         ColumnList colList = new ColumnList(columnList);
+
+         db = serviceInterface.openDatabase(APPNAME);
+         serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+         UUID rowId = UUID.randomUUID();
+
+         ContentValues cv = new ContentValues();
+
+         serviceInterface
+             .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv,
+                 rowId.toString());
+
+      } catch (IllegalArgumentException e) {
+         // expected
+         assertTrue("Got what we expected " + e.toString(), false);
+      } catch (Exception e) {
+         assertTrue("Unexpected " + e.toString(), false);
+      } finally {
+         // clean up
+         serviceInterface.deleteDBTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+         serviceInterface.closeDatabase(APPNAME, db);
+      }
+   }
+
+   public void testDbInsertSingleRowIntoTableWSingleTransaction()
+       throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -281,13 +317,14 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertSingleRowIntoTableWTwoTransactions() {
+   public void testDbInsertSingleRowIntoTableWTwoTransactions()
+       throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -321,13 +358,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertTwoRowsIntoTable() {
+   public void testDbInsertTwoRowsIntoTable() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -364,13 +401,14 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertTwoRowsIntoTableWSingleTransaction() {
+   public void testDbInsertTwoRowsIntoTableWSingleTransaction()
+       throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -407,13 +445,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertTwoRowsIntoTableWTwoTransactions() {
+   public void testDbInsertTwoRowsIntoTableWTwoTransactions() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -453,13 +491,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbQueryWNoParams() {
+   public void testDbQueryWNoParams() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -493,7 +531,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
@@ -531,13 +569,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                // verify no tables left
                assertTrue(hasNoTablesInDb(serviceInterface, db));
                serviceInterface.closeDatabase(APPNAME, db);
-           } catch (RemoteException e) {
+           } catch (ServicesAvailabilityException e) {
                e.printStackTrace();
                fail(e.getMessage());
            }
        }
    */
-   public void testDbUpdateAllValues() {
+   public void testDbUpdateAllValues() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
@@ -580,13 +618,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbUpdateAllValuesWTransactions() {
+   public void testDbUpdateAllValuesWTransactions() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
@@ -629,13 +667,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbUpdateSingleValue() {
+   public void testDbUpdateSingleValue() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
@@ -693,13 +731,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbInsertNDeleteSingleRowIntoTable() {
+   public void testDbInsertNDeleteSingleRowIntoTable() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
 
@@ -742,13 +780,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbCreateNDeleteLargeTable() {
+   public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
       final int NUM_ROWS = 10000;
       OdkDbSerializedInterface serviceInterface = bindToDbService();
       try {
@@ -800,13 +838,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
    }
 
-   public void testDbUpdateWTwoServiceConnections() {
+   public void testDbUpdateWTwoServiceConnections() throws ActionNotAuthorizedException {
       OdkDbSerializedInterface serviceInterface1 = bindToDbService();
       OdkDbSerializedInterface serviceInterface2 = bindToDbService();
 
@@ -876,7 +914,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          assertTrue(hasNoTablesInDb(serviceInterface1, db1));
          serviceInterface1.closeDatabase(APPNAME, db1);
 
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }

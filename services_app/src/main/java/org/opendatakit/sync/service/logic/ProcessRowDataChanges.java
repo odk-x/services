@@ -16,7 +16,6 @@
 package org.opendatakit.sync.service.logic;
 
 import android.content.ContentValues;
-import android.os.RemoteException;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +29,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -152,10 +152,10 @@ public class ProcessRowDataChanges {
    *          during the sync'ing of the table-level files, or if the table
    *          schema does not match, the local table will be omitted from this
    *          list.
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public void synchronizeDataRowsAndAttachments(List<TableResource> workingListOfTables,
-      SyncAttachmentState attachmentState) throws RemoteException {
+      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
     log.i(TAG, "entered synchronize()");
 
     OdkDbHandle db = null;
@@ -200,13 +200,13 @@ public class ProcessRowDataChanges {
    * @param rows
    * @return
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private UserTable updateLocalRowsFromServerChanges(TableResource tableResource,
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
       SyncAttachmentState attachmentState, ArrayList<ColumnDefinition> fileAttachmentColumns,
       UserTable localDataTable, RowResourceList rows)
-      throws IOException, RemoteException
+      throws IOException, ServicesAvailabilityException
   {
     String tableId = tableResource.getTableId();
     TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
@@ -498,7 +498,8 @@ public class ProcessRowDataChanges {
         String[] empty = {};
 
         localDataTable = sc.getDatabaseService()
-            .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty, null,
+            .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty,
+                empty, null,
                 new String[] { DataTableColumns.ID }, new String[] { "ASC" }, null, null);
 
         // TODO: fix this for synced_pending_files
@@ -578,11 +579,11 @@ public class ProcessRowDataChanges {
    * @param displayName
    *          display name for this tableId - used in notifications
    * @param attachmentState
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void synchronizeTableDataRowsAndAttachments(TableResource tableResource,
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
-      SyncAttachmentState attachmentState) throws RemoteException {
+      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
     boolean attachmentSyncSuccessful = false;
     boolean rowDataSyncSuccessful = false;
 
@@ -688,7 +689,8 @@ public class ProcessRowDataChanges {
                 String[] empty = {};
 
                 localDataTable = sc.getDatabaseService()
-                    .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty, empty,
+                    .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null,
+                        empty, empty,
                         null, new String[] {DataTableColumns.ID}, new String[]{"ASC"}, null, null);
               } finally {
                 sc.releaseDatabase(db);
@@ -771,7 +773,7 @@ public class ProcessRowDataChanges {
                     sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), firstDataETag);
-                    // the above will throw a RemoteException if the change is not committed
+                    // the above will throw a ServicesAvailabilityException if the change is not committed
                     // and be sure to update our in-memory objects...
                     te.setSchemaETag(tableResource.getSchemaETag());
                     te.setLastDataETag(firstDataETag);
@@ -926,7 +928,7 @@ public class ProcessRowDataChanges {
                     sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), outcomes.getDataETag());
-                    // the above will throw a RemoteException if the changed were not committed.
+                    // the above will throw a ServicesAvailabilityException if the changed were not committed.
                     // and be sure to update our in-memory objects...
                     te.setSchemaETag(tableResource.getSchemaETag());
                     te.setLastDataETag(outcomes.getDataETag());
@@ -983,7 +985,7 @@ public class ProcessRowDataChanges {
                 String[] syncStates = {SyncState.in_conflict.name(), SyncState.synced_pending_files.name()};
 
                 localDataTable = sc.getDatabaseService()
-                    .rawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
+                    .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
                         DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
                         null, new String[] {DataTableColumns.ID}, new String[] {"ASC"}, null, null);
               } finally {
@@ -1177,13 +1179,13 @@ public class ProcessRowDataChanges {
    * @param outcomes      result of pushing those changes to server
    * @param specialCases
    * @return RowOutcomeSummary of new count and whether or not conflicts were introduced.
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private RowOutcomeSummary processRowOutcomes(TableDefinitionEntry te, TableResource resource,
       TableLevelResult tableLevelResult, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns, boolean hasAttachments,
       int countSoFar, int totalOutcomesSize,
-      List<SyncRow> segmentAlter, ArrayList<RowOutcome> outcomes, ArrayList<RowOutcome> specialCases) throws RemoteException {
+      List<SyncRow> segmentAlter, ArrayList<RowOutcome> outcomes, ArrayList<RowOutcome> specialCases) throws ServicesAvailabilityException {
 
     ArrayList<SyncRowDataChanges> rowsToMoveToInConflictLocally = new ArrayList<SyncRowDataChanges>();
 
@@ -1315,11 +1317,11 @@ public class ProcessRowDataChanges {
    * @param orderedColumns
    * @param changes
    * @param tableLevelResult
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void conflictRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
-      TableLevelResult tableLevelResult) throws RemoteException {
+      TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
 
     int count = 0;
     for (SyncRowDataChanges change : changes) {
@@ -1415,11 +1417,11 @@ public class ProcessRowDataChanges {
    * @param changes
    * @param hasAttachments
    * @param tableLevelResult
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void insertRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
-      boolean hasAttachments, TableLevelResult tableLevelResult) throws RemoteException {
+      boolean hasAttachments, TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
     int count = 0;
     for (SyncRowDataChanges change : changes) {
       SyncRow serverRow = change.serverRow;
@@ -1469,12 +1471,12 @@ public class ProcessRowDataChanges {
    * @param changes
    * @param hasAttachments
    * @param tableLevelResult
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void updateRowsInDb(OdkDbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       boolean hasAttachments,
-      TableLevelResult tableLevelResult) throws RemoteException {
+      TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
     int count = 0;
     for (SyncRowDataChanges change : changes) {
       // if the localRow sync state was synced_pending_files,
@@ -1533,11 +1535,11 @@ public class ProcessRowDataChanges {
    * @param changes
    * @throws HttpClientWebException
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void pushLocalAttachmentsBeforeDeleteRowsInDb(OdkDbHandle db, TableResource resource,
       List<SyncRowDataChanges> changes) throws
-      HttpClientWebException, IOException, RemoteException {
+      HttpClientWebException, IOException, ServicesAvailabilityException {
 
     // try first to push any attachments of the soon-to-be-deleted
     // local row up to the server
@@ -1588,11 +1590,11 @@ public class ProcessRowDataChanges {
    * @param changes
    * @param tableLevelResult
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private void deleteRowsInDb(OdkDbHandle db, TableResource resource, OrderedColumns orderedColumns,
       List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
-      RemoteException {
+      ServicesAvailabilityException {
     int count = 0;
 
     // now delete the rows we can delete...

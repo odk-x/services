@@ -20,6 +20,7 @@ import android.app.Service;
 import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.application.AppAwareApplication;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.services.R;
@@ -275,7 +276,7 @@ public class AppSynchronizer {
         try {
           // sync the app-level files, table schemas and table-level files
           workingListOfTables = appAndTableLevelProcessor.synchronizeConfigurationAndContent(push);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           if (syncResult.getAppLevelSyncOutcome() == SyncOutcome.WORKING) {
             syncResult.setAppLevelSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
@@ -292,7 +293,7 @@ public class AppSynchronizer {
 
           try {
             rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
           } finally {
             for (TableLevelResult tlr : syncResult.getTableLevelResults()) {
@@ -398,7 +399,7 @@ public class AppSynchronizer {
       try {
         // sync the app-level files, table schemas and table-level files
         appAndTableLevelProcessor.verifyServerConfiguration();
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         if (syncResult.getAppLevelSyncOutcome() == SyncOutcome.WORKING) {
           syncResult.setAppLevelSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);

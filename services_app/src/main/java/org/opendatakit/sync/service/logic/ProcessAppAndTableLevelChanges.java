@@ -14,8 +14,6 @@
 
 package org.opendatakit.sync.service.logic;
 
-import android.os.RemoteException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -27,6 +25,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.PropertiesFileUtils;
@@ -102,7 +101,7 @@ public class ProcessAppAndTableLevelChanges {
     }
   };
 
-  public void verifyServerConfiguration() throws RemoteException {
+  public void verifyServerConfiguration() throws ServicesAvailabilityException {
     log.i(TAG, "entered verifyServerConfiguration()");
 
     if (OdkSyncService.possiblyWaitForSyncServiceDebugger()) {
@@ -201,9 +200,10 @@ public class ProcessAppAndTableLevelChanges {
    *
    * This does not process zip files; it is unclear whether we should do
    * anything for those or just leave them as zip files locally.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public List<TableResource> synchronizeConfigurationAndContent(boolean pushToServer) throws RemoteException {
+  public List<TableResource> synchronizeConfigurationAndContent(boolean pushToServer) throws
+      ServicesAvailabilityException {
     log.i(TAG, "entered synchronizeConfigurationAndContent()");
 
     boolean issueDeletes = false;
@@ -609,7 +609,7 @@ public class ProcessAppAndTableLevelChanges {
    *          down.
    * @return null if there is an error, otherwise a new or updated table
    *         resource
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    * @throws InvalidAuthTokenException 
    * @throws ClientWebException 
    */
@@ -620,11 +620,11 @@ public class ProcessAppAndTableLevelChanges {
     * @param resource the structure returned from the server
     * @param pushLocalTableLevelFiles
     * @return
-    * @throws RemoteException
+    * @throws ServicesAvailabilityException
     */
   private TableResource synchronizeTableConfigurationAndContent(TableDefinitionEntry tde,
       OrderedColumns orderedDefns, TableResource resource,
-      boolean pushLocalTableLevelFiles) throws RemoteException {
+      boolean pushLocalTableLevelFiles) throws ServicesAvailabilityException {
 
     // used to get the above from the ACTIVE store. if things go wonky, maybe
     // check to see if it was ACTIVE rather than SERVER for a reason. can't
@@ -824,11 +824,11 @@ public class ProcessAppAndTableLevelChanges {
    * @param doesNotExistLocally
    * @return the new {@link OrderedColumns} for the table.
    * @throws SchemaMismatchException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private OrderedColumns addTableFromDefinitionResource(OdkDbHandle db,
       TableDefinitionResource definitionResource, boolean doesNotExistLocally)
-      throws SchemaMismatchException, RemoteException {
+      throws SchemaMismatchException, ServicesAvailabilityException {
 
     // old URI prefix to instance content if schemaETag has changed or has been reset
     String oldTableInstanceFilesUriString = null;

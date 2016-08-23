@@ -15,12 +15,11 @@
  */
 package org.opendatakit.sync.service.logic;
 
-import android.os.RemoteException;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
@@ -492,7 +491,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String eTag = null;
     try {
       eTag = getManifestSyncETag(null);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -569,7 +568,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String eTag = null;
     try {
       eTag = getManifestSyncETag(tableId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -645,7 +644,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       eTag = getRowLevelManifestSyncETag(serverInstanceFileUri, tableId, instanceId,
           attachmentState, uriFragmentHash);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -1092,7 +1091,7 @@ public class AggregateSynchronizer implements Synchronizer {
    **********************************************************************************/
 
   @Override
-  public void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException {
+  public void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1106,7 +1105,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws RemoteException {
+      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1120,7 +1119,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws RemoteException {
+  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1133,7 +1132,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public String getManifestSyncETag(String tableId) throws RemoteException {
+  public String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1154,7 +1153,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void updateManifestSyncETag(String tableId, String documentETag) throws RemoteException {
+  public void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1178,7 +1177,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
-      RemoteException {
+      ServicesAvailabilityException {
 
     URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
 
@@ -1217,7 +1216,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
       String documentETag)
-      throws RemoteException {
+      throws ServicesAvailabilityException {
 
     URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
 
@@ -1253,7 +1252,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
       String newSchemaETag, String oldSchemaETag) throws
-      RemoteException {
+      ServicesAvailabilityException {
     // we are creating data on the server
     OdkDbHandle db = null;
 

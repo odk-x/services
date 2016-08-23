@@ -97,7 +97,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     if (msg == null) {
       msg = e.toString();
     }
-    msg = e.getClass().getName() + ": " + msg;
+    msg = "org.opendatakit|" + e.getClass().getName() + ": " + msg;
     WebLogger.getLogger(appName)
         .e(methodName, msg +
             ((dbHandleName != null) ? (" dbHandle: " + dbHandleName.getDatabaseHandle()) : ""));
@@ -846,6 +846,34 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     }
   }
 
+  @Override public OdkDbChunk privilegedGetRowsWithId(String appName,
+      OdkDbHandle dbHandleName, String tableId, String rowId)
+      throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    String activeUser = getActiveUser(appName);
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      OdkDbTable results = ODKDatabaseImplUtils.get()
+          .privilegedGetRowsWithId(db, tableId, rowId, activeUser);
+
+      return getAndCacheChunks(results);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "privilegedGetRowsWithId", e);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
   @Override
   public OdkDbChunk getMostRecentRowWithId(String appName, OdkDbHandle dbHandleName, String
       tableId,
@@ -1242,6 +1270,34 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       OdkDbTable result = ODKDatabaseImplUtils.get()
           .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, activeUser, rolesList);
+
+      return getAndCacheChunks(result);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "rawSqlQuery", e);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override
+  public OdkDbChunk privilegedRawSqlQuery(String appName, OdkDbHandle dbHandleName,
+      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    String activeUser = getActiveUser(appName);
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      OdkDbTable result = ODKDatabaseImplUtils.get().privilegedQuery(db, sqlCommand, sqlBindArgs
+          .bindArgs, sqlQueryBounds, activeUser);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
