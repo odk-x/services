@@ -431,9 +431,10 @@ public class ODKDatabaseImplUtils {
    */
   public OrderedColumns createLocalOnlyDBTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
-    // At least for now we are prepending all non-synchronized tables with a "L_" to mark them as
-    // such
-    tableId = "L_" + tableId;
+    // We are prepending all non-synchronized tables with a "L_" to mark them as such
+    if (!tableId.startsWith("L_")) {
+      tableId = "L_" + tableId;
+    }
 
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -485,14 +486,10 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    */
   public void deleteLocalOnlyDBTable(OdkConnectionInterface db,
-      final String tableId) throws ActionNotAuthorizedException {
+      String tableId) throws ActionNotAuthorizedException {
 
     if (!tableId.startsWith("L_")) {
-      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
-          "Local only tables must start with 'L_'");
-      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
-      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      throw e;
+      tableId = "L_" + tableId;
     }
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -530,11 +527,7 @@ public class ODKDatabaseImplUtils {
       ContentValues rowValues) throws ActionNotAuthorizedException {
 
     if (!tableId.startsWith("L_")) {
-      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
-          "Local only tables must start with 'L_'");
-      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
-      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      throw e;
+      tableId = "L_" + tableId;
     }
 
     if (rowValues == null || rowValues.size() <= 0) {
@@ -579,11 +572,7 @@ public class ODKDatabaseImplUtils {
       throws ActionNotAuthorizedException {
 
     if (!tableId.startsWith("L_")) {
-      ActionNotAuthorizedException e = new ActionNotAuthorizedException(
-          "Local only tables must start with 'L_'");
-      WebLogger.getLogger(db.getAppName()).e(t, "Unable to update in this table: " + tableId);
-      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      throw e;
+      tableId = "L_" + tableId;
     }
 
     if (rowValues == null || rowValues.size() <= 0) {
