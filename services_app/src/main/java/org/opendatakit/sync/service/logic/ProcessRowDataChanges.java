@@ -1372,6 +1372,7 @@ public class ProcessRowDataChanges {
         values.put(DataTableColumns.LOCALE, serverRow.getLocale());
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
         values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+        values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
         RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
         values.put(DataTableColumns.FILTER_TYPE,
             (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
