@@ -88,7 +88,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
     return props.getLocale();
   }
 
-  private RemoteException createWrappingRemoteException(String appName,
+  private IllegalStateException createWrappingRemoteException(String appName,
       OdkDbHandle dbHandleName, String methodName, Throwable e) {
     String msg = e.getLocalizedMessage();
     if (msg == null) {
@@ -102,7 +102,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
         .e(methodName, msg +
             ((dbHandleName != null) ? (" dbHandle: " + dbHandleName.getDatabaseHandle()) : ""));
     WebLogger.getLogger(appName).printStackTrace(e);
-    return new RemoteException(msg);
+    return new IllegalStateException(msg);
   }
 
   /**

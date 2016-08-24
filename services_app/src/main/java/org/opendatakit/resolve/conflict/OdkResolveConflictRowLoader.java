@@ -93,8 +93,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
           .getUserDefinedColumns(db, mTableId);
       String whereClause = DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)";
-      String[] selectionArgs = new String[] {
-          Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES) };
+      Object[] selectionArgs = new Object[] {
+          ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
       String[] orderByDir = new String[] { "DESC" };
@@ -127,8 +127,8 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
         }
 
         if (tableSetChanged) {
-          selectionArgs = new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
-              Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) };
+          selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
+              ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
 
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),

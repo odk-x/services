@@ -100,7 +100,6 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
       OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
           .getUserDefinedColumns(db, mTableId);
-      String[] selectionArgs = {};
       String whereClause = DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
@@ -111,7 +110,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, null, activeUser);
+          null, null, activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -137,7 +136,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, null, activeUser);
+              null, null, activeUser);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
