@@ -273,7 +273,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
       } catch (IllegalArgumentException e) {
          // expected
-         assertTrue("Got what we expected " + e.toString(), false);
+         assertTrue("Got what we expected " + e.toString(), true);
       } catch (Exception e) {
          assertTrue("Unexpected " + e.toString(), false);
       } finally {
