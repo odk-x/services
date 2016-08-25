@@ -3757,6 +3757,225 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
   }
 
+
+  /*
+   * Test get table health when table is healthy
+   */
+  public void testVariousRawQueryFilters_ExpectPass() throws
+      ActionNotAuthorizedException  {
+    String tableId = testTable;
+    String testCol = "testColumn";
+    String testColType = ElementDataType.integer.name();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+        .createOrOpenDBTableWithColumns(db, tableId, columns);
+    int testVal = 5;
+
+    ContentValues cvValues = new ContentValues();
+    String rowId = ODKDataUtils.genUUID();
+    cvValues.put(testCol, testVal);
+    ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
+        activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
+
+    Cursor c;
+    String sel;
+
+    sel = "SELECT * FROM " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .ADMIN_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .USER_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, "anonymous", null);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    sel = "SELECT testColumn, " + DataTableColumns.FILTER_TYPE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .ADMIN_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .USER_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, "anonymous", null);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+
+    sel = "SELECT testColumn, " + DataTableColumns.FILTER_TYPE +
+        ", " + DataTableColumns.FILTER_VALUE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .ADMIN_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .USER_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, "anonymous", null);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+
+    sel = "SELECT testColumn, " + DataTableColumns.FILTER_TYPE +
+        ", " + DataTableColumns.SYNC_STATE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .ADMIN_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .USER_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, "anonymous", null);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) == -1 );
+      assertTrue( "did not expect locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+
+    sel = "SELECT testColumn, " + DataTableColumns.FILTER_TYPE +
+        ", " + DataTableColumns.FILTER_VALUE +
+        ", " + DataTableColumns.SYNC_STATE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .ADMIN_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "expected unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) != -1 );
+      assertTrue( "expected locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) != -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, activeUser, RoleConsts
+        .USER_ROLES_LIST);
+    if ( c.moveToFirst() ) {
+      assertTrue( "expected unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) != -1 );
+      assertTrue( "expected locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) != -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();;
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null, "anonymous", null);
+    if ( c.moveToFirst() ) {
+      assertTrue( "expected unlocked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED) != -1 );
+      assertTrue( "expected locked privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS_LOCKED) != -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+  }
+
   /*
  * Test get table health when table has checkpoints
  */

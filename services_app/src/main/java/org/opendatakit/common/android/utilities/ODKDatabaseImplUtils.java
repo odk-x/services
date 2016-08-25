@@ -280,6 +280,54 @@ public class ODKDatabaseImplUtils {
     return sqlCommand + " LIMIT " + sqlQueryBounds.mLimit + " OFFSET " + sqlQueryBounds.mOffset;
   }
 
+  private void buildAccessRights(StringBuilder b, ArrayList<Object> wrappedSqlArgs,
+                  String activeUser, ArrayList<String> rolesArray ) {
+
+    if ( rolesArray != null &&
+        (rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
+         rolesArray.contains(RoleConsts.ROLE_SUPER_USER)) ) {
+      // privileged user
+      b.append("\"rwd\" as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
+       .append(", \"rwd\" as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+    } else if ( rolesArray == null || activeUser == null) {
+      // un-verified user or anonymous user
+      // unlocked tables have r, rw (modify) and rwd (default or new_row) options
+      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+          .append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+          .append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
+          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
+          .append(", ");
+      // locked tables have just rwd (new_row) and r options
+      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+    } else {
+      // ordinary user
+      // unlocked tables have r, rw (modify) and rwd (default or new_row) options
+      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
+          .append(" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+          .append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+          .append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
+          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
+          .append(", ");
+      wrappedSqlArgs.add(activeUser);
+      // locked tables have just rwd (new_row) and r options
+      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+          .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
+          .append(" then \"rw\" ")
+          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+      wrappedSqlArgs.add(activeUser);
+    }
+  }
+
   /**
    * Perform a raw query with bind parameters.
    *
@@ -304,91 +352,90 @@ public class ODKDatabaseImplUtils {
         }
       }
     }
-    boolean filteringIsRequired =
-        (rolesArray == null) ||
-            !(rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
-                rolesArray.contains(RoleConsts.ROLE_SUPER_USER));
 
-    if ( filteringIsRequired ) {
-      // test whether the resultset has a FILTER_TYPE column
-      Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
-      if (c.moveToFirst() ) {
-        if (c.getColumnIndex(DataTableColumns.FILTER_TYPE) == -1) {
-          c.close();
-          // no column -- no need to filter this resultset
-		  String sql = applyQueryBounds(sqlCommand, sqlQueryBounds);
-          c = db.rawQuery(sql, selectionArgs);
-          return c;
-        }
-        // otherwise, we need to apply filtering
-        boolean hasFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE) != -1;
-        boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
+    // test whether the resultset has a FILTER_TYPE column
+    Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
+    if (c.moveToFirst() ) {
+      if (c.getColumnIndex(DataTableColumns.FILTER_TYPE) == -1) {
         c.close();
-        String wrappedSql;
-        Object wrappedSqlArgs[];
-        if (hasFilterValue && hasSyncState) {
-          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
-              DataTableColumns.FILTER_TYPE + " != ? OR T." +
-              DataTableColumns.FILTER_VALUE + " = ? OR T." +
-              DataTableColumns.SYNC_STATE + " = ?";
-          wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 3];
-          int i = 0;
-          if ( selectionArgs != null ) {
-            for (i = 0; i < selectionArgs.length; ++i) {
-              wrappedSqlArgs[i] = selectionArgs[i];
-            }
-          }
-          wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
-          wrappedSqlArgs[i++] = activeUser;
-          wrappedSqlArgs[i++] = SyncState.new_row.name();
-        } else if (hasFilterValue) {
-          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
-              DataTableColumns.FILTER_TYPE + " != ? OR T." +
-              DataTableColumns.FILTER_VALUE + " = ?";
-          wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 2];
-          int i = 0;
-          if ( selectionArgs != null ) {
-            for (i = 0; i < selectionArgs.length; ++i) {
-              wrappedSqlArgs[i] = selectionArgs[i];
-            }
-          }
-          wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
-          wrappedSqlArgs[i++] = activeUser;
-        } else if (hasSyncState) {
-          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
-              DataTableColumns.FILTER_TYPE + " != ? OR T." +
-              DataTableColumns.SYNC_STATE + " = ?";
-          wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 2];
-          int i = 0;
-          if ( selectionArgs != null ) {
-            for (i = 0; i < selectionArgs.length; ++i) {
-              wrappedSqlArgs[i] = selectionArgs[i];
-            }
-          }
-          wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
-          wrappedSqlArgs[i++] = SyncState.new_row.name();
-        } else {
-          wrappedSql = "SELECT * FROM (" + sqlCommand + ") AS T WHERE T." +
-              DataTableColumns.FILTER_TYPE + " != ?";
-          wrappedSqlArgs = new Object[((selectionArgs == null) ? 0 : selectionArgs.length) + 1];
-          int i = 0;
-          if ( selectionArgs != null ) {
-            for (i = 0; i < selectionArgs.length; ++i) {
-              wrappedSqlArgs[i] = selectionArgs[i];
-            }
-          }
-          wrappedSqlArgs[i++] = RowFilterScope.Type.HIDDEN.name();
-        }
-        String limitAppliedSql = applyQueryBounds(wrappedSql, sqlQueryBounds);
-        c = db.rawQuery(limitAppliedSql, wrappedSqlArgs);
-        return c;
-      } else {
-        // cursor is empty!
+        // no column -- no need to filter this resultset
+        String sql = applyQueryBounds(sqlCommand, sqlQueryBounds);
+        c = db.rawQuery(sql, selectionArgs);
         return c;
       }
+
+      StringBuilder b = new StringBuilder();
+      ArrayList<Object> wrappedSqlArgs = new ArrayList<Object>();
+
+      // otherwise, we need to apply filtering
+      boolean hasFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE) != -1;
+      boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
+      c.close();
+      if (hasFilterValue && hasSyncState) {
+        b.append("SELECT *, ");
+        buildAccessRights(b, wrappedSqlArgs, activeUser, rolesArray);
+        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
+            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
+            .append(RowFilterScope.Type.HIDDEN.name()).append("\" OR T.")
+            .append(DataTableColumns.SYNC_STATE).append(" = \"")
+            .append(SyncState.new_row.name()).append("\"");
+        if ( selectionArgs != null ) {
+          for (int i = 0; i < selectionArgs.length; ++i) {
+            wrappedSqlArgs.add(selectionArgs[i]);
+          }
+        }
+        if ( rolesArray != null && activeUser != null &&
+            rolesArray.contains(RoleConsts.ROLE_USER) ) {
+          // visible if activeUser matches the filter value
+          b.append(" OR T.").append(DataTableColumns.FILTER_VALUE).append(" = ?");
+          wrappedSqlArgs.add(activeUser);
+        }
+      } else if (hasFilterValue) {
+        b.append("SELECT * ");
+        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
+            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
+            .append(RowFilterScope.Type.HIDDEN.name()).append("\"");
+        if ( selectionArgs != null ) {
+          for (int i = 0; i < selectionArgs.length; ++i) {
+            wrappedSqlArgs.add(selectionArgs[i]);
+          }
+        }
+        if ( rolesArray != null && activeUser != null &&
+            rolesArray.contains(RoleConsts.ROLE_USER) ) {
+          // visible if activeUser matches the filter value
+          b.append(" OR T.").append(DataTableColumns.FILTER_VALUE).append(" = ?");
+          wrappedSqlArgs.add(activeUser);
+        }
+      } else if (hasSyncState) {
+        b.append("SELECT * ");
+        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
+            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
+            .append(RowFilterScope.Type.HIDDEN.name()).append("\" OR T.")
+            .append(DataTableColumns.SYNC_STATE).append(" = \"")
+            .append(SyncState.new_row.name()).append("\"");
+        if ( selectionArgs != null ) {
+          for (int i = 0; i < selectionArgs.length; ++i) {
+            wrappedSqlArgs.add(selectionArgs[i]);
+          }
+        }
+      } else {
+        // only FILTER_TYPE
+        b.append("SELECT * ");
+        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
+            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
+            .append(RowFilterScope.Type.HIDDEN.name()).append(" = \"");
+        if ( selectionArgs != null ) {
+          for (int i = 0; i < selectionArgs.length; ++i) {
+            wrappedSqlArgs.add(selectionArgs[i]);
+          }
+        }
+      }
+      String wrappedSql = b.toString();
+      String limitAppliedSql = applyQueryBounds(wrappedSql, sqlQueryBounds);
+      c = db.rawQuery(limitAppliedSql, wrappedSqlArgs.toArray());
+      return c;
     } else {
-        String limitAppliedSql = applyQueryBounds(sqlCommand, sqlQueryBounds);
-      Cursor c = db.rawQuery(limitAppliedSql, selectionArgs);
+      // cursor is empty!
       return c;
     }
   }
@@ -451,7 +498,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param sqlCommand  the query to run
    * @param sqlBindArgs the selection parameters
-   * @param sqlCommand    max number of rows to return (zero is infinite)
+   * @param sqlCommand  max number of rows to return (zero is infinite)
    * @param activeUser
    * @param rolesList
    * @return
@@ -479,8 +526,8 @@ public class ODKDatabaseImplUtils {
    * The number of rows returned are limited to no greater than the sqlLimit (zero is infinite).
    *
    * @param db
-   * @param sqlCommand  the query to run
-   * @param sqlBindArgs the selection parameters
+   * @param sqlCommand     the query to run
+   * @param sqlBindArgs    the selection parameters
    * @param sqlQueryBounds the number of rows to return (zero is infinite)
    * @param activeUser
    * @return
@@ -698,7 +745,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowValues
    * @param whereClause
-   * @param whereArgs
+   * @param bindArgs
    * @throws ActionNotAuthorizedException
    */
   public void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
