@@ -702,7 +702,7 @@ public class ODKDatabaseImplUtils {
    * @throws ActionNotAuthorizedException
    */
   public void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
-      ContentValues rowValues, String whereClause, String[] whereArgs)
+      ContentValues rowValues, String whereClause, Object[] bindArgs)
       throws IllegalArgumentException {
 
     if (rowValues == null || rowValues.size() <= 0) {
@@ -720,7 +720,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.update(tableId, cvDataTableVal, whereClause, whereArgs);
+      db.update(tableId, cvDataTableVal, whereClause, bindArgs);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -738,11 +738,11 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    * @param whereClause
-   * @param whereArgs
+   * @param bindArgs
    * @throws ActionNotAuthorizedException
    */
   public void deleteLocalOnlyRow(OdkConnectionInterface db, String tableId, String whereClause,
-      String[] whereArgs) {
+      Object[] bindArgs) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -750,7 +750,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.delete(tableId, whereClause, whereArgs);
+      db.delete(tableId, whereClause, bindArgs);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();

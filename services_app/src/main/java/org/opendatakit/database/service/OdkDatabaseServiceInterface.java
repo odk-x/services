@@ -350,11 +350,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    * @param tableId
    * @param rowValues
    * @param whereClause
-   * @param whereArgs
+   * @param sqlBindArgs
    * @throws ActionNotAuthorizedException
    */
   @Override public void updateLocalOnlyRow(String appName, OdkDbHandle dbHandleName, String tableId,
-      ContentValues rowValues, String whereClause, String[] whereArgs)
+      ContentValues rowValues, String whereClause, BindArgs sqlBindArgs)
       throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -364,7 +364,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get()
-          .updateLocalOnlyRow(db, tableId, rowValues, whereClause, whereArgs);
+          .updateLocalOnlyRow(db, tableId, rowValues, whereClause, sqlBindArgs.bindArgs);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -394,11 +394,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
    * @param dbHandleName
    * @param tableId
    * @param whereClause
-   * @param whereArgs
+   * @param sqlBindArgs
    * @throws ActionNotAuthorizedException
    */
   @Override public void deleteLocalOnlyRow(String appName, OdkDbHandle dbHandleName, String tableId,
-      String whereClause, String[] whereArgs) throws RemoteException {
+      String whereClause, BindArgs sqlBindArgs) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -407,7 +407,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get()
-          .deleteLocalOnlyRow(db, tableId, whereClause, whereArgs);
+          .deleteLocalOnlyRow(db, tableId, whereClause, sqlBindArgs.bindArgs);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
