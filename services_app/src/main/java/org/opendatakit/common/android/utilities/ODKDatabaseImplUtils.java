@@ -352,8 +352,9 @@ public class ODKDatabaseImplUtils {
         }
       }
     }
-    boolean isPrivilegedUser = rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
+    boolean isPrivilegedUser = rolesArray != null &&
+        (rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+         rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR));
 
     Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
     if (c.moveToFirst() ) {
