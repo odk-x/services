@@ -352,82 +352,51 @@ public class ODKDatabaseImplUtils {
         }
       }
     }
+    boolean isPrivilegedUser = rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
+        rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
 
-    // test whether the resultset has a FILTER_TYPE column
     Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
     if (c.moveToFirst() ) {
-      if (c.getColumnIndex(DataTableColumns.FILTER_TYPE) == -1) {
-        c.close();
-        // no column -- no need to filter this resultset
+      // see if we have the columns needed to apply row-level filtering
+      boolean hasFilterType = c.getColumnIndex(DataTableColumns.FILTER_TYPE) != -1;
+      boolean hasFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE) != -1;
+      boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
+      c.close();
+
+      if ( !(hasFilterType && hasFilterValue && hasSyncState) ) {
+        // nope. we require all 3 to apply row-level filtering
+
+        // no need to filter this resultset
         String sql = applyQueryBounds(sqlCommand, sqlQueryBounds);
         c = db.rawQuery(sql, selectionArgs);
         return c;
       }
 
+      // augment query result list with the effective access controls for the row ("r", "rw", or "rwd")
       StringBuilder b = new StringBuilder();
       ArrayList<Object> wrappedSqlArgs = new ArrayList<Object>();
 
-      // otherwise, we need to apply filtering
-      boolean hasFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE) != -1;
-      boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
-      c.close();
-      if (hasFilterValue && hasSyncState) {
-        b.append("SELECT *, ");
-        buildAccessRights(b, wrappedSqlArgs, activeUser, rolesArray);
-        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
-            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
-            .append(RowFilterScope.Type.HIDDEN.name()).append("\" OR T.")
-            .append(DataTableColumns.SYNC_STATE).append(" = \"")
-            .append(SyncState.new_row.name()).append("\"");
-        if ( selectionArgs != null ) {
-          for (int i = 0; i < selectionArgs.length; ++i) {
-            wrappedSqlArgs.add(selectionArgs[i]);
-          }
+      b.append("SELECT *, ");
+      buildAccessRights(b, wrappedSqlArgs, activeUser, rolesArray);
+      b.append(" FROM (").append(sqlCommand).append(") AS T");
+      if ( selectionArgs != null ) {
+        for (int i = 0; i < selectionArgs.length; ++i) {
+          wrappedSqlArgs.add(selectionArgs[i]);
         }
-        if ( rolesArray != null && activeUser != null &&
-            rolesArray.contains(RoleConsts.ROLE_USER) ) {
+      }
+      // apply row-level visibility filter only if we are not privileged
+      // privileged users see everything.
+      if ( !isPrivilegedUser ) {
+        b.append(" WHERE T.")
+            .append(DataTableColumns.FILTER_TYPE)
+            .append(" != \"").append(RowFilterScope.Type.HIDDEN.name()).append("\" OR T.")
+            .append(DataTableColumns.SYNC_STATE)
+            .append(" = \"").append(SyncState.new_row.name()).append("\"");
+        if (rolesArray != null && activeUser != null &&
+            rolesArray.contains(RoleConsts.ROLE_USER)) {
           // visible if activeUser matches the filter value
           b.append(" OR T.").append(DataTableColumns.FILTER_VALUE).append(" = ?");
           wrappedSqlArgs.add(activeUser);
-        }
-      } else if (hasFilterValue) {
-        b.append("SELECT * ");
-        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
-            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
-            .append(RowFilterScope.Type.HIDDEN.name()).append("\"");
-        if ( selectionArgs != null ) {
-          for (int i = 0; i < selectionArgs.length; ++i) {
-            wrappedSqlArgs.add(selectionArgs[i]);
-          }
-        }
-        if ( rolesArray != null && activeUser != null &&
-            rolesArray.contains(RoleConsts.ROLE_USER) ) {
-          // visible if activeUser matches the filter value
-          b.append(" OR T.").append(DataTableColumns.FILTER_VALUE).append(" = ?");
-          wrappedSqlArgs.add(activeUser);
-        }
-      } else if (hasSyncState) {
-        b.append("SELECT * ");
-        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
-            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
-            .append(RowFilterScope.Type.HIDDEN.name()).append("\" OR T.")
-            .append(DataTableColumns.SYNC_STATE).append(" = \"")
-            .append(SyncState.new_row.name()).append("\"");
-        if ( selectionArgs != null ) {
-          for (int i = 0; i < selectionArgs.length; ++i) {
-            wrappedSqlArgs.add(selectionArgs[i]);
-          }
-        }
-      } else {
-        // only FILTER_TYPE
-        b.append("SELECT * ");
-        b.append(" FROM (").append(sqlCommand).append(") AS T WHERE T.")
-            .append(DataTableColumns.FILTER_TYPE).append(" != \"")
-            .append(RowFilterScope.Type.HIDDEN.name()).append(" = \"");
-        if ( selectionArgs != null ) {
-          for (int i = 0; i < selectionArgs.length; ++i) {
-            wrappedSqlArgs.add(selectionArgs[i]);
-          }
         }
       }
       String wrappedSql = b.toString();
