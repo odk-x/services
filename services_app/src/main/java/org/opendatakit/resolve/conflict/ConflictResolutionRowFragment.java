@@ -32,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opendatakit.IntentConsts;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -40,6 +41,7 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.resolve.views.components.Resolution;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -98,26 +100,6 @@ public class ConflictResolutionRowFragment extends ListFragment implements
   private Map<String, String> mChosenValuesMap = new TreeMap<String, String>();
   private Map<String, Resolution> mUserResolutions = new TreeMap<String, Resolution>();
 
-  private class ActiveUserAndLocale {
-    final String activeUser;
-    final String locale;
-
-    ActiveUserAndLocale(String activeUser, String locale) {
-      this.activeUser = activeUser;
-      this.locale = locale;
-    }
-  }
-
-  private ActiveUserAndLocale getActiveUserAndLocale() {
-    String activeUser;
-    String locale;
-
-    PropertiesSingleton props =
-        CommonToolProperties.get(getActivity(), mAppName);
-
-    return new ActiveUserAndLocale(props.getActiveUser(), props.getLocale());
-  }
-
   private class DiscardChangesAndDeleteLocalListener implements View.OnClickListener {
 
     @Override
@@ -136,13 +118,16 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
+          ActiveUserAndLocale aul = ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
+
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, mAppName,
-                mTableId, mRowId);
+            // This is elevated privileges since we are applying the server's change locally
+            ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db,
+                mTableId, mRowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -206,19 +191,22 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           // deleted.
           mIsShowingTakeLocalDialog = false;
           dialog.dismiss();
+
           OdkConnectionInterface db = null;
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
-                mTableId, mRowId, aul.activeUser, aul.locale);
+            // run this with user permissions, since we are taking local changes over server values
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db,
+                mTableId, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -283,7 +271,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -296,8 +285,10 @@ public class ConflictResolutionRowFragment extends ListFragment implements
               updateValues.put( entry.getKey(), mChosenValuesMap.get(entry.getKey()));
             }
 
+            // Use local user's role when accepting local changes over server changes.
             ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db,
-                mAppName, mTableId, updateValues, mRowId, aul.activeUser, aul.locale);
+                mTableId, updateValues, mRowId,
+                aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -359,7 +350,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
@@ -368,8 +360,9 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db, mAppName,
-                mTableId, mRowId, aul.activeUser, aul.locale);
+            // use local user's rolesList
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeLocalRowWithId(db,
+                mTableId, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -431,7 +424,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          ActiveUserAndLocale aul = getActiveUserAndLocale();
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
@@ -440,7 +434,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
+            // use privileged user roles since we are taking server's values
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
                 mTableId, mRowId, aul.activeUser, aul.locale);
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -492,7 +487,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
   private void discardAllLocalChanges() {
     OdkConnectionInterface db = null;
 
-    ActiveUserAndLocale aul = getActiveUserAndLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
     OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
 
@@ -501,7 +497,8 @@ public class ConflictResolutionRowFragment extends ListFragment implements
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName, mTableId,
+      // use privileged user roles since we are taking server's values
+      ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mTableId,
           mRowId, aul.activeUser, aul.locale);
 
     } catch (Exception e) {
@@ -592,6 +589,10 @@ public class ConflictResolutionRowFragment extends ListFragment implements
       return;
     }
 
+    // TODO: we have no way in the resolve conflicts screen to choose which filter scope
+    // TODO: to take. Need to allow super-user and above to choose the local filter scope
+    // TODO: vs just taking what the server has.
+
     if ( savedInstanceState != null ) {
 
       WebLogger.getLogger(mAppName).i(TAG, "onActivityCreated - restoreFromInstanceState");
@@ -633,6 +634,10 @@ public class ConflictResolutionRowFragment extends ListFragment implements
       // And finally, call this to make sure we update the button as appropriate.
       WebLogger.getLogger(mAppName).i(TAG, "onActivityCreated - restoreFromInstanceState - done");
     }
+
+    // TODO: need to show or hide the rowFilterScope in the list of columns to reconcile based
+    // TODO: upon whether the current user has RoleConsts.ROLE_SUPER_USER or
+    // TODO: RoleConsts.ROLE_ADMINISTRATOR
 
     // render total instance view
     mAdapter = new ConflictResolutionColumnListAdapter(getActivity(), mAppName,

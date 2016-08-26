@@ -125,6 +125,7 @@ public class AllConflictsResolutionActivity extends Activity implements IAppAwar
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.action_sync).setVisible(false);
+        menu.findItem(R.id.action_verify_server_settings).setVisible(false);
         menu.findItem(R.id.action_resolve_conflict).setVisible(false);
         return super.onPrepareOptionsMenu(menu);
     }
@@ -136,6 +137,9 @@ public class AllConflictsResolutionActivity extends Activity implements IAppAwar
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_sync) {
+            return true;
+        }
+        if (id == R.id.action_verify_server_settings) {
             return true;
         }
         if (id == R.id.action_resolve_conflict) {

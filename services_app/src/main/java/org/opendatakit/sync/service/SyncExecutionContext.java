@@ -22,14 +22,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.application.AppAwareApplication;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.NameUtil;
@@ -43,6 +44,7 @@ import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.sync.service.exceptions.*;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
+import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.IOException;
 import java.util.List;
@@ -132,10 +134,17 @@ public class SyncExecutionContext implements SynchronizerStatus {
     mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
 
+  public SyncOutcome getAppLevelSyncOutcome() {
+    return mUserResult.getAppLevelSyncOutcome();
+  }
+
   public SyncOutcome exceptionEquivalentOutcome(Throwable e) {
     if ( e instanceof IOException ) {
       // this occurs when JSON parser of response fails
-       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
+    } else if ( e instanceof JsonProcessingException ) {
+      // something wrong with Jackson parser / serializer
+      return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
     } else if ( e instanceof AccessDeniedException ) {
       return (SyncOutcome.ACCESS_DENIED_EXCEPTION);
     } else if ( e instanceof AccessDeniedReauthException) {
@@ -156,7 +165,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
     } else if ( e instanceof UnexpectedServerRedirectionStatusCodeException ) {
       return (SyncOutcome.UNEXPECTED_REDIRECT_EXCEPTION);
-    } else if ( e instanceof RemoteException ) {
+    } else if ( e instanceof IllegalArgumentException ) {
+      return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
+    } else if ( e instanceof IllegalStateException ) {
+      return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
+    } else if ( e instanceof SQLiteException) {
+      return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
+    } else if ( e instanceof ServicesAvailabilityException ) {
       return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
     } else if ( e instanceof SchemaMismatchException ) {
       return (SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
@@ -227,9 +242,21 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return password;
   }
 
+  public void setRolesList(String value) {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setProperty(CommonToolProperties.KEY_ROLES_LIST, value);
+  }
+
+  public void setUsersList(String value) {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setProperty(CommonToolProperties.KEY_USERS_LIST, value);
+  }
+
   private int refCount = 1;
 
-  public synchronized OdkDbHandle getDatabase() throws RemoteException {
+  public synchronized OdkDbHandle getDatabase() throws ServicesAvailabilityException {
     if ( odkDbHandle == null ) {
       odkDbHandle = getDatabaseService().openDatabase(appName);
     }
@@ -240,7 +267,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return odkDbHandle;
   }
 
-  public synchronized void releaseDatabase(OdkDbHandle odkDbHandle) throws RemoteException {
+  public synchronized void releaseDatabase(OdkDbHandle odkDbHandle) throws ServicesAvailabilityException {
     if ( odkDbHandle != null ) {
       if ( odkDbHandle != this.odkDbHandle ) {
         throw new IllegalArgumentException("Expected the internal odkDbHandle!");
@@ -258,7 +285,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
     }
   }
 
-  public String getTableDisplayName(String tableId) throws RemoteException {
+  public String getTableDisplayName(String tableId) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = getDatabase();

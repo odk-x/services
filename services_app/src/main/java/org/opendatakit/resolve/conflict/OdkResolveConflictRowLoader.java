@@ -18,10 +18,10 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
@@ -36,10 +36,14 @@ import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.database.service.OdkDbTable;
+import org.opendatakit.database.utilities.OdkDbQueryUtil;
 import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -86,15 +90,21 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
-          mAppName, mTableId);
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
+          .getUserDefinedColumns(db, mTableId);
+      String whereClause = DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)";
+      Object[] selectionArgs = new Object[] {
+          ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
       String[] groupBy = { DataTableColumns.ID };
+      String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
+      String[] orderByDir = new String[] { "DESC" };
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
-          DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
-          new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
-              Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) },
-          groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+              .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+          selectionArgs, null, activeUser);
+      table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
 
@@ -102,25 +112,28 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for ( int i = 0 ; i < table.getNumberOfRows(); ++i ) {
-          Row row = table.getRowAtIndex(i);
-          String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
+          OdkDbRow row = table.getRowAtIndex(i);
+          String rowId = row.getDataByKey(DataTableColumns.ID);
           OdkResolveConflictFieldLoader loader = new OdkResolveConflictFieldLoader(getContext()
               , mAppName, mTableId, rowId);
           ResolveActionList resolveActionList = loader.doWork(dbHandleName);
 
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
-            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mAppName,
+            // Use privileged user roles since we are taking the server's values
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
                 mTableId, rowId, activeUser, locale);
           }
         }
 
-        if ( tableSetChanged ) {
-          table = ODKDatabaseImplUtils.get().rawSqlQuery(db, mAppName, mTableId, orderedDefns,
-              DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
-              new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
-                             Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) },
-              groupBy, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "DESC");
+        if (tableSetChanged) {
+          selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
+              ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
+
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+                  .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+              selectionArgs, null, activeUser);
+          table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
 
@@ -139,7 +152,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId });
+          new String[]{ mTableId }, null, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);
@@ -217,9 +230,9 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      Row row = table.getRowAtIndex(i);
-      String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
-      String instanceName = row.getRawDataOrMetadataByElementKey(nameToUse.instanceName);
+      OdkDbRow row = table.getRowAtIndex(i);
+      String rowId = row.getDataByKey(DataTableColumns.ID);
+      String instanceName = row.getDataByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId, formDisplayName + ": " + instanceName);
       results.add(re);
     }

@@ -233,4 +233,10 @@ public class OdkSyncService extends Service {
       return true;
     }
   }
+
+  public boolean verifyServerSettings(String appName) {
+    AppSynchronizer sync = getSync(appName);
+    return sync.verifyServerSettings();
+  }
+
 }

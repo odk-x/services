@@ -23,6 +23,7 @@ import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
+import org.opendatakit.sync.activities.VerifyServerSettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,6 +111,13 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
         Intent intent = new Intent(this, ClearAppPropertiesActivity.class);
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
             this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+        header.intent = intent;
+      }
+
+      if ( header.id == R.id.verify_server_settingss ) {
+        Intent intent = new Intent(this, VerifyServerSettingsActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+                this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
         header.intent = intent;
       }
 
@@ -224,6 +232,33 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     super.onSaveInstanceState(outState);
     outState.putBoolean(SAVED_ADMIN_CONFIGURED, mAdminConfigured);
     mProps.writeProperties();
+  }
+
+  /**
+   * If we are exiting the non-privileged settings screen and the user roles are not
+   * set, then launch the verify user permissions activity (in place of this activity).
+   *
+   * Otherwise, exit the settings screen.
+   */
+  @Override
+  public void onBackPressed() {
+    if ( !mAdminMode ) {
+      String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+      boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
+              getString(R.string.credential_type_none).equals(authType);
+      if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
+              !isAnonymous ) {
+
+        mProps.writeProperties();
+        // this will swap to the new activity and close this one
+        Intent i = new Intent(this, VerifyServerSettingsActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+        startActivity(i);
+        return;
+      }
+    }
+    super.onBackPressed();
   }
 
   @Override

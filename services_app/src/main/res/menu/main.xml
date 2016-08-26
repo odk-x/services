@@ -10,9 +10,16 @@
         android:title="@string/action_sync"/>
 
     <item
+        android:id="@+id/action_verify_server_settings"
+        android:orderInCategory="20"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/ic_verified_user_black_24dp"
+        android:title="@string/action_verify_server_settings"/>
+
+    <item
         android:id="@+id/action_resolve_conflict"
         android:orderInCategory="30"
-        android:showAsAction="never"
+        android:showAsAction="ifRoom"
         android:icon="@drawable/ic_sync_problem_black_24dp"
         android:title="@string/action_resolve_conflict"/>
 

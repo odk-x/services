@@ -14,7 +14,7 @@
 
 package org.opendatakit.sync.service.logic;
 
-import android.os.RemoteException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -25,6 +25,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.PropertiesFileUtils;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -99,6 +101,88 @@ public class ProcessAppAndTableLevelChanges {
     }
   };
 
+  public void verifyServerConfiguration() throws ServicesAvailabilityException {
+    log.i(TAG, "entered verifyServerConfiguration()");
+
+    if (OdkSyncService.possiblyWaitForSyncServiceDebugger()) {
+      log.i(TAG, "running under debugger: verifyServerConfiguration()");
+    }
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_verifying_app_name_on_server, null, 0.0, false);
+
+    // fail if the server is not configured for this appName.
+    // we test this before updating privileges to reduce the likelihood
+    // that a screwed-up server settings will cause the user's privileges
+    // to be downgraded to not_verified status.
+    try {
+      sc.getSynchronizer().verifyServerSupportsAppName();
+    } catch (Exception e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception verifying support of appName exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
+    }
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
+
+    ArrayList<String> roleList;
+    try {
+      roleList = sc.getSynchronizer().getUserRoles();
+    } catch (Exception e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception obtaining user roles exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
+    }
+
+    try {
+      if ( roleList.isEmpty() ) {
+        sc.setRolesList("");
+      } else {
+        sc.setRolesList(ODKFileUtils.mapper.writeValueAsString(roleList));
+      }
+    } catch (JsonProcessingException e) {
+      log.e(TAG,
+              "[verifyServerConfiguration] exception saving user roles. exception: "
+                      + e.toString());
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      return;
+    }
+
+    if (roleList.isEmpty()) {
+      sc.setUsersList("");
+    } else {
+      ArrayList<Map<String,Object>> usersList;
+      try {
+        usersList = sc.getSynchronizer().getUsers();
+      } catch (Exception e) {
+        log.e(TAG, "[verifyServerConfiguration] exception obtaining list of users exception: " +
+            e.toString());
+        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+        return;
+      }
+
+      try {
+        if (usersList.isEmpty()) {
+          sc.setUsersList("");
+        } else {
+          sc.setUsersList(ODKFileUtils.mapper.writeValueAsString(usersList));
+        }
+      } catch (JsonProcessingException e) {
+        log.e(TAG, "[verifyServerConfiguration] exception saving list of users. exception: " +
+            e.toString());
+        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+        return;
+      }
+    }
+
+    // don't set app-level outcome -- indicating we have no errors
+    return;
+  }
 
   /**
    * Synchronize all app-level files and all data table schemas and table-level
@@ -116,9 +200,10 @@ public class ProcessAppAndTableLevelChanges {
    *
    * This does not process zip files; it is unclear whether we should do
    * anything for those or just leave them as zip files locally.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public List<TableResource> synchronizeConfigurationAndContent(boolean pushToServer) throws RemoteException {
+  public List<TableResource> synchronizeConfigurationAndContent(boolean pushToServer) throws
+      ServicesAvailabilityException {
     log.i(TAG, "entered synchronizeConfigurationAndContent()");
 
     boolean issueDeletes = false;
@@ -126,18 +211,16 @@ public class ProcessAppAndTableLevelChanges {
       issueDeletes = true;
     }
 
-    sc.updateNotification(SyncProgressState.STARTING,
-        R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
+    /**
+     * Verify that the server configuration is good and
+     * update this user's permissions to correspond to those on that server.
+     */
+    verifyServerConfiguration();
 
-    // fail if the server is not configured for this appName
-    try {
-      sc.getSynchronizer().verifyServerSupportsAppName();
-    } catch (Exception e) {
-      log.e(TAG,
-          "[synchronizeConfigurationAndContent] exception verifying support of appName exception: "
-              + e.toString());
-      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
-      return new ArrayList<TableResource>();
+    // if the verification failed, it will have set the app-level outcome.
+    // otherwise, the outcome will remain in the WORKING state and we can proceed.
+    if ( sc.getAppLevelSyncOutcome() != SyncOutcome.WORKING ) {
+      return new ArrayList<>();
     }
 
     // Everything was successful-enough to warrant deleting any sync
@@ -145,6 +228,9 @@ public class ProcessAppAndTableLevelChanges {
     // only ever have the sync etags from the current server in case
     // the user is switching servers for some reason.
     sc.getSynchronizer().deleteAllSyncETagsExceptForCurrentServer();
+
+    sc.updateNotification(SyncProgressState.STARTING,
+            R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
 
     // working list of tables -- the list we will construct and return...
     List<TableResource> workingListOfTables = new ArrayList<TableResource>();
@@ -523,7 +609,7 @@ public class ProcessAppAndTableLevelChanges {
    *          down.
    * @return null if there is an error, otherwise a new or updated table
    *         resource
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    * @throws InvalidAuthTokenException 
    * @throws ClientWebException 
    */
@@ -534,11 +620,11 @@ public class ProcessAppAndTableLevelChanges {
     * @param resource the structure returned from the server
     * @param pushLocalTableLevelFiles
     * @return
-    * @throws RemoteException
+    * @throws ServicesAvailabilityException
     */
   private TableResource synchronizeTableConfigurationAndContent(TableDefinitionEntry tde,
       OrderedColumns orderedDefns, TableResource resource,
-      boolean pushLocalTableLevelFiles) throws RemoteException {
+      boolean pushLocalTableLevelFiles) throws ServicesAvailabilityException {
 
     // used to get the above from the ACTIVE store. if things go wonky, maybe
     // check to see if it was ACTIVE rather than SERVER for a reason. can't
@@ -588,7 +674,8 @@ public class ProcessAppAndTableLevelChanges {
         try {
           db = sc.getDatabase();
           // update schemaETag to that on server (dataETag is null already).
-          sc.getDatabaseService().updateDBTableETags(sc.getAppName(), db, tableId, schemaETag, null);
+          sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db, tableId,
+              schemaETag, null);
         } finally {
           sc.releaseDatabase(db);
           db = null;
@@ -737,11 +824,11 @@ public class ProcessAppAndTableLevelChanges {
    * @param doesNotExistLocally
    * @return the new {@link OrderedColumns} for the table.
    * @throws SchemaMismatchException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private OrderedColumns addTableFromDefinitionResource(OdkDbHandle db,
       TableDefinitionResource definitionResource, boolean doesNotExistLocally)
-      throws SchemaMismatchException, RemoteException {
+      throws SchemaMismatchException, ServicesAvailabilityException {
 
     // old URI prefix to instance content if schemaETag has changed or has been reset
     String oldTableInstanceFilesUriString = null;
@@ -752,7 +839,7 @@ public class ProcessAppAndTableLevelChanges {
           definitionResource.getTableId(), new ColumnList(definitionResource.getColumns()));
 
        // and update the schema, removing the old URI string
-      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(),
+      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(),
            db, definitionResource.getTableId(), definitionResource.getSchemaETag(),
            oldTableInstanceFilesUriString);
 

@@ -20,9 +20,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
@@ -69,6 +71,32 @@ public interface Synchronizer {
    * @throws IOException
    */
   void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
+
+  /**
+   * Returns the roles assigned to the user. The server requires that the
+   * user be authenticated during this call. By using the local context on
+   * all subsequent interactions, we are able to use the negotiated identity
+   * when accessing subsequent APIs.
+   *
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+     */
+  ArrayList<String>  getUserRoles() throws HttpClientWebException, IOException;
+
+  /**
+   * If this user is a registered user with Tables Super-user, Administer Tables,
+   * or Site Administrator privileges, this returns the list of all users configured
+   * on the server and their roles (including ourselves). If this user is a registered
+   * user without those privileges, it returns a singleton list with information about
+   * this user. If the device is using anonymousUser access to the server, an empty
+   * list is returned.
+   *
+   * @return
+   * @throws HttpClientWebException
+   * @throws IOException
+    */
+  ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException;
 
   /**
    * Get a list of all tables in the server.
@@ -308,9 +336,9 @@ public interface Synchronizer {
   /**
    * Delete file and manifest SyncETags that are not for the current server.
    *
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
-  void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException;
+  void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException;
 
   /**
    *
@@ -318,10 +346,10 @@ public interface Synchronizer {
    * @param tableId
    * @param lastModified
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws RemoteException;
+      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException;
 
   /**
    * Updates this config file download URI with the indicated ETag
@@ -330,18 +358,18 @@ public interface Synchronizer {
    * @param tableId
    * @param lastModified
    * @param documentETag
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String
-      documentETag) throws RemoteException;
+      documentETag) throws ServicesAvailabilityException;
 
   /**
    *
    * @param tableId
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
-  String getManifestSyncETag(String tableId) throws RemoteException;
+  String getManifestSyncETag(String tableId) throws ServicesAvailabilityException;
 
   /**
    * Update the manifest content ETag with the indicated value. This should be done
@@ -350,10 +378,10 @@ public interface Synchronizer {
    *
    * @param tableId
    * @param documentETag
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   void updateManifestSyncETag(String tableId, String documentETag) throws
-      RemoteException;
+      ServicesAvailabilityException;
 
 
   /**
@@ -364,10 +392,10 @@ public interface Synchronizer {
    * @param attachmentState
    * @param uriFragmentHash
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
-      SyncAttachmentState attachmentState, String uriFragmentHash) throws RemoteException;
+      SyncAttachmentState attachmentState, String uriFragmentHash) throws ServicesAvailabilityException;
 
   /**
    * Update the manifest content ETag with the indicated value. This should be done
@@ -380,11 +408,11 @@ public interface Synchronizer {
    * @param attachmentState
    * @param uriFragmentHash
    * @param documentETag
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
       SyncAttachmentState attachmentState, String uriFragmentHash, String documentETag) throws
-      RemoteException;
+      ServicesAvailabilityException;
 
     /**
        * Invoked when the schema of a table has changed or we have never before synced with the server.
@@ -394,6 +422,6 @@ public interface Synchronizer {
        * @param oldSchemaETag
        */
   void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
-      String newSchemaETag, String oldSchemaETag)  throws RemoteException;
+      String newSchemaETag, String oldSchemaETag)  throws ServicesAvailabilityException;
 
 }

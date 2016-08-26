@@ -21,7 +21,6 @@
 package org.sqlite.database.sqlite;
 
 /* import dalvik.system.BlockGuard; */
-import android.content.ContentValues;
 import android.text.TextUtils;
 import android.util.Log;
 import org.opendatakit.common.android.database.AppNameSharedStateContainer;
@@ -37,7 +36,6 @@ import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
-import android.os.ParcelFileDescriptor;
 import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
@@ -1031,7 +1029,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            will return all rows for the given table.
     * @param selectionArgs You may include ?s in selection, which will be
     *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
+    *         appear in the selection.
     * @param groupBy A filter declaring how to group rows, formatted as an SQL
     *            GROUP BY clause (excluding the GROUP BY itself). Passing null
     *            will cause the rows to not be grouped.
@@ -1048,7 +1046,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @see Cursor
     */
    public Cursor query(String table, String[] columns, String selection,
-       String[] selectionArgs, String groupBy, String having,
+       Object[] selectionArgs, String groupBy, String having,
        String orderBy) {
 
       return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, null /* limit */);
@@ -1066,7 +1064,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            will return all rows for the given table.
     * @param selectionArgs You may include ?s in selection, which will be
     *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
+    *         appear in the selection.
     * @param groupBy A filter declaring how to group rows, formatted as an SQL
     *            GROUP BY clause (excluding the GROUP BY itself). Passing null
     *            will cause the rows to not be grouped.
@@ -1085,7 +1083,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @see Cursor
     */
    public Cursor query(String table, String[] columns, String selection,
-       String[] selectionArgs, String groupBy, String having,
+       Object[] selectionArgs, String groupBy, String having,
        String orderBy, String limit) {
 
       return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
@@ -1104,7 +1102,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            will return all rows for the given table.
     * @param selectionArgs You may include ?s in selection, which will be
     *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
+    *         appear in the selection.
     * @param groupBy A filter declaring how to group rows, formatted as an SQL
     *            GROUP BY clause (excluding the GROUP BY itself). Passing null
     *            will cause the rows to not be grouped.
@@ -1123,7 +1121,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @see Cursor
     */
    public Cursor query(boolean distinct, String table, String[] columns,
-       String selection, String[] selectionArgs, String groupBy,
+       String selection, Object[] selectionArgs, String groupBy,
        String having, String orderBy, String limit) {
       return query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy,
           limit, null);
@@ -1142,7 +1140,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            will return all rows for the given table.
     * @param selectionArgs You may include ?s in selection, which will be
     *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection. The values will be bound as Strings.
+    *         appear in the selection.
     * @param groupBy A filter declaring how to group rows, formatted as an SQL
     *            GROUP BY clause (excluding the GROUP BY itself). Passing null
     *            will cause the rows to not be grouped.
@@ -1164,7 +1162,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @see Cursor
     */
    public Cursor query(boolean distinct, String table, String[] columns,
-       String selection, String[] selectionArgs, String groupBy,
+       String selection, Object[] selectionArgs, String groupBy,
        String having, String orderBy, String limit, CancellationSignal cancellationSignal) {
 
       String sql = buildQueryString(
@@ -1178,12 +1176,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *
     * @param sql the SQL query. The SQL string must not be ; terminated
     * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs. The
-    *     values will be bound as Strings.
+    *     which will be replaced by the values from selectionArgs.
     * @return A {@link Cursor} object, which is positioned before the first entry. Note that
     * {@link Cursor}s are not synchronized, see the documentation for more details.
     */
-   public Cursor rawQuery(String sql, String[] selectionArgs) {
+   public Cursor rawQuery(String sql, Object[] selectionArgs) {
       return rawQuery(sql, selectionArgs, null);
    }
 
@@ -1192,8 +1189,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *
     * @param sql the SQL query. The SQL string must not be ; terminated
     * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs. The
-    *     values will be bound as Strings.
+    *     which will be replaced by the values from selectionArgs.
     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
     * If the operation is canceled, then {@link OperationCanceledException} will be thrown
     * when the query is executed.
@@ -1201,7 +1197,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * {@link Cursor}s are not synchronized, see the documentation for more details.
     */
    public Cursor rawQuery(
-       String sql, String[] selectionArgs,
+       String sql, Object[] selectionArgs,
        CancellationSignal cancellationSignal) {
       return rawQueryImpl(sql, selectionArgs, cancellationSignal);
    }
@@ -1222,7 +1218,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *            column values
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
-   public long insert(String table, String nullColumnHack, ContentValues values) {
+   public long insert(String table, String nullColumnHack, Map<String,Object> values) {
       try {
          return insertWithOnConflict(table, nullColumnHack, values, CONFLICT_NONE);
       } catch (SQLException e) {
@@ -1248,7 +1244,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @throws SQLException
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
-   public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
+   public long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
        throws SQLException {
       return insertWithOnConflict(table, nullColumnHack, values, CONFLICT_NONE);
    }
@@ -1270,7 +1266,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @return the row ID of the newly inserted row, or -1 if an error occurred
     */
    public long replaceOrThrow(String table, String nullColumnHack,
-       ContentValues initialValues) throws SQLException {
+       Map<String,Object> initialValues) throws SQLException {
       return insertWithOnConflict(table, nullColumnHack, initialValues, CONFLICT_REPLACE);
    }
 
@@ -1295,7 +1291,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * OR -1 if any error
     */
    public long insertWithOnConflict(String table, String nullColumnHack,
-       ContentValues initialValues, int conflictAlgorithm) {
+       Map<String,Object> initialValues, int conflictAlgorithm) {
       StringBuilder sql = new StringBuilder();
       sql.append("INSERT");
       sql.append(CONFLICT_VALUES[conflictAlgorithm]);
@@ -1334,13 +1330,12 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param whereClause the optional WHERE clause to apply when deleting.
     *            Passing null will delete all rows.
     * @param whereArgs You may include ?s in the where clause, which
-    *            will be replaced by the values from whereArgs. The values
-    *            will be bound as Strings.
+    *            will be replaced by the values from whereArgs.
     * @return the number of rows affected if a whereClause is passed in, 0
     *         otherwise. To remove all rows and get a count pass "1" as the
     *         whereClause.
     */
-   public int delete(String table, String whereClause, String[] whereArgs) {
+   public int delete(String table, String whereClause, Object[] whereArgs) {
       return executeForChangedRowCountImpl("DELETE FROM " + table +
           (!TextUtils.isEmpty(whereClause) ? " WHERE " + whereClause : ""), whereArgs, null);
    }
@@ -1354,11 +1349,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param whereClause the optional WHERE clause to apply when updating.
     *            Passing null will update all rows.
     * @param whereArgs You may include ?s in the where clause, which
-    *            will be replaced by the values from whereArgs. The values
-    *            will be bound as Strings.
+    *            will be replaced by the values from whereArgs.
     * @return the number of rows affected
     */
-   public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
+   public int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) {
       return updateWithOnConflict(table, values, whereClause, whereArgs, CONFLICT_NONE);
    }
 
@@ -1371,13 +1365,12 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param whereClause the optional WHERE clause to apply when updating.
     *            Passing null will update all rows.
     * @param whereArgs You may include ?s in the where clause, which
-    *            will be replaced by the values from whereArgs. The values
-    *            will be bound as Strings.
+    *            will be replaced by the values from whereArgs.
     * @param conflictAlgorithm for update conflict resolver
     * @return the number of rows affected
     */
-   public int updateWithOnConflict(String table, ContentValues values,
-       String whereClause, String[] whereArgs, int conflictAlgorithm) {
+   public int updateWithOnConflict(String table, Map<String,Object> values,
+       String whereClause, Object[] whereArgs, int conflictAlgorithm) {
       if (values == null || values.size() == 0) {
          throw new IllegalArgumentException("Empty values");
       }
@@ -1417,20 +1410,20 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * <p>
     * For INSERT statements, use any of the following instead.
     * <ul>
-    *   <li>{@link #insert(String, String, ContentValues)}</li>
-    *   <li>{@link #insertOrThrow(String, String, ContentValues)}</li>
-    *   <li>{@link #insertWithOnConflict(String, String, ContentValues, int)}</li>
+    *   <li>{@link #insert(String, String, Map<String,Object>)}</li>
+    *   <li>{@link #insertOrThrow(String, String, Map<String,Object>)}</li>
+    *   <li>{@link #insertWithOnConflict(String, String, Map<String,Object>, int)}</li>
     * </ul>
     * <p>
     * For UPDATE statements, use any of the following instead.
     * <ul>
-    *   <li>{@link #update(String, ContentValues, String, String[])}</li>
-    *   <li>{@link #updateWithOnConflict(String, ContentValues, String, String[], int)}</li>
+    *   <li>{@link #update(String, Map<String,Object>, String, Object[])}</li>
+    *   <li>{@link #updateWithOnConflict(String, Map<String,Object>, String, Object[], int)}</li>
     * </ul>
     * <p>
     * For DELETE statements, use any of the following instead.
     * <ul>
-    *   <li>{@link #delete(String, String, String[])}</li>
+    *   <li>{@link #delete(String, String, Object[])}</li>
     * </ul>
     * <p>
     * For example, the following are good candidates for using this method:
@@ -2053,7 +2046,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * {@link Cursor}s are not synchronized, see the documentation for more details.
     */
    private Cursor rawQueryImpl(
-       String sql, String[] selectionArgs,
+       String sql, Object[] selectionArgs,
        CancellationSignal cancellationSignal) {
 
       if (sql == null) {

@@ -253,6 +253,7 @@ public class SubmissionProvider extends ContentProvider {
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     String activeUser = props.getActiveUser();
+    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
     String currentLocale = props.getLocale();
 
     OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
@@ -323,7 +324,7 @@ public class SubmissionProvider extends ContentProvider {
         }
 
         OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
-            .getUserDefinedColumns(db, appName, tableId);
+            .getUserDefinedColumns(db, tableId);
 
         // Retrieve the values of the record to be emitted...
 
@@ -347,7 +348,8 @@ public class SubmissionProvider extends ContentProvider {
         String datestamp = null;
 
         try {
-          c = db.rawQuery(b.toString(), selectionArgs);
+          c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null, activeUser,
+              rolesList);
           b.setLength(0);
 
           if (c.moveToFirst() && c.getCount() == 1) {

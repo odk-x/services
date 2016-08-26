@@ -20,7 +20,6 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.sync.service.data.SyncRow;
 
 /**
  * Tracks the data values for the local and server row so that we
@@ -181,8 +180,8 @@ public final class SyncRowDataChanges {
    * @return
      */
   public boolean identicalValues(OrderedColumns orderedDefns) {
-    if ((serverRow.getFilterScope() == null) ? (localRow.getFilterScope() != null) : !serverRow
-        .getFilterScope().equals(localRow.getFilterScope())) {
+    if ((serverRow.getRowFilterScope() == null) ? (localRow.getRowFilterScope() != null) : !serverRow
+        .getRowFilterScope().equals(localRow.getRowFilterScope())) {
       return false;
     }
     if ((serverRow.getRowETag() == null) ? (localRow.getRowETag() != null) : !serverRow

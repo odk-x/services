@@ -93,4 +93,13 @@
                 android:targetClass="org.opendatakit.common.android.activities.ClearAppPropertiesActivity" />
     </header>
 
+    <header android:id="@+id/verify_server_settingss"
+            android:icon="@drawable/ic_verified_user_black_24dp"
+            android:title="@string/verify_server_settings_header"
+            android:summary="@string/click_to_verify_server_settings">
+        <intent android:action="android.intent.action.EDIT"
+                android:targetPackage="org.opendatakit.services"
+                android:targetClass="org.opendatakit.sync.activities.VerifyServerSettingsActivity" />
+    </header>
+
 </preference-headers>

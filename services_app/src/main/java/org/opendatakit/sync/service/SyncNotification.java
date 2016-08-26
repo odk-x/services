@@ -118,4 +118,21 @@ public final class SyncNotification {
         messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
   }
 
+
+  public synchronized void clearVerificationNotification() {
+    Notification.Builder finalBuilder = new Notification.Builder(cntxt);
+    int messageNum = 0;
+    String text;
+    text = cntxt.getString(R.string.sync_notification_success_verify_complete_text);
+    finalBuilder.setContentTitle(cntxt.getString(R.string.sync_notification_success_verify_complete, appName)).setContentText(text)
+            .setAutoCancel(true).setOngoing(false);
+    finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
+    this.progressStatus = new SyncProgressEvent(messageNum, text, SyncProgressState.FINISHED, -1, 0);
+
+    Notification syncNotif = finalBuilder.build();
+
+    notificationManager.notify(appName, messageNum, syncNotif);
+    WebLogger.getLogger(appName).i(LOGTAG,
+            messageNum + " FINAL SYNC Notification -" + appName + " TEXT:" + text);
+  }
 }
