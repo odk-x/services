@@ -254,6 +254,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     props.setProperty(CommonToolProperties.KEY_USERS_LIST, value);
   }
 
+  public void setAllToolsToReInitialize() {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setAllRunInitializationTasks();
+  }
+
   private int refCount = 1;
 
   public synchronized OdkDbHandle getDatabase() throws ServicesAvailabilityException {
