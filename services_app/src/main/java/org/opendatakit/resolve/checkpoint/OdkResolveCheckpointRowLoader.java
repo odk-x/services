@@ -108,9 +108,12 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
+      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
+          ODKDatabaseImplUtils.get().getAccessColumnType(db, mTableId);
+
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          null, null, activeUser);
+          null, null, accessColumnType, activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -136,7 +139,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              null, null, activeUser);
+              null, null, accessColumnType, activeUser);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
@@ -156,7 +159,8 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId }, null, aul.activeUser, aul.rolesList);
+          new String[]{ mTableId }, null, ODKDatabaseImplUtils.AccessColumnType
+              .NO_EFFECTIVE_ACCESS_COLUMN, aul.activeUser, aul.rolesList);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);

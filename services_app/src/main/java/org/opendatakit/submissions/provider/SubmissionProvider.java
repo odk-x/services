@@ -348,8 +348,12 @@ public class SubmissionProvider extends ContentProvider {
         String datestamp = null;
 
         try {
-          c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null, activeUser,
-              rolesList);
+
+          ODKDatabaseImplUtils.AccessColumnType accessColumnType =
+              ODKDatabaseImplUtils.get().getAccessColumnType(db, dbTableName);
+
+          c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,
+              accessColumnType, activeUser, rolesList);
           b.setLength(0);
 
           if (c.moveToFirst() && c.getCount() == 1) {

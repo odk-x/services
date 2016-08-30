@@ -1257,7 +1257,8 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
   }
 
   @Override public OdkDbChunk rawSqlQuery(String appName, OdkDbHandle dbHandleName,
-      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds) throws RemoteException {
+      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds, String tableId) throws
+      RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -1268,8 +1269,13 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
+          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+
       OdkDbTable result = ODKDatabaseImplUtils.get()
-          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, activeUser, rolesList);
+          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, accessColumnType,
+              activeUser, rolesList);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
@@ -1286,7 +1292,7 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
   @Override
   public OdkDbChunk privilegedRawSqlQuery(String appName, OdkDbHandle dbHandleName,
-      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds) throws RemoteException {
+      String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds, String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
 
@@ -1296,8 +1302,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
+          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+
       OdkDbTable result = ODKDatabaseImplUtils.get().privilegedQuery(db, sqlCommand, sqlBindArgs
-          .bindArgs, sqlQueryBounds, activeUser);
+          .bindArgs, sqlQueryBounds, accessColumnType, activeUser);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {

@@ -66,6 +66,10 @@ public class ODKDatabaseImplUtils {
 
   private static final String t = "ODKDatabaseImplUtils";
 
+  public enum AccessColumnType {
+    NO_EFFECTIVE_ACCESS_COLUMN,
+    LOCKED_EFFECTIVE_ACCESS_COLUMN,
+    UNLOCKED_EFFECTIVE_ACCESS_COLUMN };
   /*
    * These are the columns that are present in any row in the database. Each row
    * should have these in addition to the user-defined columns. If you add a
@@ -280,51 +284,86 @@ public class ODKDatabaseImplUtils {
     return sqlCommand + " LIMIT " + sqlQueryBounds.mLimit + " OFFSET " + sqlQueryBounds.mOffset;
   }
 
-  private void buildAccessRights(StringBuilder b, ArrayList<Object> wrappedSqlArgs,
-                  String activeUser, ArrayList<String> rolesArray ) {
+  public AccessColumnType getAccessColumnType(OdkConnectionInterface db, String tableId) {
+    if ( tableId == null ) {
+      return AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN;
+    }
+    if ( tableId.trim().length() == 0 ) {
+      throw new IllegalArgumentException("tableId can be null but cannot be blank");
+    }
 
+    ArrayList<KeyValueStoreEntry> lockedList = this.getDBTableMetadata(db, tableId,
+        KeyValueStoreConstants.PARTITION_TABLE,
+        LocalKeyValueStoreConstants.TableSecurity.ASPECT,
+        LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED);
+
+    if ( lockedList.size() == 0 ) {
+      return AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN;
+    }
+    if ( lockedList.size() != 1 ) {
+      throw new IllegalStateException("should be impossible");
+    }
+
+    Boolean outcome = KeyValueStoreUtils.getBoolean(db.getAppName(), lockedList.get(0));
+    return (outcome ?
+        AccessColumnType.LOCKED_EFFECTIVE_ACCESS_COLUMN :
+        AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN);
+  }
+
+  private void buildAccessRights(StringBuilder b, ArrayList<Object> wrappedSqlArgs,
+                  AccessColumnType accessColumnType,
+                  String activeUser, ArrayList<String>rolesArray ) {
+
+    if ( accessColumnType == AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN ) {
+      return;
+    }
+
+    b.append(", ");
     if ( rolesArray != null &&
         (rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
          rolesArray.contains(RoleConsts.ROLE_SUPER_USER)) ) {
       // privileged user
-      b.append("\"rwd\" as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
-       .append(", \"rwd\" as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+      b.append("\"rwd\" as ").append(DataTableColumns.EFFECTIVE_ACCESS);
     } else if ( rolesArray == null || activeUser == null) {
       // un-verified user or anonymous user
-      // unlocked tables have r, rw (modify) and rwd (default or new_row) options
-      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
-          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
-          .append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
-          .append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
-          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
-          .append(", ");
-      // locked tables have just rwd (new_row) and r options
-      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
-          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+      if ( accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN ) {
+        // unlocked tables have r, rw (modify) and rwd (default or new_row) options
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE)
+            .append("= \"").append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_TYPE)
+            .append("= \"").append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_TYPE)
+            .append("= \"").append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
+            .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
+      } else {
+        // locked tables have just rwd (new_row) and r options
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE)
+            .append("= \"").append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+            .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
+      }
     } else {
       // ordinary user
-      // unlocked tables have r, rw (modify) and rwd (default or new_row) options
-      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
-          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
-          .append(" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
-          .append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
-          .append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
-          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED)
-          .append(", ");
-      wrappedSqlArgs.add(activeUser);
-      // locked tables have just rwd (new_row) and r options
-      b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
-          .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-          .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
-          .append(" then \"rw\" ")
-          .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
-      wrappedSqlArgs.add(activeUser);
+      if ( accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN ) {
+        // unlocked tables have r, rw (modify) and rwd (default or new_row) options
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+            .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
+            .append(" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+            .append(RowFilterScope.Type.DEFAULT.name()).append("\" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_TYPE).append("= \"")
+            .append(RowFilterScope.Type.MODIFY.name()).append("\" then \"rw\" ")
+            .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
+        wrappedSqlArgs.add(activeUser);
+      } else {
+        // locked tables have just rwd (new_row) and r options
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+            .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+            .append(" when T.").append(DataTableColumns.FILTER_VALUE).append("= ?")
+            .append(" then \"rw\" ")
+            .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
+        wrappedSqlArgs.add(activeUser);
+      }
     }
   }
 
@@ -337,7 +376,7 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public Cursor rawQuery(OdkConnectionInterface db, String sqlCommand, Object[] selectionArgs,
-      QueryBounds sqlQueryBounds, String activeUser, String rolesList) {
+      QueryBounds sqlQueryBounds, AccessColumnType accessColumnType, String activeUser, String rolesList) {
 
     // figure out whether we have a privileged user or not
     ArrayList<String> rolesArray = null;
@@ -377,8 +416,8 @@ public class ODKDatabaseImplUtils {
       StringBuilder b = new StringBuilder();
       ArrayList<Object> wrappedSqlArgs = new ArrayList<Object>();
 
-      b.append("SELECT *, ");
-      buildAccessRights(b, wrappedSqlArgs, activeUser, rolesArray);
+      b.append("SELECT *");
+      buildAccessRights(b, wrappedSqlArgs, accessColumnType, activeUser, rolesArray);
       b.append(" FROM (").append(sqlCommand).append(") AS T");
       if ( selectionArgs != null ) {
         for (int i = 0; i < selectionArgs.length; ++i) {
@@ -474,12 +513,13 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable query(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, String activeUser, String rolesList) {
-    // TODO: Use sqlLimit
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessColumnType accessColumnType,
+      String activeUser, String rolesList) {
 
     Cursor c = null;
     try {
-      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, activeUser, rolesList);
+      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessColumnType,
+          activeUser, rolesList);
       OdkDbTable table = buildOdkDbTable(c);
       return table;
     } finally {
@@ -503,9 +543,11 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable privilegedQuery(OdkConnectionInterface db, String sqlCommand,
-      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, String activeUser) {
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessColumnType accessColumnType,
+      String activeUser) {
 
-    return query(db, sqlCommand, sqlBindArgs, sqlQueryBounds, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+    return query(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessColumnType,
+        activeUser, RoleConsts.ADMIN_ROLES_LIST);
   }
 
   private OdkDbTable buildOdkDbTable(Cursor c) {
@@ -792,13 +834,14 @@ public class ODKDatabaseImplUtils {
    * @return
    */
   public OdkDbTable getRowsWithId(OdkConnectionInterface db, String tableId, String rowId,
-      String activeUser, String rolesList   ) {
+      String activeUser, String rolesList ) {
+    AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
     OdkDbTable table = query(db, OdkDbQueryUtil
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
-        activeUser, rolesList);
+        accessColumnType, activeUser, rolesList);
 
     return table;
   }
@@ -816,11 +859,13 @@ public class ODKDatabaseImplUtils {
    */
   public OdkDbTable privilegedGetRowsWithId(OdkConnectionInterface db, String tableId, String
       rowId, String activeUser ) {
+    AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
     OdkDbTable table = privilegedQuery(db, OdkDbQueryUtil
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null, activeUser);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
+        accessColumnType, activeUser);
 
     return table;
   }
@@ -897,11 +942,13 @@ public class ODKDatabaseImplUtils {
   public OdkDbTable privilegedGetConflictingRowsWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser) {
 
+    AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
     OdkDbTable table = privilegedQuery(db, OdkDbQueryUtil
         .buildSqlStatement(tableId, OdkDbQueryUtil.GET_ROWS_WITH_ID_WHERE,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_GROUP_BY, OdkDbQueryUtil.GET_ROWS_WITH_ID_HAVING,
             OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, null, activeUser);
+            OdkDbQueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, null,
+        accessColumnType, activeUser);
 
     if (table.getNumberOfRows() == 0) {
       return table;
@@ -3191,13 +3238,15 @@ public class ODKDatabaseImplUtils {
 
       OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
+      AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
+
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
       OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, null, activeUser);
+          new Object[] { rowId }, null, accessColumnType, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3350,13 +3399,15 @@ public class ODKDatabaseImplUtils {
 
       OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
+      AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
+
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
       OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, null, activeUser);
+          new Object[] { rowId }, null, accessColumnType, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -3486,13 +3537,15 @@ public class ODKDatabaseImplUtils {
 
       OrderedColumns orderedColumns = getUserDefinedColumns(db, tableId);
 
+      AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
+
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
       OdkDbTable table = privilegedQuery(db,
           OdkDbQueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
                   " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new Object[] { rowId }, null, activeUser);
+          new Object[] { rowId }, null, accessColumnType, activeUser);
 
       if (table.getNumberOfRows() != 2) {
         throw new IllegalStateException(
@@ -4428,8 +4481,10 @@ public class ODKDatabaseImplUtils {
           whereArgs[0] = rowId;
         }
 
+        AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
+
         String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-        OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, activeUser);
+        OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, accessColumnType, activeUser);
 
         // There must be only one row in the db for the update to work
         if (shouldUpdate) {
@@ -4640,8 +4695,10 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
+      AccessColumnType accessColumnType = getAccessColumnType(db, tableId);
+
       String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-      OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, activeUser);
+      OdkDbTable data = privilegedQuery(db, sel, whereArgs, null, accessColumnType, activeUser);
 
       // There must be only one row in the db
       if (data.getNumberOfRows() != 1) {

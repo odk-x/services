@@ -116,10 +116,14 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
           " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL";
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
+
+      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
+          ODKDatabaseImplUtils.get().getAccessColumnType(db, mTableId);
+
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { mRowId }, null, activeUser);
+          new String[] { mRowId }, null, accessColumnType, activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

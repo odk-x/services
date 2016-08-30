@@ -409,10 +409,6 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
         logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
                 " -- successfully obtained reference to already-open database for " + appName +
                 " when getting " + sessionQualifier);
-
-        logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-                " -- returning an existing session for " + appName +
-                " when getting " + sessionQualifier);
         return dbConnection;
       }
 
