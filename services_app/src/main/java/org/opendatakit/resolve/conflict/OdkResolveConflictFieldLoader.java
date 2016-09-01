@@ -18,6 +18,7 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -117,13 +118,14 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, mTableId);
+      ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
-          new String[] { mRowId }, null, accessColumnType, activeUser);
+          new String[] { mRowId }, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();

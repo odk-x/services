@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.ProviderConsts;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -349,11 +350,12 @@ public class SubmissionProvider extends ContentProvider {
 
         try {
 
-          ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-              ODKDatabaseImplUtils.get().getAccessColumnType(db, dbTableName);
+          ODKDatabaseImplUtils.AccessContext accessContext =
+              ODKDatabaseImplUtils.get().getAccessContext(db, dbTableName, activeUser,
+                  rolesList);
 
           c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,
-              accessColumnType, activeUser, rolesList);
+              accessContext);
           b.setLength(0);
 
           if (c.moveToFirst() && c.getCount() == 1) {

@@ -1270,12 +1270,12 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+
+      ODKDatabaseImplUtils.AccessContext accessContext =
+          ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
 
       OdkDbTable result = ODKDatabaseImplUtils.get()
-          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, accessColumnType,
-              activeUser, rolesList);
+          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, accessContext);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
@@ -1303,11 +1303,11 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+      ODKDatabaseImplUtils.AccessContext accessContext =
+          ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
       OdkDbTable result = ODKDatabaseImplUtils.get().privilegedQuery(db, sqlCommand, sqlBindArgs
-          .bindArgs, sqlQueryBounds, accessColumnType, activeUser);
+          .bindArgs, sqlQueryBounds, accessContext);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {

@@ -444,10 +444,12 @@ public class InstanceProvider extends ContentProvider {
 
     fullQuery = b.toString();
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
-    c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, null, accessColumnType,
-        activeUser, rolesList);
+
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, null,
+        accessContext);
     return c;
   }
 

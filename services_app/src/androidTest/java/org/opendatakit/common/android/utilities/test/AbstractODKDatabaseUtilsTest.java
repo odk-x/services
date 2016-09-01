@@ -213,13 +213,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+      ODKDatabaseImplUtils.AccessContext accessContext =
+          ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
 
       // this will not interact with the database if the
       // query string is found in the PreparedStatement cache.
       Cursor c = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
       // we must get the count of rows to actually interact
       // with the database.
       c.getCount();
@@ -242,12 +243,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Check that the user defined rows are in the table
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     Cursor refCursor = db.rawQuery(query, null);
 
     if (cursor != null && refCursor != null) {
@@ -1214,8 +1216,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -1229,7 +1232,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -1258,8 +1261,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -1274,7 +1278,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1304,8 +1308,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1323,7 +1328,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     Cursor cursor = null;
      try {
         cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-            accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+            accessContext);
         assertEquals(cursor.getCount(), 1);
 
         int val = 0;
@@ -1367,7 +1372,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor2.getCount(), 1);
 
     int val2 = 0;
@@ -1398,8 +1403,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -1414,7 +1420,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1444,8 +1450,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1461,7 +1468,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -1486,7 +1493,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+       accessContext);
     assertEquals(cursor2.getCount(), 1);
 
     int val2 = 0;
@@ -1552,8 +1559,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String uuid = UUID.randomUUID().toString();
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
@@ -1578,7 +1586,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs = { uuid };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
@@ -1748,8 +1756,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -1761,7 +1770,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1789,8 +1798,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 1;
 
@@ -1804,7 +1814,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -1832,8 +1842,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1847,7 +1858,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1875,8 +1886,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1890,7 +1902,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -1931,8 +1943,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testColLat, pos_lat);
@@ -1948,7 +1961,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColLat + " = ?";
     String[] selArgs = { "" + pos_lat };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     double valLat = 0;
     double valLong = 0;
@@ -1997,8 +2010,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -2012,7 +2026,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -2047,8 +2061,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String uuid = UUID.randomUUID().toString();
 
@@ -2066,7 +2081,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColUriFragment + " = ?";
     String[] selArgs = { "" + testUriFragment };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String valUriFragment = null;
     String valContentType = null;
@@ -2101,8 +2116,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     double testVal = 5.5;
 
@@ -2116,7 +2132,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     double val = 0;
     while (cursor.moveToNext()) {
@@ -2144,8 +2160,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String testVal = "test";
 
@@ -2159,7 +2176,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2187,8 +2204,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     String interMed = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
     int pos = interMed.indexOf('T');
@@ -2213,7 +2231,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2245,8 +2263,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2257,7 +2276,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2279,7 +2298,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2288,7 +2307,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val2 = null;
     String saveptType = null;
@@ -2333,8 +2352,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2346,7 +2366,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2383,8 +2403,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2396,7 +2417,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     String saveptType = null;
@@ -2585,8 +2606,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2597,7 +2619,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2619,7 +2641,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2628,7 +2650,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val2 = null;
     String saveptType = null;
@@ -2662,7 +2684,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -2708,8 +2730,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2720,7 +2743,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2742,7 +2765,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -2751,7 +2774,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val2 = null;
     String saveptType = null;
@@ -2786,7 +2809,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -2831,8 +2854,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2844,7 +2868,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -2869,7 +2893,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 0);
 
@@ -3104,8 +3128,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -3117,7 +3142,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -3142,7 +3167,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 0);
 
@@ -3164,8 +3189,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -3177,7 +3203,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     String val = null;
     while (cursor.moveToNext()) {
@@ -3215,7 +3241,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 1);
 
@@ -3295,8 +3321,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -3319,7 +3346,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int val = 0;
     try {
       cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
       assertEquals(cursor.getCount(), 1);
 
       while (cursor.moveToNext()) {
@@ -3369,7 +3396,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     OdkDbTable baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, null, accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        selectionArgs, null, accessContext);
     UserTable table = new UserTable(baseTable, orderedColumns, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 2);
@@ -3398,7 +3425,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Run the query yet again to make sure that things worked as expected
     baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
-        selectionArgs, null, accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        selectionArgs, null, accessContext);
     table = new UserTable(baseTable, orderedColumns, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 0);
@@ -3630,8 +3657,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       e.printStackTrace();
     }
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Ensure that the expected properties is in the KVS table
     String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
@@ -3639,7 +3667,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
@@ -3654,7 +3682,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Now make sure that the table has the right value for displayName
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -3704,13 +3732,16 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(jsonChoiceList, retJsonChoiceList);
 
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     // Select the _choice_list_id from the _choice_lists table
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -3752,14 +3783,17 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       e.printStackTrace();
     }
 
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     // Ensure that the expected properties is in the KVS table
     String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
@@ -3787,8 +3821,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -3802,7 +3837,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -3815,13 +3850,16 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
+    ODKDatabaseImplUtils.AccessContext accessContextNoTableId =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
     String syncTimeVal = null;
@@ -3864,8 +3902,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -3879,7 +3918,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -3914,8 +3953,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -3930,7 +3970,25 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     sel = "SELECT * FROM " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect effective privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    ODKDatabaseImplUtils.AccessContext accessContextPlainUser, accessContextAnonymousUser;
+
+    accessContextPlainUser = ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.USER_ROLES_LIST);
+
+    accessContextAnonymousUser = ODKDatabaseImplUtils.get().getAccessContext(db, tableId, "anonymous",
+        null );
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
+        accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -3940,17 +3998,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.USER_ROLES_LIST);
-    if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
-    } else {
-      assertTrue("should not get here", false);
-    }
-    c.close();;
-
-    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, "anonymous", null);
+        accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -3962,7 +4010,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT testColumn, " + DataTableColumns.FILTER_TYPE +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -3972,7 +4020,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.USER_ROLES_LIST);
+        accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -3982,7 +4030,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, "anonymous", null);
+        accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -3996,7 +4044,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         ", " + DataTableColumns.FILTER_VALUE +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4006,7 +4054,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.USER_ROLES_LIST);
+        accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4016,7 +4064,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, "anonymous", null);
+        accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4030,7 +4078,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4040,7 +4088,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.USER_ROLES_LIST);
+        accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4050,7 +4098,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, "anonymous", null);
+        accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
@@ -4065,7 +4113,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
@@ -4075,7 +4123,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, activeUser, RoleConsts.USER_ROLES_LIST);
+        accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
@@ -4085,7 +4133,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();;
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
-        accessColumnType, "anonymous", null);
+        accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
@@ -4110,8 +4158,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -4125,7 +4174,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -4148,7 +4197,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor.getCount(), 2);
 
@@ -4157,7 +4206,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val2 = 0;
     String saveptType = null;
@@ -4428,8 +4477,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
     boolean thrown = false;
@@ -4447,7 +4497,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     Cursor cursor = null;
     try {
       cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
       assertEquals(cursor.getCount(), 1);
 
       int val = 0;
@@ -4476,7 +4526,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor2.getCount(), 2);
 
     System.out.println("testQueryDistinct_ExpectPass: after select *  query");
@@ -4542,8 +4592,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       e.printStackTrace();
     }
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Ensure that the expected properties is in the KVS table
     String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
@@ -4551,7 +4602,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4570,7 +4621,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String [] selArgs2 = { partition, key, newKVSValue };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4614,8 +4665,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       e.printStackTrace();
     }
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Ensure that the expected properties is in the KVS table
     String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
@@ -4623,7 +4675,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4640,7 +4692,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String [] selArgs2 = { partition, key, newKVSValue };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4684,8 +4736,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       e.printStackTrace();
     }
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Ensure that the expected properties is in the KVS table
     String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
@@ -4693,7 +4746,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4713,7 +4766,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     String [] selArgs2 = { partition, key, newKVSValue };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
@@ -4837,6 +4890,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     myMap.put("display", displayText);
     values.add(myMap);
 
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     String jsonChoiceList  = null;
     try {
       jsonChoiceList = ODKFileUtils.mapper.writeValueAsString(values);
@@ -4850,8 +4907,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     String val = null;
@@ -4877,8 +4933,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -4892,7 +4949,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -4905,13 +4962,16 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
+    ODKDatabaseImplUtils.AccessContext accessContextNoTableId =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
     while (cursor.moveToNext()) {
@@ -4930,8 +4990,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Select everything out of the table
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
     while (cursor.moveToNext()) {
@@ -4962,8 +5021,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -4977,7 +5037,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
     assertEquals(cursor.getCount(), 1);
 
     int val = 0;
@@ -4990,13 +5050,16 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
+    ODKDatabaseImplUtils.AccessContext accessContextNoTableId =
+        ODKDatabaseImplUtils.get().getAccessContext(db, null, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
+
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
     String defaultSyncTime = "-1";
@@ -5012,8 +5075,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Select everything out of the table
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
     String syncTime = null;
@@ -5043,8 +5105,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     int testVal = 5;
 
@@ -5058,7 +5121,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     int val = 0;
     while (cursor.moveToNext()) {
@@ -5077,7 +5140,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Run the query again and make sure that the place row in conflict worked as expected
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(DataTableColumns.ROW_ETAG);
@@ -5206,8 +5269,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5222,7 +5286,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
 
     while (cursor.moveToNext()) {
@@ -5244,7 +5308,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs2 = { "" + rowId };
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5285,8 +5349,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5301,7 +5366,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5341,7 +5406,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5393,8 +5458,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(prevDb, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5409,7 +5475,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5449,7 +5515,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5495,8 +5561,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5511,7 +5578,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5544,7 +5611,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         (getAppName(), uniqueKey);
 
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5597,8 +5664,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5613,7 +5681,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5641,7 +5709,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       String sel2 = "SELECT * FROM " + tableId;
       String[] selArgs2 = null;
       Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
 
       assertEquals(cursor2.getCount(), 1);
 
@@ -5695,8 +5763,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5711,7 +5780,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5748,7 +5817,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5803,8 +5872,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5819,7 +5889,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5857,7 +5927,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
     cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -5912,8 +5982,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert data so that the threads can all just update
     int testVal = 0;
@@ -5928,7 +5999,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
     Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor.moveToNext()) {
       int ind = cursor.getColumnIndex(setupTestCol);
@@ -5956,7 +6027,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
     cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     assertEquals(cursor2.getCount(), 1);
 
@@ -6019,8 +6090,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenDBTableWithColumns(db1, tableId, columns);
 
-    ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-        ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.ADMIN_ROLES_LIST);
 
     // Insert a row using db1
     int testVal = 5;
@@ -6035,7 +6107,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
     Cursor cursor1 = ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor1.moveToNext()) {
       int ind1 = cursor1.getColumnIndex(testCol);
@@ -6047,7 +6119,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Query with db2
     Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor2.moveToNext()) {
       int ind2 = cursor2.getColumnIndex(testCol);
@@ -6078,7 +6150,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Have both connections re-query the table
     // Query with db1
     cursor1= ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor1.moveToNext()) {
       int ind3 = cursor1.getColumnIndex(newTestCol);
@@ -6090,7 +6162,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Query with db2
     cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null,
-        accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        accessContext);
 
     while (cursor2.moveToNext()) {
       int ind4 = cursor2.getColumnIndex(testCol);
@@ -6145,8 +6217,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
           .createOrOpenDBTableWithColumns(db, tableId, columns);
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, tableId);
+      ODKDatabaseImplUtils.AccessContext accessContext =
+          ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
 
       String rowId = ODKDataUtils.genUUID();
 
@@ -6167,7 +6240,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       String sel = "SELECT * FROM " + tableId + " WHERE " + queryCol + " = ?";
       String[] selArgs = { queryVal };
       Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
 
       String val = null;
       while (cursor.moveToNext()) {
@@ -6194,7 +6267,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       sel = "SELECT * FROM " + tableId;
       selArgs = new String[0];
       cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
-          accessColumnType, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContext);
 
       assertEquals(cursor.getCount(), 0);
 

@@ -101,12 +101,13 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      ODKDatabaseImplUtils.AccessColumnType accessColumnType =
-          ODKDatabaseImplUtils.get().getAccessColumnType(db, mTableId);
+      ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
 
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          selectionArgs, null, accessColumnType, activeUser);
+          selectionArgs, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -135,7 +136,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
 
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              selectionArgs, null, accessColumnType, activeUser);
+              selectionArgs, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
@@ -156,8 +157,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
           new String[]{ mTableId }, null,
-          ODKDatabaseImplUtils.AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN,
-          activeUser, RoleConsts.ADMIN_ROLES_LIST);
+          accessContextPrivileged);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);
