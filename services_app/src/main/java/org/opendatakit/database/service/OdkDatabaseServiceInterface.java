@@ -22,7 +22,6 @@ import android.util.Log;
 
 import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableDefinitionEntry;
@@ -44,7 +43,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
 
@@ -1749,6 +1747,30 @@ public class OdkDatabaseServiceInterface extends OdkDbInterface.Stub {
               SyncState.valueOf(syncState), activeUser);
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateRowETagAndSyncState", e);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+  }
+
+  @Override public void deleteAppAndTableLevelManifestSyncETags(String appName, OdkDbHandle dbHandleName)
+          throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+              .getConnection(appName, dbHandleName);
+      SyncETagsUtils seu = new SyncETagsUtils();
+      seu.deleteAppAndTableLevelManifestSyncETags(db);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName,
+              "deleteAppAndTableLevelManifestSyncETags", e);
     } finally {
       if (db != null) {
         // release the reference...
