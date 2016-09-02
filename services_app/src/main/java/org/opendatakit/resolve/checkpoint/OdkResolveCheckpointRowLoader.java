@@ -18,14 +18,13 @@ package org.opendatakit.resolve.checkpoint;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.logic.CommonToolProperties;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
@@ -81,10 +80,6 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
 
     OdkConnectionInterface db = null;
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
-
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
     Cursor forms = null;
@@ -108,9 +103,17 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
+      ODKDatabaseImplUtils.AccessContext accessContextBase =
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
+              aul.rolesList);
+
+      ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
+
       OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-          null, null, activeUser);
+          null, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
 
       if ( !mHaveResolvedMetadataConflicts ) {
@@ -136,7 +139,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
-              null, null, activeUser);
+              null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
@@ -156,7 +159,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
               " FROM " + DatabaseConstants.FORMS_TABLE_NAME +
               " WHERE " + FormsColumns.TABLE_ID + "=?" +
               " ORDER BY " + FormsColumns.FORM_ID + " ASC",
-          new String[]{ mTableId }, null, aul.activeUser, aul.rolesList);
+          new String[]{ mTableId }, null, accessContextBase);
 
       if ( forms != null && forms.moveToFirst() ) {
         int idxInstanceName = forms.getColumnIndex(FormsColumns.INSTANCE_NAME);

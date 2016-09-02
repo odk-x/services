@@ -223,6 +223,9 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<>();
     }
 
+    // set device properties to cause all ODK tools to re-run their initialization tasks.
+    sc.setAllToolsToReInitialize();
+
     // Everything was successful-enough to warrant deleting any sync
     // ETags from syncing to a different server. This ensures that we
     // only ever have the sync etags from the current server in case
