@@ -9,6 +9,7 @@ import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.listener.ResolutionListener;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -42,6 +43,9 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
     StringBuilder exceptions = null;
 
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(mContext, mAppName);
+
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -58,8 +62,8 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
             ODKDatabaseImplUtils.get()
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mAppName, mTableId,
-                entry.rowId);
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+                entry.rowId, aul.activeUser, aul.rolesList);
           }
 
         } catch (Exception e) {

@@ -268,7 +268,7 @@ public class TablesProvider extends ContentProvider {
       }
 
       for ( String tableId : tableIds ) {
-        ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, appName, tableId);
+        ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
         deleteCount++;
       }
       db.setTransactionSuccessful();

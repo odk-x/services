@@ -15,10 +15,11 @@
  */
 package org.opendatakit.sync.service.logic;
 
-import android.os.RemoteException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
@@ -133,6 +134,92 @@ public class AggregateSynchronizer implements Synchronizer {
       } else {
         throw e;
       }
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
+  public ArrayList<String> getUserRoles() throws HttpClientWebException, IOException {
+
+    HttpGet request = new HttpGet();
+    CloseableHttpResponse response = null;
+
+    URI uri = wrapper.constructListOfUserRolesUri();
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // perhaps an older server (pre-v1.4.11) ?
+        return new ArrayList<String>();
+      }
+
+      String res = wrapper.convertResponseToString(response);
+      TypeReference ref = new TypeReference<ArrayList<String>>() { };
+
+      ArrayList<String> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+
+      return rolesList;
+
+    } catch ( NetworkTransmissionException e ) {
+      if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+                e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
+      }
+    } catch ( AccessDeniedException e ) {
+      // this must be an anonymousUser
+      return new ArrayList<String>();
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
+  public   ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException {
+
+    HttpGet request = new HttpGet();
+    CloseableHttpResponse response = null;
+
+    URI uri = wrapper.constructListOfUsersUri();
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
+
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // perhaps an older server (pre-v1.4.11) ?
+        return new ArrayList<Map<String,Object>>();
+      }
+
+      String res = wrapper.convertResponseToString(response);
+      TypeReference ref = new TypeReference<ArrayList<Map<String,Object>>>() { };
+
+      ArrayList<Map<String,Object>> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+
+      return rolesList;
+
+    } catch ( NetworkTransmissionException e ) {
+      if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
+        throw new BadClientConfigException("server did not respond. Is the configuration correct?",
+            e.getCause(), request, e.getResponse());
+      } else {
+        throw e;
+      }
+    } catch ( AccessDeniedException e ) {
+      // this must be an anonymousUser
+      return new ArrayList<Map<String,Object>>();
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());
@@ -362,7 +449,7 @@ public class AggregateSynchronizer implements Synchronizer {
       Row row = Row.forUpdate(rowToAlter.getRowId(), rowToAlter.getRowETag(),
           rowToAlter.getFormId(), rowToAlter.getLocale(),
           rowToAlter.getSavepointType(), rowToAlter.getSavepointTimestamp(),
-          rowToAlter.getSavepointCreator(), rowToAlter.getFilterScope(),
+          rowToAlter.getSavepointCreator(), rowToAlter.getRowFilterScope(),
           rowToAlter.getValues());
       row.setDeleted(rowToAlter.isDeleted());
       rows.add(row);
@@ -404,7 +491,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String eTag = null;
     try {
       eTag = getManifestSyncETag(null);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -481,7 +568,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String eTag = null;
     try {
       eTag = getManifestSyncETag(tableId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -557,7 +644,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       eTag = getRowLevelManifestSyncETag(serverInstanceFileUri, tableId, instanceId,
           attachmentState, uriFragmentHash);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       log.printStackTrace(e);
       log.e(LOGTAG, "database access error (ignoring)");
     }
@@ -1004,7 +1091,7 @@ public class AggregateSynchronizer implements Synchronizer {
    **********************************************************************************/
 
   @Override
-  public void deleteAllSyncETagsExceptForCurrentServer() throws RemoteException {
+  public void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1018,7 +1105,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws RemoteException {
+      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1032,7 +1119,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws RemoteException {
+  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1045,7 +1132,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public String getManifestSyncETag(String tableId) throws RemoteException {
+  public String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1066,7 +1153,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void updateManifestSyncETag(String tableId, String documentETag) throws RemoteException {
+  public void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1090,7 +1177,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
-      RemoteException {
+      ServicesAvailabilityException {
 
     URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
 
@@ -1129,7 +1216,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
       String documentETag)
-      throws RemoteException {
+      throws ServicesAvailabilityException {
 
     URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
 
@@ -1165,7 +1252,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
       String newSchemaETag, String oldSchemaETag) throws
-      RemoteException {
+      ServicesAvailabilityException {
     // we are creating data on the server
     OdkDbHandle db = null;
 
@@ -1178,7 +1265,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
 
       db = sc.getDatabase();
-      sc.getDatabaseService().serverTableSchemaETagChanged(sc.getAppName(), db,
+      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(), db,
           tableId, newSchemaETag, tableInstanceFilesUriString);
     } finally {
       sc.releaseDatabase(db);

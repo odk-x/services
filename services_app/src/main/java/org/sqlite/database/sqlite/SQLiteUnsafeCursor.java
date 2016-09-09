@@ -256,8 +256,8 @@ class SQLiteUnsafeCursor extends AbstractWindowedCursor {
                 int startPos = cursorPickFillWindowStartPosition(requiredPos, 0);
                 mCount = fillWindow(mWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
-                mWebLogger.d(TAG, "connection:" + mSessionQualifier + " received count(*) "
-                    + "from native_fill_window: " + mCount);
+                // mWebLogger.d(TAG, "connection:" + mSessionQualifier + " received count(*) "
+                //     + "from native_fill_window: " + mCount);
             } else {
                 int startPos = cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);

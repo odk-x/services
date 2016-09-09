@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 University of Washington
+ * Copyright (C) 2016 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,37 +29,35 @@ import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.SyncETagsUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.services.R;
-import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.sync.service.*;
-import org.sqlite.database.sqlite.SQLiteException;
+import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.SyncOverallResult;
+import org.opendatakit.sync.service.SyncProgressEvent;
+import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.SyncStatus;
 
 /**
  * @author mitchellsundt@gmail.com
  */
-public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
+public class VerifyServerSettingsFragment extends Fragment implements ISyncOutcomeHandler {
 
-  private static final String TAG = "SyncFragment";
+  private static final String TAG = "VerifyServerSettingsFragment";
 
-  public static final String NAME = "SyncFragment";
-  public static final int ID = R.layout.sync_launch_fragment;
+  public static final String NAME = "VerifyServerSettingsFragment";
+  public static final int ID = R.layout.verify_server_settings_launch_fragment;
 
   private static final String ACCOUNT_TYPE_G = "com.google";
 
-  private static final String SYNC_ATTACHMENT_TREATMENT = "syncAttachmentState";
-
-  private static final String SYNC_ACTION = "syncAction";
+  private static final String VERIFY_SERVER_SETTINGS_ACTION = "verifyServerSettingsAction";
 
   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
 
@@ -75,19 +73,14 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   private TextView accountAuthType;
   private TextView accountIdentity;
 
-  private Spinner syncInstanceAttachmentsSpinner;
+  private Button startVerifyServerSettings;
 
-  private Button startSync;
-  private Button resetServer;
-
-  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
-  private SyncActions syncAction = SyncActions.IDLE;
+  private VerifyServerSettingsActions verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putString(SYNC_ATTACHMENT_TREATMENT, syncAttachmentState.name());
-    outState.putString(SYNC_ACTION, syncAction.name());
+    outState.putString(VERIFY_SERVER_SETTINGS_ACTION, verifyServerSettingsAction.name());
   }
 
 
@@ -103,21 +96,12 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       return;
     }
 
-    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT) ) {
-      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
+    if ( savedInstanceState != null && savedInstanceState.containsKey(VERIFY_SERVER_SETTINGS_ACTION) ) {
+      String action = savedInstanceState.getString(VERIFY_SERVER_SETTINGS_ACTION);
       try {
-        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
+        verifyServerSettingsAction = VerifyServerSettingsActions.valueOf(action);
       } catch ( IllegalArgumentException e ) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
-      }
-    }
-
-    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION) ) {
-      String action = savedInstanceState.getString(SYNC_ACTION);
-      try {
-        syncAction = SyncActions.valueOf(action);
-      } catch ( IllegalArgumentException e ) {
-        syncAction = SyncActions.IDLE;
+        verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
       }
     }
     disableButtons();
@@ -132,61 +116,19 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
     accountAuthType = (TextView) view.findViewById(R.id.sync_account_auth_label);
     accountIdentity = (TextView) view.findViewById(R.id.sync_account);
 
-    syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
-
-    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT) ) {
-      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
+    if ( savedInstanceState != null && savedInstanceState.containsKey(VERIFY_SERVER_SETTINGS_ACTION) ) {
+      String action = savedInstanceState.getString(VERIFY_SERVER_SETTINGS_ACTION);
       try {
-        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
+        verifyServerSettingsAction = VerifyServerSettingsActions.valueOf(action);
       } catch ( IllegalArgumentException e ) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
+        verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
       }
     }
 
-    if ( savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION) ) {
-      String action = savedInstanceState.getString(SYNC_ACTION);
-      try {
-        syncAction = SyncActions.valueOf(action);
-      } catch ( IllegalArgumentException e ) {
-        syncAction = SyncActions.IDLE;
-      }
-    }
-
-    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(
-        getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
-    syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
-
-    syncInstanceAttachmentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override public void onItemSelected(AdapterView<?> parent, View view, int position,
-          long id) {
-        String[] syncAttachmentType =
-            getResources().getStringArray(R.array.sync_attachment_option_values);
-        syncAttachmentState = SyncAttachmentState.valueOf(syncAttachmentType[position]);
-      }
-
-      @Override public void onNothingSelected(AdapterView<?> parent) {
-        String[] syncAttachmentType =
-            getResources().getStringArray(R.array.sync_attachment_option_values);
-        syncAttachmentState = SyncAttachmentState.SYNC;
-        for ( int i = 0 ; i < syncAttachmentType.length ; ++i ) {
-          if ( syncAttachmentType[i].equals(syncAttachmentState.name()) ) {
-            syncInstanceAttachmentsSpinner.setSelection(i);
-            break;
-          }
-        }
-      }
-    });
-
-    startSync = (Button) view.findViewById(R.id.sync_start_button);
-    startSync.setOnClickListener(new View.OnClickListener() {
+    startVerifyServerSettings = (Button) view.findViewById(R.id.verify_server_settings_start_button);
+    startVerifyServerSettings.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        onClickSyncNow(v);
-      }
-    });
-    resetServer = (Button) view.findViewById(R.id.sync_reset_server_button);
-    resetServer.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-        onClickResetServer(v);
+        onClickVerifyServerSettings(v);
       }
     });
 
@@ -237,23 +179,13 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       accountIdentity.setText("");
     }
 
-    String[] syncAttachmentValues =
-        getResources().getStringArray(R.array.sync_attachment_option_values);
-    for ( int i = 0 ; i < syncAttachmentValues.length ; ++i ) {
-      if ( syncAttachmentState.name().equals(syncAttachmentValues[i]) ) {
-        syncInstanceAttachmentsSpinner.setSelection(i);
-        break;
-      }
-    }
-
     perhapsEnableButtons();
 
     updateInterface();
   }
 
   private void disableButtons() {
-    startSync.setEnabled(false);
-    resetServer.setEnabled(false);
+    startVerifyServerSettings.setEnabled(false);
   }
 
   private void perhapsEnableButtons() {
@@ -262,8 +194,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
     if ( url == null || url.length() == 0 ) {
       disableButtons();
     } else {
-      startSync.setEnabled(true);
-      resetServer.setEnabled(true);
+      startVerifyServerSettings.setEnabled(true);
     }
   }
 
@@ -277,7 +208,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   }
 
   /**
-   * Invoke this at the start of sync or reset
+   * Invoke this at the start of the verify server settings action
    */
   public void prepareForSyncAction() {
     // remove any settings for a URL other than the server URL...
@@ -308,16 +239,16 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
     Account account = new Account(props.getProperty(CommonToolProperties.KEY_ACCOUNT), ACCOUNT_TYPE_G);
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
-    startActivityForResult(i, SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE);
+    startActivityForResult(i, VerifyServerSettingsActivity.AUTHORIZE_ACCOUNT_RESULT_CODE);
   }
 
   public void onActivityResult (int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
 
-    if ( requestCode == SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE ) {
+    if ( requestCode == VerifyServerSettingsActivity.AUTHORIZE_ACCOUNT_RESULT_CODE ) {
       if ( resultCode == Activity.RESULT_CANCELED ) {
         invalidateAuthToken(getActivity(), getAppName());
-        syncAction = SyncActions.IDLE;
+        verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
       }
       tickleInterface();
     }
@@ -347,7 +278,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
           final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
           final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
           if (status == SyncStatus.SYNCING) {
-            syncAction = SyncActions.MONITOR_SYNCING;
+            verifyServerSettingsAction = VerifyServerSettingsActions.MONITOR_VERIFYING;
 
             handler.post(new Runnable() {
               @Override
@@ -359,26 +290,15 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
             return;
           }
 
-          switch (syncAction) {
-          case SYNC:
-            syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
-            syncAction = SyncActions.MONITOR_SYNCING;
+          switch (verifyServerSettingsAction) {
+            case VERIFY:
+            syncServiceInterface.verifyServerSettings(getAppName());
+            verifyServerSettingsAction = VerifyServerSettingsActions.MONITOR_VERIFYING;
 
             handler.post(new Runnable() {
               @Override
               public void run() {
-                showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1, 0);
-              }
-            });
-            break;
-          case RESET_SERVER:
-            syncServiceInterface.resetServer(getAppName(), syncAttachmentState);
-            syncAction = SyncActions.MONITOR_SYNCING;
-
-            handler.post(new Runnable() {
-              @Override
-              public void run() {
-                showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1, 0);
+                showProgressDialog(SyncStatus.NONE, null, getString(R.string.verify_server_settings_starting), -1, 0);
               }
             });
             break;
@@ -432,7 +352,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
               final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
               final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
               if (status == SyncStatus.SYNCING) {
-                syncAction = SyncActions.MONITOR_SYNCING;
+                verifyServerSettingsAction = VerifyServerSettingsActions.MONITOR_VERIFYING;
 
                 handler.post(new Runnable() {
                   @Override
@@ -444,7 +364,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
                 return;
               } else {
                 // request completed
-                syncAction = SyncActions.IDLE;
+                verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
                 final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                 handler.post(new Runnable() {
                   @Override
@@ -546,41 +466,14 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   }
 
   /**
-   * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
-   */
-  public void onClickResetServer(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
-    // ask whether to sync app files and table-level files
-
-    if (areCredentialsConfigured()) {
-      // show warning message
-      AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
-          getString(R.string.sync_reset_app_server_warning));
-
-      msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
-        @Override public void onClick(DialogInterface dialog, int which) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
-          disableButtons();
-          syncAction = SyncActions.RESET_SERVER;
-          prepareForSyncAction();
-        }
-      });
-
-      msg.setNegativeButton(getString(R.string.cancel), null);
-      msg.show();
-    }
-  }
-
-  /**
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
-  public void onClickSyncNow(View v) {
+  public void onClickVerifyServerSettings(View v) {
     WebLogger.getLogger(getAppName()).d(TAG,
-        "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
+        "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
     if (areCredentialsConfigured()) {
       disableButtons();
-      syncAction = SyncActions.SYNC;
+      verifyServerSettingsAction = VerifyServerSettingsActions.VERIFY;
       prepareForSyncAction();
     }
   }
@@ -606,7 +499,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       // we are tearing down or still initializing
       return;
     }
-    if ( syncAction == SyncActions.MONITOR_SYNCING ) {
+    if ( verifyServerSettingsAction == VerifyServerSettingsActions.MONITOR_VERIFYING ) {
 
       disableButtons();
 
@@ -614,20 +507,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         progress = SyncProgressState.INACTIVE;
       }
 
-      int id_title;
-      switch ( progress ) {
-      case APP_FILES:
-        id_title = R.string.sync_app_level_files;
-        break;
-      case TABLE_FILES:
-        id_title = R.string.sync_table_level_files;
-        break;
-      case ROWS:
-        id_title = R.string.sync_row_data;
-        break;
-      default:
-        id_title = R.string.sync_in_progress;
-      }
+      int id_title = R.string.verifying_server_settings;
 
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
@@ -709,7 +589,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       // we are tearing down or still initializing
       return;
     }
-    if ( syncAction == SyncActions.IDLE ) {
+    if ( verifyServerSettingsAction == VerifyServerSettingsActions.IDLE ) {
 
       disableButtons();
 
@@ -745,6 +625,17 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         case /** no earlier sync and no active sync */ NONE:
         case /** active sync -- get SyncProgressEvent to see current status */ SYNCING:
         case
+                /** earlier sync ended successfully without conflicts but needs row-level attachments sync'd */ SYNC_COMPLETE_PENDING_ATTACHMENTS:
+        case
+                /** the server does not have any configuration, or no configuration for this client version */ SERVER_MISSING_CONFIG_FILES:
+        case
+                /** the device does not have any configuration to push to server */ SERVER_RESET_FAILED_DEVICE_HAS_NO_CONFIG_FILES:
+        case
+                /** while a sync was in progress, another device reset the app config, requiring a restart of
+                 * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
+        case
+                /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
+        case
                 /** error accessing or updating database */ DEVICE_ERROR:
           id_title = R.string.sync_device_internal_error;
           message = getString(R.string.sync_status_device_internal_error);
@@ -755,35 +646,10 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
           message = getString(R.string.sync_status_appname_not_supported_by_server);
           break;
         case
-                /** the server does not have any configuration, or no configuration for this client version */ SERVER_MISSING_CONFIG_FILES:
-          id_title = R.string.sync_server_configuration_failure;
-          message = getString(R.string.sync_status_server_missing_config_files);
-          break;
-        case
-                /** the device does not have any configuration to push to server */ SERVER_RESET_FAILED_DEVICE_HAS_NO_CONFIG_FILES:
-          id_title = R.string.sync_device_configuration_failure;
-          message = getString(R.string.sync_status_server_reset_failed_device_has_no_config_files);
-          break;
-        case
-                /** while a sync was in progress, another device reset the app config, requiring a restart of
-                 * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
-          id_title = R.string.sync_resync_because_config_reset_error;
-          message = getString(R.string.sync_status_resync_because_config_has_been_reset_error);
-          break;
-        case
-                /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
-          id_title = R.string.sync_conflicts_need_resolving;
-          message = getString(R.string.sync_conflicts_text);
-          break;
-        case
                 /** earlier sync ended successfully without conflicts and all row-level attachments sync'd */ SYNC_COMPLETE:
-          id_title = R.string.sync_successful;
-          message = getString(R.string.sync_successful_text);
+          id_title = R.string.verify_server_setttings_successful;
+          message = getString(R.string.verify_server_setttings_successful_text);
           break;
-        case
-                /** earlier sync ended successfully without conflicts but needs row-level attachments sync'd */ SYNC_COMPLETE_PENDING_ATTACHMENTS:
-          id_title = R.string.sync_complete_pending_attachments;
-          message = getString(R.string.sync_complete_pending_attachments_text);
       }
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(OUTCOME_DIALOG_TAG);
@@ -801,7 +667,8 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         outcomeDialog = DismissableOutcomeDialogFragment.newInstance(getString(id_title),
             message,
             (status == SyncStatus.SYNC_COMPLETE ||
-             status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS), SyncFragment.NAME);
+             status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS),
+                VerifyServerSettingsFragment.NAME);
 
         // If fragment is not visible an exception could be thrown
         // TODO: Investigate a better way to handle this

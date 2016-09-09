@@ -33,6 +33,8 @@ import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.InstanceProviderAPI;
@@ -51,6 +53,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class InstanceProvider extends ContentProvider {
 
@@ -293,6 +296,10 @@ public class InstanceProvider extends ContentProvider {
       String[] projection, String selection, String[] selectionArgs,
       String sortOrder ) {
 
+    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
+    String activeUser = props.getActiveUser();
+    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+
     String fullQuery;
     String filterArgs[];
     Cursor c = null;
@@ -318,7 +325,7 @@ public class InstanceProvider extends ContentProvider {
     // Can't get away with dataTable.* because of collision with _ID column
     // get map of (elementKey -> ColumnDefinition)
     try {
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, appName, tableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);
@@ -437,7 +444,12 @@ public class InstanceProvider extends ContentProvider {
 
     fullQuery = b.toString();
 
-    c = db.rawQuery(fullQuery, filterArgs);
+
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
+
+    c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, null,
+        accessContext);
     return c;
   }
 
@@ -629,7 +641,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
+  public synchronized int update(Uri uri, ContentValues cv, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -696,18 +708,23 @@ public class InstanceProvider extends ContentProvider {
       }
 
       // update the values string...
-      if (values.containsKey(InstanceColumns.XML_PUBLISH_STATUS)) {
+      if (cv.containsKey(InstanceColumns.XML_PUBLISH_STATUS)) {
         Date xmlPublishDate = new Date();
-        values.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
+        cv.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(xmlPublishDate.getTime()));
-        String xmlPublishStatus = values.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
-        if (values.containsKey(InstanceColumns.DISPLAY_SUBTEXT) == false) {
+        String xmlPublishStatus = cv.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
+        if (cv.containsKey(InstanceColumns.DISPLAY_SUBTEXT) == false) {
           String text = getDisplaySubtext(xmlPublishStatus, xmlPublishDate);
-          values.put(InstanceColumns.DISPLAY_SUBTEXT, text);
+          cv.put(InstanceColumns.DISPLAY_SUBTEXT, text);
         }
       }
 
-      String[] args = new String[1];
+      Map<String,Object> values = new HashMap<String,Object>();
+      for ( String key : cv.keySet()) {
+        values.put(key, cv.get(key));
+      }
+
+      Object[] args = new String[1];
       for (IdStruct idStruct : idStructs) {
         args[0] = idStruct.idUploadsTable;
         count += db.update(DatabaseConstants.UPLOADS_TABLE_NAME, values,

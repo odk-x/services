@@ -60,6 +60,30 @@ public class SyncETagsUtils {
   }
 
   /**
+   * Remove app and table level manifests. Invoked when we select reset configuration
+   * and the initialization task is executed.
+   *
+   * @param db
+   */
+  public void deleteAppAndTableLevelManifestSyncETags(OdkConnectionInterface db) {
+
+    // TODO: Change this to only delete app and table level manifest sync etags
+    // for now we will delete all rows that have _is_manifest = 1
+
+    ArrayList<String> bindArgs = new ArrayList<String>();
+    StringBuilder b = new StringBuilder();
+
+    b.append("DELETE FROM ")
+            .append(DatabaseConstants.SYNC_ETAGS_TABLE_NAME).append(" WHERE ")
+            .append(SyncETagColumns.IS_MANIFEST);
+
+    b.append("=?");
+    bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
+
+    db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+  }
+
+  /**
    * Remove all ETags for anything other than the given server. 
    * Invoked when we change the target sync server...
    *

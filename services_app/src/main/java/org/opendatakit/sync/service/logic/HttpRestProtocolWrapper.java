@@ -65,7 +65,7 @@ public class HttpRestProtocolWrapper {
 
   private static final String LOGTAG = HttpRestProtocolWrapper.class.getSimpleName();
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
-  public static final int CONNECTION_TIMEOUT = 45000;
+  public static final int CONNECTION_TIMEOUT = 60000;
 
   // parameters for queries that could return a lot of data...
   public static final String CURSOR_PARAMETER = "cursor";
@@ -84,10 +84,6 @@ public class HttpRestProtocolWrapper {
 
   public static final String BOUNDARY = "boundary";
   public static final String multipartFileHeader = "filename=\"";
-
-  /** Timeout (in ms) we specify for each http request */
-  public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
-  /** Path to the file servlet on the Aggregate server. */
 
   private static final String FORWARD_SLASH = "/";
 
@@ -279,6 +275,16 @@ public class HttpRestProtocolWrapper {
 
   public URI constructListOfAppNamesUri() {
     URI uri = normalizeUri(sc.getAggregateUri(), "/odktables/");
+    return uri;
+  }
+
+  public URI constructListOfUserRolesUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/granted");
+    return uri;
+  }
+
+  public URI constructListOfUsersUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(), "/users/list");
     return uri;
   }
 
@@ -612,9 +618,6 @@ public class HttpRestProtocolWrapper {
     
     cm = new CookieManager();
     CookieHandler.setDefault(cm);
-
-    // client initialization
-    int CONNECTION_TIMEOUT = 60000;
 
     // HttpClient for auth tokens
     localAuthContext = new BasicHttpContext();

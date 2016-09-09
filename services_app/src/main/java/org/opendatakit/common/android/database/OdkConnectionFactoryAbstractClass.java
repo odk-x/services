@@ -333,8 +333,9 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
         if ( retryCount == MAX_OPEN_RETRY_COUNT ) {
           StringBuilder b = new StringBuilder();
           b.append("openDatabase Attempt ").append(retryCount)
-                  .append(" Failed: throwing  SQLiteDatabaseLockedException");
+              .append(" Failed: throwing  SQLiteDatabaseLockedException");
           appNameSharedStateContainer.dumpInfo(b);
+          logError(appName, b.toString());
         } else {
           logWarn(appName, "openDatabase Attempt " + retryCount +
                   " Failed: will throw an exception after attempt " + MAX_OPEN_RETRY_COUNT);
@@ -407,10 +408,6 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       if (dbConnection != null) {
         logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
                 " -- successfully obtained reference to already-open database for " + appName +
-                " when getting " + sessionQualifier);
-
-        logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-                " -- returning an existing session for " + appName +
                 " when getting " + sessionQualifier);
         return dbConnection;
       }

@@ -15,8 +15,8 @@
  */
 package org.opendatakit.sync.service.logic;
 
-import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebLoggerIf;
@@ -263,11 +263,11 @@ public class ProcessManifestContentAndFileChanges {
    * @param syncStatus
    * @throws HttpClientWebException
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public void syncAppLevelFiles(boolean pushLocalFiles, String serverReportedAppLevelETag,
       Synchronizer.SynchronizerStatus syncStatus)
-      throws HttpClientWebException, IOException, RemoteException {
+      throws HttpClientWebException, IOException, ServicesAvailabilityException {
     // Get the app-level files on the server.
     syncStatus.updateNotification(SyncProgressState.APP_FILES, R.string
             .sync_getting_app_level_manifest,
@@ -388,7 +388,7 @@ public class ProcessManifestContentAndFileChanges {
       // Use the matching of the ETag to indicate the device and server content exactly match.
       try {
         sc.getSynchronizer().updateManifestSyncETag(null, manifestDocument.eTag);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         log.e(LOGTAG, "Error while trying to update the manifest sync etag");
         log.printStackTrace(e);
       }
@@ -410,11 +410,11 @@ public class ProcessManifestContentAndFileChanges {
    * @param syncStatus
    * @throws HttpClientWebException
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public void syncTableLevelFiles(String tableId, String serverReportedTableLevelETag, Synchronizer.OnTablePropertiesChanged onChange,
       boolean pushLocalFiles, Synchronizer.SynchronizerStatus syncStatus) throws
-      HttpClientWebException, IOException, RemoteException {
+      HttpClientWebException, IOException, ServicesAvailabilityException {
 
     syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
         R.string.sync_getting_table_manifest,
@@ -560,7 +560,7 @@ public class ProcessManifestContentAndFileChanges {
       // Use the matching of the ETag to indicate the device and server content exactly match.
       try {
         sc.getSynchronizer().updateManifestSyncETag(tableId, manifestDocument.eTag);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         log.e(LOGTAG, "Error while trying to update the manifest sync etag");
         log.printStackTrace(e);
       }
@@ -578,10 +578,10 @@ public class ProcessManifestContentAndFileChanges {
    * @return true if the file was updated; false if it was left unchanged.
    * @throws HttpClientWebException
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   private boolean compareAndDownloadConfigFile(String tableId, OdkTablesFileManifestEntry entry,
-      File localFile) throws HttpClientWebException, IOException, RemoteException {
+      File localFile) throws HttpClientWebException, IOException, ServicesAvailabilityException {
     String basePath = ODKFileUtils.getAppFolder(sc.getAppName());
 
     // if the file is a placeholder on the server, then don't do anything...
@@ -635,7 +635,7 @@ public class ProcessManifestContentAndFileChanges {
         String md5hash = null;
         try {
           md5hash = sc.getSynchronizer().getFileSyncETag(uri, tableId, localFile.lastModified());
-        } catch (RemoteException e1) {
+        } catch (ServicesAvailabilityException e1) {
           log.printStackTrace(e1);
           log.e(LOGTAG, "database access error (ignoring)");
         }
@@ -686,10 +686,10 @@ public class ProcessManifestContentAndFileChanges {
    * @return true if sync state should move to synced (from synced_pending_files)
    * @throws HttpClientWebException
    * @throws IOException
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public boolean syncRowLevelFileAttachments(String serverInstanceFileUri, String tableId,
-      SyncRowPending localRow, SyncAttachmentState attachmentState) throws HttpClientWebException, IOException, RemoteException  {
+      SyncRowPending localRow, SyncAttachmentState attachmentState) throws HttpClientWebException, IOException, ServicesAvailabilityException  {
 
     if (localRow.getUriFragments().isEmpty()) {
       throw new IllegalStateException("should never get here!");
@@ -907,7 +907,7 @@ public class ProcessManifestContentAndFileChanges {
         // value continues to be valid now, once all the file attachments have been synced.
         sc.getSynchronizer().updateRowLevelManifestSyncETag(serverInstanceFileUri, tableId,
                 instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         log.printStackTrace(e);
         log.e(LOGTAG, "database access error (ignoring)");
       }

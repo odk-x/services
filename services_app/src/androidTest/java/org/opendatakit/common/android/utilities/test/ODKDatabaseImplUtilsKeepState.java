@@ -53,7 +53,7 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
 
           // Drop any leftover table now that the test is done
           for(String id : tableIds) {
-             ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), id);
+             ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
           }
        } else {
           verifyNoTablesExistNCleanAllTables();

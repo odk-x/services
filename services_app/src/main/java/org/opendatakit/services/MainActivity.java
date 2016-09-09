@@ -32,12 +32,14 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.sync.activities.SyncActivity;
 import org.opendatakit.common.android.activities.AppPropertiesActivity;
+import org.opendatakit.sync.activities.VerifyServerSettingsActivity;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 
   private static final String TAG = "MainActivity";
 
   private int SYNC_ACTIVITY_RESULT_CODE = 10;
+  private int VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE = 20;
   private int RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE = 30;
   private int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
@@ -92,6 +94,13 @@ public class MainActivity extends Activity implements IAppAwareActivity {
       Intent i = new Intent(this, SyncActivity.class);
       i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
       startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
+      return true;
+    }
+
+    if (id == R.id.action_verify_server_settings) {
+      Intent i = new Intent(this, VerifyServerSettingsActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      startActivityForResult(i, VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE);
       return true;
     }
 

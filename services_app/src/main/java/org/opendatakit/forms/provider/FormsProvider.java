@@ -42,11 +42,9 @@ import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -127,18 +125,18 @@ public class FormsProvider extends ContentProvider {
     return true;
   }
 
-  private FormSpec patchUpValues(String appName, ContentValues values) {
+  private FormSpec patchUpValues(String appName, HashMap<String,Object> values) {
 
     // require a tableId and formId...
     if ( !values.containsKey(FormsColumns.TABLE_ID)) {
       throw new IllegalArgumentException(FormsColumns.TABLE_ID + " is not specified");
     }
-    String tableId = values.getAsString(FormsColumns.TABLE_ID);
+    String tableId = (String) values.get(FormsColumns.TABLE_ID);
 
     if ( !values.containsKey(FormsColumns.FORM_ID)) {
       throw new IllegalArgumentException(FormsColumns.FORM_ID + " is not specified");
     }
-    String formId = values.getAsString(FormsColumns.FORM_ID);
+    String formId = (String) values.get(FormsColumns.FORM_ID);
 
     FormSpec formSpec = new FormSpec();
     formSpec.tableId = tableId;
@@ -166,8 +164,8 @@ public class FormsProvider extends ContentProvider {
     if (values.containsKey(FormsColumns.DATE) &&
         values.containsKey(FormsColumns.FILE_LENGTH)) {
       // we can avoid file I/O if these values match those of the formDefFile.
-      Long existingModificationDate = values.getAsLong(FormsColumns.DATE);
-      Long existingFileLength = values.getAsLong(FormsColumns.FILE_LENGTH);
+      Long existingModificationDate = (Long) values.get(FormsColumns.DATE);
+      Long existingFileLength = (Long) values.get(FormsColumns.FILE_LENGTH);
 
       // date is the last modification date of the formDef file
       Long now = formDefFile.lastModified();
@@ -211,11 +209,11 @@ public class FormsProvider extends ContentProvider {
     ODKFileUtils.assertDirectoryStructure(appName);
     WebLoggerIf log = WebLogger.getLogger(appName);
 
-    ContentValues values;
+    HashMap<String,Object> values = new HashMap<String,Object>();
     if (initialValues != null) {
-      values = new ContentValues(initialValues);
-    } else {
-      values = new ContentValues();
+      for ( String key : initialValues.keySet() ) {
+        values.put(key, initialValues.get(key));
+      }
     }
 
     // force a scan from disk
@@ -269,7 +267,7 @@ public class FormsProvider extends ContentProvider {
         // and notify listeners of the new row...
         Uri formUri = Uri.withAppendedPath(
             Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
-            values.getAsString(FormsColumns.FORM_ID));
+            (String) values.get(FormsColumns.FORM_ID));
         getContext().getContentResolver().notifyChange(formUri, null);
         Uri idUri = Uri.withAppendedPath(
             Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
@@ -638,7 +636,7 @@ public class FormsProvider extends ContentProvider {
     String contentFormId = (values != null && values.containsKey(FormsColumns.FORM_ID)) ?
         values.getAsString(FormsColumns.FORM_ID) : null;
 
-    HashMap<FormSpec, ContentValues> matchedValues = new HashMap<FormSpec, ContentValues>();
+    HashMap<FormSpec, HashMap<String,Object>> matchedValues = new HashMap<FormSpec, HashMap<String,Object>>();
 
     OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
@@ -676,7 +674,12 @@ public class FormsProvider extends ContentProvider {
               throw new SQLException("Modification of formId for an existing form is prohibited");
             }
 
-            ContentValues cv = (values == null) ? new ContentValues() : new ContentValues(values);
+            HashMap<String,Object> cv = new HashMap<String,Object>();
+            if ( values != null ) {
+              for ( String key : values.keySet() ) {
+                cv.put(key, values.get(key));
+              }
+            }
             cv.put(FormsColumns.TABLE_ID, tableIdValue);
             cv.put(FormsColumns.FORM_ID, formIdValue);
             for ( int idx = 0 ; idx < c.getColumnCount() ; ++idx ) {
@@ -715,9 +718,9 @@ public class FormsProvider extends ContentProvider {
 
       // go through the entries and update the database with these patched-up values...
 
-      for ( Entry<FormSpec, ContentValues> e : matchedValues.entrySet() ) {
+      for ( Entry<FormSpec, HashMap<String,Object>> e : matchedValues.entrySet() ) {
         FormSpec fs = e.getKey();
-        ContentValues cv = e.getValue();
+        HashMap<String,Object> cv = e.getValue();
 
         if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv,
             FormsColumns._ID + "=?", new String[] { fs._id }) > 0 ) {
