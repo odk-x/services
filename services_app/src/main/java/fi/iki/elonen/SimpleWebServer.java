@@ -239,15 +239,12 @@ public class SimpleWebServer extends NanoHTTPD {
             return getForbiddenResponse("Won't serve ../ for security reasons.");
         }
 
-        boolean canServeUri = false;
-        File homeDir = new File(ODKFileUtils.getOdkFolder());
-        canServeUri = canServeUri(uri, homeDir);
-        if (!canServeUri) {
+        File f = ODKFileUtils.fileFromUriOnWebServer(uri);
+        if (f == null) {
             return getNotFoundResponse();
         }
 
         // Browsers get confused without '/' after the directory, send a redirect.
-        File f = new File(homeDir, uri);
         if (f.isDirectory() && !uri.endsWith("/")) {
             uri += "/";
             Response res = createResponse(Response.Status.REDIRECT, NanoHTTPD.MIME_HTML, "<html><body>Redirected: <a href=\"" +
@@ -290,23 +287,6 @@ public class SimpleWebServer extends NanoHTTPD {
     protected Response getInternalErrorResponse(String s) {
         return createResponse(Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT,
             "INTERNAL ERRROR: " + s);
-    }
-
-    private boolean canServeUri(String uri, File homeDir) {
-        boolean canServeUri;
-        File f = new File(homeDir, uri);
-        canServeUri = f.exists();
-        if ( canServeUri ) {
-          // TODO: more rigorous checks for handling "../"?
-          File base = f.getAbsoluteFile();
-          String appName = ODKFileUtils.extractAppNameFromPath(base);
-          String relativePath = ODKFileUtils.asRelativePath(appName, base);
-          Set<String> exclusions = ODKFileUtils.getDirectoriesToExcludeFromWebServer();
-          // further restrict relativePath to not reference one of the private directories
-          String[] parts = relativePath.split("/");
-          canServeUri = parts.length > 1 && !exclusions.contains(parts[1]);
-        }
-        return canServeUri;
     }
 
     /**
