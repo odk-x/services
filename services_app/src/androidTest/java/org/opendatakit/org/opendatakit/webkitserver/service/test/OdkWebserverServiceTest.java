@@ -29,7 +29,6 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
     private static final String HELLO_WORLD_HTML_TXT = "<HTML><BODY>Hello World!!!</BODY></HTML>";
     private static final String TEST_FILE_NAME = "Hello.html";
     private static final String TEST_DIR = "testfiles";
-    private static final String SD_ODK = ODKFileUtils.getOdkFolder() + "/";
 
     public OdkWebserverServiceTest() {
         super(OdkWebkitServerService.class);
@@ -86,20 +85,21 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(TestConsts.APPNAME);
 
-        String directory = TestConsts.APPNAME + "/" + TEST_DIR;
-        String fileLocation = SD_ODK + directory;
-        String fileName = fileLocation + "/" + TEST_FILE_NAME;
+        String directory = ODKFileUtils.getConfigFolder(TestConsts.APPNAME) + File.separator +
+            TEST_DIR;
+        String fileName = directory + File.separator + TEST_FILE_NAME;
 
         OdkWebkitServerInterface serviceInterface = getOdkWebkitServerInterface();
 
         PrintWriter writer = null;
         try {
-            File directoryLocation = new File(fileLocation);
+            File directoryLocation = new File(directory);
             if(!directoryLocation.isDirectory()) {
                 directoryLocation.mkdirs();
             }
             writer = new PrintWriter(fileName, "UTF-8");
             writer.println(HELLO_WORLD_HTML_TXT);
+            writer.flush();
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -116,7 +116,9 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
 
         HttpURLConnection connection = null;
         try {
-            String urlStr = "http://localhost:8635/" + directory + "/" + TEST_FILE_NAME;
+            String urlStr = "http://localhost:8635/" + TestConsts.APPNAME + "/" +
+                ODKFileUtils.asUriFragment(TestConsts.APPNAME, new File(fileName));
+
             URL url = new URL(urlStr);
             connection = (HttpURLConnection) url.openConnection();
             if(connection.getResponseCode() != HttpStatus.SC_OK) {
