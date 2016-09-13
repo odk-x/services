@@ -1,0 +1,41 @@
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:key="group.common.server" android:title="@string/server">
+		<EditTextPreference
+			android:id="@+id/server_url"
+			android:key="common.sync_server_url"
+			android:defaultValue="@string/default_sync_server_url"
+			android:title="@string/server_url"
+			android:inputType="textNoSuggestions"
+			android:dialogTitle="@string/change_server_url" 
+			android:persistent="false"/>
+		<ListPreference
+				android:id="@+id/credential_type"
+				android:key="common.auth_credentials"
+				android:title="@string/credential"
+				android:dialogTitle="@string/change_credential"
+				android:defaultValue="none"
+				android:entries="@array/credential_entries"
+				android:entryValues="@array/credential_entry_values"
+				android:persistent="false"/>
+		<EditTextPreference
+			android:id="@+id/username"
+			android:key="common.username"
+			android:title="@string/username"
+			android:inputType="textNoSuggestions"
+			android:dialogTitle="@string/change_username" 
+			android:persistent="false"/>
+		<org.opendatakit.common.android.preferences.PasswordPreferenceScreen
+			android:id="@+id/password_screen"
+			android:key="group.common.password_screen"
+			android:title="@string/password"
+			android:summary="@string/click_to_change_password"/>
+		<!-- android:password="true" -->
+		<ListPreference
+			android:id="@+id/selected_google_account"
+			android:key="common.account"
+			android:defaultValue=""
+			android:title="@string/selected_google_account_text"
+			android:persistent="false" />
+	</PreferenceCategory>
+</PreferenceScreen>

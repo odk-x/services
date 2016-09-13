@@ -4,19 +4,26 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle-experimental:0.6.0-alpha6'
+        classpath 'com.android.tools.build:gradle-experimental:0.7.3'
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        ivy {
+            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-demo/'
+        }
         maven {
-            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-release'
+            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-master/'
         }
         ivy {
-            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot'
+            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot/'
         }
     }
+}
+
+configurations.all {
+    transitive = true
 }
 

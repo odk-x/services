@@ -1,19 +1,22 @@
-gradle.ext.gradleConfigVersion = 20
+gradle.ext.gradleConfigVersion = 58
 
-if ( !gradle.ext.has('workspacePath') ) {
-	def env = System.getProperties();
-	logger.warn("core/settings.gradle System.getProperties().stringPropertyNames(): " + env.stringPropertyNames());
+if (!gradle.ext.has('workspacePath')) {
+    def env = System.getProperties();
+    logger.warn("services/settings.gradle System.getProperties().stringPropertyNames(): " + env
+            .stringPropertyNames());
     def path = System.getProperty('com.android.studio.gradle.project.path');
-    if ( path != null ) {
-        logger.warn("core/settings.gradle Found value for System.getProperty('com.android.studio.gradle.project.path')");
+    if (path != null) {
+        logger.warn("services/settings.gradle Found value for System.getProperty('com.android" +
+                ".studio.gradle.project.path')");
         gradle.ext.workspacePath = (new File(path)).getParentFile().getAbsolutePath();
     } else {
-        logger.warn("core/settings.gradle No value found for System.getProperty('com.android.studio.gradle.project.path')");
+        logger.warn("services/settings.gradle No value found for System.getProperty('com.android" +
+                ".studio.gradle.project.path')");
         gradle.ext.workspacePath = new File("..").getAbsolutePath();
     }
 }
 
-logger.warn('core/settings.gradle -- gradle.ext.workspacePath: ' + gradle.ext.workspacePath)
+logger.warn('services/settings.gradle -- gradle.ext.workspacePath: ' + gradle.ext.workspacePath)
 
 gradle.ext.local = gradle.ext.workspacePath + '/gradle-config/remote.gradle'
 gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/' + gradle.ext.gradleConfigVersion + '/remote.gradle'
@@ -30,9 +33,10 @@ if ((new File(gradle.ext.local)).exists()) {
 settingsScripts.each {
     apply from: it
 }
-include(coreProjectChild)
+include(servicesProjectChild)
 
-if (libraryProjectPath.exists() && gradle.ext.useLocal) { // check if local library project is present
+if (libraryProjectPath.exists() && gradle.ext.useLocal) {
+    // check if local library project is present
     include libraryProjectName
     project(libraryProjectName).setProjectDir(libraryProjectPath) // set local location
 }
