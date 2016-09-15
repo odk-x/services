@@ -12,7 +12,7 @@ import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.io.File;
 
@@ -28,7 +28,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
     private static final String TEST_FILE_PREFIX = "test_";
     private static final String DATABASE_NAME = "test.db";
 
-    private OdkDbHandle uniqueKey;
+    private DbHandle uniqueKey;
 
     protected String getAppName() {
         return "test-" + uniqueKey.getDatabaseHandle().substring(6);

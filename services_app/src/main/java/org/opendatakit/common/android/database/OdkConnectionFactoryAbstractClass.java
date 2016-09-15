@@ -14,10 +14,10 @@
 
 package org.opendatakit.common.android.database;
 
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteCantOpenDatabaseException;
 import org.sqlite.database.sqlite.SQLiteDatabaseLockedException;
 import org.sqlite.database.sqlite.SQLiteException;
@@ -63,7 +63,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    * <p/>
    * AppNameSharedStateContainer contains the shared state for the given appName.
    * i.e., the appNameMutex and the sessionMutex generator, and the map of
-   * sessionQualifier to OdkDbHandles. Callers should obtain the sessionMutex
+   * sessionQualifier to DbHandles. Callers should obtain the sessionMutex
    * once and save it for later use, as it is not recoverable.
    * <p/>
    * The AppNameSharedStateContainer does its own multithreaded access protection,
@@ -120,8 +120,8 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    *
    * @return sessionQualifier appropriate for 'internal uses'
    */
-  public final OdkDbHandle generateInternalUseDbHandle() {
-    return new OdkDbHandle(ODKDataUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+  public final DbHandle generateInternalUseDbHandle() {
+    return new DbHandle(LocalizationUtils.genUUID() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
   }
 
   /**
@@ -129,8 +129,8 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    *
    * @return sessionQualifier appropriate for 'database service uses'
    */
-  public final OdkDbHandle generateDatabaseServiceDbHandle() {
-    return new OdkDbHandle(ODKDataUtils.genUUID());
+  public final DbHandle generateDatabaseServiceDbHandle() {
+    return new DbHandle(LocalizationUtils.genUUID());
   }
 
   /**
@@ -435,7 +435,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
 
   @Override
   public final OdkConnectionInterface getConnection(String appName,
-                                                    OdkDbHandle dbHandleName) {
+                                                    DbHandle dbHandleName) {
     if (dbHandleName != null) {
       return getConnectionImpl(appName, dbHandleName.getDatabaseHandle());
     } else {
@@ -444,7 +444,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
   }
 
   @Override
-  public final void removeConnection(String appName, OdkDbHandle dbHandleName) {
+  public final void removeConnection(String appName, DbHandle dbHandleName) {
     removeConnectionImpl(appName, dbHandleName.getDatabaseHandle());
   }
 

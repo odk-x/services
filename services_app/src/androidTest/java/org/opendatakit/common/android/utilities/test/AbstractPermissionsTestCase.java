@@ -18,7 +18,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.test.AndroidTestCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -28,18 +28,18 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
-import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.common.android.database.LocalKeyValueStoreConstants;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -101,7 +101,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected static boolean initialized = false;
   protected static final String APPNAME = TestConsts.APPNAME;
-  protected static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractPermissionsTestCase.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+  protected static final DbHandle uniqueKey = new DbHandle(AbstractPermissionsTestCase.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
 
   protected OdkConnectionInterface db;
 

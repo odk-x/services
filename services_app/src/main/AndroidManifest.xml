@@ -44,12 +44,12 @@
         android:logo="@drawable/odk_services"
         android:label="@string/app_name"
         android:theme="@style/Opendatakit" >
-        <service android:name="org.opendatakit.webkitserver.service.OdkWebkitServerService" 
+        <service android:name="org.opendatakit.common.android.webkitserver.service.OdkWebkitServerService"
             android:exported="true"
             android:process=":webkitservice"
             android:permission="org.opendatakit.webkitserver.RUN_WEBSERVER" >
         </service>
-        <service android:name="org.opendatakit.database.service.OdkDatabaseService" 
+        <service android:name="org.opendatakit.database.service.OdkDatabaseService"
             android:exported="true"
             android:process=":databaseservice"
             android:permission="org.opendatakit.database.RUN_DATABASE" >

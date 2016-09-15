@@ -22,19 +22,21 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
-import org.opendatakit.common.android.data.ColumnList;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableDefinitionEntry;
+import org.opendatakit.common.android.database.data.ColumnList;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.TableDefinitionEntry;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.PropertiesFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.*;
+import org.opendatakit.common.android.sync.service.*;
+import org.opendatakit.sync.service.OdkSyncService;
+import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 
@@ -265,7 +267,7 @@ public class ProcessAppAndTableLevelChanges {
 
     // get the tables on the local device
     List<String> localTableIds;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       localTableIds = sc.getDatabaseService().getAllTableIds(sc.getAppName(), db);
@@ -646,7 +648,7 @@ public class ProcessAppAndTableLevelChanges {
     displayName = sc.getTableDisplayName(tableId);
     tableLevelResult.setTableDisplayName(displayName);
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       String schemaETag = tde.getSchemaETag();
 
@@ -829,7 +831,7 @@ public class ProcessAppAndTableLevelChanges {
    * @throws SchemaMismatchException
    * @throws ServicesAvailabilityException
    */
-  private OrderedColumns addTableFromDefinitionResource(OdkDbHandle db,
+  private OrderedColumns addTableFromDefinitionResource(DbHandle db,
       TableDefinitionResource definitionResource, boolean doesNotExistLocally)
       throws SchemaMismatchException, ServicesAvailabilityException {
 

@@ -21,7 +21,9 @@ import android.util.Log;
 
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.database.service.DbChunk;
+import org.opendatakit.common.android.database.service.OdkDatabaseServiceInterface;
+import org.opendatakit.common.android.logging.WebLogger;
 
 import java.util.*;
 
@@ -31,7 +33,7 @@ public class OdkDatabaseService extends Service {
 
   // A place to store pieces of large tables or other return values that won't fit across the
   // AIDL call
-  private Map<UUID, OdkDbChunk> parceledChunks;
+  private Map<UUID, DbChunk> parceledChunks;
 
   /**
    * change to true expression if you want to debug the database service
@@ -97,7 +99,7 @@ public class OdkDatabaseService extends Service {
    *
    * @param parceledChunk The extra data to be stored
    */
-  public void putParceledChunk(OdkDbChunk parceledChunk) {
+  public void putParceledChunk(DbChunk parceledChunk) {
     if (parceledChunk == null) {
       Log.w(LOGTAG, "Attempted to store a null chunk");
       return;
@@ -111,13 +113,13 @@ public class OdkDatabaseService extends Service {
    *
    * @param chunkList The extra data to be stored
    */
-  public void putParceledChunks(List<OdkDbChunk> chunkList) {
+  public void putParceledChunks(List<DbChunk> chunkList) {
     if (chunkList == null) {
       Log.e(LOGTAG, "Attempted to store a null chunk list");
       return;
     }
 
-    for(OdkDbChunk chunk: chunkList) {
+    for(DbChunk chunk: chunkList) {
       parceledChunks.put(chunk.getThisID(), chunk);
     }
   }
@@ -128,7 +130,7 @@ public class OdkDatabaseService extends Service {
    * @param id The look up key
    * @return The chunk
    */
-  public OdkDbChunk getParceledChunk(UUID id) {
+  public DbChunk getParceledChunk(UUID id) {
     return parceledChunks.get(id);
   }
 
@@ -138,7 +140,7 @@ public class OdkDatabaseService extends Service {
    * @param id The look up key
    * @return The chunk
    */
-  public OdkDbChunk removeParceledChunk(UUID id) {
+  public DbChunk removeParceledChunk(UUID id) {
     return parceledChunks.remove(id);
   }
 

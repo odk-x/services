@@ -20,10 +20,10 @@ import android.content.Context;
 
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -46,7 +46,7 @@ public class FetchInConflictTableIdsLoader extends AsyncTaskLoader<ArrayList<Str
 
     OdkConnectionInterface db = null;
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     ArrayList<String> conflictingTableIds = new ArrayList<String>();
 
@@ -58,8 +58,8 @@ public class FetchInConflictTableIdsLoader extends AsyncTaskLoader<ArrayList<Str
       ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
       for ( String tableId : tableIds ) {
         int status = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-        if ( status == ODKCursorUtils.TABLE_HEALTH_HAS_CONFLICTS ||
-             status == ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS ) {
+        if ( status == CursorUtils.TABLE_HEALTH_HAS_CONFLICTS ||
+             status == CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS ) {
           conflictingTableIds.add(tableId);
         }
       }

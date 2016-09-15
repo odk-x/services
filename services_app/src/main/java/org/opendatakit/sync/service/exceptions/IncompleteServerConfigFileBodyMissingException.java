@@ -15,9 +15,6 @@
  */
 package org.opendatakit.sync.service.exceptions;
 
-import org.opendatakit.httpclientandroidlib.HttpRequest;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
-
 public class IncompleteServerConfigFileBodyMissingException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;

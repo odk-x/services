@@ -19,24 +19,24 @@ import android.database.Cursor;
 import android.test.AndroidTestCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
-import org.apache.commons.lang3.SystemUtils;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.*;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.common.android.data.*;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.database.data.*;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.provider.*;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
-import org.opendatakit.database.service.OdkDbTable;
-import org.opendatakit.database.utilities.OdkDbQueryUtil;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.utilities.QueryUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -1225,7 +1225,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -1763,7 +1763,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -1807,7 +1807,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -1851,7 +1851,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -1895,7 +1895,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -1954,7 +1954,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(testColAcc, pos_acc);
 
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -2019,7 +2019,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -2125,7 +2125,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -2169,7 +2169,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -2224,7 +2224,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues,
-        ODKDataUtils.genUUID(),
+        LocalizationUtils.genUUID(),
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
     // Select everything out of the table
@@ -2257,7 +2257,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String testVal2 = "test2";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2346,7 +2346,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2457,7 +2457,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2493,7 +2493,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2529,7 +2529,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2565,7 +2565,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2600,7 +2600,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String testVal2 = "test2";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2724,7 +2724,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String testVal2 = "test2";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -2848,7 +2848,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -3071,7 +3071,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
@@ -3122,7 +3122,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -3183,7 +3183,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     String testVal = "test";
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -3222,7 +3222,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     assertEquals(val, testVal);
 
-    String invalidRowId = ODKDataUtils.genUUID();
+    String invalidRowId = LocalizationUtils.genUUID();
     boolean thrown = true;
     try {
       ODKDatabaseImplUtils.get()
@@ -3330,9 +3330,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // local record that is synced and pending deletion...
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
-    cvValues.put(DataTableColumns.ROW_ETAG, ODKDataUtils.genUUID());
+    cvValues.put(DataTableColumns.ROW_ETAG, LocalizationUtils.genUUID());
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -3369,7 +3369,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // metadata fields
     updates.put(DataTableColumns.CONFLICT_TYPE, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
     updates.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
-    updates.put(DataTableColumns.ROW_ETAG, ODKDataUtils.genUUID());
+    updates.put(DataTableColumns.ROW_ETAG, LocalizationUtils.genUUID());
     // insert in_conflict server row
     updates.put(DataTableColumns.FORM_ID, "serverForm");
     updates.put(DataTableColumns.LOCALE, currentLocale);
@@ -3394,15 +3394,15 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
     String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-    OdkDbTable baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
+    BaseTable baseTable = ODKDatabaseImplUtils.get().query(db, QueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs, null, accessContext);
     UserTable table = new UserTable(baseTable, orderedColumns, adminColArr);
 
     assertEquals(table.getNumberOfRows(), 2);
 
-    OdkDbRow first = table.getRowAtIndex(0);
-    OdkDbRow second = table.getRowAtIndex(1);
+    Row first = table.getRowAtIndex(0);
+    Row second = table.getRowAtIndex(1);
 
     String v;
     int conflictTypeVal;
@@ -3423,7 +3423,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     // Run the query yet again to make sure that things worked as expected
-    baseTable = ODKDatabaseImplUtils.get().query(db, OdkDbQueryUtil
+    baseTable = ODKDatabaseImplUtils.get().query(db, QueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs, null, accessContext);
     table = new UserTable(baseTable, orderedColumns, adminColArr);
@@ -3449,7 +3449,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //  ContentValues cvValues = new ContentValues();
-//  String rowId = ODKDataUtils.genUUID();
+//  String rowId = LocalizationUtils.genUUID();
 //  cvValues.put(testCol, testVal);
 //  ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //      cvValues, rowId);
@@ -3515,7 +3515,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -3579,7 +3579,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -3828,7 +3828,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -3909,7 +3909,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -3933,7 +3933,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Test that the health of the table is CLEAN
     int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
-    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_IS_CLEAN);
+    assertEquals(health, CursorUtils.TABLE_HEALTH_IS_CLEAN);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
@@ -3960,7 +3960,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -4165,7 +4165,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -4236,7 +4236,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Test that the health of the table is CLEAN
     int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
-    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS);
+    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
@@ -4256,7 +4256,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -4299,7 +4299,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    // Test that the health of the table is CLEAN
 //    int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 //
-//    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CONFLICTS);
+//    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CONFLICTS);
 //
 //    // Drop the table now that the test is done
 //    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
@@ -4319,7 +4319,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -4402,7 +4402,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    // Test that the health of the table is CLEAN
 //    int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 //
-//    assertEquals(health, ODKCursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+//    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
 //
 //    // Drop the table now that the test is done
 //    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
@@ -4422,7 +4422,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -4810,7 +4810,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
-//    String rowId = ODKDataUtils.genUUID();
+//    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
 //    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
@@ -4940,7 +4940,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -4983,8 +4983,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // update db schema etag and last data etag
-    String newSchemaETag = ODKDataUtils.genUUID();
-    String newLastDataETag = ODKDataUtils.genUUID();
+    String newSchemaETag = LocalizationUtils.genUUID();
+    String newLastDataETag = LocalizationUtils.genUUID();
     ODKDatabaseImplUtils.get().privilegedUpdateDBTableETags(db, tableId, newSchemaETag,
         newLastDataETag);
 
@@ -5028,7 +5028,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5112,7 +5112,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 5;
 
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5134,7 +5134,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Update the row ETag and sync state
-    String rowETag = ODKDataUtils.genUUID();
+    String rowETag = LocalizationUtils.genUUID();
     ODKDatabaseImplUtils.get().privilegedUpdateRowETagAndSyncState(db, tableId, rowId, rowETag,
         SyncState.synced, activeUser);
 
@@ -5190,7 +5190,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
         OdkConnectionInterface dbToUse = db;
         if (useNewDB) {
-          OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
+          DbHandle uniqueKey = new DbHandle(AbstractODKDatabaseUtilsTest.class
               .getSimpleName() + testVal + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
           dbToUse = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
         }
@@ -5277,7 +5277,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5357,7 +5357,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5449,8 +5449,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       columns.add(new Column(testCol, testCol, testColType, "[]"));
     }
 
-    String uniqueUUID = ODKDataUtils.genUUID();
-    OdkDbHandle prevUniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
+    String uniqueUUID = LocalizationUtils.genUUID();
+    DbHandle prevUniqueKey = new DbHandle(AbstractODKDatabaseUtilsTest.class
         .getSimpleName() + uniqueUUID + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface prevDb = OdkConnectionFactorySingleton
         .getOdkConnectionFactoryInterface().getConnection(getAppName(), prevUniqueKey);
@@ -5466,7 +5466,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(prevDb, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5569,7 +5569,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5604,7 +5604,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String[] selArgs2 = null;
 
     // Query with new connection to see if this gets all recent operations
-    OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
+    DbHandle uniqueKey = new DbHandle(AbstractODKDatabaseUtilsTest.class
         .getSimpleName() + testVal + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface dbForQuery = OdkConnectionFactorySingleton
         .getOdkConnectionFactoryInterface().getConnection
@@ -5672,7 +5672,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5771,7 +5771,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5880,7 +5880,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -5917,8 +5917,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Try this to see if it makes a difference
     // Query with new connection to see if this gets all recent operations
-    String uuid = ODKDataUtils.genUUID();
-    OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
+    String uuid = LocalizationUtils.genUUID();
+    DbHandle uniqueKey = new DbHandle(AbstractODKDatabaseUtilsTest.class
         .getSimpleName() + uuid + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface dbForQuery = OdkConnectionFactorySingleton
         .getOdkConnectionFactoryInterface().getConnection
@@ -5990,7 +5990,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     int testVal = 0;
     String setupTestCol = colPrefix + 0;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(setupTestCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -6074,14 +6074,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
     // Create two different db connections
-    String uuid1 = ODKDataUtils.genUUID();
-    OdkDbHandle uniqueKey1 = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class
+    String uuid1 = LocalizationUtils.genUUID();
+    DbHandle uniqueKey1 = new DbHandle(AbstractODKDatabaseUtilsTest.class
         .getSimpleName() + uuid1 + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface db1 = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection(getAppName(), uniqueKey1);
 
-    String uuid2 = ODKDataUtils.genUUID();
-    OdkDbHandle uniqueKey2 = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() +
+    String uuid2 = LocalizationUtils.genUUID();
+    DbHandle uniqueKey2 = new DbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() +
       uuid2 + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface db2 = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection(getAppName(), uniqueKey2);
@@ -6097,7 +6097,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Insert a row using db1
     int testVal = 5;
     ContentValues cvValues = new ContentValues();
-    String rowId = ODKDataUtils.genUUID();
+    String rowId = LocalizationUtils.genUUID();
     cvValues.put(testCol, testVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -6142,7 +6142,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // Re-create the same table with different row
     int newTestVal = 200;
     cvValues = new ContentValues();
-    rowId = ODKDataUtils.genUUID();
+    rowId = LocalizationUtils.genUUID();
     cvValues.put(newTestCol, newTestVal);
     ODKDatabaseImplUtils.get().insertRowWithId(db1, tableId, orderedColumns, cvValues, rowId,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -6221,7 +6221,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
           ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      String rowId = ODKDataUtils.genUUID();
+      String rowId = LocalizationUtils.genUUID();
 
       ContentValues cvValues = new ContentValues();
       for (int i = 0; i < maxCols; ++i) {

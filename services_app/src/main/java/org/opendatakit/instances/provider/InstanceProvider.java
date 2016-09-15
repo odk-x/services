@@ -27,8 +27,8 @@ import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
@@ -39,11 +39,11 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.InstanceProviderAPI;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,9 +77,9 @@ public class InstanceProvider extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    OdkDbHandle dbHandleName;
+    DbHandle dbHandleName;
 
-    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
+    InvalidateMonitor(String appName, DbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -151,7 +151,7 @@ public class InstanceProvider extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
 
     boolean success = false;
     OdkConnectionInterface db = null;
@@ -510,7 +510,7 @@ public class InstanceProvider extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     List<IdStruct> idStructs = new ArrayList<IdStruct>();
     try {
@@ -554,9 +554,9 @@ public class InstanceProvider extends ContentProvider {
               null, where, whereArgs, null);
           del.moveToPosition(-1);
           while (del.moveToNext()) {
-            String iId = ODKCursorUtils.getIndexAsString(del,
+            String iId = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns._ID));
-            String iIdDataTable = ODKCursorUtils.getIndexAsString(del,
+            String iIdDataTable = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
             String path = ODKFileUtils.getInstanceFolder(appName, tableId, iIdDataTable);
@@ -588,9 +588,9 @@ public class InstanceProvider extends ContentProvider {
               where, whereArgs, null, null, null, null);
           del.moveToPosition(-1);
           while (del.moveToNext()) {
-            String iId = ODKCursorUtils.getIndexAsString(del,
+            String iId = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns._ID));
-            String iIdDataTable = ODKCursorUtils.getIndexAsString(del,
+            String iIdDataTable = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
             String path = ODKFileUtils.getInstanceFolder(appName, tableId, iIdDataTable);
@@ -658,7 +658,7 @@ public class InstanceProvider extends ContentProvider {
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = segments.get(2);
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     int count = 0;
     try {
@@ -694,9 +694,9 @@ public class InstanceProvider extends ContentProvider {
         ref.moveToFirst();
         if (ref.getCount() != 0) {
           do {
-            String iId = ODKCursorUtils.getIndexAsString(ref,
+            String iId = CursorUtils.getIndexAsString(ref,
                 ref.getColumnIndex(InstanceColumns._ID));
-            String iIdDataTable = ODKCursorUtils.getIndexAsString(ref,
+            String iIdDataTable = CursorUtils.getIndexAsString(ref,
                 ref.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
           } while (ref.moveToNext());

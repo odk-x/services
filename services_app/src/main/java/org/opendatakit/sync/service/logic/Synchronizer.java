@@ -22,11 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.common.android.sync.service.SyncAttachmentState;
+import org.opendatakit.common.android.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.exceptions.HttpClientWebException;
 

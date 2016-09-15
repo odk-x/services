@@ -39,7 +39,7 @@ public interface OdkConnectionInterface {
 
    /**
     * This is called within
-    * {OdkConnectionFactoryInterface.getConnection(String appName, OdkDbHandle dbHandleName)}
+    * {OdkConnectionFactoryInterface.getConnection(String appName, DbHandle dbHandleName)}
     * before the connection is returned.
     *
     * Only call this if you need to store the connection in your own data structures.
@@ -52,7 +52,7 @@ public interface OdkConnectionInterface {
     * Call this when you no longer need to use the connection.
     * The connection remains open until it is removed from
     * the connection map via:
-    * {OdkConnectionFactoryInterface.removeConnection(String appName, OdkDbHandle dbHandleName)}
+    * {OdkConnectionFactoryInterface.removeConnection(String appName, DbHandle dbHandleName)}
     *
     * @throws SQLException
     */
@@ -84,7 +84,7 @@ public interface OdkConnectionInterface {
    * To effect a close:
    * (1) call releaseReference() (because the referenceCount is +1 when you obtain this interface)
    * (2) then call:
-   * {OdkConnectionFactoryInterface.removeConnection(String appName, OdkDbHandle dbHandleName)}
+   * {OdkConnectionFactoryInterface.removeConnection(String appName, DbHandle dbHandleName)}
    * or one of its variants. Those methods will ensure that this interface is removed from the
    * set of actively managed interfaces, causing its reference count to -1, and, if there are no
    * open cursors, then trigger a close. Otherwise, we wait for a GC cycle to detect an unreachable

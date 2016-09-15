@@ -15,8 +15,6 @@
  */
 package org.opendatakit.sync.service.data;
 
-import org.opendatakit.sync.service.data.SyncRow;
-
 import java.util.List;
 
 /**

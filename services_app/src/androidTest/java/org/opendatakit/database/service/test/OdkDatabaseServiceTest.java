@@ -10,14 +10,13 @@ import android.test.ServiceTestCase;
 import android.util.Log;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnList;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.*;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.database.service.OdkDatabaseService;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.database.OdkDbSerializedInterface;
-import org.opendatakit.database.service.*;
+import org.opendatakit.common.android.database.service.UserDbInterface;
 
 import java.util.*;
 
@@ -57,9 +56,9 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    @Override protected void tearDown() throws Exception {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "tearDown: " + db.getDatabaseHandle());
          verifyNoTablesExistNCleanAllTables(serviceInterface, db);
          serviceInterface.closeDatabase(APPNAME, db);
@@ -110,7 +109,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       return cv;
    }
 
-   private void verifyRowTestSet1(OdkDbRow row) {
+   private void verifyRowTestSet1(Row row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(TEST_INT_1));
@@ -118,7 +117,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
           Double.toString(TEST_NUM_1));
    }
 
-   private void verifyRowTestSet2(OdkDbRow row) {
+   private void verifyRowTestSet2(Row row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(TEST_INT_2));
@@ -126,7 +125,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
           Double.toString(TEST_NUM_2));
    }
 
-   private void verifyRowTestSeti(OdkDbRow row, int i) {
+   private void verifyRowTestSeti(Row row, int i) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(TEST_INT_i + i));
@@ -134,14 +133,14 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
           Double.toString(TEST_NUM_i + i));
    }
 
-   private void verifyTableTestSet(OdkDbTable table, int offset) {
+   private void verifyTableTestSet(BaseTable table, int offset) {
       for (int i = 0; i < table.getNumberOfRows(); i++) {
          verifyRowTestSeti(table.getRowAtIndex(i), i + offset);
       }
    }
 
-   private void verifyNoTablesExistNCleanAllTables(OdkDbSerializedInterface serviceInterface,
-       OdkDbHandle db) throws ServicesAvailabilityException {
+   private void verifyNoTablesExistNCleanAllTables(UserDbInterface serviceInterface,
+       DbHandle db) throws ServicesAvailabilityException {
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
 
       boolean tablesGone = (tableIds.size() == 0);
@@ -154,28 +153,28 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       assertTrue(tablesGone);
    }
 
-   @Nullable private OdkDbSerializedInterface bindToDbService() {
+   @Nullable private UserDbInterface bindToDbService() {
       Intent bind_intent = new Intent();
       bind_intent.setClass(getContext(), OdkDatabaseService.class);
       IBinder service = this.bindService(bind_intent);
 
-      OdkDbSerializedInterface dbInterface;
+      UserDbInterface dbInterface;
       try {
-         dbInterface = new OdkDbSerializedInterface(OdkDbInterface.Stub.asInterface(service));
+         dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }
       return dbInterface;
    }
 
-   private boolean hasNoTablesInDb(OdkDbSerializedInterface serviceInterface, OdkDbHandle db)
+   private boolean hasNoTablesInDb(UserDbInterface serviceInterface, DbHandle db)
        throws ServicesAvailabilityException {
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
       return (tableIds.size() == 0);
    }
 
    public void testBinding() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       assertNotNull(serviceInterface.getDbInterface());
       // TODO: database check function?
 
@@ -183,11 +182,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbCreateNDeleteTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnList = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, columnList);
@@ -210,11 +209,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbCreateNDeleteTableWTransactions() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnList = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteTableWTransactions: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, columnList);
@@ -236,13 +235,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -258,7 +257,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -277,8 +276,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    public void testDbInsertThrowsIllegalArgumentException()
        throws ActionNotAuthorizedException, ServicesAvailabilityException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
-      OdkDbHandle db = null;
+      UserDbInterface serviceInterface = bindToDbService();
+      DbHandle db = null;
       try {
 
          List<Column> columnList = createColumnList();
@@ -311,13 +310,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    public void testDbInsertSingleRowIntoTableWSingleTransaction()
        throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -332,7 +331,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -350,13 +349,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    public void testDbInsertSingleRowIntoTableWTwoTransactions()
        throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertSingleRowIntoTableWTwoTransactions: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -373,7 +372,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -390,13 +389,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertTwoRowsIntoTable() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertTwoRowsIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -434,13 +433,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    public void testDbInsertTwoRowsIntoTableWSingleTransaction()
        throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -477,13 +476,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertTwoRowsIntoTableWTwoTransactions() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertTwoRowsIntoTableWTwoTransactions: " + db.getDatabaseHandle());
 
@@ -523,13 +522,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbQueryWNoParams() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbQueryWNoParams: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -546,7 +545,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -564,13 +563,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    /*
        public void testDbQueryRowWNoColumnsSpecified() {
-           OdkDbSerializedInterface serviceInterface = bindToDbService();
+           UserDbInterface serviceInterface = bindToDbService();
            try {
 
                List<Column> columnList = createColumnList();
                ColumnList colList = new ColumnList(columnList);
 
-               OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+               DbHandle db = serviceInterface.openDatabase(APPNAME);
               Log.i("openDatabase", "testDbQueryRowWNoColumnsSpecified: " + db
                   .getDatabaseHandle());
                serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -601,12 +600,12 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
        }
    */
    public void testDbUpdateAllValues() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbUpdateAllValues: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -650,12 +649,12 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbUpdateAllValuesWTransactions() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbUpdateAllValuesWTransactions: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -699,12 +698,12 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbUpdateSingleValue() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbUpdateSingleValue: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -722,7 +721,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
          verifyRowTestSet1(table.getRowAtIndex(0));
 
          List<Column> singleColumnArray = new ArrayList<Column>();
@@ -763,13 +762,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertNDeleteSingleRowIntoTable() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertNDeleteSingleRowIntoTable: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -787,7 +786,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -813,13 +812,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    
    public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
       final int NUM_ROWS = 10000;
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertNDelete1000RowsIntoTable: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -841,7 +840,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(NUM_ROWS, table.getNumberOfRows());
-         OdkDbRow row = table.getRowAtIndex(0);
+         Row row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -870,8 +869,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbUpdateWTwoServiceConnections() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface1 = bindToDbService();
-      OdkDbSerializedInterface serviceInterface2 = bindToDbService();
+      UserDbInterface serviceInterface1 = bindToDbService();
+      UserDbInterface serviceInterface2 = bindToDbService();
 
       try {
          List<Column> columnList = createColumnList();
@@ -879,11 +878,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
          UUID rowId = UUID.randomUUID();
 
-         OdkDbHandle db1 = serviceInterface1.openDatabase(APPNAME);
+         DbHandle db1 = serviceInterface1.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbUpdateWTwoServiceConnections db1: " + db1.getDatabaseHandle());
 
-         OdkDbHandle db2 = serviceInterface2.openDatabase(APPNAME);
+         DbHandle db2 = serviceInterface2.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbUpdateWTwoServiceConnections db2: " + db2.getDatabaseHandle());
 
@@ -946,13 +945,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbLimitNoOffset() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitNoOffset: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -990,13 +989,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
 
    public void testDbLimitNoOffsetArbitraryQuery() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitNoOffsetArbitraryQuery: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1009,7 +1008,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                     rowId.toString());
          }
 
-         OdkDbTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
+         BaseTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
              "SELECT * FROM " + DB_TABLE_ID, null, 10, null);
          assertEquals(10, table.getNumberOfRows());
 
@@ -1029,13 +1028,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbLimitOver() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitOver: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1072,13 +1071,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbLimitOverArbitraryQuery() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitOverArbitraryQuery: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1091,7 +1090,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                     rowId.toString());
          }
 
-         OdkDbTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
+         BaseTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
              "SELECT * FROM " + DB_TABLE_ID, null, 60, null);
 
          assertEquals(50, table.getNumberOfRows());
@@ -1112,13 +1111,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbOffsetNoLimit() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbOffsetNoLimit: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1156,13 +1155,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbOffsetNoLimitArbitraryQuery() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbOffsetNoLimitArbitraryQuery: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1175,7 +1174,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                     rowId.toString());
          }
 
-         OdkDbTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
+         BaseTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
              "SELECT * FROM " + DB_TABLE_ID, null, null, 10);
 
          assertEquals(40, table.getNumberOfRows());
@@ -1196,13 +1195,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbLimitWithOffset() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitWithOffset: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1239,13 +1238,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbLimitWithOffsetArbitraryQuery() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbLimitWithOffsetArbitraryQuery: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1258,7 +1257,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                     rowId.toString());
          }
 
-         OdkDbTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
+         BaseTable table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
              "SELECT * FROM " + DB_TABLE_ID, null, 10, 10);
 
          assertEquals(10, table.getNumberOfRows());
@@ -1279,13 +1278,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbQueryResumeForward() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1330,13 +1329,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbQueryResumeForwardEnd() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1375,13 +1374,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbQueryResumeBackward() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1426,13 +1425,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbQueryResumeBackwardEnd() throws ActionNotAuthorizedException {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          OrderedColumns columns = serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db,
              DB_TABLE_ID, colList);
@@ -1479,11 +1478,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbCreateNDeleteLocalOnlyTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1504,11 +1503,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertSingleRowIntoLocalOnlyTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1519,11 +1518,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          serviceInterface
              .insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
-         OdkDbTable results = serviceInterface.rawSqlQueryLocalOnlyTables(APPNAME, db,
+         BaseTable results = serviceInterface.rawSqlQueryLocalOnlyTables(APPNAME, db,
              DB_TABLE_ID, null, null, null, null, null, null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         OdkDbRow row = results.getRowAtIndex(0);
+         Row row = results.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -1542,11 +1541,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertTwoRowsIntoLocalOnlyTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1558,7 +1557,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2());
 
 
-         OdkDbTable results = serviceInterface.rawSqlQueryLocalOnlyTables(APPNAME, db,
+         BaseTable results = serviceInterface.rawSqlQueryLocalOnlyTables(APPNAME, db,
              DB_TABLE_ID, null, null, null, null, null, null, null, null);
 
          assertEquals(2, results.getNumberOfRows());
@@ -1581,11 +1580,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbUpdateAllValuesLocalOnlyTable()  {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1596,7 +1595,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
 
-         OdkDbTable results = serviceInterface
+         BaseTable results = serviceInterface
              .rawSqlQueryLocalOnlyTables(APPNAME, db, DB_TABLE_ID, null, null, null, null, null,
                  null, null, null);
 
@@ -1631,11 +1630,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbUpdateSingleValueLocalOnlyTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1646,7 +1645,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
 
-         OdkDbTable results = serviceInterface
+         BaseTable results = serviceInterface
              .rawSqlQueryLocalOnlyTables(APPNAME, db, DB_TABLE_ID, null, null, null, null, null,
                  null, null, null);
 
@@ -1670,7 +1669,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          assertEquals(1, results.getNumberOfRows());
 
-         OdkDbRow row = results.getRowAtIndex(0);
+         Row row = results.getRowAtIndex(0);
          assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
          assertEquals(row.getDataByKey(COL_INTEGER_ID), Integer.toString(changeValue));
          assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
@@ -1690,11 +1689,11 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    public void testDbInsertNDeleteSingleRowIntoLocalOnlyTable() {
-      OdkDbSerializedInterface serviceInterface = bindToDbService();
+      UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
-         OdkDbHandle db = serviceInterface.openDatabase(APPNAME);
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
@@ -1705,7 +1704,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
 
-         OdkDbTable results = serviceInterface
+         BaseTable results = serviceInterface
              .rawSqlQueryLocalOnlyTables(APPNAME, db, DB_TABLE_ID, null, null, null, null, null,
                  null, null, null);
 

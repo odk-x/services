@@ -18,27 +18,27 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
-import org.opendatakit.database.service.OdkDbTable;
-import org.opendatakit.database.utilities.OdkDbQueryUtil;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
+import org.opendatakit.common.android.database.data.BaseTable;
+import org.opendatakit.common.android.database.utilities.QueryUtil;
 import org.opendatakit.resolve.views.components.ConcordantColumn;
 import org.opendatakit.resolve.views.components.ConflictColumn;
 import org.opendatakit.resolve.views.components.ResolveActionList;
@@ -74,7 +74,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
    * @param dbHandleName
    * @return
    */
-  public ResolveActionList doWork(OdkDbHandle dbHandleName) {
+  public ResolveActionList doWork(DbHandle dbHandleName) {
 
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
@@ -122,7 +122,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new String[] { mRowId }, null, accessContextPrivileged);
@@ -165,8 +165,8 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
     // the first row is the localRow, the second is the serverRow.
     int localRowIndex = 0;
     int serverRowIndex = 1;
-    OdkDbRow localRow = table.getRowAtIndex(localRowIndex);
-    OdkDbRow serverRow = table.getRowAtIndex(serverRowIndex);
+    Row localRow = table.getRowAtIndex(localRowIndex);
+    Row serverRow = table.getRowAtIndex(serverRowIndex);
 
     int localConflictType = Integer.parseInt(localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
     int serverConflictType = Integer
@@ -193,7 +193,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       ElementType elementType = cd.getType();
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
-        columnDisplayName = ODKDataUtils.getLocalizedDisplayName(columnDisplayName);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(columnDisplayName);
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
@@ -228,7 +228,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
 
   @Override public ResolveActionList loadInBackground() {
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     return doWork(dbHandleName);
   }

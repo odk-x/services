@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.content.Context;
@@ -32,7 +32,7 @@ import android.database.Cursor;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 
 /**
  * Class to hold information about a form. This holds the data fields that are
@@ -137,15 +137,15 @@ public class FormInfo {
   public FormInfo(String appName, Cursor c, boolean parseFormDef) {
     this.appName = appName;
 
-    lastModificationDate = ODKCursorUtils.getIndexAsType(c, Long.class, c.getColumnIndex(FormsColumns.DATE));
-    fileLength = ODKCursorUtils.getIndexAsType(c, Long.class, c.getColumnIndex(FormsColumns.FILE_LENGTH));
-    tableId = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.TABLE_ID));
-    formId = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_ID));
-    settings = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.SETTINGS));
-    formVersion = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_VERSION));
-    formTitle = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_NAME));
-    defaultLocale = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DEFAULT_FORM_LOCALE));
-    instanceName = ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.INSTANCE_NAME));
+    lastModificationDate = CursorUtils.getIndexAsType(c, Long.class, c.getColumnIndex(FormsColumns.DATE));
+    fileLength = CursorUtils.getIndexAsType(c, Long.class, c.getColumnIndex(FormsColumns.FILE_LENGTH));
+    tableId = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.TABLE_ID));
+    formId = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_ID));
+    settings = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.SETTINGS));
+    formVersion = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.FORM_VERSION));
+    formTitle = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DISPLAY_NAME));
+    defaultLocale = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.DEFAULT_FORM_LOCALE));
+    instanceName = CursorUtils.getIndexAsString(c, c.getColumnIndex(FormsColumns.INSTANCE_NAME));
 
     File formFolder = new File( ODKFileUtils.getFormFolder(appName, tableId, formId) );
     formDefFile = new File( formFolder, ODKFileUtils.FORMDEF_JSON_FILENAME);

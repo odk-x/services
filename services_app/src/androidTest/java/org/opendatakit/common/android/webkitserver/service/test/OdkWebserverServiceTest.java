@@ -1,7 +1,6 @@
-package org.opendatakit.org.opendatakit.webkitserver.service.test;
+package org.opendatakit.common.android.webkitserver.service.test;
 
 import android.content.Intent;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
@@ -10,8 +9,8 @@ import android.test.ServiceTestCase;
 import org.opendatakit.TestConsts;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
-import org.opendatakit.webkitserver.service.OdkWebkitServerInterface;
-import org.opendatakit.webkitserver.service.OdkWebkitServerService;
+import org.opendatakit.common.android.webkitserver.service.WebkitServerInterface;
+import org.opendatakit.common.android.webkitserver.service.OdkWebkitServerService;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,18 +44,18 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
     }
 
     @NonNull
-    private OdkWebkitServerInterface getOdkWebkitServerInterface() {
+    private WebkitServerInterface getWebkitServerInterface() {
         Intent bind_intent = new Intent();
         bind_intent.setClass(getContext(), OdkWebkitServerService.class);
         IBinder service = this.bindService(bind_intent);
-        OdkWebkitServerInterface serviceInterface = OdkWebkitServerInterface.Stub.asInterface(service);
+        WebkitServerInterface serviceInterface = WebkitServerInterface.Stub.asInterface(service);
         assertNotNull(serviceInterface);
         assertTrue(service.isBinderAlive());
         return serviceInterface;
     }
 
     public void testBindingNRestart() {
-        OdkWebkitServerInterface serviceInterface = getOdkWebkitServerInterface();
+        WebkitServerInterface serviceInterface = getWebkitServerInterface();
         try {
             serviceInterface.restart();
         } catch (RemoteException e) {
@@ -70,11 +69,11 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
         Intent bind_intent = new Intent();
         bind_intent.setClass(getContext(), OdkWebkitServerService.class);
         IBinder service = this.bindService(bind_intent);
-        OdkWebkitServerInterface serviceInterface = OdkWebkitServerInterface.Stub.asInterface(service);
+        WebkitServerInterface serviceInterface = WebkitServerInterface.Stub.asInterface(service);
         assertNotNull(serviceInterface);
         assertTrue(service.isBinderAlive());
         IBinder service2 = this.bindService(bind_intent);
-        OdkWebkitServerInterface serviceInterface2 = OdkWebkitServerInterface.Stub.asInterface(service2);
+        WebkitServerInterface serviceInterface2 = WebkitServerInterface.Stub.asInterface(service2);
         assertNotNull(serviceInterface);
         assertTrue(service.isBinderAlive());
         assertNotNull(serviceInterface2);
@@ -89,7 +88,7 @@ public class OdkWebserverServiceTest  extends ServiceTestCase<OdkWebkitServerSer
             TEST_DIR;
         String fileName = directory + File.separator + TEST_FILE_NAME;
 
-        OdkWebkitServerInterface serviceInterface = getOdkWebkitServerInterface();
+        WebkitServerInterface serviceInterface = getWebkitServerInterface();
 
         PrintWriter writer = null;
         try {

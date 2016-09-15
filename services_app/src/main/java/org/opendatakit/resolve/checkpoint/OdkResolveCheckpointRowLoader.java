@@ -18,24 +18,24 @@ package org.opendatakit.resolve.checkpoint;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
-import org.opendatakit.database.service.OdkDbTable;
-import org.opendatakit.database.utilities.OdkDbQueryUtil;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
+import org.opendatakit.common.android.database.data.BaseTable;
+import org.opendatakit.common.android.database.utilities.QueryUtil;
 import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
@@ -71,12 +71,12 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
   @Override
   public ArrayList<ResolveRowEntry> loadInBackground() {
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     return doWork(dbHandleName);
   }
 
-  public ArrayList<ResolveRowEntry> doWork(OdkDbHandle dbHandleName) {
+  public ArrayList<ResolveRowEntry> doWork(DbHandle dbHandleName) {
 
     OdkConnectionInterface db = null;
 
@@ -111,7 +111,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           null, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -122,7 +122,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for (int i = 0; i < table.getNumberOfRows(); ++i) {
-          OdkDbRow row = table.getRowAtIndex(i);
+          Row row = table.getRowAtIndex(i);
           String rowId = row.getDataByKey(DataTableColumns.ID);
 
           OdkResolveCheckpointFieldLoader loader = new OdkResolveCheckpointFieldLoader(getContext(),
@@ -137,7 +137,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         }
 
         if ( tableSetChanged ) {
-          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -233,11 +233,11 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = ODKDataUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      OdkDbRow row = table.getRowAtIndex(i);
+      Row row = table.getRowAtIndex(i);
       String rowId = row.getDataByKey(DataTableColumns.ID);
       String instanceName = row.getDataByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId,

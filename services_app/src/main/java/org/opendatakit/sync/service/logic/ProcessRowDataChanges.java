@@ -25,19 +25,20 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome.OutcomeType;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableDefinitionEntry;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.TableDefinitionEntry;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.*;
+import org.opendatakit.common.android.sync.service.*;
+import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.data.SyncRowDataChanges;
 import org.opendatakit.sync.service.data.SyncRowPending;
@@ -158,7 +159,7 @@ public class ProcessRowDataChanges {
       SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
     log.i(TAG, "entered synchronize()");
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     // we can assume that all the local table properties should
     // sync with the server.
@@ -252,7 +253,7 @@ public class ProcessRowDataChanges {
 
     // loop through the localRow table
     for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-      OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+      Row localRow = localDataTable.getRowAtIndex(i);
       String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
       SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
@@ -474,7 +475,7 @@ public class ProcessRowDataChanges {
     // / PERFORM LOCAL DATABASE CHANGES
 
     {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       boolean successful = false;
       try {
         db = sc.getDatabase();
@@ -542,7 +543,7 @@ public class ProcessRowDataChanges {
   private void perhapsAddToRowsToSyncFileAttachments(List<SyncRowPending> rowsToSyncFileAttachments,
       OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
-      OdkDbRow localRow,
+      Row localRow,
       SyncState state) {
     if (state == SyncState.in_conflict) {
       if ( !fileAttachmentColumns.isEmpty() ) {
@@ -683,7 +684,7 @@ public class ProcessRowDataChanges {
             // them all.
             UserTable localDataTable;
             {
-              OdkDbHandle db = null;
+              DbHandle db = null;
               try {
                 db = sc.getDatabase();
                 String[] empty = {};
@@ -765,7 +766,7 @@ public class ProcessRowDataChanges {
                 // we re-issue a fetch using the firstDataETag as
                 // a starting point.
                 {
-                  OdkDbHandle db = null;
+                  DbHandle db = null;
                   try {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
@@ -825,7 +826,7 @@ public class ProcessRowDataChanges {
 
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-              OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+              Row localRow = localDataTable.getRowAtIndex(i);
               String stateStr = localRow
                   .getDataByKey(DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
@@ -920,7 +921,7 @@ public class ProcessRowDataChanges {
                 // time the update occurs, we are assured that there are no
                 // interleaved changes we are unaware of.
                 {
-                  OdkDbHandle db = null;
+                  DbHandle db = null;
                   try {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
@@ -978,7 +979,7 @@ public class ProcessRowDataChanges {
             // place localDataTable in this scope so it can be garbage collected...
             UserTable localDataTable = null;
             {
-              OdkDbHandle db = null;
+              DbHandle db = null;
               try {
                 db = sc.getDatabase();
                 String[] empty = {};
@@ -996,7 +997,7 @@ public class ProcessRowDataChanges {
 
             // loop through the localRow table
             for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-              OdkDbRow localRow = localDataTable.getRowAtIndex(i);
+              Row localRow = localDataTable.getRowAtIndex(i);
               String stateStr = localRow
                   .getDataByKey(DataTableColumns.SYNC_STATE);
               SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
@@ -1030,7 +1031,7 @@ public class ProcessRowDataChanges {
                   if (syncRowPending.updateSyncState()) {
                     // OK -- we succeeded in putting/getting all attachments
                     // update our state to the synced state.
-                    OdkDbHandle db = null;
+                    DbHandle db = null;
                     try {
                       db = sc.getDatabase();
                       sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(sc.getAppName
@@ -1102,7 +1103,7 @@ public class ProcessRowDataChanges {
         // NOTE: disregard whether
         // attachments were successfully
         // sync'd.
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           db = sc.getDatabase();
           sc.getDatabaseService().privilegedUpdateDBTableLastSyncTime(sc.getAppName(), db,
@@ -1199,7 +1200,7 @@ public class ProcessRowDataChanges {
     // a transaction and not lock up the database for very long.
     //
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
 
@@ -1319,7 +1320,7 @@ public class ProcessRowDataChanges {
    * @param tableLevelResult
    * @throws ServicesAvailabilityException
    */
-  private void conflictRowsInDb(OdkDbHandle db, TableResource resource,
+  private void conflictRowsInDb(DbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
 
@@ -1420,7 +1421,7 @@ public class ProcessRowDataChanges {
    * @param tableLevelResult
    * @throws ServicesAvailabilityException
    */
-  private void insertRowsInDb(OdkDbHandle db, TableResource resource,
+  private void insertRowsInDb(DbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       boolean hasAttachments, TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
     int count = 0;
@@ -1474,7 +1475,7 @@ public class ProcessRowDataChanges {
    * @param tableLevelResult
    * @throws ServicesAvailabilityException
    */
-  private void updateRowsInDb(OdkDbHandle db, TableResource resource,
+  private void updateRowsInDb(DbHandle db, TableResource resource,
       OrderedColumns orderedColumns, List<SyncRowDataChanges> changes,
       boolean hasAttachments,
       TableLevelResult tableLevelResult) throws ServicesAvailabilityException {
@@ -1538,7 +1539,7 @@ public class ProcessRowDataChanges {
    * @throws IOException
    * @throws ServicesAvailabilityException
    */
-  private void pushLocalAttachmentsBeforeDeleteRowsInDb(OdkDbHandle db, TableResource resource,
+  private void pushLocalAttachmentsBeforeDeleteRowsInDb(DbHandle db, TableResource resource,
       List<SyncRowDataChanges> changes) throws
       HttpClientWebException, IOException, ServicesAvailabilityException {
 
@@ -1593,7 +1594,7 @@ public class ProcessRowDataChanges {
    * @throws IOException
    * @throws ServicesAvailabilityException
    */
-  private void deleteRowsInDb(OdkDbHandle db, TableResource resource, OrderedColumns orderedColumns,
+  private void deleteRowsInDb(DbHandle db, TableResource resource, OrderedColumns orderedColumns,
       List<SyncRowDataChanges> changes, TableLevelResult tableLevelResult) throws IOException,
       ServicesAvailabilityException {
     int count = 0;

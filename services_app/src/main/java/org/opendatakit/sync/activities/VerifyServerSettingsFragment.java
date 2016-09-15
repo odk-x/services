@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,17 +32,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
-import org.opendatakit.sync.service.SyncOverallResult;
-import org.opendatakit.sync.service.SyncProgressEvent;
-import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.sync.service.SyncStatus;
+import org.opendatakit.common.android.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.common.android.sync.service.SyncOverallResult;
+import org.opendatakit.common.android.sync.service.SyncProgressEvent;
+import org.opendatakit.common.android.sync.service.SyncProgressState;
+import org.opendatakit.common.android.sync.service.SyncStatus;
 
 /**
  * @author mitchellsundt@gmail.com

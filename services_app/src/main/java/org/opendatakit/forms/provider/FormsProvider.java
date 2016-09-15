@@ -33,11 +33,14 @@ import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
 import org.opendatakit.common.android.logic.FormInfo;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.provider.FormsProviderAPI;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -77,9 +80,9 @@ public class FormsProvider extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    OdkDbHandle dbHandleName;
+    DbHandle dbHandleName;
 
-    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
+    InvalidateMonitor(String appName, DbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -227,7 +230,7 @@ public class FormsProvider extends ContentProvider {
     String[] selectionArgs = { formSpec.tableId, formSpec.formId };
     Cursor c = null;
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -417,7 +420,7 @@ public class FormsProvider extends ContentProvider {
 
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
@@ -474,7 +477,7 @@ public class FormsProvider extends ContentProvider {
 
     HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     Cursor c = null;
 
@@ -500,9 +503,9 @@ public class FormsProvider extends ContentProvider {
 
       if ( c.moveToFirst() ) {
         do {
-          idValue = ODKCursorUtils.getIndexAsType(c, Integer.class, idxId);
-          tableIdValue = ODKCursorUtils.getIndexAsString(c, idxTableId);
-          formIdValue = ODKCursorUtils.getIndexAsString(c, idxFormId);
+          idValue = CursorUtils.getIndexAsType(c, Integer.class, idxId);
+          tableIdValue = CursorUtils.getIndexAsString(c, idxTableId);
+          formIdValue = CursorUtils.getIndexAsString(c, idxFormId);
           FormSpec formSpec = new FormSpec();
           formSpec.tableId = tableIdValue;
           formSpec.formId = formIdValue;
@@ -638,7 +641,7 @@ public class FormsProvider extends ContentProvider {
 
     HashMap<FormSpec, HashMap<String,Object>> matchedValues = new HashMap<FormSpec, HashMap<String,Object>>();
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -663,9 +666,9 @@ public class FormsProvider extends ContentProvider {
           String formIdValue = null;
 
           do {
-            idValue = ODKCursorUtils.getIndexAsType(c, Integer.class, idxId);
-            tableIdValue = ODKCursorUtils.getIndexAsString(c, idxTableId);
-            formIdValue = ODKCursorUtils.getIndexAsString(c, idxFormId);
+            idValue = CursorUtils.getIndexAsType(c, Integer.class, idxId);
+            tableIdValue = CursorUtils.getIndexAsString(c, idxTableId);
+            formIdValue = CursorUtils.getIndexAsString(c, idxFormId);
 
             if ( contentTableId != null && !contentTableId.equals(tableIdValue) ) {
               throw new SQLException("Modification of tableId for an existing form is prohibited");
@@ -690,13 +693,13 @@ public class FormsProvider extends ContentProvider {
               }
 
               // everything else, we control...
-              Class<?> dataType = ODKCursorUtils.getIndexDataType(c, idx);
+              Class<?> dataType = CursorUtils.getIndexDataType(c, idx);
               if ( dataType == String.class ) {
-                cv.put(colName, ODKCursorUtils.getIndexAsString(c, idx));
+                cv.put(colName, CursorUtils.getIndexAsString(c, idx));
               } else if ( dataType == Long.class ) {
-                cv.put(colName, ODKCursorUtils.getIndexAsType(c, Long.class, idx));
+                cv.put(colName, CursorUtils.getIndexAsType(c, Long.class, idx));
               } else if ( dataType == Double.class ) {
-                cv.put(colName, ODKCursorUtils.getIndexAsType(c, Double.class, idx));
+                cv.put(colName, CursorUtils.getIndexAsType(c, Double.class, idx));
               }
             }
 

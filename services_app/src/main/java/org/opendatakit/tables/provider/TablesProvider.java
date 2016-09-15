@@ -29,11 +29,11 @@ import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.io.File;
 import java.util.HashSet;
@@ -54,9 +54,9 @@ public class TablesProvider extends ContentProvider {
 
   private class InvalidateMonitor extends DataSetObserver {
     String appName;
-    OdkDbHandle dbHandleName;
+    DbHandle dbHandleName;
 
-    InvalidateMonitor(String appName, OdkDbHandle dbHandleName) {
+    InvalidateMonitor(String appName, DbHandle dbHandleName) {
       this.appName = appName;
       this.dbHandleName = dbHandleName;
     }
@@ -139,7 +139,7 @@ public class TablesProvider extends ContentProvider {
     }
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     boolean success = false;
     Cursor c = null;
@@ -242,7 +242,7 @@ public class TablesProvider extends ContentProvider {
     int deleteCount = 0;
 
     // Get the database and run the query
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)

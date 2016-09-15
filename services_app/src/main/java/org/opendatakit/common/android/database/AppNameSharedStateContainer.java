@@ -14,8 +14,8 @@
 
 package org.opendatakit.common.android.database;
 
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -216,7 +216,7 @@ public class AppNameSharedStateContainer {
       } finally {
          if ( sessionQualifier != null ) {
             OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .removeConnection(appName, new OdkDbHandle(sessionQualifier));
+                .removeConnection(appName, new DbHandle(sessionQualifier));
          }
       }
    }

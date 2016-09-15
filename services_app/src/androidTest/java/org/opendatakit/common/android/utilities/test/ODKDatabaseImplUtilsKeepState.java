@@ -3,9 +3,9 @@ package org.opendatakit.common.android.utilities.test;
 import org.opendatakit.TestConsts;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
 
    private static boolean initialized = false;
     private static final String APPNAME = TestConsts.APPNAME;
-    private static final OdkDbHandle uniqueKey = new OdkDbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+    private static final DbHandle uniqueKey = new DbHandle(AbstractODKDatabaseUtilsTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
 
     @Override
     protected String getAppName() {

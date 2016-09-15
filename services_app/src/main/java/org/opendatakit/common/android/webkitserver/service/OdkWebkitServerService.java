@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.webkitserver.service;
+package org.opendatakit.common.android.webkitserver.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -116,7 +116,7 @@ public class OdkWebkitServerService extends Service {
     }
   }
 
-  private class WebkitServiceInterface extends OdkWebkitServerInterface.Stub {
+  private class WebkitServiceInterface extends WebkitServerInterface.Stub {
 
     @Override
     public boolean restart() throws RemoteException {
