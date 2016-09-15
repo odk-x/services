@@ -1254,7 +1254,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
   }
 
-  @Override public DbChunk rawSqlQuery(String appName, DbHandle dbHandleName,
+  @Override public DbChunk simpleQuery(String appName, DbHandle dbHandleName,
       String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds, String tableId) throws
       RemoteException {
 
@@ -1277,7 +1277,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "rawSqlQuery", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "simpleQuery", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1289,7 +1289,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
   }
 
   @Override
-  public DbChunk privilegedRawSqlQuery(String appName, DbHandle dbHandleName,
+  public DbChunk privilegedSimpleQuery(String appName, DbHandle dbHandleName,
       String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds, String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1309,7 +1309,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "rawSqlQuery", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "simpleQuery", e);
     } finally {
       if (db != null) {
         // release the reference...

@@ -499,7 +499,7 @@ public class ProcessRowDataChanges {
         String[] empty = {};
 
         localDataTable = sc.getDatabaseService()
-            .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty,
+            .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, null, empty,
                 empty, null,
                 new String[] { DataTableColumns.ID }, new String[] { "ASC" }, null, null);
 
@@ -690,7 +690,7 @@ public class ProcessRowDataChanges {
                 String[] empty = {};
 
                 localDataTable = sc.getDatabaseService()
-                    .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns, null,
+                    .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, null,
                         empty, empty,
                         null, new String[] {DataTableColumns.ID}, new String[]{"ASC"}, null, null);
               } finally {
@@ -986,7 +986,7 @@ public class ProcessRowDataChanges {
                 String[] syncStates = {SyncState.in_conflict.name(), SyncState.synced_pending_files.name()};
 
                 localDataTable = sc.getDatabaseService()
-                    .privilegedRawSqlQuery(sc.getAppName(), db, tableId, orderedColumns,
+                    .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns,
                         DataTableColumns.SYNC_STATE + " IN (?,?)", syncStates, empty,
                         null, new String[] {DataTableColumns.ID}, new String[] {"ASC"}, null, null);
               } finally {
