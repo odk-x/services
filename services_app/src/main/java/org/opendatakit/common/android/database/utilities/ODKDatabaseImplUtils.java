@@ -60,6 +60,31 @@ public class ODKDatabaseImplUtils {
   private static final String t = "ODKDatabaseImplUtils";
 
   /**
+   * Constants to minimize creation of String objects on the stack.
+   *
+   * Used with StringBuilder to reduce GC overhead
+   */
+  private static final String K_SELECT_FROM = "SELECT * FROM ";
+  private static final String S_AND = " AND ";
+  private static final String S_EQUALS_PARAM = " =?";
+  private static final String S_IS_NULL = " IS NULL";
+  private static final String S_IS_NOT_NULL = " IS NOT NULL";
+  private static final String K_WHERE = " WHERE ";
+  private static final String K_LIMIT = " LIMIT ";
+  private static final String K_OFFSET = " OFFSET ";
+
+  private static final String K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM = TableDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
+
+  private static final String K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM = ColumnDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
+
+  private static final String K_KVS_TABLE_ID_EQUALS_PARAM = KeyValueStoreColumns.TABLE_ID + S_EQUALS_PARAM;
+  private static final String K_KVS_PARTITION_EQUALS_PARAM = KeyValueStoreColumns.PARTITION + S_EQUALS_PARAM;
+  private static final String K_KVS_ASPECT_EQUALS_PARAM = KeyValueStoreColumns.ASPECT + S_EQUALS_PARAM;
+  private static final String K_KVS_KEY_EQUALS_PARAM = KeyValueStoreColumns.KEY + S_EQUALS_PARAM;
+
+  private static final String K_DATATABLE_ID_EQUALS_PARAM = DataTableColumns.ID + S_EQUALS_PARAM;
+
+  /**
    * The rolesList expansion is very time consuming.
    * Implement a simple 1-deep cache and a
    * special expansion of the privileged user roles list.
@@ -367,7 +392,10 @@ public class ODKDatabaseImplUtils {
       return sqlCommand;
     }
 
-    return sqlCommand + " LIMIT " + sqlQueryBounds.mLimit + " OFFSET " + sqlQueryBounds.mOffset;
+    StringBuilder b = new StringBuilder();
+    b.append(sqlCommand).append(K_LIMIT).append(sqlQueryBounds.mLimit)
+        .append(K_OFFSET).append(sqlQueryBounds.mOffset);
+    return b.toString();
   }
 
   public AccessContext getAccessContext(OdkConnectionInterface db, String tableId,
@@ -811,7 +839,9 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";", null);
+      StringBuilder b = new StringBuilder();
+      b.append("DROP TABLE IF EXISTS ").append(tableId).append(";");
+      db.execSQL(b.toString(), null);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1108,7 +1138,9 @@ public class ODKDatabaseImplUtils {
   public String[] getAllColumnNames(OdkConnectionInterface db, String tableId) {
     Cursor cursor = null;
     try {
-      cursor = db.rawQuery("SELECT * FROM " + tableId + " LIMIT 1", null);
+      StringBuilder b = new StringBuilder();
+      b.append(K_SELECT_FROM).append(tableId).append(K_LIMIT).append("1");
+      cursor = db.rawQuery(b.toString(), null);
       // If this query has been executed before, the cursor is created using the
       // previously-constructed PreparedStatement for the query. There is no actual
       // interaction with the database itself at the time the Cursor is constructed.
@@ -1141,7 +1173,7 @@ public class ODKDatabaseImplUtils {
   public OrderedColumns getUserDefinedColumns(OdkConnectionInterface db,
       String tableId) {
     ArrayList<Column> userDefinedColumns = new ArrayList<Column>();
-    String selection = ColumnDefinitionsColumns.TABLE_ID + "=?";
+    String selection = K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM;
     Object[] selectionArgs = { tableId };
     //@formatter:off
     String[] cols = {
@@ -1190,7 +1222,7 @@ public class ODKDatabaseImplUtils {
     try {
       //@formatter:off
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null,
-          TableDefinitionsColumns.TABLE_ID + "=?",
+          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM,
           new Object[] { tableId }, null, null, null, null);
       //@formatter:on
       // we know about the table...
@@ -1219,8 +1251,8 @@ public class ODKDatabaseImplUtils {
   public int getTableHealth(OdkConnectionInterface db, String tableId) {
     StringBuilder b = new StringBuilder();
     b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
-        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
-        .append(tableId).append("\"");
+        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from ")
+        .append(tableId);
 
     Cursor c = null;
     try {
@@ -1306,7 +1338,9 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      db.execSQL("DROP TABLE IF EXISTS \"" + tableId + "\";", null);
+      StringBuilder b = new StringBuilder();
+      b.append("DROP TABLE IF EXISTS ").append(tableId).append(";");
+      db.execSQL(b.toString(), null);
 
       // Delete the server sync ETags associated with this table
       seu.deleteAllSyncETagsForTableId(db, tableId);
@@ -1314,14 +1348,14 @@ public class ODKDatabaseImplUtils {
       // Delete the table definition for the tableId
       int count;
       {
-        String whereClause = TableDefinitionsColumns.TABLE_ID + " = ?";
+        String whereClause = K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM;
 
         count = db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
       }
 
       // Delete the column definitions for this tableId
       {
-        String whereClause = ColumnDefinitionsColumns.TABLE_ID + " = ?";
+        String whereClause = K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM;
 
         db.delete(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, whereClause, whereArgs);
       }
@@ -1334,7 +1368,7 @@ public class ODKDatabaseImplUtils {
 
       // Delete the values from the 4 key value stores
       {
-        String whereClause = KeyValueStoreColumns.TABLE_ID + " = ?";
+        String whereClause = K_KVS_TABLE_ID_EQUALS_PARAM;
 
         db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
       }
@@ -1425,7 +1459,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
-          TableDefinitionsColumns.TABLE_ID + "=?", new Object[] { tableId });
+          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM, new Object[] { tableId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1460,7 +1494,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, cvTableDef,
-          TableDefinitionsColumns.TABLE_ID + "=?", new Object[] { tableId });
+          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM, new Object[] { tableId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1488,7 +1522,7 @@ public class ODKDatabaseImplUtils {
     try {
       StringBuilder b = new StringBuilder();
       ArrayList<String> selArgs = new ArrayList<String>();
-      b.append(KeyValueStoreColumns.TABLE_ID).append("=?");
+      b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
       selArgs.add(tableId);
 
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, b.toString(),
@@ -1521,7 +1555,7 @@ public class ODKDatabaseImplUtils {
    * columns. Caller must then add all the user-defined column definitions and
    * closing parentheses.
    */
-  private String getUserDefinedTableCreationStatement(String tableId) {
+  private void addMetadataFieldsToTableCreationStatement(StringBuilder b) {
     /*
      * Resulting string should be the following String createTableCmd =
      * "CREATE TABLE IF NOT EXISTS " + tableId + " (" + DataTableColumns.ID +
@@ -1536,8 +1570,6 @@ public class ODKDatabaseImplUtils {
      * DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL";
      */
 
-    String createTableCmd = "CREATE TABLE IF NOT EXISTS " + tableId + " (";
-
     List<String> cols = getAdminColumns();
 
     String endSeq = ", ";
@@ -1550,7 +1582,7 @@ public class ODKDatabaseImplUtils {
       if (colName.equals(DataTableColumns.ID)
           || colName.equals(DataTableColumns.SYNC_STATE)
           || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-        createTableCmd = createTableCmd + colName + " TEXT NOT NULL" + endSeq;
+        b.append(colName).append(" TEXT NOT NULL").append(endSeq);
       } else if (colName.equals(DataTableColumns.ROW_ETAG)
           || colName.equals(DataTableColumns.FILTER_TYPE)
           || colName.equals(DataTableColumns.FILTER_VALUE)
@@ -1558,14 +1590,12 @@ public class ODKDatabaseImplUtils {
           || colName.equals(DataTableColumns.LOCALE)
           || colName.equals(DataTableColumns.SAVEPOINT_TYPE)
           || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
-        createTableCmd = createTableCmd + colName + " TEXT NULL" + endSeq;
+        b.append(colName).append(" TEXT NULL").append(endSeq);
       } else if (colName.equals(DataTableColumns.CONFLICT_TYPE)) {
-        createTableCmd = createTableCmd + colName + " INTEGER NULL" + endSeq;
+        b.append(colName).append(" INTEGER NULL").append(endSeq);
       }
       //@formatter:on
     }
-
-    return createTableCmd;
   }
 
   /**
@@ -1750,7 +1780,7 @@ public class ODKDatabaseImplUtils {
 
       if (clear) {
         db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
-            KeyValueStoreColumns.TABLE_ID + "=?", new Object[] { tableId });
+            K_KVS_TABLE_ID_EQUALS_PARAM, new Object[] { tableId });
       }
 
       for (KeyValueStoreEntry e : metadata) {
@@ -1776,14 +1806,14 @@ public class ODKDatabaseImplUtils {
     if (tableId == null || tableId.trim().length() == 0) {
       throw new IllegalArgumentException("tableId cannot be null or an empty string");
     }
-    b.append(KeyValueStoreColumns.TABLE_ID).append("=?");
+    b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
     whereArgsList.add(tableId);
     if (partition != null) {
-      b.append(" AND ").append(KeyValueStoreColumns.PARTITION).append("=?");
+      b.append(S_AND).append(K_KVS_PARTITION_EQUALS_PARAM);
       whereArgsList.add(partition);
     }
     if (aspect != null) {
-      b.append(" AND ").append(KeyValueStoreColumns.ASPECT).append("=?");
+      b.append(S_AND).append(K_KVS_ASPECT_EQUALS_PARAM);
       whereArgsList.add(aspect);
     }
     String whereClause = b.toString();
@@ -1827,28 +1857,28 @@ public class ODKDatabaseImplUtils {
     StringBuilder b = new StringBuilder();
     ArrayList<String> selArgs = new ArrayList<String>();
     if (tableId != null) {
-      b.append(KeyValueStoreColumns.TABLE_ID).append("=?");
+      b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
       selArgs.add(tableId);
     }
     if (partition != null) {
       if (b.length() != 0) {
-        b.append(" AND ");
+        b.append(S_AND);
       }
-      b.append(KeyValueStoreColumns.PARTITION).append("=?");
+      b.append(K_KVS_PARTITION_EQUALS_PARAM);
       selArgs.add(partition);
     }
     if (aspect != null) {
       if (b.length() != 0) {
-        b.append(" AND ");
+        b.append(S_AND);
       }
-      b.append(KeyValueStoreColumns.ASPECT).append("=?");
+      b.append(K_KVS_ASPECT_EQUALS_PARAM);
       selArgs.add(aspect);
     }
     if (key != null) {
       if (b.length() != 0) {
-        b.append(" AND ");
+        b.append(S_AND);
       }
-      b.append(KeyValueStoreColumns.KEY).append("=?");
+      b.append(K_KVS_KEY_EQUALS_PARAM);
       selArgs.add(key);
     }
 
@@ -1891,28 +1921,28 @@ public class ODKDatabaseImplUtils {
       StringBuilder b = new StringBuilder();
       ArrayList<String> selArgs = new ArrayList<String>();
       if (tableId != null) {
-        b.append(KeyValueStoreColumns.TABLE_ID).append("=?");
+        b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
         selArgs.add(tableId);
       }
       if (partition != null) {
         if (b.length() != 0) {
-          b.append(" AND ");
+          b.append(S_AND);
         }
-        b.append(KeyValueStoreColumns.PARTITION).append("=?");
+        b.append(K_KVS_PARTITION_EQUALS_PARAM);
         selArgs.add(partition);
       }
       if (aspect != null) {
         if (b.length() != 0) {
-          b.append(" AND ");
+          b.append(S_AND);
         }
-        b.append(KeyValueStoreColumns.ASPECT).append("=?");
+        b.append(K_KVS_ASPECT_EQUALS_PARAM);
         selArgs.add(aspect);
       }
       if (key != null) {
         if (b.length() != 0) {
-          b.append(" AND ");
+          b.append(S_AND);
         }
-        b.append(KeyValueStoreColumns.KEY).append("=?");
+        b.append(K_KVS_KEY_EQUALS_PARAM);
         selArgs.add(key);
       }
 
@@ -1964,10 +1994,11 @@ public class ODKDatabaseImplUtils {
       StringBuilder b = new StringBuilder();
       b.setLength(0);
       //@formatter:off
-      b.append("UPDATE \"").append(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME)
-          .append("\" SET ").append(KeyValueStoreColumns.VALUE_TYPE).append("=? WHERE ")
-          .append(KeyValueStoreColumns.PARTITION).append("=? AND ")
-          .append(KeyValueStoreColumns.KEY).append("=?");
+      b.append("UPDATE ").append(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME)
+          .append(" SET ").append(KeyValueStoreColumns.VALUE_TYPE).append(S_EQUALS_PARAM)
+          .append(K_WHERE)
+          .append(K_KVS_PARTITION_EQUALS_PARAM).append(S_AND)
+          .append(K_KVS_KEY_EQUALS_PARAM);
       //@formatter:on
 
       String sql = b.toString();
@@ -2020,16 +2051,12 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
 
-    String createTableCmd;
-    if (isSynchronized) {
-      createTableCmd = getUserDefinedTableCreationStatement(tableId);
-    } else {
-      createTableCmd  = "CREATE TABLE IF NOT EXISTS " + tableId + " (";
-    }
-
-
     StringBuilder createTableCmdWithCols = new StringBuilder();
-    createTableCmdWithCols.append(createTableCmd);
+    createTableCmdWithCols.append("CREATE TABLE IF NOT EXISTS ").append(tableId).append(" (");
+
+    if (isSynchronized) {
+      addMetadataFieldsToTableCreationStatement(createTableCmdWithCols);
+    }
 
     boolean first = true;
     for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
@@ -2376,8 +2403,8 @@ public class ODKDatabaseImplUtils {
 
     // remove server conflicting rows
     b.setLength(0);
-    b.append("DELETE FROM \"").append(tableId).append("\" WHERE ")
-        .append(DataTableColumns.SYNC_STATE).append(" =? AND ")
+    b.append("DELETE FROM ").append(tableId).append(K_WHERE)
+        .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(S_AND)
         .append(DataTableColumns.CONFLICT_TYPE).append(" IN (?, ?)");
 
     String sqlConflictingServer = b.toString();
@@ -2392,10 +2419,10 @@ public class ODKDatabaseImplUtils {
     // update local delete conflicts to deletes
     b.setLength(0);
     //@formatter:off
-    b.append("UPDATE \"").append(tableId).append("\" SET ")
-      .append(DataTableColumns.SYNC_STATE).append(" =?, ")
-      .append(DataTableColumns.CONFLICT_TYPE).append(" = null WHERE ")
-      .append(DataTableColumns.CONFLICT_TYPE).append(" = ?");
+    b.append("UPDATE ").append(tableId).append(" SET ")
+      .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(", ")
+      .append(DataTableColumns.CONFLICT_TYPE).append(" = null").append(K_WHERE)
+      .append(DataTableColumns.CONFLICT_TYPE).append(S_EQUALS_PARAM);
     //@formatter:on
 
     String sqlConflictingLocalDeleting = b.toString();
@@ -2418,9 +2445,9 @@ public class ODKDatabaseImplUtils {
     // reset all 'rest' rows to 'insert'
     b.setLength(0);
     //@formatter:off
-    b.append("UPDATE \"").append(tableId).append("\" SET ")
-      .append(DataTableColumns.SYNC_STATE).append(" =? WHERE ")
-      .append(DataTableColumns.SYNC_STATE).append(" =?");
+    b.append("UPDATE ").append(tableId).append(" SET ")
+      .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(K_WHERE)
+      .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM);
     //@formatter:on
 
     String sqlRest = b.toString();
@@ -2541,8 +2568,10 @@ public class ODKDatabaseImplUtils {
   private void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId,
       String rowId) {
     // delete the old server-values in_conflict row if it exists
-    String whereClause = String.format("%s = ? AND %s = ? AND %s IN ( ?, ? )", DataTableColumns.ID,
-        DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
+    StringBuilder b = new StringBuilder();
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+        .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(S_AND)
+        .append(DataTableColumns.CONFLICT_TYPE).append(" IN ( ?, ? )");
     Object[] whereArgs = { rowId, SyncState.in_conflict.name(),
         String.valueOf(ConflictType.SERVER_DELETED_OLD_VALUES),
         String.valueOf(ConflictType.SERVER_UPDATED_UPDATED_VALUES) };
@@ -2553,7 +2582,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.delete(tableId, whereClause, whereArgs);
+      db.delete(tableId, b.toString(), whereArgs);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2619,8 +2648,9 @@ public class ODKDatabaseImplUtils {
   private void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId,
       int conflictType) {
 
-    String whereClause = String
-        .format("%s = ? AND %s IS NULL", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
+    StringBuilder b = new StringBuilder();
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+        .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NULL);
     Object[] whereArgs = { rowId };
 
     TreeMap<String,Object> cv = new TreeMap<String,Object>();
@@ -2633,7 +2663,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.update(tableId, cv, whereClause, whereArgs);
+      db.update(tableId, cv, b.toString(), whereArgs);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2662,16 +2692,16 @@ public class ODKDatabaseImplUtils {
 
     // TODO: is roleList applicable here?
 
-    String whereClause;
+    StringBuilder b = new StringBuilder();
     Object[] whereArgs;
 
     if (conflictType == null) {
-      whereClause = String
-          .format("%s = ? AND %s IS NULL", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NULL);
       whereArgs = new Object[] { rowId };
     } else {
-      whereClause = String
-          .format("%s = ? AND %s = ?", DataTableColumns.ID, DataTableColumns.CONFLICT_TYPE);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.CONFLICT_TYPE).append(S_EQUALS_PARAM);
       whereArgs = new Object[] { rowId, conflictType };
     }
 
@@ -2684,7 +2714,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.update(tableId, cv, whereClause, whereArgs);
+      db.update(tableId, cv, b.toString(), whereArgs);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2711,7 +2741,7 @@ public class ODKDatabaseImplUtils {
     Cursor c = null;
     try {
       c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
-          DataTableColumns.ID + " = ?", new Object[] { rowId }, null, null, null, null);
+          K_DATATABLE_ID_EQUALS_PARAM, new Object[] { rowId }, null, null, null, null);
 
       if (c.moveToFirst()) {
         int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
@@ -2778,7 +2808,7 @@ public class ODKDatabaseImplUtils {
       }
 
       Object[] whereArgs = new Object[] { rowId };
-      String whereClause = DataTableColumns.ID + " =?";
+      String whereClause = K_DATATABLE_ID_EQUALS_PARAM;
 
       // first need to test whether we can delete all the rows under this rowId.
       // If we can't, then throw an access violation
@@ -2819,8 +2849,7 @@ public class ODKDatabaseImplUtils {
       }
 
       // delete any checkpoints
-      whereClause = DataTableColumns.ID + " = ? AND " + DataTableColumns.SAVEPOINT_TYPE +
-          " IS NULL";
+      whereClause = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TYPE + S_IS_NULL;
       db.delete(tableId, whereClause, whereArgs);
 
       // this will return null if there are no rows.
@@ -2832,7 +2861,7 @@ public class ODKDatabaseImplUtils {
 
       } else if (syncState == SyncState.new_row) {
         // we can safely remove this record from the database
-        whereClause = DataTableColumns.ID + " = ?";
+        whereClause = K_DATATABLE_ID_EQUALS_PARAM;
 
         db.delete(tableId, whereClause, whereArgs);
         shouldPhysicallyDelete = true;
@@ -2844,7 +2873,7 @@ public class ODKDatabaseImplUtils {
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 
-        db.update(tableId, values, DataTableColumns.ID + " = ?", whereArgs);
+        db.update(tableId, values, K_DATATABLE_ID_EQUALS_PARAM, whereArgs);
       }
       // TODO: throw exception if in the SyncState.in_conflict state?
 
@@ -2937,7 +2966,7 @@ public class ODKDatabaseImplUtils {
       c = null;
       try {
         c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
-            DataTableColumns.ID + " = ?", new Object[] { rowId }, null, null, null, null);
+            K_DATATABLE_ID_EQUALS_PARAM, new Object[] { rowId }, null, null, null, null);
         c.moveToFirst();
         // the row is entirely removed -- delete the attachments
         shouldPhysicallyDelete = (c.getCount() == 0);
@@ -2985,8 +3014,12 @@ public class ODKDatabaseImplUtils {
   public void deleteAllCheckpointRowsWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList)
       throws ActionNotAuthorizedException {
+    StringBuilder b = new StringBuilder();
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+        .append(DataTableColumns.SAVEPOINT_TYPE).append(S_IS_NULL);
+
     rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
-        DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL",
+        b.toString(),
         new Object[] { rowId }, activeUser, rolesList);
   }
 
@@ -3006,11 +3039,15 @@ public class ODKDatabaseImplUtils {
   public void deleteLastCheckpointRowWithId(OdkConnectionInterface db,
       String tableId, String rowId, String activeUser, String rolesList)
       throws ActionNotAuthorizedException {
+    StringBuilder b = new StringBuilder();
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+        .append(DataTableColumns.SAVEPOINT_TYPE).append(S_IS_NULL).append(S_AND)
+        .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" IN (SELECT MAX(")
+             .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+           .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+
     rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
-        DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL " + " AND "
-            + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX("
-            + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId + "\" WHERE "
-            + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId }, activeUser, rolesList);
+        b.toString(), new Object[] { rowId, rowId }, activeUser, rolesList);
   }
 
   /**
@@ -3036,12 +3073,17 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
-              + DataTableColumns.ID + "=?",
-          new Object[] { SavepointTypeManipulator.incomplete(), rowId });
-      db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
-          + " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-          + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId });
+      StringBuilder b = new StringBuilder();
+      b.append("UPDATE ").append(tableId).append(" SET ")
+          .append(DataTableColumns.SAVEPOINT_TYPE).append(S_EQUALS_PARAM).append(K_WHERE)
+          .append(K_DATATABLE_ID_EQUALS_PARAM);
+      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.incomplete(), rowId });
+      b.setLength(0);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -3076,12 +3118,18 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      db.execSQL("UPDATE \"" + tableId + "\" SET " + DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE "
-              + DataTableColumns.ID + "=?",
-          new Object[] { SavepointTypeManipulator.complete(), rowId });
-      db.delete(tableId, DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
-          + " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-          + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId });
+      StringBuilder b = new StringBuilder();
+      b.append("UPDATE ").append(tableId).append(" SET ")
+          .append(DataTableColumns.SAVEPOINT_TYPE).append(S_EQUALS_PARAM).append(K_WHERE)
+          .append(K_DATATABLE_ID_EQUALS_PARAM);
+      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.complete(), rowId });
+
+      b.setLength(0);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
+               .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -3340,9 +3388,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
+      StringBuilder b = new StringBuilder();
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
       BaseTable table = privilegedQuery(db,
-          QueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
-                  " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
+          QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
@@ -3503,8 +3553,8 @@ public class ODKDatabaseImplUtils {
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
       BaseTable table = privilegedQuery(db,
-          QueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
-                  " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
+          QueryUtil.buildSqlStatement(tableId, K_DATATABLE_ID_EQUALS_PARAM +
+                  S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL, null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
@@ -3641,9 +3691,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
+      StringBuilder b = new StringBuilder();
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
       BaseTable table = privilegedQuery(db,
-          QueryUtil.buildSqlStatement(tableId, DataTableColumns.ID + "=?" +
-                  " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null, null,
+          QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
@@ -3864,10 +3916,12 @@ public class ODKDatabaseImplUtils {
         return;
       }
 
-      c = db.query(tableId, null,
-          DataTableColumns.ID + "=?" + " AND " + DataTableColumns.SAVEPOINT_TIMESTAMP
-              + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" + tableId
-              + "\" WHERE " + DataTableColumns.ID + "=?)", new Object[] { rowId, rowId }, null,
+      StringBuilder b = new StringBuilder();
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" IN (SELECT MAX(")
+              .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ")
+                 .append(tableId).append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+      c = db.query(tableId, null, b.toString(), new Object[] { rowId, rowId }, null,
           null, null, null);
       c.moveToFirst();
 
@@ -4556,25 +4610,26 @@ public class ODKDatabaseImplUtils {
 
         if (specifiesConflictType) {
           if (nullConflictType) {
-            whereClause = DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE
-                + " IS NULL";
+            whereClause = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE
+                + S_IS_NULL;
             whereArgs[0] = rowId;
           } else {
             whereClause =
-                DataTableColumns.ID + " = ?" + " AND " + DataTableColumns.CONFLICT_TYPE + " = ?";
+                K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_EQUALS_PARAM;
             whereArgs[0] = rowId;
             whereArgs[1] = cvValues.get(DataTableColumns.CONFLICT_TYPE);
           }
         } else {
-          whereClause = DataTableColumns.ID + " = ?";
+          whereClause = K_DATATABLE_ID_EQUALS_PARAM;
           whereArgs[0] = rowId;
         }
 
         AccessContext accessContext = getAccessContext(db, tableId, activeUser,
             RoleConsts.ADMIN_ROLES_LIST);
 
-        String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-        BaseTable data = privilegedQuery(db, sel, whereArgs, null, accessContext);
+        StringBuilder b = new StringBuilder();
+        b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
+        BaseTable data = privilegedQuery(db, b.toString(), whereArgs, null, accessContext);
 
         // There must be only one row in the db for the update to work
         if (shouldUpdate) {
@@ -4760,7 +4815,7 @@ public class ODKDatabaseImplUtils {
   public void privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db, String tableId,
       String rowId, String rowETag, SyncState state, String activeUser) {
 
-    String whereClause = DataTableColumns.ID + " = ?";
+    String whereClause = K_DATATABLE_ID_EQUALS_PARAM;
     Object[] whereArgs = { rowId };
 
     TreeMap<String,Object> cvDataTableVal = new TreeMap<String,Object>();
@@ -4777,8 +4832,9 @@ public class ODKDatabaseImplUtils {
       AccessContext accessContext = getAccessContext(db, tableId, activeUser,
           RoleConsts.ADMIN_ROLES_LIST);
 
-      String sel = "SELECT * FROM " + tableId + " WHERE " + whereClause;
-      BaseTable data = privilegedQuery(db, sel, whereArgs, null, accessContext);
+      StringBuilder b = new StringBuilder();
+      b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
+      BaseTable data = privilegedQuery(db, b.toString(), whereArgs, null, accessContext);
 
       // There must be only one row in the db
       if (data.getNumberOfRows() != 1) {
