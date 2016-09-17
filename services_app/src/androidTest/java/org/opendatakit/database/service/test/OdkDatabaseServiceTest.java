@@ -23,7 +23,7 @@ import java.util.*;
 
 public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> {
 
-   private boolean initial
+   private boolean initialized = false;
    private static final String APPNAME = TestConsts.APPNAME;
    private static final String DB_TABLE_ID = "testtable";
    private static final String LOCAL_ONLY_DB_TABLE_ID = "L_" + DB_TABLE_ID;
