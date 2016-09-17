@@ -406,9 +406,9 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       dbConnection = appNameSharedStateContainer.getExisting(sessionQualifier);
 
       if (dbConnection != null) {
-        logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
-                " -- successfully obtained reference to already-open database for " + appName +
-                " when getting " + sessionQualifier);
+        // logInfo(appName, "getConnectionImpl -- " + sessionQualifier +
+        //        " -- successfully obtained reference to already-open database for " + appName +
+        //        " when getting " + sessionQualifier);
         return dbConnection;
       }
 

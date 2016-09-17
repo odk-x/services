@@ -59,6 +59,55 @@ public class ODKDatabaseImplUtils {
 
   private static final String t = "ODKDatabaseImplUtils";
 
+  /**
+   * The rolesList expansion is very time consuming.
+   * Implement a simple 1-deep cache and a
+   * special expansion of the privileged user roles list.
+   */
+  private static String cachedRolesList;
+  private static List<String> cachedRolesArray;
+  private static final List<String> cachedAdminRolesArray;
+  private static final TypeReference<ArrayList<String>> arrayListTypeReference;
+
+  static {
+    arrayListTypeReference = new TypeReference<ArrayList<String>>() {};
+
+    ArrayList<String> rolesArray = null;
+    {
+      try {
+        rolesArray = ODKFileUtils.mapper.readValue(RoleConsts.ADMIN_ROLES_LIST,
+            arrayListTypeReference);
+      } catch (IOException e) {
+        throw new IllegalStateException("this should never happen");
+      }
+    }
+    cachedAdminRolesArray = Collections.unmodifiableList(rolesArray);
+  }
+
+  private static final List<String> getRolesArray(String rolesList) {
+
+    if ( rolesList == null || rolesList.length() == 0 ) {
+      return null;
+    } else if ( RoleConsts.ADMIN_ROLES_LIST.equals(rolesList) ) {
+      return cachedAdminRolesArray;
+    } else if ( cachedRolesList != null && cachedRolesList.equals(rolesList) ) {
+      return cachedRolesArray;
+    }
+    // figure out whether we have a privileged user or not
+    ArrayList<String> rolesArray = null;
+    {
+      try {
+        rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
+      } catch (IOException e) {
+        throw new IllegalStateException("this should never happen");
+      }
+    }
+    cachedRolesArray = Collections.unmodifiableList(rolesArray);
+    cachedRolesList = rolesList;
+    return cachedRolesArray;
+  }
+
+
   public enum AccessColumnType {
     NO_EFFECTIVE_ACCESS_COLUMN,
     LOCKED_EFFECTIVE_ACCESS_COLUMN,
@@ -71,10 +120,10 @@ public class ODKDatabaseImplUtils {
     // true if user is a super-user or administrator
     public final boolean isPrivilegedUser;
     public final boolean isUnverifiedUser;
-    private final ArrayList<String> rolesArray;
+    private final List<String> rolesArray;
 
     AccessContext(AccessColumnType accessColumnType, boolean canCreateRow, String activeUser,
-        ArrayList<String> rolesArray) {
+        List<String> rolesArray) {
       if ( activeUser == null ) {
         throw new IllegalStateException("activeUser cannot be null!");
       }
@@ -100,16 +149,7 @@ public class ODKDatabaseImplUtils {
 
 
       // figure out whether we have a privileged user or not
-      ArrayList<String> rolesArray = null;
-      {
-        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-        };
-        try {
-          rolesArray = ODKFileUtils.mapper.readValue(RoleConsts.ADMIN_ROLES_LIST, ref);
-        } catch (IOException e) {
-          throw new IllegalStateException("this should never happen");
-        }
-      }
+      List<String> rolesArray = getRolesArray(RoleConsts.ADMIN_ROLES_LIST);
 
       AccessContext that = new AccessContext(accessColumnType, true, activeUser, rolesArray);
       return that;
@@ -334,18 +374,7 @@ public class ODKDatabaseImplUtils {
       String activeUser, String rolesList ) {
 
     // figure out whether we have a privileged user or not
-    ArrayList<String> rolesArray = null;
-    {
-      TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-      };
-      if (rolesList != null && rolesList.length() != 0) {
-        try {
-          rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
-        } catch (IOException e) {
-          WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-        }
-      }
-    }
+    List<String> rolesArray = getRolesArray(rolesList);
 
     if ( tableId == null ) {
       return new AccessContext(AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN, false, activeUser, rolesArray);
@@ -2765,18 +2794,7 @@ public class ODKDatabaseImplUtils {
         int idxFilterType = c.getColumnIndex(DataTableColumns.FILTER_TYPE);
         int idxFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE);
 
-        ArrayList<String> rolesArray = null;
-        {
-          TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-          };
-          if (rolesList != null && rolesList.length() != 0) {
-            try {
-              rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
-            } catch (IOException e) {
-              WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-            }
-          }
-        }
+        List<String> rolesArray = getRolesArray(rolesList);
 
         TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
 
@@ -2889,18 +2907,7 @@ public class ODKDatabaseImplUtils {
         int idxFilterType = c.getColumnIndex(DataTableColumns.FILTER_TYPE);
         int idxFilterValue = c.getColumnIndex(DataTableColumns.FILTER_VALUE);
 
-        ArrayList<String> rolesArray = null;
-        {
-          TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-          };
-          if (rolesList != null && rolesList.length() != 0) {
-            try {
-              rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
-            } catch (IOException e) {
-              WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-            }
-          }
-        }
+        List<String> rolesArray = getRolesArray(rolesList);
 
         TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
 
@@ -4150,18 +4157,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      ArrayList<String> rolesArray = null;
-      {
-        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-        };
-        if (rolesList != null && rolesList.length() != 0) {
-          try {
-            rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
-          } catch (IOException e) {
-            WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-          }
-        }
-      }
+      List<String> rolesArray = getRolesArray(rolesList);
 
       // get the security settings
       TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
@@ -4233,7 +4229,7 @@ public class ODKDatabaseImplUtils {
       this.filterTypeOnCreation = filterTypeOnCreation;
     }
 
-    public void canModifyFilterTypeAndValue(ArrayList<String> rolesArray)
+    public void canModifyFilterTypeAndValue(List<String> rolesArray)
         throws ActionNotAuthorizedException {
 
       if (rolesArray == null) {
@@ -4255,7 +4251,7 @@ public class ODKDatabaseImplUtils {
       }
     }
 
-    public void allowRowChange(String activeUser, ArrayList<String> rolesArray,
+    public void allowRowChange(String activeUser, List<String> rolesArray,
         String updatedSyncState, String priorFilterType, String priorFilterValue,
         RowChange rowChange) throws ActionNotAuthorizedException {
 
@@ -4626,18 +4622,7 @@ public class ODKDatabaseImplUtils {
         cvDataTableVal.put(DataTableColumns.ID, rowId);
       }
 
-      ArrayList<String> rolesArray = null;
-      {
-        TypeReference<ArrayList<String>> ref = new TypeReference<ArrayList<String>>() {
-        };
-        if (rolesList != null && rolesList.length() != 0) {
-          try {
-            rolesArray = ODKFileUtils.mapper.readValue(rolesList, ref);
-          } catch (IOException e) {
-            WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-          }
-        }
-      }
+      List<String> rolesArray = getRolesArray(rolesList);
 
       // get the security settings
       TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
