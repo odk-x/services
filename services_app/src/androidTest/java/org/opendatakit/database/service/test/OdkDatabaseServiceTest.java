@@ -10,6 +10,7 @@ import android.test.ServiceTestCase;
 import android.util.Log;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.database.data.*;
 import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.common.android.database.service.DbHandle;
@@ -22,6 +23,7 @@ import java.util.*;
 
 public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> {
 
+   private boolean initial
    private static final String APPNAME = TestConsts.APPNAME;
    private static final String DB_TABLE_ID = "testtable";
    private static final String LOCAL_ONLY_DB_TABLE_ID = "L_" + DB_TABLE_ID;
@@ -52,6 +54,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    @Override protected void setUp() throws Exception {
       super.setUp();
+
+      boolean beganUninitialized = !initialized;
+      if ( beganUninitialized ) {
+         initialized = true;
+         // Used to ensure that the singleton has been initialized properly
+         AndroidConnectFactory.configure();
+      }
       setupService();
    }
 
