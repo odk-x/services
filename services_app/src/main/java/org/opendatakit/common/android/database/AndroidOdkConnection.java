@@ -658,7 +658,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
      try {
        synchronized (mutex) {
          return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy,
-                 limit);
+                 limit, null);
        }
      } catch ( Throwable t ) {
         operationLog.failOperation(cookie, t);
