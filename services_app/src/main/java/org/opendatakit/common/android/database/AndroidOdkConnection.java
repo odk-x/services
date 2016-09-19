@@ -17,7 +17,7 @@ package org.opendatakit.common.android.database;
 import android.database.Cursor;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;

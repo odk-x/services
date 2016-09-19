@@ -27,15 +27,15 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.provider.MediaStore;
 import android.widget.Toast;
 import org.apache.commons.io.FileUtils;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.AppPropertiesActivity;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.MediaUtils;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.services.R;
 
 import java.io.File;

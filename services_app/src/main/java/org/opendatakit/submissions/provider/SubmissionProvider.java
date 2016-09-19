@@ -26,14 +26,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.ProviderConsts;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.provider.ProviderConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -46,12 +45,12 @@ import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.EncryptionUtils;
 import org.opendatakit.common.android.utilities.EncryptionUtils.EncryptedFormInformation;
 import org.opendatakit.common.android.utilities.FileSet;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -257,7 +256,7 @@ public class SubmissionProvider extends ContentProvider {
     String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
     String currentLocale = props.getLocale();
 
-    OdkDbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -380,7 +379,7 @@ public class SubmissionProvider extends ContentProvider {
               }
               if (defn != null && !c.isNull(i)) {
                 if (xmlInstanceName != null && defn.getElementName().equals(xmlInstanceName)) {
-                  instanceName = ODKCursorUtils.getIndexAsString(c, i);
+                  instanceName = CursorUtils.getIndexAsString(c, i);
                 }
                 // user-defined column
                 ElementType type = defn.getType();
@@ -388,36 +387,36 @@ public class SubmissionProvider extends ContentProvider {
 
                 logger.i(t, "element type: " + defn.getElementType());
                 if (dataType == ElementDataType.integer) {
-                  Integer value = ODKCursorUtils.getIndexAsType(c, Integer.class, i);
+                  Integer value = CursorUtils.getIndexAsType(c, Integer.class, i);
                   putElementValue(values, defn, value);
                 } else if (dataType == ElementDataType.number) {
-                  Double value = ODKCursorUtils.getIndexAsType(c, Double.class, i);
+                  Double value = CursorUtils.getIndexAsType(c, Double.class, i);
                   putElementValue(values, defn, value);
                 } else if (dataType == ElementDataType.bool) {
-                  Integer tmp = ODKCursorUtils.getIndexAsType(c, Integer.class, i);
+                  Integer tmp = CursorUtils.getIndexAsType(c, Integer.class, i);
                   Boolean value = tmp == null ? null : (tmp != 0);
                   putElementValue(values, defn, value);
                 } else if (type.getElementType().equals("date")) {
-                  String value = ODKCursorUtils.getIndexAsString(c, i);
+                  String value = CursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
                       ISO8601_DATE_ONLY_FORMAT, Locale.US)).format(new Date(TableConstants
                       .milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("dateTime")) {
-                  String value = ODKCursorUtils.getIndexAsString(c, i);
+                  String value = CursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
                       ISO8601_DATE_FORMAT, Locale.US)).format(new Date(TableConstants
                       .milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("time")) {
-                  String value = ODKCursorUtils.getIndexAsString(c, i);
+                  String value = CursorUtils.getIndexAsString(c, i);
                   putElementValue(values, defn, value);
                 } else if (dataType == ElementDataType.array) {
-                  ArrayList<Object> al = ODKCursorUtils.getIndexAsType(c, ArrayList.class,
+                  ArrayList<Object> al = CursorUtils.getIndexAsType(c, ArrayList.class,
                       i);
                   putElementValue(values, defn, al);
                 } else if (dataType == ElementDataType.string) {
-                  String value = ODKCursorUtils.getIndexAsString(c, i);
+                  String value = CursorUtils.getIndexAsString(c, i);
                   putElementValue(values, defn, value);
                 } else /* unrecognized */{
                   throw new IllegalStateException("unrecognized data type: "
@@ -425,23 +424,23 @@ public class SubmissionProvider extends ContentProvider {
                 }
 
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-                savepointTimestamp = ODKCursorUtils.getIndexAsString(c, i);
+                savepointTimestamp = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.ROW_ETAG)) {
-                rowETag = ODKCursorUtils.getIndexAsString(c, i);
+                rowETag = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FILTER_TYPE)) {
-                filterType = ODKCursorUtils.getIndexAsString(c, i);
+                filterType = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FILTER_VALUE)) {
-                filterValue = ODKCursorUtils.getIndexAsString(c, i);
+                filterValue = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
-                formId = ODKCursorUtils.getIndexAsString(c, i);
+                formId = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.LOCALE)) {
-                locale = ODKCursorUtils.getIndexAsString(c, i);
+                locale = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
-                formId = ODKCursorUtils.getIndexAsString(c, i);
+                formId = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_TYPE)) {
-                savepointType = ODKCursorUtils.getIndexAsString(c, i);
+                savepointType = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
-                savepointCreator = ODKCursorUtils.getIndexAsString(c, i);
+                savepointCreator = CursorUtils.getIndexAsString(c, i);
               }
             }
 

@@ -18,11 +18,11 @@ package org.opendatakit.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
@@ -31,14 +31,14 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
-import org.opendatakit.database.service.OdkDbTable;
-import org.opendatakit.database.utilities.OdkDbQueryUtil;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
+import org.opendatakit.common.android.database.data.BaseTable;
+import org.opendatakit.common.android.database.utilities.QueryUtil;
 import org.opendatakit.resolve.views.components.ResolveActionList;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 
@@ -78,7 +78,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
     String activeUser = props.getActiveUser();
     String locale = props.getLocale();
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
@@ -105,7 +105,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      OdkDbTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           selectionArgs, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -116,7 +116,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for ( int i = 0 ; i < table.getNumberOfRows(); ++i ) {
-          OdkDbRow row = table.getRowAtIndex(i);
+          Row row = table.getRowAtIndex(i);
           String rowId = row.getDataByKey(DataTableColumns.ID);
           OdkResolveConflictFieldLoader loader = new OdkResolveConflictFieldLoader(getContext()
               , mAppName, mTableId, rowId);
@@ -134,7 +134,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
               ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
 
-          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, OdkDbQueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               selectionArgs, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -231,11 +231,11 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = ODKDataUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      OdkDbRow row = table.getRowAtIndex(i);
+      Row row = table.getRowAtIndex(i);
       String rowId = row.getDataByKey(DataTableColumns.ID);
       String instanceName = row.getDataByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId, formDisplayName + ": " + instanceName);

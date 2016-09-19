@@ -28,6 +28,7 @@ namespace org_opendatakit {
 template<typename T>
 class ScopedLocalRef {
 public:
+    // initializer
     ScopedLocalRef(JNIEnv* env, T localRef) : mEnv(env), mLocalRef(localRef) {
     }
 
@@ -58,8 +59,10 @@ private:
     JNIEnv* const mEnv;
     T mLocalRef;
 
-    // disallow copy
-    ScopedLocalRef(const ScopedLocalRef&) {};
+    // disallow copy constructor
+    ScopedLocalRef(const ScopedLocalRef& ref) :mEnv(ref.mEnv) {
+        mLocalRef = mEnv->NewLocalRef(ref.mLocalRef);
+    };
 
     // disallow assign
     void operator=(const ScopedLocalRef&) {};

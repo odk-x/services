@@ -2,40 +2,15 @@ package org.opendatakit.sync.service.logic;
 
 import android.test.ApplicationTestCase;
 
-import junit.framework.TestCase;
-
-import org.apache.commons.io.FileUtils;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
-import org.opendatakit.common.android.application.AppAwareApplication;
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.services.R;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.SyncNotification;
-import org.opendatakit.sync.service.SyncOverallResult;
-import org.opendatakit.sync.service.data.SyncRow;
+import org.opendatakit.common.android.sync.service.SyncNotification;
+import org.opendatakit.common.android.sync.service.SyncOverallResult;
 
-import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 
 /**
  * Created by clarice on 5/6/16.

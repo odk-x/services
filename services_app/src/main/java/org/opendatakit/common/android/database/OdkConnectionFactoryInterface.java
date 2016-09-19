@@ -1,6 +1,6 @@
 package org.opendatakit.common.android.database;
 
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 /**
  * Factory interface that provides database connections and manages them.
@@ -27,14 +27,14 @@ public interface OdkConnectionFactoryInterface {
     *
     * @return sessionQualifier appropriate for 'internal uses'
     */
-   public OdkDbHandle generateInternalUseDbHandle();
+   public DbHandle generateInternalUseDbHandle();
 
    /**
     * This handle is suitable for database service use.
     *
     * @return sessionQualifier appropriate for 'database service uses'
     */
-   public OdkDbHandle generateDatabaseServiceDbHandle();
+   public DbHandle generateDatabaseServiceDbHandle();
 
    /**
     * Dump the state and history of the database layer.
@@ -58,24 +58,24 @@ public interface OdkConnectionFactoryInterface {
     * @param dbHandleName
     * @return
     */
-   public OdkConnectionInterface getConnection(String appName, OdkDbHandle dbHandleName);
+   public OdkConnectionInterface getConnection(String appName, DbHandle dbHandleName);
 
    /**
     * Remove the connection to the database for the given dbHandleName from the
     * active-connection map. The database connection may still be held open by
     * an open cursor or other action that has incremented the connection's reference
-    * count, but it is no longer retrievable via {@link this.getConnection(String, OdkDbHandle)}
+    * count, but it is no longer retrievable via {@link this.getConnection(String, DbHandle)}
     * after this call. Once all outstanding cursors are closed (or become GC'd), the
     * connection will be closed.
     *
     * @param appName
     * @param dbHandleName
     */
-   public void removeConnection(String appName, OdkDbHandle dbHandleName);
+   public void removeConnection(String appName, DbHandle dbHandleName);
 
    /**
     * Remove all database connections having {generateDatabaseServiceDbHandle()} session
-    * qualifiers. See {removeConnection(String, OdkDbHandle)}
+    * qualifiers. See {removeConnection(String, DbHandle)}
     *
     * @return true if anything was removed
     */
@@ -83,7 +83,7 @@ public interface OdkConnectionFactoryInterface {
 
    /**
     * Remove all open database connections.
-    * See {removeConnection(String, OdkDbHandle)}
+    * See {removeConnection(String, DbHandle)}
     */
    public void removeAllConnections();
 }

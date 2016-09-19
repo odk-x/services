@@ -55,6 +55,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.utilities.FileSet.MimeFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

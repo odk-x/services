@@ -16,7 +16,6 @@ package org.opendatakit.sync.activities;
 
 import android.app.*;
 import android.content.DialogInterface;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 /**

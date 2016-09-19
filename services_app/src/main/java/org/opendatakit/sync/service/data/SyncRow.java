@@ -17,10 +17,10 @@ package org.opendatakit.sync.service.data;
 
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.common.android.database.data.Row;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -337,7 +337,7 @@ public class SyncRow {
 
 
   public static final SyncRow convertToSyncRow(OrderedColumns orderedColumns,
-      ArrayList<ColumnDefinition> fileAttachmentColumns, OdkDbRow localRow) {
+      ArrayList<ColumnDefinition> fileAttachmentColumns, Row localRow) {
     String rowId = localRow.getDataByKey(DataTableColumns.ID);
     String rowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
 

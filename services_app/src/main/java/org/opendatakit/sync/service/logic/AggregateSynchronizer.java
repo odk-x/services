@@ -21,9 +21,9 @@ import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HeaderElement;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
@@ -44,7 +44,7 @@ import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
 import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
-import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.common.android.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.data.SyncRow;
 import org.opendatakit.sync.service.exceptions.*;
@@ -1092,7 +1092,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       sc.getDatabaseService().deleteAllSyncETagsExceptForServer(sc.getAppName(), db,
@@ -1106,7 +1106,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public String getFileSyncETag(URI
       fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       return sc.getDatabaseService().getFileSyncETag(sc.getAppName(), db,
@@ -1120,7 +1120,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       sc.getDatabaseService().updateFileSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
@@ -1142,7 +1142,7 @@ public class AggregateSynchronizer implements Synchronizer {
       fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
     }
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       return sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId);
@@ -1163,7 +1163,7 @@ public class AggregateSynchronizer implements Synchronizer {
       fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
     }
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId,
@@ -1195,7 +1195,7 @@ public class AggregateSynchronizer implements Synchronizer {
      * Accomplish this by prefixing the documentETag with a restrictive prefix and only
      * returning the eTag if that prefix matches.
      */
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       String qualifiedETag = sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db,
@@ -1234,7 +1234,7 @@ public class AggregateSynchronizer implements Synchronizer {
      * Accomplish this by prefixing the documentETag with a restrictive prefix and only
      * returning the eTag if that prefix matches.
      */
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = sc.getDatabase();
       String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
@@ -1254,7 +1254,7 @@ public class AggregateSynchronizer implements Synchronizer {
       String newSchemaETag, String oldSchemaETag) throws
       ServicesAvailabilityException {
     // we are creating data on the server
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     try {
       String tableInstanceFilesUriString = null;

@@ -24,9 +24,10 @@ import java.util.concurrent.TimeUnit;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
+import org.opendatakit.common.android.sync.service.*;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 
 public class OdkSyncService extends Service {
 

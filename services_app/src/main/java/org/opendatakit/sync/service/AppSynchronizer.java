@@ -17,12 +17,12 @@ package org.opendatakit.sync.service;
 
 import android.app.Service;
 
-import android.os.RemoteException;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
+import org.opendatakit.common.android.sync.service.*;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.sync.service.exceptions.NoAppNameSpecifiedException;

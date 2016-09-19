@@ -4,14 +4,13 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
 
-import org.opendatakit.RoleConsts;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.resolve.listener.ResolutionListener;
 import org.opendatakit.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -41,7 +40,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
     OdkConnectionInterface db = null;
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     StringBuilder exceptions = null;
 
@@ -98,7 +97,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
           OdkConnectionInterface dbOld = db;
           db = null;
 
-          dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           if ( dbOld != null ) {
             dbOld.releaseReference();

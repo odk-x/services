@@ -32,18 +32,18 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.activities.AppPropertiesActivity;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.common.android.sync.service.OdkSyncServiceInterface;
 
 /**
  * An activity for syncing the local content with the server.
@@ -69,7 +69,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   // end guarded access.
 
   @Override public void onServiceConnected(ComponentName name, IBinder service) {
-    if (!name.getClassName().equals("org.opendatakit.sync.service.OdkSyncService")) {
+    if (!name.getClassName().equals("org.opendatakit.common.android.sync.service.OdkSyncService")) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onServiceConnected] Unrecognized service");
       return;
     }

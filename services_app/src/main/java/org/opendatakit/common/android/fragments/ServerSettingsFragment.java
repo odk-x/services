@@ -24,7 +24,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.Toast;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;

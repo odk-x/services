@@ -35,16 +35,16 @@ import java.util.Map;
 import android.content.*;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.opendatakit.ProviderConsts;
+import org.opendatakit.common.android.provider.ProviderConsts;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.provider.InstanceColumns;
 import org.opendatakit.common.android.provider.InstanceProviderAPI;
 import org.opendatakit.common.android.utilities.FileSet;
 import org.opendatakit.common.android.utilities.FileSet.MimeFile;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.auth.AuthScope;
@@ -530,13 +530,13 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         c = appContext.getContentResolver().query(toUpdate, null, null, null, null);
         if (c.getCount() == 1 && c.moveToFirst()) {
 
-          String id = ODKCursorUtils.getIndexAsString(c,
+          String id = CursorUtils.getIndexAsString(c,
               c.getColumnIndex(InstanceColumns._ID));
-          String dataTableInstanceId = ODKCursorUtils.getIndexAsString(c,
+          String dataTableInstanceId = CursorUtils.getIndexAsString(c,
               c.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
-          String lastOutcome = ODKCursorUtils.getIndexAsString(c,
+          String lastOutcome = CursorUtils.getIndexAsString(c,
               c.getColumnIndex(InstanceColumns.XML_PUBLISH_STATUS));
-          String submissionInstanceId = ODKDataUtils.genUUID();
+          String submissionInstanceId = LocalizationUtils.genUUID();
           // submissions always get a new legacy instance id UNLESS the last
           // submission failed,
           // in which case we retry the submission using the legacy instance id
@@ -544,7 +544,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
           // that failure. This supports resumption of sends of forms with many
           // attachments.
           if (lastOutcome != null && lastOutcome.equals(InstanceColumns.STATUS_SUBMISSION_FAILED)) {
-            String lastId = ODKCursorUtils.getIndexAsString(c,
+            String lastId = CursorUtils.getIndexAsString(c,
                 c.getColumnIndex(InstanceColumns.SUBMISSION_INSTANCE_ID));
             if (lastId != null) {
               submissionInstanceId = lastId;

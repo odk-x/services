@@ -31,16 +31,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.RoleConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
+import org.opendatakit.common.android.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
 import org.opendatakit.common.android.database.OdkConnectionInterface;
-import org.opendatakit.common.android.logic.CommonToolProperties;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.resolve.ActiveUserAndLocale;
 import org.opendatakit.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.resolve.views.components.Resolution;
@@ -116,7 +114,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           ActiveUserAndLocale aul = ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
@@ -194,7 +192,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
           OdkConnectionInterface db = null;
 
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           ActiveUserAndLocale aul =
               ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
@@ -269,7 +267,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           dialog.dismiss();
           OdkConnectionInterface db = null;
 
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           ActiveUserAndLocale aul =
               ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
@@ -353,7 +351,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           ActiveUserAndLocale aul =
               ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -427,7 +425,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
           ActiveUserAndLocale aul =
               ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
-          OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+          DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -490,7 +488,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
     ActiveUserAndLocale aul =
         ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
-    OdkDbHandle dbHandleName = new OdkDbHandle(UUID.randomUUID().toString());
+    DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
     try {
       // +1 referenceCount if db is returned (non-null)

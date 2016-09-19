@@ -18,12 +18,12 @@ package org.opendatakit.sync.service.logic;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.common.android.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.common.android.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.data.SyncRowPending;
 import org.opendatakit.sync.service.exceptions.*;
 

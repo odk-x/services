@@ -29,7 +29,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.database.AndroidConnectFactory;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;

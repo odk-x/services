@@ -31,19 +31,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.database.OdkConnectionFactorySingleton;
-import org.opendatakit.common.android.database.OdkConnectionInterface;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.SyncETagsUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.sync.service.SyncAttachmentState;
+import org.opendatakit.common.android.sync.service.SyncOverallResult;
+import org.opendatakit.common.android.sync.service.SyncProgressState;
+import org.opendatakit.common.android.sync.service.SyncStatus;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.common.android.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.sync.service.*;
-import org.sqlite.database.sqlite.SQLiteException;
+import org.opendatakit.common.android.sync.service.*;
 
 /**
  * @author mitchellsundt@gmail.com

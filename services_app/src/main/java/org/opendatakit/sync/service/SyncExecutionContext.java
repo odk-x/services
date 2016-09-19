@@ -33,22 +33,21 @@ import org.opendatakit.common.android.application.AppAwareApplication;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
+import org.opendatakit.common.android.sync.service.*;
 import org.opendatakit.common.android.utilities.NameUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.DatabaseConsts;
-import org.opendatakit.database.OdkDbSerializedInterface;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.sync.service.exceptions.*;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.service.UserDbInterface;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.logic.Synchronizer.SynchronizerStatus;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SyncExecutionContext implements SynchronizerStatus {
 
@@ -95,7 +94,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   // set this later
   private Synchronizer synchronizer;
 
-  private OdkDbHandle odkDbHandle = null;
+  private DbHandle odkDbHandle = null;
 
   public SyncExecutionContext(AppAwareApplication context, String appName,
       SyncNotification syncProgress,
@@ -145,25 +144,25 @@ public class SyncExecutionContext implements SynchronizerStatus {
     } else if ( e instanceof JsonProcessingException ) {
       // something wrong with Jackson parser / serializer
       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
-    } else if ( e instanceof AccessDeniedException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.AccessDeniedException) {
       return (SyncOutcome.ACCESS_DENIED_EXCEPTION);
-    } else if ( e instanceof AccessDeniedReauthException) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.AccessDeniedReauthException) {
       return (SyncOutcome.ACCESS_DENIED_REAUTH_EXCEPTION);
-    } else if ( e instanceof BadClientConfigException) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.BadClientConfigException) {
       return (SyncOutcome.BAD_CLIENT_CONFIG_EXCEPTION);
-    } else if ( e instanceof ClientDetectedVersionMismatchedServerResponseException) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException) {
       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
-    } else if ( e instanceof ClientDetectedMissingConfigForClientVersionException) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.ClientDetectedMissingConfigForClientVersionException) {
       return (SyncOutcome.CLIENT_VERSION_FILES_DO_NOT_EXIST_ON_SERVER);
-    } else if ( e instanceof InternalServerFailureException) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.InternalServerFailureException) {
       return (SyncOutcome.INTERNAL_SERVER_FAILURE_EXCEPTION);
-    } else if ( e instanceof NetworkTransmissionException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.NetworkTransmissionException) {
       return (SyncOutcome.NETWORK_TRANSMISSION_EXCEPTION);
-    } else if ( e instanceof NotOpenDataKitServerException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.NotOpenDataKitServerException) {
       return (SyncOutcome.NOT_OPEN_DATA_KIT_SERVER_EXCEPTION);
-    } else if ( e instanceof ServerDetectedVersionMismatchedClientRequestException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.ServerDetectedVersionMismatchedClientRequestException) {
       return (SyncOutcome.INCOMPATIBLE_SERVER_VERSION_EXCEPTION);
-    } else if ( e instanceof UnexpectedServerRedirectionStatusCodeException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.UnexpectedServerRedirectionStatusCodeException) {
       return (SyncOutcome.UNEXPECTED_REDIRECT_EXCEPTION);
     } else if ( e instanceof IllegalArgumentException ) {
       return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
@@ -173,11 +172,11 @@ public class SyncExecutionContext implements SynchronizerStatus {
       return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
     } else if ( e instanceof ServicesAvailabilityException ) {
       return (SyncOutcome.LOCAL_DATABASE_EXCEPTION);
-    } else if ( e instanceof SchemaMismatchException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.SchemaMismatchException) {
       return (SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
-    } else if ( e instanceof ServerDoesNotRecognizeAppNameException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.ServerDoesNotRecognizeAppNameException) {
       return (SyncOutcome.APPNAME_DOES_NOT_EXIST_ON_SERVER);
-    } else if ( e instanceof IncompleteServerConfigFileBodyMissingException ) {
+    } else if ( e instanceof org.opendatakit.sync.service.exceptions.IncompleteServerConfigFileBodyMissingException) {
       return (SyncOutcome.INCOMPLETE_SERVER_CONFIG_MISSING_FILE_BODY);
     } else {
       WebLogger.getLogger(appName).e(TAG, "Unrecognized exception");
@@ -262,7 +261,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private int refCount = 1;
 
-  public synchronized OdkDbHandle getDatabase() throws ServicesAvailabilityException {
+  public synchronized DbHandle getDatabase() throws ServicesAvailabilityException {
     if ( odkDbHandle == null ) {
       odkDbHandle = getDatabaseService().openDatabase(appName);
     }
@@ -273,7 +272,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return odkDbHandle;
   }
 
-  public synchronized void releaseDatabase(OdkDbHandle odkDbHandle) throws ServicesAvailabilityException {
+  public synchronized void releaseDatabase(DbHandle odkDbHandle) throws ServicesAvailabilityException {
     if ( odkDbHandle != null ) {
       if ( odkDbHandle != this.odkDbHandle ) {
         throw new IllegalArgumentException("Expected the internal odkDbHandle!");
@@ -292,7 +291,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   }
 
   public String getTableDisplayName(String tableId) throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = getDatabase();
 
@@ -310,7 +309,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
         return NameUtil.constructSimpleDisplayName(tableId);
       }
 
-      String displayName = ODKDataUtils.getLocalizedDisplayName(rawDisplayName);
+      String displayName = LocalizationUtils.getLocalizedDisplayName(rawDisplayName);
       return displayName;
     } finally {
       releaseDatabase(db);
@@ -321,13 +320,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private class ServiceConnectionWrapper implements ServiceConnection {
 
     @Override public void onServiceConnected(ComponentName name, IBinder service) {
-      if (!name.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
+      if (!name.getClassName().equals(DatabaseConstants.DATABASE_SERVICE_CLASS)) {
         WebLogger.getLogger(getAppName()).e(TAG, "Unrecognized service");
         return;
       }
       synchronized (odkDbInterfaceBindComplete) {
         try {
-          odkDbInterface = (service == null) ? null : new OdkDbSerializedInterface(OdkDbInterface
+          odkDbInterface = (service == null) ? null : new UserDbInterface(AidlDbInterface
               .Stub.asInterface(service));
         } catch (IllegalArgumentException e) {
           odkDbInterface = null;
@@ -349,10 +348,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private ServiceConnectionWrapper odkDbServiceConnection = new ServiceConnectionWrapper();
   private Object odkDbInterfaceBindComplete = new Object();
-  private OdkDbSerializedInterface odkDbInterface;
+  private UserDbInterface odkDbInterface;
   private boolean active = false;
 
-  public OdkDbSerializedInterface getDatabaseService() {
+  public UserDbInterface getDatabaseService() {
 
     synchronized (odkDbInterfaceBindComplete) {
       if ( odkDbInterface != null ) {
@@ -364,8 +363,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
     Log.i(TAG, "Attempting bind to Database service");
     Intent bind_intent = new Intent();
-    bind_intent.setClassName(DatabaseConsts.DATABASE_SERVICE_PACKAGE,
-        DatabaseConsts.DATABASE_SERVICE_CLASS);
+    bind_intent.setClassName(DatabaseConstants.DATABASE_SERVICE_PACKAGE,
+        DatabaseConstants.DATABASE_SERVICE_CLASS);
 
     for (;;) {
       try {

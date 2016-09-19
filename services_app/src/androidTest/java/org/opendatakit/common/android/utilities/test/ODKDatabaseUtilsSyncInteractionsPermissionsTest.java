@@ -17,9 +17,9 @@ package org.opendatakit.common.android.utilities.test;
 import android.content.ContentValues;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
-import org.opendatakit.common.android.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.common.android.database.utilities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
