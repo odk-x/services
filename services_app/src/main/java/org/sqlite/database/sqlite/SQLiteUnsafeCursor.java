@@ -26,9 +26,8 @@ import android.os.OperationCanceledException;
 import android.database.AbstractWindowedCursor;
 import android.database.CursorWindow;
 import android.util.Log;
+import org.opendatakit.common.android.logging.WebLoggerIf;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebLoggerIf;
 
 import java.io.File;
 import java.util.HashMap;
