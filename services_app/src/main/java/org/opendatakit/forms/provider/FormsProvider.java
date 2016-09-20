@@ -692,14 +692,18 @@ public class FormsProvider extends ContentProvider {
                 continue;
               }
 
-              // everything else, we control...
-              Class<?> dataType = CursorUtils.getIndexDataType(c, idx);
-              if ( dataType == String.class ) {
-                cv.put(colName, CursorUtils.getIndexAsString(c, idx));
-              } else if ( dataType == Long.class ) {
-                cv.put(colName, CursorUtils.getIndexAsType(c, Long.class, idx));
-              } else if ( dataType == Double.class ) {
-                cv.put(colName, CursorUtils.getIndexAsType(c, Double.class, idx));
+              if (c.isNull(idx)) {
+                cv.put(colName, null);
+              } else {
+                // everything else, we control...
+                Class<?> dataType = CursorUtils.getIndexDataType(c, idx);
+                if (dataType == String.class) {
+                  cv.put(colName, CursorUtils.getIndexAsString(c, idx));
+                } else if (dataType == Long.class) {
+                  cv.put(colName, CursorUtils.getIndexAsType(c, Long.class, idx));
+                } else if (dataType == Double.class) {
+                  cv.put(colName, CursorUtils.getIndexAsType(c, Double.class, idx));
+                }
               }
             }
 
