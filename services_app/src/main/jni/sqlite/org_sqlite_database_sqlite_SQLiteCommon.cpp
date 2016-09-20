@@ -1267,8 +1267,8 @@ namespace org_opendatakit {
         }
         // build a column data-type row (placeholder)
         {
-            jcharArray dataTypes(env->NewCharArray(nCol));
-            contents.push_back(dataTypes);
+            jcharArray charTypeCode(env->NewCharArray(nCol));
+            contents.push_back(charTypeCode);
         }
 
 
@@ -1467,6 +1467,7 @@ namespace org_opendatakit {
                 }
             }
             env->ReleaseCharArrayElements(oa, oachars, 0);
+            env->DeleteLocalRef(oa);
         }
 
         if ( env->ExceptionCheck() == JNI_TRUE ) {
