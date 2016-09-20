@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2016 University of Washington
+ *
+ * Extensively modified MatrixCursor that efficiently ties into sqlite C++ api.
+ *
  * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +23,6 @@ package org.sqlite.database.sqlite;
 import android.database.AbstractCursor;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
-import android.database.DatabaseUtils;
-
-import java.util.ArrayList;
 
 /**
  * An immutable cursor implementation backed by an array of {@code Object}s.
