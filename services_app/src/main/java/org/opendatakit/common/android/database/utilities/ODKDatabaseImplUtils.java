@@ -1104,9 +1104,8 @@ public class ODKDatabaseImplUtils {
     }
 
     int cellIndex = -1;
-    String[] elementKeyForIndex = table.getElementKeyForIndex();
-    for (int i = 0; i < elementKeyForIndex.length; i++) {
-      if (elementKeyForIndex[i].equals(DataTableColumns.CONFLICT_TYPE)) {
+    for (int i = 0; i < table.getWidth(); i++) {
+      if (table.getElementKey(i).equals(DataTableColumns.CONFLICT_TYPE)) {
         cellIndex = i;
       }
     }
