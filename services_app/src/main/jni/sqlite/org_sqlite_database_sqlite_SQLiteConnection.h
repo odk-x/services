@@ -95,22 +95,6 @@ JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nati
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetColumnCount
- * Signature: (JJ)I
- */
-JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnCount
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetColumnName
- * Signature: (JJI)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnName
-  (JNIEnv *, jclass, jlong, jlong, jint);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
  * Method:    nativeBindNull
  * Signature: (JJI)V
  */
@@ -199,19 +183,11 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeExecuteForCursorWindow
- * Signature: (JJLandroid/database/CursorWindow;IIZ)J
+ * Method:    nativeExecuteForObjectArray
+ * Signature: (JJ)Ljava/lang/Object;
  */
-JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForCursorWindow
-  (JNIEnv *, jclass, jlong, jlong, jobject, jint, jint, jboolean);
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetDbLookaside
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetDbLookaside
-  (JNIEnv *, jclass, jlong);
+JNIEXPORT jobjectArray JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForObjectArray
+        (JNIEnv *, jclass, jlong, jlong);
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection

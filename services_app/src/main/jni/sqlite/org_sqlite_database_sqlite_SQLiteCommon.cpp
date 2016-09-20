@@ -26,6 +26,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <map>
 #include <android/log.h>
 
@@ -65,6 +66,11 @@
 #define LOGE(CONTENT) LOGIMPL(CONTENT, LOG_TAG, ANDROID_LOG_ERROR);
 
 static pthread_mutex_t g_init_mutex;
+static jclass objectClass;
+static jclass stringClass;
+static jclass longClass;
+static jclass doubleClass;
+static jclass sqliteConnectionClass;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env;
@@ -74,6 +80,19 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     if ( pthread_mutex_init(&g_init_mutex, nullptr) != 0 ) {
         return -1;
     }
+
+    jclass lcl_objectClass(env->FindClass("java/lang/Object"));
+    jclass lcl_stringClass(env->FindClass("java/lang/String"));
+    jclass lcl_longClass(env->FindClass("java/lang/Long"));
+    jclass lcl_doubleClass(env->FindClass("java/lang/Double"));
+    jclass lcl_SQLiteConnectionClass(env->FindClass("org/sqlite/database/sqlite/SQLiteConnection"));
+
+    objectClass = (jclass) env->NewGlobalRef(lcl_objectClass);
+    stringClass = (jclass) env->NewGlobalRef(lcl_stringClass);
+    longClass = (jclass) env->NewGlobalRef(lcl_longClass);
+    doubleClass = (jclass) env->NewGlobalRef(lcl_doubleClass);
+    sqliteConnectionClass = (jclass) env->NewGlobalRef(lcl_SQLiteConnectionClass);
+
     return JNI_VERSION_1_6;
 }
 
@@ -115,31 +134,6 @@ namespace org_opendatakit {
      * there is a problem acquiring a database lock.
      */
     const int BUSY_TIMEOUT_MS = 2500;
-
-    /*
-    ** Note: The following symbols must be in the same order as the corresponding
-    ** elements in the aMethod[] array in function executeIntoCursorWindow().
-    */
-    enum CWMethodNames {
-        CW_CLEAR         = 0,
-        CW_SETNUMCOLUMNS = 1,
-        CW_ALLOCROW      = 2,
-        CW_FREELASTROW   = 3,
-        CW_PUTNULL       = 4,
-        CW_PUTLONG       = 5,
-        CW_PUTDOUBLE     = 6,
-        CW_PUTSTRING     = 7,
-        CW_PUTBLOB       = 8
-    };
-
-    /*
-    ** An instance of this structure represents a single CursorWindow java method.
-    */
-    struct CWMethod {
-        jmethodID id;       /* Method id */
-        const char *zName;  /* Method name */
-        const char *zSig;   /* Method JNI signature */
-    };
 
     const int CONNECTION_ACTIVE = 1;
     const int CONNECTION_DELETE_PENDING = 2;
@@ -891,57 +885,6 @@ namespace org_opendatakit {
         return sqlite3_stmt_readonly(statement) ? JNI_TRUE : JNI_FALSE;
     }
 
-    jint getColumnCount(JNIEnv *env, jlong connectionPtr, jlong statementPtr) {
-        ActiveConnection connection(connectionPtr);
-
-        if ( connection.get() == nullptr ) {
-            jniThrowException(env,
-                              "org/sqlite/database/sqlite/SQLiteException",
-                              "Connection already closed");
-            return 0;
-        }
-
-        sqlite3_stmt* statement = getActiveStatement(statementPtr);
-        if ( statement == nullptr ) {
-            jniThrowException(env,
-                              "org/sqlite/database/sqlite/SQLiteException",
-                              "Statement already finalized");
-            return 0;
-        }
-
-        return sqlite3_column_count(statement);
-    }
-
-    jstring getColumnName(JNIEnv *env, jlong connectionPtr, jlong statementPtr, int index) {
-        ActiveConnection connection(connectionPtr);
-
-        if ( connection.get() == nullptr ) {
-            jniThrowException(env,
-                              "org/sqlite/database/sqlite/SQLiteException",
-                              "Connection already closed");
-            return nullptr;
-        }
-
-        sqlite3_stmt* statement = getActiveStatement(statementPtr);
-        if ( statement == nullptr ) {
-            jniThrowException(env,
-                              "org/sqlite/database/sqlite/SQLiteException",
-                              "Statement already finalized");
-            return nullptr;
-        }
-
-        // sqlite3_column_name16 returns a null-terminated UTF-16 string.
-        const jchar *name = static_cast<const jchar *>(sqlite3_column_name16(statement, index));
-        if (name) {
-            size_t length = 0;
-            while (name[length]) {
-                length += 1;
-            }
-            return env->NewString(name, length);
-        }
-        return nullptr;
-    }
-
     void bindNull(JNIEnv *env, jlong connectionPtr, jlong statementPtr, int index) {
         ActiveConnection connection(connectionPtr);
 
@@ -1248,119 +1191,30 @@ namespace org_opendatakit {
     }
 
     /*
-    ** Append the contents of the row that SQL statement statement currently points to
-    ** to the CursorWindow object passed as the second argument. The CursorWindow
-    ** currently contains iRow rows. Return true on success or false if an error
-    ** occurs.
+    ** This method returns an array of (array of objects).
+    ** The first entry is the list of column names in the result set.
+    ** The remaining entries are the rows in the result set.
+    **
+    ** The result can be easily converted into a MatrixCursor.
+    **
+    ** No attempt is made to provide a roaming cursor on the result set.
+    ** If the user needs to do that, they should use limit and offset
+    ** in the query.
+    **
+    ** This function executes the SQLite statement object passed as the 3rd
+    ** argument.
     */
-    static jboolean copyRowToWindow(
-            JNIEnv *env,
-            jobject win,
-            int iRow,
-            sqlite3_stmt *statement,
-            CWMethod *aMethod
-    ) {
-        int nCol = sqlite3_column_count(statement);
-        int i;
-        jboolean bOk;
-
-        bOk = env->CallBooleanMethod(win, aMethod[CW_ALLOCROW].id);
-        for (i = 0; bOk && i < nCol; i++) {
-            switch (sqlite3_column_type(statement, i)) {
-                case SQLITE_NULL: {
-                    bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
-                    break;
-                }
-
-                case SQLITE_INTEGER: {
-                    jlong val = sqlite3_column_int64(statement, i);
-                    bOk = env->CallBooleanMethod(win, aMethod[CW_PUTLONG].id, val, iRow, i);
-                    break;
-                }
-
-                case SQLITE_FLOAT: {
-                    jdouble val = sqlite3_column_double(statement, i);
-                    bOk = env->CallBooleanMethod(win, aMethod[CW_PUTDOUBLE].id, val, iRow, i);
-                    break;
-                }
-
-                case SQLITE_TEXT: {
-                    // Strings returned by sqlite3_column_text16() are always null terminated.
-                    jchar *pStr = (jchar *) sqlite3_column_text16(statement, i);
-                    if (pStr) {
-                        size_t nStr = 0;
-                        while (pStr[nStr]) {
-                            nStr += 1;
-                        }
-                        ScopedLocalRef<jstring> val(env, env->NewString(pStr, nStr));
-                        bOk = env->CallBooleanMethod(win, aMethod[CW_PUTSTRING].id, val.get(), iRow,
-                                                     i);
-                    } else {
-                        bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
-                    }
-                    break;
-                }
-
-                default: {
-                    if (sqlite3_column_type(statement, i) == SQLITE_BLOB) {
-                        const jbyte *p = (const jbyte *) sqlite3_column_blob(statement, i);
-                        if (p) {
-                            int n = sqlite3_column_bytes(statement, i);
-                            ScopedLocalRef<jbyteArray> val(env, env->NewByteArray(n));
-                            env->SetByteArrayRegion(val.get(), 0, n, p);
-                            bOk = env->CallBooleanMethod(win, aMethod[CW_PUTBLOB].id, val.get(),
-                                                         iRow, i);
-                        } else {
-                            bOk = env->CallBooleanMethod(win, aMethod[CW_PUTNULL].id, iRow, i);
-                        }
-                    } else {
-                        bOk = SQLITE_ERROR;
-                    }
-                    break;
-                }
-            }
-
-            if (bOk == 0) {
-                env->CallVoidMethod(win, aMethod[CW_FREELASTROW].id);
-            }
-        }
-
-        return bOk;
-    }
-
-    /*
-    ** This method has been rewritten for org.sqlite.database.*. The original
-    ** android implementation used the C++ interface to populate a CursorWindow
-    ** object. Since the NDK does not export this interface, we invoke the Java
-    ** interface using standard JNI methods to do the same thing.
-    **
-    ** This function executes the SQLite statement object passed as the 4th
-    ** argument and copies one or more returned rows into the CursorWindow
-    ** object passed as the 5th argument. The set of rows copied into the
-    ** CursorWindow is always contiguous.
-    **
-    ** The only row that *must* be copied into the CursorWindow is row
-    ** iRowRequired. Ideally, all rows from iRowStart through to the end
-    ** of the query are copied into the CursorWindow. If this is not possible
-    ** (CursorWindow objects have a finite capacity), some compromise position
-    ** is found (see comments embedded in the code below for details).
-    **
-    ** The return value is a 64-bit integer calculated as follows:
-    **
-    **      (iStart << 32) | nRow
-    **
-    ** where iStart is the index of the first row copied into the CursorWindow.
-    ** If the countAllRows argument is true, nRow is the total number of rows
-    ** returned by the query. Otherwise, nRow is one greater than the index of
-    ** the last row copied into the CursorWindow.
-    */
-    jlong executeIntoCursorWindow(JNIEnv *env, jlong connectionPtr,
-                                  jlong statementPtr,
-                                  jobject win,
-                                  jint startPos,                  /* First row to add (advisory) */
-                                  jint iRowRequired,              /* Required row */
-                                  jboolean countAllRows) {
+    jobjectArray executeIntoObjectArray(JNIEnv *env, jlong connectionPtr,
+                                  jlong statementPtr) {
+        // inc_size must be smaller than max local ref (512) and greater than 2
+        jsize inc_size = 500;
         ActiveConnection connection(connectionPtr);
+
+        jmethodID boxLong;
+        jmethodID boxDouble;
+        boxLong = env->GetStaticMethodID(longClass, "valueOf", "(J)Ljava/lang/Long;");
+        boxDouble = env->GetStaticMethodID(doubleClass, "valueOf", "(D)Ljava/lang/Double;");
+
 
         if ( connection.get() == nullptr ) {
             jniThrowException(env,
@@ -1377,69 +1231,157 @@ namespace org_opendatakit {
             return 0L;
         }
 
-        CWMethod aMethod[] = {
-                {0, "clear",         "()V"},
-                {0, "setNumColumns", "(I)Z"},
-                {0, "allocRow",      "()Z"},
-                {0, "freeLastRow",   "()V"},
-                {0, "putNull",       "(II)Z"},
-                {0, "putLong",       "(JII)Z"},
-                {0, "putDouble",     "(DII)Z"},
-                {0, "putString",     "(Ljava/lang/String;II)Z"},
-                {0, "putBlob",       "([BII)Z"},
-        };
-
-        /* Class android.database.CursorWindow */
-        ScopedLocalRef<jclass> cls(env, env->FindClass("android/database/CursorWindow"));
-        /* Locate all required CursorWindow methods. */
-        for (int i = 0; i < (sizeof(aMethod) / sizeof(struct CWMethod)); i++) {
-            aMethod[i].id = env->GetMethodID(cls.get(), aMethod[i].zName, aMethod[i].zSig);
-            if (aMethod[i].id == nullptr) {
-                std::ostringstream stringStream;
-                stringStream << "Failed to find method CursorWindow." << aMethod[i].zName << "()";
-                jniThrowException(env, "java/lang/Exception", stringStream.str().c_str());
-                return 0L;
-            }
-        }
-
         /* Set the number of columns in the window */
         int nCol = sqlite3_column_count(statement);
 
-        env->CallVoidMethod(win, aMethod[CW_CLEAR].id);
-        jboolean bOk = env->CallBooleanMethod(win, aMethod[CW_SETNUMCOLUMNS].id, (jint) nCol);
-        if (bOk == 0) {
-            return 0L;
-        }
+        // contentsArchive is only used if contents gets bigger than inc_size
+        jobjectArray contentsArchive = 0L;
+        std::vector< jobject > contents;
+        std::vector< char > dataTypes(nCol, 0);
+        const char INTEGER_TYPE = 0x1;
+        const char DOUBLE_TYPE = 0x2;
+        const char STRING_TYPE = 0x4;
+        const char BYTEARRAY_TYPE = 0x8;
 
-        int nRow = 0;
-        int iStart = startPos;
-        while (sqlite3_step(statement) == SQLITE_ROW) {
-            /* Only copy in rows that occur at or after row index iStart. */
-            if (nRow >= iStart && bOk) {
-                bOk = copyRowToWindow(env, win, (nRow - iStart), statement, aMethod);
-                if (bOk == 0) {
-                    /* The CursorWindow object ran out of memory. If row iRowRequired was
-                    ** not successfully added before this happened, clear the CursorWindow
-                    ** and try to add the current row again.  */
-                    if (nRow <= iRowRequired) {
-                        env->CallVoidMethod(win, aMethod[CW_CLEAR].id);
-                        bOk = env->CallBooleanMethod(win, aMethod[CW_SETNUMCOLUMNS].id, (jint) nCol);
-                        if (bOk == 0) {
-                            sqlite3_reset(statement);
-                            return 0L;
-                        }
-                        iStart = nRow;
-                        bOk = copyRowToWindow(env, win, (nRow - iStart), statement, aMethod);
+        // build the headings row
+        {
+            jobjectArray headings(env->NewObjectArray(nCol, stringClass, 0L));
+
+            for (int i = 0; i < nCol; ++i) {
+                // sqlite3_column_name16 returns a null-terminated UTF-16 string.
+                const jchar *name = static_cast<const jchar *>(sqlite3_column_name16(statement, i));
+                if (name) {
+                    size_t length = 0;
+                    while (name[length]) {
+                        length += 1;
                     }
-
-                    /* If the CursorWindow is still full and the countAllRows flag is not
-                    ** set, break out of the loop here. If countAllRows is set, continue
-                    ** so as to set variable nRow correctly.  */
-                    if (bOk == 0 && countAllRows == 0) break;
+                    jstring val(env->NewString(name, length));
+                    env->SetObjectArrayElement(headings, i, val);
+                    env->DeleteLocalRef(val);
+                } else {
+                    env->SetObjectArrayElement(headings, i, 0L);
                 }
             }
 
-            nRow++;
+            contents.push_back(headings);
+        }
+        // build a column data-type row (placeholder)
+        {
+            jcharArray dataTypes(env->NewCharArray(nCol));
+            contents.push_back(dataTypes);
+        }
+
+
+        int iRow = 0;
+        while (sqlite3_step(statement) == SQLITE_ROW) {
+            jobjectArray row(env->NewObjectArray(nCol, objectClass, 0L));
+
+            if ( env->ExceptionCheck() == JNI_TRUE ) {
+                // exception (e.g., OutOfMemoryException)
+                return 0L;
+            }
+
+            /*
+            ** Append the contents of the row that SQL statement statement currently points to
+            ** to the contents array.
+            */
+            for (int i = 0; i < nCol; i++) {
+                switch (sqlite3_column_type(statement, i)) {
+                    case SQLITE_NULL: {
+                        env->SetObjectArrayElement(row, i, 0L);
+                        break;
+                    }
+
+                    case SQLITE_INTEGER: {
+                        jlong val = sqlite3_column_int64(statement, i);
+                        jobject boxedLong(env->CallStaticObjectMethod(longClass, boxLong, val));
+                        env->SetObjectArrayElement(row, i, boxedLong);
+                        env->DeleteLocalRef(boxedLong);
+                        dataTypes[i] = dataTypes[i] | INTEGER_TYPE;
+                        break;
+                    }
+
+                    case SQLITE_FLOAT: {
+                        jdouble val = sqlite3_column_double(statement, i);
+                        jobject boxedDouble(env->CallStaticObjectMethod(doubleClass, boxDouble, val));
+                        env->SetObjectArrayElement(row, i, boxedDouble);
+                        env->DeleteLocalRef(boxedDouble);
+                        dataTypes[i] = dataTypes[i] | DOUBLE_TYPE;
+                        break;
+                    }
+
+                    case SQLITE_TEXT: {
+                        // Strings returned by sqlite3_column_text16() are always null terminated.
+                        jchar *pStr = (jchar *) sqlite3_column_text16(statement, i);
+                        if (pStr) {
+                            size_t nStr = 0;
+                            while (pStr[nStr]) {
+                                nStr += 1;
+                            }
+                            jstring val(env->NewString(pStr, nStr));
+                            env->SetObjectArrayElement(row, i, val);
+                            env->DeleteLocalRef(val);
+                            dataTypes[i] = dataTypes[i] | STRING_TYPE;
+                        } else {
+                            env->SetObjectArrayElement(row, i, 0L);
+                        }
+                        break;
+                    }
+
+                    default: {
+                        if (sqlite3_column_type(statement, i) == SQLITE_BLOB) {
+                            const jbyte *p = (const jbyte *) sqlite3_column_blob(statement, i);
+                            if (p) {
+                                int n = sqlite3_column_bytes(statement, i);
+                                jbyteArray val(env->NewByteArray(n));
+                                env->SetByteArrayRegion(val, 0, n, p);
+                                env->SetObjectArrayElement(row, i, val);
+                                env->DeleteLocalRef(val);
+                                dataTypes[i] = dataTypes[i] | BYTEARRAY_TYPE;
+                            } else {
+                                env->SetObjectArrayElement(row, i, 0L);
+                            }
+                        } else {
+                            throw_sqlite3_exception_db(env, connectionPtr, connection.get(),
+                                                       "SQL statement did not complete sucessfully.");
+                            return 0L;
+                        }
+                        break;
+                    }
+                }
+            }
+            contents.push_back(row);
+            if ( contents.size() == inc_size ) {
+                if ( contentsArchive == 0L ) {
+                    // first time
+                    contentsArchive = env->NewObjectArray(inc_size, objectClass, 0L);
+                    for ( int i = 0 ; i < contents.size() ; ++i ) {
+                        jobject oa = contents[i];
+                        contents[i] = 0L;
+                        env->SetObjectArrayElement(contentsArchive, i, oa);
+                        env->DeleteLocalRef(oa);
+                    }
+                } else {
+                    // append to existing list
+                    jsize size = env->GetArrayLength(contentsArchive);
+                    jobjectArray newArchive = env->NewObjectArray(size+inc_size, objectClass, 0L);
+                    for ( int i = 0 ; i < size ; ++i ) {
+                        jobject oa = env->GetObjectArrayElement(contentsArchive, i);
+                        env->SetObjectArrayElement(newArchive, i, oa);
+                        env->DeleteLocalRef(oa);
+                    }
+                    env->DeleteLocalRef(contentsArchive);
+                    contentsArchive = newArchive;
+                    for ( int i = 0 ; i < contents.size() ; ++i ) {
+                        jobject oa = contents[i];
+                        contents[i] = 0L;
+                        env->SetObjectArrayElement(contentsArchive, size+i, oa);
+                        env->DeleteLocalRef(oa);
+                    }
+                }
+                contents.clear();
+            }
+            iRow++;
         }
 
         /* Finalize the statement. If this indicates an error occurred, throw an
@@ -1447,28 +1389,92 @@ namespace org_opendatakit {
         int rc = sqlite3_reset(statement);
         if (rc != SQLITE_OK) {
             throw_sqlite3_exception_db(env, connectionPtr, connection.get(),
-                  "SQL statement did not complete sucessfullly.");
+                                       "SQL statement did not complete sucessfully.");
             return 0L;
         }
 
-        jlong lRet = jlong(iStart) << 32 | jlong(nRow);
-        return lRet;
-    }
-
-    jint getDbLookasideUsed(JNIEnv *env, jlong connectionPtr) {
-        ActiveConnection connection(connectionPtr);
-
-        if ( connection.get() == nullptr ) {
-            jniThrowException(env,
-                              "org/sqlite/database/sqlite/SQLiteException",
-                              "Connection already closed");
-            return -1;
+        inc_size = contents.size();
+        if ( !contents.empty() ) {
+            if ( contentsArchive == 0L ) {
+                // first time
+                contentsArchive = env->NewObjectArray(inc_size, objectClass, 0L);
+                for ( int i = 0 ; i < contents.size() ; ++i ) {
+                    jobject oa = contents[i];
+                    contents[i] = 0L;
+                    env->SetObjectArrayElement(contentsArchive, i, oa);
+                    env->DeleteLocalRef(oa);
+                }
+            } else {
+                // append to existing list
+                jsize size = env->GetArrayLength(contentsArchive);
+                jobjectArray newArchive = env->NewObjectArray(size+inc_size, objectClass, 0L);
+                for ( int i = 0 ; i < size ; ++i ) {
+                    jobject oa = env->GetObjectArrayElement(contentsArchive, i);
+                    env->SetObjectArrayElement(newArchive, i, oa);
+                    env->DeleteLocalRef(oa);
+                }
+                env->DeleteLocalRef(contentsArchive);
+                contentsArchive = newArchive;
+                for ( int i = 0 ; i < contents.size() ; ++i ) {
+                    jobject oa = contents[i];
+                    contents[i] = 0L;
+                    env->SetObjectArrayElement(contentsArchive, size+i, oa);
+                    env->DeleteLocalRef(oa);
+                }
+            }
+            contents.clear();
         }
 
-        int cur = -1;
-        int unused;
-        sqlite3_db_status(connection.get()->db, SQLITE_DBSTATUS_LOOKASIDE_USED, &cur, &unused, 0);
-        return cur;
+        // finally: update the dataTypes object array with type strings
+        if ( contentsArchive != 0L && env->GetArrayLength(contentsArchive) >= 2) {
+            jcharArray oa = (jcharArray) env->GetObjectArrayElement(contentsArchive, 1);
+            jchar* oachars = env->GetCharArrayElements(oa, nullptr);
+
+            const jchar nullType = 'n';
+            const jchar stringType = 's';
+            const jchar longType = 'l';
+            const jchar doubleType = 'd';
+            const jchar byteArrayType = 'b';
+            const jchar objectType = 'o';
+
+            for ( int i = 0 ; i < nCol ; ++i ) {
+                char type = dataTypes[i];
+                switch ( type ) {
+                    case 0:
+                        // null values only
+                        oachars[i] = nullType;
+                        break;
+                    case INTEGER_TYPE:
+                        // long values only
+                        oachars[i] = longType;
+                        break;
+                    case DOUBLE_TYPE:
+                        // double values only
+                        oachars[i] = doubleType;
+                        break;
+                    case STRING_TYPE:
+                        // string values only
+                        oachars[i] = stringType;
+                        break;
+                    case BYTEARRAY_TYPE:
+                        // byte[] values only
+                        oachars[i] = byteArrayType;
+                        break;
+                    default:
+                        // overloaded values
+                        oachars[i] = objectType;
+                        break;
+                }
+            }
+            env->ReleaseCharArrayElements(oa, oachars, 0);
+        }
+
+        if ( env->ExceptionCheck() == JNI_TRUE ) {
+            // exception (e.g., OutOfMemoryException)
+            return 0L;
+        }
+
+        return contentsArchive;
     }
 
     void cancel(JNIEnv *env, jlong connectionPtr) {
