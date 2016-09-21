@@ -96,8 +96,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     private static final String TAG = "SQLiteConnection";
     private static final boolean DEBUG = false;
 
-    private static final String[] EMPTY_STRING_ARRAY = new String[0];
-
   static {
     // load the shared stlport library
     System.loadLibrary("stlport_shared");
@@ -118,8 +116,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * the native database object can be closed.  So no finalizers here.
     */
    private static final class PreparedStatement {
-      // Next item in pool.
-      public PreparedStatement mPoolNext;
 
       // The SQL from which the statement was prepared.
       public String mSql;
@@ -863,14 +859,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          return null;
       }
 
-      int actualPos = -1;
-      int countedRows = -1;
-      int filledRows = -1;
-      Object[] result = null;
       synchronized (mConnectionPtrMutex) {
          if (mConnectionPtr == 0L) {
             throw new SQLiteException("connection closed");
          }
+         Object[] result = null;
          final int cookie = mRecentOperations
              .beginOperation(mSessionQualifier, "executeForCursor", sql, bindArgs);
          try {
@@ -893,10 +886,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             mRecentOperations.endOperationDeferLogAdditional(cookie,
                 "countedRows=" + ((result != null) ? result.length-1 : 0));
          }
-      }
-      if ( result != null && result.length > 0 ) {
-         SQLiteMemoryCursor cursor = new SQLiteMemoryCursor(result);
-         return cursor;
+         if ( result != null && result.length > 0 ) {
+            SQLiteMemoryCursor cursor = new SQLiteMemoryCursor(result);
+            return cursor;
+         }
       }
       return null;
    }
@@ -1105,24 +1098,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       String sql = buildQueryString(
           distinct, table, columns, selection, groupBy, having, orderBy, limit);
 
-      return rawQuery(sql, selectionArgs, cancellationSignal);
+      return executeForCursor(sql, selectionArgs, cancellationSignal);
    }
 
    /**
     * Runs the provided SQL and returns a {@link Cursor} over the result set.
-    *
-    * @param sql the SQL query. The SQL string must not be ; terminated
-    * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    */
-   public Cursor rawQuery(String sql, Object[] selectionArgs) {
-      return rawQuery(sql, selectionArgs, null);
-   }
-
-   /**
-    * Runs the provided SQL and returns a cursor over the result set.
     *
     * @param sql the SQL query. The SQL string must not be ; terminated
     * @param selectionArgs You may include ?s in where clause in the query,
@@ -1133,10 +1113,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @return A {@link Cursor} object, which is positioned before the first entry. Note that
     * {@link Cursor}s are not synchronized, see the documentation for more details.
     */
-   public Cursor rawQuery(
-       String sql, Object[] selectionArgs,
-       CancellationSignal cancellationSignal) {
-      return rawQueryImpl(sql, selectionArgs, cancellationSignal);
+   public Cursor rawQuery(String sql, Object[] selectionArgs, CancellationSignal cancellationSignal) {
+      return executeForCursor(sql, selectionArgs, cancellationSignal);
    }
 
    /**
@@ -1919,74 +1897,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
        }
     }
 
-   /**
-    * Runs the provided SQL and returns a cursor over the result set.
-    *
-    * @param sql the SQL query. The SQL string must not be ; terminated
-    * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs. The
-    *     values will be bound as Strings.
-    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * If the operation is canceled, then {@link OperationCanceledException} will be thrown
-    * when the query is executed.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    */
-   private Cursor rawQueryImpl(
-       String sql, Object[] selectionArgs,
-       CancellationSignal cancellationSignal) {
-
-      if (sql == null) {
-         throw new IllegalArgumentException("sql must not be null.");
-      }
-
-      if (cancellationSignal != null) {
-         cancellationSignal.throwIfCanceled();
-      }
-
-      synchronized (mConnectionPtrMutex) {
-
-         SQLiteStatementInfo info = new SQLiteStatementInfo();
-
-         if (mConnectionPtr == 0L) {
-            throw new SQLiteException("connection closed");
-         }
-
-         final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "prepare", sql,
-             null);
-         try {
-            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(
-                sql);
-            try {
-               if (info != null) {
-                  info.numParameters = statement.mNumParameters;
-                  info.readOnly = statement.mReadOnly;
-               }
-            } finally {
-               mPreparedStatementCache.releasePreparedStatement(statement);
-            }
-         } catch (Throwable t) {
-            mRecentOperations.failOperation(cookie, t);
-            throw t;
-         } finally {
-            mRecentOperations.endOperation(cookie);
-         }
-
-         int selectionArgLength = (selectionArgs == null) ? 0 : selectionArgs.length;
-         if (selectionArgLength != info.numParameters) {
-            throw new IllegalArgumentException(
-                "Incorrect number of bind arguments supplied.  " + selectionArgLength + " arguments "
-                    + "were provided but the statement needs " + info.numParameters + " arguments.");
-         }
-         try {
-            SQLiteMemoryCursor cursor = executeForCursor(sql, selectionArgs, cancellationSignal);
-            return cursor;
-         } catch (RuntimeException ex) {
-            throw ex;
-         }
-      }
-   }
-
     /**
      * Executes a statement that returns the row id of the last row inserted
      * by the statement.  Use for INSERT SQL statements.
@@ -2213,8 +2123,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
 
        private final PreparedStatementCacheImpl impl;
 
-       private PreparedStatement mPreparedStatementPool;
-
       PreparedStatementCache(int size) {
          impl = new PreparedStatementCacheImpl(size);
       }
@@ -2334,6 +2242,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                   impl.remove(statement.mSql);
                }
             } else {
+               // what is in the LRU doesn't match this statement; work independently.
                try {
                   if ( mConnectionPtr != 0L && statement.mStatementPtr != 0L ) {
                      nativeFinalizeStatement(mConnectionPtr, statement.mStatementPtr);
@@ -2344,7 +2253,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                       + "SQL: " + AppNameSharedStateContainer.trimSqlForDisplay(statement.mSql));
                   getLogger().printStackTrace(t);
                } finally {
-                  recyclePreparedStatement(statement);
+                  statement.mSql = null;
                }
             }
          }
@@ -2365,13 +2274,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       private PreparedStatement obtainPreparedStatement(String sql, long statementPtr,
           int numParameters, int type, boolean readOnly) {
          synchronized (impl) {
-            PreparedStatement statement = mPreparedStatementPool;
-            if (statement != null) {
-               mPreparedStatementPool = statement.mPoolNext;
-               statement.mPoolNext = null;
-            } else {
-               statement = new PreparedStatement();
-            }
+            PreparedStatement statement = new PreparedStatement();
+
             statement.mSql = sql;
             statement.mStatementPtr = statementPtr;
             statement.mNumParameters = numParameters;
@@ -2379,20 +2283,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             statement.mReadOnly = readOnly;
             statement.mInUse = true;
             return statement;
-         }
-      }
-
-      /**
-       * Puts the returned statement on the re-use pool.
-       * No interaction with LRU cache.
-       *
-       * @param statement
-       */
-      private void recyclePreparedStatement(PreparedStatement statement) {
-         synchronized (impl) {
-            statement.mSql = null;
-            statement.mPoolNext = mPreparedStatementPool;
-            mPreparedStatementPool = statement;
          }
       }
 

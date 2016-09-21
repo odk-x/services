@@ -543,7 +543,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
          b.toString(), null, null);;
      try {
        synchronized (mutex) {
-         return db.rawQuery(sql, selectionArgs);
+         return db.rawQuery(sql, selectionArgs, null);
        }
      } catch ( Throwable t ) {
         operationLog.failOperation(cookie, t);

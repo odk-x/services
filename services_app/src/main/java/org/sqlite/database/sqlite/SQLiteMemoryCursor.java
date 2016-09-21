@@ -35,14 +35,15 @@ public class SQLiteMemoryCursor extends AbstractCursor {
     private static final char DOUBLE_TYPE = 'd';
     private static final char BYTEARRAY_TYPE = 'b';
     private static final char OBJECT_TYPE = 'o';
+    private static final String[] NO_COLUMNS = new String[0];
 
-    private final Object[] sqliteContent;
+    private Object[] sqliteContent;
     // first row of sqliteContent
-    private final String[] columnNames;
+    private String[] columnNames;
     // second row of sqliteContent
-    private final char[] dataTypes;
+    private char[] dataTypes;
     // data rows are remaining rows of sqliteContent
-    private final int rowCount;
+    private int rowCount;
 
     /**
      * Constructs a new cursor with the given sqliteContent array
@@ -197,5 +198,17 @@ public class SQLiteMemoryCursor extends AbstractCursor {
     @Override
     public boolean isNull(int column) {
         return get(column) == null;
+    }
+
+    @Override
+    public void close() {
+        if ( !isClosed() ) {
+            super.close();
+        }
+        // release the held memory now.
+        sqliteContent = null;
+        columnNames = NO_COLUMNS;
+        dataTypes = null;
+        rowCount = 0;
     }
 }

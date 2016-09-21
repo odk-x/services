@@ -140,6 +140,10 @@ public class AppNameSharedStateContainer {
          pendingDestruction.put(dbConnection, System.currentTimeMillis());
          // remove it from the sessionQualifierConnectionMap if it is there.
          reference = sessionQualifierConnectionMap.remove(dbConnection.getSessionQualifier());
+
+         if ( sessionQualifierConnectionMap.isEmpty() ) {
+            operationLog.clearOperations();
+         }
       }
       // and report back whether the connection needs to have -1 reference adjustment.
       return ( reference != null );
