@@ -193,9 +193,12 @@ public class AndroidOdkConnection implements OdkConnectionInterface{
     try {
       int refCount = getReferenceCount();
       if (refCount != 0) {
-        WebLogger.getLogger(appName).w(getLogTag(), "finalize: expected no references -- has " + refCount);
+        WebLogger.getLogger(appName).e(getLogTag(),
+            "An AndroidOdkConnection object for database '" + appName
+                + "' sessionQualifier '" + sessionQualifier + "' was leaked!  Please fix your "
+                + "application to end transactions in progress properly and to close the "
+                + "database when it is no longer needed.");
       }
-      commonWrapUpConnection("finalize");
     } finally {
       super.finalize();
     }

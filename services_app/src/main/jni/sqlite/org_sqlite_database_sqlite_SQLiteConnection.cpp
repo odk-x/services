@@ -66,15 +66,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeO
   (JNIEnv* env, jclass clazz, jstring pathStr, jint openFlags,
         jstring labelStr, jboolean enableTrace, jboolean enableProfile) {
 
-    const char* pathChars = env->GetStringUTFChars(pathStr, nullptr);
-    const char* labelChars = env->GetStringUTFChars(labelStr, nullptr);
-
-    jlong connection = openConnection(env, pathChars, openFlags, labelChars, enableTrace, enableProfile);
-
-    env->ReleaseStringUTFChars(pathStr, pathChars);
-    env->ReleaseStringUTFChars(labelStr, labelChars);
-
-    return connection;
+    return openConnection(env, pathStr, openFlags, labelStr, enableTrace, enableProfile);
 }
 
 /*
@@ -96,8 +88,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCl
 JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativePrepareStatement
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jstring sqlString) {
 
-    jlong statementId = prepareStatement(env, connectionPtr, sqlString);
-    return statementId;
+    return prepareStatement(env, connectionPtr, sqlString);
 }
 
 /*
@@ -174,12 +165,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindString
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index, jstring valueString) {
 
-    jsize valueLength = env->GetStringLength(valueString);
-    const jchar* value = env->GetStringChars(valueString, nullptr);
-
-    bindString(env, connectionPtr, statementPtr, index, value, valueLength);
-
-    env->ReleaseStringChars(valueString, value);
+    bindString(env, connectionPtr, statementPtr, index, valueString);
 }
 
 /*
@@ -191,12 +177,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
   (JNIEnv* env, jclass clazz, jlong connectionPtr,
         jlong statementPtr, jint index, jbyteArray valueArray) {
 
-    jsize valueLength = env->GetArrayLength(valueArray);
-    jbyte* value = env->GetByteArrayElements(valueArray, nullptr);
-
-    bindBlob(env, connectionPtr, statementPtr, index, value, valueLength);
-
-    env->ReleaseByteArrayElements(valueArray, value, JNI_ABORT);
+    bindBlob(env, connectionPtr, statementPtr, index, valueArray);
 }
 
 /*

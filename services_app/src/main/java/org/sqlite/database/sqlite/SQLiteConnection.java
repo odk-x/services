@@ -34,8 +34,6 @@ import org.opendatakit.common.android.logging.WebLoggerIf;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.database.Cursor;
-import android.database.CursorWindow;
-import android.database.DatabaseUtils;
 import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import android.os.CancellationSignal;
@@ -44,6 +42,7 @@ import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -836,9 +835,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
    /**
-    * Executes a statement and populates the specified {@link CursorWindow}
-    * with a range of results.  Returns the number of rows that were counted
-    * during query execution.
+    * Executes a statement and returns a {@link SQLiteMemoryCursor}
+    * with the full result set.
     *
     * @param sql The SQL statement to execute.
     * @param bindArgs The arguments to bind, or null if none.
@@ -894,6 +892,75 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       return null;
    }
 
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_SELECT = 1;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_UPDATE = 2;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_ATTACH = 3;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_BEGIN = 4;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_COMMIT = 5;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_ABORT = 6;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_PRAGMA = 7;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_DDL = 8;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_UNPREPARED = 9;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_OTHER = 99;
+
+   /**
+    * Returns one of the following which represent the type of the given SQL statement.
+    * <ol>
+    *   <li>{@link #STATEMENT_SELECT}</li>
+    *   <li>{@link #STATEMENT_UPDATE}</li>
+    *   <li>{@link #STATEMENT_ATTACH}</li>
+    *   <li>{@link #STATEMENT_BEGIN}</li>
+    *   <li>{@link #STATEMENT_COMMIT}</li>
+    *   <li>{@link #STATEMENT_ABORT}</li>
+    *   <li>{@link #STATEMENT_OTHER}</li>
+    * </ol>
+    * @param sql the SQL statement whose type is returned by this method
+    * @return one of the values listed above
+    */
+   public static int getSqlStatementType(String sql) {
+      sql = sql.trim();
+      if (sql.length() < 3) {
+         return STATEMENT_OTHER;
+      }
+      String prefixSql = sql.substring(0, 3).toUpperCase(Locale.ENGLISH);
+      if (prefixSql.equals("SEL")) {
+         return STATEMENT_SELECT;
+      } else if (prefixSql.equals("INS") ||
+          prefixSql.equals("UPD") ||
+          prefixSql.equals("REP") ||
+          prefixSql.equals("DEL")) {
+         return STATEMENT_UPDATE;
+      } else if (prefixSql.equals("ATT")) {
+         return STATEMENT_ATTACH;
+      } else if (prefixSql.equals("COM")) {
+         return STATEMENT_COMMIT;
+      } else if (prefixSql.equals("END")) {
+         return STATEMENT_COMMIT;
+      } else if (prefixSql.equals("ROL")) {
+         return STATEMENT_ABORT;
+      } else if (prefixSql.equals("BEG")) {
+         return STATEMENT_BEGIN;
+      } else if (prefixSql.equals("PRA")) {
+         return STATEMENT_PRAGMA;
+      } else if (prefixSql.equals("CRE") || prefixSql.equals("DRO") ||
+          prefixSql.equals("ALT")) {
+         return STATEMENT_DDL;
+      } else if (prefixSql.equals("ANA") || prefixSql.equals("DET")) {
+         return STATEMENT_UNPREPARED;
+      }
+      return STATEMENT_OTHER;
+   }
+
    /**
     * Performs special reinterpretation of certain SQL statements such as "BEGIN",
     * "COMMIT" and "ROLLBACK" to ensure that transaction state invariants are
@@ -923,17 +990,17 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          cancellationSignal.throwIfCanceled();
       }
 
-      final int type = DatabaseUtils.getSqlStatementType(sql);
+      final int type = getSqlStatementType(sql);
       switch (type) {
-      case DatabaseUtils.STATEMENT_BEGIN:
+      case STATEMENT_BEGIN:
          beginTransactionNonExclusive(cancellationSignal);
          return true;
 
-      case DatabaseUtils.STATEMENT_COMMIT:
+      case STATEMENT_COMMIT:
          commitTransactionImpl(cancellationSignal);
          return true;
 
-      case DatabaseUtils.STATEMENT_ABORT:
+      case STATEMENT_ABORT:
          endTransaction(cancellationSignal);
          return true;
       }
@@ -2185,10 +2252,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             final long statementPtr = nativePrepareStatement(mConnectionPtr, sql);
             try {
                final int numParameters = nativeGetParameterCount(mConnectionPtr, statementPtr);
-               final int type = DatabaseUtils.getSqlStatementType(sql);
+               final int type = getSqlStatementType(sql);
                final boolean readOnly = nativeIsReadOnly(mConnectionPtr, statementPtr);
 
-               if (type == DatabaseUtils.STATEMENT_DDL ) {
+               if (type == STATEMENT_DDL ) {
                   impl.evictAll();
                }
 
@@ -2287,7 +2354,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
 
       private boolean isCacheable(int statementType) {
-         if (statementType == DatabaseUtils.STATEMENT_UPDATE || statementType == DatabaseUtils.STATEMENT_SELECT) {
+         if (statementType == STATEMENT_UPDATE || statementType == STATEMENT_SELECT) {
             return true;
          }
          return false;

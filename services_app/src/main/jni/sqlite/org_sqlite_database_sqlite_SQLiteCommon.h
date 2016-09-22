@@ -20,7 +20,7 @@ namespace org_opendatakit {
 void sqliteInitialize(JNIEnv* env);
 
 jlong openConnection(JNIEnv* env,
-                     const char* path, jint openFlags, const char* label,
+                     jstring pathStr, jint openFlags, jstring labelStr,
                      jboolean enableTrace, jboolean enableProfile);
 
 void closeConnection(JNIEnv* env, jlong connectionPtr);
@@ -42,10 +42,10 @@ void bindDouble(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
       jdouble value);
 
 void bindString(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
-      const jchar* value, size_t valueLength);
+      jstring valueString);
 
 void bindBlob(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
-      const jbyte* value, size_t valueLength);
+      jbyteArray valueArray);
 
 void resetAndClearBindings(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
