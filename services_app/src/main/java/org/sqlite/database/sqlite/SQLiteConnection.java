@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2016 University of Washington
+ *
+ * Extensively modified interface to C++ sqlite codebase
+ *
  * Copyright (C) 2011 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +29,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import org.opendatakit.common.android.database.AppNameSharedStateContainer;
 import org.opendatakit.common.android.database.OperationLog;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.logging.WebLoggerIf;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.database.Cursor;
-import android.database.CursorWindow;
-import android.database.DatabaseUtils;
-import org.opendatakit.common.android.logging.WebLoggerIf;
 import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import android.os.CancellationSignal;
@@ -40,9 +42,8 @@ import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -91,19 +92,17 @@ import java.util.regex.Pattern;
  * @hide
  */
 public final class SQLiteConnection extends SQLiteClosable implements CancellationSignal.OnCancelListener {
-    private static final String TAG = "SQLiteConnection";
-    private static final boolean DEBUG = false;
+   private static final String TAG = "SQLiteConnection";
+   private static final boolean DEBUG = false;
 
-    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+   static {
+      // load the shared stlport library
+      System.loadLibrary("stlport_shared");
+      // loads our custom libsqliteX.so
+      System.loadLibrary("sqliteX");
 
-  static {
-    // load the shared stlport library
-    System.loadLibrary("stlport_shared");
-    // loads our custom libsqliteX.so
-    System.loadLibrary("sqliteX");
-
-    nativeInit();
-  }
+      nativeInit();
+   }
 
    /**
     * Holder type for a prepared statement.
@@ -116,8 +115,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * the native database object can be closed.  So no finalizers here.
     */
    private static final class PreparedStatement {
-      // Next item in pool.
-      public PreparedStatement mPoolNext;
 
       // The SQL from which the statement was prepared.
       public String mSql;
@@ -332,9 +329,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native void nativeFinalizeStatement(long connectionPtr, long statementPtr);
    private static native int nativeGetParameterCount(long connectionPtr, long statementPtr);
    private static native boolean nativeIsReadOnly(long connectionPtr, long statementPtr);
-   private static native int nativeGetColumnCount(long connectionPtr, long statementPtr);
-   private static native String nativeGetColumnName(long connectionPtr, long statementPtr,
-       int index);
    private static native void nativeBindNull(long connectionPtr, long statementPtr,
        int index);
    private static native void nativeBindLong(long connectionPtr, long statementPtr,
@@ -353,10 +347,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static native int nativeExecuteForChangedRowCount(long connectionPtr, long statementPtr);
    private static native long nativeExecuteForLastInsertedRowId(
        long connectionPtr, long statementPtr);
-   private static native long nativeExecuteForCursorWindow(
-       long connectionPtr, long statementPtr, CursorWindow win,
-       int startPos, int requiredPos, boolean countAllRows);
-   private static native int nativeGetDbLookaside(long connectionPtr);
+   private static native Object[] nativeExecuteForObjectArray(
+       long connectionPtr, long statementPtr);
    private static native void nativeCancel(long connectionPtr);
    private static native void nativeResetCancel(long connectionPtr, boolean cancelable);
 
@@ -502,21 +494,21 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * This can be accessed outside of locks
     * Thread safe.
     */
-    private final SQLiteDatabaseConfiguration mConfiguration;
+   private final SQLiteDatabaseConfiguration mConfiguration;
 
    /**
     * Session qualifier supplied by user.
     * This can be accessed outside of locks
     * Thread safe.
     */
-    private final String mSessionQualifier;
+   private final String mSessionQualifier;
 
    /**
     * The operations log.
     * This can be accessed outside of locks
     * Thread safe.
     */
-    private final OperationLog mRecentOperations;
+   private final OperationLog mRecentOperations;
 
    // Error handler to be used when SQLite returns corruption errors.
    // This can be accessed outside of locks
@@ -541,7 +533,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *
     * <em>Should be accessed within the mConnectionPtrMutex lock</em>
     */
-    private long mConnectionPtr = 0L;
+   private long mConnectionPtr = 0L;
 
    /**
     * The number of times attachCancellationSignal has been called.
@@ -551,7 +543,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     *
     * <em>Should be accessed within the mConnectionPtrMutex lock</em>
     */
-    private int mCancellationSignalAttachCount;
+   private int mCancellationSignalAttachCount;
 
    /**
     * Tracks whether this SQLiteConnection has been closed/released
@@ -561,30 +553,22 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     */
    private String mAllocationReference;
 
-   /**
-    * Tracks all open cursors.
-    *
-    * <em>Should be accessed within the mConnectionPtrMutex lock</em>
-    */
-   private WeakHashMap<SQLiteCursor, Object> mActiveCursors = new
-       WeakHashMap<SQLiteCursor, Object>();
-
    public SQLiteConnection(SQLiteDatabaseConfiguration configuration,
-                             OperationLog recentOperations,
-                             DatabaseErrorHandler errorHandler,
-                             String sessionQualifier) {
-        mConfiguration = new SQLiteDatabaseConfiguration(configuration);
-        mRecentOperations = recentOperations;
-        mErrorHandler = (errorHandler != null) ? errorHandler : new DefaultDatabaseErrorHandler();
-        mSessionQualifier = sessionQualifier;
-        mAllocationReference = mConfiguration.appName + " " + mSessionQualifier;
-        mTransactionManager = new SQLiteTransactionManager();
-        mPreparedStatementCache = new PreparedStatementCache(mConfiguration.maxSqlCacheSize);
-    }
+       OperationLog recentOperations,
+       DatabaseErrorHandler errorHandler,
+       String sessionQualifier) {
+      mConfiguration = new SQLiteDatabaseConfiguration(configuration);
+      mRecentOperations = recentOperations;
+      mErrorHandler = (errorHandler != null) ? errorHandler : new DefaultDatabaseErrorHandler();
+      mSessionQualifier = sessionQualifier;
+      mAllocationReference = mConfiguration.appName + " " + mSessionQualifier;
+      mTransactionManager = new SQLiteTransactionManager();
+      mPreparedStatementCache = new PreparedStatementCache(mConfiguration.maxSqlCacheSize);
+   }
 
-    public WebLoggerIf getLogger() {
+   public WebLoggerIf getLogger() {
       return WebLogger.getLogger(mConfiguration.appName);
-    }
+   }
 
    public String getAppName() {
       return mConfiguration.appName;
@@ -851,44 +835,130 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
    /**
-    * Executes a statement and populates the specified {@link CursorWindow}
-    * with a range of results.  Returns the number of rows that were counted
-    * during query execution.
+    * Executes a statement and returns a {@link SQLiteMemoryCursor}
+    * with the full result set.
     *
     * @param sql The SQL statement to execute.
     * @param bindArgs The arguments to bind, or null if none.
-    * @param window The cursor window to clear and fill.
-    * @param startPos The start position for filling the window.
-    * @param requiredPos The position of a row that MUST be in the window.
-    * If it won't fit, then the query should discard part of what it filled
-    * so that it does.  Must be greater than or equal to <code>startPos</code>.
-    * @param countAllRows True to count all rows that the query would return
-    * regagless of whether they fit in the window.
     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * @return The number of rows that were counted during query execution.  Might
-    * not be all rows in the result set unless <code>countAllRows</code> is true.
+    * @return The MatrixCursor holding the full result set.
     *
     * @throws SQLiteException if an error occurs, such as a syntax error
     * or invalid number of bind arguments.
     * @throws OperationCanceledException if the operation was canceled.
     */
-   int executeForCursorWindow(String sql, Object[] bindArgs,
-       CursorWindow window, int startPos, int requiredPos, boolean countAllRows,
+   SQLiteMemoryCursor executeForCursor(String sql, Object[] bindArgs,
        CancellationSignal cancellationSignal) {
       if (sql == null) {
          throw new IllegalArgumentException("sql must not be null.");
       }
-      if (window == null) {
-         throw new IllegalArgumentException("window must not be null.");
-      }
 
       if (executeSpecial(sql, bindArgs, cancellationSignal)) {
-         window.clear();
-         return 0;
+         return null;
       }
 
-      return executeForCursorWindowImpl(sql, bindArgs, window, startPos, requiredPos,
-          countAllRows, cancellationSignal); // might throw
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         Object[] result = null;
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeForCursor", sql, bindArgs);
+         try {
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
+            try {
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  result = nativeExecuteForObjectArray(mConnectionPtr, statement.mStatementPtr);
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
+            }
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperationDeferLogAdditional(cookie,
+                "countedRows=" + ((result != null) ? result.length-1 : 0));
+         }
+         if ( result != null && result.length > 0 ) {
+            SQLiteMemoryCursor cursor = new SQLiteMemoryCursor(result);
+            return cursor;
+         }
+      }
+      return null;
+   }
+
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_SELECT = 1;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_UPDATE = 2;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_ATTACH = 3;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_BEGIN = 4;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_COMMIT = 5;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_ABORT = 6;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_PRAGMA = 7;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_DDL = 8;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_UNPREPARED = 9;
+   /** One of the values returned by {@link #getSqlStatementType(String)}. */
+   public static final int STATEMENT_OTHER = 99;
+
+   /**
+    * Returns one of the following which represent the type of the given SQL statement.
+    * <ol>
+    *   <li>{@link #STATEMENT_SELECT}</li>
+    *   <li>{@link #STATEMENT_UPDATE}</li>
+    *   <li>{@link #STATEMENT_ATTACH}</li>
+    *   <li>{@link #STATEMENT_BEGIN}</li>
+    *   <li>{@link #STATEMENT_COMMIT}</li>
+    *   <li>{@link #STATEMENT_ABORT}</li>
+    *   <li>{@link #STATEMENT_OTHER}</li>
+    * </ol>
+    * @param sql the SQL statement whose type is returned by this method
+    * @return one of the values listed above
+    */
+   public static int getSqlStatementType(String sql) {
+      sql = sql.trim();
+      if (sql.length() < 3) {
+         return STATEMENT_OTHER;
+      }
+      String prefixSql = sql.substring(0, 3).toUpperCase(Locale.ENGLISH);
+      if (prefixSql.equals("SEL")) {
+         return STATEMENT_SELECT;
+      } else if (prefixSql.equals("INS") ||
+          prefixSql.equals("UPD") ||
+          prefixSql.equals("REP") ||
+          prefixSql.equals("DEL")) {
+         return STATEMENT_UPDATE;
+      } else if (prefixSql.equals("ATT")) {
+         return STATEMENT_ATTACH;
+      } else if (prefixSql.equals("COM")) {
+         return STATEMENT_COMMIT;
+      } else if (prefixSql.equals("END")) {
+         return STATEMENT_COMMIT;
+      } else if (prefixSql.equals("ROL")) {
+         return STATEMENT_ABORT;
+      } else if (prefixSql.equals("BEG")) {
+         return STATEMENT_BEGIN;
+      } else if (prefixSql.equals("PRA")) {
+         return STATEMENT_PRAGMA;
+      } else if (prefixSql.equals("CRE") || prefixSql.equals("DRO") ||
+          prefixSql.equals("ALT")) {
+         return STATEMENT_DDL;
+      } else if (prefixSql.equals("ANA") || prefixSql.equals("DET")) {
+         return STATEMENT_UNPREPARED;
+      }
+      return STATEMENT_OTHER;
    }
 
    /**
@@ -920,17 +990,17 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          cancellationSignal.throwIfCanceled();
       }
 
-      final int type = DatabaseUtils.getSqlStatementType(sql);
+      final int type = getSqlStatementType(sql);
       switch (type) {
-      case DatabaseUtils.STATEMENT_BEGIN:
-            beginTransactionNonExclusive(cancellationSignal);
+      case STATEMENT_BEGIN:
+         beginTransactionNonExclusive(cancellationSignal);
          return true;
 
-      case DatabaseUtils.STATEMENT_COMMIT:
+      case STATEMENT_COMMIT:
          commitTransactionImpl(cancellationSignal);
          return true;
 
-      case DatabaseUtils.STATEMENT_ABORT:
+      case STATEMENT_ABORT:
          endTransaction(cancellationSignal);
          return true;
       }
@@ -1041,41 +1111,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
     *            (excluding the ORDER BY itself). Passing null will use the
     *            default sort order, which may be unordered.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    * @see Cursor
-    */
-   public Cursor query(String table, String[] columns, String selection,
-       Object[] selectionArgs, String groupBy, String having,
-       String orderBy) {
-
-      return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, null /* limit */);
-   }
-
-   /**
-    * Query the given table, returning a {@link Cursor} over the result set.
-    *
-    * @param table The table name to compile the query against.
-    * @param columns A list of which columns to return. Passing null will
-    *            return all columns, which is discouraged to prevent reading
-    *            data from storage that isn't going to be used.
-    * @param selection A filter declaring which rows to return, formatted as an
-    *            SQL WHERE clause (excluding the WHERE itself). Passing null
-    *            will return all rows for the given table.
-    * @param selectionArgs You may include ?s in selection, which will be
-    *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection.
-    * @param groupBy A filter declaring how to group rows, formatted as an SQL
-    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
-    *            will cause the rows to not be grouped.
-    * @param having A filter declare which row groups to include in the cursor,
-    *            if row grouping is being used, formatted as an SQL HAVING
-    *            clause (excluding the HAVING itself). Passing null will cause
-    *            all row groups to be included, and is required when row
-    *            grouping is not being used.
-    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
-    *            (excluding the ORDER BY itself). Passing null will use the
-    *            default sort order, which may be unordered.
     * @param limit Limits the number of rows returned by the query,
     *            formatted as LIMIT clause. Passing null denotes no LIMIT clause.
     * @return A {@link Cursor} object, which is positioned before the first entry. Note that
@@ -1086,45 +1121,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
        Object[] selectionArgs, String groupBy, String having,
        String orderBy, String limit) {
 
-      return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-   }
-
-   /**
-    * Query the given URL, returning a {@link Cursor} over the result set.
-    *
-    * @param distinct true if you want each row to be unique, false otherwise.
-    * @param table The table name to compile the query against.
-    * @param columns A list of which columns to return. Passing null will
-    *            return all columns, which is discouraged to prevent reading
-    *            data from storage that isn't going to be used.
-    * @param selection A filter declaring which rows to return, formatted as an
-    *            SQL WHERE clause (excluding the WHERE itself). Passing null
-    *            will return all rows for the given table.
-    * @param selectionArgs You may include ?s in selection, which will be
-    *         replaced by the values from selectionArgs, in order that they
-    *         appear in the selection.
-    * @param groupBy A filter declaring how to group rows, formatted as an SQL
-    *            GROUP BY clause (excluding the GROUP BY itself). Passing null
-    *            will cause the rows to not be grouped.
-    * @param having A filter declare which row groups to include in the cursor,
-    *            if row grouping is being used, formatted as an SQL HAVING
-    *            clause (excluding the HAVING itself). Passing null will cause
-    *            all row groups to be included, and is required when row
-    *            grouping is not being used.
-    * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause
-    *            (excluding the ORDER BY itself). Passing null will use the
-    *            default sort order, which may be unordered.
-    * @param limit Limits the number of rows returned by the query,
-    *            formatted as LIMIT clause. Passing null denotes no LIMIT clause.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    * @see Cursor
-    */
-   public Cursor query(boolean distinct, String table, String[] columns,
-       String selection, Object[] selectionArgs, String groupBy,
-       String having, String orderBy, String limit) {
-      return query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy,
-          limit, null);
+      return query(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit, null);
    }
 
    /**
@@ -1168,24 +1165,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       String sql = buildQueryString(
           distinct, table, columns, selection, groupBy, having, orderBy, limit);
 
-      return rawQuery(sql, selectionArgs, cancellationSignal);
+      return executeForCursor(sql, selectionArgs, cancellationSignal);
    }
 
    /**
     * Runs the provided SQL and returns a {@link Cursor} over the result set.
-    *
-    * @param sql the SQL query. The SQL string must not be ; terminated
-    * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
-    */
-   public Cursor rawQuery(String sql, Object[] selectionArgs) {
-      return rawQuery(sql, selectionArgs, null);
-   }
-
-   /**
-    * Runs the provided SQL and returns a cursor over the result set.
     *
     * @param sql the SQL query. The SQL string must not be ; terminated
     * @param selectionArgs You may include ?s in where clause in the query,
@@ -1196,10 +1180,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * @return A {@link Cursor} object, which is positioned before the first entry. Note that
     * {@link Cursor}s are not synchronized, see the documentation for more details.
     */
-   public Cursor rawQuery(
-       String sql, Object[] selectionArgs,
-       CancellationSignal cancellationSignal) {
-      return rawQueryImpl(sql, selectionArgs, cancellationSignal);
+   public Cursor rawQuery(String sql, Object[] selectionArgs, CancellationSignal cancellationSignal) {
+      return executeForCursor(sql, selectionArgs, cancellationSignal);
    }
 
    /**
@@ -1409,16 +1391,18 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * Execute a single SQL statement that is NOT a SELECT/INSERT/UPDATE/DELETE.
     * <p>
     * For INSERT statements, use any of the following instead.
+    * Map is Map<String,Object>
     * <ul>
-    *   <li>{@link #insert(String, String, Map<String,Object>)}</li>
-    *   <li>{@link #insertOrThrow(String, String, Map<String,Object>)}</li>
-    *   <li>{@link #insertWithOnConflict(String, String, Map<String,Object>, int)}</li>
+    *   <li>{@link #insert(String, String, Map)}</li>
+    *   <li>{@link #insertOrThrow(String, String, Map)}</li>
+    *   <li>{@link #insertWithOnConflict(String, String, Map, int)}</li>
     * </ul>
     * <p>
     * For UPDATE statements, use any of the following instead.
+    * Map is Map<String,Object>
     * <ul>
-    *   <li>{@link #update(String, Map<String,Object>, String, Object[])}</li>
-    *   <li>{@link #updateWithOnConflict(String, Map<String,Object>, String, Object[], int)}</li>
+    *   <li>{@link #update(String, Map, String, Object[])}</li>
+    *   <li>{@link #updateWithOnConflict(String, Map, String, Object[], int)}</li>
     * </ul>
     * <p>
     * For DELETE statements, use any of the following instead.
@@ -1485,87 +1469,35 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "close", null,
                 null);
             try {
-              // verify that all transactions are closed...
-              while ( inTransaction()) {
+               // verify that all transactions are closed...
+               while ( inTransaction()) {
 
-                String errorMsg = "connection:" + getAppName() + " " + mSessionQualifier +
-                    (finalized ? " Program error! A transaction is open when finalized"
-                        : " Program error! A transaction is open when calling close()");
+                  String errorMsg = "connection:" + getAppName() + " " + mSessionQualifier +
+                      (finalized ? " Program error! A transaction is open when finalized"
+                          : " Program error! A transaction is open when calling close()");
 
-                if ( hasLoggingDirectory ) {
-                  getLogger().e(TAG, errorMsg);
-                } else {
-                  Log.e(TAG, errorMsg);
-                }
-
-                try {
-                  endTransaction(null);
-                } catch ( Throwable t ) {
                   if ( hasLoggingDirectory ) {
-                    getLogger().w(TAG, errorMsg + " Exception: " + t.toString());
+                     getLogger().e(TAG, errorMsg);
                   } else {
-                    Log.w(TAG, errorMsg + " Exception: " + t.toString());
+                     Log.e(TAG, errorMsg);
                   }
-                }
-              }
 
-              // and close all cursors
-               if (!mActiveCursors.isEmpty()) {
-                  if (!finalized) {
-                     /**
-                      * If there are active cursors, then if we are not finalizing, we are in
-                      * a weird state, since the cursors should be holding references to the
-                      * connection and not allowing it to die.
-                      */
+                  try {
+                     endTransaction(null);
+                  } catch ( Throwable t ) {
                      if ( hasLoggingDirectory ) {
-                        getLogger().e(TAG, "connection:" + mSessionQualifier
-                            + " Logic error! There are open cursors when calling close()");
+                        getLogger().w(TAG, errorMsg + " Exception: " + t.toString());
                      } else {
-                        Log.e(TAG, "connection:" + mSessionQualifier
-                            + " Logic error! There are open cursors when calling close()");
+                        Log.w(TAG, errorMsg + " Exception: " + t.toString());
                      }
-                  } else {
-                     /**
-                      * Only if we are finalized is it safe to do what follows....
-                      *
-                      * If we were to access cursor outside of the finalizer, we
-                      * might get into deadlock with another thread holding the
-                      * SQLiteCursor's impl mutex and attempting to gain our
-                      * mConnectionPtrMutex mutex while we do the reverse when
-                      * we call cursor.close().
-                      *
-                      * That is not possible when finalized, so we can safely call
-                      * cursor.close() with our inverted mutex order.
-                      */
-                     ArrayList<SQLiteCursor> cursors =
-                         new ArrayList<SQLiteCursor>(mActiveCursors.keySet());
-
-                     // close cursors -- this releases their prepared statements
-                     for (SQLiteCursor cursor : cursors) {
-                        if ( cursor != null ) {
-                           if ( hasLoggingDirectory ) {
-                              getLogger().e(TAG, "connection:" + getAppName() + " "
-                                  + mSessionQualifier
-                                  + " Program error! A cursor:" + cursor.getSql()
-                                  + " is open when finalized");
-                           } else {
-                              Log.e(TAG, "connection:" + getAppName() + " "
-                                  + mSessionQualifier
-                                  + " Program error! A cursor:" + cursor.getSql()
-                                  + " is open when finalized");
-                           }
-                           cursor.close();
-                        }
-                     }
-                     mActiveCursors.clear();
                   }
                }
 
-              // and now evict the now-released prepared statements
-              mPreparedStatementCache.evictAll();
+               // and now evict the now-released prepared statements
+               mPreparedStatementCache.evictAll();
 
-              mRecentOperations.tickClose();
-              nativeClose(mConnectionPtr);
+               mRecentOperations.tickClose();
+               nativeClose(mConnectionPtr);
             } catch ( Throwable t) {
                mRecentOperations.failOperation(cookie, t);
                throw t;
@@ -1598,59 +1530,59 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags, mConfiguration.label,
              SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
 
-        try {
-          {
-            final long newValue = SQLiteGlobal.getDefaultPageSize();
-            long value = executeForLongImpl("PRAGMA page_size", null, null);
-            if (value != newValue) {
-              executeImpl("PRAGMA page_size=" + newValue, null, null);
+         try {
+            {
+               final long newValue = SQLiteGlobal.getDefaultPageSize();
+               long value = executeForLongImpl("PRAGMA page_size", null, null);
+               if (value != newValue) {
+                  executeImpl("PRAGMA page_size=" + newValue, null, null);
+               }
             }
-          }
 
-          {
-            final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
-            long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
-            if (value != newValue) {
-              executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
+            {
+               final long newValue = mConfiguration.foreignKeyConstraintsEnabled ? 1 : 0;
+               long value = executeForLongImpl("PRAGMA foreign_keys", null, null);
+               if (value != newValue) {
+                  executeImpl("PRAGMA foreign_keys=" + newValue, null, null);
+               }
             }
-          }
 
-          {
-            final long newValue = SQLiteGlobal.getJournalSizeLimit();
-            long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
-            if (value != newValue) {
-              executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
+            {
+               final long newValue = SQLiteGlobal.getJournalSizeLimit();
+               long value = executeForLongImpl("PRAGMA journal_size_limit", null, null);
+               if (value != newValue) {
+                  executeForLongImpl("PRAGMA journal_size_limit=" + newValue, null, null);
+               }
             }
-          }
 
-          {
-            final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
-            long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
-            if (value != newValue) {
-              executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
+            {
+               final long newValue = SQLiteGlobal.getWALAutoCheckpoint();
+               long value = executeForLongImpl("PRAGMA wal_autocheckpoint", null, null);
+               if (value != newValue) {
+                  executeForLongImpl("PRAGMA wal_autocheckpoint=" + newValue, null, null);
+               }
             }
-          }
 
-          setLockingMode("NORMAL");
-          setJournalMode("WAL");
-          setSyncMode(SQLiteGlobal.getWALSyncMode());
-          setBusyTimeout();
-        } catch ( Exception e ) {
-          try {
-            // release any prepared statements.
-            // close will not succeed if there are any
-            mPreparedStatementCache.evictAll();
+            setLockingMode("NORMAL");
+            setJournalMode("WAL");
+            setSyncMode(SQLiteGlobal.getWALSyncMode());
+            setBusyTimeout();
+         } catch ( Exception e ) {
+            try {
+               // release any prepared statements.
+               // close will not succeed if there are any
+               mPreparedStatementCache.evictAll();
 
-            mRecentOperations.tickClose();
-            nativeClose(mConnectionPtr);
-          } catch ( Exception ex ) {
-            getLogger().e(TAG, "Unable to close connection during failed Open: " + ex.toString());
-            getLogger().printStackTrace(ex);
-          } finally {
-            mConnectionPtr = 0L;
-          }
-          throw e;
-        }
+               mRecentOperations.tickClose();
+               nativeClose(mConnectionPtr);
+            } catch ( Exception ex ) {
+               getLogger().e(TAG, "Unable to close connection during failed Open: " + ex.toString());
+               getLogger().printStackTrace(ex);
+            } finally {
+               mConnectionPtr = 0L;
+            }
+            throw e;
+         }
       }
    }
 
@@ -1845,246 +1777,37 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
 
-    /**
-     * Executes a statement that does not return a result.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private void executeImpl(String sql, Object[] bindArgs, CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   nativeExecute(mConnectionPtr, statement.mStatementPtr);
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
-
-    /**
-     * Executes a statement that returns a single <code>long</code> result.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The value of the first column in the first row of the result set
-     * as a <code>long</code>, or zero if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private long executeForLongImpl(String sql, Object[] bindArgs,
-        CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForLongImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   return nativeExecuteForLong(mConnectionPtr, statement.mStatementPtr);
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
-
-    /**
-     * Executes a statement that returns a single {@link String} result.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The value of the first column in the first row of the result set
-     * as a <code>String</code>, or null if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private String executeForStringImpl(String sql, Object[] bindArgs,
-        CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForStringImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   return nativeExecuteForString(mConnectionPtr, statement.mStatementPtr);
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
-
-    /**
-     * Executes a statement that returns a count of the number of rows
-     * that were changed.  Use for UPDATE or DELETE SQL statements.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The number of rows that were changed.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private int executeForChangedRowCountImpl(String sql, Object[] bindArgs,
-        CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-
-          int changedRows = 0;
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForChangedRowCountImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   changedRows = nativeExecuteForChangedRowCount(mConnectionPtr, statement.mStatementPtr);
-                   return changedRows;
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperationDeferLogAdditional(cookie, "changedRows=" + changedRows);
-          }
-       }
-    }
-
    /**
-    * Runs the provided SQL and returns a cursor over the result set.
+    * Executes a statement that does not return a result.
     *
-    * @param sql the SQL query. The SQL string must not be ; terminated
-    * @param selectionArgs You may include ?s in where clause in the query,
-    *     which will be replaced by the values from selectionArgs. The
-    *     values will be bound as Strings.
+    * @param sql The SQL statement to execute.
+    * @param bindArgs The arguments to bind, or null if none.
     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * If the operation is canceled, then {@link OperationCanceledException} will be thrown
-    * when the query is executed.
-    * @return A {@link Cursor} object, which is positioned before the first entry. Note that
-    * {@link Cursor}s are not synchronized, see the documentation for more details.
+    *
+    * @throws SQLiteException if an error occurs, such as a syntax error
+    * or invalid number of bind arguments.
+    * @throws OperationCanceledException if the operation was canceled.
     */
-   private Cursor rawQueryImpl(
-       String sql, Object[] selectionArgs,
-       CancellationSignal cancellationSignal) {
-
+   private void executeImpl(String sql, Object[] bindArgs, CancellationSignal cancellationSignal) {
       if (sql == null) {
          throw new IllegalArgumentException("sql must not be null.");
       }
 
-      if (cancellationSignal != null) {
-         cancellationSignal.throwIfCanceled();
-      }
-
       synchronized (mConnectionPtrMutex) {
-
-         SQLiteStatementInfo info = new SQLiteStatementInfo();
-
          if (mConnectionPtr == 0L) {
             throw new SQLiteException("connection closed");
          }
-
-         final int cookie = mRecentOperations.beginOperation(mSessionQualifier, "prepare", sql,
-             null);
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeImpl", sql, bindArgs);
          try {
-            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(
-                sql);
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
             try {
-               if (info != null) {
-                  info.numParameters = statement.mNumParameters;
-                  info.readOnly = statement.mReadOnly;
-
-                  final int columnCount = nativeGetColumnCount(mConnectionPtr, statement.mStatementPtr);
-                  if (columnCount == 0) {
-                     info.columnNames = EMPTY_STRING_ARRAY;
-                  } else {
-                     info.columnNames = new String[columnCount];
-                     for (int i = 0; i < columnCount; i++) {
-                        info.columnNames[i] = nativeGetColumnName(mConnectionPtr,
-                            statement.mStatementPtr, i);
-                     }
-                  }
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  nativeExecute(mConnectionPtr, statement.mStatementPtr);
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
                }
             } finally {
                mPreparedStatementCache.releasePreparedStatement(statement);
@@ -2095,281 +1818,317 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          } finally {
             mRecentOperations.endOperation(cookie);
          }
+      }
+   }
 
-         int selectionArgLength = (selectionArgs == null) ? 0 : selectionArgs.length;
-         if (selectionArgLength != info.numParameters) {
-            throw new IllegalArgumentException(
-                "Incorrect number of bind arguments supplied.  " + selectionArgLength + " arguments "
-                    + "were provided but the statement needs " + info.numParameters + " arguments.");
+   /**
+    * Executes a statement that returns a single <code>long</code> result.
+    *
+    * @param sql The SQL statement to execute.
+    * @param bindArgs The arguments to bind, or null if none.
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    * @return The value of the first column in the first row of the result set
+    * as a <code>long</code>, or zero if none.
+    *
+    * @throws SQLiteException if an error occurs, such as a syntax error
+    * or invalid number of bind arguments.
+    * @throws OperationCanceledException if the operation was canceled.
+    */
+   private long executeForLongImpl(String sql, Object[] bindArgs,
+       CancellationSignal cancellationSignal) {
+      if (sql == null) {
+         throw new IllegalArgumentException("sql must not be null.");
+      }
+
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
          }
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeForLongImpl", sql, bindArgs);
          try {
-            SQLiteCursor cursor = new SQLiteCursor(this, info.columnNames, sql, selectionArgs,
-                cancellationSignal);
-            mActiveCursors.put(cursor,this);
-            return cursor;
-         } catch (RuntimeException ex) {
-            throw ex;
-         }
-      }
-   }
-
-   void releaseCursor(SQLiteCursor cursor) {
-      synchronized (mConnectionPtrMutex) {
-         mActiveCursors.remove(cursor);
-      }
-   }
-
-    /**
-     * Executes a statement that returns the row id of the last row inserted
-     * by the statement.  Use for INSERT SQL statements.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The row id of the last row that was inserted, or 0 if none.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private long executeForLastInsertedRowIdImpl(String sql, Object[] bindArgs,
-        CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-
-       synchronized (mConnectionPtrMutex) {
-          if (mConnectionPtr == 0L) {
-             throw new SQLiteException("connection closed");
-          }
-
-          final int cookie = mRecentOperations
-              .beginOperation(mSessionQualifier, "executeForLastInsertedRowIdImpl", sql, bindArgs);
-          try {
-             final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-             try {
-                bindArguments(statement, bindArgs);
-                attachCancellationSignal(cancellationSignal);
-                try {
-                   return nativeExecuteForLastInsertedRowId(mConnectionPtr, statement.mStatementPtr);
-                } finally {
-                   detachCancellationSignal(cancellationSignal);
-                }
-             } finally {
-                mPreparedStatementCache.releasePreparedStatement(statement);
-             }
-          } catch (Throwable t) {
-             mRecentOperations.failOperation(cookie, t);
-             throw t;
-          } finally {
-             mRecentOperations.endOperation(cookie);
-          }
-       }
-    }
-
-    /**
-     * Executes a statement and populates the specified {@link CursorWindow}
-     * with a range of results.  Returns the number of rows that were counted
-     * during query execution.
-     *
-     * @param sql The SQL statement to execute.
-     * @param bindArgs The arguments to bind, or null if none.
-     * @param window The cursor window to clear and fill.
-     * @param startPos The start position for filling the window.
-     * @param requiredPos The position of a row that MUST be in the window.
-     * If it won't fit, then the query should discard part of what it filled
-     * so that it does.  Must be greater than or equal to <code>startPos</code>.
-     * @param countAllRows True to count all rows that the query would return
-     * regagless of whether they fit in the window.
-     * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-     * @return The number of rows that were counted during query execution.  Might
-     * not be all rows in the result set unless <code>countAllRows</code> is true.
-     *
-     * @throws SQLiteException if an error occurs, such as a syntax error
-     * or invalid number of bind arguments.
-     * @throws OperationCanceledException if the operation was canceled.
-     */
-    private int executeForCursorWindowImpl(String sql, Object[] bindArgs, CursorWindow window,
-        int startPos, int requiredPos, boolean countAllRows, CancellationSignal cancellationSignal) {
-        if (sql == null) {
-            throw new IllegalArgumentException("sql must not be null.");
-        }
-        if (window == null) {
-            throw new IllegalArgumentException("window must not be null.");
-        }
-
-        window.acquireReference();
-        try {
-            int actualPos = -1;
-            int countedRows = -1;
-            int filledRows = -1;
-           synchronized (mConnectionPtrMutex) {
-              if (mConnectionPtr == 0L) {
-                 throw new SQLiteException("connection closed");
-              }
-              final int cookie = mRecentOperations
-                  .beginOperation(mSessionQualifier, "executeForCursorWindowImpl", sql, bindArgs);
-              try {
-                 final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
-                 try {
-                    bindArguments(statement, bindArgs);
-                    attachCancellationSignal(cancellationSignal);
-                    try {
-                       final long result = nativeExecuteForCursorWindow(mConnectionPtr, statement.mStatementPtr, window,
-                           startPos, requiredPos, countAllRows);
-                       actualPos = (int) (result >> 32);
-                       countedRows = (int) result;
-                       filledRows = window.getNumRows();
-                       window.setStartPosition(actualPos);
-                       return countedRows;
-                    } finally {
-                       detachCancellationSignal(cancellationSignal);
-                    }
-                 } finally {
-                    mPreparedStatementCache.releasePreparedStatement(statement);
-                 }
-              } catch (Throwable t) {
-                 mRecentOperations.failOperation(cookie, t);
-                 throw t;
-              } finally {
-                 mRecentOperations.endOperationDeferLogAdditional(cookie,
-                     "window='" + window + "', startPos=" + startPos + ", actualPos=" + actualPos + ", filledRows=" + filledRows
-                         + ", countedRows=" + countedRows);
-              }
-           }
-        } finally {
-            window.releaseReference();
-        }
-    }
-
-    private void attachCancellationSignal(CancellationSignal cancellationSignal) {
-        if (cancellationSignal != null) {
-            cancellationSignal.throwIfCanceled();
-
-           synchronized (mConnectionPtrMutex) {
-              if (mConnectionPtr == 0L) {
-                 throw new SQLiteException("connection closed");
-              }
-
-              mCancellationSignalAttachCount += 1;
-              if (mCancellationSignalAttachCount == 1) {
-                 // Reset cancellation flag before executing the statement.
-                 nativeResetCancel(mConnectionPtr, true /*cancelable*/);
-
-                 // After this point, onCancel() may be called concurrently.
-                 cancellationSignal.setOnCancelListener(this);
-              }
-           }
-        }
-    }
-
-    private void detachCancellationSignal(CancellationSignal cancellationSignal) {
-        if (cancellationSignal != null) {
-           synchronized (mConnectionPtrMutex) {
-              if (mConnectionPtr == 0L) {
-                 throw new SQLiteException("connection closed");
-              }
-
-              if ( mCancellationSignalAttachCount <= 0 ) {
-                // potential race condition
-                // perhaps this might occur in some shutdown pathways?
-                getLogger().w("detachCancellationSignal",
-                    "cancellation signal attachment count is <= 0");
-                return;
-              }
-
-              mCancellationSignalAttachCount -= 1;
-              if (mCancellationSignalAttachCount == 0) {
-                 // After this point, onCancel() cannot be called concurrently.
-                 cancellationSignal.setOnCancelListener(null);
-
-                 // Reset cancellation flag after executing the statement.
-                 nativeResetCancel(mConnectionPtr, false /*cancelable*/);
-              }
-           }
-        }
-    }
-
-    private void bindArguments(PreparedStatement statement, Object[] bindArgs) {
-        final int count = bindArgs != null ? bindArgs.length : 0;
-        if (count != statement.mNumParameters) {
-            throw new SQLiteBindOrColumnIndexOutOfRangeException(
-                    "Expected " + statement.mNumParameters + " bind arguments but "
-                    + count + " were provided.");
-        }
-        if (count == 0) {
-            return;
-        }
-
-        final long statementPtr = statement.mStatementPtr;
-        for (int i = 0; i < count; i++) {
-            final Object arg = bindArgs[i];
-            switch (getTypeOfObject(arg)) {
-                case Cursor.FIELD_TYPE_NULL:
-                    nativeBindNull(mConnectionPtr, statementPtr, i + 1);
-                    break;
-                case Cursor.FIELD_TYPE_INTEGER:
-                    nativeBindLong(mConnectionPtr, statementPtr, i + 1,
-                            ((Number)arg).longValue());
-                    break;
-                case Cursor.FIELD_TYPE_FLOAT:
-                    nativeBindDouble(mConnectionPtr, statementPtr, i + 1,
-                            ((Number)arg).doubleValue());
-                    break;
-                case Cursor.FIELD_TYPE_BLOB:
-                    nativeBindBlob(mConnectionPtr, statementPtr, i + 1, (byte[])arg);
-                    break;
-                case Cursor.FIELD_TYPE_STRING:
-                default:
-                    if (arg instanceof Boolean) {
-                        // Provide compatibility with legacy applications which may pass
-                        // Boolean values in bind args.
-                        nativeBindLong(mConnectionPtr, statementPtr, i + 1,
-                                ((Boolean)arg).booleanValue() ? 1 : 0);
-                    } else {
-                        nativeBindString(mConnectionPtr, statementPtr, i + 1, arg.toString());
-                    }
-                    break;
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
+            try {
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  return nativeExecuteForLong(mConnectionPtr, statement.mStatementPtr);
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
             }
-        }
-    }
-
-    /**
-     * Dumps debugging information about this connection, in the case where the
-     * caller might not actually own the connection.
-     *
-     * This function is written so that it may be called by a thread that does not
-     * own the connection.  We need to be very careful because the connection state is
-     * not synchronized.
-     *
-     * At worst, the method may return stale or slightly wrong data, however
-     * it should not crash.  This is ok as it is only used for diagnostic purposes.
-     *
-     * @param b The StringBuilder to receive the dump, not null.
-     * @param verbose True to dump more verbose information.
-     */
-    public void dump(StringBuilder b, boolean verbose) {
-        b.append("SessionQualifier: ").append(mSessionQualifier).append("\n");
-        if (verbose) {
-           synchronized (mConnectionPtrMutex) {
-              b.append("connectionPtr: 0x").append(Long.toHexString(mConnectionPtr)).append("\n");
-           }
-           b.append("lookaside: ").append(getLookaside()).append("\n");
-           b.append("preparedStatementCache hitCount: ")
-               .append(getPreparedStatementCacheHitCount()).append(" missCount: ")
-               .append(getPreparedStatementCacheMissCount()).append(" size: ")
-               .append(getPreparedStatementCacheSize()).append("\n");
-           mPreparedStatementCache.dump(b);
-        }
-    }
-
-   public int getLookaside() {
-      synchronized (mConnectionPtrMutex) {
-         if ( mConnectionPtr != 0L ) {
-            return nativeGetDbLookaside(mConnectionPtr);
-         } else {
-            return 0;
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperation(cookie);
          }
+      }
+   }
+
+   /**
+    * Executes a statement that returns a single {@link String} result.
+    *
+    * @param sql The SQL statement to execute.
+    * @param bindArgs The arguments to bind, or null if none.
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    * @return The value of the first column in the first row of the result set
+    * as a <code>String</code>, or null if none.
+    *
+    * @throws SQLiteException if an error occurs, such as a syntax error
+    * or invalid number of bind arguments.
+    * @throws OperationCanceledException if the operation was canceled.
+    */
+   private String executeForStringImpl(String sql, Object[] bindArgs,
+       CancellationSignal cancellationSignal) {
+      if (sql == null) {
+         throw new IllegalArgumentException("sql must not be null.");
+      }
+
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeForStringImpl", sql, bindArgs);
+         try {
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
+            try {
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  return nativeExecuteForString(mConnectionPtr, statement.mStatementPtr);
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
+            }
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperation(cookie);
+         }
+      }
+   }
+
+   /**
+    * Executes a statement that returns a count of the number of rows
+    * that were changed.  Use for UPDATE or DELETE SQL statements.
+    *
+    * @param sql The SQL statement to execute.
+    * @param bindArgs The arguments to bind, or null if none.
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    * @return The number of rows that were changed.
+    *
+    * @throws SQLiteException if an error occurs, such as a syntax error
+    * or invalid number of bind arguments.
+    * @throws OperationCanceledException if the operation was canceled.
+    */
+   private int executeForChangedRowCountImpl(String sql, Object[] bindArgs,
+       CancellationSignal cancellationSignal) {
+      if (sql == null) {
+         throw new IllegalArgumentException("sql must not be null.");
+      }
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+
+         int changedRows = 0;
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeForChangedRowCountImpl", sql, bindArgs);
+         try {
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
+            try {
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  changedRows = nativeExecuteForChangedRowCount(mConnectionPtr, statement.mStatementPtr);
+                  return changedRows;
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
+            }
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperationDeferLogAdditional(cookie, "changedRows=" + changedRows);
+         }
+      }
+   }
+
+   /**
+    * Executes a statement that returns the row id of the last row inserted
+    * by the statement.  Use for INSERT SQL statements.
+    *
+    * @param sql The SQL statement to execute.
+    * @param bindArgs The arguments to bind, or null if none.
+    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
+    * @return The row id of the last row that was inserted, or 0 if none.
+    *
+    * @throws SQLiteException if an error occurs, such as a syntax error
+    * or invalid number of bind arguments.
+    * @throws OperationCanceledException if the operation was canceled.
+    */
+   private long executeForLastInsertedRowIdImpl(String sql, Object[] bindArgs,
+       CancellationSignal cancellationSignal) {
+      if (sql == null) {
+         throw new IllegalArgumentException("sql must not be null.");
+      }
+
+      synchronized (mConnectionPtrMutex) {
+         if (mConnectionPtr == 0L) {
+            throw new SQLiteException("connection closed");
+         }
+
+         final int cookie = mRecentOperations
+             .beginOperation(mSessionQualifier, "executeForLastInsertedRowIdImpl", sql, bindArgs);
+         try {
+            final PreparedStatement statement = mPreparedStatementCache.acquirePreparedStatement(sql);
+            try {
+               bindArguments(statement, bindArgs);
+               attachCancellationSignal(cancellationSignal);
+               try {
+                  return nativeExecuteForLastInsertedRowId(mConnectionPtr, statement.mStatementPtr);
+               } finally {
+                  detachCancellationSignal(cancellationSignal);
+               }
+            } finally {
+               mPreparedStatementCache.releasePreparedStatement(statement);
+            }
+         } catch (Throwable t) {
+            mRecentOperations.failOperation(cookie, t);
+            throw t;
+         } finally {
+            mRecentOperations.endOperation(cookie);
+         }
+      }
+   }
+
+   private void attachCancellationSignal(CancellationSignal cancellationSignal) {
+      if (cancellationSignal != null) {
+         cancellationSignal.throwIfCanceled();
+
+         synchronized (mConnectionPtrMutex) {
+            if (mConnectionPtr == 0L) {
+               throw new SQLiteException("connection closed");
+            }
+
+            mCancellationSignalAttachCount += 1;
+            if (mCancellationSignalAttachCount == 1) {
+               // Reset cancellation flag before executing the statement.
+               nativeResetCancel(mConnectionPtr, true /*cancelable*/);
+
+               // After this point, onCancel() may be called concurrently.
+               cancellationSignal.setOnCancelListener(this);
+            }
+         }
+      }
+   }
+
+   private void detachCancellationSignal(CancellationSignal cancellationSignal) {
+      if (cancellationSignal != null) {
+         synchronized (mConnectionPtrMutex) {
+            if (mConnectionPtr == 0L) {
+               throw new SQLiteException("connection closed");
+            }
+
+            if ( mCancellationSignalAttachCount <= 0 ) {
+               // potential race condition
+               // perhaps this might occur in some shutdown pathways?
+               getLogger().w("detachCancellationSignal",
+                   "cancellation signal attachment count is <= 0");
+               return;
+            }
+
+            mCancellationSignalAttachCount -= 1;
+            if (mCancellationSignalAttachCount == 0) {
+               // After this point, onCancel() cannot be called concurrently.
+               cancellationSignal.setOnCancelListener(null);
+
+               // Reset cancellation flag after executing the statement.
+               nativeResetCancel(mConnectionPtr, false /*cancelable*/);
+            }
+         }
+      }
+   }
+
+   private void bindArguments(PreparedStatement statement, Object[] bindArgs) {
+      final int count = bindArgs != null ? bindArgs.length : 0;
+      if (count != statement.mNumParameters) {
+         throw new SQLiteBindOrColumnIndexOutOfRangeException(
+             "Expected " + statement.mNumParameters + " bind arguments but "
+                 + count + " were provided.");
+      }
+      if (count == 0) {
+         return;
+      }
+
+      final long statementPtr = statement.mStatementPtr;
+      for (int i = 0; i < count; i++) {
+         final Object arg = bindArgs[i];
+         switch (getTypeOfObject(arg)) {
+         case Cursor.FIELD_TYPE_NULL:
+            nativeBindNull(mConnectionPtr, statementPtr, i + 1);
+            break;
+         case Cursor.FIELD_TYPE_INTEGER:
+            nativeBindLong(mConnectionPtr, statementPtr, i + 1,
+                ((Number)arg).longValue());
+            break;
+         case Cursor.FIELD_TYPE_FLOAT:
+            nativeBindDouble(mConnectionPtr, statementPtr, i + 1,
+                ((Number)arg).doubleValue());
+            break;
+         case Cursor.FIELD_TYPE_BLOB:
+            nativeBindBlob(mConnectionPtr, statementPtr, i + 1, (byte[])arg);
+            break;
+         case Cursor.FIELD_TYPE_STRING:
+         default:
+            if (arg instanceof Boolean) {
+               // Provide compatibility with legacy applications which may pass
+               // Boolean values in bind args.
+               nativeBindLong(mConnectionPtr, statementPtr, i + 1,
+                   ((Boolean)arg).booleanValue() ? 1 : 0);
+            } else {
+               nativeBindString(mConnectionPtr, statementPtr, i + 1, arg.toString());
+            }
+            break;
+         }
+      }
+   }
+
+   /**
+    * Dumps debugging information about this connection, in the case where the
+    * caller might not actually own the connection.
+    *
+    * This function is written so that it may be called by a thread that does not
+    * own the connection.  We need to be very careful because the connection state is
+    * not synchronized.
+    *
+    * At worst, the method may return stale or slightly wrong data, however
+    * it should not crash.  This is ok as it is only used for diagnostic purposes.
+    *
+    * @param b The StringBuilder to receive the dump, not null.
+    * @param verbose True to dump more verbose information.
+    */
+   public void dump(StringBuilder b, boolean verbose) {
+      b.append("SessionQualifier: ").append(mSessionQualifier).append("\n");
+      if (verbose) {
+         synchronized (mConnectionPtrMutex) {
+            b.append("connectionPtr: 0x").append(Long.toHexString(mConnectionPtr)).append("\n");
+         }
+         b.append("preparedStatementCache hitCount: ")
+             .append(getPreparedStatementCacheHitCount()).append(" missCount: ")
+             .append(getPreparedStatementCacheMissCount()).append(" size: ")
+             .append(getPreparedStatementCacheSize()).append("\n");
+         mPreparedStatementCache.dump(b);
       }
    }
 
@@ -2385,53 +2144,51 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       return mPreparedStatementCache.size();
    }
 
-    @Override
-    public String toString() {
-        return "SQLiteConnection: " + mConfiguration.path + " (" + mSessionQualifier + ")";
-    }
+   @Override
+   public String toString() {
+      return "SQLiteConnection: " + mConfiguration.path + " (" + mSessionQualifier + ")";
+   }
 
    private final PreparedStatementCache mPreparedStatementCache;
 
 
    private final class PreparedStatementCache {
 
-       private final class PreparedStatementCacheImpl
-            extends LruCache<String, PreparedStatement> {
-          public PreparedStatementCacheImpl(int size) {
-             super(size);
-          }
+      private final class PreparedStatementCacheImpl
+          extends LruCache<String, PreparedStatement> {
+         public PreparedStatementCacheImpl(int size) {
+            super(size);
+         }
 
-          @Override protected void entryRemoved(boolean evicted, String key, PreparedStatement oldValue, PreparedStatement newValue) {
-             if (!oldValue.mInUse) {
-                releasePreparedStatement(oldValue);
-             }
-          }
+         @Override protected void entryRemoved(boolean evicted, String key, PreparedStatement oldValue, PreparedStatement newValue) {
+            if (!oldValue.mInUse) {
+               releasePreparedStatement(oldValue);
+            }
+         }
 
-          public void dump(StringBuilder b) {
-             b.append("  Prepared statement cache:\n");
-             Map<String, PreparedStatement> cache = snapshot();
-             if (!cache.isEmpty()) {
-                int i = 0;
-                for (Map.Entry<String, PreparedStatement> entry : cache.entrySet()) {
-                   PreparedStatement statement = entry.getValue();
-                   String sql = entry.getKey();
-                   b.append("    " + i
-                       + ": statementPtr=0x" + Long.toHexString(statement.mStatementPtr)
-                       + ", numParameters=" + statement.mNumParameters
-                       + ", type=" + statement.mType + ", readOnly="
-                       + statement.mReadOnly + ", sql=\""
-                       + AppNameSharedStateContainer.trimSqlForDisplay(sql) + "\"\n");
-                   i += 1;
-                }
-             } else {
-                b.append("    <none>\n");
-             }
-          }
-       }
+         public void dump(StringBuilder b) {
+            b.append("  Prepared statement cache:\n");
+            Map<String, PreparedStatement> cache = snapshot();
+            if (!cache.isEmpty()) {
+               int i = 0;
+               for (Map.Entry<String, PreparedStatement> entry : cache.entrySet()) {
+                  PreparedStatement statement = entry.getValue();
+                  String sql = entry.getKey();
+                  b.append("    " + i
+                      + ": statementPtr=0x" + Long.toHexString(statement.mStatementPtr)
+                      + ", numParameters=" + statement.mNumParameters
+                      + ", type=" + statement.mType + ", readOnly="
+                      + statement.mReadOnly + ", sql=\""
+                      + AppNameSharedStateContainer.trimSqlForDisplay(sql) + "\"\n");
+                  i += 1;
+               }
+            } else {
+               b.append("    <none>\n");
+            }
+         }
+      }
 
-       private final PreparedStatementCacheImpl impl;
-
-       private PreparedStatement mPreparedStatementPool;
+      private final PreparedStatementCacheImpl impl;
 
       PreparedStatementCache(int size) {
          impl = new PreparedStatementCacheImpl(size);
@@ -2495,10 +2252,10 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             final long statementPtr = nativePrepareStatement(mConnectionPtr, sql);
             try {
                final int numParameters = nativeGetParameterCount(mConnectionPtr, statementPtr);
-               final int type = DatabaseUtils.getSqlStatementType(sql);
+               final int type = getSqlStatementType(sql);
                final boolean readOnly = nativeIsReadOnly(mConnectionPtr, statementPtr);
 
-               if (type == DatabaseUtils.STATEMENT_DDL ) {
+               if (type == STATEMENT_DDL ) {
                   impl.evictAll();
                }
 
@@ -2552,6 +2309,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                   impl.remove(statement.mSql);
                }
             } else {
+               // what is in the LRU doesn't match this statement; work independently.
                try {
                   if ( mConnectionPtr != 0L && statement.mStatementPtr != 0L ) {
                      nativeFinalizeStatement(mConnectionPtr, statement.mStatementPtr);
@@ -2562,7 +2320,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                       + "SQL: " + AppNameSharedStateContainer.trimSqlForDisplay(statement.mSql));
                   getLogger().printStackTrace(t);
                } finally {
-                  recyclePreparedStatement(statement);
+                  statement.mSql = null;
                }
             }
          }
@@ -2583,13 +2341,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       private PreparedStatement obtainPreparedStatement(String sql, long statementPtr,
           int numParameters, int type, boolean readOnly) {
          synchronized (impl) {
-            PreparedStatement statement = mPreparedStatementPool;
-            if (statement != null) {
-               mPreparedStatementPool = statement.mPoolNext;
-               statement.mPoolNext = null;
-            } else {
-               statement = new PreparedStatement();
-            }
+            PreparedStatement statement = new PreparedStatement();
+
             statement.mSql = sql;
             statement.mStatementPtr = statementPtr;
             statement.mNumParameters = numParameters;
@@ -2600,22 +2353,8 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          }
       }
 
-      /**
-       * Puts the returned statement on the re-use pool.
-       * No interaction with LRU cache.
-       *
-       * @param statement
-       */
-      private void recyclePreparedStatement(PreparedStatement statement) {
-         synchronized (impl) {
-            statement.mSql = null;
-            statement.mPoolNext = mPreparedStatementPool;
-            mPreparedStatementPool = statement;
-         }
-      }
-
       private boolean isCacheable(int statementType) {
-         if (statementType == DatabaseUtils.STATEMENT_UPDATE || statementType == DatabaseUtils.STATEMENT_SELECT) {
+         if (statementType == STATEMENT_UPDATE || statementType == STATEMENT_SELECT) {
             return true;
          }
          return false;

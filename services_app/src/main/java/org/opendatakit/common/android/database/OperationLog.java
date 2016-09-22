@@ -61,6 +61,17 @@ public final class OperationLog {
       this.appName = appName;
    }
 
+   /**
+    * Invoked when AppNameSharedStateContainer becomes empty
+    */
+   public void clearOperations() {
+      synchronized (mOperations) {
+         for ( int i = 0 ; i < mOperations.length ; ++i ) {
+            mOperations[i] = null;
+         }
+      }
+   }
+
    public int beginOperation(String sessionQualifier, String kind, String sql, Object[] bindArgs) {
       synchronized (mOperations) {
          final int index = (mIndex + 1) % MAX_RECENT_OPERATIONS;

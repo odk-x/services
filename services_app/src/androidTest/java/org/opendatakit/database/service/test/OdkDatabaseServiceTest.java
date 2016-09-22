@@ -822,13 +822,16 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
       final int NUM_ROWS = 10000;
       UserDbInterface serviceInterface = bindToDbService();
+      if (false) {
+         return;
+      }
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbInsertNDelete1000RowsIntoTable: " + db.getDatabaseHandle());
+         Log.i("openDatabase", "testDbCreateNDeleteLargeTable: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenDBTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -836,6 +839,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
          Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
          for (int i = 0; i < NUM_ROWS; i++) {
+            if ( i %100 == 0 ) {
+               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: inserting row " + i );
+            }
+
             UUID rowId = UUID.randomUUID();
             rowIds.add(rowId);
 
@@ -856,6 +863,10 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          // delete row
          Iterator<UUID> rowIdIterator = rowIds.iterator();
          for (int i = 0; i < NUM_ROWS; i++) {
+            if ( i %100 == 0 ) {
+               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
+            }
+
             UUID rowId = rowIdIterator.next();
             serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          }

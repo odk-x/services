@@ -32,8 +32,6 @@ using org_opendatakit::prepareStatement;
 using org_opendatakit::finalizeStatement;
 using org_opendatakit::bindParameterCount;
 using org_opendatakit::statementIsReadOnly;
-using org_opendatakit::getColumnCount;
-using org_opendatakit::getColumnName;
 using org_opendatakit::bindNull;
 using org_opendatakit::bindLong;
 using org_opendatakit::bindDouble;
@@ -45,8 +43,7 @@ using org_opendatakit::executeForLong;
 using org_opendatakit::executeForString;
 using org_opendatakit::executeForChangedRowCount;
 using org_opendatakit::executeForLastInsertedRowId;
-using org_opendatakit::executeIntoCursorWindow;
-using org_opendatakit::getDbLookasideUsed;
+using org_opendatakit::executeIntoObjectArray;
 using org_opendatakit::cancel;
 using org_opendatakit::resetCancel;
 
@@ -69,15 +66,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeO
   (JNIEnv* env, jclass clazz, jstring pathStr, jint openFlags,
         jstring labelStr, jboolean enableTrace, jboolean enableProfile) {
 
-    const char* pathChars = env->GetStringUTFChars(pathStr, nullptr);
-    const char* labelChars = env->GetStringUTFChars(labelStr, nullptr);
-
-    jlong connection = openConnection(env, pathChars, openFlags, labelChars, enableTrace, enableProfile);
-
-    env->ReleaseStringUTFChars(pathStr, pathChars);
-    env->ReleaseStringUTFChars(labelStr, labelChars);
-
-    return connection;
+    return openConnection(env, pathStr, openFlags, labelStr, enableTrace, enableProfile);
 }
 
 /*
@@ -99,8 +88,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeCl
 JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativePrepareStatement
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jstring sqlString) {
 
-    jlong statementId = prepareStatement(env, connectionPtr, sqlString);
-    return statementId;
+    return prepareStatement(env, connectionPtr, sqlString);
 }
 
 /*
@@ -134,29 +122,6 @@ JNIEXPORT jboolean JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nati
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
 
     return statementIsReadOnly(env, connectionPtr, statementPtr);
-}
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetColumnCount
- * Signature: (JJ)I
- */
-JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnCount
-  (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-
-    return getColumnCount(env, connectionPtr, statementPtr);
-}
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetColumnName
- * Signature: (JJI)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetColumnName
-  (JNIEnv* env, jclass clazz, jlong connectionPtr,
-        jlong statementPtr, jint index) {
-
-    return getColumnName(env, connectionPtr, statementPtr, index);
 }
 
 /*
@@ -200,12 +165,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
 JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBindString
   (JNIEnv* env, jclass clazz, jlong connectionPtr, jlong statementPtr, jint index, jstring valueString) {
 
-    jsize valueLength = env->GetStringLength(valueString);
-    const jchar* value = env->GetStringChars(valueString, nullptr);
-
-    bindString(env, connectionPtr, statementPtr, index, value, valueLength);
-
-    env->ReleaseStringChars(valueString, value);
+    bindString(env, connectionPtr, statementPtr, index, valueString);
 }
 
 /*
@@ -217,12 +177,7 @@ JNIEXPORT void JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeBi
   (JNIEnv* env, jclass clazz, jlong connectionPtr,
         jlong statementPtr, jint index, jbyteArray valueArray) {
 
-    jsize valueLength = env->GetArrayLength(valueArray);
-    jbyte* value = env->GetByteArrayElements(valueArray, nullptr);
-
-    bindBlob(env, connectionPtr, statementPtr, index, value, valueLength);
-
-    env->ReleaseByteArrayElements(valueArray, value, JNI_ABORT);
+    bindBlob(env, connectionPtr, statementPtr, index, valueArray);
 }
 
 /*
@@ -293,36 +248,18 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
 
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeExecuteForCursorWindow
- * Signature: (JJLandroid/database/CursorWindow;IIZ)J
+ * Method:    nativeExecuteForObjectArray
+ * Signature: (JJ)Ljava/lang/Object;
  */
-JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForCursorWindow
-  (
-  JNIEnv *env, 
-  jclass clazz,
-  jlong connectionPtr,             /* Pointer to SQLiteConnection C++ object */
-  jlong statementPtr,              /* Pointer to sqlite3_stmt object */
-  jobject win,                    /* The CursorWindow object to populate */
-  jint startPos,                  /* First row to add (advisory) */
-  jint iRowRequired,              /* Required row */
-  jboolean countAllRows
-) {
+JNIEXPORT jobjectArray JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForObjectArray
+        (
+                JNIEnv *env,
+                jclass clazz,
+                jlong connectionPtr,             /* Pointer to SQLiteConnection C++ object */
+                jlong statementPtr               /* Pointer to sqlite3_stmt object */
+        ) {
 
-  jlong lResult = executeIntoCursorWindow(env, connectionPtr, statementPtr,
-                          win, startPos, iRowRequired, countAllRows);
-  return lResult;
-}
-
-/*
- * Class:     org_sqlite_database_sqlite_SQLiteConnection
- * Method:    nativeGetDbLookaside
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeGetDbLookaside
-  (JNIEnv* env, jclass clazz, jlong connectionPtr) {
-
-    jint cur = getDbLookasideUsed(env, connectionPtr);
-    return cur;
+    return executeIntoObjectArray(env, connectionPtr, statementPtr);
 }
 
 /*

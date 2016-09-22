@@ -6205,7 +6205,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String testColType = ElementDataType.string.name();
 
     for (int j = 0 ; j < maxIterations ; ++j ) {
+      if ( j % 10 == 0 ) {
       System.out.println("iteration " + j + " of " + maxIterations);
+      }
 
       int maxCols = 10 + (j % 7);
       // construct table
