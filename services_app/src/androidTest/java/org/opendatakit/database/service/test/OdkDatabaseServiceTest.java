@@ -10,14 +10,14 @@ import android.test.ServiceTestCase;
 import android.util.Log;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
-import org.opendatakit.common.android.database.data.*;
-import org.opendatakit.common.android.database.service.AidlDbInterface;
-import org.opendatakit.common.android.database.service.DbHandle;
-import org.opendatakit.database.service.OdkDatabaseService;
-import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.database.service.UserDbInterface;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.database.data.*;
+import org.opendatakit.database.service.AidlDbInterface;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.services.database.service.OdkDatabaseService;
+import org.opendatakit.exception.ActionNotAuthorizedException;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.database.service.UserDbInterface;
 
 import java.util.*;
 

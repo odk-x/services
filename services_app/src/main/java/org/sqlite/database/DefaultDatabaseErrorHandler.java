@@ -20,7 +20,7 @@
 
 package org.sqlite.database;
 
-import org.opendatakit.common.android.database.OperationLog;
+import org.opendatakit.services.database.OperationLog;
 import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
 
