@@ -25,7 +25,7 @@
 			android:inputType="textNoSuggestions"
 			android:dialogTitle="@string/change_username" 
 			android:persistent="false"/>
-		<org.opendatakit.common.android.preferences.PasswordPreferenceScreen
+		<org.opendatakit.services.preferences.PasswordPreferenceScreen
 			android:id="@+id/password_screen"
 			android:key="group.common.password_screen"
 			android:title="@string/password"
