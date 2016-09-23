@@ -119,5 +119,7 @@ dependencies {
 
     androidTestCompile 'com.android.support:support-v13:23.1.0'
     androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'joda-time:joda-time:2.2'
     testCompile 'junit:junit:4.12'
+    testCompile 'joda-time:joda-time:2.2'
 }
