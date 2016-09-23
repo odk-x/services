@@ -184,7 +184,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeE
 /*
  * Class:     org_sqlite_database_sqlite_SQLiteConnection
  * Method:    nativeExecuteForObjectArray
- * Signature: (JJ)Ljava/lang/Object;
+ * Signature: (JJ)[Ljava/lang/Object;
  */
 JNIEXPORT jobjectArray JNICALL Java_org_sqlite_database_sqlite_SQLiteConnection_nativeExecuteForObjectArray
         (JNIEnv *, jclass, jlong, jlong);
