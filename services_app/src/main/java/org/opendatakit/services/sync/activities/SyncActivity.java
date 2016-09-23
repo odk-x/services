@@ -69,7 +69,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
   // end guarded access.
 
   @Override public void onServiceConnected(ComponentName name, IBinder service) {
-    if (!name.getClassName().equals("org.opendatakit.services.sync.service.OdkSyncService")) {
+    if (!name.getClassName().equals(IntentConsts.Sync.SYNC_SERVICE_CLASS)) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onServiceConnected] Unrecognized service");
       return;
     }
