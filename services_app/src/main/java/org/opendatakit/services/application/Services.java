@@ -14,8 +14,7 @@
 
 package org.opendatakit.services.application;
 
-import org.opendatakit.common.android.application.AppAwareApplication;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
+import org.opendatakit.application.AppAwareApplication;
 import org.opendatakit.services.R;
 
 public class Services extends AppAwareApplication {

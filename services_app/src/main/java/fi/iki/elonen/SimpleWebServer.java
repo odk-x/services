@@ -38,9 +38,9 @@ import java.net.URLEncoder;
 import java.util.*;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.webkitserver.WebkitServerConsts;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.consts.WebkitServerConsts;
 
 /**
  * Customized and simplified version of the class of the same name.
