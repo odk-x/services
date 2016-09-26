@@ -24,7 +24,10 @@
 
 package org.sqlite.database.sqlite;
 
+import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.StatFs;
+import org.opendatakit.utilities.ODKFileUtils;
 /* import android.os.SystemProperties; */
 
 /**
@@ -45,7 +48,7 @@ public final class SQLiteGlobal {
     private static final String TAG = "SQLiteGlobal";
 
     private static final Object sLock = new Object();
-    private static int sDefaultPageSize;
+    private static long sDefaultPageSize = 0L;
 
     private SQLiteGlobal() {
     }
@@ -53,14 +56,26 @@ public final class SQLiteGlobal {
     /**
      * Gets the default page size to use when creating a database.
      */
-    public static int getDefaultPageSize() {
-        synchronized (sLock) {
-            if (sDefaultPageSize == 0) {
-                sDefaultPageSize = new StatFs("/data").getBlockSize();
-            }
-            // TODO: is this correct? why not return sDefaultPageSize?
-            return 1024;
+    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
+    public static long getDefaultPageSize() {
+        if ( sDefaultPageSize != 0L ) {
+            return sDefaultPageSize;
         }
+
+        String path = ODKFileUtils.getOdkFolder();
+
+        synchronized (sLock) {
+            if (sDefaultPageSize == 0L) {
+                if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN ) {
+                    sDefaultPageSize = new StatFs(path).getBlockSizeLong();
+                } else {
+                    sDefaultPageSize = new StatFs(path).getBlockSize();
+                }
+            }
+        }
+
+        return sDefaultPageSize;
     }
 
     /**
