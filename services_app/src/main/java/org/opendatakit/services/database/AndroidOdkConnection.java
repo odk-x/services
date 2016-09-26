@@ -92,17 +92,35 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     this.sessionQualifier = sessionQualifier;
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   *
+   * @return
+   */
+  private Boolean internalWaitForInitializationComplete() throws InterruptedException {
+    synchronized (initializationMutex) {
+      if (initializationComplete) {
+        return initializationStatus;
+      }
+
+      initializationMutex.wait(100L);
+
+      if (initializationComplete) {
+        return initializationStatus;
+      }
+    }
+    // not yet completed.
+    return null;
+  }
+
   public boolean waitForInitializationComplete() {
     for (; ; ) {
       try {
-        synchronized (initializationMutex) {
-          if (initializationComplete) {
-            return initializationStatus;
-          }
-          initializationMutex.wait(100L);
-          if (initializationComplete) {
-            return initializationStatus;
-          }
+        // invoke method
+        // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+        Boolean outcome = internalWaitForInitializationComplete();
+        if ( outcome != null ) {
+          return outcome;
         }
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -169,13 +187,23 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return true if database connection is open
+   */
+  private boolean internalIsOpen() {
+    synchronized (mutex) {
+      return db.isOpen();
+    }
+  }
+
   public boolean isOpen() {
     final int cookie = operationLog.beginOperation(sessionQualifier, "isOpen()", null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.isOpen();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalIsOpen();
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -208,6 +236,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     throw new IllegalStateException("this method should not be called");
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalCommonWrapUpConnection_Close() {
+    synchronized (mutex) {
+      db.close();
+    }
+  }
+
   private void commonWrapUpConnection(String action) throws Throwable {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "commonWrapUpConnection(\"" + action + "\")", null, null);
@@ -223,9 +261,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
               "commonWrapUpConnection(\"" + action + "\") -- close", null, null);
           ;
           try {
-            synchronized (mutex) {
-              db.close();
-            }
+            // invoke method
+            // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+            internalCommonWrapUpConnection_Close();
           } catch (Throwable t) {
             operationLog.failOperation(innerCookie, t);
             if (t instanceof SQLiteException) {
@@ -250,13 +288,23 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private int internalGetVersion() {
+    synchronized (mutex) {
+      return db.getVersion();
+    }
+  }
+
   public int getVersion() throws SQLiteException {
     final int cookie = operationLog.beginOperation(sessionQualifier, "getVersion()", null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.getVersion();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalGetVersion();
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -269,14 +317,25 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   *
+   * @return
+   */
+  private void internalSetVersion(int version) {
+    synchronized (mutex) {
+      db.setVersion(version);
+    }
+  }
+
   public void setVersion(int version) throws SQLiteException {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "setVersion(" + version + ")", null, null);
     ;
     try {
-      synchronized (mutex) {
-        db.setVersion(version);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalSetVersion(version);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -286,6 +345,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalBeginTransactionExclusive() {
+    synchronized (mutex) {
+      db.beginTransaction(SQLiteConnection.TRANSACTION_MODE_IMMEDIATE, null);
     }
   }
 
@@ -295,9 +364,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
         .beginOperation(sessionQualifier, "beginTransactionExclusive()", null, null);
     ;
     try {
-      synchronized (mutex) {
-        db.beginTransaction(SQLiteConnection.TRANSACTION_MODE_IMMEDIATE, null);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalBeginTransactionExclusive();
       success = true;
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
@@ -313,6 +382,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       WebLogger.getLogger(appName)
           .e("AndroidOdkConnection", "Attempting dump of all database connections");
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalBeginTransactionNonExclusive() {
+    synchronized (mutex) {
+      db.beginTransactionNonExclusive();
     }
   }
 
@@ -322,9 +401,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
         .beginOperation(sessionQualifier, "beginTransactionNonExclusive()", null, null);
     ;
     try {
-      synchronized (mutex) {
-        db.beginTransactionNonExclusive();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalBeginTransactionNonExclusive();
       success = true;
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
@@ -343,13 +422,23 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private boolean internalInTransaction() {
+    synchronized (mutex) {
+      return db.inTransaction();
+    }
+  }
+
   public boolean inTransaction() {
     final int cookie = operationLog.beginOperation(sessionQualifier, "inTransaction()", null, null);
-    ;
+
     try {
-      synchronized (mutex) {
-        return db.inTransaction();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalInTransaction();
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -359,17 +448,27 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalSetTransactionSuccessful() {
+    synchronized (mutex) {
+      db.setTransactionSuccessful();
     }
   }
 
   public void setTransactionSuccessful() {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "setTransactionSuccessful()", null, null);
-    ;
+
     try {
-      synchronized (mutex) {
-        db.setTransactionSuccessful();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalSetTransactionSuccessful();
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -382,14 +481,23 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalEndTransaction() {
+    synchronized (mutex) {
+      db.endTransaction();
+    }
+  }
+
   public void endTransaction() {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "endTransaction()", null, null);
-    ;
     try {
-      synchronized (mutex) {
-        db.endTransaction();
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalEndTransaction();
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -399,6 +507,18 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   *
+   * @return number of rows updated
+   */
+  private int internalUpdate(String table, Map<String, Object> values, String whereClause,
+      Object[] whereArgs) {
+    synchronized (mutex) {
+      return db.update(table, values, whereClause, whereArgs);
     }
   }
 
@@ -417,11 +537,10 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
     try {
-      synchronized (mutex) {
-        return db.update(table, values, whereClause, whereArgs);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalUpdate(table, values, whereClause, whereArgs);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -431,6 +550,17 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   *
+   * @return number of rows updated
+   */
+  private int internalDelete(String table, String whereClause, Object[] whereArgs) {
+    synchronized (mutex) {
+      return db.delete(table, whereClause, whereArgs);
     }
   }
 
@@ -450,9 +580,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.delete(table, whereClause, whereArgs);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalDelete(table, whereClause, whereArgs);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -462,6 +592,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private long internalReplaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues) {
+    synchronized (mutex) {
+      return db.replaceOrThrow(table, nullColumnHack, initialValues);
     }
   }
 
@@ -477,9 +617,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.replaceOrThrow(table, nullColumnHack, initialValues);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalReplaceOrThrow(table, nullColumnHack, initialValues);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -489,6 +629,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private long internalInsertOrThrow(String table, String nullColumnHack, Map<String, Object> values) {
+    synchronized (mutex) {
+      return db.insertOrThrow(table, nullColumnHack, values);
     }
   }
 
@@ -504,9 +654,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.insertOrThrow(table, nullColumnHack, values);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalInsertOrThrow(table, nullColumnHack, values);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -516,6 +666,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private void internalExecSQL(String sql, Object[] bindArgs) {
+    synchronized (mutex) {
+      db.execSQL(sql, bindArgs);
     }
   }
 
@@ -530,9 +690,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        db.execSQL(sql, bindArgs);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      internalExecSQL(sql, bindArgs);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -542,6 +702,16 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private Cursor internalRawQuery(String sql, Object[] selectionArgs) {
+    synchronized (mutex) {
+      return db.rawQuery(sql, selectionArgs, null);
     }
   }
 
@@ -556,9 +726,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.rawQuery(sql, selectionArgs, null);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalRawQuery(sql, selectionArgs);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -568,6 +738,17 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private Cursor internalQuery(String table, String[] columns, String selection, Object[] selectionArgs,
+      String groupBy, String having, String orderBy, String limit) {
+    synchronized (mutex) {
+      return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     }
   }
 
@@ -613,9 +794,10 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalQuery(table, columns, selection, selectionArgs, groupBy, having, orderBy,
+          limit);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -625,6 +807,18 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       }
     } finally {
       operationLog.endOperation(cookie);
+    }
+  }
+
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+  private Cursor internalQueryDistinct(String table, String[] columns, String selection,
+      Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+    synchronized (mutex) {
+      return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit,
+              null);
     }
   }
 
@@ -670,11 +864,10 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
     ;
     try {
-      synchronized (mutex) {
-        return db
-            .query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit,
-                null);
-      }
+      // invoke method
+      // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+      return internalQueryDistinct(table, columns, selection, selectionArgs, groupBy, having,
+          orderBy, limit);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
