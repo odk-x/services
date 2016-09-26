@@ -361,7 +361,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
    */
-  private void invokeBindService() throws InterruptedException {
+  private UserDbInterface invokeBindService() throws InterruptedException {
 
     Log.i(TAG, "Attempting or polling on bind to Database service");
     Intent bind_intent = new Intent();
@@ -378,7 +378,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
       }
 
       odkDbInterfaceBindComplete.wait();
+
+      if (odkDbInterface != null) {
+        return odkDbInterface;
+      }
     }
+    return null;
   }
 
   public UserDbInterface getDatabaseService() {
@@ -395,7 +400,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
         // call method that waits on odkDbInterfaceBindComplete
         // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-        invokeBindService();
+        UserDbInterface userDbInterface = invokeBindService();
+        if ( userDbInterface != null ) {
+          return userDbInterface;
+        }
 
       } catch (InterruptedException e) {
         // expected if we are waiting. Ignore because we log bind attempt if spinning.
