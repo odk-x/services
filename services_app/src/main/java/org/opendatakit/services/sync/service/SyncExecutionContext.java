@@ -357,43 +357,48 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private UserDbInterface odkDbInterface;
   private boolean active = false;
 
-  public UserDbInterface getDatabaseService() {
 
-    synchronized (odkDbInterfaceBindComplete) {
-      if ( odkDbInterface != null ) {
-        return odkDbInterface;
-      }
-    }
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   */
+  private void invokeBindService() throws InterruptedException {
 
-    // block waiting for it to be bound...
-
-    Log.i(TAG, "Attempting bind to Database service");
+    Log.i(TAG, "Attempting or polling on bind to Database service");
     Intent bind_intent = new Intent();
     bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
-            IntentConsts.Database.DATABASE_SERVICE_CLASS);
+        IntentConsts.Database.DATABASE_SERVICE_CLASS);
 
+    synchronized (odkDbInterfaceBindComplete) {
+      if ( !active ) {
+        active = true;
+        application.bindService(bind_intent, odkDbServiceConnection,
+            Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
+                Context.BIND_ADJUST_WITH_ACTIVITY :
+                0));
+      }
+
+      odkDbInterfaceBindComplete.wait();
+    }
+  }
+
+  public UserDbInterface getDatabaseService() {
+
+    // block waiting for it to be bound...
     for (;;) {
       try {
+
         synchronized (odkDbInterfaceBindComplete) {
-          if ( odkDbInterface != null ) {
-            return odkDbInterface;
-          }
-          if ( !active ) {
-            active = true;
-            application.bindService(bind_intent, odkDbServiceConnection,
-                Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
-                    Context.BIND_ADJUST_WITH_ACTIVITY :
-                    0));
-          }
-
-          odkDbInterfaceBindComplete.wait();
-
-          if ( odkDbInterface != null ) {
+          if (odkDbInterface != null) {
             return odkDbInterface;
           }
         }
+
+        // call method that waits on odkDbInterfaceBindComplete
+        // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+        invokeBindService();
+
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        // expected if we are waiting. Ignore because we log bind attempt if spinning.
       }
     }
   }

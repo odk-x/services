@@ -208,21 +208,29 @@ public class AppNameSharedStateContainer {
       }
    }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
+   */
+   private String internalGetSessionQualifier() {
+      synchronized (appNameMutex) {
+         if (beginTransactionSessionQualifier != null) {
+            return beginTransactionSessionQualifier;
+         }
+      }
+      return null;
+   }
+
    void releaseBeginTransactionSession() {
       String sessionQualifier = null;
       try {
-         synchronized (appNameMutex) {
-            if (beginTransactionSessionQualifier != null) {
-               sessionQualifier = beginTransactionSessionQualifier;
-            }
-         }
+         sessionQualifier = internalGetSessionQualifier();
       } finally {
-         if ( sessionQualifier != null ) {
+         if (sessionQualifier != null) {
             OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .removeConnection(appName, new DbHandle(sessionQualifier));
          }
       }
    }
-
 
 }
