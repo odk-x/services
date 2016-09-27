@@ -427,7 +427,7 @@ public class ODKDatabaseImplUtils {
       ArrayList<KeyValueStoreEntry> lockedList = this
           .getTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
               LocalKeyValueStoreConstants.TableSecurity.ASPECT,
-              LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED);
+              LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED).getEntries();
 
       if (lockedList.size() != 0) {
         if (lockedList.size() != 1) {
@@ -453,7 +453,7 @@ public class ODKDatabaseImplUtils {
       ArrayList<KeyValueStoreEntry> canUnverifiedCreateList = this.getTableMetadata(db, tableId,
           KeyValueStoreConstants.PARTITION_TABLE,
           LocalKeyValueStoreConstants.TableSecurity.ASPECT,
-          LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE);
+          LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE).getEntries();
 
       if ( canUnverifiedCreateList.size() != 0 ) {
         if ( canUnverifiedCreateList.size() != 1 ) {
@@ -660,13 +660,13 @@ public class ODKDatabaseImplUtils {
    * @param accessContext  for managing what effective accesses to return
    * @return
    */
-  public BaseTable query(OdkConnectionInterface db, String sqlCommand,
+  public BaseTable query(OdkConnectionInterface db, String tableId, String sqlCommand,
       Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
 
     Cursor c = null;
     try {
       c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
-      BaseTable table = buildBaseTable(c, accessContext.canCreateRow);
+      BaseTable table = buildBaseTable(db, c, tableId, accessContext.canCreateRow);
       return table;
     } finally {
       if (c != null && !c.isClosed()) {
@@ -688,16 +688,17 @@ public class ODKDatabaseImplUtils {
    * @param accessContext  for managing what effective accesses to return
    * @return
    */
-  public BaseTable privilegedQuery(OdkConnectionInterface db, String sqlCommand,
+  public BaseTable privilegedQuery(OdkConnectionInterface db, String tableId, String sqlCommand,
       Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
 
-    if ( !accessContext.isPrivilegedUser ) {
+    if (!accessContext.isPrivilegedUser) {
       accessContext = accessContext.cloneAsPrivilegedUser();
     }
-    return query(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
+    return query(db, tableId, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
   }
 
-  private BaseTable buildBaseTable(Cursor c, boolean canCreateRow) {
+  private BaseTable buildBaseTable(OdkConnectionInterface db, Cursor c, String tableId,
+      boolean canCreateRow) {
 
     HashMap<String, Integer> mElementKeyToIndex = null;
     String[] mElementKeyForIndex = null;
@@ -772,6 +773,10 @@ public class ODKDatabaseImplUtils {
     c.close();
 
     table.setEffectiveAccessCreateRow(canCreateRow);
+
+    if (tableId != null) {
+      table.setMetaDataRev(getTableDefinitionRevId(db, tableId));
+    }
     return table;
   }
 
@@ -991,7 +996,7 @@ public class ODKDatabaseImplUtils {
 
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
 
-    BaseTable table = query(db, QueryUtil
+    BaseTable table = query(db, tableId, QueryUtil
         .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
             QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
             QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
@@ -1018,7 +1023,7 @@ public class ODKDatabaseImplUtils {
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, RoleConsts
         .ADMIN_ROLES_LIST);
 
-    BaseTable table = privilegedQuery(db, QueryUtil
+    BaseTable table = privilegedQuery(db, tableId, QueryUtil
         .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
             QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
             QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
@@ -1103,7 +1108,7 @@ public class ODKDatabaseImplUtils {
     AccessContext accessContext = getAccessContext(db, tableId, activeUser,
         RoleConsts.ADMIN_ROLES_LIST);
 
-    BaseTable table = privilegedQuery(db, QueryUtil
+    BaseTable table = privilegedQuery(db, tableId, QueryUtil
         .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
             QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
             QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
@@ -1541,6 +1546,7 @@ public class ODKDatabaseImplUtils {
         int idxSchemaETag = c.getColumnIndex(TableDefinitionsColumns.SCHEMA_ETAG);
         int idxLastDataETag = c.getColumnIndex(TableDefinitionsColumns.LAST_DATA_ETAG);
         int idxLastSyncTime = c.getColumnIndex(TableDefinitionsColumns.LAST_SYNC_TIME);
+        int idxRevId = c.getColumnIndex(TableDefinitionsColumns.REV_ID);
 
         if (c.getCount() != 1) {
           throw new IllegalStateException(
@@ -1551,6 +1557,7 @@ public class ODKDatabaseImplUtils {
         e.setSchemaETag(c.getString(idxSchemaETag));
         e.setLastDataETag(c.getString(idxLastDataETag));
         e.setLastSyncTime(c.getString(idxLastSyncTime));
+        e.setRevId(c.getString(idxRevId));
       }
     } finally {
       if (c != null && !c.isClosed()) {
@@ -1558,6 +1565,35 @@ public class ODKDatabaseImplUtils {
       }
     }
     return e;
+  }
+
+  public String getTableDefinitionRevId(OdkConnectionInterface db, String tableId) {
+    String revId = null;
+    Cursor c = null;
+    try {
+      StringBuilder b = new StringBuilder();
+      ArrayList<String> selArgs = new ArrayList<String>();
+      b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
+      selArgs.add(tableId);
+
+      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, b.toString(),
+          selArgs.toArray(new String[selArgs.size()]), null, null, null, null);
+      if (c.moveToFirst()) {
+        int idxRevId = c.getColumnIndex(TableDefinitionsColumns.REV_ID);
+
+        if (c.getCount() != 1) {
+          throw new IllegalStateException(
+              "Two or more TableDefinitionEntry records found for tableId " + tableId);
+        }
+
+        revId = c.getString(idxRevId);
+      }
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+    return revId;
   }
 
   /*
@@ -1747,6 +1783,9 @@ public class ODKDatabaseImplUtils {
     values.put(KeyValueStoreColumns.VALUE_TYPE, e.type);
     values.put(KeyValueStoreColumns.VALUE, e.value);
 
+    TreeMap<String, Object> metadataRev = new TreeMap<String, Object>();
+    metadataRev.put(TableDefinitionsColumns.REV_ID, UUID.randomUUID().toString());
+
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
@@ -1757,6 +1796,11 @@ public class ODKDatabaseImplUtils {
       } else {
         db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
       }
+
+      // Update the table definition table with a new revision ID, essentially telling all caches
+      // of this table's metadata that they are dirty.
+      db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, metadataRev,
+          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM, new Object[] {e.tableId});
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1921,10 +1965,11 @@ public class ODKDatabaseImplUtils {
    * @param key
    * @return
    */
-  public ArrayList<KeyValueStoreEntry> getTableMetadata(OdkConnectionInterface db, String tableId,
+  public TableMetaDataEntries getTableMetadata(OdkConnectionInterface db, String tableId,
       String partition, String aspect, String key) {
 
-    ArrayList<KeyValueStoreEntry> entries = new ArrayList<KeyValueStoreEntry>();
+    TableMetaDataEntries metadata = new TableMetaDataEntries(tableId,
+        getTableDefinitionRevId(db, tableId));
 
     Cursor c = null;
     try {
@@ -1974,7 +2019,7 @@ public class ODKDatabaseImplUtils {
           e.key = c.getString(idxKey);
           e.type = c.getString(idxType);
           e.value = c.getString(idxValue);
-          entries.add(e);
+          metadata.addEntry(e);
         } while (c.moveToNext());
       }
     } finally {
@@ -1982,7 +2027,7 @@ public class ODKDatabaseImplUtils {
         c.close();
       }
     }
-    return entries;
+    return metadata;
   }
 
   /**
@@ -2039,6 +2084,7 @@ public class ODKDatabaseImplUtils {
     // Add the table id into table definitions
     TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
     cvTableDef.put(TableDefinitionsColumns.TABLE_ID, tableId);
+    cvTableDef.put(TableDefinitionsColumns.REV_ID, UUID.randomUUID().toString());
     cvTableDef.put(TableDefinitionsColumns.SCHEMA_ETAG, null);
     cvTableDef.put(TableDefinitionsColumns.LAST_DATA_ETAG, null);
     cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME, -1);
@@ -3401,7 +3447,7 @@ public class ODKDatabaseImplUtils {
       StringBuilder b = new StringBuilder();
       b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
           .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
-      BaseTable table = privilegedQuery(db,
+      BaseTable table = privilegedQuery(db, tableId,
           QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
@@ -3562,7 +3608,7 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      BaseTable table = privilegedQuery(db,
+      BaseTable table = privilegedQuery(db, tableId,
           QueryUtil.buildSqlStatement(tableId, K_DATATABLE_ID_EQUALS_PARAM +
                   S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL, null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
@@ -3704,7 +3750,7 @@ public class ODKDatabaseImplUtils {
       StringBuilder b = new StringBuilder();
       b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
           .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
-      BaseTable table = privilegedQuery(db,
+      BaseTable table = privilegedQuery(db, tableId,
           QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
               new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
@@ -4503,7 +4549,7 @@ public class ODKDatabaseImplUtils {
     // get the security settings
     List<KeyValueStoreEntry> entries = getTableMetadata(db, tableId,
         KeyValueStoreConstants.PARTITION_TABLE, LocalKeyValueStoreConstants.TableSecurity.ASPECT,
-        null);
+        null).getEntries();
 
     KeyValueStoreEntry locked = null;
     KeyValueStoreEntry filterTypeOnCreation = null;
@@ -4639,7 +4685,7 @@ public class ODKDatabaseImplUtils {
 
         StringBuilder b = new StringBuilder();
         b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
-        BaseTable data = privilegedQuery(db, b.toString(), whereArgs, null, accessContext);
+        BaseTable data = privilegedQuery(db, tableId, b.toString(), whereArgs, null, accessContext);
 
         // There must be only one row in the db for the update to work
         if (shouldUpdate) {
@@ -4844,7 +4890,7 @@ public class ODKDatabaseImplUtils {
 
       StringBuilder b = new StringBuilder();
       b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
-      BaseTable data = privilegedQuery(db, b.toString(), whereArgs, null, accessContext);
+      BaseTable data = privilegedQuery(db, tableId, b.toString(), whereArgs, null, accessContext);
 
       // There must be only one row in the db
       if (data.getNumberOfRows() != 1) {

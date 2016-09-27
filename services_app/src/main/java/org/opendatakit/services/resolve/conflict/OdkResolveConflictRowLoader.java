@@ -105,7 +105,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           selectionArgs, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -134,7 +134,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
           selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
               ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
 
-          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               selectionArgs, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -144,7 +144,7 @@ public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<Resol
       // The display name is the table display name, not the form display name...
       ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db,
           mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
-          KeyValueStoreConstants.TABLE_DISPLAY_NAME);
+          KeyValueStoreConstants.TABLE_DISPLAY_NAME).getEntries();
 
       tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(mTableId)) : entries.get(0).value;

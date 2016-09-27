@@ -749,8 +749,8 @@ public class ProcessAppAndTableLevelChanges {
          * Since the md5Hash of the file identifies identical properties, ensure
          * that the list of KVS entries is in alphabetical order.
          */
-        List<KeyValueStoreEntry> kvsEntries =
-            sc.getDatabaseService().getTableMetadata(sc.getAppName(), db, tableId, null, null, null);
+        List<KeyValueStoreEntry> kvsEntries = sc.getDatabaseService()
+            .getTableMetadata(sc.getAppName(), db, tableId, null, null, null, null).getEntries();
 
         for (int i = 0; i < kvsEntries.size(); i++) {
           KeyValueStoreEntry entry = kvsEntries.get(i);
