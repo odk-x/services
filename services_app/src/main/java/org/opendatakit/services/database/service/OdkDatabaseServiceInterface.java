@@ -934,6 +934,37 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     return getAndCacheChunks(kvsEntries);
   }
 
+  @Override
+  public DbChunk getTableMetadataIfChanged(String appName, DbHandle dbHandleName, String tableId,
+      String revId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    TableMetaDataEntries kvsEntries = null;
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      String currentRevId = ODKDatabaseImplUtils.get().getTableDefinitionRevId(db, tableId);
+      if (revId != null && revId.equals(currentRevId)) {
+        kvsEntries = new TableMetaDataEntries(tableId, revId);
+      } else {
+        kvsEntries = ODKDatabaseImplUtils.get().getTableMetadata(db, tableId, null, null, null);
+      }
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "getTableMetadata", e);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+
+    return getAndCacheChunks(kvsEntries);
+  }
+
   @Override public DbChunk getTableHealthStatuses(String appName,
       DbHandle dbHandleName) throws RemoteException {
 
