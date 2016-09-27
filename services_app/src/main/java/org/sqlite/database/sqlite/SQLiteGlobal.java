@@ -67,10 +67,20 @@ public final class SQLiteGlobal {
 
         synchronized (sLock) {
             if (sDefaultPageSize == 0L) {
-                if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN ) {
-                    sDefaultPageSize = new StatFs(path).getBlockSizeLong();
+                long pageSize = 0L;
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        pageSize = new StatFs(path).getBlockSizeLong();
+                    } else {
+                        pageSize = new StatFs(path).getBlockSize();
+                    }
+                } catch ( Throwable t ) {
+                    // ignore.
+                }
+                if ( pageSize < 1024L ) {
+                    sDefaultPageSize = 1024L;
                 } else {
-                    sDefaultPageSize = new StatFs(path).getBlockSize();
+                    sDefaultPageSize = pageSize;
                 }
             }
         }
