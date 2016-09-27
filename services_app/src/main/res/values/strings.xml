@@ -124,6 +124,8 @@
     <string name="sync_table_data_sync_pending_attachments">Partially completed sync of %1$s dataset with server. Not all attachments synced.</string>
     <string name="sync_table_data_sync_with_conflicts">Partially completed sync of %1$s dataset with server. Resolve conflicts and resync.</string>
     <string name="sync_table_contains_checkpoints">Checkpoints must be resolved before sync can proceed.</string>
+    <string name="sync_table_erroneous_filter">Internal error when querying database.</string>
+    <string name="sync_table_erroneous_conflict_type">Internal error when resolving server data against locally conflicting row.</string>
 
     <string name="sync_verifying_app_name_on_server">Verifying server supports this user application name.</string>
     <string name="sync_obtaining_user_permissions_from_server">Retrieving user permissions from server.</string>

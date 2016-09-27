@@ -86,7 +86,7 @@ public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActi
 
 
       List<KeyValueStoreEntry> columnDisplayNames =
-          ODKDatabaseImplUtils.get().getDBTableMetadata(db, mTableId,
+          ODKDatabaseImplUtils.get().getTableMetadata(db, mTableId,
               KeyValueStoreConstants.PARTITION_COLUMN, null,
               KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
 

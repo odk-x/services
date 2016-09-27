@@ -82,7 +82,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Drop any leftover table now that the test is done
     for(String id : tableIds) {
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
+      ODKDatabaseImplUtils.get().deleteTableAndAllData(db, id);
     }
 
     assertTrue(tablesGone);
@@ -103,7 +103,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   /*
  * Test creation of user defined database table when table doesn't exist
  */
-  public void testCreateOrOpenDbTableWhenTableDoesNotExist_ExpectPass() {
+  public void testCreateOrOpenTableWhenTableDoesNotExist_ExpectPass() {
     verifyNoTablesExist();
 
     // Create the database table
@@ -113,7 +113,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableName, columns);
+            .createOrOpenTableWithColumns(db, tableName, columns);
 
     // Check that the table exists
     Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "'", null);
@@ -123,7 +123,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals("Name of user defined table does not match", cursor.getString(0), tableName);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableName);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableName);
     verifyNoTablesExist();
   }
 
@@ -157,7 +157,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     // Check that the user defined rows are in the table
     Cursor cursor = ODKDatabaseImplUtils.get().queryForTest(db, tableId, null, null, null, null,
@@ -201,7 +201,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -242,7 +242,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -289,21 +289,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when table does
    * not exist
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnDoesNotExist_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnDoesNotExist_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -319,23 +319,23 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when table does
    * exist
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnDoesExist_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnDoesExist_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
     OrderedColumns orderedColumns2 = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -351,20 +351,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * null
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsNull_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsNull_ExpectFail() {
     String tableId = testTable;
     boolean thrown = false;
     OrderedColumns orderedColumns = null;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, null);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, null);
     } catch (Exception e) {
       thrown = true;
       e.printStackTrace();
@@ -373,14 +373,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
    /*
     * Test creation of user defined database table with column when column is
     * null
     */
-   public void testCreateOrOpenDbTableWithColumnWhenColumnIsEmpty_ExpectPass() {
+   public void testCreateOrOpenTableWithColumnWhenColumnIsEmpty_ExpectPass() {
       String tableId = testTable;
       List<Column> columns = new ArrayList<Column>();
 
@@ -388,7 +388,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       OrderedColumns orderedColumns = null;
 
       try {
-         orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+         orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       } catch (Exception e) {
          thrown = true;
          e.printStackTrace();
@@ -397,19 +397,19 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       assertFalse(thrown);
 
       // Drop the table now that the test is done
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+      ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
    }
   /*
    * Test creation of user defined database table with column when column is int
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsInt_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsInt_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -425,14 +425,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * array
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsArray_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsArray_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String itemsStr = "items";
@@ -445,7 +445,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // no-op
@@ -453,14 +453,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * array
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsArrayEmpty_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsArrayEmpty_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.array.name();
@@ -471,7 +471,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // no-op
@@ -479,14 +479,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * array
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsArray_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsArray_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String itemsStr = "items";
@@ -496,7 +496,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColItems + "\"]"));
     columns.add(new Column(testColItems, itemsStr, ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 2);
@@ -548,21 +548,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * array
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsBoolean_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsBoolean_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.bool.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -578,21 +578,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * string
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsString_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsString_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -608,21 +608,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * date
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsDate_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsDate_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATE;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -638,21 +638,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * datetime
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsDateTime_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsDateTime_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATETIME;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -668,21 +668,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * time
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsTime_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsTime_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.TIME;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 1);
@@ -698,14 +698,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * geopoint
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointLongMissing_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointLongMissing_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -729,7 +729,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -737,14 +737,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * geopoint
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointAltMissing_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointAltMissing_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -768,7 +768,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -776,14 +776,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * geopoint
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointAccMissing_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointAccMissing_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -807,7 +807,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -815,7 +815,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -827,7 +827,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
    * geopoint data type (and we could even create the subelements based off of
    * the known definition of this datatype.
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointListMissing_ExpectSuccess() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointListMissing_ExpectSuccess() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -850,7 +850,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -858,10 +858,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointBadChildKey_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointBadChildKey_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -885,7 +885,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -893,14 +893,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * geopoint
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopointLatMissing_ExpectFail() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopointLatMissing_ExpectFail() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -924,7 +924,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OrderedColumns orderedColumns;
 
     try {
-      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+      orderedColumns = ODKDatabaseImplUtils.get().createOrOpenTableWithColumns(db, tableId, columns);
       success = true;
     } catch (IllegalArgumentException e) {
       // expected
@@ -932,14 +932,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(success);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * geopoint
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsGeopoint_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsGeopoint_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String lat = "latitude";
@@ -960,7 +960,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColAlt, alt, testColResType, "[]"));
     columns.add(new Column(testColAcc, acc, testColResType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 5);
@@ -992,14 +992,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test creation of user defined database table with column when column is
    * mimeUri
    */
-  public void testCreateOrOpenDbTableWithColumnWhenColumnIsMimeUri_ExpectPass() {
+  public void testCreateOrOpenTableWithColumnWhenColumnIsMimeUri_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String uriFrag = "uriFragment";
@@ -1014,7 +1014,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColUriFrag, "uriFragment", ElementDataType.rowpath.name(), "[]"));
     columns.add(new Column(testColContType, "contentType", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns coldefs = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     assertEquals(coldefs.getColumnDefinitions().size(), 3);
@@ -1088,7 +1088,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -1098,7 +1098,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String tableId = testTable;
     List<Column> columns = new ArrayList<Column>();
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     String[] colNames = ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
     boolean colLength = (colNames.length > 0);
@@ -1113,7 +1113,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -1141,7 +1141,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("testCol", "testCol", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     OrderedColumns defns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
 
@@ -1152,7 +1152,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cdref, cdalt);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -1177,7 +1177,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   /*
    * Test writing the data into the existing db table with all null values
    */
-  public void testWriteDataIntoExisitingDbTableWithAllNullValues_ExpectFail()
+  public void testWriteDataIntoExisitingTableWithAllNullValues_ExpectFail()
       throws ActionNotAuthorizedException {
     String tableId = testTable;
     String testCol = "testColumn";
@@ -1186,7 +1186,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     try {
       ODKDatabaseImplUtils.get()
@@ -1201,13 +1201,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with valid values
    */
-  public void testWriteDataIntoExisitingDbTableWithValidValue_ExpectPass()
+  public void testWriteDataIntoExisitingTableWithValidValue_ExpectPass()
       throws ActionNotAuthorizedException {
     String tableId = testTable;
     String testCol = "testColumn";
@@ -1215,7 +1215,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1246,21 +1246,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with valid values and a
    * certain id
    */
-  public void testWriteDataIntoExisitingDbTableWithIdWhenIdDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithIdWhenIdDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1293,21 +1293,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with valid values and an
    * existing id
    */
-  public void testWriteDataIntoExisitingDbTableWithIdWhenIdAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithIdWhenIdAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1387,14 +1387,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test updating the data in an existing db table with valid values when the
    * id does not exist
    */
-  public void testUpdateDataInExistingDBTableWithIdWhenIdDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testUpdateDataInExistingTableWithIdWhenIdDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
 
     String tableId = testTable;
     String testCol = "testColumn";
@@ -1402,7 +1402,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1435,21 +1435,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test updating the data in the existing db table with valid values when the
    * id already exists
    */
-  public void testUpdateDataInExistingDBTableWithIdWhenIdAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testUpdateDataInExistingTableWithIdWhenIdAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1508,21 +1508,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val2, testVal2);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with valid values and an
    * existing id
    */
-  public void testWriteDataIntoExisitingDbTableWithIdWhenIdIsNull_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithIdWhenIdIsNull_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     int testVal = 5;
     boolean thrown = false;
@@ -1544,21 +1544,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data and metadata into the existing db table with valid
    * values
    */
-  public void testWriteDataAndMetadataIntoExistingDBTableWithValidValue_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataAndMetadataIntoExistingTableWithValidValue_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String nullString = null;
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1600,13 +1600,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing writing metadata into an existing table when the rowID is null
    */
-  public void testWriteDataAndMetadataIntoExistingDBTableWhenIDIsNull_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testWriteDataAndMetadataIntoExistingTableWhenIDIsNull_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String nullString = null;
     boolean thrown = false;
@@ -1614,7 +1614,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
@@ -1644,7 +1644,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -1652,7 +1652,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
    * The sync state and other fields that should not be null will be silently
    * replaced with non-null values.
    */
-  public void testWriteDataAndMetadataIntoExistingDBTableWhenSyncStateIsNull_ExpectSuccess() throws ActionNotAuthorizedException  {
+  public void testWriteDataAndMetadataIntoExistingTableWhenSyncStateIsNull_ExpectSuccess() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String nullString = null;
     boolean thrown = false;
@@ -1660,7 +1660,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
@@ -1691,13 +1691,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing metadata into the existing db table when sync state is null
    */
-  public void testWriteDataAndMetadataIntoExistingDBTableWhenTimeStampIsNull_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testWriteDataAndMetadataIntoExistingTableWhenTimeStampIsNull_ExpectFail() throws ActionNotAuthorizedException  {
     // TODO: should this fail or succeed?
     String tableId = testTable;
     String nullString = null;
@@ -1707,7 +1707,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
 
@@ -1739,13 +1739,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertFalse(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with array value
    */
-  public void testWriteDataIntoExisitingDbTableWithArray_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithArray_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.array.name();
@@ -1755,7 +1755,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testCol + "_items\"]"));
     columns.add(new Column(testCol + "_items", "items", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1784,20 +1784,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with boolean value
    */
-  public void testWriteDataIntoExisitingDbTableWithBoolean_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithBoolean_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.bool.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1828,20 +1828,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with valid values
    */
-  public void testWriteDataIntoExisitingDbTableWithDate_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithDate_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATE;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1872,20 +1872,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with datetime
    */
-  public void testWriteDataIntoExisitingDbTableWithDatetime_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithDatetime_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATETIME;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1916,13 +1916,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with geopoint
    */
-  public void testWriteDataIntoExisitingDbTableWithGeopoint_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithGeopoint_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColLat = "testColumn_latitude";
@@ -1942,7 +1942,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     columns.add(new Column(testColAlt, "altitude", ElementDataType.number.name(), "[]"));
     columns.add(new Column(testColAcc, "accuracy", ElementDataType.number.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -1996,20 +1996,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(valAcc, pos_acc);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with integer
    */
-  public void testWriteDataIntoExisitingDbTableWithInteger_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithInteger_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2040,13 +2040,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with mimeUri
    */
-  public void testWriteDataIntoExisitingDbTableWithMimeUri_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithMimeUri_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColUriFragment = "testColumn_uriFragment";
@@ -2060,7 +2060,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .add(new Column(testColUriFragment, "uriFragment", ElementDataType.rowpath.name(), "[]"));
     columns.add(new Column(testColContentType, "contentType", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2102,20 +2102,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(valContentType, testContentType);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with number
    */
-  public void testWriteDataIntoExisitingDbTableWithNumber_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithNumber_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.number.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2146,20 +2146,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with string
    */
-  public void testWriteDataIntoExisitingDbTableWithString_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithString_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2190,20 +2190,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test writing the data into the existing db table with time
    */
-  public void testWriteDataIntoExisitingDbTableWithTime_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testWriteDataIntoExisitingTableWithTime_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.TIME;
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2245,14 +2245,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWhenRowAlreadyExists_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2262,7 +2262,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2336,13 +2336,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertNotSame(saveptType, SavepointTypeManipulator.complete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWhenRowDoesNotExist_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2351,7 +2351,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2387,13 +2387,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWhenRowIdNotProvided_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWhenRowIdNotProvided_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2402,7 +2402,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2447,13 +2447,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowConflictType_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWithRowConflictType_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2462,7 +2462,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2483,13 +2483,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowSavepointType_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWithRowSavepointType_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2498,7 +2498,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2519,13 +2519,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdWithRowSavepointTimestamp_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdWithRowSavepointTimestamp_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2534,7 +2534,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2555,13 +2555,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test inserting a checkpoint row in the database
    */
-  public void testInsertCheckpointRowIntoExistingDBTableWithIdAndNoData_ExpectFail() throws ActionNotAuthorizedException  {
+  public void testInsertCheckpointRowIntoExistingTableWithIdAndNoData_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2570,7 +2570,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ContentValues cvValues = new ContentValues();
 
@@ -2589,13 +2589,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue(thrown);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test saving a checkpoint row in the database as complete
    */
-  public void testSaveAsCompleteMostRecentCheckpointDataInDBTableWithId_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testSaveAsCompleteMostRecentCheckpointDataInTableWithId_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2605,7 +2605,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2713,13 +2713,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(saveptType, SavepointTypeManipulator.complete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test saving a checkpoint row in the database as incomplete
    */
-  public void testSaveAsIncompleteMostRecentCheckpointDataInDBTableWithId_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testSaveAsIncompleteMostRecentCheckpointDataInTableWithId_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -2729,7 +2729,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2838,7 +2838,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(saveptType, SavepointTypeManipulator.incomplete());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -2853,7 +2853,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-            .createOrOpenDBTableWithColumns(db, tableId, columns);
+            .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -2899,7 +2899,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3067,7 +3067,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   /*
    * Test create or open table with columns and properties
    */
-  public void testCreateOrOpenDBTableWithColumnsAndProperties_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testCreateOrOpenTableWithColumnsAndProperties_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -3084,7 +3084,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3096,7 +3096,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { KeyValueStoreConstants.PARTITION_TABLE,
         KeyValueStoreConstants.COLUMN_DISPLAY_NAME, tableId };
-    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
+    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db, null,
         KeyValueStoreConstants.PARTITION_TABLE, null, KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
     boolean found = false;
     for ( KeyValueStoreEntry entry : entries ) {
@@ -3108,10 +3108,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue("found at least one matching entry in KVS", found);
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, null, null, null);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, null, null, null);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 
   }
 
@@ -3127,7 +3127,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -3173,7 +3173,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3188,7 +3188,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -3247,13 +3247,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test delete db table metadata - delete all metadata
    */
-  public void testDeleteDBTableMetadata_ExpectPass() {
+  public void testDeleteTableMetadata_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -3272,14 +3272,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
     }
 
     // Ensure that the expected properties is in the KVS table
-    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
+    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db, null,
         partition, null, key);
     assertEquals(entries.size(), 1);
     boolean found = false;
@@ -3292,21 +3292,21 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue("found the KVSEntry", found);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries, kvsEntries);
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Ensure that the expected properties is in the KVS table
-    entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
+    entries = ODKDatabaseImplUtils.get().getTableMetadata(db, null,
         partition, null, key);
     assertEquals(entries.size(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3320,7 +3320,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -3432,7 +3432,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(table.getNumberOfRows(), 0);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3446,13 +3446,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //  ContentValues cvValues = new ContentValues();
 //  String rowId = LocalizationUtils.genUUID();
 //  cvValues.put(testCol, testVal);
-//  ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//  ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //      cvValues, rowId);
 //
 //  // Select everything out of the table
@@ -3498,7 +3498,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //  assertEquals(cursor.getCount(), 1);
 //
 //  // Drop the table now that the test is done
-//  ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//  ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //}
 
   /*
@@ -3512,13 +3512,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -3562,7 +3562,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(cursor.getCount(), 0);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -3576,13 +3576,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -3626,13 +3626,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(cursor.getCount(), 0);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
    * Test enforce types table metadata
    */
-  public void testEnforceTypesDBTableMetadata_ExpectPass() {
+  public void testEnforceTypesTableMetadata_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -3649,10 +3649,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
 
-    // createOrOpenDBTableWithColumnsAndProperties calls enforceTypesDBTableMetadata
+    // createOrOpenTableWithColumnsAndProperties calls enforceTypesTableMetadata
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3672,7 +3672,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries.size(), kvsEntries.size());
@@ -3698,10 +3698,10 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val, ElementDataType.object.name());
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3759,7 +3759,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   /*
    * Test get table metadata
    */
-  public void testGetDBTableMetadata_ExpectPass() {
+  public void testGetTableMetadata_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -3778,7 +3778,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -3798,16 +3798,16 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3820,7 +3820,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -3888,7 +3888,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(lastDataETagVal, tde.getLastDataETag());
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -3901,7 +3901,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -3937,7 +3937,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(health, CursorUtils.TABLE_HEALTH_IS_CLEAN);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
 
@@ -3952,7 +3952,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -4144,7 +4144,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     c.close();
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -4157,7 +4157,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -4240,7 +4240,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -4253,13 +4253,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -4303,7 +4303,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CONFLICTS);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4316,13 +4316,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -4406,7 +4406,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4419,13 +4419,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -4461,7 +4461,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    assertEquals(conflictType, conflictTypeVal);
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4476,7 +4476,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -4562,13 +4562,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(val3, testVal);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test replace metadata with KVS
    */
-  public void testReplaceDBTableMetadataWithKVS_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testReplaceTableMetadataWithKVS_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -4587,7 +4587,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4607,7 +4607,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
@@ -4618,7 +4618,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     KeyValueStoreEntry newKVSEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), newKVSValue);
     newKVSEntries.add(newKVSEntry);
-    ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, newKVSEntries, true);
+    ODKDatabaseImplUtils.get().replaceTableMetadata(db, tableId, newKVSEntries, true);
 
     String [] selArgs2 = { partition, key, newKVSValue };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
@@ -4626,22 +4626,22 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
+    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata
         (db, tableId, partition, aspect, key);
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntries.get(0));
 
     // Delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test replace metadata
    */
-  public void testReplaceDBTableMetadata_ExpectPass() {
+  public void testReplaceTableMetadata_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -4660,7 +4660,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4680,7 +4680,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
@@ -4689,7 +4689,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     String newKVSValue = "newTestTable";
     KeyValueStoreEntry newKVSEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), newKVSValue);
-    ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, newKVSEntry);
+    ODKDatabaseImplUtils.get().replaceTableMetadata(db, newKVSEntry);
 
     String [] selArgs2 = { partition, key, newKVSValue };
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
@@ -4697,22 +4697,22 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
+    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata
         (db, tableId, partition, aspect, key);
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 
     // Delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test replace metadata sub list
    */
-  public void testReplaceDBTableMetadataSubList_ExpectPass() {
+  public void testReplaceTableMetadataSubList_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -4731,7 +4731,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     try {
       ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns,
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns,
               kvsEntries, true);
     } catch (Exception e){
       e.printStackTrace();
@@ -4751,7 +4751,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
+    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata(db, tableId,
         partition, aspect, key);
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
@@ -4762,7 +4762,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     KeyValueStoreEntry newKVSEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), newKVSValue);
     newKVSEntries.add(newKVSEntry);
-    ODKDatabaseImplUtils.get().replaceDBTableMetadataSubList(db, tableId, partition, aspect,
+    ODKDatabaseImplUtils.get().replaceTableMetadataSubList(db, tableId, partition, aspect,
         newKVSEntries);
 
     String [] selArgs2 = { partition, key, newKVSValue };
@@ -4771,29 +4771,29 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
+    ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getTableMetadata
         (db, tableId, partition, aspect, key);
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 
     // Delete the metadata
-    ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test resolve server conflict with delete in existing table with id
    */
-  public void testResolveServerConflictWithDeleteInExistingDbTableWithId_ExpectPass() {
+  public void testResolveServerConflictWithDeleteInExistingTableWithId_ExpectPass() {
     // Test this after restructuring of the Sync code
   }
 
   /*
    * Test resolve server conflict with update in existing table with id
    */
-  public void testResolveServerConflictWithUpdateInExistingDbTableWithId_ExpectPass() {
+  public void testResolveServerConflictWithUpdateInExistingTableWithId_ExpectPass() {
     // Test this after restructuring of the Sync code
   }
 
@@ -4807,13 +4807,13 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column(testCol, testCol, testColType, "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, tableId, columns);
+//        .createOrOpenTableWithColumns(db, tableId, columns);
 //    int testVal = 5;
 //
 //    ContentValues cvValues = new ContentValues();
 //    String rowId = LocalizationUtils.genUUID();
 //    cvValues.put(testCol, testVal);
-//    ODKDatabaseImplUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
+//    ODKDatabaseImplUtils.get().insertDataIntoExistingTableWithId(db, tableId, orderedColumns,
 //        cvValues, rowId);
 //
 //    // Select everything out of the table
@@ -4868,7 +4868,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 //    }
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 //  }
 
   /*
@@ -4925,14 +4925,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
   /*
    * Test update table eTags
    */
-  public void testUpdateDBTableETags() throws ActionNotAuthorizedException  {
+  public void testUpdateTableETags() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -4986,7 +4986,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     // update db schema etag and last data etag
     String newSchemaETag = LocalizationUtils.genUUID();
     String newLastDataETag = LocalizationUtils.genUUID();
-    ODKDatabaseImplUtils.get().privilegedUpdateDBTableETags(db, tableId, newSchemaETag,
+    ODKDatabaseImplUtils.get().privilegedUpdateTableETags(db, tableId, newSchemaETag,
         newLastDataETag);
 
     // Select everything out of the table
@@ -5007,20 +5007,20 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
    * Test update table last sync time
    */
-  public void testUpdateDBTableLastSyncTime_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testUpdateTableLastSyncTime_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5072,7 +5072,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // udpate db table last sync time
-    ODKDatabaseImplUtils.get().privilegedUpdateDBTableLastSyncTime(db, tableId);
+    ODKDatabaseImplUtils.get().privilegedUpdateTableLastSyncTime(db, tableId);
 
     // Select everything out of the table
     cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
@@ -5091,7 +5091,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertNotSame(syncTime, defaultSyncTime);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5104,7 +5104,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5158,7 +5158,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /**
@@ -5268,7 +5268,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5328,7 +5328,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5348,7 +5348,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5431,7 +5431,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5457,7 +5457,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         .getOdkConnectionFactoryInterface().getConnection(getAppName(), prevUniqueKey);
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(prevDb, tableId, columns);
+        .createOrOpenTableWithColumns(prevDb, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5540,7 +5540,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5560,7 +5560,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5643,7 +5643,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     dbForQuery.releaseReference();
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5663,7 +5663,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5742,7 +5742,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5762,7 +5762,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5851,7 +5851,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5871,7 +5871,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -5961,7 +5961,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -5981,7 +5981,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db, tableId, columns);
+        .createOrOpenTableWithColumns(db, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -6061,7 +6061,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
   /*
@@ -6089,7 +6089,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Create a table on db1
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db1, tableId, columns);
+        .createOrOpenTableWithColumns(db1, tableId, columns);
 
     ODKDatabaseImplUtils.AccessContext accessContext =
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -6131,14 +6131,14 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Delete the table and recreate with a different row
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db1, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db1, tableId);
 
     // Create a table on db1
     String newTestCol = "testColumn0";
     List<Column> newColumns = new ArrayList<Column>();
     newColumns.add(new Column(newTestCol, newTestCol, testColType, "[]"));
     orderedColumns = ODKDatabaseImplUtils.get()
-        .createOrOpenDBTableWithColumns(db1, tableId, newColumns);
+        .createOrOpenTableWithColumns(db1, tableId, newColumns);
 
     // Re-create the same table with different row
     int newTestVal = 200;
@@ -6186,7 +6186,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(false);
 
     // Drop the table now that the test is done
-    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
 
  /*
@@ -6218,7 +6218,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         columns.add(new Column(testCol, testCol, testColType, "[]"));
       }
       OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumns(db, tableId, columns);
+          .createOrOpenTableWithColumns(db, tableId, columns);
 
       ODKDatabaseImplUtils.AccessContext accessContext =
           ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
@@ -6275,7 +6275,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
       assertEquals(cursor.getCount(), 0);
 
       // Drop the table now that the test is done
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+      ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 
       for ( int len = 1 ; len < maxBytes ; len += 4 ) {
         byte[] bytes = new byte[len];

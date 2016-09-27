@@ -206,8 +206,6 @@ public class InstanceProvider extends ContentProvider {
     String instanceName = null;
     Cursor c = null;
 
-    String dbTableName;
-
     StringBuilder b = new StringBuilder();
 
     try {
@@ -223,8 +221,6 @@ public class InstanceProvider extends ContentProvider {
       if (!success) {
         throw new SQLException("Unknown URI (missing data table for tableId) " + uri);
       }
-
-      dbTableName = "\"" + tableId + "\"";
 
       try {
         c = db.query(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
@@ -255,7 +251,7 @@ public class InstanceProvider extends ContentProvider {
             .append("SELECT DISTINCT ").append(DATA_TABLE_ID_COLUMN).append(" as ")
             .append(InstanceColumns.DATA_INSTANCE_ID).append(",").append("? as ")
             .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(" FROM ")
-            .append(dbTableName).append(" EXCEPT SELECT DISTINCT ")
+            .append(tableId).append(" EXCEPT SELECT DISTINCT ")
             .append(InstanceColumns.DATA_INSTANCE_ID).append(",")
             .append(InstanceColumns.DATA_TABLE_TABLE_ID).append(" FROM ")
             .append(DatabaseConstants.UPLOADS_TABLE_NAME).append(")");
@@ -304,7 +300,6 @@ public class InstanceProvider extends ContentProvider {
     String filterArgs[];
     Cursor c = null;
 
-    String dbTableName;
     OrderedColumns orderedDefns;
 
     StringBuilder b = new StringBuilder();
@@ -319,8 +314,6 @@ public class InstanceProvider extends ContentProvider {
     if (!success) {
       throw new SQLException("Unknown URI (missing data table for tableId) " + uri);
     }
-
-    dbTableName = "\"" + tableId + "\"";
 
     // Can't get away with dataTable.* because of collision with _ID column
     // get map of (elementKey -> ColumnDefinition)
@@ -349,30 +342,30 @@ public class InstanceProvider extends ContentProvider {
        .append(".").append(InstanceColumns.SUBMISSION_INSTANCE_ID)
          .append(" as ").append(InstanceColumns.SUBMISSION_INSTANCE_ID).append(",");
     // add the dataTable metadata except for _ID (which conflicts with InstanceColumns._ID)
-    b.append(dbTableName).append(".").append(DataTableColumns.ROW_ETAG)
+    b.append(tableId).append(".").append(DataTableColumns.ROW_ETAG)
          .append(" as ").append(DataTableColumns.ROW_ETAG).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.SYNC_STATE)
+     .append(tableId).append(".").append(DataTableColumns.SYNC_STATE)
          .append(" as ").append(DataTableColumns.SYNC_STATE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.CONFLICT_TYPE)
+     .append(tableId).append(".").append(DataTableColumns.CONFLICT_TYPE)
          .append(" as ").append(DataTableColumns.CONFLICT_TYPE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.FILTER_TYPE)
+     .append(tableId).append(".").append(DataTableColumns.FILTER_TYPE)
          .append(" as ").append(DataTableColumns.FILTER_TYPE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.FILTER_VALUE)
+     .append(tableId).append(".").append(DataTableColumns.FILTER_VALUE)
          .append(" as ").append(DataTableColumns.FILTER_VALUE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.FORM_ID)
+     .append(tableId).append(".").append(DataTableColumns.FORM_ID)
          .append(" as ").append(DataTableColumns.FORM_ID).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.LOCALE)
+     .append(tableId).append(".").append(DataTableColumns.LOCALE)
          .append(" as ").append(DataTableColumns.LOCALE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.SAVEPOINT_TYPE)
+     .append(tableId).append(".").append(DataTableColumns.SAVEPOINT_TYPE)
          .append(" as ").append(DataTableColumns.SAVEPOINT_TYPE).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.SAVEPOINT_TIMESTAMP)
+     .append(tableId).append(".").append(DataTableColumns.SAVEPOINT_TIMESTAMP)
          .append(" as ").append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(",")
-     .append(dbTableName).append(".").append(DataTableColumns.SAVEPOINT_CREATOR)
+     .append(tableId).append(".").append(DataTableColumns.SAVEPOINT_CREATOR)
          .append(" as ").append(DataTableColumns.SAVEPOINT_CREATOR).append(",");
     // add the user-specified data fields in this dataTable
     for ( ColumnDefinition cd : orderedDefns.getColumnDefinitions() ) {
       if ( cd.isUnitOfRetention() ) {
-        b.append(dbTableName).append(".").append(cd.getElementKey())
+        b.append(tableId).append(".").append(cd.getElementKey())
             .append(" as ").append(cd.getElementKey()).append(",");
       }
     }
@@ -397,15 +390,15 @@ public class InstanceProvider extends ContentProvider {
     b.append(InstanceColumns.DATA_INSTANCE_NAME);
     b.append(" as ").append(InstanceColumns.DISPLAY_NAME);
     b.append(" FROM ");
-    b.append("( SELECT * FROM ").append(dbTableName).append(" AS T WHERE T.")
+    b.append("( SELECT * FROM ").append(tableId).append(" AS T WHERE T.")
      .append(DATA_TABLE_SAVEPOINT_TIMESTAMP_COLUMN).append("=(SELECT MAX(V.")
      .append(DATA_TABLE_SAVEPOINT_TIMESTAMP_COLUMN).append(") FROM ")
-       .append(dbTableName).append(" AS V WHERE V.")
+       .append(tableId).append(" AS V WHERE V.")
        .append(DATA_TABLE_ID_COLUMN).append("=T.").append(DATA_TABLE_ID_COLUMN)
      .append(" AND V.").append(DATA_TABLE_SAVEPOINT_TYPE_COLUMN).append(" IS NOT NULL").append(")")
-     .append(") as ").append(dbTableName);
+     .append(") as ").append(tableId);
     b.append(" JOIN ").append(DatabaseConstants.UPLOADS_TABLE_NAME).append(" ON ")
-        .append(dbTableName).append(".").append(DATA_TABLE_ID_COLUMN).append("=")
+        .append(tableId).append(".").append(DATA_TABLE_ID_COLUMN).append("=")
         .append(DatabaseConstants.UPLOADS_TABLE_NAME).append(".")
         .append(InstanceColumns.DATA_INSTANCE_ID).append(" AND ").append("? =")
         .append(DatabaseConstants.UPLOADS_TABLE_NAME).append(".")
@@ -526,8 +519,6 @@ public class InstanceProvider extends ContentProvider {
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
       }
 
-      String dbTableName = "\"" + tableId + "\"";
-
       if (success) {
         // delete the entries matching the filter criteria
         if (segments.size() == 2) {
@@ -616,7 +607,7 @@ public class InstanceProvider extends ContentProvider {
       for (IdStruct idStruct : idStructs) {
         db.delete(DatabaseConstants.UPLOADS_TABLE_NAME, InstanceColumns.DATA_INSTANCE_ID + "=?",
             new String[] { idStruct.idUploadsTable });
-        db.delete(dbTableName, DATA_TABLE_ID_COLUMN + "=?", new String[] { idStruct.idDataTable });
+        db.delete(tableId, DATA_TABLE_ID_COLUMN + "=?", new String[] { idStruct.idDataTable });
       }
       db.setTransactionSuccessful();
     } finally {
@@ -676,8 +667,6 @@ public class InstanceProvider extends ContentProvider {
       if (!success) {
         throw new SQLException("Unknown URI (missing data table for tableId) " + uri);
       }
-
-      String dbTableName = "\"" + tableId + "\"";
 
       internalUpdate(db, uri, appName, tableId );
 

@@ -407,7 +407,8 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public RowResourceList getUpdates(TableResource table, String dataETag, String websafeResumeCursor)
+  public RowResourceList getUpdates(TableResource table, String dataETag,
+      String websafeResumeCursor, int fetchLimit)
           throws HttpClientWebException, IOException {
 
     String tableId = table.getTableId();
@@ -417,9 +418,9 @@ public class AggregateSynchronizer implements Synchronizer {
     CloseableHttpResponse response = null;
 
     if ((table.getDataETag() == null) || dataETag == null) {
-      uri = wrapper.constructTableDataUri(table.getDataUri(), websafeResumeCursor);
+      uri = wrapper.constructTableDataUri(table.getDataUri(), websafeResumeCursor, fetchLimit);
     } else {
-      uri = wrapper.constructTableDataDiffUri(table.getDiffUri(), dataETag, websafeResumeCursor);
+      uri = wrapper.constructTableDataDiffUri(table.getDiffUri(), dataETag, websafeResumeCursor, fetchLimit);
     }
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);

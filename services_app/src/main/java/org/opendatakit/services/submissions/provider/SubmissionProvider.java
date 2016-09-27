@@ -273,8 +273,6 @@ public class SubmissionProvider extends ContentProvider {
         throw new SQLException("Unknown URI (missing data table for tableId) " + uri);
       }
 
-      final String dbTableName = "\"" + tableId + "\"";
-
       // Get the table properties specific to XML submissions
 
       String xmlInstanceName = null;
@@ -333,11 +331,11 @@ public class SubmissionProvider extends ContentProvider {
         // issue query to retrieve the most recent non-checkpoint data record
         // for the instanceId
         StringBuilder b = new StringBuilder();
-        b.append("SELECT * FROM ").append(dbTableName).append(" as T WHERE ")
+        b.append("SELECT * FROM ").append(tableId).append(" as T WHERE ")
             .append(DataTableColumns.ID).append("=?").append(" AND ")
             .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NOT NULL AND ")
             .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append("=(SELECT max(V.")
-                .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(dbTableName)
+                .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
                    .append(" as V WHERE V.").append(DataTableColumns.ID).append("=T.")
                    .append(DataTableColumns.ID).append(" AND V.")
                    .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NOT NULL").append(")");
@@ -350,7 +348,7 @@ public class SubmissionProvider extends ContentProvider {
         try {
 
           ODKDatabaseImplUtils.AccessContext accessContext =
-              ODKDatabaseImplUtils.get().getAccessContext(db, dbTableName, activeUser,
+              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
                   rolesList);
 
           c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,

@@ -425,7 +425,7 @@ public class ODKDatabaseImplUtils {
     Boolean isLocked = false;
     {
       ArrayList<KeyValueStoreEntry> lockedList = this
-          .getDBTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
+          .getTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
               LocalKeyValueStoreConstants.TableSecurity.ASPECT,
               LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED);
 
@@ -450,7 +450,7 @@ public class ODKDatabaseImplUtils {
       // this is the unverified user case. By default, they can create rows.
       // Administrator can use table properties to manage that capability.
       canCreateRow = true;
-      ArrayList<KeyValueStoreEntry> canUnverifiedCreateList = this.getDBTableMetadata(db, tableId,
+      ArrayList<KeyValueStoreEntry> canUnverifiedCreateList = this.getTableMetadata(db, tableId,
           KeyValueStoreConstants.PARTITION_TABLE,
           LocalKeyValueStoreConstants.TableSecurity.ASPECT,
           LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE);
@@ -785,7 +785,7 @@ public class ODKDatabaseImplUtils {
    * @param columns
    * @return
    */
-  public OrderedColumns createLocalOnlyDBTableWithColumns(OdkConnectionInterface db,
+  public OrderedColumns createLocalOnlyTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -797,7 +797,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      createDBTableWithColumns(db, tableId, orderedDefs, false);
+      createTableWithColumns(db, tableId, orderedDefs, false);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -819,12 +819,12 @@ public class ODKDatabaseImplUtils {
           if (colNames != null && colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
             WebLogger.getLogger(db.getAppName()).e(t,
-                "createLocalOnlyDbTableWithColumns: Error while adding table " + tableId
+                "createLocalOnlyTableWithColumns: Error while adding table " + tableId
                     + " with columns:" + colNames.toString());
           }
         } else {
           WebLogger.getLogger(db.getAppName()).e(t,
-              "createLocalOnlyDbTableWithColumns: Error while adding table " + tableId
+              "createLocalOnlyTableWithColumns: Error while adding table " + tableId
                   + " with columns: null");
         }
       }
@@ -837,7 +837,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void deleteLocalOnlyDBTable(OdkConnectionInterface db,
+  public void deleteLocalOnlyTable(OdkConnectionInterface db,
       String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -1334,7 +1334,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void deleteDBTableAndAllData(OdkConnectionInterface db,
+  public void deleteTableAndAllData(OdkConnectionInterface db,
       final String tableId) {
 
     SyncETagsUtils seu = new SyncETagsUtils();
@@ -1453,7 +1453,7 @@ public class ODKDatabaseImplUtils {
    * @param schemaETag
    * @param lastDataETag
    */
-  public void privilegedUpdateDBTableETags(OdkConnectionInterface db, String tableId,
+  public void privilegedUpdateTableETags(OdkConnectionInterface db, String tableId,
       String schemaETag, String lastDataETag) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
@@ -1489,7 +1489,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void privilegedUpdateDBTableLastSyncTime(OdkConnectionInterface db, String tableId) {
+  public void privilegedUpdateTableLastSyncTime(OdkConnectionInterface db, String tableId) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
@@ -1736,7 +1736,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param e  a KeyValueStoreEntry. If e.value is null or an empty string, the entry is deleted.
    */
-  public void replaceDBTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
+  public void replaceTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
     validateKVSEntry(db.getAppName(), e.tableId, e);
 
     TreeMap<String,Object> values = new TreeMap<String,Object>();
@@ -1753,7 +1753,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       if (e.value == null || e.value.trim().length() == 0) {
-        deleteDBTableMetadata(db, e.tableId, e.partition, e.aspect, e.key);
+        deleteTableMetadata(db, e.tableId, e.partition, e.aspect, e.key);
       } else {
         db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
       }
@@ -1779,7 +1779,7 @@ public class ODKDatabaseImplUtils {
    * @param clear    if true then delete the existing set of values for this tableId
    *                 before inserting the new ones.
    */
-  public void replaceDBTableMetadata(OdkConnectionInterface db, String tableId,
+  public void replaceTableMetadata(OdkConnectionInterface db, String tableId,
       List<KeyValueStoreEntry> metadata, boolean clear) {
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -1794,7 +1794,7 @@ public class ODKDatabaseImplUtils {
       }
 
       for (KeyValueStoreEntry e : metadata) {
-        replaceDBTableMetadata(db, e);
+        replaceTableMetadata(db, e);
       }
 
       if (!dbWithinTransaction) {
@@ -1807,7 +1807,7 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  public void replaceDBTableMetadataSubList(OdkConnectionInterface db, String tableId,
+  public void replaceTableMetadataSubList(OdkConnectionInterface db, String tableId,
       String partition, String aspect, List<KeyValueStoreEntry> metadata) {
 
     StringBuilder b = new StringBuilder();
@@ -1838,7 +1838,7 @@ public class ODKDatabaseImplUtils {
       db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
 
       for (KeyValueStoreEntry e : metadata) {
-        replaceDBTableMetadata(db, e);
+        replaceTableMetadata(db, e);
       }
 
       if (!dbWithinTransaction) {
@@ -1861,7 +1861,7 @@ public class ODKDatabaseImplUtils {
    * @param aspect
    * @param key
    */
-  public void deleteDBTableMetadata(OdkConnectionInterface db, String tableId, String partition,
+  public void deleteTableMetadata(OdkConnectionInterface db, String tableId, String partition,
       String aspect, String key) {
 
     StringBuilder b = new StringBuilder();
@@ -1921,7 +1921,7 @@ public class ODKDatabaseImplUtils {
    * @param key
    * @return
    */
-  public ArrayList<KeyValueStoreEntry> getDBTableMetadata(OdkConnectionInterface db, String tableId,
+  public ArrayList<KeyValueStoreEntry> getTableMetadata(OdkConnectionInterface db, String tableId,
       String partition, String aspect, String key) {
 
     ArrayList<KeyValueStoreEntry> entries = new ArrayList<KeyValueStoreEntry>();
@@ -1993,7 +1993,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void enforceTypesDBTableMetadata(OdkConnectionInterface db, String tableId) {
+  public void enforceTypesTableMetadata(OdkConnectionInterface db, String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2031,7 +2031,7 @@ public class ODKDatabaseImplUtils {
    * Create a user defined database table metadata - table definiton and KVS
    * values
    */
-  private void createDBTableMetadata(OdkConnectionInterface db, String tableId) {
+  private void createTableMetadata(OdkConnectionInterface db, String tableId) {
     if (tableId == null || tableId.length() <= 0) {
       throw new IllegalArgumentException(t + ": application name and table name must be specified");
     }
@@ -2054,7 +2054,7 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param orderedDefs
    */
-  private void createDBTableWithColumns(OdkConnectionInterface db, String tableId,
+  private void createTableWithColumns(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedDefs, boolean isSynchronized) {
 
     if (tableId == null || tableId.length() <= 0) {
@@ -2112,7 +2112,7 @@ public class ODKDatabaseImplUtils {
 
     if (isSynchronized) {
       // Create the metadata for the table - table def and KVS
-      createDBTableMetadata(db, tableId);
+      createTableMetadata(db, tableId);
 
       // Now need to call the function to write out all the column values
       for (ColumnDefinition column : orderedDefs.getColumnDefinitions()) {
@@ -2262,7 +2262,7 @@ public class ODKDatabaseImplUtils {
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenDBTableWithColumns(OdkConnectionInterface db,
+  public OrderedColumns createOrOpenTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -2273,7 +2273,7 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, tableId, orderedDefs, true);
+        createTableWithColumns(db, tableId, orderedDefs, true);
       } else {
         verifyTableSchema(db, tableId, orderedDefs);
       }
@@ -2298,12 +2298,12 @@ public class ODKDatabaseImplUtils {
           if (colNames != null && colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
             WebLogger.getLogger(db.getAppName()).e(t,
-                "createOrOpenDBTableWithColumns: Error while adding table " + tableId
+                "createOrOpenTableWithColumns: Error while adding table " + tableId
                     + " with columns:" + colNames.toString());
           }
         } else {
           WebLogger.getLogger(db.getAppName()).e(t,
-              "createOrOpenDBTableWithColumns: Error while adding table " + tableId
+              "createOrOpenTableWithColumns: Error while adding table " + tableId
                   + " with columns: null");
         }
       }
@@ -2322,7 +2322,7 @@ public class ODKDatabaseImplUtils {
    * @param columns
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenDBTableWithColumnsAndProperties(OdkConnectionInterface db,
+  public OrderedColumns createOrOpenTableWithColumnsAndProperties(OdkConnectionInterface db,
       String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData,
       boolean clear) throws JsonProcessingException {
     boolean dbWithinTransaction = db.inTransaction();
@@ -2336,15 +2336,15 @@ public class ODKDatabaseImplUtils {
       }
       boolean created = false;
       if (!hasTableId(db, tableId)) {
-        createDBTableWithColumns(db, tableId, orderedDefs, true);
+        createTableWithColumns(db, tableId, orderedDefs, true);
         created = true;
       } else {
         // confirm that the column definitions are unchanged...
         verifyTableSchema(db, tableId, orderedDefs);
       }
 
-      replaceDBTableMetadata(db, tableId, metaData, (clear || created));
-      enforceTypesDBTableMetadata(db, tableId);
+      replaceTableMetadata(db, tableId, metaData, (clear || created));
+      enforceTypesTableMetadata(db, tableId);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2366,12 +2366,12 @@ public class ODKDatabaseImplUtils {
           if (colNames != null && colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
             WebLogger.getLogger(db.getAppName()).e(t,
-                "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
+                "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
                     + " with columns:" + colNames.toString());
           }
         } else {
           WebLogger.getLogger(db.getAppName()).e(t,
-              "createOrOpenDBTableWithColumnsAndProperties: Error while adding table " + tableId
+              "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
                   + " with columns: null");
         }
       }
@@ -2508,7 +2508,7 @@ public class ODKDatabaseImplUtils {
    * we need to clear out the dataETag so
    * that we will pull all server changes and sync our properties.
    * <p/>
-   * updateDBTableETags(sc.getAppName(), db, tableId, null, null);
+   * updateTableETags(sc.getAppName(), db, tableId, null, null);
    * <p/>
    * Although the server does not recognize this tableId, we can
    * keep our record of the ETags for the table-level files and
@@ -2551,7 +2551,7 @@ public class ODKDatabaseImplUtils {
 
       changeDataRowsToNewRowState(db, tableId);
 
-      privilegedUpdateDBTableETags(db, tableId, schemaETag, null);
+      privilegedUpdateTableETags(db, tableId, schemaETag, null);
 
       if (tableInstanceFilesUri != null) {
         SyncETagsUtils seu = new SyncETagsUtils();
@@ -2921,7 +2921,7 @@ public class ODKDatabaseImplUtils {
     * @param rolesList
     * @throws ActionNotAuthorizedException
    */
-  private void rawCheckpointDeleteDataInDBTable(OdkConnectionInterface db,
+  private void rawCheckpointDeleteDataInTable(OdkConnectionInterface db,
       String tableId, String rowId, String whereClause, Object[] whereArgs, String activeUser,
       String rolesList) throws ActionNotAuthorizedException {
 
@@ -3028,7 +3028,7 @@ public class ODKDatabaseImplUtils {
     b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
         .append(DataTableColumns.SAVEPOINT_TYPE).append(S_IS_NULL);
 
-    rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
+    rawCheckpointDeleteDataInTable(db, tableId, rowId,
         b.toString(),
         new Object[] { rowId }, activeUser, rolesList);
   }
@@ -3056,7 +3056,7 @@ public class ODKDatabaseImplUtils {
              .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
            .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
 
-    rawCheckpointDeleteDataInDBTable(db, tableId, rowId,
+    rawCheckpointDeleteDataInTable(db, tableId, rowId,
         b.toString(), new Object[] { rowId, rowId }, activeUser, rolesList);
   }
 
@@ -3184,7 +3184,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, false,
+    upsertDataIntoExistingTable(db, tableId, orderedColumns, cvDataTableVal, true, false,
         activeUser, rolesList, locale, false);
   }
 
@@ -3203,7 +3203,7 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException(t + ": No rowId in cvValues map " + tableId);
     }
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvValues, true, false,
+    upsertDataIntoExistingTable(db, tableId, orderedColumns, cvValues, true, false,
         activeUser, rolesList, locale, false);
   }
 
@@ -3243,7 +3243,7 @@ public class ODKDatabaseImplUtils {
     }
 
     try {
-      upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
+      upsertDataIntoExistingTable(db, tableId, orderedColumns, cvDataTableVal, true, true,
           activeUser, rolesList, locale, asCsvRequestedChange);
     } catch (ActionNotAuthorizedException e) {
       WebLogger.getLogger(db.getAppName()).printStackTrace(e);
@@ -3921,7 +3921,7 @@ public class ODKDatabaseImplUtils {
         }
         currValues.put(DataTableColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
+        insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, true, null, null);
         return;
       }
@@ -3947,7 +3947,7 @@ public class ODKDatabaseImplUtils {
         }
         currValues.put(DataTableColumns._ID, rowId);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
+        insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, true, null, null);
         return;
       } else {
@@ -4022,7 +4022,7 @@ public class ODKDatabaseImplUtils {
           }
         }
 
-        insertCheckpointIntoExistingDBTable(db, tableId, orderedColumns, currValues, activeUser,
+        insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, false, priorFilterType, priorFilterValue);
       }
     } finally {
@@ -4100,7 +4100,7 @@ public class ODKDatabaseImplUtils {
 
     // TODO: verify that all fields are specified
     try {
-      upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
+      upsertDataIntoExistingTable(db, tableId, orderedColumns, cvDataTableVal, false, true,
           activeUser, rolesList, locale, asCsvRequestedChange);
     } catch (ActionNotAuthorizedException e) {
       WebLogger.getLogger(db.getAppName()).printStackTrace(e);
@@ -4139,7 +4139,7 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
-    upsertDataIntoExistingDBTable(db, tableId, orderedColumns, cvDataTableVal, false, false,
+    upsertDataIntoExistingTable(db, tableId, orderedColumns, cvDataTableVal, false, false,
         activeUser, rolesList, locale, false);
   }
 
@@ -4155,7 +4155,7 @@ public class ODKDatabaseImplUtils {
    * @param locale
    * @param isNewRow
    */
-  private void insertCheckpointIntoExistingDBTable(OdkConnectionInterface db, String tableId,
+  private void insertCheckpointIntoExistingTable(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, HashMap<String,Object> cvValues, String activeUser, String rolesList,
       String locale, boolean isNewRow, String priorFilterType, String priorFilterValue)
       throws ActionNotAuthorizedException {
@@ -4176,7 +4176,7 @@ public class ODKDatabaseImplUtils {
       }
     } else {
       throw new IllegalArgumentException(t
-          + ": rowId should not be null in insertCheckpointIntoExistingDBTable in the ContentValues");
+          + ": rowId should not be null in insertCheckpointIntoExistingTable in the ContentValues");
     }
 
     if (!cvDataTableVal.containsKey(DataTableColumns.ROW_ETAG)
@@ -4501,7 +4501,7 @@ public class ODKDatabaseImplUtils {
       String tableId) {
 
     // get the security settings
-    List<KeyValueStoreEntry> entries = getDBTableMetadata(db, tableId,
+    List<KeyValueStoreEntry> entries = getTableMetadata(db, tableId,
         KeyValueStoreConstants.PARTITION_TABLE, LocalKeyValueStoreConstants.TableSecurity.ASPECT,
         null);
 
@@ -4546,7 +4546,7 @@ public class ODKDatabaseImplUtils {
    *
    * TODO: This is broken w.r.t. updates of partial fields
    */
-  private void upsertDataIntoExistingDBTable(OdkConnectionInterface db, String tableId,
+  private void upsertDataIntoExistingTable(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, Map<String,Object> cvValues, boolean shouldUpdate,
       boolean asServerRequestedChange, String activeUser, String rolesList, String locale,
       boolean asCsvRequestedChange) throws ActionNotAuthorizedException {

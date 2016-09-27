@@ -229,7 +229,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param columns
    * @return
    */
-  @Override public DbChunk createLocalOnlyDbTableWithColumns(String appName, DbHandle dbHandleName,
+  @Override public DbChunk createLocalOnlyTableWithColumns(String appName, DbHandle dbHandleName,
                                                              String tableId, ColumnList columns) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -239,7 +239,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OrderedColumns results = ODKDatabaseImplUtils.get()
-          .createLocalOnlyDBTableWithColumns(db, tableId, columns.getColumns());
+          .createLocalOnlyTableWithColumns(db, tableId, columns.getColumns());
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
@@ -249,7 +249,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("createLocalOnlyDbTableWithColumns",
+      WebLogger.getLogger(appName).e("createLocalOnlyTableWithColumns",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -270,7 +270,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param dbHandleName
    * @param tableId
    */
-  @Override public void deleteLocalOnlyDBTable(String appName, DbHandle dbHandleName,
+  @Override public void deleteLocalOnlyTable(String appName, DbHandle dbHandleName,
       String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -279,7 +279,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().deleteLocalOnlyDBTable(db, tableId);
+      ODKDatabaseImplUtils.get().deleteLocalOnlyTable(db, tableId);
 
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -288,7 +288,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       if (msg == null)
         msg = e.toString();
       msg = "Exception: " + msg;
-      WebLogger.getLogger(appName).e("deleteLocalOnlyDbTable",
+      WebLogger.getLogger(appName).e("deleteLocalOnlyTable",
           appName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new RemoteException(msg);
@@ -528,7 +528,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public DbChunk createOrOpenDBTableWithColumns(String appName,
+  @Override public DbChunk createOrOpenTableWithColumns(String appName,
       DbHandle dbHandleName, String tableId, ColumnList columns) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -538,11 +538,11 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       OrderedColumns results = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumns(db, tableId, columns.getColumns());
+          .createOrOpenTableWithColumns(db, tableId, columns.getColumns());
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "createOrOpenDBTableWithColumns", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "createOrOpenTableWithColumns", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -553,7 +553,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public DbChunk createOrOpenDBTableWithColumnsAndProperties(String appName,
+  @Override public DbChunk createOrOpenTableWithColumnsAndProperties(String appName,
       DbHandle dbHandleName, String tableId, ColumnList columns,
       List<KeyValueStoreEntry> metaData, boolean clear) throws RemoteException {
 
@@ -565,12 +565,12 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       OrderedColumns results =
           ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns.getColumns(),
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns.getColumns(),
               metaData, clear);
 
       return getAndCacheChunks(results);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "createOrOpenDBTableWithColumnsAndProperties", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "createOrOpenTableWithColumnsAndProperties", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -645,7 +645,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public void deleteDBTableAndAllData(String appName, DbHandle dbHandleName,
+  @Override public void deleteTableAndAllData(String appName, DbHandle dbHandleName,
       String tableId) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -654,9 +654,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, tableId);
+      ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "deleteDBTableAndAllData", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "deleteTableAndAllData", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -667,7 +667,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public void deleteDBTableMetadata(String appName, DbHandle dbHandleName,
+  @Override public void deleteTableMetadata(String appName, DbHandle dbHandleName,
       String tableId, String partition, String aspect, String key) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -676,9 +676,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().deleteDBTableMetadata(db, tableId, partition, aspect, key);
+      ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "deleteDBTableMetadata", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "deleteTableMetadata", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -907,7 +907,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public DbChunk getDBTableMetadata(String appName,
+  @Override public DbChunk getTableMetadata(String appName,
       DbHandle dbHandleName, String tableId, String partition, String aspect, String key)
       throws RemoteException {
 
@@ -919,9 +919,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       kvsEntries = ODKDatabaseImplUtils.get()
-          .getDBTableMetadata(db, tableId, partition, aspect, key);
+          .getTableMetadata(db, tableId, partition, aspect, key);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "getDBTableMetadata", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "getTableMetadata", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1324,7 +1324,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public void replaceDBTableMetadata(String appName, DbHandle dbHandleName,
+  @Override public void replaceTableMetadata(String appName, DbHandle dbHandleName,
       KeyValueStoreEntry entry) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1333,9 +1333,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, entry);
+      ODKDatabaseImplUtils.get().replaceTableMetadata(db, entry);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "replaceDBTableMetadata", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "replaceTableMetadata", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1346,7 +1346,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public void replaceDBTableMetadataList(String appName, DbHandle dbHandleName,
+  @Override public void replaceTableMetadataList(String appName, DbHandle dbHandleName,
       String tableId, List<KeyValueStoreEntry> entries, boolean clear) throws RemoteException {
 
     OdkConnectionInterface db = null;
@@ -1355,9 +1355,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().replaceDBTableMetadata(db, tableId, entries, clear);
+      ODKDatabaseImplUtils.get().replaceTableMetadata(db, tableId, entries, clear);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "replaceDBTableMetadataList", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "replaceTableMetadataList", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1368,7 +1368,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
-  @Override public void replaceDBTableMetadataSubList(String appName, DbHandle dbHandleName,
+  @Override public void replaceTableMetadataSubList(String appName, DbHandle dbHandleName,
       String tableId, String partition, String aspect, List<KeyValueStoreEntry> entries)
       throws RemoteException {
 
@@ -1379,9 +1379,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       ODKDatabaseImplUtils.get()
-          .replaceDBTableMetadataSubList(db, tableId, partition, aspect, entries);
+          .replaceTableMetadataSubList(db, tableId, partition, aspect, entries);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "replaceDBTableMetadataSubList", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "replaceTableMetadataSubList", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1467,7 +1467,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param lastDataETag
    * @throws RemoteException
      */
-  @Override public void privilegedUpdateDBTableETags(String appName, DbHandle dbHandleName,
+  @Override public void privilegedUpdateTableETags(String appName, DbHandle dbHandleName,
       String tableId,
       String schemaETag, String lastDataETag) throws RemoteException {
 
@@ -1477,10 +1477,10 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().privilegedUpdateDBTableETags(db, tableId, schemaETag,
+      ODKDatabaseImplUtils.get().privilegedUpdateTableETags(db, tableId, schemaETag,
           lastDataETag);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateDBTableETags", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateTableETags", e);
     } finally {
       if (db != null) {
         // release the reference...
@@ -1499,7 +1499,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param tableId
    * @throws RemoteException
      */
-  @Override public void privilegedUpdateDBTableLastSyncTime(String appName, DbHandle
+  @Override public void privilegedUpdateTableLastSyncTime(String appName, DbHandle
       dbHandleName,
       String tableId) throws RemoteException {
 
@@ -1509,9 +1509,9 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get().privilegedUpdateDBTableLastSyncTime(db, tableId);
+      ODKDatabaseImplUtils.get().privilegedUpdateTableLastSyncTime(db, tableId);
     } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateDBTableLastSyncTime", e);
+      throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateTableLastSyncTime", e);
     } finally {
       if (db != null) {
         // release the reference...

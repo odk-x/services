@@ -181,12 +181,17 @@ public interface Synchronizer {
    *          the local data table. Fetches changes after that dataETag.
    * @param websafeResumeCursor
    *          either null or a value used to resume a prior query.
+   * @param fetchLimit
+   *          the number of rows that should be returned in one chunk.
+   *          Used to limit memory usage during sync and presumably improve
+   *          performance.
    *          
    * @return an RowResourceList of the changes on the server since that dataETag.
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowResourceList getUpdates(TableResource tableResource, String dataETag, String websafeResumeCursor)
+  RowResourceList getUpdates(TableResource tableResource, String dataETag, String
+      websafeResumeCursor, int fetchLimit)
       throws HttpClientWebException, IOException;
 
   /**

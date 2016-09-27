@@ -136,7 +136,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       // Drop any leftover table now that the test is done
       for(String id : tableIds) {
-        ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
+        ODKDatabaseImplUtils.get().deleteTableAndAllData(db, id);
       }
     } else {
       verifyNoTablesExistNCleanAllTables();
@@ -168,7 +168,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     // Drop any leftover table now that the test is done
     for(String id : tableIds) {
-      ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, id);
+      ODKDatabaseImplUtils.get().deleteTableAndAllData(db, id);
     }
 
     tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
@@ -255,7 +255,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
       metaData.add(entry);
 
       return orderedColumns = ODKDatabaseImplUtils.get()
-          .createOrOpenDBTableWithColumnsAndProperties(db, tableId, columns, metaData, true);
+          .createOrOpenTableWithColumnsAndProperties(db, tableId, columns, metaData, true);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
       throw new IllegalStateException("Unable to create table with properties");

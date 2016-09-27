@@ -33,8 +33,6 @@ import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 
 import android.database.Cursor;
-import android.database.CursorWindow;
-import android.database.DatabaseUtils;
 import org.opendatakit.logging.WebLoggerIf;
 import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;

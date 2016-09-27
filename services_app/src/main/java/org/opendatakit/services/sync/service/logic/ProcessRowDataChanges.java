@@ -733,7 +733,7 @@ public class ProcessRowDataChanges {
 
               try {
                 rows = sc.getSynchronizer().getUpdates(tableResource, te.getLastDataETag(),
-                    websafeResumeCursor);
+                    websafeResumeCursor, 2000);
                 if (firstDataETag == null) {
                   firstDataETag = rows.getDataETag();
                 }
@@ -771,7 +771,7 @@ public class ProcessRowDataChanges {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
                     // of the fetch queries, above.
-                    sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
+                    sc.getDatabaseService().privilegedUpdateTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), firstDataETag);
                     // the above will throw a ServicesAvailabilityException if the change is not committed
@@ -926,7 +926,7 @@ public class ProcessRowDataChanges {
                     db = sc.getDatabase();
                     // update the dataETag to the one returned by the first
                     // of the fetch queries, above.
-                    sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db,
+                    sc.getDatabaseService().privilegedUpdateTableETags(sc.getAppName(), db,
                         tableId,
                         tableResource.getSchemaETag(), outcomes.getDataETag());
                     // the above will throw a ServicesAvailabilityException if the changed were not committed.
@@ -1106,7 +1106,7 @@ public class ProcessRowDataChanges {
         DbHandle db = null;
         try {
           db = sc.getDatabase();
-          sc.getDatabaseService().privilegedUpdateDBTableLastSyncTime(sc.getAppName(), db,
+          sc.getDatabaseService().privilegedUpdateTableLastSyncTime(sc.getAppName(), db,
               tableId);
         } finally {
           sc.releaseDatabase(db);

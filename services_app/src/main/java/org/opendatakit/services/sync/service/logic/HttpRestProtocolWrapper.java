@@ -401,14 +401,20 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
-  public URI constructTableDataUri(String tableIdDataUri, String websafeResumeCursor) {
+  public URI constructTableDataUri(String tableIdDataUri, String websafeResumeCursor,
+      int fetchLimit) {
     URI uri = URI.create(tableIdDataUri);
 
     try {
-      // and apply the cursor...
+      // apply the fetchLimit
+      uri = new URIBuilder(uri.toString())
+          .addParameter(HttpRestProtocolWrapper.FETCH_LIMIT, Integer.toString(fetchLimit)).build();
+
       if (websafeResumeCursor != null) {
+        // and apply the cursor...
         uri = new URIBuilder(uri.toString())
-            .addParameter(HttpRestProtocolWrapper.CURSOR_PARAMETER, websafeResumeCursor).build();
+            .addParameter(HttpRestProtocolWrapper.CURSOR_PARAMETER, websafeResumeCursor)
+                .build();
       }
     } catch (URISyntaxException e) {
       log.printStackTrace(e);
@@ -418,13 +424,15 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
-  public URI constructTableDataDiffUri(String tableIdDiffUri, String dataETag, String websafeResumeCursor) {
+  public URI constructTableDataDiffUri(String tableIdDiffUri, String dataETag, String websafeResumeCursor,
+      int fetchLimit) {
 
     URI uri = URI.create(tableIdDiffUri);
 
     try {
       uri = new URIBuilder(uri.toString())
-          .addParameter(HttpRestProtocolWrapper.QUERY_DATA_ETAG, dataETag).build();
+          .addParameter(HttpRestProtocolWrapper.QUERY_DATA_ETAG, dataETag)
+          .addParameter(HttpRestProtocolWrapper.FETCH_LIMIT, Integer.toString(fetchLimit)).build();
 
       // and apply the cursor...
       if (websafeResumeCursor != null) {

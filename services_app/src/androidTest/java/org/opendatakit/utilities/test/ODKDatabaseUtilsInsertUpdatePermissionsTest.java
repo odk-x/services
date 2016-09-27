@@ -406,7 +406,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column("col1", "col1", "string", "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenTableWithColumns(db, getAppName(), tableId, columns);
 //
 //    // Check that the user defined rows are in the table
 //    Cursor cursor = ODKDatabaseImplUtils.get().query(db, tableId, null, null, null, null, null,
@@ -449,7 +449,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //    }
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, getAppName(), tableId);
 //  }
 //
 //  /*
@@ -461,7 +461,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //    List<Column> columns = new ArrayList<Column>();
 //    columns.add(new Column("col1", "col1", "string", "[]"));
 //    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
-//        .createOrOpenDBTableWithColumns(db, getAppName(), tableId, columns);
+//        .createOrOpenTableWithColumns(db, getAppName(), tableId, columns);
 //
 //    // Check that the user defined rows are in the table
 //    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null);
@@ -503,7 +503,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //    }
 //
 //    // Drop the table now that the test is done
-//    ODKDatabaseImplUtils.get().deleteDBTableAndAllData(db, getAppName(), tableId);
+//    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, getAppName(), tableId);
 //  }
 //
 //

@@ -95,7 +95,7 @@ public class ProcessAppAndTableLevelChanges {
           }
         }
 
-        sc.getDatabaseService().createOrOpenDBTableWithColumnsAndProperties(sc.getAppName(),
+        sc.getDatabaseService().createOrOpenTableWithColumnsAndProperties(sc.getAppName(),
             sc.getDatabase(), tableId, dtd.columnList, dtd.kvsEntries, true);
       } catch (Exception e) {
         this.reloadingException = e;
@@ -564,7 +564,7 @@ public class ProcessAppAndTableLevelChanges {
         try {
           db = sc.getDatabase();
           // this is an atomic action -- no need to gain transaction before invoking it
-          sc.getDatabaseService().deleteDBTableAndAllData(sc.getAppName(), db, localTableId);
+          sc.getDatabaseService().deleteTableAndAllData(sc.getAppName(), db, localTableId);
           tableLevelDeleteSuccess = true;
         } catch (Exception e) {
           exception("synchronizeConfigurationAndContent - exception while deleting table definition",
@@ -679,7 +679,7 @@ public class ProcessAppAndTableLevelChanges {
         try {
           db = sc.getDatabase();
           // update schemaETag to that on server (dataETag is null already).
-          sc.getDatabaseService().privilegedUpdateDBTableETags(sc.getAppName(), db, tableId,
+          sc.getDatabaseService().privilegedUpdateTableETags(sc.getAppName(), db, tableId,
               schemaETag, null);
         } finally {
           sc.releaseDatabase(db);
@@ -750,7 +750,7 @@ public class ProcessAppAndTableLevelChanges {
          * that the list of KVS entries is in alphabetical order.
          */
         List<KeyValueStoreEntry> kvsEntries =
-            sc.getDatabaseService().getDBTableMetadata(sc.getAppName(), db, tableId, null, null, null);
+            sc.getDatabaseService().getTableMetadata(sc.getAppName(), db, tableId, null, null, null);
 
         for (int i = 0; i < kvsEntries.size(); i++) {
           KeyValueStoreEntry entry = kvsEntries.get(i);
@@ -840,7 +840,7 @@ public class ProcessAppAndTableLevelChanges {
 
     if (doesNotExistLocally) {
       OrderedColumns orderedDefns;
-      orderedDefns = sc.getDatabaseService().createOrOpenDBTableWithColumns(sc.getAppName(), db,
+      orderedDefns = sc.getDatabaseService().createOrOpenTableWithColumns(sc.getAppName(), db,
           definitionResource.getTableId(), new ColumnList(definitionResource.getColumns()));
 
        // and update the schema, removing the old URI string
