@@ -913,7 +913,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     OdkConnectionInterface db = null;
 
-    ArrayList<KeyValueStoreEntry> kvsEntries = null;
+    TableMetaDataEntries kvsEntries = null;
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -1277,7 +1277,7 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
           ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
 
       BaseTable result = ODKDatabaseImplUtils.get()
-          .query(db, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, accessContext);
+          .query(db, tableId, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds, accessContext);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {
@@ -1305,11 +1305,12 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
 
-      ODKDatabaseImplUtils.AccessContext accessContext =
-          ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      ODKDatabaseImplUtils.AccessContext accessContext = ODKDatabaseImplUtils.get()
+          .getAccessContext(db, tableId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable result = ODKDatabaseImplUtils.get().privilegedQuery(db, sqlCommand, sqlBindArgs
-          .bindArgs, sqlQueryBounds, accessContext);
+      BaseTable result = ODKDatabaseImplUtils.get()
+          .privilegedQuery(db, tableId, sqlCommand, sqlBindArgs.bindArgs, sqlQueryBounds,
+              accessContext);
 
       return getAndCacheChunks(result);
     } catch (Exception e) {

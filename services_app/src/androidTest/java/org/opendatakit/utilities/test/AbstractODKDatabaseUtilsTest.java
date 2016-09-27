@@ -3096,10 +3096,11 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { KeyValueStoreConstants.PARTITION_TABLE,
         KeyValueStoreConstants.COLUMN_DISPLAY_NAME, tableId };
-    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
-        KeyValueStoreConstants.PARTITION_TABLE, null, KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
+    List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, null, KeyValueStoreConstants.PARTITION_TABLE, null,
+            KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();
     boolean found = false;
-    for ( KeyValueStoreEntry entry : entries ) {
+    for (KeyValueStoreEntry entry : entries) {
       if ( entry.value != null && entry.value.equals(tableId) ) {
         found = true;
         break;
@@ -3280,7 +3281,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Ensure that the expected properties is in the KVS table
     List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
-        partition, null, key);
+        partition, null, key).getEntries();
     assertEquals(entries.size(), 1);
     boolean found = false;
     for ( KeyValueStoreEntry entry : entries ) {
@@ -3292,8 +3293,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertTrue("found the KVSEntry", found);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries, kvsEntries);
 
@@ -3302,7 +3303,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Ensure that the expected properties is in the KVS table
     entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db, null,
-        partition, null, key);
+        partition, null, key).getEntries();
     assertEquals(entries.size(), 0);
 
     // Drop the table now that the test is done
@@ -3395,7 +3396,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
     String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-    BaseTable baseTable = ODKDatabaseImplUtils.get().query(db, QueryUtil
+    BaseTable baseTable = ODKDatabaseImplUtils.get().query(db, tableId, QueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs, null, accessContext);
     UserTable table = new UserTable(baseTable, orderedColumns, adminColArr);
@@ -3424,7 +3425,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
         activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
     // Run the query yet again to make sure that things worked as expected
-    baseTable = ODKDatabaseImplUtils.get().query(db, QueryUtil
+    baseTable = ODKDatabaseImplUtils.get().query(db, tableId, QueryUtil
             .buildSqlStatement(tableId, whereClause, null, null, orderByKeys, orderByDirs),
         selectionArgs, null, accessContext);
     table = new UserTable(baseTable, orderedColumns, adminColArr);
@@ -3672,8 +3673,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries.size(), kvsEntries.size());
 
@@ -3798,8 +3799,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Now make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
@@ -4607,8 +4608,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
@@ -4627,7 +4628,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Make sure that the returned value is equal to the original value
     ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
-        (db, tableId, partition, aspect, key);
+        (db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntries.get(0));
 
@@ -4680,8 +4681,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
@@ -4698,7 +4699,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Make sure that the returned value is equal to the original value
     ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
-        (db, tableId, partition, aspect, key);
+        (db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 
@@ -4751,8 +4752,8 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     assertEquals(cursor.getCount(), 1);
 
     // Make sure that the returned value is equal to the original value
-    ArrayList<KeyValueStoreEntry> retKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata(db, tableId,
-        partition, aspect, key);
+    ArrayList<KeyValueStoreEntry> retKVSEntries = ODKDatabaseImplUtils.get()
+        .getDBTableMetadata(db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
@@ -4772,7 +4773,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
     // Make sure that the returned value is equal to the original value
     ArrayList<KeyValueStoreEntry> newRetKVSEntries =  ODKDatabaseImplUtils.get().getDBTableMetadata
-        (db, tableId, partition, aspect, key);
+        (db, tableId, partition, aspect, key).getEntries();
 
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 

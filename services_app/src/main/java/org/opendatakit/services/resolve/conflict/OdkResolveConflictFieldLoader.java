@@ -98,7 +98,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
       List<KeyValueStoreEntry> columnDisplayNames =
           ODKDatabaseImplUtils.get().getDBTableMetadata(db, mTableId,
               KeyValueStoreConstants.PARTITION_COLUMN, null,
-              KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
+              KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();
 
       for (KeyValueStoreEntry e : columnDisplayNames) {
         try {
@@ -122,7 +122,7 @@ public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveAction
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new String[] { mRowId }, null, accessContextPrivileged);

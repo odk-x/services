@@ -304,7 +304,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
           getDatabaseService().getDBTableMetadata(appName, db, tableId,
               KeyValueStoreConstants.PARTITION_TABLE,
               KeyValueStoreConstants.ASPECT_DEFAULT,
-              KeyValueStoreConstants.TABLE_DISPLAY_NAME);
+              KeyValueStoreConstants.TABLE_DISPLAY_NAME, null).getEntries();
       if ( displayNameList.size() != 1 ) {
         return NameUtil.constructSimpleDisplayName(tableId);
       }

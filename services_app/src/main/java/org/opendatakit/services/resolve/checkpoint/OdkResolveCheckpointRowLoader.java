@@ -111,7 +111,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
           ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           null, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -137,7 +137,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
         }
 
         if ( tableSetChanged ) {
-          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -147,7 +147,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
       // The display name is the table display name, not the form display name...
       ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getDBTableMetadata(db,
           mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
-          KeyValueStoreConstants.TABLE_DISPLAY_NAME);
+          KeyValueStoreConstants.TABLE_DISPLAY_NAME).getEntries();
 
       tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(mTableId)) : entries.get(0).value;
