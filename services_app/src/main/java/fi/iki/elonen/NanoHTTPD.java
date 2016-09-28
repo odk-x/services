@@ -51,10 +51,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.UUID;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.CharEncoding;
 
 import android.util.Log;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * A simple, tiny, nicely embeddable HTTP server in Java
@@ -119,6 +122,85 @@ public abstract class NanoHTTPD {
      * Pseudo-Parameter to use to store the actual query string in the parameters map for later re-processing.
      */
     private static final String QUERY_STRING_PARAMETER = "NanoHttpd.QUERY_STRING";
+
+    /**
+     * Wrapper to capture and log response, in full, to a file.
+     * Logs filenames to Android log and always writes to appName = "default".
+     */
+    static class CopyWriter {
+        // by default, do not log to a file.
+        static boolean enableResponseLogging = false;
+
+        OutputStream outputStream;
+        OutputStreamWriter writer;
+        PrintWriter pw;
+        boolean pwUsed;
+
+        // to capture content
+        StringBuilder b;
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+
+
+        CopyWriter(OutputStream outputStream) throws UnsupportedEncodingException {
+            this.outputStream = outputStream;
+            this.writer = new OutputStreamWriter(this.outputStream, CharEncoding.UTF_8);
+            this.pw = new PrintWriter(writer);
+            if ( enableResponseLogging ) {
+                this.b = new StringBuilder();
+                this.bao = new ByteArrayOutputStream();
+            }
+        }
+
+        void print(String s) {
+            pwUsed = true;
+            pw.print(s);
+            if ( enableResponseLogging ) {
+                b.append(s);
+            }
+        }
+
+        void write(byte[] bytes) throws IOException {
+            outputStream.write(bytes);
+            if ( enableResponseLogging ) {
+                bao.write(bytes);
+            }
+        }
+
+        void write(byte[] bytes, int offset, int size) throws IOException {
+            outputStream.write(bytes, offset, size);
+            if ( enableResponseLogging ) {
+                bao.write(bytes, offset, size);
+            }
+        }
+
+        void flush() throws IOException {
+            if ( pwUsed ) {
+                pw.flush();
+                writer.flush();
+
+                if ( enableResponseLogging ) {
+                    // save off the builder bytes
+                    bao.write(b.toString().getBytes(CharEncoding.UTF_8));
+                    b.setLength(0);
+                }
+
+                pwUsed = false;
+            }
+            outputStream.flush();
+        }
+
+        void logResponse() throws IOException {
+            if ( enableResponseLogging ) {
+                String fn = UUID.randomUUID().toString();
+                File loc = new File( ODKFileUtils.getOutputFolder("default"), fn);
+                Log.i("NanoHTTPD", "sendResponse(): response written to " + fn);
+                OutputStream s = new FileOutputStream(loc);
+                s.write(bao.toByteArray());
+                s.close();
+            }
+        }
+    }
+
     private final String hostname;
     private final int myPort;
     private ServerSocket myServerSocket;
@@ -646,61 +728,63 @@ public abstract class NanoHTTPD {
             SimpleDateFormat gmtFrmt = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
             gmtFrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 
+            StringBuilder b = new StringBuilder();
+
             try {
                 if (status == null) {
                     Log.e("NanoHTTPD", "sendResponse(): Status can't be null.");
                     throw new Error("sendResponse(): Status can't be null.");
                 }
-                OutputStreamWriter writer = new OutputStreamWriter(outputStream, CharEncoding.UTF_8);
-                PrintWriter pw = new PrintWriter(writer);
-                pw.print("HTTP/1.1 " + status.getDescription() + " \r\n");
+                CopyWriter cw = new CopyWriter(outputStream);
+                cw.print("HTTP/1.1 " + status.getDescription() + " \r\n");
 
                 if (mime != null) {
                   if ( mime.toLowerCase(Locale.ENGLISH).contains("charset=utf-8") ) {
-                    pw.print("Content-Type: " + mime + "\r\n");
+                    cw.print("Content-Type: " + mime + "\r\n");
                   } else {
-                    pw.print("Content-Type: " + mime + "; charset=utf-8\r\n");
+                    cw.print("Content-Type: " + mime + "; charset=utf-8\r\n");
                   }
                 }
 
                 if (header == null || header.get("Date") == null) {
-                    pw.print("Date: " + gmtFrmt.format(new Date()) + "\r\n");
+                    cw.print("Date: " + gmtFrmt.format(new Date()) + "\r\n");
                 }
 
                 if (header != null) {
                     for (String key : header.keySet()) {
                         String value = header.get(key);
-                        pw.print(key + ": " + value + "\r\n");
+                        cw.print(key + ": " + value + "\r\n");
                     }
                 }
 
-                sendConnectionHeaderIfNotAlreadyPresent(pw, header);
+                sendConnectionHeaderIfNotAlreadyPresent(cw, header);
 
                 if (requestMethod != Method.HEAD && chunkedTransfer) {
-                    sendAsChunked(outputStream, pw);
+                    sendAsChunked(cw);
                 } else {
                     int pending = data != null ? data.available() : 0;
-                    sendContentLengthHeaderIfNotAlreadyPresent(pw, header, pending);
-                    pw.print("\r\n");
-                    pw.flush();
-                    sendAsFixedLength(outputStream, pending);
+                    sendContentLengthHeaderIfNotAlreadyPresent(cw, header, pending);
+                    cw.print("\r\n");
+                    cw.flush();
+                    sendAsFixedLength(cw, pending);
                 }
-                outputStream.flush();
+                cw.flush();
+                cw.logResponse();
                 safeClose(data);
             } catch (IOException ioe) {
                 // Couldn't write? No can do.
             }
         }
 
-        protected void sendContentLengthHeaderIfNotAlreadyPresent(PrintWriter pw, Map<String, String> header, int size) {
+        protected void sendContentLengthHeaderIfNotAlreadyPresent(CopyWriter cw, Map<String, String> header, int size) {
             if (!headerAlreadySent(header, "content-length")) {
-                pw.print("Content-Length: "+ size +"\r\n");
+                cw.print("Content-Length: "+ size +"\r\n");
             }
         }
 
-        protected void sendConnectionHeaderIfNotAlreadyPresent(PrintWriter pw, Map<String, String> header) {
+        protected void sendConnectionHeaderIfNotAlreadyPresent(CopyWriter cw, Map<String, String> header) {
             if (!headerAlreadySent(header, "connection")) {
-                pw.print("Connection: keep-alive\r\n");
+                cw.print("Connection: keep-alive\r\n");
             }
         }
 
@@ -712,23 +796,23 @@ public abstract class NanoHTTPD {
             return alreadySent;
         }
 
-        private void sendAsChunked(OutputStream outputStream, PrintWriter pw) throws IOException {
-            pw.print("Transfer-Encoding: chunked\r\n");
-            pw.print("\r\n");
-            pw.flush();
+        private void sendAsChunked(CopyWriter cw) throws IOException {
+            cw.print("Transfer-Encoding: chunked\r\n");
+            cw.print("\r\n");
+            cw.flush();
             int BUFFER_SIZE = 16 * 1024;
             byte[] CRLF = "\r\n".getBytes();
             byte[] buff = new byte[BUFFER_SIZE];
             int read;
             while ((read = data.read(buff)) > 0) {
-                outputStream.write(String.format("%x\r\n", read).getBytes());
-                outputStream.write(buff, 0, read);
-                outputStream.write(CRLF);
+                cw.write(String.format("%x\r\n", read).getBytes());
+                cw.write(buff, 0, read);
+                cw.write(CRLF);
             }
-            outputStream.write(String.format("0\r\n\r\n").getBytes());
+            cw.write(String.format("0\r\n\r\n").getBytes());
         }
 
-        private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
+        private void sendAsFixedLength(CopyWriter cw, int pending) throws IOException {
             if (requestMethod != Method.HEAD && data != null) {
                 int BUFFER_SIZE = 16 * 1024;
                 byte[] buff = new byte[BUFFER_SIZE];
@@ -737,7 +821,7 @@ public abstract class NanoHTTPD {
                     if (read <= 0) {
                         break;
                     }
-                    outputStream.write(buff, 0, read);
+                    cw.write(buff, 0, read);
                     pending -= read;
                 }
             }
