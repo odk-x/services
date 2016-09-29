@@ -119,6 +119,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
                  null));
          columns.add(
              new Column(MANY_COL_BOOL_ID + i, "column Bool", ElementDataType.bool.name(), null));
+         columns.add(
+             new Column(MANY_COL_DATE_ID + i, "column Date", ElementDataType.string.name(), null));
       }
       return columns;
    }
