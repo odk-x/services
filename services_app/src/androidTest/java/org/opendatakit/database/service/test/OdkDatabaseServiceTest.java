@@ -953,7 +953,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
    public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
        throws ActionNotAuthorizedException {
-      final int NUM_ROWS = 10000;
+      final int NUM_ROWS = 2500;
       UserDbInterface serviceInterface = bindToDbService();
       if (false) {
          return;
