@@ -8,7 +8,9 @@ import android.support.annotation.Nullable;
 import android.test.ServiceTestCase;
 
 import android.util.Log;
+import org.joda.time.DateTime;
 import org.opendatakit.TestConsts;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.data.*;
@@ -18,6 +20,7 @@ import org.opendatakit.services.database.service.OdkDatabaseService;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.utilities.DateUtils;
 
 import java.util.*;
 
@@ -43,6 +46,19 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    private static final String TEST_STR_i = "TestStri";
    private static final int TEST_INT_i = 0;
    private static final double TEST_NUM_i = 0.1;
+
+
+   // The number of columns to put into the list, divided by the 5 column types to repeat.
+   private static final int MANY_COL_NUM_COLUMNS = 100 / 5;
+   private static final String MANY_COL_STRING_ID = "columnString";
+   private static final String MANY_COL_INTEGER_ID = "columnInteger";
+   private static final String MANY_COL_NUMBER_ID = "columnNumber";
+   private static final String MANY_COL_BOOL_ID = "columnBool";
+   private static final String MANY_COL_DATE_ID = "columnDate";
+   private static final DateUtils date = new DateUtils(Locale.US, TimeZone.getDefault());
+   private static final String dateString = date.formatDateTimeForDb(DateTime.parse
+       ("2016-09-28T21:26:22+00:00"));
+
 
    public OdkDatabaseServiceTest() {
       super(OdkDatabaseService.class);
@@ -88,6 +104,25 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       return columns;
    }
 
+   @NonNull private List<Column> createManyColumnList() {
+      List<Column> columns = new ArrayList<>();
+
+      for (int i = 0; i < MANY_COL_NUM_COLUMNS; i++) {
+         columns.add(
+             new Column(MANY_COL_STRING_ID + i, "column String", ElementDataType.string.name(),
+                 null));
+         columns.add(
+             new Column(MANY_COL_INTEGER_ID + i, "column Integer", ElementDataType.integer.name(),
+                 null));
+         columns.add(
+             new Column(MANY_COL_NUMBER_ID + i, "column Number", ElementDataType.number.name(),
+                 null));
+         columns.add(
+             new Column(MANY_COL_BOOL_ID + i, "column Bool", ElementDataType.bool.name(), null));
+      }
+      return columns;
+   }
+
    private ContentValues contentValuesTestSet1() {
       ContentValues cv = new ContentValues();
 
@@ -118,6 +153,21 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       return cv;
    }
 
+   private ContentValues contentValuesTestSetManyColumns(int i) {
+      ContentValues cv = new ContentValues();
+
+
+      for (int j = 0; j < MANY_COL_NUM_COLUMNS; j++) {
+         cv.put(MANY_COL_STRING_ID + j, "STR_" + j + "_" + i);
+         cv.put(MANY_COL_INTEGER_ID + j, i+j);
+         cv.put(MANY_COL_NUMBER_ID + j, i*j);
+         cv.put(MANY_COL_BOOL_ID + j, ((i+j)%2 != 0));
+         cv.put(MANY_COL_DATE_ID + j, dateString);
+      }
+
+      return cv;
+   }
+
    private void verifyRowTestSet1(Row row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
@@ -140,6 +190,16 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
           Integer.toString(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.toString(TEST_NUM_i + i));
+   }
+
+   private void veriftyRowTestSetManyColumns(Row row, int i) {
+      for (int j = 0; j < MANY_COL_NUM_COLUMNS; j++) {
+         assertEquals(row.getDataByKey(MANY_COL_STRING_ID + j), "STR_" + j + "_" + i);
+         assertEquals(row.getDataByKey(MANY_COL_INTEGER_ID + j), Integer.toString(i + j));
+         assertEquals(row.getDataByKey(MANY_COL_NUMBER_ID + j), Double.toString(i * j));
+         assertEquals(row.getDataByKey(MANY_COL_BOOL_ID + j), Integer.toString((i+j)%2));
+         assertEquals(row.getDataByKey(MANY_COL_DATE_ID + j), dateString);
+      }
    }
 
    private void verifyTableTestSet(BaseTable table, int offset) {
@@ -848,7 +908,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
 
             // insert row
             serviceInterface
-                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(), rowId.toString());
+                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSeti(i),
+                    rowId.toString());
          }
 
          UserTable table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
@@ -858,7 +919,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          assertEquals(NUM_ROWS, table.getNumberOfRows());
          Row row = table.getRowAtIndex(0);
 
-         verifyRowTestSet1(row);
+         verifyRowTestSeti(row, 0);
 
          // delete row
          Iterator<UUID> rowIdIterator = rowIds.iterator();
@@ -875,6 +936,87 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
              null, null, null, null, null, null, null);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(0, table.getNumberOfRows());
+
+         // clean up
+         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+         // verify no tables left
+         assertTrue(hasNoTablesInDb(serviceInterface, db));
+         serviceInterface.closeDatabase(APPNAME, db);
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+   }
+
+   public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
+       throws ActionNotAuthorizedException {
+      final int NUM_ROWS = 10000;
+      UserDbInterface serviceInterface = bindToDbService();
+      if (false) {
+         return;
+      }
+      try {
+
+         List<Column> columnList = createManyColumnList();
+         ColumnList colList = new ColumnList(columnList);
+
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
+         Log.i("openDatabase",
+             "testDbCreateNVerifyNDeleteLargeTableManyColumns: " + db.getDatabaseHandle());
+
+         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+
+         Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
+         for (int i = 0; i < NUM_ROWS; i++) {
+            if ( i %100 == 0 ) {
+               Log.i("openDatabase", "testDbCreateNVerifyNDeleteLargeTableManyColumns: inserting row " + i );
+            }
+
+            UUID rowId = UUID.randomUUID();
+            rowIds.add(rowId);
+
+            // insert row
+            serviceInterface
+                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                    contentValuesTestSetManyColumns(i), rowId.toString());
+         }
+
+         UserTable table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+             null, null, null, null, null, null, null);
+         UserTable table2 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+             null, null, null, null, null, null, null);
+
+         assertEquals(DB_TABLE_ID, table1.getTableId());
+         assertEquals(DB_TABLE_ID, table2.getTableId());
+         assertEquals(NUM_ROWS, table1.getNumberOfRows());
+         assertEquals(NUM_ROWS, table2.getNumberOfRows());
+
+         for (int i = 0; i < NUM_ROWS; i++) {
+            Row row1 = table1.getRowAtIndex(i);
+            veriftyRowTestSetManyColumns(row1, i);
+
+            Row row2 = table2.getRowAtIndex(i);
+            veriftyRowTestSetManyColumns(row2, i);
+         }
+
+         // delete row
+         Iterator<UUID> rowIdIterator = rowIds.iterator();
+         for (int i = 0; i < NUM_ROWS; i++) {
+            if ( i %100 == 0 ) {
+               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
+            }
+
+            UUID rowId = rowIdIterator.next();
+            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+         }
+
+         table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+             null, null, null, null, null, null, null);
+         assertEquals(DB_TABLE_ID, table1.getTableId());
+         assertEquals(0, table1.getNumberOfRows());
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
