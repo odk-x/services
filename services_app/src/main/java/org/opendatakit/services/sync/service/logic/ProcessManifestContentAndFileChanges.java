@@ -16,7 +16,10 @@
 package org.opendatakit.services.sync.service.logic;
 
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
@@ -24,7 +27,6 @@ import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.services.sync.service.data.SyncRowPending;
 import org.opendatakit.services.sync.service.exceptions.*;
 
 import java.io.*;
@@ -689,11 +691,35 @@ public class ProcessManifestContentAndFileChanges {
    * @throws ServicesAvailabilityException
    */
   public boolean syncRowLevelFileAttachments(String serverInstanceFileUri, String tableId,
-      SyncRowPending localRow, SyncAttachmentState attachmentState) throws HttpClientWebException, IOException, ServicesAvailabilityException  {
+      org.opendatakit.database.data.Row localRow,
+      ArrayList<ColumnDefinition> fileAttachmentColumns,
+      SyncAttachmentState attachmentState) throws HttpClientWebException,
+      IOException, ServicesAvailabilityException  {
 
-    if (localRow.getUriFragments().isEmpty()) {
-      throw new IllegalStateException("should never get here!");
+
+    // list of local non-null uriFragment field values
+    ArrayList<String> uriFragments = new ArrayList<String>();
+
+    StringBuilder b = new StringBuilder();
+    b.append(localRow.getDataByKey(DataTableColumns.ROW_ETAG));
+    // extract the non-null uriFragments here...
+    for ( ColumnDefinition cd : fileAttachmentColumns) {
+      String uriFragment = localRow.getDataByKey(cd.getElementKey());
+      if ( uriFragment != null) {
+        uriFragments.add(uriFragment);
+        b.append("<").append(cd.getElementKey()).append("|").append(uriFragment).append(">");
+      } else {
+        b.append("<").append(cd.getElementKey()).append("|").append(">");
+      }
     }
+
+    //////////////////////////////////////////////////////////
+    if (uriFragments.isEmpty()) {
+      // success!
+      return true;
+    }
+
+    String uriFragmentHash = Integer.toHexString(b.toString().hashCode());
 
     boolean fullySyncedUploads = false;
     boolean impossibleToFullySyncDownloadsServerMissingFileToDownload = false;
@@ -707,16 +733,9 @@ public class ProcessManifestContentAndFileChanges {
       return false;
     }
 
-     // 1) Get this row's instanceId (rowId)
-    String instanceId = localRow.getRowId();
+    // 1) Get this row's instanceId (rowId)
+    String instanceId = localRow.getDataByKey(DataTableColumns.ID);
     log.i(LOGTAG, "syncRowLevelFileAttachments requesting a row-level manifest for " + instanceId);
-
-    // 2) get the list of file attachments in this row
-    List<String> localRowPathUris = localRow.getUriFragments();
-
-    // 3) get the content-hash of the above list. This is used, together with the attachementState
-    //    when fetching the attachment manifest and updating the manifest ETag.
-    String uriFragmentHash = localRow.getUriFragmentHash();
 
     // 4) Get the list of files on the server
     FileManifestDocument manifestDocument =
@@ -745,12 +764,12 @@ public class ProcessManifestContentAndFileChanges {
     for (OdkTablesFileManifestEntry entry : manifestDocument.entries) {
 
       // we only care about the files that are referenced in the current row
-      if ( localRowPathUris.contains(entry.filename) ) {
+      if ( uriFragments.contains(entry.filename) ) {
         // this is something we want to do something with
 
         // remove from the list -- anything left over is orphaned or needs to be
         // pushed up to the server because the server doesn't know about it.
-        localRowPathUris.remove(entry.filename);
+        uriFragments.remove(entry.filename);
 
         CommonFileAttachmentTerms cat = sc.getSynchronizer().createCommonFileAttachmentTerms(
             serverInstanceFileUri, tableId, instanceId, entry.filename);
@@ -793,7 +812,7 @@ public class ProcessManifestContentAndFileChanges {
     // If the file for this rowPathUri does not exist locally, then we should flag
     // this as a missing file to download. i.e., the server does not yet have it, so
     // we cannot complete our own row-level download to bring everything up-to-date.
-    for (String rowPathUri : localRowPathUris) {
+    for (String rowPathUri : uriFragments) {
 
       CommonFileAttachmentTerms cat = sc.getSynchronizer().createCommonFileAttachmentTerms(
           serverInstanceFileUri, tableId, instanceId, rowPathUri);
@@ -822,7 +841,7 @@ public class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to send to server -- they are all synced");
       fullySyncedUploads = true;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
-               attachmentState.equals(SyncAttachmentState.UPLOAD)) {
+        attachmentState.equals(SyncAttachmentState.UPLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
       for (CommonFileAttachmentTerms fileAttachment : filesToUpload) {
@@ -847,7 +866,7 @@ public class ProcessManifestContentAndFileChanges {
         // Upload the final batch
         log.i(LOGTAG, "syncRowLevelFileAttachments uploading batch for " + instanceId);
         sc.getSynchronizer().uploadInstanceFileBatch(batch, serverInstanceFileUri,
-                instanceId, tableId);
+            instanceId, tableId);
       }
 
       fullySyncedUploads = true;
@@ -857,7 +876,7 @@ public class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to fetch from server -- they are all synced");
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
-               attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
+        attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
 
@@ -884,15 +903,15 @@ public class ProcessManifestContentAndFileChanges {
         // download the final batch
         log.i(LOGTAG, "syncRowLevelFileAttachments downloading batch for " + instanceId);
         sc.getSynchronizer().downloadInstanceFileBatch(batch, serverInstanceFileUri,
-                instanceId, tableId);
+            instanceId, tableId);
       }
 
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     }
 
     if ( attachmentState == SyncAttachmentState.NONE ||
-            ((fullySyncedUploads || (attachmentState == SyncAttachmentState.DOWNLOAD)) &&
-             (fullySyncedDownloads || (attachmentState == SyncAttachmentState.UPLOAD))) ) {
+        ((fullySyncedUploads || (attachmentState == SyncAttachmentState.DOWNLOAD)) &&
+            (fullySyncedDownloads || (attachmentState == SyncAttachmentState.UPLOAD))) ) {
       // there may be synced_pending_files rows, but all of the uploads we want to do
       // have been uploaded, and all of the downloads we want to do have been downloaded.
       //
@@ -906,7 +925,7 @@ public class ProcessManifestContentAndFileChanges {
         // locally or on the server). That content has not changed, so the uriFragmentHash
         // value continues to be valid now, once all the file attachments have been synced.
         sc.getSynchronizer().updateRowLevelManifestSyncETag(serverInstanceFileUri, tableId,
-                instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
+            instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
       } catch (ServicesAvailabilityException e) {
         log.printStackTrace(e);
         log.e(LOGTAG, "database access error (ignoring)");

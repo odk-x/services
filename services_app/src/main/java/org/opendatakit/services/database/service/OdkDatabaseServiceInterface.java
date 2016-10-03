@@ -1356,6 +1356,33 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
+  @Override
+  public void privilegedExecute(String appName, DbHandle dbHandleName,
+      String sqlCommand, BindArgs sqlBindArgs) {
+
+    OdkConnectionInterface db = null;
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+
+      ODKDatabaseImplUtils.get()
+          .privilegedExecute(db, sqlCommand, sqlBindArgs.bindArgs);
+
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "privilegedExecute", e);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+
+  }
+
   @Override public void replaceTableMetadata(String appName, DbHandle dbHandleName,
       KeyValueStoreEntry entry) throws RemoteException {
 

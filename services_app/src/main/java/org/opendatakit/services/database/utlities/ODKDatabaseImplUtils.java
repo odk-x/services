@@ -697,6 +697,22 @@ public class ODKDatabaseImplUtils {
     return query(db, tableId, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
   }
 
+  /**
+   * Privileged execute of an arbitrary SQL command.
+   * For obvious reasons, this is very dangerous!
+   *
+   * The sql command can be any valid SQL command that does not return a result set.
+   * No data is returned (e.g., insert into table ... or similar).
+   *
+   * @param db
+   * @param sqlCommand
+   * @param sqlBindArgs
+   */
+  public void privilegedExecute(OdkConnectionInterface db, String sqlCommand, Object[]
+      sqlBindArgs) {
+    db.execSQL(sqlCommand, sqlBindArgs);
+  }
+
   private BaseTable buildBaseTable(OdkConnectionInterface db, Cursor c, String tableId,
       boolean canCreateRow) {
 

@@ -20,6 +20,7 @@ import android.app.Service;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.application.AppAwareApplication;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
@@ -35,7 +36,6 @@ import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenExceptio
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
 import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
-import org.opendatakit.services.sync.service.logic.ProcessRowDataChanges;
 import org.opendatakit.services.sync.service.logic.Synchronizer;
 
 import java.util.List;
@@ -277,7 +277,7 @@ public class AppSynchronizer {
         ProcessAppAndTableLevelChanges appAndTableLevelProcessor = new ProcessAppAndTableLevelChanges(
                 sharedContext);
 
-        ProcessRowDataChanges rowDataProcessor = new ProcessRowDataChanges(sharedContext);
+        ProcessRowDataOrchestrateChanges rowDataProcessor = new ProcessRowDataOrchestrateChanges(sharedContext);
 
         List<TableResource> workingListOfTables = null;
         try {

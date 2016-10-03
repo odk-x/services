@@ -18,8 +18,12 @@ package org.opendatakit.services.sync.service.logic;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.fileupload.MultipartStream;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.aggregate.odktables.rest.entity.Row;
+import org.opendatakit.database.data.*;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
@@ -46,7 +50,6 @@ import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
-import org.opendatakit.services.sync.service.data.SyncRow;
 import org.opendatakit.services.sync.service.exceptions.*;
 
 import java.io.BufferedInputStream;
@@ -257,6 +260,34 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
+  public TableResource getTable(String tableId) throws
+      HttpClientWebException, IOException {
+
+    TableResource tableResource = null;
+    HttpGet request = new HttpGet();
+    CloseableHttpResponse response = null;
+
+    URI uri = wrapper.constructTableIdUri(tableId);
+
+    wrapper.buildNoContentJsonResponseRequest(uri, request);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+
+      String res = wrapper.convertResponseToString(response);
+
+      tableResource = ODKFileUtils.mapper.readValue(res, TableResource.class);
+
+      return tableResource;
+    } finally {
+      if ( response != null ) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
+
+  @Override
   public TableDefinitionResource getTableDefinition(String tableDefinitionUri)
           throws HttpClientWebException, IOException {
 
@@ -442,17 +473,34 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public RowOutcomeList alterRows(TableResource resource,
-      List<SyncRow> rowsToInsertUpdateOrDelete) throws IOException, HttpClientWebException {
+  public RowOutcomeList pushLocalRows(TableResource resource, OrderedColumns orderedColumns,
+      List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete) throws IOException, HttpClientWebException {
 
     ArrayList<Row> rows = new ArrayList<Row>();
-    for (SyncRow rowToAlter : rowsToInsertUpdateOrDelete) {
-      Row row = Row.forUpdate(rowToAlter.getRowId(), rowToAlter.getRowETag(),
-          rowToAlter.getFormId(), rowToAlter.getLocale(),
-          rowToAlter.getSavepointType(), rowToAlter.getSavepointTimestamp(),
-          rowToAlter.getSavepointCreator(), rowToAlter.getRowFilterScope(),
-          rowToAlter.getValues());
-      row.setDeleted(rowToAlter.isDeleted());
+    for (org.opendatakit.database.data.Row rowToAlter : rowsToInsertUpdateOrDelete) {
+
+      ArrayList<DataKeyValue> values = new ArrayList<DataKeyValue>();
+      for (ColumnDefinition column : orderedColumns.getColumnDefinitions()) {
+        if (column.isUnitOfRetention()) {
+          String elementKey = column.getElementKey();
+          values.add(new DataKeyValue(elementKey, rowToAlter.getDataByKey(elementKey)));
+        }
+      }
+
+      Row row = Row.forUpdate(rowToAlter.getDataByKey(DataTableColumns.ID),
+          rowToAlter.getDataByKey(DataTableColumns.ROW_ETAG),
+          rowToAlter.getDataByKey(DataTableColumns.FORM_ID),
+          rowToAlter.getDataByKey(DataTableColumns.LOCALE),
+          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TYPE),
+          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
+          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
+          RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.FILTER_TYPE),
+              rowToAlter.getDataByKey(DataTableColumns.FILTER_VALUE)),
+          values);
+
+      boolean isDeleted = SyncState.deleted.name().equals(
+          rowToAlter.getDataByKey(DataTableColumns.SYNC_STATE));
+      row.setDeleted(isDeleted);
       rows.add(row);
     }
     RowList rlist = new RowList(rows, resource.getDataETag());
@@ -462,7 +510,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     String rowListJSON = ODKFileUtils.mapper.writeValueAsString(rlist);
     HttpEntity entity = new GzipCompressingEntity(new StringEntity(rowListJSON,
-            Charset.forName("UTF-8")));
+        Charset.forName("UTF-8")));
 
     URI uri = URI.create(resource.getDataUri());
     wrapper.buildJsonContentJsonResponseRequest(uri, request);
@@ -471,8 +519,10 @@ public class AggregateSynchronizer implements Synchronizer {
     RowOutcomeList outcomes;
 
     try {
-      // TODO: response can be HttpStatus.SC_CONFLICT to indicate dataETag change
-      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_CONFLICT);
+      if ( response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT ) {
+        return null;
+      }
       String res = wrapper.convertResponseToString(response);
       outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
       return outcomes;

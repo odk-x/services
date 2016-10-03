@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.database.data.*;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.services.sync.service.data.SyncRow;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 
 /**
@@ -106,6 +106,16 @@ public interface Synchronizer {
    * @throws IOException
    */
   TableResourceList getTables(String webSafeResumeCursor) throws HttpClientWebException, IOException;
+
+  /**
+   * Get info about the table in the server.
+   *
+   * @param tableId
+   * @return the table resource for this tableId on the server
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  TableResource getTable(String tableId) throws HttpClientWebException, IOException;
 
   /**
    * Discover the schema for a table resource.
@@ -196,19 +206,21 @@ public interface Synchronizer {
 
   /**
    * Apply inserts, updates and deletes in a collection up to the server.
-   * This does not depend upon knowing the current dataETag of the server.
-   * The dataETag for the changeSet made by this call is returned to the 
+   * This depends upon knowing the current dataETag of the server.
+   * The dataETag for the changeSet made by this call is returned to the
    * caller via the RowOutcomeList.
-   * 
+   *
    * @param tableResource
    *          the TableResource from the server for a tableId
+   * @param orderedColumns
    * @param rowsToInsertUpdateOrDelete
-   * @return
+   * @return null if the server's dataETag is different than ours and we need to re-pull server
+   * changes. Otherwise, returns RowOutcomeList with the row-by-row results.
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowOutcomeList alterRows(TableResource tableResource,
-      List<SyncRow> rowsToInsertUpdateOrDelete) throws HttpClientWebException, IOException;
+  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns,
+      List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete) throws HttpClientWebException, IOException;
 
   /**
    * Request the app-level manifest. This uses a NOT_MODIFIED header to detect
