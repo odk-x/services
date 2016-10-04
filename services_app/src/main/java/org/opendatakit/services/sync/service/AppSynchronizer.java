@@ -267,8 +267,8 @@ public class AppSynchronizer {
         //
         // NOTE: server limits this string to 10 characters
 
-        SyncExecutionContext sharedContext = new SyncExecutionContext(application, appName,
-                syncProgress, syncResult);
+        SyncExecutionContext sharedContext = new SyncExecutionContext(application,
+            application.getVersionCodeString(), appName, syncProgress, syncResult);
 
         Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
@@ -393,8 +393,8 @@ public class AppSynchronizer {
       //
       // NOTE: server limits this string to 10 characters
 
-      SyncExecutionContext sharedContext = new SyncExecutionContext(application, appName,
-              syncProgress, syncResult);
+      SyncExecutionContext sharedContext = new SyncExecutionContext(application,
+          application.getVersionCodeString(), appName, syncProgress, syncResult);
 
       Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 

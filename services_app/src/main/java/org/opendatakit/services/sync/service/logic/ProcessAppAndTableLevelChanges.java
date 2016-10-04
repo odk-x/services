@@ -232,7 +232,7 @@ public class ProcessAppAndTableLevelChanges {
     // ETags from syncing to a different server. This ensures that we
     // only ever have the sync etags from the current server in case
     // the user is switching servers for some reason.
-    sc.getSynchronizer().deleteAllSyncETagsExceptForCurrentServer();
+    manifestProcessor.deleteAllSyncETagsExceptForCurrentServer();
 
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
@@ -660,7 +660,7 @@ public class ProcessAppAndTableLevelChanges {
         }
 
         // the insert of the table was incomplete -- try again
-        sc.getSynchronizer().updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(tableId, null, schemaETag);
+        manifestProcessor.updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(tableId, null, schemaETag);
 
         /**************************
          * PART 1A: CREATE THE TABLE First we need to create the table on the
@@ -877,7 +877,8 @@ public class ProcessAppAndTableLevelChanges {
         // server has changed its schema
 
         // construct old URI prefix to instance content
-        sc.getSynchronizer().updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(definitionResource.getTableId(), definitionResource.getSchemaETag(), schemaETag);
+        manifestProcessor.updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(
+            definitionResource.getTableId(), definitionResource.getSchemaETag(), schemaETag);
       }
       // NOTE: te has an out-of-date schemaETag at this point.
 

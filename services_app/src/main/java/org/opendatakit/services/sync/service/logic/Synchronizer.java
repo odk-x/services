@@ -23,8 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.entity.*;
-import org.opendatakit.database.data.*;
-import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
@@ -96,6 +95,38 @@ public interface Synchronizer {
    * @throws IOException
     */
   ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException;
+
+  /**
+   * Construct the URI for fetching the app-level config files manifest.
+   *
+   * @return
+   */
+  URI constructAppLevelFileManifestUri();
+
+  /**
+   * Construct the URI for fetching the tableId's config files manifest.
+   *
+   * @param tableId
+   * @return
+   */
+  URI constructTableLevelFileManifestUri(String tableId);
+
+  /**
+   * Construct the URI for the Realized Table (tableId & schemaETag)
+   * @param tableId
+   * @param schemaETag
+   * @return
+   */
+  URI constructRealizedTableIdUri(String tableId, String schemaETag);
+
+  /**
+   * Construct the URI for fetching the manifest for the row-level attachments of a given rowId
+   *
+   * @param serverInstanceFileUri
+   * @param rowId
+   * @return
+   */
+  URI constructInstanceFileManifestUri(String serverInstanceFileUri, String rowId);
 
   /**
    * Get a list of all tables in the server.
@@ -228,13 +259,15 @@ public interface Synchronizer {
    * expected to update the ETag after they have made the device match the
    * content reported by the server (or vice-versa on a push).
    *
+   * @param lastKnownLocalAppLevelManifestETag  the app-level file manifest etag we last knew of.
+   * @param serverReportedAppLevelETag  the app-level file manifest etag found in TableResourceList
    * @param pushLocalFiles
-   * @param serverReportedAppLevelETag
    * @return
    * @throws HttpClientWebException
    * @throws IOException
    */
-  FileManifestDocument getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
+  FileManifestDocument getAppLevelFileManifest(
+      String lastKnownLocalAppLevelManifestETag, String serverReportedAppLevelETag, boolean pushLocalFiles)
       throws HttpClientWebException, IOException;
 
   /**
@@ -244,13 +277,16 @@ public interface Synchronizer {
    * content reported by the server (or vice-versa on a push).
    *
    * @param tableId
-   * @param serverReportedTableLevelETag
+   * @param lastKnownLocalTableLevelManifestETag  the table-level file manifest etag we last knew.
+   * @param serverReportedTableLevelETag  the table-level file manifest etag found in
+   *                                      TableResourceList
    * @param pushLocalFiles
    * @return
    * @throws IOException
    * @throws HttpClientWebException
    */
-  FileManifestDocument getTableLevelFileManifest(String tableId, String serverReportedTableLevelETag,
+  FileManifestDocument getTableLevelFileManifest(String tableId,
+      String lastKnownLocalTableLevelManifestETag, String serverReportedTableLevelETag,
       boolean pushLocalFiles) throws IOException, HttpClientWebException;
 
   /**
@@ -267,13 +303,14 @@ public interface Synchronizer {
    * @param instanceId
    * @param attachmentState that we are trying to enforce.
    * @param localRowAttachmentHash
+   * @param lastKnownLocalRowLevelManifestETag the eTag for the manifest we last had
    * @return
    * @throws HttpClientWebException
    * @throws IOException
    */
   FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
       String tableId, String instanceId, SyncAttachmentState attachmentState,
-      String localRowAttachmentHash) throws
+      String localRowAttachmentHash, String lastKnownLocalRowLevelManifestETag) throws
       HttpClientWebException,
       IOException;
 
@@ -348,96 +385,4 @@ public interface Synchronizer {
    */
   void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
       String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
-
-  /**
-   * Delete file and manifest SyncETags that are not for the current server.
-   *
-   * @throws ServicesAvailabilityException
-   */
-  void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException;
-
-  /**
-   *
-   * @param fileDownloadUri
-   * @param tableId
-   * @param lastModified
-   * @return
-   * @throws ServicesAvailabilityException
-   */
-  String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException;
-
-  /**
-   * Updates this config file download URI with the indicated ETag
-   *
-   * @param fileDownloadUri
-   * @param tableId
-   * @param lastModified
-   * @param documentETag
-   * @throws ServicesAvailabilityException
-   */
-  void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String
-      documentETag) throws ServicesAvailabilityException;
-
-  /**
-   *
-   * @param tableId
-   * @return
-   * @throws ServicesAvailabilityException
-   */
-  String getManifestSyncETag(String tableId) throws ServicesAvailabilityException;
-
-  /**
-   * Update the manifest content ETag with the indicated value. This should be done
-   * AFTER the device matches the content on the server. Until then, the ETag should
-   * not be recorded.
-   *
-   * @param tableId
-   * @param documentETag
-   * @throws ServicesAvailabilityException
-   */
-  void updateManifestSyncETag(String tableId, String documentETag) throws
-      ServicesAvailabilityException;
-
-
-  /**
-   *
-   * @param serverInstanceFileUri
-   * @param tableId
-   * @param rowId
-   * @param attachmentState
-   * @param uriFragmentHash
-   * @return
-   * @throws ServicesAvailabilityException
-   */
-  String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
-      SyncAttachmentState attachmentState, String uriFragmentHash) throws ServicesAvailabilityException;
-
-  /**
-   * Update the manifest content ETag with the indicated value. This should be done
-   * AFTER the device matches the content on the server. Until then, the ETag should
-   * not be recorded.
-   *
-   * @param serverInstanceFileUri
-   * @param tableId
-   * @param rowId
-   * @param attachmentState
-   * @param uriFragmentHash
-   * @param documentETag
-   * @throws ServicesAvailabilityException
-   */
-  void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId, String rowId,
-      SyncAttachmentState attachmentState, String uriFragmentHash, String documentETag) throws
-      ServicesAvailabilityException;
-
-    /**
-       * Invoked when the schema of a table has changed or we have never before synced with the server.
-       *
-       * @param tableId
-       * @param newSchemaETag
-       * @param oldSchemaETag
-       */
-  void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
-      String newSchemaETag, String oldSchemaETag)  throws ServicesAvailabilityException;
-
 }

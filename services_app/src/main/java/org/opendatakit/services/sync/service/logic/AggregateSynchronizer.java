@@ -21,13 +21,8 @@ import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.aggregate.odktables.rest.entity.Row;
-import org.opendatakit.database.data.*;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.logging.WebLoggerIf;
-import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HeaderElement;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
@@ -48,9 +43,20 @@ import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
 import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
 import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
-import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.WebLoggerIf;
+import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
-import org.opendatakit.services.sync.service.exceptions.*;
+import org.opendatakit.services.sync.service.exceptions.AccessDeniedException;
+import org.opendatakit.services.sync.service.exceptions.BadClientConfigException;
+import org.opendatakit.services.sync.service.exceptions.ClientDetectedMissingConfigForClientVersionException;
+import org.opendatakit.services.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
+import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
+import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.services.sync.service.exceptions.NetworkTransmissionException;
+import org.opendatakit.services.sync.service.exceptions.ServerDoesNotRecognizeAppNameException;
+import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -94,13 +100,32 @@ public class AggregateSynchronizer implements Synchronizer {
   private final Map<String, TableResource> resources;
   private final WebLoggerIf log;
 
-  public AggregateSynchronizer(SyncExecutionContext sc) throws
-      InvalidAuthTokenException {
+  public AggregateSynchronizer(SyncExecutionContext sc) throws InvalidAuthTokenException {
     this.sc = sc;
     this.wrapper = new HttpRestProtocolWrapper(sc);
     this.log = WebLogger.getLogger(sc.getAppName());
 
     this.resources = new HashMap<String, TableResource>();
+  }
+
+  @Override
+  public URI constructAppLevelFileManifestUri() {
+    return wrapper.constructAppLevelFileManifestUri();
+  }
+
+  @Override
+  public URI constructTableLevelFileManifestUri(String tableId) {
+    return wrapper.constructTableLevelFileManifestUri(tableId);
+  }
+
+  @Override
+  public URI constructRealizedTableIdUri(String tableId, String schemaETag) {
+    return wrapper.constructRealizedTableIdUri(tableId, schemaETag);
+  }
+
+  @Override
+  public URI constructInstanceFileManifestUri(String serverInstanceFileUri, String rowId) {
+    return wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
   }
 
   @Override
@@ -535,17 +560,12 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public FileManifestDocument getAppLevelFileManifest(boolean pushLocalFiles, String serverReportedAppLevelETag)
+  public FileManifestDocument getAppLevelFileManifest(
+      String lastKnownLocalAppLevelManifestETag,
+      String serverReportedAppLevelETag, boolean pushLocalFiles)
       throws HttpClientWebException, IOException {
 
     URI fileManifestUri = wrapper.constructAppLevelFileManifestUri();
-    String eTag = null;
-    try {
-      eTag = getManifestSyncETag(null);
-    } catch (ServicesAvailabilityException e) {
-      log.printStackTrace(e);
-      log.e(LOGTAG, "database access error (ignoring)");
-    }
 
     HttpGet request = new HttpGet();
     wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
@@ -553,9 +573,10 @@ public class AggregateSynchronizer implements Synchronizer {
     // don't short-circuit manifest if we are pushing local files,
     // as we need to know exactly what is on the server to minimize
     // transmissions of files being pushed up to the server.
-    if (!pushLocalFiles && eTag != null) {
-      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
-      if ( serverReportedAppLevelETag != null && serverReportedAppLevelETag.equals(eTag) ) {
+    if (!pushLocalFiles && lastKnownLocalAppLevelManifestETag != null) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, lastKnownLocalAppLevelManifestETag);
+      if ( serverReportedAppLevelETag != null &&
+          serverReportedAppLevelETag.equals(lastKnownLocalAppLevelManifestETag) ) {
         // no change -- we can skip the request to the server
         return null;
       }
@@ -573,7 +594,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
 
       // update the manifest ETag record...
-      eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
+      String eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
 
       String res = wrapper.convertResponseToString(response);
 
@@ -610,19 +631,13 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public FileManifestDocument getTableLevelFileManifest(String tableId,
+      String lastKnownLocalTableLevelManifestETag,
       String serverReportedTableLevelETag,
       boolean pushLocalFiles)
       throws IOException,
       HttpClientWebException {
 
     URI fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
-    String eTag = null;
-    try {
-      eTag = getManifestSyncETag(tableId);
-    } catch (ServicesAvailabilityException e) {
-      log.printStackTrace(e);
-      log.e(LOGTAG, "database access error (ignoring)");
-    }
 
     HttpGet request = new HttpGet();
     wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
@@ -631,9 +646,10 @@ public class AggregateSynchronizer implements Synchronizer {
     // don't short-circuit manifest if we are pushing local files,
     // as we need to know exactly what is on the server to minimize
     // transmissions of files being pushed up to the server.
-    if (!pushLocalFiles && eTag != null) {
-      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
-      if ( serverReportedTableLevelETag != null && serverReportedTableLevelETag.equals(eTag) ) {
+    if (!pushLocalFiles && lastKnownLocalTableLevelManifestETag != null) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, lastKnownLocalTableLevelManifestETag);
+      if ( serverReportedTableLevelETag != null &&
+          serverReportedTableLevelETag.equals(lastKnownLocalTableLevelManifestETag) ) {
         // no change -- we can skip the request to the server
         return null;
       }
@@ -652,7 +668,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
       // update the manifest ETag record...
       Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-      eTag = eTagHdr.getValue();
+      String eTag = eTagHdr.getValue();
 
       String res = wrapper.convertResponseToString(response);
       OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
@@ -685,27 +701,18 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
       String tableId, String instanceId, SyncAttachmentState attachmentState,
-      String uriFragmentHash)
+      String uriFragmentHash, String lastKnownLocalRowLevelManifestETag)
       throws HttpClientWebException, IOException {
 
     URI instanceFileManifestUri =
         wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, instanceId);
 
-    String eTag = null;
-    try {
-      eTag = getRowLevelManifestSyncETag(serverInstanceFileUri, tableId, instanceId,
-          attachmentState, uriFragmentHash);
-    } catch (ServicesAvailabilityException e) {
-      log.printStackTrace(e);
-      log.e(LOGTAG, "database access error (ignoring)");
-    }
-
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
     wrapper.buildNoContentJsonResponseRequest(instanceFileManifestUri, request);
 
-    if ( eTag != null ) {
-      request.addHeader(HttpHeaders.IF_NONE_MATCH, eTag);
+    if ( lastKnownLocalRowLevelManifestETag != null ) {
+      request.addHeader(HttpHeaders.IF_NONE_MATCH, lastKnownLocalRowLevelManifestETag);
     }
 
     List<OdkTablesFileManifestEntry> theList = null;
@@ -720,7 +727,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
       // update the manifest ETag record...
       Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
-      eTag = eTagHdr.getValue();
+      String eTag = eTagHdr.getValue();
 
       // retrieve the manifest...
       String res = wrapper.convertResponseToString(response);
@@ -1136,191 +1143,4 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
-  /**********************************************************************************
-   *
-   * Database interactions
-   **********************************************************************************/
-
-  @Override
-  public void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException {
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      sc.getDatabaseService().deleteAllSyncETagsExceptForServer(sc.getAppName(), db,
-              sc.getAggregateUri());
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      return sc.getDatabaseService().getFileSyncETag(sc.getAppName(), db,
-          fileDownloadUri.toString(), tableId,
-          lastModified);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      sc.getDatabaseService().updateFileSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
-          lastModified, documentETag);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
-
-    URI fileManifestUri;
-
-    if ( tableId == null ) {
-      fileManifestUri = wrapper.constructAppLevelFileManifestUri();
-    } else {
-      fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
-    }
-
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      return sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
-
-    URI fileManifestUri;
-
-    if ( tableId == null ) {
-      fileManifestUri = wrapper.constructAppLevelFileManifestUri();
-    } else {
-      fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
-    }
-
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId,
-          documentETag);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
-      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
-      ServicesAvailabilityException {
-
-    URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
-
-    /**
-     * When we are obtaining the manifest from the server, we need to:
-     *
-     * (1) If the current attachmentState does not match the previous fetch's state, we
-     * need to pull the server manifest in its entirety.
-     * (2) If the list of attachment filenames has changed since the previous fetch, we
-     * need to pull the server manifest in its entirety.
-     * (3) Otherwise, if we are using the same attachmentState and have the same list of
-     * attachment filenames, we can short-circuit the processing if there is no change
-     * to the manifest on the server.
-     *
-     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
-     * returning the eTag if that prefix matches.
-     */
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      String qualifiedETag = sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db,
-                                  fileManifestUri.toString(), tableId);
-      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
-      if ( qualifiedETag != null && qualifiedETag.startsWith(restrictivePrefix) ) {
-        return qualifiedETag.substring(restrictivePrefix.length());
-      } else {
-        return null;
-      }
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
-      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
-      String documentETag)
-      throws ServicesAvailabilityException {
-
-    URI fileManifestUri = wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
-
-    /**
-     * When we are obtaining the manifest from the server, we need to:
-     *
-     * (1) If the current attachmentState does not match the previous fetch's state, we
-     * need to pull the server manifest in its entirety.
-     * (2) If the list of attachment filenames has changed since the previous fetch, we
-     * need to pull the server manifest in its entirety.
-     * (3) Otherwise, if we are using the same attachmentState and have the same list of
-     * attachment filenames, we can short-circuit the processing if there is no change
-     * to the manifest on the server.
-     *
-     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
-     * returning the eTag if that prefix matches.
-     */
-    DbHandle db = null;
-    try {
-      db = sc.getDatabase();
-      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
-      if ( documentETag != null ) {
-        documentETag = restrictivePrefix + documentETag;
-      }
-      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db,
-          fileManifestUri.toString(), tableId, documentETag);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
-
-  @Override
-  public void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
-      String newSchemaETag, String oldSchemaETag) throws
-      ServicesAvailabilityException {
-    // we are creating data on the server
-    DbHandle db = null;
-
-    try {
-      String tableInstanceFilesUriString = null;
-
-      if ( oldSchemaETag != null) {
-        URI uri = wrapper.constructRealizedTableIdUri(tableId, oldSchemaETag);
-        tableInstanceFilesUriString = uri.toString();
-      }
-
-      db = sc.getDatabase();
-      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(), db,
-          tableId, newSchemaETag, tableInstanceFilesUriString);
-    } finally {
-      sc.releaseDatabase(db);
-      db = null;
-    }
-  }
 }

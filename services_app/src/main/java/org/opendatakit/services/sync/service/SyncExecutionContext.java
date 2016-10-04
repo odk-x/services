@@ -24,12 +24,9 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.application.AppAwareApplication;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
@@ -42,7 +39,6 @@ import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
@@ -60,19 +56,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private static final String ACCOUNT_TYPE_G = "com.google";
 
   private static final int OVERALL_PROGRESS_BAR_LENGTH = 6350400;
-  private static final ObjectMapper mapper;
-
-  static {
-    mapper = new ObjectMapper();
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-  }
-
-  public static void invalidateAuthToken(AppAwareApplication application, String appName) {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
-    AccountManager.get(application).invalidateAuthToken(ACCOUNT_TYPE_G, props.getProperty(CommonToolProperties.KEY_AUTH));
-    props.removeProperty(CommonToolProperties.KEY_AUTH);
-    props.writeProperties();
-  }
 
   /**
    * The results of the synchronization that we will pass back to the user.
@@ -83,7 +66,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private int iMajorSyncStep;
   private int GRAINS_PER_MAJOR_SYNC_STEP;
 
-  private final AppAwareApplication application;
+  private final Context application;
+  private final String versionCode;
   private final String appName;
   private final String odkClientApiVersion;
   private final String userAgent;
@@ -101,14 +85,14 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private DbHandle odkDbHandle = null;
 
-  public SyncExecutionContext(AppAwareApplication context, String appName,
+  public SyncExecutionContext(Context context, String versionCode, String appName,
       SyncNotification syncProgress,
       SyncOverallResult syncResult) {
     this.application = context;
     this.appName = appName;
-    String versionCode = application.getVersionCodeString();
+    this.versionCode = versionCode;
     this.odkClientApiVersion = versionCode.substring(0, versionCode.length() - 2);
-    this.userAgent = "Sync " + application.getVersionCodeString() + " (gzip)";
+    this.userAgent = "Sync " + versionCode + " (gzip)";
     this.syncProgress = syncProgress;
     this.synchronizer = null;
     this.mUserResult = syncResult;
@@ -232,10 +216,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getAuthenticationType() {
     return authenticationType;
-  }
-
-  public String getGoogleAccount() {
-    return googleAccount;
   }
 
   public String getUsername() {

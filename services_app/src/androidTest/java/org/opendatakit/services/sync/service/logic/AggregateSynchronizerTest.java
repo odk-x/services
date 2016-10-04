@@ -72,7 +72,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
     }
 
     SyncExecutionContext syncExecutionContext = new SyncExecutionContext(getApplication(),
-        appName, syncProg, syncRes);
+        getApplication().getVersionCodeString(), appName, syncProg, syncRes);
 
     return syncExecutionContext;
   }

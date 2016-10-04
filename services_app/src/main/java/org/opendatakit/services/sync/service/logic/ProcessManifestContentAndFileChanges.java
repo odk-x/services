@@ -18,6 +18,7 @@ package org.opendatakit.services.sync.service.logic;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -274,8 +275,12 @@ public class ProcessManifestContentAndFileChanges {
     syncStatus.updateNotification(SyncProgressState.APP_FILES, R.string
             .sync_getting_app_level_manifest,
         null, 1.0, false);
+
+    String lastKnownLocalAppLevelManifestETag = getManifestSyncETag(null);
     FileManifestDocument manifestDocument =
-        sc.getSynchronizer().getAppLevelFileManifest(pushLocalFiles, serverReportedAppLevelETag);
+        sc.getSynchronizer().getAppLevelFileManifest(
+            lastKnownLocalAppLevelManifestETag, serverReportedAppLevelETag,
+            pushLocalFiles);
 
     if (manifestDocument == null) {
       log.i(LOGTAG, "no change in app-level manifest -- skipping!");
@@ -389,7 +394,7 @@ public class ProcessManifestContentAndFileChanges {
       //
       // Use the matching of the ETag to indicate the device and server content exactly match.
       try {
-        sc.getSynchronizer().updateManifestSyncETag(null, manifestDocument.eTag);
+        updateManifestSyncETag(null, manifestDocument.eTag);
       } catch (ServicesAvailabilityException e) {
         log.e(LOGTAG, "Error while trying to update the manifest sync etag");
         log.printStackTrace(e);
@@ -422,9 +427,10 @@ public class ProcessManifestContentAndFileChanges {
         R.string.sync_getting_table_manifest,
         new Object[] { tableId }, 1.0, false);
 
+    String lastKnownLocalTableLevelManifestETag = getManifestSyncETag(tableId);
     // get the table files on the server
     FileManifestDocument manifestDocument = sc.getSynchronizer().getTableLevelFileManifest(tableId,
-        serverReportedTableLevelETag, pushLocalFiles);
+        lastKnownLocalTableLevelManifestETag, serverReportedTableLevelETag, pushLocalFiles);
 
     if (manifestDocument == null) {
       log.i(LOGTAG, "no change in table manifest -- skipping!");
@@ -561,7 +567,7 @@ public class ProcessManifestContentAndFileChanges {
       //
       // Use the matching of the ETag to indicate the device and server content exactly match.
       try {
-        sc.getSynchronizer().updateManifestSyncETag(tableId, manifestDocument.eTag);
+        updateManifestSyncETag(tableId, manifestDocument.eTag);
       } catch (ServicesAvailabilityException e) {
         log.e(LOGTAG, "Error while trying to update the manifest sync etag");
         log.printStackTrace(e);
@@ -625,7 +631,7 @@ public class ProcessManifestContentAndFileChanges {
         boolean success = false;
         try {
           sc.getSynchronizer().downloadFile(localFile, uri);
-          sc.getSynchronizer().updateFileSyncETag(uri, tableId, localFile.lastModified(), entry.md5hash);
+          updateFileSyncETag(uri, tableId, localFile.lastModified(), entry.md5hash);
           success = true;
         } finally {
           if ( !success ) {
@@ -636,7 +642,7 @@ public class ProcessManifestContentAndFileChanges {
         boolean hasUpToDateEntry = true;
         String md5hash = null;
         try {
-          md5hash = sc.getSynchronizer().getFileSyncETag(uri, tableId, localFile.lastModified());
+          md5hash = getFileSyncETag(uri, tableId, localFile.lastModified());
         } catch (ServicesAvailabilityException e1) {
           log.printStackTrace(e1);
           log.e(LOGTAG, "database access error (ignoring)");
@@ -655,7 +661,7 @@ public class ProcessManifestContentAndFileChanges {
           boolean success = false;
           try {
             sc.getSynchronizer().downloadFile(localFile, uri);
-            sc.getSynchronizer().updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
+            updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
             success = true;
           } finally {
             if ( !success ) {
@@ -664,7 +670,7 @@ public class ProcessManifestContentAndFileChanges {
           }
         } else {
           if (!hasUpToDateEntry) {
-            sc.getSynchronizer().updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
+            updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
           }
           // no change -- we have the file; it didn't change.
           return false;
@@ -737,10 +743,15 @@ public class ProcessManifestContentAndFileChanges {
     String instanceId = localRow.getDataByKey(DataTableColumns.ID);
     log.i(LOGTAG, "syncRowLevelFileAttachments requesting a row-level manifest for " + instanceId);
 
+
+    String lastKnownLocalRowLevelManifestETag =
+        getRowLevelManifestSyncETag(serverInstanceFileUri, tableId, instanceId,
+          attachmentState, uriFragmentHash);
+
     // 4) Get the list of files on the server
     FileManifestDocument manifestDocument =
         sc.getSynchronizer().getRowLevelFileManifest(serverInstanceFileUri, tableId, instanceId,
-            attachmentState, uriFragmentHash);
+            attachmentState, uriFragmentHash, lastKnownLocalRowLevelManifestETag);
 
     if ( manifestDocument == null ) {
       // if the row attachment state, list of file attachments, and manifest on the server
@@ -924,7 +935,7 @@ public class ProcessManifestContentAndFileChanges {
         // file attachments (and just that content -- not whether or not the files existed
         // locally or on the server). That content has not changed, so the uriFragmentHash
         // value continues to be valid now, once all the file attachments have been synced.
-        sc.getSynchronizer().updateRowLevelManifestSyncETag(serverInstanceFileUri, tableId,
+        updateRowLevelManifestSyncETag(serverInstanceFileUri, tableId,
             instanceId, attachmentState, uriFragmentHash, manifestDocument.eTag);
       } catch (ServicesAvailabilityException e) {
         log.printStackTrace(e);
@@ -940,6 +951,254 @@ public class ProcessManifestContentAndFileChanges {
       // we were not able to do this.
       log.i(LOGTAG, "syncRowLevelFileAttachments PENDING file attachments for " + instanceId);
       return false;
+    }
+  }
+
+  /**********************************************************************************
+   *
+   * Database interactions
+   **********************************************************************************/
+
+
+  /**
+   * Delete file and manifest SyncETags that are not for the current server.
+   *
+   * @throws ServicesAvailabilityException
+   */
+  public void deleteAllSyncETagsExceptForCurrentServer() throws ServicesAvailabilityException {
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().deleteAllSyncETagsExceptForServer(sc.getAppName(), db,
+          sc.getAggregateUri());
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   *
+   * @param fileDownloadUri
+   * @param tableId
+   * @param lastModified
+   * @return
+   * @throws ServicesAvailabilityException
+   */
+  String getFileSyncETag(URI
+      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      return sc.getDatabaseService().getFileSyncETag(sc.getAppName(), db,
+          fileDownloadUri.toString(), tableId,
+          lastModified);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   * Updates this config file download URI with the indicated ETag
+   *
+   * @param fileDownloadUri
+   * @param tableId
+   * @param lastModified
+   * @param documentETag
+   * @throws ServicesAvailabilityException
+   */
+  void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().updateFileSyncETag(sc.getAppName(), db, fileDownloadUri.toString(), tableId,
+          lastModified, documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   *
+   * @param tableId
+   * @return
+   * @throws ServicesAvailabilityException
+   */
+  String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
+
+    URI fileManifestUri;
+
+    if ( tableId == null ) {
+      fileManifestUri = sc.getSynchronizer().constructAppLevelFileManifestUri();
+    } else {
+      fileManifestUri = sc.getSynchronizer().constructTableLevelFileManifestUri(tableId);
+    }
+
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      return sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   * Update the manifest content ETag with the indicated value. This should be done
+   * AFTER the device matches the content on the server. Until then, the ETag should
+   * not be recorded.
+   *
+   * @param tableId
+   * @param documentETag
+   * @throws ServicesAvailabilityException
+   */
+  void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
+
+    URI fileManifestUri;
+
+    if ( tableId == null ) {
+      fileManifestUri = sc.getSynchronizer().constructAppLevelFileManifestUri();
+    } else {
+      fileManifestUri = sc.getSynchronizer().constructTableLevelFileManifestUri(tableId);
+    }
+
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db, fileManifestUri.toString(), tableId,
+          documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   *
+   * @param serverInstanceFileUri
+   * @param tableId
+   * @param rowId
+   * @param attachmentState
+   * @param uriFragmentHash
+   * @return
+   * @throws ServicesAvailabilityException
+   */
+  String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
+      ServicesAvailabilityException {
+
+    URI fileManifestUri = sc.getSynchronizer().constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
+
+    /**
+     * When we are obtaining the manifest from the server, we need to:
+     *
+     * (1) If the current attachmentState does not match the previous fetch's state, we
+     * need to pull the server manifest in its entirety.
+     * (2) If the list of attachment filenames has changed since the previous fetch, we
+     * need to pull the server manifest in its entirety.
+     * (3) Otherwise, if we are using the same attachmentState and have the same list of
+     * attachment filenames, we can short-circuit the processing if there is no change
+     * to the manifest on the server.
+     *
+     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
+     * returning the eTag if that prefix matches.
+     */
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      String qualifiedETag = sc.getDatabaseService().getManifestSyncETag(sc.getAppName(), db,
+          fileManifestUri.toString(), tableId);
+      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
+      if ( qualifiedETag != null && qualifiedETag.startsWith(restrictivePrefix) ) {
+        return qualifiedETag.substring(restrictivePrefix.length());
+      } else {
+        return null;
+      }
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   * Update the manifest content ETag with the indicated value. This should be done
+   * AFTER the device matches the content on the server. Until then, the ETag should
+   * not be recorded.
+   *
+   * @param serverInstanceFileUri
+   * @param tableId
+   * @param rowId
+   * @param attachmentState
+   * @param uriFragmentHash
+   * @param documentETag
+   * @throws ServicesAvailabilityException
+   */
+  void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+      String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
+      String documentETag)
+      throws ServicesAvailabilityException {
+
+    URI fileManifestUri = sc.getSynchronizer().constructInstanceFileManifestUri(serverInstanceFileUri, rowId);
+
+    /**
+     * When we are obtaining the manifest from the server, we need to:
+     *
+     * (1) If the current attachmentState does not match the previous fetch's state, we
+     * need to pull the server manifest in its entirety.
+     * (2) If the list of attachment filenames has changed since the previous fetch, we
+     * need to pull the server manifest in its entirety.
+     * (3) Otherwise, if we are using the same attachmentState and have the same list of
+     * attachment filenames, we can short-circuit the processing if there is no change
+     * to the manifest on the server.
+     *
+     * Accomplish this by prefixing the documentETag with a restrictive prefix and only
+     * returning the eTag if that prefix matches.
+     */
+    DbHandle db = null;
+    try {
+      db = sc.getDatabase();
+      String restrictivePrefix = attachmentState.name() + "." + uriFragmentHash + "|";
+      if ( documentETag != null ) {
+        documentETag = restrictivePrefix + documentETag;
+      }
+      sc.getDatabaseService().updateManifestSyncETag(sc.getAppName(), db,
+          fileManifestUri.toString(), tableId, documentETag);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
+    }
+  }
+
+  /**
+   * Invoked when the schema of a table has changed or we have never before synced with the server.
+   *
+   * @param tableId
+   * @param newSchemaETag
+   * @param oldSchemaETag
+   */
+  public void updateTableSchemaETagAndPurgePotentiallyChangedDocumentETags(String tableId,
+      String newSchemaETag, String oldSchemaETag) throws
+      ServicesAvailabilityException {
+    // we are creating data on the server
+    DbHandle db = null;
+
+    try {
+      String tableInstanceFilesUriString = null;
+
+      if ( oldSchemaETag != null) {
+        URI uri = sc.getSynchronizer().constructRealizedTableIdUri(tableId, oldSchemaETag);
+        tableInstanceFilesUriString = uri.toString();
+      }
+
+      db = sc.getDatabase();
+      sc.getDatabaseService().privilegedServerTableSchemaETagChanged(sc.getAppName(), db,
+          tableId, newSchemaETag, tableInstanceFilesUriString);
+    } finally {
+      sc.releaseDatabase(db);
+      db = null;
     }
   }
 }
