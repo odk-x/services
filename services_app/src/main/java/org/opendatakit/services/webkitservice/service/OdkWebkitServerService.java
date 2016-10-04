@@ -21,8 +21,11 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.opendatakit.consts.WebkitServerConsts;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.webkitserver.service.WebkitServerInterface;
 
+import java.io.File;
 import java.io.IOException;
 
 import fi.iki.elonen.SimpleWebServer;
@@ -97,7 +100,8 @@ public class OdkWebkitServerService extends Service {
   private synchronized void startServer() {
     if (server == null || !server.isAlive()) {
       stopServer();
-      SimpleWebServer testing = new SimpleWebServer();
+      SimpleWebServer testing = new SimpleWebServer(WebkitServerConsts.HOSTNAME, WebkitServerConsts.PORT, new File(ODKFileUtils.getOdkFolder()).getAbsoluteFile(), false);
+      //SimpleWebServer testing = new SimpleWebServer();
       try {
         testing.start();
         server = testing;
