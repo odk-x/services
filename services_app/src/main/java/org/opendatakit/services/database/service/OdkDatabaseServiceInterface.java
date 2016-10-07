@@ -1247,57 +1247,6 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param orderedColumns
    * @param cvValues  server's field values for this row
    * @param rowId
-   * @param localRowConflictType
-   *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
-   * @return
-     * @throws RemoteException
-     */
-  @Override public DbChunk privilegedPlaceRowIntoConflictWithId(String appName, DbHandle
-      dbHandleName,
-      String tableId, OrderedColumns orderedColumns, ContentValues cvValues,
-      String rowId, int localRowConflictType) throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    String activeUser = getActiveUser(appName);
-    String locale = getLocale(appName);
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      db.beginTransactionExclusive();
-
-      ODKDatabaseImplUtils.get()
-          .privilegedPlaceRowIntoConflictWithId(db, tableId, orderedColumns, cvValues, rowId,
-              localRowConflictType, activeUser, locale);
-      BaseTable t = ODKDatabaseImplUtils.get().privilegedGetConflictingRowsWithId(db, tableId,
-          rowId, activeUser);
-      db.setTransactionSuccessful();
-      return getAndCacheChunks(t);
-    } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "privilegedPlaceRowIntoConflictWithId", e);
-    } finally {
-      if (db != null) {
-        db.endTransaction();
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-
-  }
-
-  /**
-   * SYNC Only. ADMIN Privileges!
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues  server's field values for this row
-   * @param rowId
    *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
    * @return
    * @throws RemoteException
@@ -1656,53 +1605,6 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       return getAndCacheChunks(t);
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "updateRowWithId", e);
-    } finally {
-      if (db != null) {
-        db.endTransaction();
-        // release the reference...
-        // this does not necessarily close the db handle
-        // or terminate any pending transaction
-        db.releaseReference();
-      }
-    }
-  }
-
-  /**
-   * SYNC Only. ADMIN Privileges!
-   *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param asCsvRequestedChange
-   * @return
-   * @throws RemoteException
-   */
-  @Override public DbChunk privilegedUpdateRowWithId(String appName, DbHandle dbHandleName,
-                                                        String tableId, OrderedColumns orderedColumns, ContentValues cvValues, String rowId, boolean asCsvRequestedChange)
-      throws RemoteException {
-
-    OdkConnectionInterface db = null;
-
-    String activeUser = getActiveUser(appName);
-    String locale = getLocale(appName);
-
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-              .getConnection(appName, dbHandleName);
-      db.beginTransactionExclusive();
-      ODKDatabaseImplUtils.get()
-              .privilegedUpdateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
-                  locale, asCsvRequestedChange);
-      BaseTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
-          rowId, activeUser);
-      db.setTransactionSuccessful();
-      return getAndCacheChunks(t);
-    } catch (Exception e) {
-      throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateRowWithId", e);
     } finally {
       if (db != null) {
         db.endTransaction();
