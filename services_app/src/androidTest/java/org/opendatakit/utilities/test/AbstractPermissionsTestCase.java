@@ -16,7 +16,6 @@ package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -122,7 +121,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     LOCALLY_SYNCED_PENDING_FILES,
     LOCALLY_DELETED,
     LOCALLY_IN_CONFLICT
-  };
+  }
 
   public static class SyncParamOutcome {
 
@@ -877,7 +876,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected enum FirstSavepointTimestampType { CHECKPOINT_NEW_ROW, NEW_ROW, CHANGED, SYNCED,
-    SYNCED_PENDING_FILES, IN_CONFLICT, DELETED };
+    SYNCED_PENDING_FILES, IN_CONFLICT, DELETED }
 
   protected boolean verifyRowSyncStateAndCheckpoints(String tableId, String rowId, int expectedRowCount,
       FirstSavepointTimestampType expectFirstRemainingType, String identifyingDescription) {

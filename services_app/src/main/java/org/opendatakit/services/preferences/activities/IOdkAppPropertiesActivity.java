@@ -24,6 +24,6 @@ import org.opendatakit.properties.PropertiesSingleton;
  */
 public interface IOdkAppPropertiesActivity {
 
-   public PropertiesSingleton getProps();
+   PropertiesSingleton getProps();
 
 }

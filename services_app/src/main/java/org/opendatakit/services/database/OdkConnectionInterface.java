@@ -20,22 +20,22 @@ public interface OdkConnectionInterface {
    *
    * @return true if initialization is successful.
    */
-    public boolean waitForInitializationComplete();
+    boolean waitForInitializationComplete();
 
 
   /**
    * Signal that initialization is complete with the given outcome
    * @param outcome true if successful
    */
-    public void signalInitializationComplete(boolean outcome);
+    void signalInitializationComplete(boolean outcome);
 
-    public int getReferenceCount();
+    int getReferenceCount();
 
-    public String getAppName();
+    String getAppName();
 
-    public String getSessionQualifier();
+    String getSessionQualifier();
 
-    public void dumpDetail(StringBuilder b);
+    void dumpDetail(StringBuilder b);
 
    /**
     * This is called within
@@ -46,7 +46,7 @@ public interface OdkConnectionInterface {
     * In general, however, that is a bad idea. Just use the above function to retrieve
     * the connection each time you need it.
     */
-    public void acquireReference();
+    void acquireReference();
 
    /**
     * Call this when you no longer need to use the connection.
@@ -56,7 +56,7 @@ public interface OdkConnectionInterface {
     *
     * @throws SQLException
     */
-    public void releaseReference() throws SQLException;
+    void releaseReference() throws SQLException;
 
    /**
     * Get the schema version in the database.
@@ -65,7 +65,7 @@ public interface OdkConnectionInterface {
     * @return
     * @throws SQLException
     */
-    public int getVersion() throws SQLException;
+    int getVersion() throws SQLException;
 
    /**
     * Set the schema version in the database.
@@ -74,9 +74,9 @@ public interface OdkConnectionInterface {
     * @param version
     * @throws SQLException
     */
-    public void setVersion(int version) throws SQLException;
+    void setVersion(int version) throws SQLException;
 
-    public boolean isOpen() throws SQLException;
+    boolean isOpen() throws SQLException;
 
   /**
    * close() is not implemented.
@@ -91,7 +91,7 @@ public interface OdkConnectionInterface {
    * connection and terminate it during the finalize() action (which should be considered a logic
    * error).
    */
-    public void close();
+    void close();
 
    /**
     * Take an immediate exclusive lock on the database.
@@ -102,7 +102,7 @@ public interface OdkConnectionInterface {
     *
     * @throws SQLException
     */
-    public void beginTransactionExclusive() throws SQLException;
+    void beginTransactionExclusive() throws SQLException;
 
    /**
     * The normal lock is a non-exclusive deferred lock that gains
@@ -111,31 +111,31 @@ public interface OdkConnectionInterface {
     *
     * @throws SQLException
     */
-    public void beginTransactionNonExclusive() throws SQLException;
+    void beginTransactionNonExclusive() throws SQLException;
 
-    public boolean inTransaction() throws SQLException;
+    boolean inTransaction() throws SQLException;
 
-    public void setTransactionSuccessful() throws SQLException;
+    void setTransactionSuccessful() throws SQLException;
 
-    public void endTransaction() throws SQLException;
+    void endTransaction() throws SQLException;
 
-    public int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) throws SQLException;
+    int update(String table, Map<String,Object> values, String whereClause, Object[] whereArgs) throws SQLException;
 
-    public int delete(String table, String whereClause, Object[] whereArgs) throws SQLException;
+    int delete(String table, String whereClause, Object[] whereArgs) throws SQLException;
 
-    public long replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
+    long replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
             throws SQLException;
 
-    public long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
+    long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
             throws SQLException;
 
-    public void execSQL(String sql, Object[] bindArgs) throws SQLException;
+    void execSQL(String sql, Object[] bindArgs) throws SQLException;
 
-    public Cursor rawQuery(String sql, Object[] selectionArgs) throws SQLException;
+    Cursor rawQuery(String sql, Object[] selectionArgs) throws SQLException;
 
-    public Cursor query(String table, String[] columns, String selection, Object[] selectionArgs,
+    Cursor query(String table, String[] columns, String selection, Object[] selectionArgs,
                            String groupBy, String having, String orderBy, String limit) throws SQLException;
 
-    public Cursor queryDistinct(String table, String[] columns, String selection,
+    Cursor queryDistinct(String table, String[] columns, String selection,
         Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) throws SQLException;
 }

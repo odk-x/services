@@ -101,7 +101,7 @@ public class ProcessAppAndTableLevelChanges {
         this.reloadingException = e;
       }
     }
-  };
+  }
 
   public void verifyServerConfiguration() throws ServicesAvailabilityException {
     log.i(TAG, "entered verifyServerConfiguration()");

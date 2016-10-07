@@ -148,7 +148,7 @@ public class ODKDatabaseImplUtils {
   public enum AccessColumnType {
     NO_EFFECTIVE_ACCESS_COLUMN,
     LOCKED_EFFECTIVE_ACCESS_COLUMN,
-    UNLOCKED_EFFECTIVE_ACCESS_COLUMN };
+    UNLOCKED_EFFECTIVE_ACCESS_COLUMN }
 
   public static class AccessContext {
     public final AccessColumnType accessColumnType;
@@ -4812,8 +4812,6 @@ public class ODKDatabaseImplUtils {
     CHANGE_ROW,
     DELETE_ROW
   }
-
-  ;
 
   private class TableSecuritySettings {
     final String tableId;

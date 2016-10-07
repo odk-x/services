@@ -57,9 +57,9 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
 
-  private static enum DialogState {
+  private enum DialogState {
     Progress, Alert, None
-  };
+  }
 
   private static ConflictResolutionListTask conflictResolutionListTask = null;
 
@@ -85,30 +85,26 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
     Intent incomingIntent = getActivity().getIntent();
     mAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-    if ( mAppName == null || mAppName.length() == 0 ) {
+    if (mAppName == null || mAppName.length() == 0) {
       getActivity().setResult(Activity.RESULT_CANCELED);
       getActivity().finish();
       return;
     }
 
     mTableId = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
-    if ( mTableId == null || mTableId.length() == 0 ) {
+    if (mTableId == null || mTableId.length() == 0) {
       getActivity().setResult(Activity.RESULT_CANCELED);
       getActivity().finish();
       return;
     }
 
-    if ( savedInstanceState != null ) {
-      mHaveResolvedMetadataConflicts =
-          savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
-          savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) : false;
-    } else {
-      mHaveResolvedMetadataConflicts = false;
-    }
+    mHaveResolvedMetadataConflicts = savedInstanceState != null &&
+        (savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
+         savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) :
+         false);
 
     // render total instance view
-    mAdapter = new ArrayAdapter<ResolveRowEntry>(getActivity(), android.R.layout
-        .simple_list_item_1);
+    mAdapter = new ArrayAdapter<ResolveRowEntry>(getActivity(), android.R.layout.simple_list_item_1);
     setListAdapter(mAdapter);
 
     getLoaderManager().initLoader(RESOLVE_ROW_LOADER, null, this);

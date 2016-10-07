@@ -96,7 +96,7 @@ public final class WebUtils {
   }
 
   protected WebUtils() {
-  };
+  }
 
   /**
    * Create an httpClient with connection timeouts and other parameters set.

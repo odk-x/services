@@ -163,7 +163,7 @@ public class ProcessRowDataOrchestrateChanges {
         db = null;
       }
 
-      synchronizeTableDataRowsAndAttachments(tableResource, te, orderedDefns, displayName,
+      synchronizeTableDataRowsAndAttachments(te, orderedDefns, displayName,
           attachmentState);
       sc.incMajorSyncStep();
     }
@@ -179,9 +179,6 @@ public class ProcessRowDataOrchestrateChanges {
    * This method does NOT synchronize any non-instance files; it assumes the
    * database schema has already been sync'd.
    *
-   * @param tableResource
-   *          the table resource from the server, either from the getTables()
-   *          call or from a createTable() response.
    * @param te
    *          definition of the table to synchronize
    * @param orderedColumns
@@ -191,7 +188,7 @@ public class ProcessRowDataOrchestrateChanges {
    * @param attachmentState
    * @throws ServicesAvailabilityException
    */
-  private void synchronizeTableDataRowsAndAttachments(TableResource tableResource,
+  private void synchronizeTableDataRowsAndAttachments(
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
       SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
 
@@ -241,7 +238,7 @@ public class ProcessRowDataOrchestrateChanges {
             R.string.sync_verifying_table_schema_on_server, new Object[] { tableId }, 0.0, false);
 
 
-        tableResource = sc.getSynchronizer().getTable(tableId);
+        TableResource tableResource = sc.getSynchronizer().getTable(tableId);
 
         // test that the schemaETag matches
         // if it doesn't, the user MUST sync app-level files and

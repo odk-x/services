@@ -3997,7 +3997,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
@@ -4019,7 +4019,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
@@ -4029,7 +4029,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
@@ -4053,7 +4053,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
@@ -4063,7 +4063,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
@@ -4087,7 +4087,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
@@ -4097,7 +4097,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
@@ -4122,7 +4122,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
@@ -4132,7 +4132,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     } else {
       assertTrue("should not get here", false);
     }
-    c.close();;
+    c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);

@@ -199,7 +199,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
 
   public boolean isOpen() {
     final int cookie = operationLog.beginOperation(sessionQualifier, "isOpen()", null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -249,7 +249,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
   private void commonWrapUpConnection(String action) throws Throwable {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "commonWrapUpConnection(\"" + action + "\")", null, null);
-    ;
+
     try {
       if (isOpen()) {
         try {
@@ -259,7 +259,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
         } finally {
           final int innerCookie = operationLog.beginOperation(sessionQualifier,
               "commonWrapUpConnection(\"" + action + "\") -- close", null, null);
-          ;
+
           try {
             // invoke method
             // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -300,7 +300,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
 
   public int getVersion() throws SQLiteException {
     final int cookie = operationLog.beginOperation(sessionQualifier, "getVersion()", null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -331,7 +331,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
   public void setVersion(int version) throws SQLiteException {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "setVersion(" + version + ")", null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -362,7 +362,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     boolean success = false;
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "beginTransactionExclusive()", null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -399,7 +399,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
     boolean success = false;
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "beginTransactionNonExclusive()", null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -578,7 +578,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -615,7 +615,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("\"").append(nullColumnHack).append("\",...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -652,7 +652,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("\"").append(nullColumnHack).append("\",...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -688,7 +688,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -724,7 +724,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("...)");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -792,7 +792,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("\"").append(limit).append("\")");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -862,7 +862,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       b.append("\"").append(limit).append("\")");
     }
     final int cookie = operationLog.beginOperation(sessionQualifier, b.toString(), null, null);
-    ;
+
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961

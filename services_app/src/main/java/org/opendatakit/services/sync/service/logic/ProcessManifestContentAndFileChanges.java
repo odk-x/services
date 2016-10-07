@@ -206,11 +206,8 @@ public class ProcessManifestContentAndFileChanges {
     File[] partials = baseFolder.listFiles(new FileFilter() {
       @Override
       public boolean accept(File pathname) {
-        if (excludingNamedItemsUnderFolder == null) {
-          return true;
-        } else {
-          return !excludingNamedItemsUnderFolder.contains(pathname.getName());
-        }
+        return excludingNamedItemsUnderFolder == null ||
+            !excludingNamedItemsUnderFolder.contains(pathname.getName());
       }
     });
 

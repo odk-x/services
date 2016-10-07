@@ -16,7 +16,6 @@
 package org.opendatakit.services.sync.service.logic;
 
 import android.content.ContentValues;
-import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -39,7 +38,6 @@ import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
-import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.TableLevelResult;
 

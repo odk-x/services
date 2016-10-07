@@ -49,26 +49,18 @@ public class DismissableOutcomeDialogFragment extends DialogFragment {
     String title = getArguments().getString("title");
     String message = getArguments().getString("message");
 
-    if ( savedInstanceState != null ) {
-      ok_invoked = savedInstanceState.getBoolean(OK_INVOKED);
-    } else {
-      ok_invoked = false;
-    }
+    ok_invoked = savedInstanceState != null && savedInstanceState.getBoolean(OK_INVOKED);
 
     DialogInterface.OnClickListener okButtonListener = new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
+      @Override public void onClick(DialogInterface dialog, int which) {
         ok_invoked = true;
         cancelOutcomeDialog();
       }
     };
 
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setTitle(title)
-        .setMessage(message)
-        .setIcon(R.drawable.ic_info_outline_black_24dp)
-        .setCancelable(false)
-        .setPositiveButton(R.string.ok, okButtonListener);
+    builder.setTitle(title).setMessage(message).setIcon(R.drawable.ic_info_outline_black_24dp)
+        .setCancelable(false).setPositiveButton(R.string.ok, okButtonListener);
 
     AlertDialog dialog = builder.create();
     dialog.setCanceledOnTouchOutside(false);

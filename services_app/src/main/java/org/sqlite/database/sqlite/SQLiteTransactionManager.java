@@ -20,7 +20,7 @@ package org.sqlite.database.sqlite;
  */
 final class SQLiteTransactionManager {
 
-   enum TransactionOutcome { NO_ACTION, COMMIT_ACTION, ROLLBACK_ACTION };
+   enum TransactionOutcome { NO_ACTION, COMMIT_ACTION, ROLLBACK_ACTION }
 
    /**
     * Track nested (software-only) transactions

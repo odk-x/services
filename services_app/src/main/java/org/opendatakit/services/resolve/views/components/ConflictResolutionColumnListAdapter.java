@@ -61,7 +61,7 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
      * @param resolution
      * @param value
      */
-    public void onConflictResolutionDecision(String elementKey,
+    void onConflictResolutionDecision(String elementKey,
         Resolution resolution, String value);
 
     /**
@@ -70,12 +70,12 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
      * @param elementKey
      * @return null if a decision has not yet been made
      */
-    public Resolution getConflictResolutionDecision(String elementKey);
+    Resolution getConflictResolutionDecision(String elementKey);
 
     /**
      * Called when the user has made a decision about which row to use.
      */
-    public void onDecisionMade();
+    void onDecisionMade();
   }
 
   /**

@@ -22,5 +22,5 @@ public enum Resolution {
   // LOCAL is the most-recent-change if processing a checkpoint
   LOCAL,
   // SERVER is the original row content if processing a checkpoint
-  SERVER;
+  SERVER
 }

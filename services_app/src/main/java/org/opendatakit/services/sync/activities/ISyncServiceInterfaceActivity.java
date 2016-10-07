@@ -5,5 +5,5 @@ package org.opendatakit.services.sync.activities;
  */
 public interface ISyncServiceInterfaceActivity {
 
-   public void invokeSyncInterfaceAction(DoSyncActionCallback callback);
+   void invokeSyncInterfaceAction(DoSyncActionCallback callback);
 }

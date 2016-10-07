@@ -23,5 +23,5 @@ public class InstanceUploadOutcome {
   public HashMap<String, String> mResults = null;
 
   public InstanceUploadOutcome() {
-  };
+  }
 }

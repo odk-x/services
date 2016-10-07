@@ -16,7 +16,7 @@ public interface OdkConnectionFactoryInterface {
     * A suffix that identifies a sessionQualifier as having been
     * created for internal use (e.g., for content providers).
     */
-   static final String INTERNAL_TYPE_SUFFIX = "-internal";
+   String INTERNAL_TYPE_SUFFIX = "-internal";
 
    /**
     * Generate a database handle (a wrapper for a session qualifier)
@@ -27,14 +27,14 @@ public interface OdkConnectionFactoryInterface {
     *
     * @return sessionQualifier appropriate for 'internal uses'
     */
-   public DbHandle generateInternalUseDbHandle();
+   DbHandle generateInternalUseDbHandle();
 
    /**
     * This handle is suitable for database service use.
     *
     * @return sessionQualifier appropriate for 'database service uses'
     */
-   public DbHandle generateDatabaseServiceDbHandle();
+   DbHandle generateDatabaseServiceDbHandle();
 
    /**
     * Dump the state and history of the database layer.
@@ -43,7 +43,7 @@ public interface OdkConnectionFactoryInterface {
     *
     * @param asError true if it should be logged as an error
     */
-   public void dumpInfo(boolean asError);
+   void dumpInfo(boolean asError);
 
    /**
     * Get a connection to the database for the given dbHandleName.
@@ -58,7 +58,7 @@ public interface OdkConnectionFactoryInterface {
     * @param dbHandleName
     * @return
     */
-   public OdkConnectionInterface getConnection(String appName, DbHandle dbHandleName);
+   OdkConnectionInterface getConnection(String appName, DbHandle dbHandleName);
 
    /**
     * Remove the connection to the database for the given dbHandleName from the
@@ -71,7 +71,7 @@ public interface OdkConnectionFactoryInterface {
     * @param appName
     * @param dbHandleName
     */
-   public void removeConnection(String appName, DbHandle dbHandleName);
+   void removeConnection(String appName, DbHandle dbHandleName);
 
    /**
     * Remove all database connections having {generateDatabaseServiceDbHandle()} session
@@ -79,11 +79,11 @@ public interface OdkConnectionFactoryInterface {
     *
     * @return true if anything was removed
     */
-   public boolean removeAllDatabaseServiceConnections();
+   boolean removeAllDatabaseServiceConnections();
 
    /**
     * Remove all open database connections.
     * See {removeConnection(String, DbHandle)}
     */
-   public void removeAllConnections();
+   void removeAllConnections();
 }
