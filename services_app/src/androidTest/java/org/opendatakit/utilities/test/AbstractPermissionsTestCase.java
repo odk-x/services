@@ -545,13 +545,22 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     return orderedColumns;
   }
 
-  protected OrderedColumns assertPopulatedSyncStateTestTable(String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType, SyncState state) {
+  protected OrderedColumns assertEmptySyncStateTestTable(String tableId, boolean isLocked,
+      boolean anonymousCanCreate, String defaultFilterType) {
 
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 
     OrderedColumns orderedColumns =
         assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+
+    return orderedColumns;
+  }
+
+  protected void assertRowInSyncStateTestTable(String tableId,
+      OrderedColumns orderedColumns,
+      String rowId, SyncState state) throws ActionNotAuthorizedException {
+
+    ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, adminUser);
 
     // and now add rows to that table
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
@@ -572,30 +581,134 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.putNull(DataTableColumns.FILTER_VALUE);
-    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale, false);
+    if ( rowIdDefaultNull.equals(rowId) ) {
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+              commonUser, currentLocale, false);
+    }
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
-    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale, false);
+    if ( rowIdDefaultCommon.equals(rowId) ) {
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+              commonUser, currentLocale, false);
+    }
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
-    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
-        rowIdHiddenCommon, commonUser, currentLocale, false);
+    if ( rowIdHiddenCommon.equals(rowId) ) {
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdHiddenCommon,
+              commonUser, currentLocale, false);
+    }
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
-    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
-        rowIdReadOnlyCommon, commonUser, currentLocale, false);
+    if ( rowIdReadOnlyCommon.equals(rowId) ) {
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdReadOnlyCommon,
+              commonUser, currentLocale, false);
+    }
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
-    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
-        rowIdModifyCommon, commonUser, currentLocale, false);
+    if ( rowIdModifyCommon.equals(rowId) ) {
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdModifyCommon,
+              commonUser, currentLocale, false);
+    }
+  }
 
-    return orderedColumns;
+
+  protected void assertInConflictRowInSyncStateTestTable(String tableId,
+      OrderedColumns orderedColumns,
+      String rowId, int localConflictType, int serverConflictType)
+      throws ActionNotAuthorizedException {
+
+    ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, adminUser);
+
+    // and now add rows to that table
+    ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
+
+    cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, SAVEPOINT_TIMESTAMP_LOCAL);
+    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
+
+    // first -- insert row as "new_row" with no rowETag
+    cvValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+    cvValues.put(DataTableColumns.ROW_ETAG, "not_null_because_has_been_synced");
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.FILTER_VALUE);
+
+    if ( rowIdDefaultNull.equals(rowId) ) {
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+              commonUser, currentLocale, false);
+      cvValues.put("col3",2*Math.PI);
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+              commonUser, currentLocale, false);
+    }
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    if ( rowIdDefaultCommon.equals(rowId) ) {
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+              commonUser, currentLocale, false);
+      cvValues.put("col3",2*Math.PI);
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+              commonUser, currentLocale, false);
+    }
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    if ( rowIdHiddenCommon.equals(rowId) ) {
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdHiddenCommon,
+              commonUser, currentLocale, false);
+      cvValues.put("col3",2*Math.PI);
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdHiddenCommon,
+              commonUser, currentLocale, false);
+    }
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    if ( rowIdReadOnlyCommon.equals(rowId) ) {
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdReadOnlyCommon,
+              commonUser, currentLocale, false);
+      cvValues.put("col3",2*Math.PI);
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdReadOnlyCommon,
+              commonUser, currentLocale, false);
+    }
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    if ( rowIdModifyCommon.equals(rowId) ) {
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdModifyCommon,
+              commonUser, currentLocale, false);
+      cvValues.put("col3",2*Math.PI);
+      cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
+      ODKDatabaseImplUtils.get()
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdModifyCommon,
+              commonUser, currentLocale, false);
+    }
   }
 
   protected OrderedColumns assertOneCheckpointAsUpdatePopulatedTestTable(
@@ -1015,7 +1128,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected void verifySyncOutcome(String tableId, OrderedColumns oc, boolean
-      asPrivilegedUser, SyncParamOutcome spo) {
+      asPrivilegedUser, RowFilterScope.Type type, SyncParamOutcome spo) {
 
     String characterizer;
     {
@@ -1039,7 +1152,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     // and now handle server row changes.
     // this may be deletes with or without changes to any values or filter scopes
     ContentValues cvValues = buildServerRowContent(tableId, spo.rowId,
-        spo.isServerRowDeleted, RowFilterScope.Type.DEFAULT,
+        spo.isServerRowDeleted, type,
         new Boolean[] { spo.changeServerBoolean, spo.changeServerInteger, spo.changeServerNumber,
             spo.changeServerString, spo.changeServerRowPath, spo.changeServerFormIdMetadata,
             spo.changeServerPrivilegedMetadata });
@@ -1217,15 +1330,67 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
             sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
           } else {
             // user has no say in metadata -- take server's version for those and resolve
-            if ( changeServerRowPath ) {
-              sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
-            } else {
-              sco = ServerChangeOutcome.LOCALLY_SYNCED;
-            }
+            sco = ServerChangeOutcome.LOCALLY_SYNCED;
           }
           break;
         default:
           throw new IllegalStateException("Unexpected sync state");
+        }
+      }
+      SyncParamOutcome spo = new SyncParamOutcome(rowId, isServerRowDeleted, changeServerBoolean,
+          changeServerInteger, changeServerNumber, changeServerString, changeServerRowPath,
+          changeServerFormIdMetadata, changeServerPrivilegedMetadata, sco);
+      cases.add(spo);
+    }
+    return cases;
+  }
+
+  protected ArrayList<SyncParamOutcome> buildConflictingSyncParamOutcomesList(boolean
+      privilegedUser,
+      int localConflictType,
+      boolean isServerRowDeleted,
+      boolean changeServerBoolean, boolean changeServerInteger,
+      boolean changeServerNumber, boolean changeServerString,
+      boolean changeServerRowPath, boolean changeServerFormIdMetadata,
+      boolean changeServerPrivilegedMetadata) {
+
+    ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
+    String[] rowIds = {  rowIdDefaultNull,
+        rowIdDefaultCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
+
+    for ( String rowId : rowIds ) {
+
+      ServerChangeOutcome sco;
+      if ( isServerRowDeleted ) {
+        switch (localConflictType) {
+        case ConflictType.LOCAL_DELETED_OLD_VALUES:
+          sco = ServerChangeOutcome.LOCALLY_DELETED;
+          break;
+        case ConflictType.LOCAL_UPDATED_UPDATED_VALUES:
+          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          break;
+        default:
+          throw new IllegalStateException("unhandled local conflict type");
+        }
+      } else {
+        switch (localConflictType) {
+        case ConflictType.LOCAL_DELETED_OLD_VALUES:
+          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          break;
+        case ConflictType.LOCAL_UPDATED_UPDATED_VALUES:
+          if ( changeServerBoolean || changeServerInteger ||
+              changeServerNumber || changeServerString ||
+              changeServerRowPath ) {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          } else if ( changeServerPrivilegedMetadata && privilegedUser ) {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          } else {
+            // user has no say in metadata -- take server's version for those and resolve
+            sco = ServerChangeOutcome.LOCALLY_SYNCED;
+          }
+          break;
+        default:
+          throw new IllegalStateException("unhandled local conflict type");
         }
       }
       SyncParamOutcome spo = new SyncParamOutcome(rowId, isServerRowDeleted, changeServerBoolean,

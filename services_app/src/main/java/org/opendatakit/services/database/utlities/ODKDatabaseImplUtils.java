@@ -3779,10 +3779,12 @@ public class ODKDatabaseImplUtils {
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
 
-      privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row, activeUser);
+      if ( privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
+          activeUser) ) {
 
-      // move the local conflict back into the normal (null) state
-      deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
+        // delete what was the local conflict record
+        deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
+      }
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -3841,7 +3843,11 @@ public class ODKDatabaseImplUtils {
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
 
-      privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row, activeUser);
+      if ( !privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
+          activeUser) ) {
+        throw new IllegalArgumentException(
+            "row id " + rowId + " does not have exactly 1 row in table " + tableId);
+      }
 
       // move the local conflict back into the normal (null) state
       deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
@@ -4240,8 +4246,11 @@ public class ODKDatabaseImplUtils {
         // move the local record into the 'new_row' sync state
         // so it can be physically deleted.
 
-        privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
-            activeUser);
+        if ( !privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
+            activeUser) ) {
+          throw new IllegalArgumentException(
+              "row id " + rowId + " does not have exactly 1 row in table " + tableId);
+        }
 
         // and delete the local conflict and all of its associated attachments
         deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
@@ -5317,8 +5326,9 @@ public class ODKDatabaseImplUtils {
    * @param rowId
    * @param rowETag
    * @param state
+   * @return true if rowId exists. False otherwise.
    */
-  public void privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db, String tableId,
+  public boolean privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db, String tableId,
       String rowId, String rowETag, SyncState state, String activeUser) {
 
     String whereClause = K_DATATABLE_ID_EQUALS_PARAM;
@@ -5344,8 +5354,7 @@ public class ODKDatabaseImplUtils {
 
       // There must be only one row in the db
       if (data.getNumberOfRows() != 1) {
-        throw new IllegalArgumentException(
-            t + ": row id " + rowId + " does not have exactly 1 row in table " + tableId);
+        return false;
       }
 
       db.update(tableId, cvDataTableVal, whereClause, whereArgs);
@@ -5353,6 +5362,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
       }
+      return true;
     } finally {
       if (!dbWithinTransaction) {
         db.endTransaction();

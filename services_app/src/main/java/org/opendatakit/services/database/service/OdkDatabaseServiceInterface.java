@@ -1758,9 +1758,11 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      ODKDatabaseImplUtils.get()
-          .privilegedUpdateRowETagAndSyncState(db, tableId, rowId, rowETag,
-              SyncState.valueOf(syncState), activeUser);
+      if ( !ODKDatabaseImplUtils.get().privilegedUpdateRowETagAndSyncState(db, tableId, rowId, rowETag,
+              SyncState.valueOf(syncState), activeUser) ) {
+        throw new IllegalArgumentException(
+            "row id " + rowId + " does not have exactly 1 row in table " + tableId);
+      }
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "privilegedUpdateRowETagAndSyncState", e);
     } finally {
