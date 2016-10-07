@@ -16,7 +16,9 @@ package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.test.AndroidTestCase;
+import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.TestConsts;
@@ -28,7 +30,10 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
+import org.opendatakit.database.data.BaseTable;
+import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
@@ -37,6 +42,7 @@ import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
@@ -54,6 +60,8 @@ import java.util.Locale;
  * Permissions tests in the database.
  */
 public class AbstractPermissionsTestCase extends AndroidTestCase {
+
+  public static final String SAVEPOINT_TIMESTAMP_LOCAL = "2016-10-07T00:11:59.893000000";
 
   protected static class AuthParamAndOutcome {
     public final String tableId;
@@ -93,6 +101,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   protected static final String rowIdReadOnlyCommon = "rowIdReadOnlyCommon";
   protected static final String rowIdModifyCommon = "rowIdModifyCommon";
 
+  protected static final String serverUser = "mailto:server_user@gmail.com";
   protected static final String commonUser = "mailto:common@gmail.com";
   protected static final String otherUser = "mailto:other@gmail.com";
   protected static final String superUser = "mailto:super@gmail.com";
@@ -102,6 +111,52 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   protected static boolean initialized = false;
   protected static final String APPNAME = TestConsts.APPNAME;
   protected static final DbHandle uniqueKey = new DbHandle(AbstractPermissionsTestCase.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+
+  // upon applying the server row, there are 4 outcomes:
+  // 1. row is updated locally into synced state
+  // 2. row is updated locally into synced_pending_files state
+  // 3. row is locally deleted
+  // 4. row is placed into conflict
+  public enum ServerChangeOutcome {
+    LOCALLY_SYNCED,
+    LOCALLY_SYNCED_PENDING_FILES,
+    LOCALLY_DELETED,
+    LOCALLY_IN_CONFLICT
+  };
+
+  public static class SyncParamOutcome {
+
+    String rowId;
+    boolean isServerRowDeleted;
+    boolean changeServerBoolean;
+    boolean changeServerInteger;
+    boolean changeServerNumber;
+    boolean changeServerString;
+    boolean changeServerRowPath;
+    boolean changeServerFormIdMetadata;
+    boolean changeServerPrivilegedMetadata;
+
+    ServerChangeOutcome outcome;
+
+    public SyncParamOutcome(String rowId, boolean isServerRowDeleted,
+        boolean changeServerBoolean, boolean changeServerInteger,
+        boolean changeServerNumber, boolean changeServerString,
+        boolean changeServerRowPath, boolean changeServerFormIdMetadata,
+        boolean changeServerPrivilegedMetadata, ServerChangeOutcome outcome) {
+
+      this.rowId = rowId;
+      this.isServerRowDeleted = isServerRowDeleted;
+      this.changeServerBoolean = changeServerBoolean;
+      this.changeServerInteger = changeServerInteger;
+      this.changeServerNumber = changeServerNumber;
+      this.changeServerString = changeServerString;
+      this.changeServerRowPath = changeServerRowPath;
+      this.changeServerFormIdMetadata = changeServerFormIdMetadata;
+      this.changeServerPrivilegedMetadata = changeServerPrivilegedMetadata;
+
+      this.outcome = outcome;
+    }
+  }
 
   protected OdkConnectionInterface db;
 
@@ -262,6 +317,77 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     }
   }
 
+  protected ContentValues buildServerRowContent(String tableId, String rowId,
+      boolean isServerRowDeleted,
+      RowFilterScope.Type type, Boolean[] changeArray) {
+
+    // and now add rows to that table
+    ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
+
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+
+    cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, SAVEPOINT_TIMESTAMP_LOCAL);
+    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
+
+    // first -- insert row as "new_row" with no rowETag
+    cvValues.put(DataTableColumns.ROW_ETAG, "server content");
+    cvValues.put(DataTableColumns.SYNC_STATE, (isServerRowDeleted ?
+        SyncState.deleted.name() : SyncState.changed.name()));
+
+    RowFilterScope.Type localType;
+    if ( rowId.equals(rowIdDefaultNull) ) {
+      localType = RowFilterScope.Type.DEFAULT;
+      cvValues.put(DataTableColumns.FILTER_TYPE, localType.name());
+      cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    } else if ( rowId.equals(rowIdDefaultCommon) ) {
+      localType = RowFilterScope.Type.DEFAULT;
+      cvValues.put(DataTableColumns.FILTER_TYPE, localType.name());
+      cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    } else if ( rowId.equals(rowIdHiddenCommon) ) {
+      localType = RowFilterScope.Type.HIDDEN;
+      cvValues.put(DataTableColumns.FILTER_TYPE, localType.name());
+      cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    } else if ( rowId.equals(rowIdReadOnlyCommon) ) {
+      localType = RowFilterScope.Type.READ_ONLY;
+      cvValues.put(DataTableColumns.FILTER_TYPE, localType.name());
+      cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    } else if ( rowId.equals(rowIdModifyCommon) ) {
+      localType = RowFilterScope.Type.MODIFY;
+      cvValues.put(DataTableColumns.FILTER_TYPE, localType.name());
+      cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    } else {
+      throw new IllegalArgumentException("unexpected rowId value");
+    }
+
+    if (changeArray != null && changeArray.length >= 1 && changeArray[0]) {
+      cvValues.put("col1", false); // boolean
+    }
+    if (changeArray != null && changeArray.length >= 2 && changeArray[1]) {
+      cvValues.put("col2", 4); // integer
+    }
+    if (changeArray != null && changeArray.length >= 3 && changeArray[2]) {
+      cvValues.put("col3", 2 * Math.PI); // number
+    }
+    if (changeArray != null && changeArray.length >= 4 && changeArray[3]) {
+      cvValues.put("col4", "a different string from the server"); // string
+    }
+    if (changeArray != null && changeArray.length >= 5 && changeArray[4]) {
+      File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdDefaultCommon),
+          "server_sample.jpg");
+      cvValues.put("col7",
+          ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdDefaultCommon, rowFile)); // rowpath
+    }
+    if (changeArray != null && changeArray.length >= 7 && changeArray[6]) {
+      if ( type == localType ) {
+        cvValues.put(DataTableColumns.FILTER_VALUE, serverUser);
+      } else {
+        cvValues.put(DataTableColumns.FILTER_TYPE, type.name());
+      }
+    }
+    return cvValues;
+  }
+
   /**
    * These are content values that don't set any metadata fields that are privileged.
    */
@@ -273,7 +399,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     // primitive types
     cvValues.put("col1", true); // boolean
     cvValues.put("col2", 5); // integer
-    cvValues.put("col3", 3.3); // number;
+    cvValues.put("col3", Math.PI); // number;
     cvValues.put("col4", "this is a test"); // string
     // string with 500 varchars allocated to it
     cvValues.put("col5", "and a long string test"); // string(500)
@@ -416,6 +542,59 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdModifyCommon, commonUser, currentLocale);
+
+    return orderedColumns;
+  }
+
+  protected OrderedColumns assertPopulatedSyncStateTestTable(String tableId, boolean isLocked,
+      boolean anonymousCanCreate, String defaultFilterType, SyncState state) {
+
+    ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
+
+    OrderedColumns orderedColumns =
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+
+    // and now add rows to that table
+    ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
+
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+
+    cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, SAVEPOINT_TIMESTAMP_LOCAL);
+    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
+
+    // first -- insert row as "new_row" with no rowETag
+    if ( state == SyncState.new_row ) {
+      cvValues.putNull(DataTableColumns.ROW_ETAG);
+    } else {
+      cvValues.put(DataTableColumns.ROW_ETAG, "not_null_because_has_been_synced");
+    }
+    cvValues.put(DataTableColumns.SYNC_STATE, state.name());
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+        rowIdDefaultNull, commonUser, currentLocale, false);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+        rowIdDefaultCommon, commonUser, currentLocale, false);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+        rowIdHiddenCommon, commonUser, currentLocale, false);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+        rowIdReadOnlyCommon, commonUser, currentLocale, false);
+
+    cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
+    cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    ODKDatabaseImplUtils.get().privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues,
+        rowIdModifyCommon, commonUser, currentLocale, false);
 
     return orderedColumns;
   }
@@ -836,6 +1015,227 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     }
   }
 
+  protected void verifySyncOutcome(String tableId, OrderedColumns oc, boolean
+      asPrivilegedUser, SyncParamOutcome spo) {
+
+    String characterizer;
+    {
+      StringBuilder b = new StringBuilder();
+      b.append(asPrivilegedUser ? "privlged |" : "ordinary |")
+          .append(spo.isServerRowDeleted ? "deletedOnServer |" : "changedOnServer |")
+          .append(spo.changeServerBoolean ? "B" : "-").append(spo.changeServerInteger ? "I" : "-")
+          .append(spo.changeServerNumber ? "D" : "-").append(spo.changeServerString ? "S" : "-")
+          .append(spo.changeServerRowPath ? "R" : "-")
+          .append(spo.changeServerFormIdMetadata ? "F" : "-")
+          .append(spo.changeServerPrivilegedMetadata ? "P" : "-");
+      b.append(" @ ").append(spo.rowId);
+      characterizer = b.toString();
+    }
+
+    Log.i(tableId, "processing: " + characterizer);
+
+    BaseTable original = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, tableId, spo.rowId,
+        commonUser);
+
+    // and now handle server row changes.
+    // this may be deletes with or without changes to any values or filter scopes
+    ContentValues cvValues = buildServerRowContent(tableId, spo.rowId,
+        spo.isServerRowDeleted, RowFilterScope.Type.DEFAULT,
+        new Boolean[] { spo.changeServerBoolean, spo.changeServerInteger, spo.changeServerNumber,
+            spo.changeServerString, spo.changeServerRowPath, spo.changeServerFormIdMetadata,
+            spo.changeServerPrivilegedMetadata });
+
+    ODKDatabaseImplUtils.get().privilegedPerhapsPlaceRowIntoConflictWithId(db, tableId, oc,
+        cvValues, spo.rowId, commonUser,
+        (asPrivilegedUser ? RoleConsts.ADMIN_ROLES_LIST : RoleConsts.USER_ROLES_LIST),
+        currentLocale);
+
+    BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, tableId,
+        spo.rowId, commonUser);
+
+    switch ( spo.outcome ) {
+    case LOCALLY_DELETED:
+      assertEquals("row not deleted: " + characterizer, 0, baseTable.getNumberOfRows());
+      break;
+    case LOCALLY_SYNCED:
+    case LOCALLY_SYNCED_PENDING_FILES:
+      assertEquals("row not resolved: " + characterizer, 1, baseTable.getNumberOfRows());
+      // content should match server cvValues
+      for ( String key : cvValues.keySet() ) {
+        if ( key.equals(DataTableColumns.SYNC_STATE) ) {
+          String localValue = baseTable.getRowAtIndex(0).getDataByKey(key);
+          if ( spo.outcome == ServerChangeOutcome.LOCALLY_SYNCED ) {
+            assertEquals("syncState not synced: " + characterizer,
+                SyncState.synced.name(), localValue);
+          } else {
+            assertEquals("syncState not synced_pending_files: " + characterizer,
+                SyncState.synced_pending_files.name(), localValue );
+          }
+        } else {
+          String localValue = baseTable.getRowAtIndex(0).getDataByKey(key);
+          String serverValue = cvValues.getAsString(key);
+
+          ElementDataType dt = ElementDataType.string;
+          try {
+            ColumnDefinition cd = oc.find(key);
+            dt = cd.getType().getDataType();
+          } catch ( IllegalArgumentException e ) {
+            // ignore
+          }
+          if ( dt == ElementDataType.bool ) {
+            serverValue = Integer.toString(DataHelper.boolToInt(cvValues.getAsBoolean(key)));
+          }
+          assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue
+              + " ): " + characterizer,
+              ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt) );
+        }
+      }
+      break;
+    case LOCALLY_IN_CONFLICT:
+      assertEquals(2, baseTable.getNumberOfRows());
+      Row localRow = null;
+      Row serverRow = null;
+      for ( int i = 0 ; i < 2 ; ++i ) {
+        Row r = baseTable.getRowAtIndex(i);
+        assertEquals("syncState not in_conflict: " + characterizer, SyncState.in_conflict.name(),
+            r.getDataByKey(DataTableColumns.SYNC_STATE));
+        String conflictType = r.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        Integer ct = Integer.valueOf(conflictType);
+        if ( ct == ConflictType.LOCAL_DELETED_OLD_VALUES || ct == ConflictType
+            .LOCAL_UPDATED_UPDATED_VALUES ) {
+          localRow = r;
+        }
+        if ( ct == ConflictType.SERVER_DELETED_OLD_VALUES || ct == ConflictType
+            .SERVER_UPDATED_UPDATED_VALUES ) {
+          serverRow = r;
+        }
+      }
+      assertNotNull("did not find local conflict: " + characterizer, localRow);
+      assertNotNull("did not find server conflict: " + characterizer, serverRow);
+
+      // verify serverRow content
+      // content should match server cvValues
+      for ( String key : cvValues.keySet() ) {
+        if ( key.equals(DataTableColumns.SYNC_STATE) ||
+            key.equals(DataTableColumns.CONFLICT_TYPE)) {
+        } else {
+          String localValue = serverRow.getDataByKey(key);
+          String serverValue = cvValues.getAsString(key);
+
+          ElementDataType dt = ElementDataType.string;
+          try {
+            ColumnDefinition cd = oc.find(key);
+            dt = cd.getType().getDataType();
+          } catch ( IllegalArgumentException e ) {
+            // ignore
+          }
+          if ( dt == ElementDataType.bool ) {
+            serverValue = Integer.toString(DataHelper.boolToInt(cvValues.getAsBoolean(key)));
+          }
+          assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue
+                  + " ): " + characterizer,
+              ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt) );
+        }
+      }
+
+      // verify localRow content
+      // content should match original local row
+      for ( String key : cvValues.keySet() ) {
+        if ( key.equals(DataTableColumns.SYNC_STATE) ||
+            key.equals(DataTableColumns.CONFLICT_TYPE)) {
+        } else {
+          String localValue = localRow.getDataByKey(key);
+          String originalValue = original.getRowAtIndex(0).getDataByKey(key);
+
+          ElementDataType dt = ElementDataType.string;
+          try {
+            ColumnDefinition cd = oc.find(key);
+            dt = cd.getType().getDataType();
+          } catch ( IllegalArgumentException e ) {
+            // ignore
+          }
+          assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue
+                  + " ): " + characterizer,
+              ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt) );
+        }
+      }
+
+      break;
+    }
+  }
+
+  protected ArrayList<SyncParamOutcome> buildSyncParamOutcomesList(boolean privilegedUser,
+      SyncState localRowSyncState,
+      boolean isServerRowDeleted,
+      boolean changeServerBoolean, boolean changeServerInteger,
+      boolean changeServerNumber, boolean changeServerString,
+      boolean changeServerRowPath, boolean changeServerFormIdMetadata,
+      boolean changeServerPrivilegedMetadata) {
+
+    ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
+    String[] rowIds = {  rowIdDefaultNull,
+        rowIdDefaultCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
+
+    for ( String rowId : rowIds ) {
+
+      ServerChangeOutcome sco;
+      if ( isServerRowDeleted ) {
+        switch (localRowSyncState) {
+        case deleted:
+        case synced:
+        case synced_pending_files:
+          sco = ServerChangeOutcome.LOCALLY_DELETED;
+          break;
+        case new_row:
+        case changed:
+          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          break;
+        default:
+          throw new IllegalStateException("unhandled sync state");
+        }
+      } else {
+        switch (localRowSyncState) {
+        case deleted:
+          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          break;
+        case synced:
+          if ( !changeServerRowPath ) {
+            sco = ServerChangeOutcome.LOCALLY_SYNCED;
+          } else {
+            sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+          }
+          break;
+        case synced_pending_files:
+          sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+          break;
+        case new_row:
+        case changed:
+          if ( changeServerBoolean || changeServerInteger ||
+               changeServerNumber || changeServerString ||
+               changeServerRowPath ) {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          } else if ( changeServerPrivilegedMetadata && privilegedUser ) {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          } else {
+            // user has no say in metadata -- take server's version for those and resolve
+            if ( changeServerRowPath ) {
+              sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+            } else {
+              sco = ServerChangeOutcome.LOCALLY_SYNCED;
+            }
+          }
+          break;
+        default:
+          throw new IllegalStateException("Unexpected sync state");
+        }
+      }
+      SyncParamOutcome spo = new SyncParamOutcome(rowId, isServerRowDeleted, changeServerBoolean,
+          changeServerInteger, changeServerNumber, changeServerString, changeServerRowPath,
+          changeServerFormIdMetadata, changeServerPrivilegedMetadata, sco);
+      cases.add(spo);
+    }
+    return cases;
+  }
 
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListResolveTakeServer(String tableId) {
 

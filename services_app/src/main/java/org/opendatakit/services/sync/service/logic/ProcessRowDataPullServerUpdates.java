@@ -21,9 +21,11 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
@@ -35,6 +37,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.TableLevelResult;
 
@@ -65,11 +68,11 @@ public class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
   private static final double maxPercentage = 50.0;
   private static final int numberOfPhases = 2;
 
-  private RowDataServerUpdateActions rowProcessor;
+  private ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataPullServerUpdates(SyncExecutionContext sharedContext) {
     super(sharedContext);
-    this.rowProcessor = new RowDataServerUpdateActions(this);
+    this.manifestProcessor = new ProcessManifestContentAndFileChanges(sc);
 
     setUpdateNotificationBounds(minPercentage, maxPercentage, 1);
   }
@@ -211,200 +214,44 @@ public class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             return;
           }
 
-          // OK -- the server is reporting a change (in serverRow) to the
-          // localRow.
-          // if the localRow is already in a in_conflict state, determine
-          // what its
-          // ConflictType is. If the localRow holds the earlier server-side
-          // change,
-          // then skip and look at the next record.
-          int localRowConflictTypeBeforeSync = -1;
-          if (state == SyncState.in_conflict) {
-            // we need to remove the in_conflict records that refer to the
-            // prior state of the server
-            String localRowConflictTypeBeforeSyncStr = localRow
-                .getDataByKey(DataTableColumns.CONFLICT_TYPE);
-            if (localRowConflictTypeBeforeSyncStr == null) {
-              // this row is in conflict. It MUST have a non-null conflict type.
-              tableLevelResult.setMessage(sc.getString(R.string.sync_table_erroneous_conflict_type));
-              tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
-              return;
-            }
+          if (state == SyncState.synced_pending_files && serverRow.isDeleted() ) {
+            manifestProcessor.syncRowLevelFileAttachments(
+                tableResource.getInstanceFilesUri(),
+                tableResource.getTableId(), localRow, fileAttachmentColumns, SyncAttachmentState.UPLOAD);
 
-            localRowConflictTypeBeforeSync = Integer.parseInt(localRowConflictTypeBeforeSyncStr);
-            if (localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES
-                || localRowConflictTypeBeforeSync == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
-              // This localRow holds the server values from a
-              // previously-identified conflict.
-              // Skip it -- we will clean up this copy later once we find
-              // the matching localRow
-              // that holds the locally-changed values that were in conflict
-              // with this earlier
-              // set of server values.
-              continue;
-            }
           }
+
+          ContentValues values = new ContentValues();
+
+          // set up to insert the in_conflict row from the server
+          for (DataKeyValue entry : serverRow.getValues()) {
+            String colName = entry.column;
+            values.put(colName, entry.value);
+          }
+
+          // insert in_conflict server row
+          values.put(DataTableColumns.ID, serverRow.getRowId());
+          values.put(DataTableColumns.ROW_ETAG, serverRow.getRowETag());
+          values.put(DataTableColumns.SYNC_STATE, (serverRow.isDeleted() ?
+              SyncState.deleted.name() : SyncState.changed.name()));
+          values.put(DataTableColumns.FORM_ID, serverRow.getFormId());
+          values.put(DataTableColumns.LOCALE, serverRow.getLocale());
+          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
+          values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+          values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
+          RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
+          values.put(DataTableColumns.FILTER_TYPE,
+              (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
+          values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+          values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+          sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), sc
+              .getDatabase(), tableId, orderedColumns, values, rowId);
 
           // remove this server row from the map of changes reported by the server.
           // the following decision tree will always place the row into one of the
           // local action lists.
           changedServerRows.remove(rowId);
-
-          if (state == SyncState.synced || state == SyncState.synced_pending_files) {
-            // the server's change should be applied locally.
-            //
-            // the file attachments might be stale locally,
-            // but those are dealt with separately.
-
-            if (serverRow.isDeleted()) {
-
-              rowProcessor
-                  .deleteRowInDb(db, tableResource, orderedColumns, fileAttachmentColumns,
-                      localRow, serverRow.getRowETag(), (state == SyncState.synced_pending_files),
-                      tableLevelResult);
-            } else {
-              // When a prior sync ends with conflicts, we will not update the table's "lastDataETag"
-              // and when we next sync, we will pull the same server row updates as when the
-              // conflicts were raised (elsewhere in the table).
-              //
-              // Therefore, we can expect many server row updates to have already been locally
-              // applied (for the rows were not in conflict). Detect and ignore these already-
-              // processed changes by testing for the server and device having identical field values.
-              //
-
-              if (!rowProcessor.identicalValues(orderedColumns, serverElementKeyToIndex, localRow,
-                  serverRow)) {
-                // Only add a local-update if the server and device rows have different values.
-                //
-                rowProcessor.updateRowInDb(db, tableResource,
-                    orderedColumns,
-                    serverElementKeyToIndex,
-                    fileAttachmentColumns,
-                    localRow, serverRow, (state == SyncState.synced_pending_files),
-                    tableLevelResult);
-              }
-            }
-          } else if (serverRow.isDeleted() && (state == SyncState.deleted || (
-              state == SyncState.in_conflict
-                  && localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES))) {
-            // this occurs if
-            // (1) a delete request was never ACKed but it was performed
-            // on the server.
-            // (2) if there is an unresolved conflict held locally with the
-            // local action being to delete the record, and the prior server
-            // state being a value change, but the newly sync'd state now
-            // reflects a deletion by another party.
-            //
-
-            // no need to worry about server in_conflict records.
-            // any server in_conflict rows will be deleted during the delete
-            // step
-
-            rowProcessor
-                .deleteRowInDb(db, tableResource, orderedColumns, fileAttachmentColumns,
-                    localRow, serverRow.getRowETag(),
-                    false /* (state == SyncState.synced_pending_files) */,
-                    tableLevelResult);
-
-          } else {
-            // SyncState.deleted and server is not deleting
-            // SyncState.new_row and record exists on server
-            // SyncState.changed and new change on server
-            // SyncState.in_conflict and new change on server
-
-            // ALSO: this case can occur when our prior sync attempt pulled down changes that
-            // placed local row(s) in conflict -- which we have since resolved -- and we are now
-            // issuing a sync to push those changes up to the server.
-            //
-            // This is because we do not update our local table's "lastDataETag" until we have
-            // sync'd and applied all changes from the server and have no local conflicts or
-            // checkpoints on the table. Because of this, when we issue a sync after resolving
-            // a conflict, we will get the set of server row changes that include the row(s)
-            // that were previously in conflict. This will appear as one of:
-            //    changed | changed
-            //    changed | deleted
-            //    deleted | changed
-            //    deleted | deleted
-            //
-            // BUT, this time, however, the local records will have the same rowETag as the
-            // server record, indicating that they are valid changes (or deletions) on top of
-            // the server's current version of this same row.
-            //
-            // If this is the case (the rowETags match), then we should not place the row into
-            // conflict, but should instead ignore the reported content from the server and push
-            // the local row's change or delete up to the server in the next section.
-            //
-            // If not, when we reach this point in the code, the rowETag of the server row
-            // should **not match** our local row -- indicating that the server has a change from
-            // another source, and that we should place the row into conflict.
-            //
-            String localRowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
-            if (localRowETag != null && localRowETag.equals(serverRow.getRowETag())) {
-              // ignore the server record. This is an update we will push to the server.
-              continue;
-            }
-
-            // no need to worry about server in_conflict records.
-            // any server in_conflict rows will be cleaned up during the
-            // update of the in_conflict state.
-
-            // figure out what the localRow conflict type should be...
-            int localRowConflictType;
-            if (state == SyncState.changed) {
-              // SyncState.changed and new change on server
-              localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
-              getLogger().i(TAG, "local row was in sync state CHANGED, changing to "
-                  + "IN_CONFLICT and setting conflict type to: " + localRowConflictType);
-            } else if (state == SyncState.new_row) {
-              // SyncState.new_row and record exists on server
-              // The 'new_row' case occurs if an insert is never ACKed but
-              // completes successfully on the server.
-              localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
-              getLogger().i(TAG, "local row was in sync state NEW_ROW, changing to "
-                  + "IN_CONFLICT and setting conflict type to: " + localRowConflictType);
-            } else if (state == SyncState.deleted) {
-              // SyncState.deleted and server is not deleting
-              localRowConflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;
-              getLogger().i(TAG, "local row was in sync state DELETED, changing to "
-                  + "IN_CONFLICT and updating conflict type to: " + localRowConflictType);
-            } else if (state == SyncState.in_conflict) {
-              // SyncState.in_conflict and new change on server
-              // leave the local conflict type unchanged (retrieve it and
-              // use it).
-              localRowConflictType = localRowConflictTypeBeforeSync;
-              getLogger().i(TAG, "local row was in sync state IN_CONFLICT, leaving as "
-                  + "IN_CONFLICT and leaving conflict type unchanged as: "
-                  + localRowConflictTypeBeforeSync);
-            } else {
-              throw new IllegalStateException("Unexpected state encountered");
-            }
-
-            if (!rowProcessor.identicalValues(orderedColumns, serverElementKeyToIndex, localRow, serverRow)) {
-              if (rowProcessor.identicalValuesExceptRowETagAndFilterScope(orderedColumns,
-                  serverElementKeyToIndex, localRow, serverRow)) {
-                // just apply the server RowETag and filterScope to the
-                // local row
-                rowProcessor
-                    .updateRowInDb(db, tableResource,
-                        orderedColumns,
-                        serverElementKeyToIndex,
-                        fileAttachmentColumns,
-                        localRow, serverRow,
-                        true /* (state == SyncState.synced_pending_files) */,
-                        tableLevelResult);
-
-              } else {
-                rowProcessor
-                    .conflictRowInDb(db, tableResource,
-                        orderedColumns,
-                        serverRow,
-                        localRowConflictType,
-                        tableLevelResult);
-              }
-            } else {
-              getLogger().w(TAG, "identical rows returned from server -- SHOULDN'T THESE NOT HAPPEN?");
-            }
-          }
         }
 
         // Now, go through the remaining serverRows in the rows map. That
@@ -414,12 +261,48 @@ public class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
         for (RowResource serverRow : changedServerRows.values()) {
           boolean isDeleted = serverRow.isDeleted();
           if (!isDeleted) {
-            rowProcessor.insertRowInDb(db, tableResource,
-                orderedColumns,
-                serverElementKeyToIndex,
-                fileAttachmentColumns,
-                serverRow,
-                tableLevelResult);
+
+            boolean hasNonNullAttachments = false;
+
+            for ( ColumnDefinition cd : fileAttachmentColumns ) {
+              Integer idx = serverElementKeyToIndex.get(cd.getElementKey());
+              if ( idx != null ) {
+                String uriFragment = serverRow.getValues().get(idx).value;
+                if ( uriFragment != null ) {
+                  hasNonNullAttachments = true;
+                  break;
+                }
+              }
+            }
+
+            ContentValues values = new ContentValues();
+
+            for (DataKeyValue entry : serverRow.getValues()) {
+              String colName = entry.column;
+              values.put(colName, entry.value);
+            }
+
+            // set all the metadata fields
+            values.put(DataTableColumns.ID, serverRow.getRowId());
+            values.put(DataTableColumns.ROW_ETAG, serverRow.getRowETag());
+            values.put(DataTableColumns.SYNC_STATE, hasNonNullAttachments
+                ? SyncState.synced_pending_files.name() : SyncState.synced.name());
+            values.put(DataTableColumns.FORM_ID, serverRow.getFormId());
+            values.put(DataTableColumns.LOCALE, serverRow.getLocale());
+            values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
+            values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+            values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
+            RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
+            values.put(DataTableColumns.FILTER_TYPE,
+                (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
+            values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+            values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+            sc.getDatabaseService().privilegedInsertRowWithId(sc.getAppName(), db,
+                tableId, orderedColumns, values, serverRow.getRowId(), false);
+            tableLevelResult.incLocalInserts();
+
+            publishUpdateNotification(R.string.sync_inserting_local_row, tableId);
           }
         }
 

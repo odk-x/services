@@ -1289,6 +1289,57 @@ public class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
   }
 
+  /**
+   * SYNC Only. ADMIN Privileges!
+   *
+   * @param appName
+   * @param dbHandleName
+   * @param tableId
+   * @param orderedColumns
+   * @param cvValues  server's field values for this row
+   * @param rowId
+   *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
+   * @return
+   * @throws RemoteException
+   */
+  @Override public DbChunk privilegedPerhapsPlaceRowIntoConflictWithId(String appName, DbHandle
+      dbHandleName,
+      String tableId, OrderedColumns orderedColumns, ContentValues cvValues,
+      String rowId) throws RemoteException {
+
+    OdkConnectionInterface db = null;
+
+    String activeUser = getActiveUser(appName);
+    String rolesList = getRolesList(appName);
+    String locale = getLocale(appName);
+
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      db.beginTransactionExclusive();
+
+      ODKDatabaseImplUtils.get()
+          .privilegedPerhapsPlaceRowIntoConflictWithId(db, tableId, orderedColumns, cvValues, rowId,
+              activeUser, rolesList, locale);
+      BaseTable t = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, tableId,
+          rowId, activeUser);
+      db.setTransactionSuccessful();
+      return getAndCacheChunks(t);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "privilegedPerhapsPlaceRowIntoConflictWithId", e);
+    } finally {
+      if (db != null) {
+        db.endTransaction();
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+
+  }
+
   @Override public DbChunk simpleQuery(String appName, DbHandle dbHandleName,
       String sqlCommand, BindArgs sqlBindArgs, QueryBounds sqlQueryBounds, String tableId) throws
       RemoteException {

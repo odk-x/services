@@ -46,6 +46,7 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.utilities.ChoiceListUtils;
 import org.opendatakit.services.utilities.SyncETagsUtils;
+import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
@@ -1135,14 +1136,9 @@ public class ODKDatabaseImplUtils {
       return table;
     }
 
-    int cellIndex = -1;
-    for (int i = 0; i < table.getWidth(); i++) {
-      if (table.getElementKey(i).equals(DataTableColumns.CONFLICT_TYPE)) {
-        cellIndex = i;
-      }
-    }
+    Integer cellIndex = table.getColumnIndexOfElementKey(DataTableColumns.CONFLICT_TYPE);
 
-    if (cellIndex < 0) {
+    if (cellIndex == null) {
       throw new IllegalStateException("Missing CONFLICT_TYPE column");
     }
 
@@ -2696,6 +2692,484 @@ public class ODKDatabaseImplUtils {
       this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
       this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues,
           rowId, activeUser, locale, false);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  public boolean identicalValue(String localValue, String serverValue, ElementDataType dt) {
+
+    if (localValue == null && serverValue == null) {
+      return true;
+    } else if (localValue == null || serverValue == null) {
+      return false;
+    } else if (localValue.equals(serverValue)) {
+      return true;
+    }
+
+    // NOT textually identical.
+    //
+    // Everything must be textually identical except possibly number fields
+    // which may have rounding due to different database implementations,
+    // data representations, and marshaling libraries.
+    //
+    if (dt == ElementDataType.number) {
+      // !!Important!! Double.valueOf(str) handles NaN and +/-Infinity
+      Double localNumber = Double.valueOf(localValue);
+      Double serverNumber = Double.valueOf(serverValue);
+
+      if (localNumber.equals(serverNumber)) {
+        // simple case -- trailing zeros or string representation mix-up
+        //
+        return true;
+      } else if (localNumber.isInfinite() && serverNumber.isInfinite()) {
+        // if they are both plus or both minus infinity, we have a match
+        if (Math.signum(localNumber) == Math.signum(serverNumber)) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (localNumber.isNaN() || localNumber.isInfinite() || serverNumber.isNaN()
+          || serverNumber.isInfinite()) {
+        // one or the other is special1
+        return false;
+      } else {
+        double localDbl = localNumber;
+        double serverDbl = serverNumber;
+        if (localDbl == serverDbl) {
+          return true;
+        }
+        // OK. We have two values like 9.80 and 9.8
+        // consider them equal if they are adjacent to each other.
+        double localNear = localDbl;
+        int idist = 0;
+        int idistMax = 128;
+        for (idist = 0; idist < idistMax; ++idist) {
+          localNear = Math.nextAfter(localNear, serverDbl);
+          if (localNear == serverDbl) {
+            break;
+          }
+        }
+        if (idist < idistMax) {
+          return true;
+        }
+        return false;
+      }
+    } else {
+      // textual identity is required!
+      return false;
+    }
+  }
+
+  /**
+   * Delete any prior server conflict row.
+   * Examine database and incoming server values to determine how to apply the
+   * server values to the database. This might delete the existing row, update
+   * it, or create a conflict row.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param serverValues  field values for this row coming from server.
+   *                      All fields must have values. The SyncState field
+   *                      (a local field that does not come from the server)
+   *                      should be "changed" or "deleted"
+   * @param rowId
+   * @param activeUser
+   * @param rolesList  passed in to determine if the current user is a privileged user
+   * @param locale
+   */
+  public void privilegedPerhapsPlaceRowIntoConflictWithId(OdkConnectionInterface db,
+      String tableId, OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
+      String activeUser, String rolesList, String locale) {
+
+    AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
+
+    // The rolesList of the activeUser does not impact the execution of this action.
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      // delete any existing server conflict row
+      this.deleteServerConflictRowWithId(db, tableId, rowId);
+      // fetch the current local (possibly-in-conflict) row
+      BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, activeUser);
+      if ( baseTable.getNumberOfRows() == 0 ) {
+        throw new IllegalArgumentException("no matching row found for server conflict");
+      } else if ( baseTable.getNumberOfRows() != 1 ) {
+        throw new IllegalArgumentException("row has checkpoints or database is corrupt");
+      }
+
+      Row localRow = baseTable.getRowAtIndex(0);
+
+      if ( localRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE) == null ) {
+        throw new IllegalArgumentException("row has checkpoints");
+      }
+
+      String strSyncState = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
+      SyncState state = SyncState.valueOf(strSyncState);
+
+      int localRowConflictTypeBeforeSync = -1;
+      if (state == SyncState.in_conflict) {
+        // we need to remove the in_conflict records that refer to the
+        // prior state of the server
+        String localRowConflictTypeBeforeSyncStr = localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        if (localRowConflictTypeBeforeSyncStr == null) {
+          // this row is in conflict. It MUST have a non-null conflict type.
+          throw new IllegalStateException("conflict type is null on an in-conflict row");
+        }
+
+        localRowConflictTypeBeforeSync = Integer.parseInt(localRowConflictTypeBeforeSyncStr);
+        if (localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES
+            || localRowConflictTypeBeforeSync == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+          // should be impossible
+          throw new IllegalStateException("only the local conflict record should remain");
+        }
+      }
+
+      boolean isServerRowDeleted =
+          serverValues.getAsString(DataTableColumns.SYNC_STATE).equals(SyncState.deleted.name());
+
+      boolean executeDropThrough = false;
+
+      if ( isServerRowDeleted ) {
+        if ( state == SyncState.synced ) {
+          // the server's change should be applied locally.
+          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+        } else if ( state == SyncState.synced_pending_files ) {
+          // sync logic may want to UPLOAD local files up to server before calling this routine.
+          // this would prevent loss of attachments that have not yet been pushed to server.
+
+          // the server's change should be applied locally.
+          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+        } else if ( (state == SyncState.deleted)  || ((state == SyncState.in_conflict)
+            && (localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES))) {
+          // this occurs if
+          // (1) a delete request was never ACKed but it was performed
+          // on the server.
+          // (2) if there is an unresolved conflict held locally with the
+          // local action being to delete the record, and the prior server
+          // state being a value change, but the newly sync'd state now
+          // reflects a deletion by another party.
+          //
+          // the server's change should be applied locally.
+          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+        } else {
+          // need to resolve a conflict situation...
+          executeDropThrough = true;
+        }
+      } else if ( state == SyncState.synced || state == SyncState.synced_pending_files ) {
+        // When a prior sync ends with conflicts, we will not update the table's "lastDataETag"
+        // and when we next sync, we will pull the same server row updates as when the
+        // conflicts were raised (elsewhere in the table).
+        //
+        // Therefore, we can expect many server row updates to have already been locally
+        // applied (for the rows were not in conflict). Detect and ignore these already-
+        // processed changes by testing for the server and device having identical field values.
+        //
+
+        boolean isDifferent = false;
+        for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+          String colName = baseTable.getElementKey(i);
+          if ( DataTableColumns.ID.equals(colName) ||
+              DataTableColumns.CONFLICT_TYPE.equals(colName) ||
+              DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ||
+              DataTableColumns.SYNC_STATE.equals(colName) ) {
+            // these values are ignored during comparisons
+            continue;
+          }
+          String localValue = localRow.getDataByKey(colName);
+          String serverValue = serverValues.containsKey(colName) ?
+              serverValues.getAsString(colName) : null;
+
+          ElementDataType dt = ElementDataType.string;
+          try {
+            ColumnDefinition cd = orderedColumns.find(colName);
+            dt = cd.getType().getDataType();
+          } catch ( IllegalArgumentException e ) {
+            // ignore
+          }
+          if ( !identicalValue(localValue, serverValue, dt) ) {
+            isDifferent = true;
+            break;
+          }
+        }
+
+        if ( isDifferent ) {
+          // Local row needs to be updated with server values.
+          //
+          // detect and handle file attachment column changes and sync state
+          // (need to change serverRow value of this)
+          boolean hasNonNullAttachments = false;
+
+          for ( ColumnDefinition cd : orderedColumns.getColumnDefinitions() ) {
+            // todo: does not handle array containing (types containing) rowpath elements
+            if ( cd.isUnitOfRetention() &&
+                cd.getType().getDataType().equals(ElementDataType.rowpath)) {
+              String uriFragment = serverValues.getAsString(cd.getElementKey());
+              String localUriFragment = localRow.getDataByKey(cd.getElementKey());
+              if (uriFragment != null ) {
+                if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
+                  hasNonNullAttachments = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          // update the row from the changes on the server
+          ContentValues values = new ContentValues(serverValues);
+
+          values.put(DataTableColumns.SYNC_STATE, (hasNonNullAttachments ||
+              (state == SyncState.synced_pending_files))
+              ? SyncState.synced_pending_files.name() : SyncState.synced.name());
+          values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+          this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
+              locale, false);
+        }
+
+        // and don't execute the drop-through in this case.
+      } else {
+        executeDropThrough = true;
+      }
+
+      if ( executeDropThrough ) {
+        // SyncState.deleted and server is not deleting
+        // SyncState.new_row and record exists on server
+        // SyncState.changed and new change (or delete) on server
+        // SyncState.in_conflict and new change (or delete) on server
+
+        // ALSO: this case can occur when our prior sync attempt pulled down changes that
+        // placed local row(s) in conflict -- which we have since resolved -- and we are now
+        // issuing a sync to push those changes up to the server.
+        //
+        // This is because we do not update our local table's "lastDataETag" until we have
+        // sync'd and applied all changes from the server and have no local conflicts or
+        // checkpoints on the table. Because of this, when we issue a sync after resolving
+        // a conflict, we will get the set of server row changes that include the row(s)
+        // that were previously in conflict. This will appear as one of:
+        //    changed | changed
+        //    changed | deleted
+        //    deleted | changed
+        //    deleted | deleted
+        //
+        // BUT, this time, however, the local records will have the same rowETag as the
+        // server record, indicating that they are valid changes (or deletions) on top of
+        // the server's current version of this same row.
+        //
+        // If this is the case (the rowETags match), then we should not place the row into
+        // conflict, but should instead ignore the reported content from the server and push
+        // the local row's change or delete up to the server in the next section.
+        //
+        // If not, when we reach this point in the code, the rowETag of the server row
+        // should **not match** our local row -- indicating that the server has a change from
+        // another source, and that we should place the row into conflict.
+        //
+        String localRowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
+        String serverRowETag = serverValues.getAsString(DataTableColumns.ROW_ETAG);
+        boolean isDifferentRowETag = (localRowETag == null) || !localRowETag.equals(serverRowETag);
+        if (!isDifferentRowETag) {
+          // ignore the server record.
+          // This is an update we will push to the server.
+          // todo: make sure local row is not in_conflict at this point.
+          if ( state == SyncState.in_conflict ) {
+            // don't think this is logically possible at this point, but we should
+            // transition record to changed or deleted state.
+            ContentValues values = new ContentValues();
+            for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+              String colName = baseTable.getElementKey(i);
+              if ( DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ) {
+                continue;
+              }
+              if ( localRow.getDataByIndex(i) == null ) {
+                values.putNull(colName);
+              } else {
+                values.put(colName, localRow.getDataByIndex(i));
+              }
+            }
+            values.put(DataTableColumns.ID, rowId);
+            values.putNull(DataTableColumns.CONFLICT_TYPE);
+            values.put(DataTableColumns.SYNC_STATE,
+                (localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
+                  SyncState.deleted.name() : SyncState.changed.name());
+
+            this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
+                activeUser, locale, false);
+          }
+        } else {
+          // figure out what the localRow conflict type should be...
+          int localRowConflictType;
+          if (state == SyncState.changed) {
+            // SyncState.changed and new change on server
+            localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
+          } else if (state == SyncState.new_row) {
+            // SyncState.new_row and record exists on server
+            // The 'new_row' case occurs if an insert is never ACKed but
+            // completes successfully on the server.
+            localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
+          } else if (state == SyncState.deleted) {
+            // SyncState.deleted and server is not deleting
+            localRowConflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;
+          } else if (state == SyncState.in_conflict) {
+            // SyncState.in_conflict and new change on server
+            // leave the local conflict type unchanged (retrieve it and
+            // use it).
+            localRowConflictType = localRowConflictTypeBeforeSync;
+          } else {
+            throw new IllegalStateException("Unexpected state encountered");
+          }
+
+          boolean isDifferentPrivilegedFields = false;
+          {
+            String[] privilegedColumns = new String[] {
+                DataTableColumns.FILTER_TYPE,
+                DataTableColumns.FILTER_VALUE };
+            for ( int i = 0 ; i < privilegedColumns.length ; ++i ) {
+              String colName = privilegedColumns[i];
+              String localValue = localRow.getDataByKey(colName);
+              String serverValue = serverValues.containsKey(colName) ?
+                  serverValues.getAsString(colName) : null;
+
+              ElementDataType dt = ElementDataType.string;
+              try {
+                ColumnDefinition cd = orderedColumns.find(colName);
+                dt = cd.getType().getDataType();
+              } catch ( IllegalArgumentException e ) {
+                // ignore
+              }
+
+              boolean sameValue = identicalValue(localValue, serverValue, dt);
+
+              if (!sameValue) {
+                isDifferentPrivilegedFields = true;
+                break;
+              }
+            }
+          }
+          boolean isDifferentExcludingPrivilegedFields = false;
+          for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+            String colName = baseTable.getElementKey(i);
+            if ( DataTableColumns.ID.equals(colName) ||
+                DataTableColumns.CONFLICT_TYPE.equals(colName) ||
+                DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ||
+                DataTableColumns.SYNC_STATE.equals(colName) ||
+                DataTableColumns.ROW_ETAG.equals(colName) ||
+                DataTableColumns.FILTER_TYPE.equals(colName) ||
+                DataTableColumns.FILTER_VALUE.equals(colName) ) {
+              // these values are ignored during this comparison
+              continue;
+            }
+            String localValue = localRow.getDataByKey(colName);
+            String serverValue = serverValues.containsKey(colName) ?
+                serverValues.getAsString(colName) : null;
+
+            ElementDataType dt = ElementDataType.string;
+            try {
+              ColumnDefinition cd = orderedColumns.find(colName);
+              dt = cd.getType().getDataType();
+            } catch ( IllegalArgumentException e ) {
+              // ignore
+            }
+
+            if ( serverValue != null && dt == ElementDataType.bool ) {
+              serverValue = Integer.toString(DataHelper.boolToInt(serverValues.getAsBoolean(colName)));
+            }
+            boolean sameValue = identicalValue(localValue, serverValue, dt);
+
+            if ( !sameValue ) {
+              isDifferentExcludingPrivilegedFields = true;
+              break;
+            }
+          }
+
+          boolean hasNonNullDifferingServerAttachments = false;
+
+          if ( isDifferentExcludingPrivilegedFields || (state != SyncState.synced) ) {
+            for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
+              // todo: does not handle array containing (types containing) rowpath elements
+              if (cd.isUnitOfRetention() && cd.getType().getDataType().equals(ElementDataType.rowpath)) {
+                String uriFragment = serverValues.getAsString(cd.getElementKey());
+                String localUriFragment = localRow.getDataByKey(cd.getElementKey());
+                if (uriFragment != null ) {
+                  if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
+                    hasNonNullDifferingServerAttachments = true;
+                  }
+                }
+              }
+            }
+          }
+
+          ContentValues values = new ContentValues(serverValues);
+
+          if ( isDifferentExcludingPrivilegedFields || isDifferentPrivilegedFields ||
+              isDifferentRowETag || isServerRowDeleted ) {
+
+            if ( isDifferentExcludingPrivilegedFields || isServerRowDeleted ||
+                 (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ||
+                 (accessContext.isPrivilegedUser && isDifferentPrivilegedFields) ) {
+
+              this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
+              serverValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+              serverValues.put(DataTableColumns.CONFLICT_TYPE,
+                  (isServerRowDeleted ?
+                    ConflictType.SERVER_DELETED_OLD_VALUES :
+                    ConflictType.SERVER_UPDATED_UPDATED_VALUES ));
+              this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues,
+                  rowId, activeUser, locale, false);
+            } else {
+              // just apply the server RowETag and filterScope to the local row
+              values.put(DataTableColumns.SYNC_STATE, hasNonNullDifferingServerAttachments
+                  ? SyncState.synced_pending_files.name() : SyncState.synced.name());
+              values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+              // move the local conflict back into the normal non-conflict (null) state
+              // set the sync state to "changed" temporarily (otherwise we can't update)
+
+              this.restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
+                  localRowConflictTypeBeforeSync);
+
+              this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
+                  locale, false);
+            }
+          } else {
+            // data matches -- update row to adjust sync state and conflict type
+            // if needed.
+            SyncState destState = (hasNonNullDifferingServerAttachments ||
+                (state == SyncState.synced_pending_files))
+                ? SyncState.synced_pending_files : SyncState.synced;
+
+            if ((state != destState) || isDifferentRowETag ||
+                (localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE) != null) ) {
+              // todo: handle case where local row was in conflict
+              // server has now matched the local row's state. i.e.,
+              // update rowEtag, clear conflictType and adjust syncState on row.
+              values.put(DataTableColumns.SYNC_STATE, destState.name());
+              values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+              // move the local conflict back into the normal non-conflict (null) state
+              // set the sync state to "changed" temporarily (otherwise we can't update)
+
+              this.restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
+                  localRowConflictTypeBeforeSync);
+
+              this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
+                  locale, false);
+
+              WebLogger.getLogger(db.getAppName()).w(t, "identical rows returned from server -- " + "SHOULDN'T THESE NOT HAPPEN?");
+            }
+          }
+        }
+      }
+
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();

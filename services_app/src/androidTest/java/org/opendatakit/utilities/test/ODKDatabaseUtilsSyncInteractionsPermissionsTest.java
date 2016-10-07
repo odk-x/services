@@ -14,262 +14,211 @@
 
 package org.opendatakit.utilities.test;
 
-import android.content.ContentValues;
-import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ActionNotAuthorizedException;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
 /**
- * Permissions tests in the database.
+ * Verifies the privilegedPerhapsPlaceRowIntoConflictWithId API in the database.
  *
- * These are specific to the functionality that can occur during sync and conflict resolution
- *
+ * @author mitchellsundt@gmail.com
  */
 public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsSyncInteractionsPermissionsTest";
 
-  public void base_Type_ResolveLocalRow_Table( boolean isLocked, boolean canAnonCreate,
-      RowFilterScope.Type type) throws ActionNotAuthorizedException {
-
-    String tableId;
-    if ( isLocked ) {
-      if ( canAnonCreate ) {
-        tableId = testTableLockedYesAnonCreate;
-      } else {
-        tableId = testTableLockedNoAnonCreate;
-      }
-    } else {
-      if ( canAnonCreate ) {
-        tableId = testTableUnlockedYesAnonCreate;
-      } else {
-        tableId = testTableUnlockedNoAnonCreate;
-      }
-    }
-
-    OrderedColumns oc = assertConflictPopulatedTestTable(tableId,
-        isLocked, canAnonCreate, type.name());
-
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListResolveTakeLocal(tableId, isLocked);
-
-    for ( AuthParamAndOutcome ap : cases ) {
-      try {
-        // expect one row in synced state
-        verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType.IN_CONFLICT,
-            ap.toString());
-
-        // should always succeed
-        ODKDatabaseImplUtils.get()
-            .resolveServerConflictTakeLocalRowWithId(db, ap.tableId, ap.rowId, ap.username, ap.roles, currentLocale);
-        assertFalse("Expecting to throw an error: " + ap.toString(), ap.throwsAccessException);
-
-        if (ap.rowId.contains("" + ConflictType.LOCAL_DELETED_OLD_VALUES)) {
-          assertTrue("Expected no rows to remain: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 1,
-                  FirstSavepointTimestampType.DELETED, ap.toString()));
-        } else {
-          assertTrue("Expected row to be marked as changed: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 1,
-                  FirstSavepointTimestampType.CHANGED, ap.toString()));
-        }
-
-      } catch (ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ex.toString() +" for " + ap.toString(),
-            ap.throwsAccessException);
-      } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
-      }
-    }
-  }
-
-  public void base_Type_ResolveLocalRowWithServerChanges_Table( boolean isLocked, boolean
-      canAnonCreate,
-      RowFilterScope.Type type) throws ActionNotAuthorizedException {
-
-    String tableId;
-    if ( isLocked ) {
-      if ( canAnonCreate ) {
-        tableId = testTableLockedYesAnonCreate;
-      } else {
-        tableId = testTableLockedNoAnonCreate;
-      }
-    } else {
-      if ( canAnonCreate ) {
-        tableId = testTableUnlockedYesAnonCreate;
-      } else {
-        tableId = testTableUnlockedNoAnonCreate;
-      }
-    }
-
-    OrderedColumns oc = assertConflictPopulatedTestTable(tableId,
-        isLocked, canAnonCreate, type.name());
-
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListResolveTakeLocal(tableId, isLocked);
-
-    for ( AuthParamAndOutcome ap : cases ) {
-      try {
-        if (ap.rowId.contains("" + ConflictType.LOCAL_DELETED_OLD_VALUES ) ) {
-          // if we are deleting locally, blending makes no sense.
-          continue;
-        }
-
-        // expect one row in synced state
-        verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-                .IN_CONFLICT,
-            ap.toString());
-
-        ContentValues cvValues = new ContentValues();
-        cvValues.put("col3", 3.3); // number;
-
-        // should always succeed
-        ODKDatabaseImplUtils.get()
-            .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, ap.tableId, cvValues,
-                ap.rowId,
-                ap.username, ap.roles, currentLocale);
-        assertFalse("Expecting to throw an error: " + ap.toString(), ap.throwsAccessException);
-
-        if ( ap.rowId.contains("" + ConflictType.LOCAL_DELETED_OLD_VALUES) ) {
-          assertTrue("Expected no rows to remain: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 1,
-                  FirstSavepointTimestampType.DELETED,
-                  ap.toString()));
-        } else {
-          assertTrue("Expected row to be marked as changed: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 1,
-                  FirstSavepointTimestampType.CHANGED,
-                  ap.toString()));
-        }
-
-      } catch (ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ex.toString() +" for " + ap.toString(),
-            ap.throwsAccessException);
-      } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
-      }
-    }
-  }
-
-  public void base_Type_ResolveServerRow_Table( boolean isLocked, boolean canAnonCreate,
-      RowFilterScope.Type type) throws ActionNotAuthorizedException {
-
-    String tableId;
-    if ( isLocked ) {
-      if ( canAnonCreate ) {
-        tableId = testTableLockedYesAnonCreate;
-      } else {
-        tableId = testTableLockedNoAnonCreate;
-      }
-    } else {
-      if ( canAnonCreate ) {
-        tableId = testTableUnlockedYesAnonCreate;
-      } else {
-        tableId = testTableUnlockedNoAnonCreate;
-      }
-    }
-
-    OrderedColumns oc = assertConflictPopulatedTestTable(tableId,
-        isLocked, canAnonCreate, type.name());
-
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListResolveTakeServer(tableId);
-
-    for ( AuthParamAndOutcome ap : cases ) {
-      try {
-        // expect one row in synced state
-        verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-                .IN_CONFLICT,
-            ap.toString());
-
-        // should always succeed
-        ODKDatabaseImplUtils.get()
-            .resolveServerConflictTakeServerRowWithId(db, ap.tableId, ap.rowId, ap.username, ap.roles);
-        assertFalse("Expecting to throw an error: " + ap.toString(), ap.throwsAccessException);
-
-        if ( ap.rowId.contains("" + ConflictType.SERVER_DELETED_OLD_VALUES) ) {
-          assertTrue("Expected no rows to remain: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 0, FirstSavepointTimestampType.NEW_ROW,
-                  ap.toString()));
-        } else {
-          assertTrue("Expected row to be marked as deleted: " + ap.toString(),
-              verifyRowSyncStateAndCheckpoints(ap.tableId, ap.rowId, 1,
-                  FirstSavepointTimestampType.SYNCED_PENDING_FILES,
-                  ap.toString()));
-        }
-
-      } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
-      }
-    }
-  }
-
-  public void testResolveLocalRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
-
-    base_Type_ResolveLocalRow_Table(false, false, RowFilterScope.Type.DEFAULT);
-  }
-
-  public void testResolveLocalRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
-
-    base_Type_ResolveLocalRow_Table(false, true, RowFilterScope.Type.DEFAULT);
-  }
-
-  public void testResolveLocalRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
-
-    base_Type_ResolveLocalRow_Table(true, false, RowFilterScope.Type.DEFAULT);
-  }
-
-  public void testResolveLocalRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
-
-    base_Type_ResolveLocalRow_Table(true, true, RowFilterScope.Type.DEFAULT);
-  }
-
-  ///////////////////
-
-  public void testResolveLocalRowWithServerChangesUnlockedNoAnonCreate() throws
+  public void base_Type_PerhapsPlaceRowIntoConflict_Table( boolean isLocked, boolean canAnonCreate,
+      RowFilterScope.Type type, SyncState localRowSyncState, boolean asPrivilegedUser) throws
       ActionNotAuthorizedException {
 
-    base_Type_ResolveLocalRowWithServerChanges_Table(false, false, RowFilterScope.Type.DEFAULT);
+    String tableId;
+    if ( isLocked ) {
+      if ( canAnonCreate ) {
+        tableId = testTableLockedYesAnonCreate;
+      } else {
+        tableId = testTableLockedNoAnonCreate;
+      }
+    } else {
+      if ( canAnonCreate ) {
+        tableId = testTableUnlockedYesAnonCreate;
+      } else {
+        tableId = testTableUnlockedNoAnonCreate;
+      }
+    }
+
+    Boolean[] options = new Boolean[]{ false, false, false, false, false, false, false, false};
+
+    ArrayList<Integer> testVector = new ArrayList<Integer>();
+    int maskChangesInt = (1 << (options.length-1)) -1;
+    int maskDeleted = 1 << (options.length-1);
+    testVector.add(0);
+    testVector.add(0 | maskDeleted);
+    testVector.add(maskChangesInt);
+    testVector.add(maskChangesInt | maskDeleted);
+    for ( int i = 0 ; i < options.length-1 ; ++i ) {
+      testVector.add(1 << i);
+      testVector.add((1 << i) | maskDeleted);
+      testVector.add(maskChangesInt ^ (1 << i));
+      testVector.add((maskChangesInt ^ (1 << i)) | maskDeleted);
+    }
+
+    for ( Integer i : testVector ) {
+      for ( int pos = 0 ; pos < options.length ; ++pos ) {
+        options[pos] = (i & (1 << pos)) != 0;
+      }
+
+      // add local content
+      OrderedColumns oc = assertPopulatedSyncStateTestTable(tableId,
+          isLocked, canAnonCreate, type.name(), localRowSyncState);
+
+      // loop over rowId :
+      ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList
+          (asPrivilegedUser, localRowSyncState,
+              options[7], options[0], options[1], options[2], options[3], options[4], options[5],
+              options[6] );
+
+      for ( SyncParamOutcome spo : spoList ) {
+        verifySyncOutcome(tableId, oc, asPrivilegedUser, spo);
+      }
+    }
   }
 
-  public void testResolveLocalRowWithServerChangesUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_new_row() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveLocalRowWithServerChanges_Table(false, true, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.new_row,
+        true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.new_row,
+        false);
   }
 
-  public void testResolveLocalRowWithServerChangesLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_changed() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveLocalRowWithServerChanges_Table(true, false, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.changed, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.changed, false);
   }
 
-  public void testResolveLocalRowWithServerChangesLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_deleted() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveLocalRowWithServerChanges_Table(true, true, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.deleted, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.deleted, false);
   }
 
-  ///////////////////
+  public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced() throws
+      ActionNotAuthorizedException {
 
-  public void testResolveServerRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
-
-    base_Type_ResolveServerRow_Table(false, false, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.synced, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.synced, false);
   }
 
-  public void testResolveServerRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced_pending_files() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveServerRow_Table(false, true, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, false, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, false);
   }
 
-  public void testResolveServerRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_new_row() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveServerRow_Table(true, false, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.new_row, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.new_row, false);
   }
 
-  public void testResolveServerRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_changed() throws
+      ActionNotAuthorizedException {
 
-    base_Type_ResolveServerRow_Table(true, true, RowFilterScope.Type.DEFAULT);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.changed, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.changed, false);
   }
+
+  public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_deleted() throws
+      ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.deleted, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.deleted, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced() throws
+      ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.synced, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.synced, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced_pending_files() throws
+      ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(false, true, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_new_row() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.new_row, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.new_row, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_changed() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.changed, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.changed, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_deleted() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.deleted, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.deleted, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.synced, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.synced, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced_pending_files() throws
+      ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, false, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_new_row() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.new_row, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.new_row, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_changed() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.changed, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.changed, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_deleted() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.deleted, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.deleted, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced() throws ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.synced, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.synced, false);
+  }
+
+  public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced_pending_files() throws
+      ActionNotAuthorizedException {
+
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState
+        .synced_pending_files, true);
+    base_Type_PerhapsPlaceRowIntoConflict_Table(true, true, RowFilterScope.Type.DEFAULT, SyncState.synced_pending_files, false);
+  }
+
 }

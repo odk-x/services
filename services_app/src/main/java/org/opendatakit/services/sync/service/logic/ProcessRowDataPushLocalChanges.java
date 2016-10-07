@@ -15,10 +15,13 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
+import android.content.ContentValues;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcome.OutcomeType;
 import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
@@ -36,6 +39,7 @@ import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.TableLevelResult;
 
@@ -59,11 +63,8 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
   private static final int UPSERT_BATCH_SIZE = 500;
 
-  private RowDataServerUpdateActions rowProcessor;
-
   ProcessRowDataPushLocalChanges(SyncExecutionContext sharedContext) {
     super(sharedContext);
-    this.rowProcessor = new RowDataServerUpdateActions(this);
 
     setUpdateNotificationBounds(minPercentage, maxPercentage, 1);
   }
@@ -105,21 +106,24 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
       boolean specialCase = false;
       boolean badState = false;
       for (int i = 0; i < segmentAlter.size(); ++i) {
-        RowOutcome r = outcomes.get(i);
+        RowOutcome serverRow = outcomes.get(i);
         Row localRow = segmentAlter.get(i);
         String localRowId = localRow.getDataByKey(DataTableColumns.ID);
-        if (!r.getRowId().equals(localRowId)) {
+        if (!serverRow.getRowId().equals(localRowId)) {
           throw new ClientDetectedVersionMismatchedServerResponseException("Unexpected reordering of return");
         }
-        if (r.getOutcome() == OutcomeType.SUCCESS) {
+        if (serverRow.getOutcome() == OutcomeType.SUCCESS) {
 
-          if (r.isDeleted()) {
+          if (serverRow.isDeleted()) {
 
-            rowProcessor.deleteRowInDb(db, resource, orderedColumns,
-                fileAttachmentColumns, localRow, r.getRowETag(),
-                false, tableLevelResult);
-
+            // we should delete the LOCAL row because we have successfully deleted the server row.
+            sc.getDatabaseService().privilegedDeleteRowWithId(
+                sc.getAppName(), db, resource.getTableId(), orderedColumns,
+                localRow.getDataByKey(DataTableColumns.ID));
+            tableLevelResult.incLocalDeletes();
+            publishUpdateNotification(R.string.sync_deleting_local_row, resource.getTableId());
             tableLevelResult.incServerDeletes();
+
           } else {
 
             boolean hasNonEmptyAttachmentColumns = false;
@@ -135,8 +139,8 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
             sc.getDatabaseService().privilegedUpdateRowETagAndSyncState(
                 sc.getAppName(), db,
                 resource.getTableId(),
-                r.getRowId(),
-                r.getRowETag(),
+                serverRow.getRowId(),
+                serverRow.getRowETag(),
                 newSyncState.name());
 
             publishUpdateNotification(R.string.sync_server_row_updated, resource.getTableId());
@@ -144,8 +148,8 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
             tableLevelResult.incServerUpserts();
           }
 
-        } else if (r.getOutcome() == OutcomeType.FAILED) {
-          if (r.getRowId() == null || !r.isDeleted()) {
+        } else if (serverRow.getOutcome() == OutcomeType.FAILED) {
+          if (serverRow.getRowId() == null || !serverRow.isDeleted()) {
             // should never occur!!!
             badState = true;
           } else {
@@ -157,7 +161,7 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
           publishUpdateNotification(R.string.sync_server_row_update_failed, resource.getTableId());
 
-        } else if (r.getOutcome() == OutcomeType.IN_CONFLICT) {
+        } else if (serverRow.getOutcome() == OutcomeType.IN_CONFLICT) {
           // another device updated this record between the time we fetched
           // changes and the time we tried to update this record. Transition
           // the record locally into the conflicting state.
@@ -169,23 +173,41 @@ public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
           // no need to worry about server in_conflict records.
           // any server in_conflict rows will be removed during
           // the update to the in_conflict state.
-          boolean isDeleted = SyncState.deleted.name().equals(
-                localRow.getDataByKey(DataTableColumns.SYNC_STATE));
-          Integer localRowConflictType = isDeleted ? ConflictType.LOCAL_DELETED_OLD_VALUES
-              : ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
 
-          rowProcessor.
-            conflictRowInDb(db, resource, orderedColumns, r,
-                localRowConflictType,
-                tableLevelResult);
+          ContentValues values = new ContentValues();
 
-        } else if (r.getOutcome() == OutcomeType.DENIED) {
+          // set up to insert the in_conflict row from the server
+          for (DataKeyValue entry : serverRow.getValues()) {
+            String colName = entry.column;
+            values.put(colName, entry.value);
+          }
+
+          // insert in_conflict server row
+          values.put(DataTableColumns.ROW_ETAG, serverRow.getRowETag());
+          values.put(DataTableColumns.SYNC_STATE, (serverRow.isDeleted() ?
+              SyncState.deleted.name() : SyncState.changed.name()));
+          values.putNull(DataTableColumns.CONFLICT_TYPE);
+          values.put(DataTableColumns.FORM_ID, serverRow.getFormId());
+          values.put(DataTableColumns.LOCALE, serverRow.getLocale());
+          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
+          values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
+          values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
+          RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
+          values.put(DataTableColumns.FILTER_TYPE,
+              (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
+          values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+
+          sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), db,
+              resource.getTableId(),
+              orderedColumns, values, serverRow.getRowId());
+
+        } else if (serverRow.getOutcome() == OutcomeType.DENIED) {
           specialCase = true;
           // TODO: use different status message ???
           publishUpdateNotification(R.string.sync_server_row_update_denied, resource.getTableId());
         } else {
           // a new OutcomeType state was added!
-          throw new IllegalStateException("Unexpected OutcomeType! " + r.getOutcome().name());
+          throw new IllegalStateException("Unexpected OutcomeType! " + serverRow.getOutcome().name());
         }
       }
 
