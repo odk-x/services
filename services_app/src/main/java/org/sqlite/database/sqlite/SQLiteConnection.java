@@ -783,58 +783,6 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
    /**
-    * Executes a statement that returns a count of the number of rows
-    * that were changed.  Use for UPDATE or DELETE SQL statements.
-    *
-    * @param sql The SQL statement to execute.
-    * @param bindArgs The arguments to bind, or null if none.
-    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * @return The number of rows that were changed.
-    *
-    * @throws SQLiteException if an error occurs, such as a syntax error
-    * or invalid number of bind arguments.
-    * @throws OperationCanceledException if the operation was canceled.
-    */
-   public int executeForChangedRowCount(String sql, Object[] bindArgs,
-       CancellationSignal cancellationSignal) {
-      if (sql == null) {
-         throw new IllegalArgumentException("sql must not be null.");
-      }
-
-      if (executeSpecial(sql, bindArgs, cancellationSignal)) {
-         return 0;
-      }
-
-      return executeForChangedRowCountImpl(sql, bindArgs, cancellationSignal); // might throw
-   }
-
-   /**
-    * Executes a statement that returns the row id of the last row inserted
-    * by the statement.  Use for INSERT SQL statements.
-    *
-    * @param sql The SQL statement to execute.
-    * @param bindArgs The arguments to bind, or null if none.
-    * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
-    * @return The row id of the last row that was inserted, or 0 if none.
-    *
-    * @throws SQLiteException if an error occurs, such as a syntax error
-    * or invalid number of bind arguments.
-    * @throws OperationCanceledException if the operation was canceled.
-    */
-   public long executeForLastInsertedRowId(String sql, Object[] bindArgs,
-       CancellationSignal cancellationSignal) {
-      if (sql == null) {
-         throw new IllegalArgumentException("sql must not be null.");
-      }
-
-      if (executeSpecial(sql, bindArgs, cancellationSignal)) {
-         return 0;
-      }
-
-      return executeForLastInsertedRowIdImpl(sql, bindArgs, cancellationSignal); // might throw
-   }
-
-   /**
     * Executes a statement and returns a {@link SQLiteMemoryCursor}
     * with the full result set.
     *
@@ -1298,7 +1246,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             sql.append((i > 0) ? ",?" : "?");
          }
       } else {
-         sql.append(nullColumnHack + ") VALUES (NULL");
+         sql.append(nullColumnHack).append(") VALUES (NULL");
       }
       sql.append(')');
 
@@ -2174,12 +2122,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                for (Map.Entry<String, PreparedStatement> entry : cache.entrySet()) {
                   PreparedStatement statement = entry.getValue();
                   String sql = entry.getKey();
-                  b.append("    " + i
-                      + ": statementPtr=0x" + Long.toHexString(statement.mStatementPtr)
-                      + ", numParameters=" + statement.mNumParameters
-                      + ", type=" + statement.mType + ", readOnly="
-                      + statement.mReadOnly + ", sql=\""
-                      + AppNameSharedStateContainer.trimSqlForDisplay(sql) + "\"\n");
+                  b.append("    ").append(i).append(": statementPtr=0x")
+                      .append(Long.toHexString(statement.mStatementPtr)).append(", numParameters=")
+                      .append(statement.mNumParameters).append(", type=").append(statement.mType)
+                      .append(", readOnly=").append(statement.mReadOnly).append(", sql=\"")
+                      .append(AppNameSharedStateContainer.trimSqlForDisplay(sql)).append("\"\n");
                   i += 1;
                }
             } else {
@@ -2354,10 +2301,9 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       }
 
       private boolean isCacheable(int statementType) {
-         if (statementType == STATEMENT_UPDATE || statementType == STATEMENT_SELECT) {
-            return true;
-         }
-         return false;
+         boolean outcome = (statementType == STATEMENT_UPDATE) ||
+                            (statementType == STATEMENT_SELECT);
+         return outcome;
       }
    }
 }

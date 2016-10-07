@@ -24,10 +24,10 @@ import org.opendatakit.sync.service.SyncStatus;
 
 import android.os.RemoteException;
 
-public class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
+class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
 
   private static final String LOGTAG = OdkSyncServiceInterfaceImpl.class.getSimpleName();
-  private OdkSyncService syncService;
+  private final OdkSyncService syncService;
 
   public OdkSyncServiceInterfaceImpl(OdkSyncService syncService) {
     this.syncService = syncService;

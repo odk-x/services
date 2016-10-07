@@ -3091,11 +3091,6 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     }
 
     // Ensure that at least one of the expected properties is in the KVS table
-    String sel = "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
-        " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
-        " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
-    String[] selArgs = { KeyValueStoreConstants.PARTITION_TABLE,
-        KeyValueStoreConstants.COLUMN_DISPLAY_NAME, tableId };
     List<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get()
         .getTableMetadata(db, null, KeyValueStoreConstants.PARTITION_TABLE, null,
             KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();

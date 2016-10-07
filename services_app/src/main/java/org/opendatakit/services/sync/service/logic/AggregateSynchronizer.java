@@ -110,15 +110,12 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private SyncExecutionContext sc;
   private HttpRestProtocolWrapper wrapper;
-  private final Map<String, TableResource> resources;
   private final WebLoggerIf log;
 
   public AggregateSynchronizer(SyncExecutionContext sc) throws InvalidAuthTokenException {
     this.sc = sc;
     this.wrapper = new HttpRestProtocolWrapper(sc);
     this.log = WebLogger.getLogger(sc.getAppName());
-
-    this.resources = new HashMap<String, TableResource>();
   }
 
   @Override
@@ -379,8 +376,6 @@ public class AggregateSynchronizer implements Synchronizer {
       String res = wrapper.convertResponseToString(response);
 
       resource = ODKFileUtils.mapper.readValue(res, TableResource.class);
-      // save resource
-      this.resources.put(resource.getTableId(), resource);
       return resource;
     } finally {
       if ( response != null ) {
@@ -409,8 +404,6 @@ public class AggregateSynchronizer implements Synchronizer {
         response.close();
       }
     }
-
-    this.resources.remove(table.getTableId());
   }
 
   @Override
@@ -1025,7 +1018,9 @@ public class AggregateSynchronizer implements Synchronizer {
           }
         }
       } finally {
-        is.close();
+        if ( is != null ) {
+          is.close();
+        }
       }
 
       byte[] content = bo.toByteArray();

@@ -158,7 +158,7 @@ public class AppNameSharedStateContainer {
 
    void dumpInfo(StringBuilder b) {
       synchronized (appNameMutex) {
-         b.append("\n---------------- " + appName + " ---------------------\n\n");
+         b.append("\n---------------- ").append(appName).append(" ---------------------\n\n");
          operationLog.dump(b, true);
 
          b.append("beginTransactionSessionQualifier ")
@@ -182,7 +182,7 @@ public class AppNameSharedStateContainer {
 
             if (dbConnection != null) {
                Long value = dbconnectionPD.getValue();
-               b.append("\n-----closed at " + value + "\n");
+               b.append("\n-----closed at ").append(value).append("\n");
                dbConnection.dumpDetail(b);
                b.append("\n-------\n");
             }

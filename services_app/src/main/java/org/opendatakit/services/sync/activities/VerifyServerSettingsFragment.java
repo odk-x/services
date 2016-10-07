@@ -64,7 +64,7 @@ public class VerifyServerSettingsFragment extends Fragment implements ISyncOutco
 
   private String mAppName;
 
-  private Handler handler = new Handler();
+  private final Handler handler = new Handler();
   private DismissableProgressDialogFragment progressDialog = null;
   private DismissableOutcomeDialogFragment outcomeDialog = null;
 
@@ -414,7 +414,7 @@ public class VerifyServerSettingsFragment extends Fragment implements ISyncOutco
                 if ( syncServiceInterface != null ) {
                   WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is not null");
                   boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
-                  if (completed == false) {
+                  if (!completed) {
                     throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
                   }
                   getActivity().finish();

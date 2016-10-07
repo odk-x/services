@@ -97,7 +97,7 @@ public class VerifyServerSettingsActivity extends Activity implements IAppAwareA
   public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
     try {
       boolean bound = getBound();
-      if (odkSyncInterface != null && callback != null && bound == true) {
+      if (odkSyncInterface != null && callback != null && bound) {
         callback.doAction(odkSyncInterface);
       } else {
         if (callback != null) {

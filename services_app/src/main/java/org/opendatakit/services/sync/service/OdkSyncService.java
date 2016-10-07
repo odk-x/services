@@ -40,7 +40,7 @@ public class OdkSyncService extends Service {
   public static boolean possiblyWaitForSyncServiceDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
       return true;
     }
     return false;
@@ -231,11 +231,7 @@ public class OdkSyncService extends Service {
 
   public boolean clearAppSynchronizer(String appName) {
     AppSynchronizer appSync = syncs.remove(appName);
-    if (appSync == null) {
-      return false;
-    } else {
-      return true;
-    }
+    return appSync != null;
   }
 
   public boolean verifyServerSettings(String appName) {

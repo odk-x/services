@@ -46,7 +46,7 @@ import java.util.*;
  * @author mitchellsundt@gmail.com
  *
  */
-public class ProcessManifestContentAndFileChanges {
+class ProcessManifestContentAndFileChanges {
 
   private static final String LOGTAG = ProcessManifestContentAndFileChanges.class.getSimpleName();
 
@@ -54,10 +54,10 @@ public class ProcessManifestContentAndFileChanges {
    * Maximum number of bytes to put within one bulk upload/download request for
    * row-level instance files.
    */
-  public static final long MAX_BATCH_SIZE = 10485760;
+  private static final long MAX_BATCH_SIZE = 10485760;
 
 
-  private SyncExecutionContext sc;
+  private final SyncExecutionContext sc;
   private final WebLoggerIf log;
 
   public ProcessManifestContentAndFileChanges(SyncExecutionContext sc) {
@@ -982,8 +982,7 @@ public class ProcessManifestContentAndFileChanges {
    * @return
    * @throws ServicesAvailabilityException
    */
-  String getFileSyncETag(URI
-      fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
+  private String getFileSyncETag(URI fileDownloadUri, String tableId, long lastModified) throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1005,7 +1004,8 @@ public class ProcessManifestContentAndFileChanges {
    * @param documentETag
    * @throws ServicesAvailabilityException
    */
-  void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified, String documentETag) throws ServicesAvailabilityException {
+  private void updateFileSyncETag(URI fileDownloadUri, String tableId, long lastModified,
+      String documentETag) throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
       db = sc.getDatabase();
@@ -1023,7 +1023,7 @@ public class ProcessManifestContentAndFileChanges {
    * @return
    * @throws ServicesAvailabilityException
    */
-  String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
+  private String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1052,7 +1052,7 @@ public class ProcessManifestContentAndFileChanges {
    * @param documentETag
    * @throws ServicesAvailabilityException
    */
-  void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
+  private void updateManifestSyncETag(String tableId, String documentETag) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
@@ -1083,7 +1083,7 @@ public class ProcessManifestContentAndFileChanges {
    * @return
    * @throws ServicesAvailabilityException
    */
-  String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+  private String getRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash) throws
       ServicesAvailabilityException {
 
@@ -1133,7 +1133,7 @@ public class ProcessManifestContentAndFileChanges {
    * @param documentETag
    * @throws ServicesAvailabilityException
    */
-  void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
+  private void updateRowLevelManifestSyncETag(String serverInstanceFileUri, String tableId,
       String rowId, SyncAttachmentState attachmentState, String uriFragmentHash,
       String documentETag)
       throws ServicesAvailabilityException {

@@ -39,7 +39,7 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
   final SQLiteConnection db;
   final String sessionQualifier;
   int referenceCount = 1;
-  Object initializationMutex = new Object();
+  final Object initializationMutex = new Object();
   boolean initializationComplete = false;
   boolean initializationStatus = false;
 
@@ -78,7 +78,9 @@ public class AndroidOdkConnection implements OdkConnectionInterface {
       return connection;
     } finally {
       if (!success) {
-        db.releaseReference();
+        if ( db != null ) {
+          db.releaseReference();
+        }
       }
     }
   }

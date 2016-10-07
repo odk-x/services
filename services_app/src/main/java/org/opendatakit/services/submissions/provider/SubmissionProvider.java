@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -103,10 +104,10 @@ public class SubmissionProvider extends ContentProvider {
   /**
    * change to true expression if you want to debug this content provider
    */
-  public static void possiblyWaitForContentProviderDebugger() {
+  private static void possiblyWaitForContentProviderDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
     }
   }
 
@@ -132,7 +133,7 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   @SuppressWarnings("unchecked")
-  private static final void putElementValue(HashMap<String, Object> dataMap, ColumnDefinition defn,
+  private static void putElementValue(HashMap<String, Object> dataMap, ColumnDefinition defn,
       Object value) {
     List<ColumnDefinition> nesting = new ArrayList<ColumnDefinition>();
     ColumnDefinition cur = defn.getParent();
@@ -155,7 +156,7 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   @SuppressWarnings("unchecked")
-  private static final int generateXmlHelper(Document d, Element data, int idx, String key,
+  private static int generateXmlHelper(Document d, Element data, int idx, String key,
       Map<String, Object> values, WebLoggerIf logger) {
     Object o = values.get(key);
 
@@ -173,7 +174,7 @@ public class SubmissionProvider extends ContentProvider {
       Text txtNode = d.createTextNode(((Boolean) o).toString());
       e.appendChild(txtNode);
     } else if (o instanceof String) {
-      Text txtNode = d.createTextNode(((String) o).toString());
+      Text txtNode = d.createTextNode(((String) o));
       e.appendChild(txtNode);
     } else if (o instanceof List) {
       StringBuilder b = new StringBuilder();
@@ -220,7 +221,7 @@ public class SubmissionProvider extends ContentProvider {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+  public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
 
     possiblyWaitForContentProviderDebugger();
 
@@ -844,28 +845,28 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   @Override
-  public int delete(Uri uri, String selection, String[] selectionArgs) {
+  public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
     return 0;
   }
 
   @Override
-  public String getType(Uri uri) {
+  public String getType(@NonNull Uri uri) {
     return null;
   }
 
   @Override
-  public Uri insert(Uri uri, ContentValues values) {
+  public Uri insert(@NonNull Uri uri, ContentValues values) {
     return null;
   }
 
   @Override
-  public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+  public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs,
       String sortOrder) {
     return null;
   }
 
   @Override
-  public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+  public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
     return 0;
   }
 

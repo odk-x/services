@@ -36,7 +36,7 @@ public final class OperationLog {
 
    private final OperationLogEntry[] mOperations = new OperationLogEntry[MAX_RECENT_OPERATIONS];
 
-   private String appName;
+   private final String appName;
    private int mIndex;
    private int mGeneration;
   /**

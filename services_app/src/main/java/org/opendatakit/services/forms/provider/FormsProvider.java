@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.SQLException;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -68,7 +69,7 @@ public class FormsProvider extends ContentProvider {
   public static void possiblyWaitForContentProviderDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
     }
   }
 
@@ -148,7 +149,7 @@ public class FormsProvider extends ContentProvider {
 
     File formDefFolder = new File(formFolder);
 
-    if (values.containsKey(FormsColumns.DISPLAY_NAME) == false) {
+    if (!values.containsKey(FormsColumns.DISPLAY_NAME)) {
       values.put(FormsColumns.DISPLAY_NAME, NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(formId)));
     }
@@ -197,7 +198,7 @@ public class FormsProvider extends ContentProvider {
   }
 
   @Override
-  public synchronized Uri insert(Uri uri, ContentValues initialValues) {
+  public synchronized Uri insert(@NonNull Uri uri, ContentValues initialValues) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -367,9 +368,7 @@ public class FormsProvider extends ContentProvider {
             + ")";
         pf.whereIdArgs = new String[whereArgs.length + 1];
         pf.whereIdArgs[0] =  (pf.isNumericFormId ? pf.numericFormId : pf.tableId);
-        for (int i = 0; i < whereArgs.length; ++i) {
-          pf.whereIdArgs[i + 1] = whereArgs[i];
-        }
+        System.arraycopy(whereArgs, 0, pf.whereIdArgs, 1, whereArgs.length);
       }
     } else {
       // we have both a tableId and a formId.
@@ -385,9 +384,7 @@ public class FormsProvider extends ContentProvider {
         pf.whereIdArgs = new String[whereArgs.length + 2];
         pf.whereIdArgs[0] = pf.tableId;
         pf.whereIdArgs[1] = pf.formId;
-        for (int i = 0; i < whereArgs.length; ++i) {
-          pf.whereIdArgs[i + 2] = whereArgs[i];
-        }
+        System.arraycopy(whereArgs, 0, pf.whereIdArgs, 2, whereArgs.length);
       }
     }
 
@@ -395,7 +392,7 @@ public class FormsProvider extends ContentProvider {
   }
 
   @Override
-  public String getType(Uri uri) {
+  public String getType(@NonNull Uri uri) {
     List<String> segments = uri.getPathSegments();
 
     PatchedFilter pf = extractUriFeatures( uri, segments, null, null );
@@ -408,7 +405,7 @@ public class FormsProvider extends ContentProvider {
   }
 
   @Override
-  public Cursor query(Uri uri, String[] projection, String where, String[] whereArgs,
+  public Cursor query(@NonNull Uri uri, String[] projection, String where, String[] whereArgs,
       String sortOrder) {
     possiblyWaitForContentProviderDebugger();
 
@@ -464,7 +461,7 @@ public class FormsProvider extends ContentProvider {
    * {directory}
    */
   @Override
-  public synchronized int delete(Uri uri, String where, String[] whereArgs) {
+  public synchronized int delete(@NonNull Uri uri, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -616,7 +613,7 @@ public class FormsProvider extends ContentProvider {
   }
 
   @Override
-  public synchronized int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
+  public synchronized int update(@NonNull Uri uri, ContentValues values, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();

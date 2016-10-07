@@ -48,7 +48,7 @@ import java.util.UUID;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
+class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
 
   private final String mAppName;
   private final String mTableId;
@@ -76,7 +76,7 @@ public class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<Res
     return doWork(dbHandleName);
   }
 
-  public ArrayList<ResolveRowEntry> doWork(DbHandle dbHandleName) {
+  private ArrayList<ResolveRowEntry> doWork(DbHandle dbHandleName) {
 
     OdkConnectionInterface db = null;
 

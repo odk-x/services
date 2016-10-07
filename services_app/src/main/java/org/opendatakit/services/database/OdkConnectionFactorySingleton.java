@@ -27,7 +27,7 @@ public final class OdkConnectionFactorySingleton {
     * @return the registered factory class
     * @throws IllegalStateException if no factory class has been registered.
     */
-   public static final OdkConnectionFactoryInterface getOdkConnectionFactoryInterface
+   public static OdkConnectionFactoryInterface getOdkConnectionFactoryInterface
        () {
       synchronized ( OdkConnectionFactorySingleton.class ) {
          if (connectionFactorySingleton == null) {
@@ -48,7 +48,7 @@ public final class OdkConnectionFactorySingleton {
     * @param factorySingleton
     * @throws IllegalArgumentException if factorySingleton is being re-registered.
     */
-   public static synchronized final void set(OdkConnectionFactoryInterface factorySingleton) {
+   public static synchronized void set(OdkConnectionFactoryInterface factorySingleton) {
       OdkConnectionFactoryInterface oldInterface = null;
       synchronized ( OdkConnectionFactorySingleton.class ) {
          oldInterface = connectionFactorySingleton;

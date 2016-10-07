@@ -33,6 +33,7 @@ package fi.iki.elonen;
  * #L%
  */
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.apache.commons.lang3.CharEncoding;
@@ -224,14 +225,14 @@ public abstract class NanoHTTPD {
             return pw.append(s);
         }
 
-        public void write(byte[] bytes) throws IOException {
+        public void write(@NonNull byte[] bytes) throws IOException {
             outputStream.write(bytes);
             if ( enableResponseLogging ) {
                 bao.write(bytes);
             }
         }
 
-        public void write(byte[] bytes, int offset, int size) throws IOException {
+        public void write(@NonNull byte[] bytes, int offset, int size) throws IOException {
             outputStream.write(bytes, offset, size);
             if ( enableResponseLogging ) {
                 bao.write(bytes, offset, size);
@@ -1603,12 +1604,12 @@ public abstract class NanoHTTPD {
             }
 
             @Override
-            public void write(byte[] b) throws IOException {
+            public void write(@NonNull byte[] b) throws IOException {
                 write(b, 0, b.length);
             }
 
             @Override
-            public void write(byte[] b, int off, int len) throws IOException {
+            public void write(@NonNull byte[] b, int off, int len) throws IOException {
                 if (len == 0)
                     return;
                 out.write(String.format("%x\r\n", len).getBytes());

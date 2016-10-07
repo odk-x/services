@@ -32,14 +32,14 @@ import fi.iki.elonen.SimpleWebServer;
 
 public class OdkWebkitServerService extends Service {
 
-  public static final String LOGTAG = OdkWebkitServerService.class.getSimpleName();
+  private static final String LOGTAG = OdkWebkitServerService.class.getSimpleName();
   /**
    * change to true expression if you want to debug this webkit service
    */
-  public static void possiblyWaitForWebkitServerServiceDebugger() {
+  private static void possiblyWaitForWebkitServerServiceDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
     }
   }
 

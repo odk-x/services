@@ -138,7 +138,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
     baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type.MODIFY);
   }
 
-  public void baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type type) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -193,7 +193,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
     baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type.MODIFY);
   }
 
-  public void baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type type) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -310,7 +310,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
     baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type.MODIFY);
   }
 
-  public void baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type type)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -373,7 +373,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
     baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type.MODIFY);
   }
 
-  public void baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type type)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -436,7 +436,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
     baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type.MODIFY);
   }
 
-  public void baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type type)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;

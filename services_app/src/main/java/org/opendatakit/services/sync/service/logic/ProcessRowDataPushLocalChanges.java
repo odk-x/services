@@ -52,7 +52,7 @@ import java.util.List;
  * @author sudar.sam@gmail.com
  *
  */
-public class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
+class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
   private static final String TAG = ProcessRowDataPushLocalChanges.class.getSimpleName();
 

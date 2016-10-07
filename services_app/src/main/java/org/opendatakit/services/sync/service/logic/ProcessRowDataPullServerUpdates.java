@@ -58,7 +58,7 @@ import java.util.Map;
  * @author sudar.sam@gmail.com
  * @author mitchellsundt@gmail.com
  */
-public class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
+class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
   private static final String TAG = ProcessRowDataPullServerUpdates.class.getSimpleName();
 
@@ -66,7 +66,7 @@ public class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
   private static final double maxPercentage = 50.0;
   private static final int numberOfPhases = 2;
 
-  private ProcessManifestContentAndFileChanges manifestProcessor;
+  private final ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataPullServerUpdates(SyncExecutionContext sharedContext) {
     super(sharedContext);

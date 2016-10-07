@@ -30,7 +30,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
   private static final String TAG = "ODKDatabaseUtilsSyncInteractionsPermissionsTest";
 
-  public void base_Type_PerhapsPlaceRowIntoConflict_Table( boolean isLocked, boolean canAnonCreate,
+  private void base_Type_PerhapsPlaceRowIntoConflict_Table(boolean isLocked, boolean canAnonCreate,
       RowFilterScope.Type type, SyncState localRowSyncState, boolean asPrivilegedUser) throws
       ActionNotAuthorizedException {
 

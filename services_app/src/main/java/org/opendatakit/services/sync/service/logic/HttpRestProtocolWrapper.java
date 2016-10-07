@@ -204,7 +204,7 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
-  private static final String escapeSegment(String segment) {
+  private static String escapeSegment(String segment) {
     return segment;
     // String encoding = CharEncoding.UTF_8;
     // String encodedSegment;

@@ -59,10 +59,10 @@ public class ProcessAppAndTableLevelChanges {
 
   private static final String TAG = ProcessAppAndTableLevelChanges.class.getSimpleName();
 
-  private WebLoggerIf log;
+  private final WebLoggerIf log;
   
-  private SyncExecutionContext sc;
-  private ProcessManifestContentAndFileChanges manifestProcessor;
+  private final SyncExecutionContext sc;
+  private final ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessAppAndTableLevelChanges(SyncExecutionContext sc) {
     this.sc = sc;

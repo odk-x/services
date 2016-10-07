@@ -12,9 +12,9 @@ import org.opendatakit.sync.service.TableLevelResult;
  */
 public abstract class ProcessRowDataSharedBase implements IProcessRowData {
 
-  protected static final String ID_COLUMN = "id";
+  static final String ID_COLUMN = "id";
 
-  private WebLoggerIf log;
+  private final WebLoggerIf log;
 
   final SyncExecutionContext sc;
 
@@ -25,11 +25,11 @@ public abstract class ProcessRowDataSharedBase implements IProcessRowData {
 
   private int rowsProcessed = 0;
 
-  protected int maxColumnsToUseLargeFetchLimit = 80;
-  protected int smallFetchLimit = 200;
-  protected int largeFetchLimit = 1000;
+  int maxColumnsToUseLargeFetchLimit = 80;
+  int smallFetchLimit = 200;
+  int largeFetchLimit = 1000;
 
-  public ProcessRowDataSharedBase(SyncExecutionContext sharedContext) {
+  ProcessRowDataSharedBase(SyncExecutionContext sharedContext) {
     this.sc = sharedContext;
     this.log = WebLogger.getLogger(sc.getAppName());
   }
@@ -52,11 +52,11 @@ public abstract class ProcessRowDataSharedBase implements IProcessRowData {
     return sc;
   }
 
-  public WebLoggerIf getLogger() {
+  WebLoggerIf getLogger() {
     return log;
   }
 
-  protected void setUpdateNotificationBounds(double minPercentage, double maxPercentage,
+  void setUpdateNotificationBounds(double minPercentage, double maxPercentage,
       int totalAffectedRows) {
 
     this.minPercentage = minPercentage;
@@ -91,8 +91,7 @@ public abstract class ProcessRowDataSharedBase implements IProcessRowData {
    * @param e
    * @param tableLevelResult
    */
-  public void exception(String method, String tableId, Exception e,
-      TableLevelResult tableLevelResult) {
+  void exception(String method, String tableId, Exception e, TableLevelResult tableLevelResult) {
     String msg = e.getMessage();
     if (msg == null) {
       msg = e.toString();

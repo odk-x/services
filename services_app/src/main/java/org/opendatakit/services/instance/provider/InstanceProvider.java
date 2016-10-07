@@ -21,6 +21,7 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.SQLException;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
@@ -65,7 +66,7 @@ public class InstanceProvider extends ContentProvider {
   public static void possiblyWaitForContentProviderDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
     }
   }
 
@@ -134,7 +135,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+  public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs,
       String sortOrder) {
     possiblyWaitForContentProviderDebugger();
 
@@ -229,14 +230,17 @@ public class InstanceProvider extends ContentProvider {
                 + "=? AND " + KeyValueStoreColumns.KEY + "=?", new String[] { tableId,
                 KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
                 KeyValueStoreConstants.XML_INSTANCE_NAME }, null, null, null, null);
-
-        c.moveToFirst();
-        if (c.getCount() == 1) {
-          int idxInstanceName = c.getColumnIndex(KeyValueStoreColumns.VALUE);
-          instanceName = c.getString(idxInstanceName);
+        if ( c != null ) {
+          c.moveToFirst();
+          if (c.getCount() == 1) {
+            int idxInstanceName = c.getColumnIndex(KeyValueStoreColumns.VALUE);
+            instanceName = c.getString(idxInstanceName);
+          }
         }
       } finally {
-        c.close();
+        if ( c != null ) {
+          c.close();
+        }
       }
 
       // ARGH! we must ensure that we have records in our UPLOADS_TABLE_NAME
@@ -422,12 +426,8 @@ public class InstanceProvider extends ContentProvider {
 
     if (selectionArgs != null) {
       String[] tempArgs = new String[filterArgs.length + selectionArgs.length];
-      for (int i = 0; i < filterArgs.length; ++i) {
-        tempArgs[i] = filterArgs[i];
-      }
-      for (int i = 0; i < selectionArgs.length; ++i) {
-        tempArgs[filterArgs.length + i] = selectionArgs[i];
-      }
+      System.arraycopy(filterArgs, 0, tempArgs, 0, filterArgs.length);
+      System.arraycopy(selectionArgs, 0, tempArgs, filterArgs.length + 0, selectionArgs.length);
       filterArgs = tempArgs;
     }
 
@@ -447,7 +447,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public String getType(Uri uri) {
+  public String getType(@NonNull Uri uri) {
     // don't see the point of trying to implement this call...
     return null;
     // switch (sUriMatcher.match(uri)) {
@@ -463,7 +463,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public Uri insert(Uri uri, ContentValues initialValues) {
+  public Uri insert(@NonNull Uri uri, ContentValues initialValues) {
     throw new IllegalArgumentException("Insert not implemented!");
   }
 
@@ -487,7 +487,7 @@ public class InstanceProvider extends ContentProvider {
    * {directory}
    */
   @Override
-  public synchronized int delete(Uri uri, String where, String[] whereArgs) {
+  public synchronized int delete(@NonNull Uri uri, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -525,9 +525,7 @@ public class InstanceProvider extends ContentProvider {
           where = "(" + where + ") AND (" + InstanceColumns.DATA_INSTANCE_ID + "=? )";
           if (whereArgs != null) {
             String[] args = new String[whereArgs.length + 1];
-            for (int i = 0; i < whereArgs.length; ++i) {
-              args[i] = whereArgs[i];
-            }
+            System.arraycopy(whereArgs, 0, args, 0, whereArgs.length);
             args[whereArgs.length] = instanceId;
             whereArgs = args;
           } else {
@@ -632,7 +630,7 @@ public class InstanceProvider extends ContentProvider {
   }
 
   @Override
-  public synchronized int update(Uri uri, ContentValues cv, String where, String[] whereArgs) {
+  public synchronized int update(@NonNull Uri uri, ContentValues cv, String where, String[] whereArgs) {
     possiblyWaitForContentProviderDebugger();
 
     List<String> segments = uri.getPathSegments();
@@ -702,7 +700,7 @@ public class InstanceProvider extends ContentProvider {
         cv.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(xmlPublishDate.getTime()));
         String xmlPublishStatus = cv.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
-        if (cv.containsKey(InstanceColumns.DISPLAY_SUBTEXT) == false) {
+        if (!cv.containsKey(InstanceColumns.DISPLAY_SUBTEXT)) {
           String text = getDisplaySubtext(xmlPublishStatus, xmlPublishDate);
           cv.put(InstanceColumns.DISPLAY_SUBTEXT, text);
         }

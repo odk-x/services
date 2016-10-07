@@ -50,13 +50,13 @@ public class ProcessRowDataOrchestrateChanges {
 
   private static final String TAG = ProcessRowDataOrchestrateChanges.class.getSimpleName();
 
-  private WebLoggerIf log;
+  private final WebLoggerIf log;
 
   private final SyncExecutionContext sc;
 
-  private ProcessRowDataPullServerUpdates serverUpdateProcessor;
-  private ProcessRowDataPushLocalChanges localChangesProcessor;
-  private ProcessRowDataSyncAttachments syncAttachmentsProcessor;
+  private final ProcessRowDataPullServerUpdates serverUpdateProcessor;
+  private final ProcessRowDataPushLocalChanges localChangesProcessor;
+  private final ProcessRowDataSyncAttachments syncAttachmentsProcessor;
 
   public ProcessRowDataOrchestrateChanges(SyncExecutionContext sharedContext) {
     this.sc = sharedContext;

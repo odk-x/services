@@ -165,11 +165,8 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
 
   @Override
   public boolean isEnabled(int position) {
-    if (isConflictColumnPosition(position)) {
-      return true;
-    } else {
-      return false;
-    }
+    boolean outcome = isConflictColumnPosition(position);
+    return outcome;
   }
 
   @Override

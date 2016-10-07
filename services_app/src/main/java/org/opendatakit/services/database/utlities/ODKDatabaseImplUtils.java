@@ -121,7 +121,7 @@ public class ODKDatabaseImplUtils {
     cachedAdminRolesArray = Collections.unmodifiableList(rolesArray);
   }
 
-  private static final List<String> getRolesArray(String rolesList) {
+  private static List<String> getRolesArray(String rolesList) {
 
     if ( rolesList == null || rolesList.length() == 0 ) {
       return null;
@@ -212,14 +212,14 @@ public class ODKDatabaseImplUtils {
    * if the user attempts to do something differently, but correct
    * the error. This is largely for migration / forward compatibility.
    */
-  private static ArrayList<Object[]> knownKVSValueTypeRestrictions = new ArrayList<Object[]>();
+  private static final ArrayList<Object[]> knownKVSValueTypeRestrictions = new ArrayList<Object[]>();
 
   /**
    * Same as above, but quick access via the key.
    * For now, we know that the keys are all unique.
    * Eventually this might need to be a MultiMap.
    */
-  private static TreeMap<String, ArrayList<Object[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<String, ArrayList<Object[]>>();
+  private static final TreeMap<String, ArrayList<Object[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<String, ArrayList<Object[]>>();
 
   private static void updateKeyToKnownKVSValueTypeRestrictions(Object[] field) {
     ArrayList<Object[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
@@ -376,7 +376,7 @@ public class ODKDatabaseImplUtils {
     databaseUtil = util;
   }
 
-  protected ODKDatabaseImplUtils() {
+  private ODKDatabaseImplUtils() {
   }
 
   /**
@@ -569,9 +569,7 @@ public class ODKDatabaseImplUtils {
       buildAccessRights(b, wrappedSqlArgs, accessContext);
       b.append(" FROM (").append(sqlCommand).append(") AS T");
       if ( selectionArgs != null ) {
-        for (int i = 0; i < selectionArgs.length; ++i) {
-          wrappedSqlArgs.add(selectionArgs[i]);
-        }
+        Collections.addAll(wrappedSqlArgs, selectionArgs);
       }
       // apply row-level visibility filter only if we are not privileged
       // privileged users see everything.
@@ -830,7 +828,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.endTransaction();
       }
-      if (success == false) {
+      if (!success) {
 
         // Get the names of the columns
         StringBuilder colNames = new StringBuilder();
@@ -863,8 +861,6 @@ public class ODKDatabaseImplUtils {
       String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
-
-    Object[] whereArgs = { tableId };
 
     try {
       if (!dbWithinTransaction) {
@@ -1071,7 +1067,7 @@ public class ODKDatabaseImplUtils {
     }
 
     // most recent savepoint timestamp...
-    BaseTable t = new BaseTable(table, Collections.singletonList(Integer.valueOf(0)));
+    BaseTable t = new BaseTable(table, Collections.singletonList(0));
 
     if (hasConflictRows(t)) {
       throw new IllegalStateException("row is in conflict");
@@ -1100,7 +1096,7 @@ public class ODKDatabaseImplUtils {
     }
 
     // most recent savepoint timestamp...
-    BaseTable t = new BaseTable(table, Collections.singletonList(Integer.valueOf(0)));
+    BaseTable t = new BaseTable(table, Collections.singletonList(0));
 
     if (hasConflictRows(t)) {
       throw new IllegalStateException("row is in conflict");
@@ -1117,39 +1113,6 @@ public class ODKDatabaseImplUtils {
       }
     }
     return false;
-  }
-
-  public BaseTable privilegedGetConflictingRowsWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser) {
-
-    AccessContext accessContext = getAccessContext(db, tableId, activeUser,
-        RoleConsts.ADMIN_ROLES_LIST);
-
-    BaseTable table = privilegedQuery(db, tableId, QueryUtil
-        .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
-            QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new Object[] { rowId }, null,
-        accessContext);
-
-    if (table.getNumberOfRows() == 0) {
-      return table;
-    }
-
-    Integer cellIndex = table.getColumnIndexOfElementKey(DataTableColumns.CONFLICT_TYPE);
-
-    if (cellIndex == null) {
-      throw new IllegalStateException("Missing CONFLICT_TYPE column");
-    }
-
-    List<Row> rows = table.getRows();
-    for (Row row : rows) {
-      if (row.getDataByIndex(cellIndex) == null) {
-        throw new IllegalStateException("row is not in conflict");
-      }
-    }
-
-    return table;
   }
 
   /**
@@ -2048,9 +2011,8 @@ public class ODKDatabaseImplUtils {
    * imported CSV files.
    *
    * @param db
-   * @param tableId
    */
-  public void enforceTypesTableMetadata(OdkConnectionInterface db, String tableId) {
+  private void enforceTypesTableMetadata(OdkConnectionInterface db) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2284,7 +2246,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.endTransaction();
       }
-      if (success == false) {
+      if (!success) {
 
         WebLogger.getLogger(db.getAppName())
             .e(t, "setChoiceList: Error while updating choiceList entry " + choiceListJSON);
@@ -2345,7 +2307,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.endTransaction();
       }
-      if (success == false) {
+      if (!success) {
 
         // Get the names of the columns
         StringBuilder colNames = new StringBuilder();
@@ -2402,7 +2364,7 @@ public class ODKDatabaseImplUtils {
       }
 
       replaceTableMetadata(db, tableId, metaData, (clear || created));
-      enforceTypesTableMetadata(db, tableId);
+      enforceTypesTableMetadata(db);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2413,7 +2375,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.endTransaction();
       }
-      if (success == false) {
+      if (!success) {
 
         // Get the names of the columns
         StringBuilder colNames = new StringBuilder();
@@ -2465,7 +2427,7 @@ public class ODKDatabaseImplUtils {
    * @param db
    * @param tableId
    */
-  public void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
+  private void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
 
     StringBuilder b = new StringBuilder();
 
@@ -3233,7 +3195,7 @@ public class ODKDatabaseImplUtils {
    * @param syncState
    * @param conflictType
    */
-  public void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
+  private void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
       SyncState syncState, Integer conflictType) {
 
     // TODO: is roleList applicable here?
@@ -3725,7 +3687,7 @@ public class ODKDatabaseImplUtils {
   }
 
   private void updateRowWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, Map<String,Object> cvValues, String rowId, String activeUser,
+      OrderedColumns orderedColumns, Map<String,Object> cvValues, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
     // TODO: make sure caller passes in the correct roleList for the use case.
@@ -3759,7 +3721,7 @@ public class ODKDatabaseImplUtils {
    * @param locale
    * @param asCsvRequestedChange
    */
-  public void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
+  private void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String locale, boolean asCsvRequestedChange) {
 
@@ -4030,12 +3992,12 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with the changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId, activeUser, rolesList,
+      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
           locale);
 
       // update as if user has admin privileges.
       // do this so we can update the filter type and filter value
-      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues, rowId,
+      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues,
           activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
 
       // and if we are deleting, try to delete it.
@@ -4182,12 +4144,12 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with server's changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, rowId, activeUser, rolesList,
+      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
           locale);
 
       // update as if user has admin privileges.
       // do this so we can update the filter type and filter value
-      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues, rowId,
+      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues,
           activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
 
       if (!inTransaction) {
@@ -4356,7 +4318,7 @@ public class ODKDatabaseImplUtils {
 
         // update local with server's changes
 
-        updateRowWithId(db, tableId, orderedColumns, updateValues, rowId, activeUser, rolesList,
+        updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
             locale);
 
         // and reset the sync state to whatever it should be (update will make it changed)

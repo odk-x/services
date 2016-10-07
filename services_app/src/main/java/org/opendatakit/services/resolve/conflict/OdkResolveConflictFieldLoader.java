@@ -52,7 +52,7 @@ import java.util.UUID;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
+class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
 
   private final String mAppName;
   private final String mTableId;

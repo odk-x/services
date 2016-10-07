@@ -49,7 +49,7 @@ import java.util.UUID;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
+class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEntry>> {
 
   private final String mAppName;
   private final String mTableId;

@@ -78,7 +78,7 @@ public final class SQLiteDebug {
      * log all queries that take 200ms or longer to run.
      * @hide
      */
-    public static final boolean shouldLogSlowQuery(long elapsedTimeMillis) {
+    public static boolean shouldLogSlowQuery(long elapsedTimeMillis) {
         int slowQueryMillis = 10000;
         return slowQueryMillis >= 0 && elapsedTimeMillis >= slowQueryMillis;
     }

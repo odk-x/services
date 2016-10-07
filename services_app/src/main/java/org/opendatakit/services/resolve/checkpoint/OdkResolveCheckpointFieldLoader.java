@@ -43,7 +43,7 @@ import java.util.*;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList> {
+class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList> {
 
   private final String mAppName;
   private final String mTableId;

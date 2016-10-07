@@ -45,14 +45,14 @@ import java.util.List;
  * @author sudar.sam@gmail.com
  *
  */
-public class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
+class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
   private static final String TAG = ProcessRowDataSyncAttachments.class.getSimpleName();
 
   private static final double minPercentage = 75.0;
   private static final double maxPercentage = 100.0;
 
-  private ProcessManifestContentAndFileChanges manifestProcessor;
+  private final ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataSyncAttachments(SyncExecutionContext sharedContext) {
     super(sharedContext);

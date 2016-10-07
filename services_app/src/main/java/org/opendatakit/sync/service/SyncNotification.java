@@ -30,7 +30,7 @@ public final class SyncNotification {
   private final NotificationManager notificationManager;
 
   private SyncProgressEvent progressStatus;
-  private Notification.Builder builder;
+  private final Notification.Builder builder;
 
   public SyncNotification(Context context, String appName) {
     this.cntxt = context;

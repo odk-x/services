@@ -33,7 +33,7 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
 
   private static final String TAG = "ODKDatabaseUtilsConflictInteractionsPermissionsTest";
 
-  public void base_Type_ResolveLocalRow_Table( boolean isLocked, boolean canAnonCreate,
+  private void base_Type_ResolveLocalRow_Table(boolean isLocked, boolean canAnonCreate,
       RowFilterScope.Type type) throws ActionNotAuthorizedException {
 
     String tableId;
@@ -87,9 +87,8 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
     }
   }
 
-  public void base_Type_ResolveLocalRowWithServerChanges_Table( boolean isLocked, boolean
-      canAnonCreate,
-      RowFilterScope.Type type) throws ActionNotAuthorizedException {
+  private void base_Type_ResolveLocalRowWithServerChanges_Table(boolean isLocked,
+      boolean canAnonCreate, RowFilterScope.Type type) throws ActionNotAuthorizedException {
 
     String tableId;
     if ( isLocked ) {
@@ -155,7 +154,7 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
     }
   }
 
-  public void base_Type_ResolveServerRow_Table( boolean isLocked, boolean canAnonCreate,
+  private void base_Type_ResolveServerRow_Table(boolean isLocked, boolean canAnonCreate,
       RowFilterScope.Type type) throws ActionNotAuthorizedException {
 
     String tableId;

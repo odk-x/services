@@ -28,7 +28,7 @@ import java.util.*;
 
 public class OdkDatabaseService extends Service {
 
-  public static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
+  private static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 
   // A place to store pieces of large tables or other return values that won't fit across the
   // AIDL call
@@ -40,7 +40,7 @@ public class OdkDatabaseService extends Service {
   public static void possiblyWaitForDatabaseServiceDebugger() {
     if ( false ) {
       android.os.Debug.waitForDebugger();
-      int len = new String("for setting breakpoint").length();
+      int len = "for setting breakpoint".length();
     }
   }
 

@@ -332,8 +332,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
     }
   }
 
-  private ServiceConnectionWrapper odkDbServiceConnection = new ServiceConnectionWrapper();
-  private Object odkDbInterfaceBindComplete = new Object();
+  private final ServiceConnectionWrapper odkDbServiceConnection = new ServiceConnectionWrapper();
+  private final Object odkDbInterfaceBindComplete = new Object();
   private UserDbInterface odkDbInterface;
   private boolean active = false;
 
