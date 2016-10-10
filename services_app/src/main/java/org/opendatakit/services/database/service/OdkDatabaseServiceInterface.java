@@ -37,7 +37,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
-import org.opendatakit.services.utilities.SyncETagsUtils;
+import org.opendatakit.services.database.utlities.SyncETagsUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.queries.QueryBounds;

@@ -44,8 +44,6 @@ import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.utilities.ChoiceListUtils;
-import org.opendatakit.services.utilities.SyncETagsUtils;
 import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
