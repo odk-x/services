@@ -61,6 +61,13 @@ public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
     protected void tearDown() {
         WebkitServerInterface webkitServer = getWebkitServerInterface();
         getContext().unbindService(odkWebkitServiceConnection);
+        // sleep to let this take effect
+        try {
+            Thread.sleep(200L);
+        } catch (InterruptedException e) {
+            // ignore
+            e.printStackTrace();
+        }
     }
 
     private class ServiceConnectionWrapper implements ServiceConnection {
