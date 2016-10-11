@@ -30,7 +30,7 @@ import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.sync.service.OdkSyncService;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.utilities.PropertiesFileUtils;
+import org.opendatakit.builder.PropertiesFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.database.data.KeyValueStoreEntry;
