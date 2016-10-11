@@ -654,6 +654,8 @@ public abstract class NanoHTTPD {
 
         private static final String ASCII_ENCODING = "US-ASCII";
 
+        private static final String UTF8_ENCODING = "UTF-8";
+
         private static final String MULTIPART_FORM_DATA_HEADER = "multipart/form-data";
 
         private static final String CONTENT_REGEX = "[ |\t]*([^/^ ^;^,]+/[^ ^;^,]+)";
@@ -706,7 +708,8 @@ public abstract class NanoHTTPD {
         }
 
         public String getEncoding() {
-            return encoding == null ? ASCII_ENCODING : encoding;
+            // Always assume UTF-8
+            return UTF8_ENCODING;
         }
 
         public String getBoundary() {
