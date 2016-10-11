@@ -150,8 +150,8 @@ public class FormsProvider extends ContentProvider {
     File formDefFolder = new File(formFolder);
 
     if (!values.containsKey(FormsColumns.DISPLAY_NAME)) {
-      values.put(FormsColumns.DISPLAY_NAME, NameUtil.normalizeDisplayName(NameUtil
-          .constructSimpleDisplayName(formId)));
+      values.put(FormsColumns.DISPLAY_NAME,
+          NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName(formId)));
     }
 
     // require that it contain a formDef file
