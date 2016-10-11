@@ -1782,8 +1782,12 @@ public abstract class NanoHTTPD {
                 pw.append("HTTP/1.1 ").append(this.status.getDescription()).append(" \r\n");
 
                 if (this.mimeType != null) {
-                    //printHeader(cw, "Content-Type", this.mimeType);
-                    printHeader(pw, "Content-Type", this.mimeType);
+                    if (this.mimeType.toLowerCase(Locale.ENGLISH).contains("charset=utf-8")) {
+                        //printHeader(cw, "Content-Type", this.mimeType);
+                        printHeader(pw, "Content-Type", this.mimeType);
+                    } else {
+                        printHeader(pw, "Content-Type", this.mimeType +"; charset=utf-8");
+                    }
                 }
                 if (getHeader("date") == null) {
                     //printHeader(cw, "Date", gmtFrmt.format(new Date()));
