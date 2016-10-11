@@ -69,7 +69,6 @@ import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -674,18 +673,14 @@ public abstract class NanoHTTPD {
 
         private final String contentType;
 
-        private final String encoding;
-
         private final String boundary;
 
         public ContentType(String contentTypeHeader) {
             this.contentTypeHeader = contentTypeHeader;
             if (contentTypeHeader != null) {
                 contentType = getDetailFromContentHeader(contentTypeHeader, MIME_PATTERN, "", 1);
-                encoding = getDetailFromContentHeader(contentTypeHeader, CHARSET_PATTERN, null, 2);
             } else {
                 contentType = "";
-                encoding = "UTF-8";
             }
             if (MULTIPART_FORM_DATA_HEADER.equalsIgnoreCase(contentType)) {
                 boundary = getDetailFromContentHeader(contentTypeHeader, BOUNDARY_PATTERN, null, 2);
@@ -720,12 +715,6 @@ public abstract class NanoHTTPD {
             return MULTIPART_FORM_DATA_HEADER.equalsIgnoreCase(contentType);
         }
 
-        public ContentType tryUTF8() {
-            if (encoding == null) {
-                return new ContentType(this.contentTypeHeader + "; charset=UTF-8");
-            }
-            return this;
-        }
     }
 
     protected class HTTPSession implements IHTTPSession {
@@ -2419,10 +2408,7 @@ public abstract class NanoHTTPD {
         } else {
             byte[] bytes;
             try {
-                CharsetEncoder newEncoder = Charset.forName(contentType.getEncoding()).newEncoder();
-                if (!newEncoder.canEncode(txt)) {
-                    contentType = contentType.tryUTF8();
-                }
+                // Always use UTF-8
                 bytes = txt.getBytes(contentType.getEncoding());
             } catch (UnsupportedEncodingException e) {
                 NanoHTTPD.LOG.log(Level.SEVERE, "encoding problem, responding nothing", e);
