@@ -17,21 +17,21 @@
     </header>
 
     <header
-            android:fragment="org.opendatakit.common.android.fragments.ServerSettingsFragment"
+            android:fragment="org.opendatakit.services.preferences.fragments.ServerSettingsFragment"
             android:icon="@drawable/ic_cloud_black_24dp"
             android:title="@string/server"
             android:summary="@string/server_settings_summary">
         <extra android:name="appName" android:value="bogus"/>
     </header>
 
-    <header android:fragment="org.opendatakit.common.android.fragments.DeviceSettingsFragment"
+    <header android:fragment="org.opendatakit.services.preferences.fragments.DeviceSettingsFragment"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/device"
             android:summary="@string/device_settings_summary">
         <extra android:name="appName" android:value="bogus"/>
     </header>
 
-    <header android:fragment="org.opendatakit.common.android.fragments.TablesSettingsFragment"
+    <header android:fragment="org.opendatakit.services.preferences.fragments.TablesSettingsFragment"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/tool_tables_settings"
             android:summary="@string/tool_tables_settings_summary">
@@ -42,7 +42,7 @@
     <!-- this is visible if admin mode is not enabled OR if in admin mode -->
     <header
             android:id="@+id/admin_password_status"
-            android:fragment="org.opendatakit.common.android.fragments.AdminPasswordSettingsFragment"
+            android:fragment="org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment"
             android:icon="@drawable/ic_vpn_key_black_24dp"
             android:title="@string/change_admin_password"
             android:summary="@string/admin_password_disabled">
@@ -53,14 +53,14 @@
 
     <!-- these are visible if in admin mode -->
     <header
-            android:fragment="org.opendatakit.common.android.fragments.AdminConfigurableServerSettingsFragment"
+            android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableServerSettingsFragment"
             android:icon="@drawable/ic_cloud_black_24dp"
             android:title="@string/restrict_server"
             android:summary="@string/restrict_server_settings_summary">
         <extra android:name="appName" android:value="bogus"/>
         <extra android:name="adminMode" android:value="true"/>
     </header>
-    <header android:fragment="org.opendatakit.common.android.fragments.AdminConfigurableDeviceSettingsFragment"
+    <header android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableDeviceSettingsFragment"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/restrict_device"
             android:summary="@string/restrict_device_settings_summary">
@@ -68,7 +68,7 @@
         <extra android:name="adminMode" android:value="true"/>
     </header>
     <header
-            android:fragment="org.opendatakit.common.android.fragments.AdminConfigurableTablesSettingsFragment"
+            android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableTablesSettingsFragment"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/admin_tool_tables_settings"
             android:summary="@string/admin_tool_tables_settings_summary">
@@ -90,7 +90,7 @@
             android:summary="@string/click_to_clear_settings">
         <intent android:action="android.intent.action.EDIT"
                 android:targetPackage="org.opendatakit.services"
-                android:targetClass="org.opendatakit.common.android.activities.ClearAppPropertiesActivity" />
+                android:targetClass="org.opendatakit.activities.ClearAppPropertiesActivity" />
     </header>
 
     <header android:id="@+id/verify_server_settingss"

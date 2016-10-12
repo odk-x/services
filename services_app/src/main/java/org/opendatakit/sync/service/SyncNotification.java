@@ -15,7 +15,7 @@
  */
 package org.opendatakit.sync.service;
 
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.logging.WebLogger;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -30,7 +30,7 @@ public final class SyncNotification {
   private final NotificationManager notificationManager;
 
   private SyncProgressEvent progressStatus;
-  private Notification.Builder builder;
+  private final Notification.Builder builder;
 
   public SyncNotification(Context context, String appName) {
     this.cntxt = context;

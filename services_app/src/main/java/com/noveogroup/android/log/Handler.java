@@ -39,7 +39,7 @@ public interface Handler {
      * @param level the level.
      * @return Are messages with this level allowed to be logged or not.
      */
-    public boolean isEnabled(Logger.Level level);
+    boolean isEnabled(Logger.Level level);
 
     /**
      * Prints a log message.
@@ -61,7 +61,7 @@ public interface Handler {
      *                      which is considered as an empty array.
      * @throws IllegalArgumentException if no format string is specified but arguments are presented.
      */
-    public void print(String loggerName, Logger.Level level,
+    void print(String loggerName, Logger.Level level,
                       Throwable throwable, String messageFormat, Object... args) throws IllegalArgumentException;
 
 }

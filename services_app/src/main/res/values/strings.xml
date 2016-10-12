@@ -124,6 +124,8 @@
     <string name="sync_table_data_sync_pending_attachments">Partially completed sync of %1$s dataset with server. Not all attachments synced.</string>
     <string name="sync_table_data_sync_with_conflicts">Partially completed sync of %1$s dataset with server. Resolve conflicts and resync.</string>
     <string name="sync_table_contains_checkpoints">Checkpoints must be resolved before sync can proceed.</string>
+    <string name="sync_table_erroneous_filter">Internal error when querying database.</string>
+    <string name="sync_table_erroneous_conflict_type">Internal error when resolving server data against locally conflicting row.</string>
 
     <string name="sync_verifying_app_name_on_server">Verifying server supports this user application name.</string>
     <string name="sync_obtaining_user_permissions_from_server">Retrieving user permissions from server.</string>
@@ -137,6 +139,17 @@
     <string name="sync_getting_changed_rows_on_server">Fetching %1$s dataset changes from server.</string>
     <string name="sync_anaylzing_local_row_changes">Collecting %1$s local row changes to send to server.</string>
     <string name="sync_applying_batch_server_row_changes">Applying a batch of %1$s row updates from server.</string>
+    <string name="sync_fetching_local_rows_in_batch_server_row_changes">Fetching %1$s rows matching row updates from server.</string>
+    <string name="sync_succeeded_pulling_rows_from_server">Successfully pulled all %1$s row updates from server.</string>
+    <string name="sync_failed_pulling_rows_from_server">Failed while pulling %1$s row updates from server.</string>
+
+    <string name="sync_calculating_rows_to_push_to_server">Counting row changes in %1$s to send to server.</string>
+    <string name="sync_pushing_local_row_changes_to_server">Pushing row changes in %1$s to server.</string>
+    <string name="sync_server_row_updated">Updating %1$s dataset row %2$d of %3$d on server succeeded.</string>
+    <string name="sync_server_row_update_failed">Updating %1$s dataset row %2$d of %3$d on server failed.</string>
+    <string name="sync_server_row_update_denied">Updating %1$s dataset row %2$d of %3$d on server denied.</string>
+    <string name="sync_updating_data_etag_after_push_to_server">Completed a bulk-update of %1$s on server.</string>
+    <string name="sync_completed_push_to_server">Successfully updated %1$s on server.</string>
 
     <string name="sync_upserting_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
     <string name="sync_altering_server_row">Sending %1$s dataset row %2$d of %3$d to server.</string>
@@ -145,8 +158,13 @@
     <string name="sync_uploading_attachments_server_row">Uploading %1$s attachments for row %2$d of %3$d to server.</string>
     <string name="sync_downloading_attachments_server_row">Downloading %1$s attachments for row %2$d of %3$d from server.</string>
     <string name="sync_syncing_attachments_server_row">Syncing %1$s attachments for row %2$d of %3$d with server.</string>
+    <string name="sync_attachment_no_changes">No attachments to sync for %1$s.</string>
+    <string name="sync_count_attachment_changes">Counting rows with attachments to sync for %1$s</string>
+    <string name="sync_fetch_batch_attachment_changes">Fetching first batch of rows with attachments to sync on %1$s</string>
+    <string name="sync_attachment_completed">Completed syncing attachments for %1$s.</string>
 
     <string name="sync_deleting_local_row">Deleting %1$s local dataset row %2$d of %3$d.</string>
+    <string name="sync_deferring_delete_local_row">Deferring full delete %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_updating_local_row">Updating %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_inserting_local_row">Inserting %1$s local dataset row %2$d of %3$d.</string>
     <string name="sync_marking_conflicting_local_row">Mark conflicting %1$s local dataset row %2$d of %3$d.</string>
