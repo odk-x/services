@@ -47,7 +47,7 @@ public final class SQLiteDatabaseConfiguration {
    * Each prepared-statement is between 1K - 6K, depending on the complexity of the
    * SQL statement & schema.  A large SQL cache may use a significant amount of memory.
    */
-  public static final int MAX_SQL_CACHE_SIZE = 100;
+  private static final int MAX_SQL_CACHE_SIZE = 100;
 
   /**
    * ODK appName
@@ -83,7 +83,7 @@ public final class SQLiteDatabaseConfiguration {
      *
      * Default is the value returned by {@link Locale#getDefault()}.
      */
-    public Locale locale;
+    private Locale locale;
 
     /**
      * True if foreign key constraints are enabled.
@@ -208,7 +208,7 @@ public final class SQLiteDatabaseConfiguration {
      *
      * @param other The object from which to copy the parameters.
      */
-    public void updateParametersFrom(SQLiteDatabaseConfiguration other) {
+    private void updateParametersFrom(SQLiteDatabaseConfiguration other) {
         if (other == null) {
             throw new IllegalArgumentException("other must not be null.");
         }

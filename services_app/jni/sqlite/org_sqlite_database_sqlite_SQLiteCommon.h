@@ -20,7 +20,7 @@ namespace org_opendatakit {
 void sqliteInitialize(JNIEnv* env);
 
 jlong openConnection(JNIEnv* env,
-                     const char* path, jint openFlags, const char* label,
+                     jstring pathStr, jint openFlags, jstring labelStr,
                      jboolean enableTrace, jboolean enableProfile);
 
 void closeConnection(JNIEnv* env, jlong connectionPtr);
@@ -33,11 +33,6 @@ jint bindParameterCount(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
 jboolean statementIsReadOnly(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
-jint getColumnCount(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
-
-jstring getColumnName(JNIEnv* env, jlong connectionPtr, jlong statementPtr,
-      int index);
-
 void bindNull(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index);
 
 void bindLong(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
@@ -47,10 +42,10 @@ void bindDouble(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
       jdouble value);
 
 void bindString(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
-      const jchar* value, size_t valueLength);
+      jstring valueString);
 
 void bindBlob(JNIEnv* env, jlong connectionPtr, jlong statementPtr, int index,
-      const jbyte* value, size_t valueLength);
+      jbyteArray valueArray);
 
 void resetAndClearBindings(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
@@ -65,13 +60,7 @@ jint executeForChangedRowCount(JNIEnv* env, jlong connectionPtr, jlong statement
 
 jlong executeForLastInsertedRowId(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
-jlong executeIntoCursorWindow(JNIEnv* env, jlong connectionPtr, jlong statementPtr,
-                          jobject win,
-                          jint startPos,                  /* First row to add (advisory) */
-                          jint iRowRequired,              /* Required row */
-                          jboolean countAllRows);
-
-jint getDbLookasideUsed(JNIEnv* env, jlong connectionPtr);
+jobjectArray executeIntoObjectArray(JNIEnv* env, jlong connectionPtr, jlong statementPtr);
 
 void cancel(JNIEnv* env, jlong connectionPtr);
 

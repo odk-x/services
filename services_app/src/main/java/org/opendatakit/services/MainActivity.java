@@ -23,16 +23,16 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.IAppAwareActivity;
-import org.opendatakit.common.android.database.AndroidConnectFactory;
-import org.opendatakit.common.android.fragment.AboutMenuFragment;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.sync.activities.SyncActivity;
-import org.opendatakit.common.android.activities.AppPropertiesActivity;
-import org.opendatakit.sync.activities.VerifyServerSettingsActivity;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.fragment.AboutMenuFragment;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.sync.activities.SyncActivity;
+import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
+import org.opendatakit.services.sync.activities.VerifyServerSettingsActivity;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 

@@ -32,11 +32,6 @@ public final class SQLiteStatementInfo {
     public int numParameters;
 
     /**
-     * The names of all columns in the result set of the statement.
-     */
-    public String[] columnNames;
-
-    /**
      * True if the statement is read-only.
      */
     public boolean readOnly;
