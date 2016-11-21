@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header android:id="@+id/general_settings"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="@string/general_settings"
+            android:summary="@string/admin_access_settings">
+        <extra android:name="appName" android:value="bogus"/>
+    </header>
+
+    <header
+            android:id="@+id/admin_password_status"
+            android:fragment="org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment"
+            android:icon="@drawable/ic_vpn_key_black_24dp"
+            android:title="@string/change_admin_password"
+            android:summary="@string/admin_password_disabled">
+        <extra android:name="appName" android:value="bogus"/>
+        <extra android:name="adminMode" android:value="true"/>
+    </header>
+    <header
+            android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableServerSettingsFragment"
+            android:icon="@drawable/ic_cloud_black_24dp"
+            android:title="@string/restrict_server"
+            android:summary="@string/restrict_server_settings_summary">
+        <extra android:name="appName" android:value="bogus"/>
+        <extra android:name="adminMode" android:value="true"/>
+    </header>
+    <header android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableDeviceSettingsFragment"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="@string/restrict_device"
+            android:summary="@string/restrict_device_settings_summary">
+        <extra android:name="appName" android:value="bogus"/>
+        <extra android:name="adminMode" android:value="true"/>
+    </header>
+
+</preference-headers>

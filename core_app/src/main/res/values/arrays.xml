@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string-array name="sync_attachment_option_names">
-        <item>Fully Sync Attachments</item>
-        <item>Upload Attachments Only</item>
-        <item>Download Attachments Only</item>
-        <item>Do Not Sync Attachments</item>
-    </string-array>
-</resources>

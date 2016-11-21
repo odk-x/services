@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/user_access_preferences" >
+        <CheckBoxPreference
+            android:id="@+id/change_font_size"
+            android:defaultValue="true"
+            android:key="common.change_font_size"
+            android:title="@string/font_size" 
+            android:persistent="false" />
+
+        <CheckBoxPreference
+                android:id="@+id/change_splash_screen"
+                android:defaultValue="true"
+                android:key="common.change_splash_settings"
+                android:title="@string/admin_change_splash_settings"
+                android:persistent="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
