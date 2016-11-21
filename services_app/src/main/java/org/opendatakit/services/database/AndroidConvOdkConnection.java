@@ -140,7 +140,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
   }
 
   public void dumpDetail(StringBuilder b) {
-    WebLogger.getLogger(appName).e(getLogTag(), "dumpDetail: This has not been implemented");
+    WebLogger.getLogger(appName).i(getLogTag(), "dumpDetail: This has not been implemented");
   }
 
   private String getLogTag() {
@@ -148,11 +148,11 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
   }
 
   public void acquireReference() {
-    WebLogger.getLogger(appName).e(getLogTag(), "acquireReference: This has not been implemented");
+    WebLogger.getLogger(appName).i(getLogTag(), "acquireReference: This has not been implemented");
   }
 
   public void releaseReference() {
-    WebLogger.getLogger(appName).e(getLogTag(), "releaseReference: Check implementation");
+    WebLogger.getLogger(appName).i(getLogTag(), "releaseReference: Check implementation");
 
 //    try {
 //      commonWrapUpConnection("releaseReference");
@@ -250,7 +250,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       }
     }
     if ( !success ) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Attempting dump of all database connections");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Attempting dump of all database connections");
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().dumpInfo(true);
     }
   }
@@ -305,7 +305,8 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     if (values != null && values.size() != 0) {
       for (Map.Entry<String, Object> entry : values.entrySet()) {
         Object obj = entry.getValue();
-        if (obj instanceof String) {cv.put(entry.getKey(),(String)entry.getValue());}
+        if (obj == null) {cv.putNull(entry.getKey());}
+        else if (obj instanceof String) {cv.put(entry.getKey(),(String)entry.getValue());}
         else if (obj instanceof Integer) {cv.put(entry.getKey(), (Integer)entry.getValue());}
         else if (obj instanceof Boolean) {cv.put(entry.getKey(), (Boolean)entry.getValue());}
         else if (obj instanceof Double) {cv.put(entry.getKey(), (Double)entry.getValue());}
@@ -365,7 +366,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("...)");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Update command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Update command issued");
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -373,14 +374,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       String [] stringWhereArgs = this.convertObjArrayToStringArray(whereArgs);
       return internalUpdate(table, cvValues, whereClause, stringWhereArgs);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during update command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during update command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of update command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of update command");
     }
   }
 
@@ -409,7 +410,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("...)");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Delete command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Delete command issued");
 
     try {
       // invoke method
@@ -420,14 +421,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       }
       return internalDelete(table, whereClause, stringWhereArgs);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during delete command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during delete command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of delete command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of delete command");
     }
   }
 
@@ -450,7 +451,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("\"").append(nullColumnHack).append("\",...)");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "replaceOrThrow command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "replaceOrThrow command issued");
 
     try {
       // invoke method
@@ -458,14 +459,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       ContentValues cvInitValues = convertMapToContentValue(initialValues);
       return internalReplaceOrThrow(table, nullColumnHack, cvInitValues);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during replaceOrThrow command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during replaceOrThrow command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of replaceOrThrow command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of replaceOrThrow command");
     }
   }
 
@@ -489,7 +490,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("\"").append(nullColumnHack).append("\",...)");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "insertOrThrow command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "insertOrThrow command issued");
 
     try {
       // invoke method
@@ -497,128 +498,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       ContentValues cvValues = convertMapToContentValue(values);
       return internalInsertOrThrow(table, nullColumnHack, cvValues);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during insertOrThrow command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during insertOrThrow command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of insertOrThrow command");
-    }
-  }
-
-  public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
-    StringBuilder b = new StringBuilder();
-    b.append("delete(\"").append(table).append("\",...,");
-    if ( whereClause == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(whereClause).append("\",");
-    }
-    if ( whereArgs == null ) {
-      b.append("null)");
-    } else {
-      b.append("...)");
-    }
-    try {
-      synchronized (mutex) {
-        return db.update(table, values, whereClause, whereArgs);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
-  }
-
-  public int delete(String table, String whereClause, String[] whereArgs) {
-    StringBuilder b = new StringBuilder();
-    b.append("delete(\"").append(table).append("\",");
-    if ( whereClause == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(whereClause).append("\",");
-    }
-    if ( whereArgs == null ) {
-      b.append("null)");
-    } else {
-      b.append("...)");
-    }
-     try {
-       synchronized (mutex) {
-         return db.delete(table, whereClause, whereArgs);
-       }
-     } catch ( Throwable t ) {
-        if ( t instanceof SQLiteException ) {
-          throw t;
-        } else {
-          throw new SQLiteException("unexpected", t);
-        }
-     }
-  }
-
-  public long replaceOrThrow(String table, String nullColumnHack, ContentValues initialValues)
-      throws SQLException {
-     StringBuilder b = new StringBuilder();
-     b.append("replaceOrThrow(\"").append(table).append("\",");
-     if ( nullColumnHack == null ) {
-        b.append("null,...)");
-     } else {
-        b.append("\"").append(nullColumnHack).append("\",...)");
-     }
-     try {
-       synchronized (mutex) {
-         return db.replaceOrThrow(table, nullColumnHack, initialValues);
-       }
-     } catch ( Throwable t ) {
-       if ( t instanceof SQLiteException ) {
-         throw t;
-       } else {
-         throw new SQLiteException("unexpected", t);
-       }
-     }
-  }
-
-  public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
-      throws SQLException {
-    StringBuilder b = new StringBuilder();
-    b.append("insertOrThrow(\"").append(table).append("\",");
-    if ( nullColumnHack == null ) {
-      b.append("null,...)");
-    } else {
-      b.append("\"").append(nullColumnHack).append("\",...)");
-    }
-    try {
-      synchronized (mutex) {
-        return db.insertOrThrow(table, nullColumnHack, values);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
-  }
-
-  // Added for execSQL with null arguments
-  public void execSQL(String sql) throws SQLException {
-    StringBuilder b = new StringBuilder();
-    b.append("execSQL(\"").append(sql);
-    try {
-      synchronized (mutex) {
-        OdkDatabaseService.possiblyWaitForDatabaseServiceDebugger();
-        db.execSQL(sql);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of insertOrThrow command");
     }
   }
 
@@ -668,7 +555,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("...)");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "rawQuery command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "rawQuery command issued");
 
     try {
       // invoke method
@@ -679,14 +566,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       }
       return internalRawQuery(sql, stringSelArgs);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during rawQuery command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during rawQuery command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of rawQuery command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of rawQuery command");
     }
   }
 
@@ -740,7 +627,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("\"").append(limit).append("\")");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "query command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "query command issued");
 
     try {
       // invoke method
@@ -753,14 +640,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       return internalQuery(table, columns, selection, stringSelArgs, groupBy, having, orderBy,
               limit);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during query command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during query command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of query command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of query command");
     }
   }
 
@@ -816,7 +703,7 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
     } else {
       b.append("\"").append(limit).append("\")");
     }
-    WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "queryDistinct command issued");
+    WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "queryDistinct command issued");
 
     try {
       // invoke method
@@ -829,141 +716,14 @@ public final class AndroidConvOdkConnection implements OdkConnectionInterface {
       return internalQueryDistinct(table, columns, selection, stringSelArgs, groupBy, having,
               orderBy, limit);
     } catch (Throwable t) {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "Throwable caught during queryDistinct command");
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "Throwable caught during queryDistinct command");
       if (t instanceof org.sqlite.database.sqlite.SQLiteException) {
         throw t;
       } else {
         throw new org.sqlite.database.sqlite.SQLiteException("unexpected", t);
       }
     } finally {
-      WebLogger.getLogger(appName).e("AndroidConvOdkConnection", "end of queryDistinct command");
-    }
-  }
-
-  public Cursor rawQuery(String sql, String[] selectionArgs) {
-    StringBuilder b = new StringBuilder();
-    b.append("rawQuery(\"").append(sql).append("\",");
-    if ( selectionArgs == null ) {
-      b.append("null)");
-    } else {
-      b.append("...)");
-    }
-    try {
-      synchronized (mutex) {
-        return db.rawQuery(sql, selectionArgs);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
-  }
-
-  public Cursor query(String table, String[] columns, String selection, String[] selectionArgs,
-    String groupBy, String having, String orderBy, String limit) {
-    StringBuilder b = new StringBuilder();
-    b.append("query(\"").append(table).append("\",");
-    if ( columns == null ) {
-      b.append("null,");
-    } else {
-      b.append("...,");
-    }
-    if ( selection == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(selection).append("\",");
-    }
-    if ( selectionArgs == null ) {
-      b.append("null,");
-    } else {
-      b.append("...,");
-    }
-    if ( groupBy == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(groupBy).append("\",");
-    }
-    if ( having == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(having).append("\",");
-    }
-    if ( orderBy == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(orderBy).append("\",");
-    }
-    if ( limit == null ) {
-      b.append("null)");
-    } else {
-      b.append("\"").append(limit).append("\")");
-    }
-    try {
-      synchronized (mutex) {
-        return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
-    }
-  }
-
-  public Cursor queryDistinct(String table, String[] columns, String selection,
-      String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
-    StringBuilder b = new StringBuilder();
-    b.append("queryDistinct(\"").append(table).append("\",");
-    if ( columns == null ) {
-      b.append("null,");
-    } else {
-      b.append("...,");
-    }
-    if ( selection == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(selection).append("\",");
-    }
-    if ( selectionArgs == null ) {
-      b.append("null,");
-    } else {
-      b.append("...,");
-    }
-    if ( groupBy == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(groupBy).append("\",");
-    }
-    if ( having == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(having).append("\",");
-    }
-    if ( orderBy == null ) {
-      b.append("null,");
-    } else {
-      b.append("\"").append(orderBy).append("\",");
-    }
-    if ( limit == null ) {
-      b.append("null)");
-    } else {
-      b.append("\"").append(limit).append("\")");
-    }
-
-    try {
-      synchronized (mutex) {
-        return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy,
-                 limit);
-      }
-    } catch ( Throwable t ) {
-      if ( t instanceof SQLiteException ) {
-        throw t;
-      } else {
-        throw new SQLiteException("unexpected", t);
-      }
+      WebLogger.getLogger(appName).i("AndroidConvOdkConnection", "end of queryDistinct command");
     }
   }
 }

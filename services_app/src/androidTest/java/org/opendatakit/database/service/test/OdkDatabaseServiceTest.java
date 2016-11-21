@@ -881,156 +881,156 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
    
-   public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
-      final int NUM_ROWS = 10000;
-      UserDbInterface serviceInterface = bindToDbService();
-      if (false) {
-         return;
-      }
-      try {
+//   public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
+//      final int NUM_ROWS = 10000;
+//      UserDbInterface serviceInterface = bindToDbService();
+//      if (false) {
+//         return;
+//      }
+//      try {
+//
+//         List<Column> columnList = createColumnList();
+//         ColumnList colList = new ColumnList(columnList);
+//
+//         DbHandle db = serviceInterface.openDatabase(APPNAME);
+//         Log.i("openDatabase", "testDbCreateNDeleteLargeTable: " + db.getDatabaseHandle());
+//
+//         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+//
+//         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+//
+//         Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
+//         for (int i = 0; i < NUM_ROWS; i++) {
+//            if ( i %100 == 0 ) {
+//               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: inserting row " + i );
+//            }
+//
+//            UUID rowId = UUID.randomUUID();
+//            rowIds.add(rowId);
+//
+//            // insert row
+//            serviceInterface
+//                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSeti(i),
+//                    rowId.toString());
+//         }
+//
+//         UserTable table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+//             null, null, null, null, null, null, null);
+//
+//         assertEquals(DB_TABLE_ID, table.getTableId());
+//         assertEquals(NUM_ROWS, table.getNumberOfRows());
+//         Row row = table.getRowAtIndex(0);
+//
+//         verifyRowTestSeti(row, 0);
+//
+//         // delete row
+//         Iterator<UUID> rowIdIterator = rowIds.iterator();
+//         for (int i = 0; i < NUM_ROWS; i++) {
+//            if ( i %100 == 0 ) {
+//               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
+//            }
+//
+//            UUID rowId = rowIdIterator.next();
+//            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+//         }
+//
+//         table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+//             null, null, null, null, null, null, null);
+//         assertEquals(DB_TABLE_ID, table.getTableId());
+//         assertEquals(0, table.getNumberOfRows());
+//
+//         // clean up
+//         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+//
+//         // verify no tables left
+//         assertTrue(hasNoTablesInDb(serviceInterface, db));
+//         serviceInterface.closeDatabase(APPNAME, db);
+//      } catch (ServicesAvailabilityException e) {
+//         e.printStackTrace();
+//         fail(e.getMessage());
+//      }
+//   }
 
-         List<Column> columnList = createColumnList();
-         ColumnList colList = new ColumnList(columnList);
-
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLargeTable: " + db.getDatabaseHandle());
-
-         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
-
-         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
-
-         Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
-         for (int i = 0; i < NUM_ROWS; i++) {
-            if ( i %100 == 0 ) {
-               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: inserting row " + i );
-            }
-
-            UUID rowId = UUID.randomUUID();
-            rowIds.add(rowId);
-
-            // insert row
-            serviceInterface
-                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSeti(i),
-                    rowId.toString());
-         }
-
-         UserTable table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null, null, null);
-
-         assertEquals(DB_TABLE_ID, table.getTableId());
-         assertEquals(NUM_ROWS, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
-
-         verifyRowTestSeti(row, 0);
-
-         // delete row
-         Iterator<UUID> rowIdIterator = rowIds.iterator();
-         for (int i = 0; i < NUM_ROWS; i++) {
-            if ( i %100 == 0 ) {
-               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
-            }
-
-            UUID rowId = rowIdIterator.next();
-            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
-         }
-
-         table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null, null, null);
-         assertEquals(DB_TABLE_ID, table.getTableId());
-         assertEquals(0, table.getNumberOfRows());
-
-         // clean up
-         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
-
-         // verify no tables left
-         assertTrue(hasNoTablesInDb(serviceInterface, db));
-         serviceInterface.closeDatabase(APPNAME, db);
-      } catch (ServicesAvailabilityException e) {
-         e.printStackTrace();
-         fail(e.getMessage());
-      }
-   }
-
-   public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
-       throws ActionNotAuthorizedException {
-      final int NUM_ROWS = 2500;
-      UserDbInterface serviceInterface = bindToDbService();
-      if (false) {
-         return;
-      }
-      try {
-
-         List<Column> columnList = createManyColumnList();
-         ColumnList colList = new ColumnList(columnList);
-
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase",
-             "testDbCreateNVerifyNDeleteLargeTableManyColumns: " + db.getDatabaseHandle());
-
-         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
-
-         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
-
-         Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
-         for (int i = 0; i < NUM_ROWS; i++) {
-            if ( i %100 == 0 ) {
-               Log.i("openDatabase", "testDbCreateNVerifyNDeleteLargeTableManyColumns: inserting row " + i );
-            }
-
-            UUID rowId = UUID.randomUUID();
-            rowIds.add(rowId);
-
-            // insert row
-            serviceInterface
-                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
-                    contentValuesTestSetManyColumns(i), rowId.toString());
-         }
-
-         UserTable table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null, null, null);
-         UserTable table2 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null, null, null);
-
-         assertEquals(DB_TABLE_ID, table1.getTableId());
-         assertEquals(DB_TABLE_ID, table2.getTableId());
-         assertEquals(NUM_ROWS, table1.getNumberOfRows());
-         assertEquals(NUM_ROWS, table2.getNumberOfRows());
-
-         for (int i = 0; i < NUM_ROWS; i++) {
-            Row row1 = table1.getRowAtIndex(i);
-            veriftyRowTestSetManyColumns(row1, i);
-
-            Row row2 = table2.getRowAtIndex(i);
-            veriftyRowTestSetManyColumns(row2, i);
-         }
-
-         // delete row
-         Iterator<UUID> rowIdIterator = rowIds.iterator();
-         for (int i = 0; i < NUM_ROWS; i++) {
-            if ( i %100 == 0 ) {
-               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
-            }
-
-            UUID rowId = rowIdIterator.next();
-            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
-         }
-
-         table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
-             null, null, null, null, null, null, null);
-         assertEquals(DB_TABLE_ID, table1.getTableId());
-         assertEquals(0, table1.getNumberOfRows());
-
-         // clean up
-         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
-
-         // verify no tables left
-         assertTrue(hasNoTablesInDb(serviceInterface, db));
-         serviceInterface.closeDatabase(APPNAME, db);
-      } catch (ServicesAvailabilityException e) {
-         e.printStackTrace();
-         fail(e.getMessage());
-      }
-   }
+//   public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
+//       throws ActionNotAuthorizedException {
+//      final int NUM_ROWS = 2500;
+//      UserDbInterface serviceInterface = bindToDbService();
+//      if (false) {
+//         return;
+//      }
+//      try {
+//
+//         List<Column> columnList = createManyColumnList();
+//         ColumnList colList = new ColumnList(columnList);
+//
+//         DbHandle db = serviceInterface.openDatabase(APPNAME);
+//         Log.i("openDatabase",
+//             "testDbCreateNVerifyNDeleteLargeTableManyColumns: " + db.getDatabaseHandle());
+//
+//         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+//
+//         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+//
+//         Set<UUID> rowIds = new HashSet<>(NUM_ROWS);
+//         for (int i = 0; i < NUM_ROWS; i++) {
+//            if ( i %100 == 0 ) {
+//               Log.i("openDatabase", "testDbCreateNVerifyNDeleteLargeTableManyColumns: inserting row " + i );
+//            }
+//
+//            UUID rowId = UUID.randomUUID();
+//            rowIds.add(rowId);
+//
+//            // insert row
+//            serviceInterface
+//                .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+//                    contentValuesTestSetManyColumns(i), rowId.toString());
+//         }
+//
+//         UserTable table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+//             null, null, null, null, null, null, null);
+//         UserTable table2 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+//             null, null, null, null, null, null, null);
+//
+//         assertEquals(DB_TABLE_ID, table1.getTableId());
+//         assertEquals(DB_TABLE_ID, table2.getTableId());
+//         assertEquals(NUM_ROWS, table1.getNumberOfRows());
+//         assertEquals(NUM_ROWS, table2.getNumberOfRows());
+//
+//         for (int i = 0; i < NUM_ROWS; i++) {
+//            Row row1 = table1.getRowAtIndex(i);
+//            veriftyRowTestSetManyColumns(row1, i);
+//
+//            Row row2 = table2.getRowAtIndex(i);
+//            veriftyRowTestSetManyColumns(row2, i);
+//         }
+//
+//         // delete row
+//         Iterator<UUID> rowIdIterator = rowIds.iterator();
+//         for (int i = 0; i < NUM_ROWS; i++) {
+//            if ( i %100 == 0 ) {
+//               Log.i("openDatabase", "testDbCreateNDeleteLargeTable: deleting row " + i );
+//            }
+//
+//            UUID rowId = rowIdIterator.next();
+//            serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+//         }
+//
+//         table1 = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
+//             null, null, null, null, null, null, null);
+//         assertEquals(DB_TABLE_ID, table1.getTableId());
+//         assertEquals(0, table1.getNumberOfRows());
+//
+//         // clean up
+//         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+//
+//         // verify no tables left
+//         assertTrue(hasNoTablesInDb(serviceInterface, db));
+//         serviceInterface.closeDatabase(APPNAME, db);
+//      } catch (ServicesAvailabilityException e) {
+//         e.printStackTrace();
+//         fail(e.getMessage());
+//      }
+//   }
 
    public void testDbUpdateWTwoServiceConnections() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface1 = bindToDbService();
