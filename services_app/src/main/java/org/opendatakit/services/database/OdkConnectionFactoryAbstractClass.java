@@ -43,11 +43,6 @@ import java.nio.channels.FileLock;
 public abstract class OdkConnectionFactoryAbstractClass implements OdkConnectionFactoryInterface {
 
   /**
-   * the database schema version that the application expects
-   */
-  private static final int mNewVersion = 1;
-
-  /**
    * object for guarding appNameSharedStateMap
    * <p/>
    * That map never has its contents removed, so once an AppNameSharedStateContainer
@@ -231,7 +226,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
           dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
 
           // Now run initialization
-          dbConnection = initDatabase(sessionQualifier, dbConnection, appName);
+          dbConnection = initDatabase(dbConnection, appName);
         } else {
           // We add connection to map and are done with it
           dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
@@ -267,27 +262,24 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     return dbConnection;
   }
 
-  private OdkConnectionInterface initDatabase(String sessionQualifier, OdkConnectionInterface dbConnection, String appName) {
+  private OdkConnectionInterface initDatabase(OdkConnectionInterface dbConnection, String appName) {
     boolean initSuccessful = false;
     try {
       dbConnection.beginTransactionExclusive();
       try {
+        logInfo(appName, "initDatabase -- for " + appName);
         int version = dbConnection.getVersion();
-        if (version != mNewVersion) {
+        if (version != AndroidConnectFactory.getDbVersion()) {
           if (version == 0) {
-            logInfo(appName, "getNewConnectionImpl -- Invoking onCreate for " + appName +
-                    " " + sessionQualifier);
-            onCreate(dbConnection);
+            // custom DB only -- native DB will have already set this value.
+            dbConnection.setVersion(AndroidConnectFactory.getDbVersion());
           } else {
-            logInfo(appName, "getNewConnectionImpl -- Invoking onUpgrade for " + appName +
-                    " " + sessionQualifier);
-            onUpgrade(dbConnection, version, mNewVersion);
+            throw new IllegalStateException(
+                "Database version does not match expected custom / native database layer");
           }
-          dbConnection.setVersion(mNewVersion);
-          dbConnection.setTransactionSuccessful();
-        } else {
-          dbConnection.setTransactionSuccessful();
         }
+        ODKDatabaseImplUtils.initializeDatabase(dbConnection);
+        dbConnection.setTransactionSuccessful();
       } finally {
         dbConnection.endTransaction();
       }
@@ -296,8 +288,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       if ( !initSuccessful ) {
         try {
           logInfo(appName,
-                  "getNewConnectionImpl -- " + appName +
-                          " " + sessionQualifier + " -- removing session on database");
+                  "getNewConnectionImpl -- " + appName + " -- removing session on database");
           // -1 to let go of +1 from creation or retrieval via getExisting()
           dbConnection.releaseReference();
         } finally {
@@ -609,36 +600,4 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
       removeAllConnections(appName);
     }
   }
-
-  /**
-   * Called when the database is created for the first time. This is where the
-   * creation of tables and the initial population of the tables should happen.
-   *
-   * @param db The database.
-   */
-  protected final void onCreate(OdkConnectionInterface db) {
-    ODKDatabaseImplUtils.initializeDatabase(db);
-  }
-
-  /**
-   * Called when the database needs to be upgraded. The implementation should
-   * use this method to drop tables, add tables, or do anything else it needs to
-   * upgrade to the new schema version.
-   * <p/>
-   * The SQLite ALTER TABLE documentation can be found <a
-   * href="http://sqlite.org/lang_altertable.html">here</a>. If you add new
-   * columns you can use ALTER TABLE to insert them into a live table. If you
-   * rename or remove columns you can use ALTER TABLE to rename the old table,
-   * then create the new table and then populate the new table with the contents
-   * of the old table.
-   *
-   * @param db         The database.
-   * @param oldVersion The old database version.
-   * @param newVersion The new database version.
-   */
-  protected final void onUpgrade(OdkConnectionInterface db, int oldVersion, int newVersion) {
-    // for now, upgrade and creation use the same codepath...
-    ODKDatabaseImplUtils.initializeDatabase(db);
-  }
-
 }

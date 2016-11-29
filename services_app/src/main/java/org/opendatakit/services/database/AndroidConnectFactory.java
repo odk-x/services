@@ -38,6 +38,13 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractCl
     // just to get the static initialization block (above) to run
   }
 
+  /**
+   * @return the database schema version that the application expects
+   */
+  public static int getDbVersion() {
+    return 1;
+  }
+
   private AndroidConnectFactory() {
   }
 
