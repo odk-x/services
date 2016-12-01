@@ -24,7 +24,7 @@ android {
         minSdkVersion(minVersion)
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
-        versionName(versionCodeName)
+        versionName(versionCodeName + " builtinDB")
     }
 
     productFlavors {
