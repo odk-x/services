@@ -68,6 +68,10 @@ android {
         }
     }
 
+    dexOptions {
+        javaMaxHeapSize "2g"
+    }
+
     lintOptions {
         disable 'InvalidPackage'
     }
