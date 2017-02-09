@@ -177,7 +177,7 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
    * @return
    * @throws SQLiteException
    */
-  private final OdkConnectionInterface getNewConnectionImpl(
+  private synchronized final OdkConnectionInterface getNewConnectionImpl(
           AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier)
           throws SQLiteException, IllegalAccessException {
 
@@ -197,41 +197,41 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     File dbFile = null;
     FileLock fileLock = null;
     try {
-      if (!lockfile.exists()) {
-        lockfile.createNewFile();
-      }
+        if (!lockfile.exists()) {
+          lockfile.createNewFile();
+        }
 
       RandomAccessFile raf = new RandomAccessFile(lockfile, "rw");
 
       fileLock = raf.getChannel().lock();
 
-      if (fileLock != null) {
-        if (fileLock.isShared()) {
-          throw new IllegalArgumentException("DB lock file cannot be shared");
+        if (fileLock != null) {
+          if (fileLock.isShared()) {
+            throw new IllegalArgumentException("DB lock file cannot be shared");
+          }
+
+          // Now write a number to the file
+          long ms = System.currentTimeMillis();
+          raf.writeLong(ms);
+
+          // Now that we know we have a good lock
+          // check that sqlite.db exists
+          String dbFileName = getDbFilePath(appName);
+          dbFile = new File(dbFileName);
+
+          // If it doesn't exist, then we need to
+          // create it and initialize it!!
+          if (!dbFile.exists()) {
+            // Attempt to open the database
+            dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
+
+            // Now run initialization
+            dbConnection = initDatabase(dbConnection, appName);
+          } else {
+            // We add connection to map and are done with it
+            dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
+          }
         }
-
-        // Now write a number to the file
-        long ms = System.currentTimeMillis();
-        raf.writeLong(ms);
-
-        // Now that we know we have a good lock
-        // check that sqlite.db exists
-        String dbFileName = getDbFilePath(appName);
-        dbFile = new File(dbFileName);
-
-        // If it doesn't exist, then we need to
-        // create it and initialize it!!
-        if (!dbFile.exists()) {
-          // Attempt to open the database
-          dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
-
-          // Now run initialization
-          dbConnection = initDatabase(dbConnection, appName);
-        } else {
-          // We add connection to map and are done with it
-          dbConnection = attemptToOpenDb(appNameSharedStateContainer, sessionQualifier);
-        }
-      }
 
       if (dbConnection != null) {
         OdkConnectionInterface dbConnectionExisting = null;
