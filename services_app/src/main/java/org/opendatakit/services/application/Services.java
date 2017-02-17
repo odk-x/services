@@ -14,10 +14,10 @@
 
 package org.opendatakit.services.application;
 
-import org.opendatakit.application.AppAwareApplication;
+import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 
-public class Services extends AppAwareApplication {
+public class Services extends ToolAwareApplication {
 
   private static Services singleton = null;
 

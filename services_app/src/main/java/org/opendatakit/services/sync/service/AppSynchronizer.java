@@ -18,7 +18,7 @@ package org.opendatakit.services.sync.service;
 import android.app.Service;
 
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.application.AppAwareApplication;
+import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -68,7 +68,7 @@ public class AppSynchronizer {
 
   public synchronized boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
     if (curThread == null) {
-      curTask = new SyncTask(((AppAwareApplication) service.getApplication()), push,
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()), push,
           attachmentState);
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
@@ -81,7 +81,7 @@ public class AppSynchronizer {
 
   public synchronized boolean verifyServerSettings() {
     if (curThread == null) {
-      curTask = new SyncTask(((AppAwareApplication) service.getApplication()));
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()));
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
@@ -142,19 +142,19 @@ public class AppSynchronizer {
 
   private class SyncTask implements Runnable {
 
-    private AppAwareApplication application;
+    private ToolAwareApplication application;
     private final boolean onlyVerifySettings;
     private final boolean push;
     private final SyncAttachmentState attachmentState;
 
-    public SyncTask(AppAwareApplication application) {
+    public SyncTask(ToolAwareApplication application) {
       this.application = application;
       this.onlyVerifySettings = true;
       this.push = false;
       this.attachmentState = SyncAttachmentState.NONE;
     }
 
-    public SyncTask(AppAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
+    public SyncTask(ToolAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
       this.application = application;
       this.onlyVerifySettings = false;
       this.push = push;
