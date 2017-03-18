@@ -294,6 +294,13 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             values.put(DataTableColumns.FILTER_TYPE,
                 (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
             values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+
+            RowFilterScope.GroupType groupType = serverRow.getRowFilterScope().getGroupType();
+            values.put(DataTableColumns.GROUP_TYPE,
+                    (type == null) ? RowFilterScope.GroupType.DEFAULT.name() : groupType.name());
+            values.put(DataTableColumns.GROUPS_LIST, serverRow.getRowFilterScope().getGroupsList());
+            values.put(DataTableColumns.FILTER_EXT, serverRow.getRowFilterScope().getExt());
+
             values.putNull(DataTableColumns.CONFLICT_TYPE);
 
             sc.getDatabaseService().privilegedInsertRowWithId(sc.getAppName(), db,

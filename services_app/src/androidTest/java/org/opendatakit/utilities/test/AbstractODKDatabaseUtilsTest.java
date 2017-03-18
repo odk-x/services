@@ -3376,6 +3376,9 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     updates.put(DataTableColumns.SAVEPOINT_CREATOR, "mailto:server@gmail.com");
     updates.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     updates.put(DataTableColumns.FILTER_VALUE, "mailto:server@gmail.com");
+    updates.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    updates.putNull(DataTableColumns.GROUPS_LIST);
+    updates.putNull(DataTableColumns.FILTER_EXT);
 
     // Place row in conflict
     int conflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;

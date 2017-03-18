@@ -329,6 +329,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
 
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
+
     // first -- insert row as "new_row" with no rowETag
     cvValues.put(DataTableColumns.ROW_ETAG, "server content");
     cvValues.put(DataTableColumns.SYNC_STATE, (isServerRowDeleted ?
@@ -461,26 +465,41 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewConflictInsert(tableId, orderedColumns, cvValues,
         rowIdDefaultNull, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewConflictInsert(tableId, orderedColumns, cvValues,
         rowIdDefaultCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewConflictInsert(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewConflictInsert(tableId, orderedColumns, cvValues,
         rowIdReadOnlyCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewConflictInsert(tableId, orderedColumns, cvValues,
         rowIdModifyCommon, commonUser, currentLocale);
 
@@ -509,6 +528,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
+
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdDefaultCommonNew, commonUser, currentLocale);
 
@@ -519,26 +542,41 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdDefaultNull, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdDefaultCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdReadOnlyCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     spewInsert(tableId, orderedColumns, cvValues,
         rowIdModifyCommon, commonUser, currentLocale);
 
@@ -581,6 +619,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdDefaultNull.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
@@ -589,6 +630,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdDefaultCommon.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
@@ -597,6 +641,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdHiddenCommon.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdHiddenCommon,
@@ -605,6 +652,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdReadOnlyCommon.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdReadOnlyCommon,
@@ -613,6 +663,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdModifyCommon.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdModifyCommon,
@@ -641,6 +694,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.putNull(DataTableColumns.FILTER_VALUE);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
 
     if ( rowIdDefaultNull.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
@@ -656,6 +712,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.DEFAULT.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdDefaultCommon.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()
@@ -670,6 +729,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdHiddenCommon.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()
@@ -684,6 +746,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.READ_ONLY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdReadOnlyCommon.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()
@@ -698,6 +763,9 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
     cvValues.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.MODIFY.name());
     cvValues.put(DataTableColumns.FILTER_VALUE, commonUser);
+    cvValues.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
+    cvValues.putNull(DataTableColumns.GROUPS_LIST);
+    cvValues.putNull(DataTableColumns.FILTER_EXT);
     if ( rowIdModifyCommon.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()

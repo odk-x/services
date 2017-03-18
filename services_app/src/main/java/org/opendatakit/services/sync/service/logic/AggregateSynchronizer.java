@@ -526,7 +526,9 @@ public class AggregateSynchronizer implements Synchronizer {
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
           RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.FILTER_TYPE),
-              rowToAlter.getDataByKey(DataTableColumns.FILTER_VALUE)),
+              rowToAlter.getDataByKey(DataTableColumns.FILTER_VALUE), rowToAlter.getDataByKey
+                  (DataTableColumns.GROUP_TYPE), rowToAlter.getDataByKey(DataTableColumns
+                  .GROUPS_LIST), rowToAlter.getDataByKey(DataTableColumns.FILTER_EXT)),
           values);
 
       boolean isDeleted = SyncState.deleted.name().equals(
