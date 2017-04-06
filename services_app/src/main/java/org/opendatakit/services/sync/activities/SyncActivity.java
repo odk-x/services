@@ -265,6 +265,12 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
       startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
       return true;
     }
+
+    if (id == R.id.action_logout) {
+
+      getProps().clearActiveUser();
+      return true;
+    }
     return super.onOptionsItemSelected(item);
   }
 

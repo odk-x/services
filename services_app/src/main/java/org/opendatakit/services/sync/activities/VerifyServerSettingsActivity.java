@@ -246,6 +246,7 @@ public class VerifyServerSettingsActivity extends Activity implements IAppAwareA
   public boolean onPrepareOptionsMenu(Menu menu) {
     menu.findItem(R.id.action_sync).setVisible(false);
     menu.findItem(R.id.action_verify_server_settings).setVisible(false);
+    menu.findItem(R.id.action_logout).setVisible(false);
     return super.onPrepareOptionsMenu(menu);
   }
 
