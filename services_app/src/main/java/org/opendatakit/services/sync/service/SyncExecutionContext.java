@@ -280,21 +280,23 @@ public class SyncExecutionContext implements SynchronizerStatus {
     try {
       db = getDatabase();
 
+      String rawDisplayName = null;
+
       List<KeyValueStoreEntry> displayNameList =
           getDatabaseService().getTableMetadata(appName, db, tableId,
               KeyValueStoreConstants.PARTITION_TABLE,
               KeyValueStoreConstants.ASPECT_DEFAULT,
               KeyValueStoreConstants.TABLE_DISPLAY_NAME, null).getEntries();
-      if ( displayNameList.size() != 1 ) {
-        return NameUtil.constructSimpleDisplayName(tableId);
+      if ( displayNameList.size() == 1 ) {
+        rawDisplayName = displayNameList.get(0).value;
       }
 
-      String rawDisplayName = displayNameList.get(0).value;
       if ( rawDisplayName == null ) {
-        return NameUtil.constructSimpleDisplayName(tableId);
+        rawDisplayName = NameUtil.constructSimpleDisplayName(tableId);
       }
 
-      String displayName = LocalizationUtils.getLocalizedDisplayName(rawDisplayName);
+      String displayName = LocalizationUtils.getLocalizedDisplayName(appName, tableId,
+          rawDisplayName);
       return displayName;
     } finally {
       releaseDatabase(db);

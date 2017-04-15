@@ -178,7 +178,8 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       ElementType elementType = cd.getType();
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
-        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(columnDisplayName);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, columnDisplayName);
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }
