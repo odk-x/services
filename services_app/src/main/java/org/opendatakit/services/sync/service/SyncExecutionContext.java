@@ -275,8 +275,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     }
   }
 
-  public String getTableDisplayName(String tableId) throws ServicesAvailabilityException {
-    DbHandle db = null;
+  public String getTableDisplayName(String tableId) throws
+      ServicesAvailabilityException {
+     PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+     String locale = props.getUserSelectedDefaultLocale();
+     DbHandle db = null;
     try {
       db = getDatabase();
 
@@ -296,7 +300,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
       }
 
       String displayName = LocalizationUtils.getLocalizedDisplayName(appName, tableId,
-          rawDisplayName);
+          locale, rawDisplayName);
       return displayName;
     } finally {
       releaseDatabase(db);

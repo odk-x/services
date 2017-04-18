@@ -295,6 +295,9 @@
     <string name="device">Device Settings</string>
     <string name="device_restrictions_apply">Device Settings (non-Admin restrictions apply)</string>
 
+    <string name="default_locale">Default Locale</string>
+    <string name="change_default_locale">Change Default Locale</string>
+    <string name="system_locale">Device Locale (%1$s)</string>
     <string name="font_size">Text Font Size</string>
     <string name="change_font_size">Text Font Size</string>
 

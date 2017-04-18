@@ -82,6 +82,7 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
     PropertiesSingleton props =
         CommonToolProperties.get(getContext(), mAppName);
     String activeUser = props.getActiveUser();
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
     OdkConnectionInterface db = null;
 
@@ -194,7 +195,7 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
-            mTableId, columnDisplayName);
+            mTableId, userSelectedDefaultLocale, columnDisplayName);
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }

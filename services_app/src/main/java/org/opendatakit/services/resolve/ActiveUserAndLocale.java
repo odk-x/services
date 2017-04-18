@@ -39,6 +39,6 @@ public class ActiveUserAndLocale {
 
     return new ActiveUserAndLocale(props.getActiveUser(),
         props.getProperty(CommonToolProperties.KEY_ROLES_LIST),
-        props.getLocale());
+        props.getUserSelectedDefaultLocale());
   }
 }

@@ -16,6 +16,7 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.LoaderManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -42,7 +43,11 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
     OnPreferenceChangeListener {
 
   private static final String t = "DeviceSettingsFragment";
+  private static final int LOADER_ID = 3;
 
+  private String mAppName;
+
+  private CommonTranslationsLocaleScreen mDefaultTranslationPreference;
   private ListPreference mFontSizePreference;
 
   private CheckBoxPreference mShowSplashPreference;
@@ -52,7 +57,12 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    mAppName = this.getActivity().getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+    if (mAppName == null || mAppName.length() == 0) {
+      mAppName = ODKFileUtils.getOdkDefaultAppName();
+    }
+
+    PropertiesSingleton props = CommonToolProperties.get(this.getActivity(), mAppName);
 
     addPreferencesFromResource(R.xml.device_preferences);
 
@@ -69,6 +79,37 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
 
     PreferenceCategory deviceCategory = (PreferenceCategory) findPreference
         (CommonToolProperties.GROUPING_DEVICE_CATEGORY);
+
+    mDefaultTranslationPreference = (CommonTranslationsLocaleScreen) findPreference(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE);
+    final Bundle b = new Bundle();
+    b.putString(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+    this.getLoaderManager().initLoader(LOADER_ID, b, mDefaultTranslationPreference.getLoaderCallback());
+
+    mDefaultTranslationPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String stringValue = newValue.toString();
+        int index = ((CommonTranslationsLocaleScreen) preference).findIndexOfValue(stringValue);
+        String entry = (String) ((CommonTranslationsLocaleScreen) preference).getEntries()[index];
+        preference.setSummary(entry);
+
+        PropertiesSingleton props =
+            ((IOdkAppPropertiesActivity) DeviceSettingsFragment.this.getActivity()).getProps();
+        if ( stringValue == null || stringValue.length() == 0 || stringValue.equalsIgnoreCase("_")) {
+          props.removeProperty(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE);
+        } else {
+          props.setProperty(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE, stringValue);
+        }
+        // since the selection changed, we need to change the languages on the tags
+        DeviceSettingsFragment.this.getLoaderManager().restartLoader(LOADER_ID, b,
+            mDefaultTranslationPreference.getLoaderCallback());
+        return true;
+      }
+    });
+
+    mDefaultTranslationPreference.setEnabled(true);
+
 
     boolean fontAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_FONT_SIZE);
