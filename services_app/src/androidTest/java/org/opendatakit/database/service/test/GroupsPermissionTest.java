@@ -124,26 +124,37 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       return columns;
    }
 
-   private ContentValues contentValuesTestSeti(int i, String groupType, String groupsList) {
+   private ContentValues contentValuesTestSeti(int i, String groupReadOnly, String groupModify, String groupPrivileged) {
       ContentValues cv = new ContentValues();
 
       cv.put(COL_STRING_ID, TEST_STR_i + i);
       cv.put(COL_INTEGER_ID, i);
       cv.put(COL_NUMBER_ID, TEST_NUM_i + i);
-      cv.put(DataTableColumns.GROUP_TYPE, groupType);
-      cv.put(DataTableColumns.GROUPS_LIST, groupsList);
-      cv.putNull(DataTableColumns.FILTER_EXT);
+
+      if (groupReadOnly != null) {
+         cv.put(DataTableColumns.GROUP_READ_ONLY, groupReadOnly);
+      }
+
+      if (groupModify != null) {
+         cv.put(DataTableColumns.GROUP_MODIFY, groupModify);
+      }
+
+      if (groupPrivileged != null) {
+         cv.put(DataTableColumns.GROUP_PRIVILEGED, groupPrivileged);
+      }
+
       return cv;
    }
 
-   private void verifyRowTestSeti(Row row, int i, String groupType, String groupsList) {
+   private void verifyRowTestSeti(Row row, int i, String groupReadOnly, String groupModify, String groupPrivileged) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Integer.toString(i));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.toString(TEST_NUM_i + i));
-      assertEquals(groupType, row.getDataByKey(DataTableColumns.GROUP_TYPE));
-      assertEquals(groupsList, row.getDataByKey(DataTableColumns.GROUPS_LIST));
+      assertEquals(groupReadOnly, row.getDataByKey(DataTableColumns.GROUP_READ_ONLY));
+      assertEquals(groupModify, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
+      assertEquals(groupPrivileged, row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
    }
 
 
@@ -154,9 +165,9 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       cv.put(COL_STRING_ID, TEST_STR_1);
       cv.put(COL_INTEGER_ID, TEST_INT_1);
       cv.put(COL_NUMBER_ID, TEST_NUM_1);
-      cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.Type.DEFAULT.name());
-      cv.put(DataTableColumns.GROUPS_LIST, TEST_GROUP_1);
-      cv.putNull(DataTableColumns.FILTER_EXT);
+      cv.put(DataTableColumns.GROUP_READ_ONLY, RowFilterScope.Access.FULL.name());
+      cv.put(DataTableColumns.GROUP_MODIFY, TEST_GROUP_1);
+      cv.putNull(DataTableColumns.GROUP_PRIVILEGED);
 
       return cv;
    }
@@ -165,10 +176,10 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID), Integer.toString(TEST_INT_1));
       assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
-      assertEquals(row.getDataByKey(DataTableColumns.GROUP_TYPE),
-          RowFilterScope.Type.DEFAULT.name());
-      assertEquals(TEST_GROUP_1, row.getDataByKey(DataTableColumns.GROUPS_LIST));
-      assertNull(row.getDataByKey(DataTableColumns.FILTER_EXT));
+      assertEquals(row.getDataByKey(DataTableColumns.GROUP_READ_ONLY),
+              RowFilterScope.Access.FULL.name());
+      assertEquals(TEST_GROUP_1, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
+      assertNull(row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
    }
 
    private KeyValueStoreEntry lockTableProperty() {
@@ -200,7 +211,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       prop.aspect = "security";
       prop.key = "filterTypeOnCreation";
       prop.type = "string";
-      prop.value = RowFilterScope.Type.READ_ONLY.name();
+      prop.value = RowFilterScope.Access.READ_ONLY.name();
       return prop;
    }
 
@@ -209,9 +220,9 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       prop.tableId = DB_TABLE_ID;
       prop.partition = "Table";
       prop.aspect = "security";
-      prop.key = "filterTypeOnCreation";
+      prop.key = "defaultAccessOnCreation";
       prop.type = "string";
-      prop.value = RowFilterScope.Type.HIDDEN.name();
+      prop.value = RowFilterScope.Access.HIDDEN.name();
       return prop;
    }
 
@@ -501,7 +512,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       } catch (ActionNotAuthorizedException e) {
@@ -596,8 +607,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          // change group
          ContentValues cv = new ContentValues();
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_2);
+         cv.put(DataTableColumns.GROUP_PRIVILEGED, TEST_GRP_2);
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
@@ -611,9 +621,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(RowFilterScope.GroupType.DEFAULT.name(), row.getDataByKey(DataTableColumns
-             .GROUP_TYPE));
-         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUPS_LIST));
+         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
 
          // verify user 2 can change value
          cv = new ContentValues();
@@ -628,7 +636,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -679,8 +687,6 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
              colList, metaData, false);
 
          switchToUser2();
-
-         // insert row
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
                  rowId.toString());
@@ -744,7 +750,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       } catch (ActionNotAuthorizedException e) {
@@ -800,8 +806,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_3);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
+         cv.put(DataTableColumns.GROUP_PRIVILEGED, TEST_GRP_3);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -816,7 +821,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -842,7 +847,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          Row row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -929,7 +934,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 2);
-         cv.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+         cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
 
          assertEquals(rowId.toString(), row.getDataByKey
@@ -947,7 +952,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -964,8 +969,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
 
          cv = new ContentValues();
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_3);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.READ_ONLY.name());
+         cv.put(DataTableColumns.GROUP_READ_ONLY, TEST_GRP_3);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
          // user three should NOW be able to see the row
@@ -996,14 +1000,14 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          Row row = table.getRowAtIndex(0);
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
          // change to allow user 3 to modify row, and lock user 2
          ContentValues cv = new ContentValues();
-         cv.put(DataTableColumns.FILTER_VALUE, "mailto:" + TEST_USER_1);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.MODIFY.name());
+         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_1);
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_3);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
          // verify user 3 can update
@@ -1018,7 +1022,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1101,9 +1105,8 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          // change group
          ContentValues cv = new ContentValues();
-         cv.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_2);
+         cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
+         cv.put(DataTableColumns.GROUP_PRIVILEGED, TEST_GRP_2);
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
@@ -1117,9 +1120,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(RowFilterScope.GroupType.DEFAULT.name(), row.getDataByKey(DataTableColumns
-             .GROUP_TYPE));
-         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUPS_LIST));
+         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
 
          // verify user 3 cannot read the data
          switchToUser3();
@@ -1143,7 +1144,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -1216,9 +1217,8 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          // NOTE: until the sync state is changed no permissions are enforced
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 2);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_2);
-         cv.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_2);
+         cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
 
          assertEquals(rowId.toString(), row.getDataByKey
@@ -1233,7 +1233,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1254,7 +1254,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          switchToUser1();
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
-         cv.put(DataTableColumns.FILTER_VALUE, "mailto:" + TEST_USER_2);
+         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_2);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1268,7 +1268,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1286,8 +1286,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 4);
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_3);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_3);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1301,7 +1300,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1313,7 +1312,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1391,9 +1390,8 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          // change group
          ContentValues cv = new ContentValues();
-         cv.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_2);
+         cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_2);
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
@@ -1407,9 +1405,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(RowFilterScope.GroupType.DEFAULT.name(), row.getDataByKey(DataTableColumns
-             .GROUP_TYPE));
-         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUPS_LIST));
+         assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
 
          // verify user 3 cannot read the data
          switchToUser3();
@@ -1433,7 +1429,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -1505,9 +1501,8 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          // NOTE: until the sync state is changed no permissions are enforced
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 2);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_2);
-         cv.put(DataTableColumns.FILTER_TYPE, RowFilterScope.Type.HIDDEN.name());
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_2);
+         cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
 
          assertEquals(rowId.toString(), row.getDataByKey
@@ -1522,7 +1517,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1543,7 +1538,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          switchToUser1();
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
-         cv.put(DataTableColumns.FILTER_VALUE, "mailto:" + TEST_USER_2);
+         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_2);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1557,7 +1552,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1575,8 +1570,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 4);
-         cv.put(DataTableColumns.GROUPS_LIST, TEST_GRP_3);
-         cv.put(DataTableColumns.GROUP_TYPE, RowFilterScope.GroupType.DEFAULT.name());
+         cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_3);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1590,7 +1584,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1602,7 +1596,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.FILTER_VALUE));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1674,17 +1668,27 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          int i=0;
          for(int counter = 0; counter < 10; counter++) {
             for(String group : groups) {
-               for(RowFilterScope.GroupType type : RowFilterScope.GroupType.values()) {
+               for(RowFilterScope.Access type : RowFilterScope.Access.values()) {
                   // insert row
                   UUID rowId = UUID.randomUUID();
                   i++;
-                  ContentValues cv = contentValuesTestSeti(i, type.name(), group);
-                  serviceInterface
-                      .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+                  ContentValues cv = null;
+                  if (type.equals(RowFilterScope.Access.FULL)) {
+                     cv = contentValuesTestSeti(i, null, null, group);
+                  } else if (type.equals(RowFilterScope.Access.MODIFY)) {
+                     cv = contentValuesTestSeti(i, null, group, null);
+                  } else if (type.equals(RowFilterScope.Access.READ_ONLY)) {
+                     cv = contentValuesTestSeti(i, group, null, null);
+                  }
 
-                  cv = new ContentValues();
-                  cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
-                  serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+                  if (cv != null) {
+                     serviceInterface
+                             .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+
+                     cv = new ContentValues();
+                     cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
+                     serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+                  }
                }
             }
          }
@@ -1692,20 +1696,20 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          UserTable table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
              null, null, null, null, null, -1, 0);
          assertEquals(DB_TABLE_ID, table.getTableId());
-         assertEquals(120, table.getNumberOfRows());
+         assertEquals(90, table.getNumberOfRows());
 
          switchToUser2();
          table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
              null, null, null, null, null, -1, 0);
          assertEquals(DB_TABLE_ID, table.getTableId());
-         assertEquals(40, table.getNumberOfRows());
+         assertEquals(30, table.getNumberOfRows());
          helperCheckFunction(table, TEST_GRP_2);
 
          switchToUser3();
          table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
              null, null, null, null, null, -1, 0);
          assertEquals(DB_TABLE_ID, table.getTableId());
-         assertEquals(40, table.getNumberOfRows());
+         assertEquals(30, table.getNumberOfRows());
          helperCheckFunction(table, TEST_GRP_3);
       }  catch (ActionNotAuthorizedException e) {
          e.printStackTrace();
@@ -1717,18 +1721,16 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
    }
 
-   private void helperCheckFunction(UserTable table, String groupsList) {
+   private void helperCheckFunction(UserTable table, String groupName) {
       for(int i=0; i < table.getNumberOfRows(); i++) {
          Row row = table.getRowAtIndex(i);
          int iValue = Integer.valueOf(row.getDataByKey(COL_INTEGER_ID));
-         if(i % 4 == 0) {
-            verifyRowTestSeti(row, iValue, RowFilterScope.GroupType.DEFAULT.name(), groupsList);
-         } else if (i % 4 == 1) {
-            verifyRowTestSeti(row, iValue, RowFilterScope.GroupType.MODIFY.name(), groupsList);
-         } else if (i % 4 == 2) {
-            verifyRowTestSeti(row, iValue, RowFilterScope.GroupType.READ_ONLY.name(), groupsList);
-         } else if (i % 4 == 3) {
-            verifyRowTestSeti(row, iValue, RowFilterScope.GroupType.HIDDEN.name(), groupsList);
+         if(i % 3 == 0) {
+            verifyRowTestSeti(row, iValue, null, null, groupName);
+         } else if (i % 3 == 1) {
+            verifyRowTestSeti(row, iValue, null, groupName, null);
+         } else if (i % 3 == 2) {
+            verifyRowTestSeti(row, iValue, groupName, null, null);
          } else {
             fail("Something is wrong");
          }

@@ -237,10 +237,10 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
           values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
           values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
           values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-          RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
-          values.put(DataTableColumns.FILTER_TYPE,
-              (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
-          values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+          RowFilterScope.Access type = serverRow.getRowFilterScope().getAccess();
+          values.put(DataTableColumns.DEFAULT_ACCESS,
+              (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
+          values.put(DataTableColumns.OWNER, serverRow.getRowFilterScope().getOwner());
           values.putNull(DataTableColumns.CONFLICT_TYPE);
 
           sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), sc
@@ -290,16 +290,14 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
             values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
             values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-            RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
-            values.put(DataTableColumns.FILTER_TYPE,
-                (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
-            values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+            RowFilterScope.Access type = serverRow.getRowFilterScope().getAccess();
+            values.put(DataTableColumns.DEFAULT_ACCESS,
+                (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
+            values.put(DataTableColumns.OWNER, serverRow.getRowFilterScope().getOwner());
 
-            RowFilterScope.GroupType groupType = serverRow.getRowFilterScope().getGroupType();
-            values.put(DataTableColumns.GROUP_TYPE,
-                    (type == null) ? RowFilterScope.GroupType.DEFAULT.name() : groupType.name());
-            values.put(DataTableColumns.GROUPS_LIST, serverRow.getRowFilterScope().getGroupsList());
-            values.put(DataTableColumns.FILTER_EXT, serverRow.getRowFilterScope().getExt());
+            values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
+            values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
+            values.put(DataTableColumns.GROUP_PRIVILEGED, serverRow.getRowFilterScope().getGroupPrivileged());
 
             values.putNull(DataTableColumns.CONFLICT_TYPE);
 

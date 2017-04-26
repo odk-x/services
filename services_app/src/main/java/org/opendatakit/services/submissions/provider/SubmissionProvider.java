@@ -426,9 +426,9 @@ public class SubmissionProvider extends ContentProvider {
                 savepointTimestamp = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.ROW_ETAG)) {
                 rowETag = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_TYPE)) {
+              } else if (columnName.equals(DataTableColumns.DEFAULT_ACCESS)) {
                 filterType = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_VALUE)) {
+              } else if (columnName.equals(DataTableColumns.OWNER)) {
                 filterValue = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
                 formId = CursorUtils.getIndexAsString(c, i);

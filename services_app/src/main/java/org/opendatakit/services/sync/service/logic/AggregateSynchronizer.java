@@ -84,7 +84,6 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -525,10 +524,10 @@ public class AggregateSynchronizer implements Synchronizer {
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TYPE),
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
-          RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.FILTER_TYPE),
-              rowToAlter.getDataByKey(DataTableColumns.FILTER_VALUE), rowToAlter.getDataByKey
-                  (DataTableColumns.GROUP_TYPE), rowToAlter.getDataByKey(DataTableColumns
-                  .GROUPS_LIST), rowToAlter.getDataByKey(DataTableColumns.FILTER_EXT)),
+          RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.DEFAULT_ACCESS),
+              rowToAlter.getDataByKey(DataTableColumns.OWNER), rowToAlter.getDataByKey
+                  (DataTableColumns.GROUP_READ_ONLY), rowToAlter.getDataByKey(DataTableColumns
+                  .GROUP_MODIFY), rowToAlter.getDataByKey(DataTableColumns.GROUP_PRIVILEGED)),
           values);
 
       boolean isDeleted = SyncState.deleted.name().equals(
