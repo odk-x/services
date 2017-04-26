@@ -46,12 +46,12 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
     String activeUser;
     String rolesList;
-    String locale;
+    String userSelectedDefaultLocale;
 
     PropertiesSingleton props = CommonToolProperties.get(mContext, mAppName);
     activeUser = props.getActiveUser();
     rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-    locale = props.getLocale();
+    userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -68,11 +68,11 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
           if ( mTakeLocal ) {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
-                    activeUser, rolesList, locale);
+                    activeUser, rolesList, userSelectedDefaultLocale);
           } else {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
-                    activeUser, locale);
+                    activeUser, userSelectedDefaultLocale);
           }
 
         } catch (Exception e) {

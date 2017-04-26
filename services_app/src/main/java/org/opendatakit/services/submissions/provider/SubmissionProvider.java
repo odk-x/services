@@ -255,7 +255,7 @@ public class SubmissionProvider extends ContentProvider {
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     String activeUser = props.getActiveUser();
     String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-    String currentLocale = props.getLocale();
+    String currentLocale = props.getUserSelectedDefaultLocale();
 
     DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;

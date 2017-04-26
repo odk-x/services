@@ -84,10 +84,10 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     return props.getProperty(CommonToolProperties.KEY_USERS_LIST);
   }
 
-  private String getLocale(String appName) {
+  private String getUserSelectedDefaultLocale(String appName) {
     PropertiesSingleton props =
         CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
-    return props.getLocale();
+    return props.getUserSelectedDefaultLocale();
   }
 
   private IllegalStateException createWrappingRemoteException(String appName,
@@ -1130,7 +1130,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1139,7 +1139,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
           .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
-              rolesList, locale);
+              rolesList, userSelectedDefaultLocale);
       BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
           activeUser, rolesList);
       db.setTransactionSuccessful();
@@ -1165,7 +1165,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1173,7 +1173,8 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
           .getConnection(appName, dbHandleName);
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
-          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList, locale);
+          .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
+              userSelectedDefaultLocale);
       BaseTable t = ODKDatabaseImplUtils.get()
           .getMostRecentRowWithId(db, tableId, rowId, activeUser, rolesList);
       db.setTransactionSuccessful();
@@ -1211,7 +1212,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     String activeUser = getActiveUser(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1220,7 +1221,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
           .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
-              locale, asCsvRequestedChange);
+              userSelectedDefaultLocale, asCsvRequestedChange);
       BaseTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
           rowId, activeUser);
       db.setTransactionSuccessful();
@@ -1260,7 +1261,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1270,7 +1271,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
       ODKDatabaseImplUtils.get()
           .privilegedPerhapsPlaceRowIntoConflictWithId(db, tableId, orderedColumns, cvValues, rowId,
-              activeUser, rolesList, locale);
+              activeUser, rolesList, userSelectedDefaultLocale);
       BaseTable t = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, tableId,
           rowId, activeUser);
       db.setTransactionSuccessful();
@@ -1589,7 +1590,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1598,7 +1599,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       db.beginTransactionExclusive();
       ODKDatabaseImplUtils.get()
           .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
-              locale);
+              userSelectedDefaultLocale);
       BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
           activeUser, rolesList);
       db.setTransactionSuccessful();
@@ -1652,7 +1653,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1660,7 +1661,8 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
           .getConnection(appName, dbHandleName);
 
       ODKDatabaseImplUtils.get()
-          .resolveServerConflictTakeLocalRowWithId(db, tableId, rowId, activeUser, rolesList, locale);
+          .resolveServerConflictTakeLocalRowWithId(db, tableId, rowId, activeUser, rolesList,
+              userSelectedDefaultLocale);
 
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "resolveServerConflictTakeLocalRowWithId", e);
@@ -1682,7 +1684,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
     String activeUser = getActiveUser(appName);
     String rolesList = getInternalRolesList(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1691,7 +1693,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
 
       ODKDatabaseImplUtils.get()
           .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, tableId, cvValues,
-              rowId, activeUser, rolesList, locale);
+              rowId, activeUser, rolesList, userSelectedDefaultLocale);
 
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "resolveServerConflictTakeLocalRowPlusServerDeltasWithId", e);
@@ -1711,7 +1713,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     OdkConnectionInterface db = null;
 
     String activeUser = getActiveUser(appName);
-    String locale = getLocale(appName);
+    String userSelectedDefaultLocale = getUserSelectedDefaultLocale(appName);
 
     try {
       // +1 referenceCount if db is returned (non-null)
@@ -1721,7 +1723,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       // regardless of the roles available to the user, act as god.
       ODKDatabaseImplUtils.get()
           .resolveServerConflictTakeServerRowWithId(db, tableId, rowId, activeUser,
-              locale);
+              userSelectedDefaultLocale);
 
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "resolveServerConflictTakeServerRowWithId", e);

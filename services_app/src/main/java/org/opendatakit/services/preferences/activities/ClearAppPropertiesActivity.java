@@ -21,6 +21,7 @@ import android.os.Bundle;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
 
@@ -53,10 +54,12 @@ public class ClearAppPropertiesActivity extends Activity {
                 mDialog.dismiss();
 
                 // clear the device and secure properties for this appName
-
                 PropertiesSingleton mProps = CommonToolProperties.get(
                     ClearAppPropertiesActivity.this, mAppName);
                 mProps.clearSettings();
+
+                // clear the translations cache
+                LocalizationUtils.clearTranslations();
 
                 // clear the tables.init file that prevents re-reading and re-processing
                 // the assets/tables.init file (that preloads data from csv files)

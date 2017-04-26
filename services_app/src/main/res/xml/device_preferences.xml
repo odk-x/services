@@ -1,6 +1,13 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 	<PreferenceCategory android:key="group.common.device" android:title="@string/device">
+		<org.opendatakit.services.preferences.fragments.CommonTranslationsLocaleScreen
+				android:id="@+id/default_locale"
+				android:key="common.common_translations_locale"
+				android:title="@string/default_locale"
+				android:dialogTitle="@string/change_default_locale"
+				android:persistent="false"/>
+
 		<ListPreference
 			android:id="@+id/font_size"
 			android:key="common.font_size"

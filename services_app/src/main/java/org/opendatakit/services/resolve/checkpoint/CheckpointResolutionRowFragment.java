@@ -196,7 +196,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
           String activeUser;
           String rolesList;
-          String locale;
+          String userSelectedDefaultLocale;
 
           {
             PropertiesSingleton props =
@@ -204,7 +204,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
             activeUser = props.getActiveUser();
             rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-            locale = props.getLocale();
+            userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
           }
 
           try {
@@ -216,7 +216,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
                 mTableId);
             ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
-                values, mRowId, activeUser, rolesList, locale);
+                values, mRowId, activeUser, rolesList, userSelectedDefaultLocale);
 
             // and save that checkpoint as incomplete
             ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,

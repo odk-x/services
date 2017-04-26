@@ -76,7 +76,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
     PropertiesSingleton props =
         CommonToolProperties.get(getContext(), mAppName);
     String activeUser = props.getActiveUser();
-    String locale = props.getLocale();
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
     DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
@@ -126,7 +126,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
             tableSetChanged = true;
             // Use privileged user roles since we are taking the server's values
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
-                mTableId, rowId, activeUser, locale);
+                mTableId, rowId, activeUser, userSelectedDefaultLocale);
           }
         }
 
@@ -231,7 +231,8 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName, mTableId,
+        userSelectedDefaultLocale, nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {

@@ -25,6 +25,7 @@ import android.view.MenuItem;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -133,6 +134,13 @@ public class MainActivity extends Activity implements IAppAwareActivity {
       startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
       return true;
     }
+
+    if (id == R.id.action_logout) {
+
+      CommonToolProperties.get(this, mAppName).clearActiveUser();
+      return true;
+    }
+
     return super.onOptionsItemSelected(item);
   }
 

@@ -31,13 +31,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.RoleConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.sync.service.*;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -65,6 +71,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   private DismissableProgressDialogFragment progressDialog = null;
   private DismissableOutcomeDialogFragment outcomeDialog = null;
 
+  private LinearLayout infoPane;
   private TextView uriField;
   private TextView accountAuthType;
   private TextView accountIdentity;
@@ -73,6 +80,8 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
 
   private Button startSync;
   private Button resetServer;
+
+  private LinearLayout resetButtonPane;
 
   private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
   private SyncActions syncAction = SyncActions.IDLE;
@@ -122,6 +131,8 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
+
+    infoPane = (LinearLayout) view.findViewById(R.id.sync_info_pane);
     uriField = (TextView) view.findViewById(R.id.sync_uri_field);
     accountAuthType = (TextView) view.findViewById(R.id.sync_account_auth_label);
     accountIdentity = (TextView) view.findViewById(R.id.sync_account);
@@ -183,6 +194,8 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         onClickResetServer(v);
       }
     });
+
+    resetButtonPane = (LinearLayout) view.findViewById(R.id.sync_reset_button_pane);
 
     return view;
   }
@@ -252,13 +265,35 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
 
   private void perhapsEnableButtons() {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    boolean isTablesAdmin;
+    {
+      String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+      // figure out whether we have a privileged user or not
+      ArrayList<String> rolesArray = null;
+      if ( rolesList != null && rolesList.length() != 0 ) {
+        try {
+          TypeReference<ArrayList<String>> arrayListTypeReference;
+          arrayListTypeReference = new TypeReference<ArrayList<String>>() {};
+          rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
+        } catch (IOException e) {
+          throw new IllegalStateException("this should never happen");
+        }
+      }
+      isTablesAdmin = (rolesArray != null) && rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
+    }
+
     String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     if ( url == null || url.length() == 0 ) {
       disableButtons();
     } else {
       startSync.setEnabled(true);
-      resetServer.setEnabled(true);
+      resetServer.setEnabled(isTablesAdmin);
     }
+
+    // only show information screens if we are the tables admin
+    int visibility = isTablesAdmin ? View.VISIBLE : View.GONE;
+    infoPane.setVisibility(visibility);
+    resetButtonPane.setVisibility(visibility);
   }
 
   AlertDialog.Builder buildOkMessage(String title, String message) {

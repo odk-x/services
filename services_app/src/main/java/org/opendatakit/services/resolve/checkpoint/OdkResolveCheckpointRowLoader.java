@@ -23,6 +23,8 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.DatabaseConstants;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.provider.DataTableColumns;
@@ -79,6 +81,10 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
   private ArrayList<ResolveRowEntry> doWork(DbHandle dbHandleName) {
 
     OdkConnectionInterface db = null;
+
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
@@ -233,7 +239,8 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName, mTableId,
+        userSelectedDefaultLocale, nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
