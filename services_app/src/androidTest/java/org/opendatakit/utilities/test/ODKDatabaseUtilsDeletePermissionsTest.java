@@ -32,7 +32,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -72,7 +72,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -112,7 +112,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -152,7 +152,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -192,7 +192,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -221,7 +221,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -250,7 +250,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -279,7 +279,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -308,7 +308,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -350,7 +350,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -392,7 +392,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -434,7 +434,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -478,7 +478,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -522,7 +522,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -567,7 +567,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -612,7 +612,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -657,7 +657,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -701,7 +701,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -746,7 +746,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -791,7 +791,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -836,7 +836,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -880,7 +880,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -925,7 +925,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -970,7 +970,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -1014,7 +1014,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -1053,7 +1053,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -1092,7 +1092,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -1131,7 +1131,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 

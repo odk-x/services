@@ -28,12 +28,12 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
   private static final String TAG = "ODKDatabaseUtilsNewRowDeletePermissionsTest";
 
-  private void baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Access access) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, type.name());
+        false, false, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -46,7 +46,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       try {
         // expect one row
         verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
-                .NEW_ROW, type,
+                .NEW_ROW, access,
             ap.toString());
 
         ODKDatabaseImplUtils.get()
@@ -65,30 +65,30 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
   public void testDelete_DEFAULT_UnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_UnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_UnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_UnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_UnlockedNoAnonCreate0(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Access access) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
-        false, true, type.name());
+        false, true, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -101,7 +101,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       try {
         // expect one row
         verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
-                .NEW_ROW, type,
+                .NEW_ROW, access,
             ap.toString());
 
         ODKDatabaseImplUtils.get()
@@ -120,30 +120,30 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
   public void testDelete_DEFAULT_UnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_UnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_UnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_UnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_UnlockedYesAnonCreate0(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Access access) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
-        true, false, type.name());
+        true, false, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -156,7 +156,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       try {
         // expect one row
         verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
-            .NEW_ROW, type,
+            .NEW_ROW, access,
             ap.toString());
 
         ODKDatabaseImplUtils.get()
@@ -175,30 +175,30 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
   public void testDelete_DEFAULT_LockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_LockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_LockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_LockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_LockedNoAnonCreate0(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type type) throws
+  private void baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Access access) throws
       ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
-        true, true, type.name());
+        true, true, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -211,7 +211,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       try {
         // expect one row
         verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
-            .NEW_ROW, type,
+            .NEW_ROW, access,
             ap.toString());
 
         ODKDatabaseImplUtils.get()
@@ -230,30 +230,30 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
   public void testDelete_DEFAULT_LockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_LockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_LockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_LockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
-    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_LockedYesAnonCreate0(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Access access)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, type.name());
+        false, false, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -267,7 +267,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-              .CHECKPOINT_NEW_ROW, type,
+              .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
       try {
@@ -289,34 +289,34 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
   public void testDelete_DEFAULT_AllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_AllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_AllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_AllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedNoAnonCreate(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Access access)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, type.name());
+            false, true, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -330,7 +330,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-              .CHECKPOINT_NEW_ROW, type,
+              .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
       try {
@@ -352,34 +352,34 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
   public void testDelete_DEFAULT_AllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_AllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_AllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_AllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_AllCheckpointsAsInsertUnlockedYesAnonCreate(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Access access)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedNoAnonCreate,
-            true, false, type.name());
+            true, false, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -393,7 +393,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-              .CHECKPOINT_NEW_ROW, type,
+              .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
       try {
@@ -415,34 +415,34 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
   public void testDelete_DEFAULT_AllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_AllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_AllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_AllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_AllCheckpointsAsInsertLockedNoAnonCreate(RowFilterScope.Access.MODIFY);
   }
 
-  private void baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type type)
+  private void baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Access access)
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedYesAnonCreate,
-            true, true, type.name());
+            true, true, access.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -456,7 +456,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       // expect two checkpoints in new_row state
       verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
-              .CHECKPOINT_NEW_ROW, type,
+              .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
       try {
@@ -478,25 +478,25 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
   public void testDelete_DEFAULT_AllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type.DEFAULT);
+    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Access.FULL);
   }
 
   public void testDelete_HIDDEN_AllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type.HIDDEN);
+    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Access.HIDDEN);
   }
 
   public void testDelete_READ_ONLY_AllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type.READ_ONLY);
+    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Access.READ_ONLY);
   }
 
   public void testDelete_MODIFY_AllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
-    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Type.MODIFY);
+    baseDelete_Type_AllCheckpointsAsInsertLockedYesAnonCreate(RowFilterScope.Access.MODIFY);
   }
 
 

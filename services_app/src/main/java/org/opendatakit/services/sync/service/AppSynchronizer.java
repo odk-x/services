@@ -20,7 +20,14 @@ import android.app.Service;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.R;
+import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
+import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
+import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
 import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
+import org.opendatakit.services.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
@@ -30,13 +37,6 @@ import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.R;
-import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
-import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
-import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
-import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
-import org.opendatakit.services.sync.service.logic.Synchronizer;
 
 import java.util.List;
 
