@@ -5012,7 +5012,7 @@ public class ODKDatabaseImplUtils {
 
             // disallow edits if:
             // 1. user is unverified
-            // 2. existing filterValue is null or does not match the activeUser AND
+            // 2. existing owner is null or does not match the activeUser AND
             //    the activeUser is neither a super-user nor an administrator nor a member of
             //    group_privileged.
 
@@ -5024,7 +5024,7 @@ public class ODKDatabaseImplUtils {
                   t + ": unverified users cannot modify rows in a locked table " + tableId);
             }
 
-            // allow if prior filterValue matches activeUser
+            // allow if prior owner matches activeUser
             if (!(priorOwner != null && activeUser.equals(priorOwner))) {
               // otherwise...
               // reject if the activeUser is not a super-user or administrator or member of
@@ -5063,7 +5063,7 @@ public class ODKDatabaseImplUtils {
                   priorDefaultAccess.equals(RowFilterScope.Access.FULL.name()))) {
                 // otherwise...
 
-                // allow if prior filterValue matches activeUser
+                // allow if prior owner matches activeUser
                 if (priorOwner == null || !activeUser.equals(priorOwner)) {
                   // otherwise...
                   // reject if the activeUser is not a super-user or administrator
@@ -5138,7 +5138,7 @@ public class ODKDatabaseImplUtils {
               if (priorDefaultAccess == null || !(priorDefaultAccess.equals(RowFilterScope.Access.FULL.name()))) {
                 // otherwise...
 
-                // allow if prior filterValue matches activeUser
+                // allow if prior owner matches activeUser
                 if (priorOwner == null || !activeUser.equals(priorOwner)) {
                   // otherwise...
                   // reject if the activeUser is not a super-user or administrator

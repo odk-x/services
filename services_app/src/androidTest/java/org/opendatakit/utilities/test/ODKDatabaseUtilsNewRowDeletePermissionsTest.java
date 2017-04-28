@@ -45,7 +45,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       try {
         // expect one row
-        verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
+        verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
                 .NEW_ROW, access,
             ap.toString());
 
@@ -100,7 +100,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       try {
         // expect one row
-        verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
+        verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
                 .NEW_ROW, access,
             ap.toString());
 
@@ -155,7 +155,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       try {
         // expect one row
-        verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
+        verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
             .NEW_ROW, access,
             ap.toString());
 
@@ -210,7 +210,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
 
       try {
         // expect one row
-        verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
+        verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 1, FirstSavepointTimestampType
             .NEW_ROW, access,
             ap.toString());
 
@@ -266,7 +266,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
-      verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
+      verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
               .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
@@ -329,7 +329,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
-      verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
+      verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
               .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
@@ -392,7 +392,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
-      verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
+      verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
               .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 
@@ -455,7 +455,7 @@ public class ODKDatabaseUtilsNewRowDeletePermissionsTest extends AbstractPermiss
       insert2CheckpointsWithAdminRights(ap, oc);
 
       // expect two checkpoints in new_row state
-      verifyRowSyncStateFilterTypeAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
+      verifyRowSyncStateDefaultAccessAndCheckpoints(ap.tableId, ap.rowId, 2, FirstSavepointTimestampType
               .CHECKPOINT_NEW_ROW, access,
           ap.toString());
 

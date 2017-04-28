@@ -209,7 +209,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       prop.tableId = DB_TABLE_ID;
       prop.partition = "Table";
       prop.aspect = "security";
-      prop.key = "filterTypeOnCreation";
+      prop.key = "defaultAccessOnCreation";
       prop.type = "string";
       prop.value = RowFilterScope.Access.READ_ONLY.name();
       return prop;
@@ -1638,9 +1638,6 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
-
-   //ContentValues contentValuesTestSeti(int i, String groupType, String groupsList)
-   //verifyRowTestSeti(Row row, int i, String groupType, String groupsList)
    public void testGroupViewingMultipleHiddenNotLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;

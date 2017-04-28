@@ -240,7 +240,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected OrderedColumns assertEmptyTestTable(String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) {
+      boolean anonymousCanCreate, String defaultAccess) {
 
     List<Column> columns = new ArrayList<Column>();
     // arbitrary type derived from integer
@@ -305,7 +305,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
           LocalKeyValueStoreConstants.TableSecurity.ASPECT,
           LocalKeyValueStoreConstants.TableSecurity.KEY_DEFAULT_ACCESS_ON_CREATION,
           ElementDataType.string,
-          defaultFilterType);
+          defaultAccess);
       metaData.add(entry);
 
       return orderedColumns = ODKDatabaseImplUtils.get()
@@ -441,10 +441,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected OrderedColumns assertConflictPopulatedTestTable(String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) {
+      boolean anonymousCanCreate, String defaultAccess) {
 
     OrderedColumns orderedColumns =
-        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add rows to that table
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
@@ -507,10 +507,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected OrderedColumns assertPopulatedTestTable(String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) {
+      boolean anonymousCanCreate, String defaultAccess) {
 
     OrderedColumns orderedColumns =
-        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add rows to that table
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
@@ -584,12 +584,12 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   }
 
   protected OrderedColumns assertEmptySyncStateTestTable(String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) {
+      boolean anonymousCanCreate, String defaultAccess) {
 
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
 
     OrderedColumns orderedColumns =
-        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     return orderedColumns;
   }
@@ -781,10 +781,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected OrderedColumns assertOneCheckpointAsUpdatePopulatedTestTable(
       String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) throws ActionNotAuthorizedException {
+      boolean anonymousCanCreate, String defaultAccess) throws ActionNotAuthorizedException {
 
     OrderedColumns orderedColumns =
-        assertPopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertPopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add checkpoint row to that table.
     // Add these as the commonUser, but with admin roles so that the insert of
@@ -817,10 +817,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected OrderedColumns assertTwoCheckpointAsUpdatePopulatedTestTable(
       String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) throws ActionNotAuthorizedException {
+      boolean anonymousCanCreate, String defaultAccess) throws ActionNotAuthorizedException {
 
     OrderedColumns orderedColumns =
-        assertOneCheckpointAsUpdatePopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertOneCheckpointAsUpdatePopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add checkpoint row to that table.
     // Add these as the commonUser, but with admin roles so that the insert of
@@ -853,10 +853,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected OrderedColumns assertOneCheckpointAsInsertPopulatedTestTable(
       String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) throws ActionNotAuthorizedException {
+      boolean anonymousCanCreate, String defaultAccess) throws ActionNotAuthorizedException {
 
     OrderedColumns orderedColumns =
-        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertEmptyTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add checkpoint row to that table.
     // Add these as the commonUser, but with admin roles so that the insert of
@@ -889,10 +889,10 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
   protected OrderedColumns assertTwoCheckpointAsInsertPopulatedTestTable(
       String tableId, boolean isLocked,
-      boolean anonymousCanCreate, String defaultFilterType) throws ActionNotAuthorizedException {
+      boolean anonymousCanCreate, String defaultAccess) throws ActionNotAuthorizedException {
 
     OrderedColumns orderedColumns =
-        assertOneCheckpointAsInsertPopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultFilterType);
+        assertOneCheckpointAsInsertPopulatedTestTable(tableId, isLocked, anonymousCanCreate, defaultAccess);
 
     // and now add checkpoint row to that table.
     // Add these as the commonUser, but with admin roles so that the insert of
@@ -1062,13 +1062,12 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   protected boolean verifyRowSyncStateAndCheckpoints(String tableId, String rowId, int expectedRowCount,
       FirstSavepointTimestampType expectFirstRemainingType, String identifyingDescription) {
 
-    return verifyRowSyncStateFilterTypeAndCheckpoints(tableId, rowId, expectedRowCount,
+    return verifyRowSyncStateDefaultAccessAndCheckpoints(tableId, rowId, expectedRowCount,
         expectFirstRemainingType, null, identifyingDescription);
   }
 
-  protected boolean verifyRowSyncStateFilterTypeAndCheckpoints(String tableId, String rowId, int
-      expectedRowCount,
-      FirstSavepointTimestampType expectFirstRemainingType, RowFilterScope.Access type,
+  protected boolean verifyRowSyncStateDefaultAccessAndCheckpoints(String tableId, String rowId, int
+      expectedRowCount,FirstSavepointTimestampType expectFirstRemainingType, RowFilterScope.Access type,
       String identifyingDescription) {
     Cursor c = null;
     try {
@@ -1089,8 +1088,8 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
       int idxType = c.getColumnIndex(DataTableColumns.SAVEPOINT_TYPE);
-      int idxFilterType = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
-      int idxFilterValue = c.getColumnIndex(DataTableColumns.OWNER);
+      int idxDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
+      int idxOwner = c.getColumnIndex(DataTableColumns.OWNER);
 
       String syncState = c.getString(idxSyncState);
 
@@ -1159,7 +1158,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
       if ( type != null ) {
         assertEquals("Expected first row to have filter type: " + identifyingDescription,
-            type.name(), c.getString(idxFilterType));
+            type.name(), c.getString(idxDefaultAccess));
       }
 
       // subsequent updates should all be checkpoints
@@ -1180,7 +1179,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
 
         if ( type != null ) {
           assertEquals("Expected subsequent rows to have filter type: " + identifyingDescription,
-              type.name(), c.getString(idxFilterType));
+              type.name(), c.getString(idxDefaultAccess));
         }
       }
 
