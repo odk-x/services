@@ -29,6 +29,10 @@ import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.data.TableMetaDataEntries;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -36,6 +40,7 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
+import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.services.forms.FormInfo;
 import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.provider.FormsProviderAPI;
@@ -318,10 +323,41 @@ public class FormsProvider extends ContentProvider {
     String formId;
     String numericFormId;
     boolean isNumericFormId;
+    boolean requiresBlankFormIdPatch;
     String whereId;
     String[] whereIdArgs;
   }
 
+  /**
+   * Parse the URI for the form. This is either of the form:
+   *
+   *  /appName/_ID/
+   *       use the _ID column to retrieve the referenced form
+   *       this is a numeric row id.
+   *
+   *  or
+   *
+   *  /appName/tableId/
+   *       this will return all forms for a given tableId.
+   *
+   *  or
+   *
+   *  /appName/tableId//
+   *       this requires a call to updatePatchedFilter(...) to
+   *       retrieve and use the default formId for this tableId.
+   *       If there is no configured default formId, use the
+   *       tableId as the formId.
+   *
+   *  or
+   *
+   *  /appName/tableId/formId/
+   *
+   * @param uri
+   * @param segments
+   * @param where
+   * @param whereArgs
+   * @return
+   */
   private PatchedFilter extractUriFeatures( Uri uri, List<String> segments, String where, String[] whereArgs ) {
 
     PatchedFilter pf = new PatchedFilter();
@@ -372,6 +408,8 @@ public class FormsProvider extends ContentProvider {
       }
     } else {
       // we have both a tableId and a formId.
+      pf.requiresBlankFormIdPatch = ( pf.formId == null || pf.formId.length() == 0 );
+
       // combine with the filter clause the user supplied.
       if (TextUtils.isEmpty(where)) {
         pf.whereId = FormsColumns.TABLE_ID + "=? AND " + FormsColumns.FORM_ID + "=?";
@@ -389,6 +427,31 @@ public class FormsProvider extends ContentProvider {
     }
 
     return pf;
+  }
+
+  /**
+   * If the URL did not include a formId, update the patched filter to use the
+   * default formId for this tableId. If no default formId is specified in the
+   * table's properties, use the tableId form as the default form.
+   *
+   * @param db
+   * @param pf
+   */
+  private void updatePatchedFilter(OdkConnectionInterface db, PatchedFilter pf) {
+    if ( pf.requiresBlankFormIdPatch ) {
+      TableMetaDataEntries values = ODKDatabaseImplUtils.get()
+          .getTableMetadata(db, pf.tableId,
+              LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
+              LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
+              LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID);
+      if (values.getEntries() == null || values.getEntries().size() != 1) {
+        // use the tableId as the default formId
+        pf.formId = pf.tableId;
+      } else {
+        pf.formId = values.getEntries().get(0).value;
+      }
+      pf.whereIdArgs[1] = pf.formId;
+    }
   }
 
   @Override
@@ -423,6 +486,8 @@ public class FormsProvider extends ContentProvider {
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
+      updatePatchedFilter(db, pf);
+
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, sortOrder, null);
 
@@ -485,6 +550,8 @@ public class FormsProvider extends ContentProvider {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
       db.beginTransactionNonExclusive();
+      updatePatchedFilter(db, pf);
+
       c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
           null, null, null, null);
 
@@ -643,6 +710,8 @@ public class FormsProvider extends ContentProvider {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
       db.beginTransactionNonExclusive();
+      updatePatchedFilter(db, pf);
+
       Cursor c = null;
       try {
         c = db.query(DatabaseConstants.FORMS_TABLE_NAME, null, pf.whereId, pf.whereIdArgs,
