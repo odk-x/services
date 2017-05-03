@@ -33,7 +33,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -58,7 +58,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -81,7 +81,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -104,7 +104,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -126,7 +126,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -150,7 +150,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -174,7 +174,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -197,7 +197,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -219,7 +219,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -243,7 +243,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -266,7 +266,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -288,7 +288,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -310,7 +310,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -334,7 +334,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = new ContentValues();
     cvValues.put("col0", 1); // myothertype:integer
@@ -357,7 +357,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
@@ -380,7 +380,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 

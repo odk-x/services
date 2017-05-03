@@ -14,37 +14,18 @@
 
 package org.opendatakit.services.legacy.tasks;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import android.app.Application;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.AsyncTask;
 
-import android.content.*;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.opendatakit.provider.ProviderConsts;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.provider.InstanceColumns;
-import org.opendatakit.provider.InstanceProviderAPI;
-import org.opendatakit.utilities.FileSet;
-import org.opendatakit.utilities.FileSet.MimeFile;
 import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.auth.AuthScope;
@@ -66,18 +47,37 @@ import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
 import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
 import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.provider.InstanceColumns;
+import org.opendatakit.provider.InstanceProviderAPI;
+import org.opendatakit.provider.ProviderConsts;
+import org.opendatakit.services.R;
 import org.opendatakit.services.legacy.listeners.InstanceUploaderListener;
 import org.opendatakit.services.legacy.logic.InstanceUploadOutcome;
 import org.opendatakit.services.legacy.utilities.WebUtils;
+import org.opendatakit.utilities.FileSet;
+import org.opendatakit.utilities.FileSet.MimeFile;
+import org.opendatakit.utilities.LocalizationUtils;
 
-import android.app.Application;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import org.opendatakit.services.R;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Background task for uploading completed forms.
@@ -416,7 +416,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
     AuthScope a;
     // allow digest auth on any port...
-    a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
+    a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
     asList.add(a);
     // and allow basic auth on the standard TLS/SSL ports...
     a = new AuthScope(host, 443, null, AuthSchemes.BASIC);

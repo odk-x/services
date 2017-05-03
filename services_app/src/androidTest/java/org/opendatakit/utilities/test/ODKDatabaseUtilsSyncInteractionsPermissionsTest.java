@@ -49,18 +49,18 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       ActionNotAuthorizedException {
 
     base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.DEFAULT,
+        RowFilterScope.Access.FULL,
         localRowSyncState,
         asPrivilegedUser);
 
     base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.READ_ONLY,
+        RowFilterScope.Access.READ_ONLY,
         localRowSyncState,
         asPrivilegedUser);
   }
 
   private void base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(boolean isLocked,
-      boolean canAnonCreate, RowFilterScope.Type type,
+      boolean canAnonCreate, RowFilterScope.Access type,
       SyncState localRowSyncState, boolean asPrivilegedUser) throws ActionNotAuthorizedException {
 
     String tableId;
@@ -117,8 +117,8 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
           // or, if the incoming type is read-only, use hidden
           assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
           verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Type.READ_ONLY) ? RowFilterScope.Type.HIDDEN :
-                  RowFilterScope.Type.READ_ONLY, spo);
+              (type == RowFilterScope.Access.READ_ONLY) ? RowFilterScope.Access.HIDDEN :
+                  RowFilterScope.Access.READ_ONLY, spo);
         }
       }
     }
@@ -143,18 +143,18 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       ActionNotAuthorizedException {
 
     base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.DEFAULT,
+        RowFilterScope.Access.FULL,
         localConflictType, serverConflictType,
         asPrivilegedUser);
 
     base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.READ_ONLY,
+        RowFilterScope.Access.READ_ONLY,
         localConflictType, serverConflictType,
         asPrivilegedUser);
   }
 
   private void base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(
-      boolean isLocked, boolean canAnonCreate, RowFilterScope.Type type,
+      boolean isLocked, boolean canAnonCreate, RowFilterScope.Access type,
       int localConflictType, int serverConflictType, boolean asPrivilegedUser) throws
       ActionNotAuthorizedException {
 
@@ -212,8 +212,8 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
           // or, if the incoming type is read-only, use hidden
           assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType, serverConflictType);
           verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Type.READ_ONLY) ? RowFilterScope.Type.HIDDEN :
-                  RowFilterScope.Type.READ_ONLY, spo);
+              (type == RowFilterScope.Access.READ_ONLY) ? RowFilterScope.Access.HIDDEN :
+                  RowFilterScope.Access.READ_ONLY, spo);
         }
       }
     }

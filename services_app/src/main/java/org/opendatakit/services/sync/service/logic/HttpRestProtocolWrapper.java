@@ -677,7 +677,7 @@ public class HttpRestProtocolWrapper {
       {
         AuthScope a;
         // allow digest auth on any port...
-        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
+        a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
         asList.add(a);
         // and allow basic auth on the standard TLS/SSL ports...
         a = new AuthScope(host, 443, null, AuthSchemes.BASIC);

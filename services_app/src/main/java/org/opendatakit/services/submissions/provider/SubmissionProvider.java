@@ -358,8 +358,11 @@ public class SubmissionProvider extends ContentProvider {
 
           if (c.moveToFirst() && c.getCount() == 1) {
             String rowETag = null;
-            String filterType = null;
-            String filterValue = null;
+            String defaultAccess = null;
+            String owner = null;
+            String groupReadOnly = null;
+            String groupModify = null;
+            String groupPrivileged = null;
             String formId = null;
             String locale = null;
             String savepointType = null;
@@ -426,10 +429,10 @@ public class SubmissionProvider extends ContentProvider {
                 savepointTimestamp = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.ROW_ETAG)) {
                 rowETag = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_TYPE)) {
-                filterType = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_VALUE)) {
-                filterValue = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.DEFAULT_ACCESS)) {
+                defaultAccess = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.OWNER)) {
+                owner = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
                 formId = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.LOCALE)) {
@@ -440,6 +443,12 @@ public class SubmissionProvider extends ContentProvider {
                 savepointType = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
                 savepointCreator = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_READ_ONLY)) {
+                groupReadOnly = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_MODIFY)) {
+                groupModify = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_PRIVILEGED)) {
+                groupPrivileged = CursorUtils.getIndexAsString(c, i);
               }
             }
 
@@ -593,18 +602,42 @@ public class SubmissionProvider extends ContentProvider {
               }
               meta.appendChild(v);
 
-              // filterType
-              v = d.createElement("filterType");
-              if (filterType != null) {
-                txtNode = d.createTextNode(filterType);
+              // defaultAccess
+              v = d.createElement("defaultAccess");
+              if (defaultAccess != null) {
+                txtNode = d.createTextNode(defaultAccess);
                 v.appendChild(txtNode);
               }
               meta.appendChild(v);
 
-              // filterValue
-              v = d.createElement("filterValue");
-              if (filterValue != null) {
-                txtNode = d.createTextNode(filterValue);
+              // owner
+              v = d.createElement("owner");
+              if (owner != null) {
+                txtNode = d.createTextNode(owner);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupReadOnly
+              v = d.createElement("groupReadOnly");
+              if (groupReadOnly != null) {
+                txtNode = d.createTextNode(groupReadOnly);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupModify
+              v = d.createElement("groupModify");
+              if (groupModify != null) {
+                txtNode = d.createTextNode(groupModify);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupPrivileged
+              v = d.createElement("groupPrivileged");
+              if (groupPrivileged != null) {
+                txtNode = d.createTextNode(groupPrivileged);
                 v.appendChild(txtNode);
               }
               meta.appendChild(v);
