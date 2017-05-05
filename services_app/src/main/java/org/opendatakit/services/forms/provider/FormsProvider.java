@@ -27,7 +27,6 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.KeyValueStoreEntry;
@@ -590,7 +589,7 @@ public class FormsProvider extends ContentProvider {
             fs.tableId + "." + fs.formId + "." + System.currentTimeMillis());
 
         try {
-          FileUtils.moveDirectory(srcDir, destDir);
+          ODKFileUtils.moveDirectory(srcDir, destDir);
           if ( db.delete(DatabaseConstants.FORMS_TABLE_NAME, FormsColumns._ID + "=?", new String[] { id }) > 0 ) {
             fs.success = true;
           }
@@ -644,7 +643,7 @@ public class FormsProvider extends ContentProvider {
     File[] delDirs = destFolder.listFiles();
     for (File formIdDir : delDirs) {
       try {
-        FileUtils.deleteDirectory(formIdDir);
+        ODKFileUtils.deleteDirectory(formIdDir);
       } catch (IOException e) {
         logger.e(t, "Unable to remove directory " + e.toString());
         logger.printStackTrace(e);

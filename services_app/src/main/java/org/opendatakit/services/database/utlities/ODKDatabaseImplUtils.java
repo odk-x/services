@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -1430,7 +1429,7 @@ public class ODKDatabaseImplUtils {
     // And delete the files from the SDCard...
     String tableDir = ODKFileUtils.getTablesFolder(db.getAppName(), tableId);
     try {
-      FileUtils.deleteDirectory(new File(tableDir));
+      ODKFileUtils.deleteDirectory(new File(tableDir));
     } catch (IOException e1) {
       e1.printStackTrace();
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
@@ -1440,7 +1439,7 @@ public class ODKDatabaseImplUtils {
     try {
       File file = new File(assetsCsvDir);
       if (file.exists()) {
-        Collection<File> files = FileUtils.listFiles(file, new IOFileFilter() {
+        Collection<File> files = ODKFileUtils.listFiles(file, new IOFileFilter() {
 
           @Override public boolean accept(File file) {
             String[] parts = file.getName().split("\\.");
@@ -1468,9 +1467,9 @@ public class ODKDatabaseImplUtils {
           }
         });
 
-        FileUtils.deleteDirectory(new File(tableDir));
+        ODKFileUtils.deleteDirectory(new File(tableDir));
         for (File f : files) {
-          FileUtils.deleteQuietly(f);
+          ODKFileUtils.deleteQuietly(f);
         }
       }
     } catch (IOException e1) {
@@ -3465,8 +3464,13 @@ public class ODKDatabaseImplUtils {
     if (shouldPhysicallyDelete) {
       File instanceFolder = new File(ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
       try {
-        FileUtils.deleteDirectory(instanceFolder);
+        ODKFileUtils.deleteDirectory(instanceFolder);
       } catch (IOException e) {
+        // TODO Auto-generated catch block
+        WebLogger.getLogger(db.getAppName())
+            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      } catch (Exception e) {
         // TODO Auto-generated catch block
         WebLogger.getLogger(db.getAppName())
             .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
@@ -3572,8 +3576,13 @@ public class ODKDatabaseImplUtils {
     if (shouldPhysicallyDelete) {
       File instanceFolder = new File(ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
       try {
-        FileUtils.deleteDirectory(instanceFolder);
+        ODKFileUtils.deleteDirectory(instanceFolder);
       } catch (IOException e) {
+        // TODO Auto-generated catch block
+        WebLogger.getLogger(db.getAppName())
+            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      } catch (Exception e ) {
         // TODO Auto-generated catch block
         WebLogger.getLogger(db.getAppName())
             .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());

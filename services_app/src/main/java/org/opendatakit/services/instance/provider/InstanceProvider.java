@@ -24,7 +24,6 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;
@@ -558,7 +557,7 @@ public class InstanceProvider extends ContentProvider {
             File f = new File(path);
             if (f.exists()) {
               if (f.isDirectory()) {
-                FileUtils.deleteDirectory(f);
+                ODKFileUtils.deleteDirectory(f);
               } else {
                 f.delete();
               }
@@ -592,7 +591,7 @@ public class InstanceProvider extends ContentProvider {
             File f = new File(path);
             if (f.exists()) {
               if (f.isDirectory()) {
-                FileUtils.deleteDirectory(f);
+                ODKFileUtils.deleteDirectory(f);
               } else {
                 f.delete();
               }

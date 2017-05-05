@@ -3,7 +3,6 @@ package org.opendatakit.utilities.test;
 import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -86,7 +85,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
                 TEST_FILE_PREFIX);
 
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
-        FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+        ODKFileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
 
         ODKFileUtils.verifyExternalStorageAvailability();
 
@@ -114,7 +113,7 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         // C++ layer that were orphaned in Java
         Thread.sleep(100L);
         try {
-           FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+            ODKFileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
         } catch ( Exception e) {
            // ignore
         }

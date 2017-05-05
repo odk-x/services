@@ -25,7 +25,6 @@ import android.preference.*;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.provider.MediaStore;
 import android.widget.Toast;
-import org.apache.commons.io.FileUtils;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
@@ -268,7 +267,7 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
       if ( !ODKFileUtils.isPathUnderAppName(appName, sourceMedia) ) {
         newMedia = ODKFileUtils.asConfigFile(appName, "splash" + extension);
         try {
-          FileUtils.copyFile(sourceMedia, newMedia);
+          ODKFileUtils.copyFile(sourceMedia, newMedia);
         } catch (IOException e) {
           WebLogger.getLogger(appName).e(t, "Failed to copy " + sourceMedia.getAbsolutePath());
           Toast.makeText(this.getActivity(), R.string.splash_media_save_failed, Toast.LENGTH_SHORT).show();
