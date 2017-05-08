@@ -72,16 +72,37 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     return props.getActiveUser();
   }
 
+  private String getInternalDefaultGroup(String appName) {
+    PropertiesSingleton props =
+        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
+    String value = props.getProperty(CommonToolProperties.KEY_DEFAULT_GROUP);
+    if ( value != null && value.length() == 0 ) {
+      return null;
+    } else {
+      return value;
+    }
+  }
+
   private String getInternalRolesList(String appName) {
     PropertiesSingleton props =
             CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
-    return props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+    String value = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+    if ( value != null && value.length() == 0 ) {
+      return null;
+    } else {
+      return value;
+    }
   }
 
   private String getInternalUsersList(String appName) {
     PropertiesSingleton props =
         CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
-    return props.getProperty(CommonToolProperties.KEY_USERS_LIST);
+    String value = props.getProperty(CommonToolProperties.KEY_USERS_LIST);
+    if ( value != null && value.length() == 0 ) {
+      return null;
+    } else {
+      return value;
+    }
   }
 
   private String getUserSelectedDefaultLocale(String appName) {
@@ -122,6 +143,20 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       return getInternalRolesList(appName);
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, null, "getRolesList", e);
+    }
+  }
+
+  /**
+   * Return the current user's default group.
+   * This will be an empty string if the server does not support user-defined groups.
+   *
+   * @return empty string or the name of the default group.
+   */
+  @Override public String getDefaultGroup(String appName) throws RemoteException {
+    try {
+      return getInternalDefaultGroup(appName);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, null, "getDefaultGroup", e);
     }
   }
 

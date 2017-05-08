@@ -107,6 +107,7 @@ public class PasswordDialogFragment extends DialogFragment {
           // passwords are the same
           props.setProperty(passwordPropertyName, pw);
           if ( !isAdminPassword ) {
+            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
             props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
             props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
           }
@@ -121,6 +122,7 @@ public class PasswordDialogFragment extends DialogFragment {
         } else if (pw.equalsIgnoreCase("") && ver.equalsIgnoreCase("")) {
           props.setProperty(passwordPropertyName, "");
           if ( !isAdminPassword ) {
+            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
             props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
             props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
           }

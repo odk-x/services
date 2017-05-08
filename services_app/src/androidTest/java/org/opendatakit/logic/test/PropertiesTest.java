@@ -63,6 +63,7 @@ public class PropertiesTest extends AndroidTestCase {
             CommonToolProperties.KEY_AUTH,
             CommonToolProperties.KEY_PASSWORD,
             CommonToolProperties.KEY_ROLES_LIST,
+            CommonToolProperties.KEY_DEFAULT_GROUP,
             CommonToolProperties.KEY_USERS_LIST,
             CommonToolProperties.KEY_ADMIN_PW
         };

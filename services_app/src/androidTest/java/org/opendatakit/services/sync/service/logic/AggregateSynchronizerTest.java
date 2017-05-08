@@ -60,6 +60,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
           getApplication().getString(R.string.credential_type_none));
       props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
       props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
+      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
       props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
     } else {
@@ -67,6 +68,7 @@ public class AggregateSynchronizerTest extends ApplicationTestCase<Services> {
           getApplication().getString(R.string.credential_type_username_password));
       props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
       props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
+      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
       props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
     }

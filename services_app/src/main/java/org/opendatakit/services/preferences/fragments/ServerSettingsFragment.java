@@ -110,6 +110,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
               PropertiesSingleton props =
                   ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
               props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
+              props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
               props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
               props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
               return true;
@@ -154,6 +155,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
         props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+        props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
         props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
         return true;
@@ -231,6 +233,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
                 ServerSettingsFragment.this.getActivity()).getProps();
             props.setProperty(CommonToolProperties.KEY_ACCOUNT, value);
             props.setProperty(CommonToolProperties.KEY_AUTH, "");
+            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
             props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
             props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
             return true;

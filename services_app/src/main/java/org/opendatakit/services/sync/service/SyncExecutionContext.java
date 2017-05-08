@@ -232,6 +232,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     props.setProperty(CommonToolProperties.KEY_ROLES_LIST, value);
   }
 
+  public void setDefaultGroup(String value) {
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+
+    props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, value);
+  }
+
   public void setUsersList(String value) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 

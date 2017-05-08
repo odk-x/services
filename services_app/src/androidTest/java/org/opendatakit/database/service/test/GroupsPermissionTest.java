@@ -232,7 +232,9 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       return props.getActiveUser();
    }
 
-   private void setActiveUser(String activeUser, String password, String appName, String role) {
+   private void setActiveUser(String activeUser, String password, String appName, String
+       roleListJSONstring,
+       String defaultGroup) {
       PropertiesSingleton props = CommonToolProperties
           .get(getService().getApplicationContext(), appName);
       // these are stored in devices
@@ -241,23 +243,24 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       props.setProperty(CommonToolProperties.KEY_ACCOUNT, activeUser);
       // this is stored in SharedPreferences
       props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, role);
+      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);
+      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
    }
 
    private void switchToUser1() {
-      setActiveUser(TEST_USER_1, TEST_PWD_1, APPNAME, FULL_PERMISSION_ROLES);
+      setActiveUser(TEST_USER_1, TEST_PWD_1, APPNAME, FULL_PERMISSION_ROLES, null);
       String verifyName = getActiveUser(APPNAME);
       assertEquals("mailto:" + TEST_USER_1, verifyName);
    }
 
    private void switchToUser2() {
-      setActiveUser(TEST_USER_2, TEST_PWD_2, APPNAME, LIMITED_PERMISSION_ROLES_2);
+      setActiveUser(TEST_USER_2, TEST_PWD_2, APPNAME, LIMITED_PERMISSION_ROLES_2, null);
       String verifyName = getActiveUser(APPNAME);
       assertEquals("mailto:" + TEST_USER_2, verifyName);
    }
 
    private void switchToUser3() {
-      setActiveUser(TEST_USER_3, TEST_PWD_3, APPNAME, LIMITED_PERMISSION_ROLES_3);
+      setActiveUser(TEST_USER_3, TEST_PWD_3, APPNAME, LIMITED_PERMISSION_ROLES_3, null);
       String verifyName = getActiveUser(APPNAME);
       assertEquals("mailto:" + TEST_USER_3, verifyName);
    }
@@ -336,17 +339,17 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
    public void testSetUser() throws ActionNotAuthorizedException {
       String testUserName = "test@gmail.com";
-      setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES);
+      setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
       String verifyName = getActiveUser(APPNAME);
       assertEquals("mailto:" + testUserName, verifyName);
 
 
       String testUserName2 = "test3@gmail.com";
-      setActiveUser(testUserName2, "1235", APPNAME, LIMITED_PERMISSION_ROLES_3);
+      setActiveUser(testUserName2, "1235", APPNAME, LIMITED_PERMISSION_ROLES_3, null);
       verifyName = getActiveUser(APPNAME);
       assertNotEquals("mailto:" + testUserName, verifyName);
 
-      setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES);
+      setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
       verifyName = getActiveUser(APPNAME);
       assertEquals("mailto:" + testUserName, verifyName);
    }
