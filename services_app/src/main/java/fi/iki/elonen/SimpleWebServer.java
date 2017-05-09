@@ -334,7 +334,7 @@ public class SimpleWebServer extends NanoHTTPD {
         // use the referer to retrieve the appname
         // adjust uri to be /appname/config/uri
         //
-        // i.e., yielding /default/config/favicon.ico
+        // i.e., yielding /default/config/assets/favicon.ico
         //
         String referer = header.get("referer");
         if (referer == null) {
