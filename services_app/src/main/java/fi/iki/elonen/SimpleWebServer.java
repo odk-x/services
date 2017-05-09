@@ -345,7 +345,7 @@ public class SimpleWebServer extends NanoHTTPD {
         nextSlash = referer.indexOf('/', idx + 1);
         appName = referer.substring(idx + 1, nextSlash);
         // adjust the uri to be under the config directory of the referer
-        File file = new File(ODKFileUtils.getConfigFolder(appName), uri.substring(1));
+        File file = new File(ODKFileUtils.getAssetsFolder(appName), uri.substring(1));
         // we expect a leading slash...
         uri = "/" + appName + "/" + ODKFileUtils.asUriFragment(appName, file);
         nextSlash = uri.indexOf('/', 1);
