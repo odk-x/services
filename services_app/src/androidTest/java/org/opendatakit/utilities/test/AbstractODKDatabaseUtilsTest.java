@@ -1573,7 +1573,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
     cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.OWNER, nullString);
+    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
     cvValues.put(DataTableColumns.FORM_ID, nullString);
     cvValues.put(DataTableColumns.LOCALE, nullString);
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
@@ -1624,7 +1624,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
     cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.OWNER, nullString);
+    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
     cvValues.put(DataTableColumns.FORM_ID, nullString);
     cvValues.put(DataTableColumns.LOCALE, nullString);
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
@@ -1671,7 +1671,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SYNC_STATE, nullString);
     cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.OWNER, nullString);
+    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
     cvValues.put(DataTableColumns.FORM_ID, nullString);
     cvValues.put(DataTableColumns.LOCALE, nullString);
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
@@ -1717,7 +1717,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
     cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.OWNER, nullString);
+    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
     cvValues.put(DataTableColumns.FORM_ID, nullString);
     cvValues.put(DataTableColumns.LOCALE, nullString);
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
@@ -3375,7 +3375,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
     updates.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     updates.put(DataTableColumns.SAVEPOINT_CREATOR, "mailto:server@gmail.com");
     updates.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
-    updates.put(DataTableColumns.OWNER, "mailto:server@gmail.com");
+    updates.put(DataTableColumns.ROW_OWNER, "mailto:server@gmail.com");
     updates.putNull(DataTableColumns.GROUP_READ_ONLY);
     updates.putNull(DataTableColumns.GROUP_MODIFY);
     updates.putNull(DataTableColumns.GROUP_PRIVILEGED);
@@ -4041,7 +4041,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
 
     sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
-        ", " + DataTableColumns.OWNER +
+        ", " + DataTableColumns.ROW_OWNER +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
@@ -4109,7 +4109,7 @@ public abstract class AbstractODKDatabaseUtilsTest extends AndroidTestCase {
 
 
     sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
-        ", " + DataTableColumns.OWNER +
+        ", " + DataTableColumns.ROW_OWNER +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,

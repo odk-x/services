@@ -57,7 +57,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
    private static final int TEST_INT_1 = 1;
    private static final double TEST_NUM_1 = 1.1;
 
-   private static final String FULL_PERMISSION_ROLES = "[\"ROLE_DATA_OWNER\",\"ROLE_USER\","
+   private static final String FULL_PERMISSION_ROLES = "[\"ROLE_DATA_ROW_OWNER\",\"ROLE_USER\","
        + "\"ROLE_SITE_ACCESS_ADMIN\",\"ROLE_SYNCHRONIZE_TABLES\",\"ROLE_ADMINISTER_TABLES\",\"ROLE_DATA_VIEWER\",\"ROLE_SUPER_USER_TABLES\"]";
 
    private static final String LIMITED_PERMISSION_ROLES_2 = "[\"ROLE_USER\","
@@ -496,7 +496,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       } catch (ActionNotAuthorizedException e) {
@@ -620,7 +620,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -734,7 +734,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       } catch (ActionNotAuthorizedException e) {
@@ -805,7 +805,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -831,7 +831,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          Row row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -936,7 +936,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -984,13 +984,13 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          Row row = table.getRowAtIndex(0);
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
          // change to allow user 3 to modify row, and lock user 2
          ContentValues cv = new ContentValues();
-         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_1);
+         cv.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_1);
          cv.put(DataTableColumns.GROUP_MODIFY, TEST_GRP_3);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
@@ -1006,7 +1006,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1128,7 +1128,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -1217,7 +1217,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1238,7 +1238,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          switchToUser1();
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
-         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_2);
+         cv.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_2);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1252,7 +1252,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1284,7 +1284,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1296,7 +1296,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1413,7 +1413,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
@@ -1501,7 +1501,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1522,7 +1522,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          switchToUser1();
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
-         cv.put(DataTableColumns.OWNER, "mailto:" + TEST_USER_2);
+         cv.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_2);
 
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
@@ -1536,7 +1536,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("3",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1568,7 +1568,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 
@@ -1580,7 +1580,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          row = table.getRowAtIndex(0);
 
          assertEquals("4",row.getDataByKey(COL_INTEGER_ID));
-         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.OWNER));
+         assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
 

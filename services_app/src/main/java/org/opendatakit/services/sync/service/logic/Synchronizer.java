@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,16 +72,25 @@ public interface Synchronizer {
   void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
 
   /**
-   * Returns the roles assigned to the user. The server requires that the
-   * user be authenticated during this call. By using the local context on
-   * all subsequent interactions, we are able to use the negotiated identity
-   * when accessing subsequent APIs.
+   * Returns a map:
+   *  {
+   *    "roles" : list of the roles and groups assigned to the user,
+   *    "defaultGroup" : defaultGroup the user belongs to
+   *  }
+   *
+   * The server requires that the user be authenticated during this call. By
+   * using the local context on all subsequent interactions, we are able to
+   * use the negotiated identity when accessing subsequent APIs.
+   *
+   * The defaultGroup can be null and, if not null, must appear in the list
+   * of roles and groups assigned to the user.
    *
    * @return
    * @throws HttpClientWebException
    * @throws IOException
      */
-  ArrayList<String>  getUserRoles() throws HttpClientWebException, IOException;
+  HashMap<String,Object> getUserRolesAndDefaultGroup() throws HttpClientWebException,
+      IOException;
 
   /**
    * If this user is a registered user with Tables Super-user, Administer Tables,

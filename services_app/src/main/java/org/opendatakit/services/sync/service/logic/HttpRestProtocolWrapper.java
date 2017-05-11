@@ -278,8 +278,8 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
-  public URI constructListOfUserRolesUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/granted");
+  public URI constructListOfUserRolesAndDefaultGroupUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/grantedDefault");
     return uri;
   }
 
