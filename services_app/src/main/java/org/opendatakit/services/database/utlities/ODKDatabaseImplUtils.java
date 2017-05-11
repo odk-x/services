@@ -259,7 +259,7 @@ public class ODKDatabaseImplUtils {
     adminColumns.add(DataTableColumns.SYNC_STATE); // not exportable
     adminColumns.add(DataTableColumns.CONFLICT_TYPE); // not exportable
     adminColumns.add(DataTableColumns.DEFAULT_ACCESS);
-    adminColumns.add(DataTableColumns.OWNER);
+    adminColumns.add(DataTableColumns.ROW_OWNER);
     adminColumns.add(DataTableColumns.GROUP_READ_ONLY);
     adminColumns.add(DataTableColumns.GROUP_MODIFY);
     adminColumns.add(DataTableColumns.GROUP_PRIVILEGED);
@@ -275,7 +275,7 @@ public class ODKDatabaseImplUtils {
     exportColumns.add(DataTableColumns.ID);
     exportColumns.add(DataTableColumns.ROW_ETAG);
     exportColumns.add(DataTableColumns.DEFAULT_ACCESS);
-    exportColumns.add(DataTableColumns.OWNER);
+    exportColumns.add(DataTableColumns.ROW_OWNER);
     exportColumns.add(DataTableColumns.GROUP_READ_ONLY);
     exportColumns.add(DataTableColumns.GROUP_MODIFY);
     exportColumns.add(DataTableColumns.GROUP_PRIVILEGED);
@@ -539,7 +539,7 @@ public class ODKDatabaseImplUtils {
         // unlocked tables have r, rw (modify) and rwd (default or new_row) options
         b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
             .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-            .append(" when T.").append(DataTableColumns.OWNER).append("= ?")
+            .append(" when T.").append(DataTableColumns.ROW_OWNER).append("= ?")
             .append(" then \"rwd\" ")
             .append(" when T.").append(DataTableColumns.DEFAULT_ACCESS).append("= \"")
             .append(RowFilterScope.Access.FULL.name()).append("\" then \"rwd\" ")
@@ -551,7 +551,7 @@ public class ODKDatabaseImplUtils {
         // locked tables have just rwd (new_row) and r options
         b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
             .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-            .append(" when T.").append(DataTableColumns.OWNER).append("= ?")
+            .append(" when T.").append(DataTableColumns.ROW_OWNER).append("= ?")
             .append(" then \"rw\" ")
             .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
         wrappedSqlArgs.add(accessContext.activeUser);
@@ -576,7 +576,7 @@ public class ODKDatabaseImplUtils {
     if (c.moveToFirst() ) {
       // see if we have the columns needed to apply row-level filtering
       boolean hasDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS) != -1;
-      boolean hasOwner = c.getColumnIndex(DataTableColumns.OWNER) != -1;
+      boolean hasOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER) != -1;
       boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
       boolean hasGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY) != -1;
       boolean hasGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY) != -1;
@@ -614,7 +614,7 @@ public class ODKDatabaseImplUtils {
         if (!accessContext.isUnverifiedUser && accessContext.activeUser != null &&
             accessContext.hasRole(RoleConsts.ROLE_USER)) {
           // visible if activeUser matches the filter value
-          b.append(" OR T.").append(DataTableColumns.OWNER).append(" = ?");
+          b.append(" OR T.").append(DataTableColumns.ROW_OWNER).append(" = ?");
           wrappedSqlArgs.add(accessContext.activeUser);
         }
         if(hasGroupReadOnly) {
@@ -1659,7 +1659,7 @@ public class ODKDatabaseImplUtils {
         b.append(colName).append(" TEXT NOT NULL").append(endSeq);
       } else if (colName.equals(DataTableColumns.ROW_ETAG)
           || colName.equals(DataTableColumns.DEFAULT_ACCESS)
-          || colName.equals(DataTableColumns.OWNER)
+          || colName.equals(DataTableColumns.ROW_OWNER)
           || colName.equals(DataTableColumns.GROUP_READ_ONLY)
           || colName.equals(DataTableColumns.GROUP_MODIFY)
           || colName.equals(DataTableColumns.GROUP_PRIVILEGED)
@@ -3050,7 +3050,7 @@ public class ODKDatabaseImplUtils {
           {
             String[] privilegedColumns = new String[] {
                 DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.OWNER};
+                DataTableColumns.ROW_OWNER};
             for ( int i = 0 ; i < privilegedColumns.length ; ++i ) {
               String colName = privilegedColumns[i];
               String localValue = localRow.getDataByKey(colName);
@@ -3082,7 +3082,7 @@ public class ODKDatabaseImplUtils {
                 DataTableColumns.SYNC_STATE.equals(colName) ||
                 DataTableColumns.ROW_ETAG.equals(colName) ||
                 DataTableColumns.DEFAULT_ACCESS.equals(colName) ||
-                DataTableColumns.OWNER.equals(colName) ||
+                DataTableColumns.ROW_OWNER.equals(colName) ||
                 DataTableColumns.GROUP_READ_ONLY.equals(colName) ||
                 DataTableColumns.GROUP_MODIFY.equals(colName) ||
                 DataTableColumns.GROUP_PRIVILEGED.equals(colName)) {
@@ -3383,7 +3383,7 @@ public class ODKDatabaseImplUtils {
       try {
         c = db.query(tableId,
             new String[] { DataTableColumns.SYNC_STATE, DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns.GROUP_MODIFY,
+                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns.GROUP_MODIFY,
                 DataTableColumns.GROUP_PRIVILEGED},
             whereClause, whereArgs, null, null,
                 DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
@@ -3391,7 +3391,7 @@ public class ODKDatabaseImplUtils {
 
         int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
         int idxDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
-        int idxOwner = c.getColumnIndex(DataTableColumns.OWNER);
+        int idxOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER);
         int idxGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY);
         int idxGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY);
         int idxGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED);
@@ -3509,14 +3509,14 @@ public class ODKDatabaseImplUtils {
       try {
         c = db.query(tableId,
             new String[] { DataTableColumns.SYNC_STATE, DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns
+                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns
                 .GROUP_MODIFY, DataTableColumns.GROUP_PRIVILEGED}, whereClause,
             whereArgs, null, null, null, null);
         boolean hasRow = c.moveToFirst();
 
         int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
         int idxDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
-        int idxOwner = c.getColumnIndex(DataTableColumns.OWNER);
+        int idxOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER);
         int idxGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY);
         int idxGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY);
         int idxGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED);
@@ -4035,8 +4035,8 @@ public class ODKDatabaseImplUtils {
       privilegedUpdateValues.put(DataTableColumns.ID, rowId);
       privilegedUpdateValues
           .put(DataTableColumns.DEFAULT_ACCESS, serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-      privilegedUpdateValues.put(DataTableColumns.OWNER,
-          serverRow.getDataByKey(DataTableColumns.OWNER));
+      privilegedUpdateValues.put(DataTableColumns.ROW_OWNER,
+          serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
       privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
           serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
       privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
@@ -4220,8 +4220,8 @@ public class ODKDatabaseImplUtils {
       privilegedUpdateValues.put(DataTableColumns.ID, rowId);
       privilegedUpdateValues
           .put(DataTableColumns.DEFAULT_ACCESS, serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-      privilegedUpdateValues.put(DataTableColumns.OWNER,
-          serverRow.getDataByKey(DataTableColumns.OWNER));
+      privilegedUpdateValues.put(DataTableColumns.ROW_OWNER,
+          serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
       privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
           serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
       privilegedUpdateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
@@ -4356,8 +4356,8 @@ public class ODKDatabaseImplUtils {
         // take the server's metadata values too...
         updateValues.put(DataTableColumns.DEFAULT_ACCESS,
             serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-        updateValues.put(DataTableColumns.OWNER,
-            serverRow.getDataByKey(DataTableColumns.OWNER));
+        updateValues.put(DataTableColumns.ROW_OWNER,
+            serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
         updateValues
             .put(DataTableColumns.FORM_ID, serverRow.getDataByKey(DataTableColumns.FORM_ID));
         updateValues.put(DataTableColumns.LOCALE, serverRow.getDataByKey(DataTableColumns.LOCALE));
@@ -4486,7 +4486,7 @@ public class ODKDatabaseImplUtils {
           t + ": No user supplied conflict type can be included for a checkpoint");
     }
 
-    if (cvValues.containsKey(DataTableColumns.OWNER)) {
+    if (cvValues.containsKey(DataTableColumns.ROW_OWNER)) {
       throw new IllegalArgumentException(
           t + ": No user supplied filter value can be included for a checkpoint");
     }
@@ -4627,7 +4627,7 @@ public class ODKDatabaseImplUtils {
             priorDefaultAccess = c.getString(i);
           }
 
-          if (name.equals(DataTableColumns.OWNER)) {
+          if (name.equals(DataTableColumns.ROW_OWNER)) {
             priorOwner = c.getString(i);
           }
 
@@ -4862,8 +4862,8 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.OWNER)) {
-          cvDataTableVal.put(DataTableColumns.OWNER, activeUser);
+        if (!cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER)) {
+          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY) || (
@@ -4891,7 +4891,7 @@ public class ODKDatabaseImplUtils {
         // don't allow changes to default access or owner or syncState when inserting checkpoints
         cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, priorDefaultAccess);
 
-        cvDataTableVal.put(DataTableColumns.OWNER, priorOwner);
+        cvDataTableVal.put(DataTableColumns.ROW_OWNER, priorOwner);
 
         cvDataTableVal.put(DataTableColumns.GROUP_READ_ONLY, priorGroupReadOnly);
 
@@ -5240,7 +5240,7 @@ public class ODKDatabaseImplUtils {
     boolean update = false;
     String updatedSyncState = SyncState.new_row.name();
     String priorDefaultAccess = DataTableColumns.DEFAULT_DEFAULT_ACCESS;
-    String priorOwner = DataTableColumns.DEFAULT_OWNER;
+    String priorOwner = DataTableColumns.DEFAULT_ROW_OWNER;
     String priorGroupReadOnly = DataTableColumns.DEFAULT_GROUP_READ_ONLY;
     String priorGroupModify = DataTableColumns.DEFAULT_GROUP_MODDIFY;
     String priorGroupPrivileged = DataTableColumns.DEFAULT_GROUP_PRIVILEGED;
@@ -5332,7 +5332,7 @@ public class ODKDatabaseImplUtils {
             if (priorDefaultAccess == null) {
               priorDefaultAccess = DataTableColumns.DEFAULT_DEFAULT_ACCESS;
             }
-            int ownerCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.OWNER);
+            int ownerCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.ROW_OWNER);
             priorOwner =  data.getRowAtIndex(0).getDataByIndex(ownerCursorIndex);
             int groupReadOnlyCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.GROUP_READ_ONLY);
             priorGroupReadOnly =  data.getRowAtIndex(0).getDataByIndex(groupReadOnlyCursorIndex);
@@ -5385,7 +5385,7 @@ public class ODKDatabaseImplUtils {
       if (!asServerRequestedChange) {
         // do not allow defaultAccess or owner to be modified in normal workflow
         if (cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || cvDataTableVal
-            .containsKey(DataTableColumns.OWNER)) {
+            .containsKey(DataTableColumns.ROW_OWNER)) {
 
           tss.canModifyDefaultAccessAndOwner(rolesArray, priorGroupPrivileged);
         }
@@ -5452,7 +5452,7 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
 
           // activeUser
-          cvDataTableVal.put(DataTableColumns.OWNER, activeUser);
+          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
 
           tss.allowRowChange(activeUser, rolesArray, updatedSyncState, priorDefaultAccess,
               priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.NEW_ROW);
@@ -5586,7 +5586,7 @@ public class ODKDatabaseImplUtils {
         continue;
       } else if (DataTableColumns.DEFAULT_ACCESS.equals(key)) {
         continue;
-      } else if (DataTableColumns.OWNER.equals(key)) {
+      } else if (DataTableColumns.ROW_OWNER.equals(key)) {
         continue;
       } else if (DataTableColumns.GROUP_READ_ONLY.equals(key)) {
         continue;

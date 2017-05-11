@@ -431,7 +431,7 @@ public class SubmissionProvider extends ContentProvider {
                 rowETag = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.DEFAULT_ACCESS)) {
                 defaultAccess = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.OWNER)) {
+              } else if (columnName.equals(DataTableColumns.ROW_OWNER)) {
                 owner = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
                 formId = CursorUtils.getIndexAsString(c, i);

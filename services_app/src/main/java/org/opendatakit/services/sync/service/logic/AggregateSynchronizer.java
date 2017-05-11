@@ -522,7 +522,7 @@ public class AggregateSynchronizer implements Synchronizer {
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
           rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
           RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.DEFAULT_ACCESS),
-              rowToAlter.getDataByKey(DataTableColumns.OWNER), rowToAlter.getDataByKey
+              rowToAlter.getDataByKey(DataTableColumns.ROW_OWNER), rowToAlter.getDataByKey
                   (DataTableColumns.GROUP_READ_ONLY), rowToAlter.getDataByKey(DataTableColumns
                   .GROUP_MODIFY), rowToAlter.getDataByKey(DataTableColumns.GROUP_PRIVILEGED)),
           values);
