@@ -41,12 +41,7 @@ import org.opendatakit.services.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.services.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Isolate the app-level and table-level synchronization steps
@@ -130,9 +125,9 @@ public class ProcessAppAndTableLevelChanges {
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
 
-    ArrayList<String> roleList;
+    HashMap<String,Object> rolesAndDefaultGroupMap;
     try {
-      roleList = sc.getSynchronizer().getUserRoles();
+      rolesAndDefaultGroupMap = sc.getSynchronizer().getUserRolesAndDefaultGroup();
     } catch (Exception e) {
       log.e(TAG,
               "[verifyServerConfiguration] exception obtaining user roles exception: "
@@ -141,6 +136,22 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
+    if ( rolesAndDefaultGroupMap == null ||
+         !rolesAndDefaultGroupMap.containsKey("roles") ||
+         !rolesAndDefaultGroupMap.containsKey("defaultGroup") ) {
+      log.w(TAG,
+          "[verifyServerConfiguration] no rolesAndGroupsMap returned or missing roles and/or "
+              + "defaultGroup keys -- perhaps an anonymousUser or older server?");
+      sc.setRolesList("");
+      sc.setDefaultGroup("");
+      sc.setUsersList("");
+      return;
+    }
+
+    String defaultGroup = (String) rolesAndDefaultGroupMap.get("defaultGroup");
+    sc.setDefaultGroup((defaultGroup == null) ? "" : defaultGroup);
+
+    ArrayList<String> roleList = (ArrayList<String>) rolesAndDefaultGroupMap.get("roles");
     try {
       if ( roleList.isEmpty() ) {
         sc.setRolesList("");

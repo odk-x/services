@@ -82,11 +82,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
@@ -180,12 +176,13 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public ArrayList<String> getUserRoles() throws HttpClientWebException, IOException {
+  public HashMap<String,Object> getUserRolesAndDefaultGroup() throws HttpClientWebException,
+      IOException {
 
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
 
-    URI uri = wrapper.constructListOfUserRolesUri();
+    URI uri = wrapper.constructListOfUserRolesAndDefaultGroupUri();
 
     wrapper.buildNoContentJsonResponseRequest(uri, request);
 
@@ -194,15 +191,15 @@ public class AggregateSynchronizer implements Synchronizer {
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         // perhaps an older server (pre-v1.4.11) ?
-        return new ArrayList<String>();
+        return new HashMap<String,Object>();
       }
 
       String res = wrapper.convertResponseToString(response);
-      TypeReference ref = new TypeReference<ArrayList<String>>() { };
+      TypeReference ref = new TypeReference<HashMap<String,Object>>() { };
 
-      ArrayList<String> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+      HashMap<String,Object> rolesAndDefaultGroupMap = ODKFileUtils.mapper.readValue(res, ref);
 
-      return rolesList;
+      return rolesAndDefaultGroupMap;
 
     } catch ( NetworkTransmissionException e ) {
       if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
@@ -213,7 +210,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
     } catch ( AccessDeniedException e ) {
       // this must be an anonymousUser
-      return new ArrayList<String>();
+      return new HashMap<String,Object>();
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());
