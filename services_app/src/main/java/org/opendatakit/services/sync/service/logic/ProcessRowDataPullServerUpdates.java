@@ -237,10 +237,10 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
           values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
           values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
           values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-          RowFilterScope.Access type = serverRow.getRowFilterScope().getAccess();
+          RowFilterScope.Access type = serverRow.getRowFilterScope().getDefaultAccess();
           values.put(DataTableColumns.DEFAULT_ACCESS,
               (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
-          values.put(DataTableColumns.OWNER, serverRow.getRowFilterScope().getOwner());
+          values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
           values.putNull(DataTableColumns.CONFLICT_TYPE);
 
           sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), sc
@@ -290,10 +290,10 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
             values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
             values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-            RowFilterScope.Access type = serverRow.getRowFilterScope().getAccess();
+            RowFilterScope.Access type = serverRow.getRowFilterScope().getDefaultAccess();
             values.put(DataTableColumns.DEFAULT_ACCESS,
                 (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
-            values.put(DataTableColumns.OWNER, serverRow.getRowFilterScope().getOwner());
+            values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
 
             values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
             values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
