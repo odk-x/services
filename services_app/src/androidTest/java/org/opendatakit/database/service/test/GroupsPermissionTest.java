@@ -275,24 +275,33 @@ public class GroupsPermissionTest {
       props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
       props.setProperty(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);
       props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
+      // apparently need to sleep to allow service layer to reliably detect
+      // the username update in SharedPreferences. If we don't wait, we can
+      // pull stale data in service layer and apply incorrect filter criteria.
+      //
+      try {
+         Thread.sleep(100L);
+      } catch (InterruptedException e) {
+         e.printStackTrace();
+      }
    }
 
    private void switchToUser1() {
       setActiveUser(TEST_USER_1, TEST_PWD_1, APPNAME, FULL_PERMISSION_ROLES, null);
       String verifyName = getActiveUser(APPNAME);
-      assertEquals("mailto:" + TEST_USER_1, verifyName);
+      assertEquals("failing switchToUser1", "mailto:" + TEST_USER_1, verifyName);
    }
 
    private void switchToUser2() {
       setActiveUser(TEST_USER_2, TEST_PWD_2, APPNAME, LIMITED_PERMISSION_ROLES_2, null);
       String verifyName = getActiveUser(APPNAME);
-      assertEquals("mailto:" + TEST_USER_2, verifyName);
+      assertEquals("failing switchToUser2", "mailto:" + TEST_USER_2, verifyName);
    }
 
    private void switchToUser3() {
       setActiveUser(TEST_USER_3, TEST_PWD_3, APPNAME, LIMITED_PERMISSION_ROLES_3, null);
       String verifyName = getActiveUser(APPNAME);
-      assertEquals("mailto:" + TEST_USER_3, verifyName);
+      assertEquals("failing switchToUser3", "mailto:" + TEST_USER_3, verifyName);
    }
 
    private boolean hasNoTablesInDb(UserDbInterface serviceInterface, DbHandle db)
@@ -380,6 +389,7 @@ public class GroupsPermissionTest {
       setActiveUser(testUserName2, "1235", APPNAME, LIMITED_PERMISSION_ROLES_3, null);
       verifyName = getActiveUser(APPNAME);
       assertNotEquals("mailto:" + testUserName, verifyName);
+      assertEquals("mailto:" + testUserName2, verifyName);
 
       setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
       verifyName = getActiveUser(APPNAME);
@@ -760,6 +770,7 @@ public class GroupsPermissionTest {
          assertEquals(rowId.toString(), row.getDataByKey
              (DataTableColumns.ID));
 
+         // NOTE: savepoint_creator will change to be the new user unless it is specified in cv.
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
 
