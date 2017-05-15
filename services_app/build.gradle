@@ -103,7 +103,7 @@ allprojects {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:support-annotations:25.1.0'
+    compile 'com.android.support:support-annotations:25.3.1'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
@@ -122,7 +122,7 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support.test:rules:0.5'
     androidTestCompile fileTree(include: '*.jar', dir: 'libs')
-	androidTestCompile 'com.android.support:support-annotations:25.1.0'
+	androidTestCompile 'com.android.support:support-annotations:25.3.1'
 
     testCompile 'junit:junit:4.12'
 }
