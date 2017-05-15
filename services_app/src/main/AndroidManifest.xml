@@ -47,6 +47,7 @@
         android:name="org.opendatakit.services.application.Services"
         android:allowBackup="true"
         android:largeHeap="true"
+        android:supportsRtl="true"
         android:installLocation="auto"
         android:icon="@drawable/odk_services"
         android:logo="@drawable/odk_services"

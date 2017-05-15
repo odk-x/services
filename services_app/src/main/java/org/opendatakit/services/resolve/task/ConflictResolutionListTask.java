@@ -6,11 +6,10 @@ import android.widget.ArrayAdapter;
 
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.services.resolve.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -22,7 +21,10 @@ import java.util.UUID;
  */
 public class ConflictResolutionListTask extends AsyncTask<Void, String, String> {
 
-  Context mContext;
+  ActiveUserAndLocale aul;
+  String formatStrResolvingRowNofM;
+  String formatStrDone;
+
   boolean mTakeLocal;
   String mAppName;
   String mTableId;
@@ -32,7 +34,10 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
   String mResult = null;
 
   public ConflictResolutionListTask(Context context, boolean takeLocal) {
-    mContext = context;
+    aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
+
+    formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
+    formatStrDone = context.getString(R.string.done_resolving_rows);
     mTakeLocal = takeLocal;
   }
 
@@ -44,23 +49,13 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
     StringBuilder exceptions = null;
 
-    String activeUser;
-    String rolesList;
-    String userSelectedDefaultLocale;
-
-    PropertiesSingleton props = CommonToolProperties.get(mContext, mAppName);
-    activeUser = props.getActiveUser();
-    rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-    userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
       for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
-        this.publishProgress(
-            mContext.getString(R.string.resolving_row_n_of_m, i+1, mAdapter.getCount()));
+        this.publishProgress(String.format(formatStrResolvingRowNofM, i+1, mAdapter.getCount()));
 
         ResolveRowEntry entry = mAdapter.getItem(i);
         try {
@@ -68,11 +63,11 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
           if ( mTakeLocal ) {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
-                    activeUser, rolesList, userSelectedDefaultLocale);
+                    aul.activeUser, aul.rolesList, aul.locale);
           } else {
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
-                    activeUser, userSelectedDefaultLocale);
+                    aul.activeUser, aul.locale);
           }
 
         } catch (Exception e) {
@@ -108,8 +103,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
               .getConnection(mAppName, dbHandleName);
         }
       }
-      this.publishProgress(
-          mContext.getString(R.string.done_resolving_rows));
+      this.publishProgress(formatStrDone);
 
 
     } finally {
@@ -199,7 +193,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
   public void setResolveRowEntryAdapter(ArrayAdapter<ResolveRowEntry> adapter) {
     synchronized (this) {
       this.mAdapter = adapter;
-      this.mProgress = mContext.getString(R.string.resolving_row_n_of_m, 1, mAdapter.getCount());
+      this.mProgress = String.format(formatStrResolvingRowNofM, 1, mAdapter.getCount());
     }
   }
 

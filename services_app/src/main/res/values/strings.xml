@@ -57,7 +57,7 @@
 	<string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
     <string name="checkpoint_take_newest_with_deltas_warning">Apply Indicated Changes, Save as Incomplete and Proceed?</string>
 
-    <string name="checkpoint_auto_apply">No user-defined field differences -- automatically discarding checkpoint.</string>
+    <string name="checkpoint_auto_apply">No user-defined field differences &#8212; automatically discarding checkpoint.</string>
     <string name="checkpoint_auto_apply_all">No user-defined field differences in any rows\nAutomatically discarded checkpoints.</string>
 
     <string name="select_conflict_to_resolve">Select the row with conflicts to resolve</string>
@@ -81,10 +81,10 @@
 	<string name="conflict_enforce_local_delete">Delete record on server</string>
 	<string name="conflict_apply_delete_from_server">Delete local record</string>
 
-    <string name="conflict_auto_apply">No user-defined field differences -- automatically taking server metadata revisions.</string>
+    <string name="conflict_auto_apply">No user-defined field differences &#8212; automatically taking server metadata revisions.</string>
     <string name="conflict_auto_apply_all">No user-defined field differences in any rows.\nAutomatically took server revisions.</string>
 
-    <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
+    <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts &#8212; contact the ODK Team</string>
 
     <string name="resolve_row_display_name">Form: %1$s Instance: %2$s</string>
     <!-- Sync Service and Notifications stuff -->

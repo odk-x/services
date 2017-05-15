@@ -21,7 +21,9 @@ import java.util.UUID;
  */
 public class CheckpointResolutionListTask extends AsyncTask<Void, String, String> {
 
-  Context mContext;
+  ActiveUserAndLocale aul;
+  String formatStrResolvingRowNofM;
+  String formatStrDone;
   boolean mTakeNewest;
   String mAppName;
   String mTableId;
@@ -31,7 +33,10 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   String mResult = null;
 
   public CheckpointResolutionListTask(Context context, boolean takeNewest) {
-    mContext = context;
+    aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
+
+    formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
+    formatStrDone = context.getString(R.string.done_resolving_rows);
     mTakeNewest = takeNewest;
   }
 
@@ -43,9 +48,6 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
     StringBuilder exceptions = null;
 
-    ActiveUserAndLocale aul =
-        ActiveUserAndLocale.getActiveUserAndLocale(mContext, mAppName);
-
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -53,7 +55,7 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
       for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
         this.publishProgress(
-            mContext.getString(R.string.resolving_row_n_of_m, i+1, mAdapter.getCount()));
+            String.format(formatStrResolvingRowNofM, i+1, mAdapter.getCount()));
 
         ResolveRowEntry entry = mAdapter.getItem(i);
         try {
@@ -99,8 +101,7 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
               .getConnection(mAppName, dbHandleName);
         }
       }
-      this.publishProgress(
-          mContext.getString(R.string.done_resolving_rows));
+      this.publishProgress(formatStrDone);
 
 
     } finally {
@@ -190,7 +191,8 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   public void setResolveRowEntryAdapter(ArrayAdapter<ResolveRowEntry> adapter) {
     synchronized (this) {
       this.mAdapter = adapter;
-      this.mProgress = mContext.getString(R.string.resolving_row_n_of_m, 1, mAdapter.getCount());
+      this.mProgress =
+          String.format(formatStrResolvingRowNofM, 1, mAdapter.getCount());
     }
   }
 

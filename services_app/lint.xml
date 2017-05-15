@@ -7,4 +7,7 @@
     <issue id="TrulyRandom">
         <ignore path="java/org/opendatakit/services/utilities/EncryptionUtils.*" />
     </issue>
+    <issue id="GoogleAppIndexingWarning">
+        <ignore path="**"/>
+    </issue>
 </lint>
