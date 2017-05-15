@@ -31,6 +31,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -279,8 +280,12 @@ public class GroupsPermissionTest {
       // the username update in SharedPreferences. If we don't wait, we can
       // pull stale data in service layer and apply incorrect filter criteria.
       //
+      // and this apparently takes longer on the test server?
+      //
       try {
-         Thread.sleep(100L);
+         // try to force test server to sync the SharedPreferences...
+         InstrumentationRegistry.getTargetContext().getCacheDir().listFiles();
+         Thread.sleep(200L);
       } catch (InterruptedException e) {
          e.printStackTrace();
       }
