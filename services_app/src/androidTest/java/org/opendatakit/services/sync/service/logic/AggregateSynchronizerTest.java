@@ -178,8 +178,13 @@ public class AggregateSynchronizerTest {
    * Perform tear down for tests if necessary
    */
   @After
-  protected void tearDown() throws Exception {
+  public void tearDown() throws Exception {
     // no-op
+  }
+
+  @Test
+  public void testNoOp() {
+     // no-op
   }
 
 //  /*
