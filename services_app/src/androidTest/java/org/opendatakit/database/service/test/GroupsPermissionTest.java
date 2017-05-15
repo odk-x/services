@@ -1,16 +1,25 @@
 package org.opendatakit.database.service.test;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.test.ServiceTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ServiceTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.database.service.DbHandle;
@@ -21,15 +30,16 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.services.database.service.OdkDatabaseService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
-public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
+@RunWith(AndroidJUnit4.class)
+public class GroupsPermissionTest {
 
    private boolean initialized = false;
    private static final String APPNAME = TestConsts.APPNAME;
@@ -66,16 +76,13 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
    private static final String LIMITED_PERMISSION_ROLES_3 = "[\"ROLE_USER\","
        + "\"ROLE_SYNCHRONIZE_TABLES\",\"" + TEST_GRP_3 + "\"]";
 
-   public GroupsPermissionTest() {
-      super(OdkDatabaseService.class);
-   }
+   private static int bindToDbServiceCount = 0;
 
-   public GroupsPermissionTest(Class<OdkDatabaseService> serviceClass) {
-      super(serviceClass);
-   }
+   @Rule
+   public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-   @Override protected void setUp() throws Exception {
-      super.setUp();
+   @Before
+   public void setUp() throws Exception {
 
       boolean beganUninitialized = !initialized;
       if (beganUninitialized) {
@@ -83,10 +90,10 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          // Used to ensure that the singleton has been initialized properly
          AndroidConnectFactory.configure();
       }
-      setupService();
    }
 
-   @Override protected void tearDown() throws Exception {
+   @After
+   public void tearDown() throws Exception {
       UserDbInterface serviceInterface = bindToDbService();
       try {
          DbHandle db = serviceInterface.openDatabase(APPNAME);
@@ -97,16 +104,38 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
          e.printStackTrace();
          fail(e.getMessage());
       }
-      super.tearDown();
    }
 
    @Nullable private UserDbInterface bindToDbService() {
-      Intent bind_intent = new Intent();
-      bind_intent.setClass(getContext(), OdkDatabaseService.class);
-      IBinder service = this.bindService(bind_intent);
+      Context context = InstrumentationRegistry.getContext();
 
+      ++bindToDbServiceCount;
+      Intent bind_intent = new Intent();
+      bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
+          IntentConsts.Database.DATABASE_SERVICE_CLASS);
+
+      int count = 0;
       UserDbInterface dbInterface;
       try {
+         IBinder service = null;
+         while ( service == null ) {
+            try {
+               service = mServiceRule.bindService(bind_intent);
+            } catch (TimeoutException e) {
+               dbInterface = null;
+            }
+            if ( service == null ) {
+               ++count;
+               if ( count % 20 == 0 ) {
+                  Log.i("GroupPermissionTest", "bindToDbService failed for " + count +
+                      " tries so far on bindToDbServiceCount " + bindToDbServiceCount);
+               }
+               try {
+                  Thread.sleep(10);
+               } catch (InterruptedException e) {
+               }
+            }
+         }
          dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
@@ -228,7 +257,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
 
    private String getActiveUser(String appName) {
       PropertiesSingleton props = CommonToolProperties
-          .get(getService().getApplicationContext(), appName);
+          .get(InstrumentationRegistry.getTargetContext(), appName);
       return props.getActiveUser();
    }
 
@@ -236,9 +265,10 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
        roleListJSONstring,
        String defaultGroup) {
       PropertiesSingleton props = CommonToolProperties
-          .get(getService().getApplicationContext(), appName);
+          .get(InstrumentationRegistry.getTargetContext(), appName);
       // these are stored in devices
-      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getContext()
+      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+          InstrumentationRegistry.getTargetContext()
           .getString(org.opendatakit.androidlibrary.R.string.credential_type_google_account));
       props.setProperty(CommonToolProperties.KEY_ACCOUNT, activeUser);
       // this is stored in SharedPreferences
@@ -289,6 +319,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       assertTrue(tablesGone);
    }
 
+   @Test
    public void testDbInsertNDeleteSingleRowIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -337,6 +368,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testSetUser() throws ActionNotAuthorizedException {
       String testUserName = "test@gmail.com";
       setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
@@ -354,6 +386,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       assertEquals("mailto:" + testUserName, verifyName);
    }
 
+   @Test
    public void testUserAuthorizationSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db;
@@ -410,6 +443,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testUserAuthorizationFailure() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -554,6 +588,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupAuthorizationUpdateRow_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -650,6 +685,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupAuthorizationFailureLocked_ExpectSomeFailures() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -873,6 +909,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupAuthorizationFailureNotLocked_ExpectSomeFailures() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -1053,6 +1090,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupAuthorizationViewHiddenRowLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -1158,6 +1196,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupViewingHiddenLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -1338,6 +1377,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupAuthorizationViewHiddenRowNotLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -1443,6 +1483,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupViewingHiddenNotLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
@@ -1622,6 +1663,7 @@ public class GroupsPermissionTest extends ServiceTestCase<OdkDatabaseService> {
       }
    }
 
+   @Test
    public void testGroupViewingMultipleHiddenNotLocked_ExpectSuccess() {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;

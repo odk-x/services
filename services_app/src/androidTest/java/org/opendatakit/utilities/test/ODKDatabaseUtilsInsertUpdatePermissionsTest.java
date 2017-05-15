@@ -15,6 +15,9 @@
 package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -22,13 +25,18 @@ import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Permissions tests in the database.
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsInsertUpdatePermissionsTest";
 
+  @Test
   public void testUpdateUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
@@ -53,6 +61,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
 
+  @Test
   public void testInsertCheckpointAsUpdateUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -77,6 +86,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
@@ -99,6 +109,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsInsertUnlockedNoAnonCreate()
       throws ActionNotAuthorizedException {
 
@@ -122,6 +133,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testUpdateUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -145,6 +157,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsUpdateUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -170,6 +183,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -192,6 +206,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsInsertUnlockedYesAnonCreate()
       throws ActionNotAuthorizedException {
 
@@ -215,6 +230,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testUpdateLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -239,6 +255,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
 
+  @Test
   public void testInsertCheckpointAsUpdateLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -262,6 +279,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -284,6 +302,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsInsertLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -306,6 +325,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testUpdateLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -329,6 +349,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsUpdateLockedYesAnonCreate() throws
       ActionNotAuthorizedException {
 
@@ -353,6 +374,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -375,6 +397,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
     }
   }
 
+  @Test
   public void testInsertCheckpointAsInsertLockedYesAnonCreate()
       throws ActionNotAuthorizedException {
 
@@ -401,6 +424,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //  /*
 //   * Test query when there is data
 //   */
+//  @Test
 //  public void testQueryWithData_ExpectPass() {
 //    String tableId = testTable;
 //    List<Column> columns = new ArrayList<Column>();
@@ -455,6 +479,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 //  /*
 //   * Test raw query when there is no data
 //   */
+//  @Test
 //  public void testRawQueryWithData_ExpectPass() {
 //    String tableId = testTable;
 //    String query = "SELECT * FROM " + tableId;

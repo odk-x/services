@@ -705,7 +705,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
       String tableId, String instanceId, SyncAttachmentState attachmentState,
-      String uriFragmentHash, String lastKnownLocalRowLevelManifestETag)
+      String lastKnownLocalRowLevelManifestETag)
       throws HttpClientWebException, IOException {
 
     URI instanceFileManifestUri =

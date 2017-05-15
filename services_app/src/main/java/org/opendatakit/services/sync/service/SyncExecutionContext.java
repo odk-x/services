@@ -364,9 +364,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
       if ( !active ) {
         active = true;
         application.bindService(bind_intent, odkDbServiceConnection,
-            Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
-                Context.BIND_ADJUST_WITH_ACTIVITY :
-                0));
+            Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
       }
 
       odkDbInterfaceBindComplete.wait();

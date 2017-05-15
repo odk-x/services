@@ -124,9 +124,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
       bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
               IntentConsts.Sync.SYNC_SERVICE_CLASS);
       bindService(bind_intent, this,
-              Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
-                      Context.BIND_ADJUST_WITH_ACTIVITY :
-                      0));
+              Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
     } catch (Exception e) {
       e.printStackTrace();
     }

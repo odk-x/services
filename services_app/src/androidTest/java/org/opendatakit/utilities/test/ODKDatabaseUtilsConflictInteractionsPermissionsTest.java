@@ -15,6 +15,9 @@
 package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
@@ -23,12 +26,16 @@ import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Permissions tests in the database.
  *
  * These are specific to the functionality that can occur during sync and conflict resolution
  *
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsConflictInteractionsPermissionsTest";
@@ -207,21 +214,25 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
     }
   }
 
+  @Test
   public void testResolveLocalRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRow_Table(false, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRow_Table(false, true, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRow_Table(true, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRow_Table(true, true, RowFilterScope.Access.FULL);
@@ -229,22 +240,26 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
 
   ///////////////////
 
+  @Test
   public void testResolveLocalRowWithServerChangesUnlockedNoAnonCreate() throws
       ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(false, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowWithServerChangesUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(false, true, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowWithServerChangesLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(true, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveLocalRowWithServerChangesLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(true, true, RowFilterScope.Access.FULL);
@@ -252,21 +267,25 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
 
   ///////////////////
 
+  @Test
   public void testResolveServerRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveServerRow_Table(false, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveServerRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveServerRow_Table(false, true, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveServerRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveServerRow_Table(true, false, RowFilterScope.Access.FULL);
   }
 
+  @Test
   public void testResolveServerRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     base_Type_ResolveServerRow_Table(true, true, RowFilterScope.Access.FULL);

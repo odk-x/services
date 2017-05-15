@@ -748,7 +748,7 @@ class ProcessManifestContentAndFileChanges {
     // 4) Get the list of files on the server
     FileManifestDocument manifestDocument =
         sc.getSynchronizer().getRowLevelFileManifest(serverInstanceFileUri, tableId, instanceId,
-            attachmentState, uriFragmentHash, lastKnownLocalRowLevelManifestETag);
+            attachmentState, lastKnownLocalRowLevelManifestETag);
 
     if ( manifestDocument == null ) {
       // if the row attachment state, list of file attachments, and manifest on the server

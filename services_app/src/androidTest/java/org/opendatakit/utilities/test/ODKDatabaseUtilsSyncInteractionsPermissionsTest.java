@@ -14,6 +14,9 @@
 
 package org.opendatakit.utilities.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
  *
  * @author mitchellsundt@gmail.com
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsSyncInteractionsPermissionsTest";
@@ -219,112 +223,132 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
     }
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_new_row() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_changed() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_deleted() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_new_row() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_changed() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_deleted() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_new_row() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_changed() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_deleted() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_new_row() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_changed() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_deleted() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
@@ -333,6 +357,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
   //===============================
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -340,6 +365,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -347,6 +373,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -354,6 +381,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -363,6 +391,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -370,6 +399,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -377,6 +407,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -384,6 +415,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -393,6 +425,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -400,6 +433,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -407,6 +441,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -414,6 +449,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -424,6 +460,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -431,6 +468,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -438,6 +476,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -445,6 +484,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 

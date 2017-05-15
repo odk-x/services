@@ -16,9 +16,11 @@ package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
@@ -55,10 +57,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static org.junit.Assert.*;
+
 /**
  * Permissions tests in the database.
  */
-public class AbstractPermissionsTestCase extends AndroidTestCase {
+public class AbstractPermissionsTestCase {
 
   public static final String SAVEPOINT_TIMESTAMP_LOCAL = "2016-10-07T00:11:59.893000000";
 
@@ -163,14 +167,8 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     return APPNAME;
   }
 
-  /*
-* Set up the database for the tests(non-Javadoc)
-*
-* @see android.test.AndroidTestCase#setUp()
-*/
-  @Override
-  protected synchronized void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public synchronized void setUp() throws Exception {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(APPNAME);
 
@@ -197,21 +195,13 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
     }
   }
 
-
-  /*
-* Destroy all test data once tests are done(non-Javadoc)
-*
-* @see android.test.AndroidTestCase#tearDown()
-*/
-  @Override
-  protected void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     verifyNoTablesExistNCleanAllTables();
 
     if (db != null) {
       db.releaseReference();
     }
-
-    super.tearDown();
   }
 
   protected void verifyNoTablesExistNCleanAllTables() {
@@ -235,6 +225,7 @@ public class AbstractPermissionsTestCase extends AndroidTestCase {
   /*
    * Check that the database is setup
    */
+  @Test
   public void testPreConditions() {
     assertNotNull(db);
   }

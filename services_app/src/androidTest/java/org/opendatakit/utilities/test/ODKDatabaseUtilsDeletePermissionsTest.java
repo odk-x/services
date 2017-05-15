@@ -14,6 +14,9 @@
 
 package org.opendatakit.utilities.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -21,13 +24,18 @@ import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Permissions tests in the database.
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsDeletePermissionsTest";
 
+  @Test
   public void testDeleteUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
@@ -68,6 +76,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -108,6 +117,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -148,6 +158,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -188,6 +199,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
@@ -217,6 +229,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -246,6 +259,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -275,6 +289,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -304,6 +319,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
@@ -346,6 +362,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
@@ -388,6 +405,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
@@ -430,6 +448,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
@@ -472,6 +491,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -516,6 +536,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -561,6 +582,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -606,6 +628,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -651,6 +674,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate1()
       throws  ActionNotAuthorizedException {
 
@@ -695,6 +719,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate1()
       throws  ActionNotAuthorizedException {
 
@@ -740,6 +765,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate1()
       throws  ActionNotAuthorizedException {
 
@@ -785,6 +811,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate1()
       throws  ActionNotAuthorizedException {
 
@@ -830,6 +857,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate0()
       throws  ActionNotAuthorizedException {
 
@@ -874,6 +902,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate0()
       throws  ActionNotAuthorizedException {
 
@@ -919,6 +948,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate0()
       throws  ActionNotAuthorizedException {
 
@@ -964,6 +994,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate0()
       throws  ActionNotAuthorizedException {
 
@@ -1009,6 +1040,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -1047,6 +1079,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -1086,6 +1119,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
@@ -1125,6 +1159,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 

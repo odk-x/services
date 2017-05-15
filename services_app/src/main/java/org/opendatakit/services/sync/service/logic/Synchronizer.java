@@ -312,7 +312,6 @@ public interface Synchronizer {
    * @param tableId
    * @param instanceId
    * @param attachmentState that we are trying to enforce.
-   * @param localRowAttachmentHash
    * @param lastKnownLocalRowLevelManifestETag the eTag for the manifest we last had
    * @return
    * @throws HttpClientWebException
@@ -320,7 +319,7 @@ public interface Synchronizer {
    */
   FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
       String tableId, String instanceId, SyncAttachmentState attachmentState,
-      String localRowAttachmentHash, String lastKnownLocalRowLevelManifestETag) throws
+      String lastKnownLocalRowLevelManifestETag) throws
       HttpClientWebException,
       IOException;
 

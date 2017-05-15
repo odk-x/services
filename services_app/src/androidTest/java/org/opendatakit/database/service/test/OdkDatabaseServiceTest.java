@@ -1,30 +1,42 @@
 package org.opendatakit.database.service.test;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.test.ServiceTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ServiceTestRule;
+import android.support.test.runner.AndroidJUnit4;
 
 import android.util.Log;
 import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.database.service.OdkDatabaseService;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.utilities.DateUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
-public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> {
+import static org.junit.Assert.*;
+
+@RunWith(AndroidJUnit4.class)
+public class OdkDatabaseServiceTest {
 
    private boolean initialized = false;
    private static final String APPNAME = TestConsts.APPNAME;
@@ -59,39 +71,71 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    private static final String dateString = date.formatDateTimeForDb(DateTime.parse
        ("2016-09-28T21:26:22+00:00"));
 
+   private static int bindToDbServiceCount = 0;
 
-   public OdkDatabaseServiceTest() {
-      super(OdkDatabaseService.class);
-   }
+   @Rule
+   public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-   public OdkDatabaseServiceTest(Class<OdkDatabaseService> serviceClass) {
-      super(serviceClass);
-   }
-
-   @Override protected void setUp() throws Exception {
-      super.setUp();
+   @Before
+   public void setUp() throws Exception {
 
       boolean beganUninitialized = !initialized;
-      if ( beganUninitialized ) {
+      if (beganUninitialized) {
          initialized = true;
          // Used to ensure that the singleton has been initialized properly
          AndroidConnectFactory.configure();
       }
-      setupService();
    }
 
-   @Override protected void tearDown() throws Exception {
+   @After
+   public void tearDown() throws Exception {
       UserDbInterface serviceInterface = bindToDbService();
       try {
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "tearDown: " + db.getDatabaseHandle());
+         Log.i("OdkDatabaseServiceTest", "tearDown: " + db.getDatabaseHandle());
          verifyNoTablesExistNCleanAllTables(serviceInterface, db);
          serviceInterface.closeDatabase(APPNAME, db);
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
       }
-      super.tearDown();
+   }
+
+   @Nullable private UserDbInterface bindToDbService() {
+      Context context = InstrumentationRegistry.getContext();
+
+      ++bindToDbServiceCount;
+      Intent bind_intent = new Intent();
+      bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
+          IntentConsts.Database.DATABASE_SERVICE_CLASS);
+
+      int count = 0;
+      UserDbInterface dbInterface;
+      try {
+         IBinder service = null;
+         while ( service == null ) {
+            try {
+               service = mServiceRule.bindService(bind_intent);
+            } catch (TimeoutException e) {
+               dbInterface = null;
+            }
+            if ( service == null ) {
+               ++count;
+               if ( count % 20 == 0 ) {
+                  Log.i("GroupPermissionTest", "bindToDbService failed for " + count +
+                      " tries so far on bindToDbServiceCount " + bindToDbServiceCount);
+               }
+               try {
+                  Thread.sleep(10);
+               } catch (InterruptedException e) {
+               }
+            }
+         }
+         dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
+      } catch (IllegalArgumentException e) {
+         dbInterface = null;
+      }
+      return dbInterface;
    }
 
    @NonNull private List<Column> createColumnList() {
@@ -224,26 +268,13 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       assertTrue(tablesGone);
    }
 
-   @Nullable private UserDbInterface bindToDbService() {
-      Intent bind_intent = new Intent();
-      bind_intent.setClass(getContext(), OdkDatabaseService.class);
-      IBinder service = this.bindService(bind_intent);
-
-      UserDbInterface dbInterface;
-      try {
-         dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
-      } catch (IllegalArgumentException e) {
-         dbInterface = null;
-      }
-      return dbInterface;
-   }
-
    private boolean hasNoTablesInDb(UserDbInterface serviceInterface, DbHandle db)
        throws ServicesAvailabilityException {
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
       return (tableIds.size() == 0);
    }
 
+   @Test
    public void testBinding() {
       UserDbInterface serviceInterface = bindToDbService();
       assertNotNull(serviceInterface.getDbInterface());
@@ -252,6 +283,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       // TODO: add a bind with bind_intent.setClassName instead
    }
 
+   @Test
    public void testDbCreateNDeleteTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -279,6 +311,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbCreateNDeleteTableWTransactions() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -305,6 +338,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -345,6 +379,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertThrowsIllegalArgumentException()
        throws ActionNotAuthorizedException, ServicesAvailabilityException {
       UserDbInterface serviceInterface = bindToDbService();
@@ -379,6 +414,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertSingleRowIntoTableWSingleTransaction()
        throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
@@ -418,6 +454,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertSingleRowIntoTableWTwoTransactions()
        throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
@@ -459,6 +496,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertTwoRowsIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -502,6 +540,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertTwoRowsIntoTableWSingleTransaction()
        throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
@@ -546,6 +585,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertTwoRowsIntoTableWTwoTransactions() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -592,6 +632,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbQueryWNoParams() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -633,6 +674,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
    /*
+       @Test
        public void testDbQueryRowWNoColumnsSpecified() {
            UserDbInterface serviceInterface = bindToDbService();
            try {
@@ -670,6 +712,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
            }
        }
    */
+   @Test
    public void testDbUpdateAllValues() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -719,6 +762,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbUpdateAllValuesWTransactions() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -768,6 +812,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbUpdateSingleValue() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -832,6 +877,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertNDeleteSingleRowIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -880,7 +926,8 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
          fail(e.getMessage());
       }
    }
-   
+
+   @Test
    public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
       final int NUM_ROWS = 10000;
       UserDbInterface serviceInterface = bindToDbService();
@@ -951,6 +998,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
        throws ActionNotAuthorizedException {
       final int NUM_ROWS = 2500;
@@ -1032,6 +1080,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbUpdateWTwoServiceConnections() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface1 = bindToDbService();
       UserDbInterface serviceInterface2 = bindToDbService();
@@ -1108,6 +1157,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbLimitNoOffset() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1152,6 +1202,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
    }
 
 
+   @Test
    public void testDbLimitNoOffsetArbitraryQuery() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1191,6 +1242,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbLimitOver() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1234,6 +1286,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbLimitOverArbitraryQuery() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1274,6 +1327,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbOffsetNoLimit() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1318,6 +1372,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbOffsetNoLimitArbitraryQuery() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1358,6 +1413,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbLimitWithOffset() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1401,6 +1457,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbLimitWithOffsetArbitraryQuery() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1441,6 +1498,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbQueryResumeForward() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1492,6 +1550,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbQueryResumeForwardEnd() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1537,6 +1596,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbQueryResumeBackward() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1588,6 +1648,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbQueryResumeBackwardEnd() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1641,6 +1702,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbCreateNDeleteLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1666,6 +1728,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertSingleRowIntoLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1704,6 +1767,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertTwoRowsIntoLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1743,6 +1807,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbUpdateAllValuesLocalOnlyTable()  {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1793,6 +1858,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbUpdateSingleValueLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
@@ -1852,6 +1918,7 @@ public class OdkDatabaseServiceTest extends ServiceTestCase<OdkDatabaseService> 
       }
    }
 
+   @Test
    public void testDbInsertNDeleteSingleRowIntoLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
