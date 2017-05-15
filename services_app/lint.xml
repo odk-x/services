@@ -5,6 +5,6 @@
         <ignore regexp="Invalid package reference in library; not included in Android: `java.nio.file`\. Referenced from `com\.fasterxml\.jackson\.databind\.ext\.Java7SupportImpl`\." />
     </issue>
     <issue id="TrulyRandom">
-        <ignore/>
+        <ignore path="java/org/opendatakit/services/utilities/EncryptionUtils.*" />
     </issue>
 </lint>
