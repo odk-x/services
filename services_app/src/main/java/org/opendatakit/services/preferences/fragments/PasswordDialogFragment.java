@@ -29,6 +29,9 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PasswordDialogFragment extends DialogFragment {
 
   public interface OnChangePassword {
@@ -105,13 +108,14 @@ public class PasswordDialogFragment extends DialogFragment {
         
         if (!pw.equalsIgnoreCase("") && !ver.equalsIgnoreCase("") && pw.equals(ver)) {
           // passwords are the same
-          props.setProperty(passwordPropertyName, pw);
+          Map<String,String> properties = new HashMap<String,String>();
+          properties.put(passwordPropertyName, pw);
           if ( !isAdminPassword ) {
-            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
           }
-          props.writeProperties();
+          props.setProperties(properties);
 
           Toast.makeText(PasswordDialogFragment.this.getActivity(),
               R.string.password_changed, Toast.LENGTH_SHORT).show();
@@ -120,13 +124,14 @@ public class PasswordDialogFragment extends DialogFragment {
             callback.passwordChanged();
           }
         } else if (pw.equalsIgnoreCase("") && ver.equalsIgnoreCase("")) {
-          props.setProperty(passwordPropertyName, "");
+          Map<String,String> properties = new HashMap<String,String>();
+          properties.put(passwordPropertyName, "");
           if ( !isAdminPassword ) {
-            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
           }
-          props.writeProperties();
+          props.setProperties(properties);
 
           if ( isAdminPassword ) {
             Toast.makeText(PasswordDialogFragment.this.getActivity(),

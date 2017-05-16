@@ -79,24 +79,26 @@ public class AggregateSynchronizerTest {
     SyncOverallResult syncRes = new SyncOverallResult();
 
     PropertiesSingleton props = CommonToolProperties.get(context, appName);
-    props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, agg_url);
+    Map<String,String> properties = new HashMap<String,String>();
+    properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL, agg_url);
     if ( userName.length() == 0 ) {
-      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           context.getString(R.string.credential_type_none));
-      props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
-      props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
-      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-      props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERNAME, userName);
+      properties.put(CommonToolProperties.KEY_PASSWORD, password);
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
     } else {
-      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           context.getString(R.string.credential_type_username_password));
-      props.setProperty(CommonToolProperties.KEY_USERNAME, userName);
-      props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
-      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-      props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERNAME, userName);
+      properties.put(CommonToolProperties.KEY_PASSWORD, password);
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
     }
+    props.setProperties(properties);
 
     SyncExecutionContext syncExecutionContext = new SyncExecutionContext(context,
         ((ToolAwareApplication) context).getVersionCodeString(), appName, syncProg, syncRes);

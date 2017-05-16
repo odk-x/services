@@ -14,6 +14,10 @@ import org.opendatakit.utilities.StaticStateManipulator;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -40,14 +44,17 @@ public class PropertiesTest {
         Context context = InstrumentationRegistry.getTargetContext();
 
         PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
+        Map<String,String> properties = new HashMap<String,String>();
+
         // non-default value for font size
-        props.setProperty(CommonToolProperties.KEY_FONT_SIZE, "29");
+        properties.put(CommonToolProperties.KEY_FONT_SIZE, "29");
         // these are stored in devices
-        props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
             context.getString(R.string.credential_type_google_account));
-        props.setProperty(CommonToolProperties.KEY_ACCOUNT, "mitchs.test@gmail.com");
+        properties.put(CommonToolProperties.KEY_ACCOUNT, "mitchs.test@gmail.com");
         // this is stored in SharedPreferences
-        props.setProperty(CommonToolProperties.KEY_PASSWORD, "asdf");
+        properties.put(CommonToolProperties.KEY_PASSWORD, "asdf");
+        props.setProperties(properties);
 
         StaticStateManipulator.get().reset();
 
@@ -84,11 +91,11 @@ public class PropertiesTest {
 
         for ( String secureKey : secureKeys ) {
             // this is stored in SharedPreferences
-            props.setProperty(secureKey, "asdf" + secureKey.hashCode());
+            props.setProperties(Collections.singletonMap(secureKey, "asdf" + secureKey.hashCode()));
             assertEquals(props.getProperty(secureKey), "asdf" + secureKey.hashCode());
 
             // and verify remove works
-            props.removeProperty(secureKey);
+            props.setProperties(Collections.singletonMap(secureKey, (String) null));
 
             assertNull("remove: " + secureKey, props.getProperty(secureKey));
 

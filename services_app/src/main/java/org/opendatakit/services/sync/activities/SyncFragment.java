@@ -44,6 +44,8 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -618,8 +620,12 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
     PropertiesSingleton props = CommonToolProperties.get(context, appName);
     AccountManager.get(context).invalidateAuthToken(ACCOUNT_TYPE_G,
         props.getProperty(CommonToolProperties.KEY_AUTH));
-    props.removeProperty(CommonToolProperties.KEY_AUTH);
-    props.writeProperties();
+    Map<String,String> properties = new HashMap<String,String>();
+    properties.put(CommonToolProperties.KEY_AUTH, null);
+    properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+    properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+    properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+    props.setProperties(properties);
   }
 
 

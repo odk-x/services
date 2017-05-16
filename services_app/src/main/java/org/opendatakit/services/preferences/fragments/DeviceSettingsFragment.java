@@ -37,6 +37,7 @@ import org.opendatakit.services.R;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 public class DeviceSettingsFragment extends PreferenceFragment implements
     OnPreferenceChangeListener {
@@ -96,9 +97,11 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) DeviceSettingsFragment.this.getActivity()).getProps();
         if ( stringValue == null || stringValue.length() == 0 || stringValue.equalsIgnoreCase("_")) {
-          props.removeProperty(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE);
+          props.setProperties(Collections.singletonMap(CommonToolProperties
+              .KEY_COMMON_TRANSLATIONS_LOCALE, (String) null));
         } else {
-          props.setProperty(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE, stringValue);
+          props.setProperties(Collections.singletonMap(CommonToolProperties
+              .KEY_COMMON_TRANSLATIONS_LOCALE, stringValue));
         }
         // since the selection changed, we need to change the languages on the tags
         DeviceSettingsFragment.this.getLoaderManager().restartLoader(LOADER_ID, b,
@@ -135,7 +138,8 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
 
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) DeviceSettingsFragment.this.getActivity()).getProps();
-        props.setProperty(CommonToolProperties.KEY_FONT_SIZE, newValue.toString());
+        props.setProperties(Collections.singletonMap(CommonToolProperties
+            .KEY_FONT_SIZE, newValue.toString()));
         return true;
       }
     });
@@ -156,7 +160,8 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) DeviceSettingsFragment.this.getActivity()).getProps();
-        props.setProperty(CommonToolProperties.KEY_SHOW_SPLASH, newValue.toString());
+        props.setProperties(Collections.singletonMap(CommonToolProperties
+            .KEY_SHOW_SPLASH, newValue.toString()));
         return true;
       }
     });
@@ -204,7 +209,8 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
                     ((IOdkAppPropertiesActivity) DeviceSettingsFragment.this.getActivity()).getProps();
 
                 String path = getString(R.string.default_splash_path);
-                props.setProperty(CommonToolProperties.KEY_SPLASH_PATH, path);
+                props.setProperties(Collections.singletonMap(CommonToolProperties
+                    .KEY_SPLASH_PATH, path));
                 mSplashPathPreference.setSummary(path);
               }
             }
@@ -227,13 +233,6 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
     if ( !adminMode && (!fontAvailable || !splashAvailable) ) {
       deviceCategory.setTitle(R.string.device_restrictions_apply);
     }
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
   }
 
   @Override public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -282,16 +281,11 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
       if (newMedia.exists()) {
         String appRelativePath = ODKFileUtils.asRelativePath(props.getAppName(), newMedia);
 
-        props.setProperty(CommonToolProperties.KEY_SPLASH_PATH, appRelativePath);
+        props.setProperties(Collections.singletonMap(CommonToolProperties
+            .KEY_SPLASH_PATH, appRelativePath));
         mSplashPathPreference.setSummary(appRelativePath);
       }
     }
-  }
-
-  @Override public void onPause() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-    super.onPause();
   }
 
   /**
@@ -301,13 +295,7 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     preference.setSummary((CharSequence) newValue);
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-    } else if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-    } else {
-      throw new IllegalStateException("Unexpected case");
-    }
+    props.setProperties(Collections.singletonMap(preference.getKey(), newValue.toString()));
     return true;
   }
 }

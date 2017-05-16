@@ -34,6 +34,8 @@ import org.opendatakit.services.R;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
 
@@ -109,10 +111,12 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
               PropertiesSingleton props =
                   ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
-              props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
-              props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-              props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-              props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+              Map<String,String> properties = new HashMap<String,String>();
+              properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
+              properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+              properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+              properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+              props.setProperties(properties);
               return true;
             } else {
               Toast.makeText(getActivity().getApplicationContext(),
@@ -154,10 +158,12 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
-        props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
-        props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-        props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-        props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+        Map<String,String> properties = new HashMap<String,String>();
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+        properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+        properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+        properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+        props.setProperties(properties);
         return true;
       }
     });
@@ -231,11 +237,13 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
             preference.setSummary(value);
             PropertiesSingleton props = ((IOdkAppPropertiesActivity)
                 ServerSettingsFragment.this.getActivity()).getProps();
-            props.setProperty(CommonToolProperties.KEY_ACCOUNT, value);
-            props.setProperty(CommonToolProperties.KEY_AUTH, "");
-            props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+            Map<String,String> properties = new HashMap<String,String>();
+            properties.put(CommonToolProperties.KEY_ACCOUNT, value);
+            properties.put(CommonToolProperties.KEY_AUTH, "");
+            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+            props.setProperties(properties);
             return true;
           }
         });
@@ -253,8 +261,14 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
       }
     }
     if ( !found ) {
-      // clear the property (prevents clarice@ from being identified)
-      props.setProperty(CommonToolProperties.KEY_ACCOUNT, "");
+      // clear the account property and authentication status
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(CommonToolProperties.KEY_ACCOUNT, "");
+      properties.put(CommonToolProperties.KEY_AUTH, "");
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+      props.setProperties(properties);
       // set to "none"
       mSelectedGoogleAccountPreference.setValue(accountValues.get(accountValues.size()-1));
       mSelectedGoogleAccountPreference.setSummary(accountEntries.get(accountEntries.size()-1));
@@ -268,19 +282,6 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
          !googleAccountAvailable) ) {
       serverCategory.setTitle(R.string.server_restrictions_apply);
     }
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-  }
-
-  @Override public void onPause() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-    super.onPause();
   }
 
   /**
@@ -331,9 +332,12 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     preference.setSummary((CharSequence) newValue);
     if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-      props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(preference.getKey(), newValue.toString());
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+      props.setProperties(properties);
     } else {
       throw new IllegalStateException("Unexpected case");
     }

@@ -44,6 +44,9 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author mitchellsundt@gmail.com
  */
@@ -481,8 +484,12 @@ public class VerifyServerSettingsFragment extends Fragment implements ISyncOutco
     PropertiesSingleton props = CommonToolProperties.get(context, appName);
     AccountManager.get(context).invalidateAuthToken(ACCOUNT_TYPE_G,
         props.getProperty(CommonToolProperties.KEY_AUTH));
-    props.removeProperty(CommonToolProperties.KEY_AUTH);
-    props.writeProperties();
+    Map<String,String> properties = new HashMap<String,String>();
+    properties.put(CommonToolProperties.KEY_AUTH, null);
+    properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+    properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+    properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+    props.setProperties(properties);
   }
 
 

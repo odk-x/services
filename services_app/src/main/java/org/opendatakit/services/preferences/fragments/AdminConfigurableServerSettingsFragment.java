@@ -21,6 +21,8 @@ import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 
+import java.util.Collections;
+
 public class AdminConfigurableServerSettingsFragment extends PreferenceFragment implements
     OnPreferenceChangeListener {
 
@@ -67,20 +69,7 @@ public class AdminConfigurableServerSettingsFragment extends PreferenceFragment 
   @Override
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.setProperty(preference.getKey(), newValue.toString());
+    props.setProperties(Collections.singletonMap(preference.getKey(), newValue.toString()));
     return true;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-  }
-
-  @Override public void onPause() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-    super.onPause();
   }
 }

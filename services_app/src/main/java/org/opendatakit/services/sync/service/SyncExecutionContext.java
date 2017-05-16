@@ -48,7 +48,10 @@ import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStat
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SyncExecutionContext implements SynchronizerStatus {
 
@@ -226,22 +229,19 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return password;
   }
 
-  public void setRolesList(String value) {
+  public void setRolesListAndDefaultGroup(String rolesList, String defaultGroup) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
-    props.setProperty(CommonToolProperties.KEY_ROLES_LIST, value);
-  }
-
-  public void setDefaultGroup(String value) {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-    props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, value);
+    Map<String,String> properties = new HashMap<String,String>();
+    properties.put(CommonToolProperties.KEY_ROLES_LIST, rolesList);
+    properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
+    props.setProperties(properties);
   }
 
   public void setUsersList(String value) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
-    props.setProperty(CommonToolProperties.KEY_USERS_LIST, value);
+    props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_USERS_LIST, value));
   }
 
   public void setAllToolsToReInitialize() {

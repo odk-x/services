@@ -29,10 +29,7 @@ import org.opendatakit.services.R;
 import org.opendatakit.utilities.LocalizationUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Holds the list of commonTranslations.js locales and a "default to system locale" option.
@@ -158,7 +155,8 @@ public class CommonTranslationsLocaleScreen extends ListPreference {
          if ( idxCurrentSelection == -1 ) {
             // can't find default locale -- reset to the default locale specified in the common
             // translations file.
-            props.setProperty(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE, commonLocaleDefault);
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE,
+                commonLocaleDefault));
             idxCurrentSelection = idxLocaleDefault;
          }
 

@@ -142,21 +142,27 @@ public class ProcessAppAndTableLevelChanges {
       log.w(TAG,
           "[verifyServerConfiguration] no rolesAndGroupsMap returned or missing roles and/or "
               + "defaultGroup keys -- perhaps an anonymousUser or older server?");
-      sc.setRolesList("");
-      sc.setDefaultGroup("");
+      sc.setRolesListAndDefaultGroup("", "");
       sc.setUsersList("");
       return;
     }
 
-    String defaultGroup = (String) rolesAndDefaultGroupMap.get("defaultGroup");
-    sc.setDefaultGroup((defaultGroup == null) ? "" : defaultGroup);
+    String defaultGroup = "";
+    {
+      Object o = rolesAndDefaultGroupMap.get("defaultGroup");
+      if ( o != null ) {
+        defaultGroup = o.toString();
+      }
+    }
 
-    ArrayList<String> roleList = (ArrayList<String>) rolesAndDefaultGroupMap.get("roles");
+    String roleListJSONString = "";
     try {
-      if ( roleList.isEmpty() ) {
-        sc.setRolesList("");
-      } else {
-        sc.setRolesList(ODKFileUtils.mapper.writeValueAsString(roleList));
+      Object o = rolesAndDefaultGroupMap.get("roles");
+      if ( o != null ) {
+        ArrayList<String> roleList = (ArrayList<String>) o;
+        if ( !roleList.isEmpty() ) {
+          roleListJSONString = ODKFileUtils.mapper.writeValueAsString(roleList);
+        }
       }
     } catch (JsonProcessingException e) {
       log.e(TAG,
@@ -166,7 +172,8 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    if (roleList.isEmpty()) {
+    sc.setRolesListAndDefaultGroup(roleListJSONString, defaultGroup);
+    if (roleListJSONString.isEmpty()) {
       sc.setUsersList("");
     } else {
       ArrayList<Map<String,Object>> usersList;

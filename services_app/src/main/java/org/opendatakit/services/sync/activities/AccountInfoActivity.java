@@ -33,6 +33,8 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 
+import java.util.Collections;
+
 /**
  * Activity to authenticate against an account and generate a token into the
  * shared preferences.
@@ -147,8 +149,7 @@ public class AccountInfoActivity extends Activity {
     // Set the authentication token and dismiss the dialog.
     String auth_token = bundle.getString(AccountManager.KEY_AUTHTOKEN);
     PropertiesSingleton props = CommonToolProperties.get(this, appName);
-    props.setProperty(CommonToolProperties.KEY_AUTH, auth_token);
-    props.writeProperties();
+    props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_AUTH, auth_token));
     WebLogger.getLogger(appName).i(TAG, "TOKEN" + auth_token);
 
     dismissDialog(WAITING_ID);

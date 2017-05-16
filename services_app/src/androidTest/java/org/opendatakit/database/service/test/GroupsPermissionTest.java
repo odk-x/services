@@ -10,11 +10,9 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -31,15 +29,13 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 
-import java.io.FileDescriptor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GroupsPermissionTest {
 
    private boolean initialized = false;
@@ -90,6 +86,18 @@ public class GroupsPermissionTest {
          initialized = true;
          // Used to ensure that the singleton has been initialized properly
          AndroidConnectFactory.configure();
+
+         UserDbInterface serviceInterface = bindToDbService();
+         DbHandle dbHandle = null;
+         try {
+            dbHandle = serviceInterface.openDatabase(APPNAME);
+
+            verifyNoTablesExistNCleanAllTables(serviceInterface, dbHandle);
+         } finally {
+            if ( dbHandle != null ) {
+               serviceInterface.closeDatabase(APPNAME, dbHandle);
+            }
+         }
       }
    }
 
@@ -265,30 +273,20 @@ public class GroupsPermissionTest {
    private void setActiveUser(String activeUser, String password, String appName, String
        roleListJSONstring,
        String defaultGroup) {
+      Log.e("GroupsPermissionTest", "setActiveUser: Setting user to " + activeUser);
       PropertiesSingleton props = CommonToolProperties
           .get(InstrumentationRegistry.getTargetContext(), appName);
       // these are stored in devices
-      props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           InstrumentationRegistry.getTargetContext()
           .getString(org.opendatakit.androidlibrary.R.string.credential_type_google_account));
-      props.setProperty(CommonToolProperties.KEY_ACCOUNT, activeUser);
+      properties.put(CommonToolProperties.KEY_ACCOUNT, activeUser);
       // this is stored in SharedPreferences
-      props.setProperty(CommonToolProperties.KEY_PASSWORD, password);
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);
-      props.setProperty(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
-      // apparently need to sleep to allow service layer to reliably detect
-      // the username update in SharedPreferences. If we don't wait, we can
-      // pull stale data in service layer and apply incorrect filter criteria.
-      //
-      // and this apparently takes longer on the test server?
-      //
-      try {
-         // try to force test server to sync the SharedPreferences...
-         InstrumentationRegistry.getTargetContext().getCacheDir().listFiles();
-         Thread.sleep(200L);
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-      }
+      properties.put(CommonToolProperties.KEY_PASSWORD, password);
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
+      props.setProperties(properties);
    }
 
    private void switchToUser1() {

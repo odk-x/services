@@ -232,7 +232,6 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     outState.putBoolean(SAVED_ADMIN_CONFIGURED, mAdminConfigured);
-    mProps.writeProperties();
   }
 
   /**
@@ -250,7 +249,6 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
       if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
               !isAnonymous ) {
 
-        mProps.writeProperties();
         // this will swap to the new activity and close this one
         Intent i = new Intent(this, VerifyServerSettingsActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -260,11 +258,5 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
       }
     }
     super.onBackPressed();
-  }
-
-  @Override
-  public void finish() {
-    mProps.writeProperties();
-    super.finish();
   }
 }
