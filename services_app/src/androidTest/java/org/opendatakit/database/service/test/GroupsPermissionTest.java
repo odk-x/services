@@ -10,7 +10,12 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import org.junit.*;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.TestConsts;
@@ -18,7 +23,11 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.data.*;
+import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
@@ -29,10 +38,18 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -58,6 +75,7 @@ public class GroupsPermissionTest {
    private static final String TEST_USER_3 = "usr3@gmail.com";
    private static final String TEST_PWD_3 = "12345";
    private static final String TEST_GRP_3 = "GROUP_THREE";
+   private static final String anonymousUser = "anonymous";
 
 
    private static final String TEST_STR_1 = "TestStr1";
@@ -270,6 +288,12 @@ public class GroupsPermissionTest {
       return props.getActiveUser();
    }
 
+   private void clearActiveUser(String appName) {
+      PropertiesSingleton props = CommonToolProperties
+              .get(InstrumentationRegistry.getTargetContext(), appName);
+      props.clearActiveUser();
+   }
+
    private void setActiveUser(String activeUser, String password, String appName, String
        roleListJSONstring,
        String defaultGroup) {
@@ -287,6 +311,11 @@ public class GroupsPermissionTest {
       properties.put(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
       props.setProperties(properties);
+   }
+
+   private void switchToAnonymousUser() {
+      clearActiveUser(APPNAME);
+      getActiveUser(APPNAME);
    }
 
    private void switchToUser1() {
@@ -690,6 +719,145 @@ public class GroupsPermissionTest {
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
       } catch (ActionNotAuthorizedException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+   }
+
+   @Test
+   public void testGroupAuthorizationAnonymousFailureLocked_ExpectSomeFailures() {
+      UserDbInterface serviceInterface = bindToDbService();
+      DbHandle db = null;
+      List<Column> columnList = createColumnList();
+      ColumnList colList = new ColumnList(columnList);
+      UUID rowId = UUID.randomUUID();
+      OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+
+      try {
+         switchToUser1();
+         db = serviceInterface.openDatabase(APPNAME);
+
+         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         metaData.add(lockTableProperty());
+         metaData.add(noAnonCreationProperty());
+         metaData.add(defaultPermissionReadOnlyProperty());
+
+         serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
+                 colList, metaData, false);
+
+         switchToAnonymousUser();
+         serviceInterface
+                 .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
+                         rowId.toString());
+
+         fail("Should have thrown a ActionNotAuthorizedException");
+      } catch (ActionNotAuthorizedException e) {
+         // should fail based on security settings
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+
+      try {
+         switchToUser1();
+         // insert row
+         serviceInterface
+                 .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
+                         rowId.toString());
+
+         UserTable table = serviceInterface
+                 .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         Row row = table.getRowAtIndex(0);
+
+         verifyRowTestSet1(row);
+
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } catch (ActionNotAuthorizedException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+
+      try {
+         switchToAnonymousUser();
+         UserTable table = serviceInterface
+                 .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         Row row = table.getRowAtIndex(0);
+
+         verifyRowTestSet1(row);
+
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+
+      try {
+         switchToUser1();
+         UserTable table = serviceInterface
+                 .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         Row row = table.getRowAtIndex(0);
+
+         ContentValues cv = new ContentValues();
+         cv.put(COL_INTEGER_ID, 2);
+         cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
+
+         assertEquals(rowId.toString(), row.getDataByKey
+                 (DataTableColumns.ID));
+
+         // NOTE: savepoint_creator will change to be the new user unless it is specified in cv.
+         serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+
+
+         table = serviceInterface
+                 .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         row = table.getRowAtIndex(0);
+
+         assertEquals("2",row.getDataByKey(COL_INTEGER_ID));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
+         assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
+
+      } catch (ActionNotAuthorizedException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+
+      // clean up
+      try {
+         switchToUser1();
+         // delete row
+         serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+
+         UserTable table = serviceInterface
+                 .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         Row row = table.getRowAtIndex(0);
+
+         assertEquals(SyncState.deleted.name(), row.getDataByKey(DataTableColumns
+                 .SYNC_STATE));
+
+         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+         // verify no tables left
+         assertTrue(hasNoTablesInDb(serviceInterface, db));
+         serviceInterface.closeDatabase(APPNAME, db);
+      }  catch (ActionNotAuthorizedException e) {
          e.printStackTrace();
          fail(e.getMessage());
       } catch (ServicesAvailabilityException e) {

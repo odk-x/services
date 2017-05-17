@@ -473,8 +473,11 @@ public class ODKDatabaseImplUtils {
     boolean canCreateRow = false;
     if ( isLocked ) {
       // only super-user or tables administrator can create rows in locked tables.
-      canCreateRow = rolesList.contains(RoleConsts.ROLE_SUPER_USER) ||
-                     rolesList.contains(RoleConsts.ROLE_ADMINISTRATOR);
+      if (rolesList != null) {
+        canCreateRow = rolesList.contains(RoleConsts.ROLE_SUPER_USER) ||
+                rolesList.contains(RoleConsts.ROLE_ADMINISTRATOR);
+      }
+
     } else if ( rolesList == null ) {
       // this is the unverified user case. By default, they can create rows.
       // Administrator can use table properties to manage that capability.
