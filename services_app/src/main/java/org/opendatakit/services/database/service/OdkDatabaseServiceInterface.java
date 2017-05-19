@@ -66,12 +66,6 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     AndroidConnectFactory.configure();
   }
 
-  private String getActiveUser(String appName) {
-    PropertiesSingleton props =
-        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
-    return props.getActiveUser();
-  }
-
   private String getInternalDefaultGroup(String appName) {
     PropertiesSingleton props =
         CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
@@ -126,6 +120,22 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
             ((dbHandleName != null) ? (" dbHandle: " + dbHandleName.getDatabaseHandle()) : ""));
     WebLogger.getLogger(appName).printStackTrace(e);
     return new IllegalStateException(msg);
+  }
+
+  /**
+   * Return the active user or "anonymous" if the user
+   * has not been authenticated against the server.
+   *
+   * @param appName
+   *
+   * @return the user reported from the server or "anonymous" if
+   * server authentication has not been completed.
+   */
+  @Override
+  public String getActiveUser(String appName) {
+    PropertiesSingleton props =
+        CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
+    return props.getActiveUser();
   }
 
   /**
