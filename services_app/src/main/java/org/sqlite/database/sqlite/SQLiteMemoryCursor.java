@@ -68,13 +68,13 @@ public class SQLiteMemoryCursor extends AbstractCursor {
             throw new CursorIndexOutOfBoundsException("Requested column: "
                     + column + ", # of columns: " +  columnNames.length);
         }
-        if (mPos < 0) {
+        if (getPosition() < 0) {
             throw new CursorIndexOutOfBoundsException("Before first row.");
         }
-        if (mPos >= rowCount) {
+        if (getPosition() >= rowCount) {
             throw new CursorIndexOutOfBoundsException("After last row.");
         }
-        Object[] row = (Object[]) sqliteContent[2+mPos];
+        Object[] row = (Object[]) sqliteContent[2+getPosition()];
         return row[column];
     }
 
@@ -180,7 +180,7 @@ public class SQLiteMemoryCursor extends AbstractCursor {
 
         char type = dataTypes[column];
         if ((rowCount == 0) || (type == NULL_TYPE) ||
-                (mPos >= 0 && mPos < rowCount && isNull(column)) ) {
+                (getPosition() >= 0 && getPosition() < rowCount && isNull(column)) ) {
             return Cursor.FIELD_TYPE_NULL;
         } else if ( type == STRING_TYPE ) {
             return Cursor.FIELD_TYPE_STRING;
