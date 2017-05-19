@@ -5632,7 +5632,7 @@ public class ODKDatabaseImplUtils {
 
       TreeMap<String, String> moreToResolve = new TreeMap<String, String>();
 
-      for (TreeMap.Entry<String, String> entry : toBeResolved.entrySet()) {
+      for (Map.Entry<String, String> entry : toBeResolved.entrySet()) {
         String key = entry.getKey();
         String json = entry.getValue();
         if (json == null) {
