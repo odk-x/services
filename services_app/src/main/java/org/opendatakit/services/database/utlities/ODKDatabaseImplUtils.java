@@ -5389,8 +5389,10 @@ public class ODKDatabaseImplUtils {
         // do not allow defaultAccess or owner to be modified in normal workflow
         if (cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || cvDataTableVal
             .containsKey(DataTableColumns.ROW_OWNER)) {
-
-          tss.canModifyDefaultAccessAndOwner(rolesArray, priorGroupPrivileged);
+          // the owner is allowed to update his or her row
+          if(activeUser == null || !(update && activeUser.equals(priorOwner))){
+            tss.canModifyDefaultAccessAndOwner(rolesArray, priorGroupPrivileged);
+          }
         }
       }
 
@@ -5451,14 +5453,18 @@ public class ODKDatabaseImplUtils {
         }
 
         if (!asServerRequestedChange) {
-
-          cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
-
-          // activeUser
-          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
-
           tss.allowRowChange(activeUser, rolesArray, updatedSyncState, priorDefaultAccess,
               priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.NEW_ROW);
+        }
+
+        if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || (
+             cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null)) {
+          cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
+        }
+
+        if (!cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER) || (
+             cvDataTableVal.get(DataTableColumns.ROW_OWNER) == null)) {
+          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
