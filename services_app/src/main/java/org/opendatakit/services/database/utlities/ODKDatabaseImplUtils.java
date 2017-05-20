@@ -5453,18 +5453,14 @@ public class ODKDatabaseImplUtils {
         }
 
         if (!asServerRequestedChange) {
+
+          cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
+
+          // activeUser
+          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
+
           tss.allowRowChange(activeUser, rolesArray, updatedSyncState, priorDefaultAccess,
               priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.NEW_ROW);
-        }
-
-        if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || (
-             cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null)) {
-          cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
-        }
-
-        if (!cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER) || (
-             cvDataTableVal.get(DataTableColumns.ROW_OWNER) == null)) {
-          cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
