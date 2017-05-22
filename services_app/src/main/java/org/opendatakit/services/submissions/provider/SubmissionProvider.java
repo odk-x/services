@@ -43,6 +43,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.utilities.EncryptionUtils;
 import org.opendatakit.services.utilities.EncryptionUtils.EncryptedFormInformation;
 import org.opendatakit.utilities.FileSet;
@@ -245,17 +246,17 @@ public class SubmissionProvider extends ContentProvider {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
     WebLoggerIf logger = WebLogger.getLogger(appName);
+    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
 
     final String tableId = segments.get(1);
     final String instanceId = segments.get(2);
     final String submissionInstanceId = segments.get(3);
     
-    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
     String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-    String activeUser = props.getActiveUser();
-    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-    String currentLocale = props.getUserSelectedDefaultLocale();
+
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
 
     DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
@@ -349,8 +350,8 @@ public class SubmissionProvider extends ContentProvider {
         try {
 
           ODKDatabaseImplUtils.AccessContext accessContext =
-              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
-                  rolesList);
+              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, aul.activeUser,
+                  aul.rolesList);
 
           c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,
               accessContext);
@@ -540,7 +541,7 @@ public class SubmissionProvider extends ContentProvider {
               d.appendChild(e);
               e.setAttribute("id", tableId);
               DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
-                  tableId, instanceId, activeUser, currentLocale, username, userEmail);
+                  tableId, instanceId, aul.activeUser, aul.locale, username, userEmail);
 
               int idx = 0;
               Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");

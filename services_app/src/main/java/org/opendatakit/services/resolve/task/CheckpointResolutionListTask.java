@@ -9,7 +9,7 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;

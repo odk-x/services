@@ -37,6 +37,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -283,15 +284,13 @@ public class GroupsPermissionTest {
    }
 
    private String getActiveUser(String appName) {
-      PropertiesSingleton props = CommonToolProperties
-          .get(InstrumentationRegistry.getTargetContext(), appName);
-      return props.getActiveUser();
+      return ODKServicesPropertyUtils.getActiveUser(CommonToolProperties.get(
+          InstrumentationRegistry.getTargetContext(), appName));
    }
 
    private void clearActiveUser(String appName) {
-      PropertiesSingleton props = CommonToolProperties
-              .get(InstrumentationRegistry.getTargetContext(), appName);
-      props.clearActiveUser();
+      ODKServicesPropertyUtils.clearActiveUser(CommonToolProperties.get(
+          InstrumentationRegistry.getTargetContext(), appName));
    }
 
    private void setActiveUser(String activeUser, String password, String appName, String

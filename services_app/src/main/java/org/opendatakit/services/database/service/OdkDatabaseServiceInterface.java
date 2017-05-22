@@ -42,6 +42,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.queries.QueryBounds;
 import org.opendatakit.database.utilities.DbChunkUtil;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -135,7 +136,8 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
   public String getActiveUser(String appName) {
     PropertiesSingleton props =
         CommonToolProperties.get(odkDatabaseService.getApplicationContext(), appName);
-    return props.getActiveUser();
+
+    return ODKServicesPropertyUtils.getActiveUser(props);
   }
 
   /**

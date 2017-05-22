@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.services.resolve;
+package org.opendatakit.services.utilities;
 
 import android.content.Context;
 import org.opendatakit.properties.CommonToolProperties;
@@ -34,10 +34,11 @@ public class ActiveUserAndLocale {
 
   public static ActiveUserAndLocale getActiveUserAndLocale(Context context, String appName) {
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(context, appName);
+    PropertiesSingleton props = CommonToolProperties.get(context, appName);
 
-    return new ActiveUserAndLocale(props.getActiveUser(),
+    String activeUser = ODKServicesPropertyUtils.getActiveUser(props);
+
+    return new ActiveUserAndLocale(activeUser,
         props.getProperty(CommonToolProperties.KEY_ROLES_LIST),
         props.getUserSelectedDefaultLocale());
   }

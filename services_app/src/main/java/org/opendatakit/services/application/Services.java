@@ -28,8 +28,6 @@ public class Services extends ToolAwareApplication {
   @Override
   public void onCreate() {
     singleton = this;
-
     super.onCreate();
   }
-
 }

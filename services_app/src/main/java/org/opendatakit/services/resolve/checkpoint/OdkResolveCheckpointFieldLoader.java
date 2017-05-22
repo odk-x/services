@@ -25,9 +25,8 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -71,11 +70,8 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
 
     OdkConnectionInterface db = null;
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
-
-    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     UserTable table = null;
 
@@ -106,7 +102,7 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, mTableId,
-          mRowId, activeUser);
+          mRowId, aul.activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -181,7 +177,7 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
-            mTableId, userSelectedDefaultLocale, columnDisplayName);
+            mTableId, aul.locale, columnDisplayName);
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }

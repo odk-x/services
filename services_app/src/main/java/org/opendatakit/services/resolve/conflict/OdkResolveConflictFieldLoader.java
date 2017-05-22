@@ -27,9 +27,8 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -79,10 +78,8 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
-    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     OdkConnectionInterface db = null;
 
@@ -120,7 +117,7 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
       BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
@@ -195,7 +192,7 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
-            mTableId, userSelectedDefaultLocale, columnDisplayName);
+            mTableId, aul.locale, columnDisplayName);
       } else {
         columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
       }

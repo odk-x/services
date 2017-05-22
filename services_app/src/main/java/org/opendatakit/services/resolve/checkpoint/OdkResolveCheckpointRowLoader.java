@@ -38,7 +38,7 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.utilities.QueryUtil;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
