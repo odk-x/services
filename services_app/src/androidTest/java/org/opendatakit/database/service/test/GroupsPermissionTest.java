@@ -27,10 +27,7 @@ import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
-import org.opendatakit.database.service.AidlDbInterface;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.database.service.UserDbInterfaceImpl;
+import org.opendatakit.database.service.*;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
@@ -151,7 +148,8 @@ public class GroupsPermissionTest {
          } catch (TimeoutException e) {
             e.printStackTrace();
          }
-         dbInterface = new UserDbInterfaceImpl(AidlDbInterface.Stub.asInterface(service));
+         dbInterface = new UserDbInterfaceImpl(
+             new InternalUserDbInterfaceAidlWrapperImpl(AidlDbInterface.Stub.asInterface(service)));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }

@@ -21,14 +21,11 @@ import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.service.UserDbInterfaceImpl;
+import org.opendatakit.database.service.*;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.data.*;
-import org.opendatakit.database.service.AidlDbInterface;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.utilities.DateUtils;
 
 import java.util.*;
@@ -132,7 +129,8 @@ public class OdkDatabaseServiceTest {
                }
             }
          }
-         dbInterface = new UserDbInterfaceImpl(AidlDbInterface.Stub.asInterface(service));
+         dbInterface = new UserDbInterfaceImpl(
+             new InternalUserDbInterfaceAidlWrapperImpl(AidlDbInterface.Stub.asInterface(service)));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }
@@ -278,7 +276,8 @@ public class OdkDatabaseServiceTest {
    @Test
    public void testBinding() {
       UserDbInterfaceImpl serviceInterface = bindToDbService();
-      assertNotNull(serviceInterface.getDbInterface());
+      assertNotNull( "bind did not succeed",
+          ((InternalUserDbInterfaceAidlWrapperImpl) serviceInterface.getInternalUserDbInterface()).getDbInterface());
       // TODO: database check function?
 
       // TODO: add a bind with bind_intent.setClassName instead

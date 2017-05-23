@@ -587,8 +587,9 @@ public class ODKDatabaseImplUtils {
 
       c.close();
 
-      if ( !(hasDefaultAccess && hasOwner && hasSyncState) ) {
-        // nope. we require all 3 to apply row-level filtering
+      if ( !(hasDefaultAccess && hasOwner && hasSyncState &&
+             hasGroupReadOnly && hasGroupModify && hasGroupPrivileged) ) {
+        // nope. we require all 6 to apply row-level filtering
 
         // no need to filter this resultset
         String sql = applyQueryBounds(sqlCommand, sqlQueryBounds);
@@ -620,21 +621,27 @@ public class ODKDatabaseImplUtils {
           b.append(" OR T.").append(DataTableColumns.ROW_OWNER).append(" = ?");
           wrappedSqlArgs.add(accessContext.activeUser);
         }
-        if(hasGroupReadOnly) {
+
+        {
+          // row is visible if group_read_only is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
           for(String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_READ_ONLY).append(" = ?");
             wrappedSqlArgs.add(group);
           }
         }
-        if(hasGroupModify) {
+
+        {
+          // row is visible if group_modify is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
           for(String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_MODIFY).append(" = ?");
             wrappedSqlArgs.add(group);
           }
         }
-        if(hasGroupPrivileged) {
+
+        {
+          // row is visible if group_privileged is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
           for(String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_PRIVILEGED).append(" = ?");
