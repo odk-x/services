@@ -196,12 +196,13 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
 
     File dbFile = null;
     FileLock fileLock = null;
+    RandomAccessFile raf = null;
     try {
         if (!lockfile.exists()) {
           lockfile.createNewFile();
         }
 
-      RandomAccessFile raf = new RandomAccessFile(lockfile, "rw");
+      raf = new RandomAccessFile(lockfile, "rw");
 
       fileLock = raf.getChannel().lock();
 
@@ -256,6 +257,13 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
         }
       } catch (IOException ioe) {
         ioe.printStackTrace();
+      }
+      if ( raf != null ) {
+        try {
+          raf.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
     }
 
@@ -384,7 +392,6 @@ public abstract class OdkConnectionFactoryAbstractClass implements OdkConnection
     OdkConnectionInterface dbConnection = null;
 
     AppNameSharedStateContainer appNameSharedStateContainer = null;
-    boolean hasBeenInitialized = false;
     {
       synchronized (mutex) {
         appNameSharedStateContainer = appNameSharedStateMap.get(appName);
