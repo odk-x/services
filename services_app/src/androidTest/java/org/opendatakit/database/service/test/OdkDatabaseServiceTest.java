@@ -21,6 +21,7 @@ import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.service.AidlDbInterface;
@@ -101,7 +102,7 @@ public class OdkDatabaseServiceTest {
       }
    }
 
-   @Nullable private UserDbInterface bindToDbService() {
+   @Nullable private UserDbInterfaceImpl bindToDbService() {
       Context context = InstrumentationRegistry.getContext();
 
       ++bindToDbServiceCount;
@@ -110,7 +111,7 @@ public class OdkDatabaseServiceTest {
           IntentConsts.Database.DATABASE_SERVICE_CLASS);
 
       int count = 0;
-      UserDbInterface dbInterface;
+      UserDbInterfaceImpl dbInterface;
       try {
          IBinder service = null;
          while ( service == null ) {
@@ -131,7 +132,7 @@ public class OdkDatabaseServiceTest {
                }
             }
          }
-         dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
+         dbInterface = new UserDbInterfaceImpl(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }
@@ -276,7 +277,7 @@ public class OdkDatabaseServiceTest {
 
    @Test
    public void testBinding() {
-      UserDbInterface serviceInterface = bindToDbService();
+      UserDbInterfaceImpl serviceInterface = bindToDbService();
       assertNotNull(serviceInterface.getDbInterface());
       // TODO: database check function?
 

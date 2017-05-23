@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -324,7 +325,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
       }
       synchronized (odkDbInterfaceBindComplete) {
         try {
-          odkDbInterface = (service == null) ? null : new UserDbInterface(AidlDbInterface
+          odkDbInterface = (service == null) ? null : new UserDbInterfaceImpl(AidlDbInterface
               .Stub.asInterface(service));
         } catch (IllegalArgumentException e) {
           odkDbInterface = null;

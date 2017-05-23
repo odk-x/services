@@ -2403,7 +2403,7 @@ public class ODKDatabaseImplUtils {
    */
   public OrderedColumns createOrOpenTableWithColumnsAndProperties(OdkConnectionInterface db,
       String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData,
-      boolean clear) throws JsonProcessingException {
+      boolean clear) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
 

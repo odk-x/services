@@ -31,6 +31,7 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
@@ -163,7 +164,7 @@ public class GroupsPermissionTest {
                }
             }
          }
-         dbInterface = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
+         dbInterface = new UserDbInterfaceImpl(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }
