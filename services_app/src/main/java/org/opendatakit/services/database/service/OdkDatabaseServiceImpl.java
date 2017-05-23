@@ -154,8 +154,6 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
 
    @Override public DbHandle openDatabase(String appName) {
 
-      OdkDatabaseService.possiblyWaitForDatabaseServiceDebugger();
-
       OdkConnectionInterface db = null;
 
       DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -1488,7 +1486,6 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       OdkConnectionInterface db = null;
 
       String activeUser = getActiveUser(appName);
-      String rolesList = getInternalRolesList(appName);
 
       try {
          // +1 referenceCount if db is returned (non-null)
