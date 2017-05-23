@@ -5389,8 +5389,10 @@ public class ODKDatabaseImplUtils {
         // do not allow defaultAccess or owner to be modified in normal workflow
         if (cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || cvDataTableVal
             .containsKey(DataTableColumns.ROW_OWNER)) {
-
-          tss.canModifyDefaultAccessAndOwner(rolesArray, priorGroupPrivileged);
+          // the owner is allowed to update his or her row
+          if(activeUser == null || !(update && activeUser.equals(priorOwner))){
+            tss.canModifyDefaultAccessAndOwner(rolesArray, priorGroupPrivileged);
+          }
         }
       }
 

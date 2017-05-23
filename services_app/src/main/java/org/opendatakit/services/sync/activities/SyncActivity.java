@@ -23,7 +23,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -39,6 +38,7 @@ import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
@@ -266,7 +266,7 @@ public class SyncActivity extends Activity implements IAppAwareActivity,
 
     if (id == R.id.action_logout) {
 
-      getProps().clearActiveUser();
+      ODKServicesPropertyUtils.clearActiveUser(getProps());
       return true;
     }
     return super.onOptionsItemSelected(item);

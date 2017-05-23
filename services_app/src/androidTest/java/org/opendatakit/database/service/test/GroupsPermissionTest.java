@@ -7,7 +7,6 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
@@ -38,6 +37,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +95,7 @@ public class GroupsPermissionTest {
    private static int bindToDbServiceCount = 0;
 
    @Rule
-   public final ServiceTestRule mServiceRule = new ServiceTestRule();
+   public final ODKServiceTestRule mServiceRule = new ODKServiceTestRule();
 
    @Before
    public void setUp() throws Exception {
@@ -146,23 +146,10 @@ public class GroupsPermissionTest {
       UserDbInterface dbInterface;
       try {
          IBinder service = null;
-         while ( service == null ) {
-            try {
-               service = mServiceRule.bindService(bind_intent);
-            } catch (TimeoutException e) {
-               dbInterface = null;
-            }
-            if ( service == null ) {
-               ++count;
-               if ( count % 20 == 0 ) {
-                  Log.i("GroupPermissionTest", "bindToDbService failed for " + count +
-                      " tries so far on bindToDbServiceCount " + bindToDbServiceCount);
-               }
-               try {
-                  Thread.sleep(10);
-               } catch (InterruptedException e) {
-               }
-            }
+         try {
+            service = mServiceRule.bindService(bind_intent);
+         } catch (TimeoutException e) {
+            e.printStackTrace();
          }
          dbInterface = new UserDbInterfaceImpl(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
@@ -283,16 +270,11 @@ public class GroupsPermissionTest {
       return prop;
    }
 
-   private String getActiveUser(String appName) {
-      PropertiesSingleton props = CommonToolProperties
-          .get(InstrumentationRegistry.getTargetContext(), appName);
-      return props.getActiveUser();
-   }
 
    private void clearActiveUser(String appName) {
       PropertiesSingleton props = CommonToolProperties
               .get(InstrumentationRegistry.getTargetContext(), appName);
-      props.clearActiveUser();
+      ODKServicesPropertyUtils.clearActiveUser(props);
    }
 
    private void setActiveUser(String activeUser, String password, String appName, String
@@ -314,26 +296,47 @@ public class GroupsPermissionTest {
       props.setProperties(properties);
    }
 
-   private void switchToAnonymousUser() {
+   private void switchToAnonymousUser(UserDbInterface dbServiceInterface) {
       clearActiveUser(APPNAME);
-      getActiveUser(APPNAME);
+      //dbServiceInterface.getActiveUser(APPNAME);
+      String verifyName = null;
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Unable to get verify switched to AnonymousUser");
+      }
    }
 
-   private void switchToUser1() {
+   private void switchToUser1(UserDbInterface dbServiceInterface) {
       setActiveUser(TEST_USER_1, TEST_PWD_1, APPNAME, FULL_PERMISSION_ROLES, null);
-      String verifyName = getActiveUser(APPNAME);
+      String verifyName = null;
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Unable to get verify switched to User 1");
+      }
       assertEquals("failing switchToUser1", "mailto:" + TEST_USER_1, verifyName);
    }
 
-   private void switchToUser2() {
+   private void switchToUser2(UserDbInterface dbServiceInterface) {
       setActiveUser(TEST_USER_2, TEST_PWD_2, APPNAME, LIMITED_PERMISSION_ROLES_2, null);
-      String verifyName = getActiveUser(APPNAME);
+      String verifyName = null;
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Unable to get verify switched to User 1");
+      }
       assertEquals("failing switchToUser2", "mailto:" + TEST_USER_2, verifyName);
    }
 
-   private void switchToUser3() {
+   private void switchToUser3(UserDbInterface dbServiceInterface) {
       setActiveUser(TEST_USER_3, TEST_PWD_3, APPNAME, LIMITED_PERMISSION_ROLES_3, null);
-      String verifyName = getActiveUser(APPNAME);
+      String verifyName = null;
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Unable to get verify switched to User 1");
+      }
       assertEquals("failing switchToUser3", "mailto:" + TEST_USER_3, verifyName);
    }
 
@@ -345,7 +348,7 @@ public class GroupsPermissionTest {
 
    private void verifyNoTablesExistNCleanAllTables(UserDbInterface serviceInterface, DbHandle db)
        throws ServicesAvailabilityException {
-      switchToUser1();
+      switchToUser1(serviceInterface);
 
       List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
 
@@ -412,20 +415,38 @@ public class GroupsPermissionTest {
 
    @Test
    public void testSetUser() throws ActionNotAuthorizedException {
+      UserDbInterface dbServiceInterface = bindToDbService();
       String testUserName = "test@gmail.com";
       setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
-      String verifyName = getActiveUser(APPNAME);
+      String verifyName = null;
+
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+        fail("Failed to verify user");
+      }
+
       assertEquals("mailto:" + testUserName, verifyName);
 
 
       String testUserName2 = "test3@gmail.com";
       setActiveUser(testUserName2, "1235", APPNAME, LIMITED_PERMISSION_ROLES_3, null);
-      verifyName = getActiveUser(APPNAME);
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Failed to verify user");
+      }
+
       assertNotEquals("mailto:" + testUserName, verifyName);
       assertEquals("mailto:" + testUserName2, verifyName);
 
       setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
-      verifyName = getActiveUser(APPNAME);
+
+      try {
+         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+      } catch (ServicesAvailabilityException e) {
+         fail("Failed to verify user");
+      }
       assertEquals("mailto:" + testUserName, verifyName);
    }
 
@@ -439,7 +460,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
@@ -496,7 +517,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -507,7 +528,7 @@ public class GroupsPermissionTest {
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
              colList, metaData, false);
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
 
          // insert row
          serviceInterface
@@ -523,7 +544,7 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // insert row
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -549,7 +570,7 @@ public class GroupsPermissionTest {
 
       // NOTE: until the sync state is changed no permissions are enforced
       try {
-         switchToUser2();
+         switchToUser2(serviceInterface);
          UserTable table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -604,7 +625,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -641,7 +662,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
@@ -673,7 +694,7 @@ public class GroupsPermissionTest {
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
 
          // verify user 2 can read
          table = serviceInterface
@@ -702,7 +723,7 @@ public class GroupsPermissionTest {
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
-         switchToUser1();
+         switchToUser1(serviceInterface);
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
          table = serviceInterface
@@ -738,7 +759,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -749,7 +770,7 @@ public class GroupsPermissionTest {
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
                  colList, metaData, false);
 
-         switchToAnonymousUser();
+         switchToAnonymousUser(serviceInterface);
          serviceInterface
                  .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
                          rowId.toString());
@@ -763,7 +784,7 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // insert row
          serviceInterface
                  .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -787,7 +808,7 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToAnonymousUser();
+         switchToAnonymousUser(serviceInterface);
          UserTable table = serviceInterface
                  .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -802,7 +823,7 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          UserTable table = serviceInterface
                  .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -840,7 +861,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -877,7 +898,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -888,7 +909,7 @@ public class GroupsPermissionTest {
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
              colList, metaData, false);
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
                  rowId.toString());
@@ -902,7 +923,7 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // insert row
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -928,7 +949,7 @@ public class GroupsPermissionTest {
 
       // NOTE: until the sync state is changed no permissions are enforced
       try {
-         switchToUser2();
+         switchToUser2(serviceInterface);
          UserTable table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -966,7 +987,7 @@ public class GroupsPermissionTest {
 
       // even though user 2 was last change should lose permission when in sync'd state
       try {
-         switchToUser2();
+         switchToUser2(serviceInterface);
          UserTable table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -986,7 +1007,7 @@ public class GroupsPermissionTest {
 
       // verify user 3 also fails
       try {
-         switchToUser3();
+         switchToUser3(serviceInterface);
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1000,7 +1021,7 @@ public class GroupsPermissionTest {
 
       // NOTE: super user can change group
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          UserTable table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -1038,7 +1059,7 @@ public class GroupsPermissionTest {
 
       // verify user 3 now succeeds with the correct groups
       try {
-         switchToUser3();
+         switchToUser3(serviceInterface);
          ContentValues cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 4);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1065,7 +1086,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1102,7 +1123,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser2();
+         switchToUser2(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -1129,7 +1150,7 @@ public class GroupsPermissionTest {
 
 
          // NOTE: until the sync state is changed no permissions are enforced
-         switchToUser1();
+         switchToUser1(serviceInterface);
          table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -1147,7 +1168,7 @@ public class GroupsPermissionTest {
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
          // user two should still be able to see the row since they created it
-         switchToUser2();
+         switchToUser2(serviceInterface);
 
          table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
@@ -1161,13 +1182,13 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // user three should not be able to see the row
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(0, table.getNumberOfRows());
 
          // change so that user 3 has group read access
-         switchToUser1();
+         switchToUser1(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
@@ -1177,7 +1198,7 @@ public class GroupsPermissionTest {
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
          // user three should NOW be able to see the row
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
@@ -1197,7 +1218,7 @@ public class GroupsPermissionTest {
       // verify user 3 also fails
       try {
          // verify no changes
-         switchToUser1();
+         switchToUser1(serviceInterface);
          UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId
              .toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
@@ -1215,7 +1236,7 @@ public class GroupsPermissionTest {
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
          // verify user 3 can update
-         switchToUser3();
+         switchToUser3(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1231,7 +1252,7 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // verify user 2 cannot update
-         switchToUser2();
+         switchToUser2(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 4);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1246,7 +1267,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1283,7 +1304,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -1315,7 +1336,7 @@ public class GroupsPermissionTest {
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
 
          // verify user 2 can read
          table = serviceInterface
@@ -1328,7 +1349,7 @@ public class GroupsPermissionTest {
          assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
 
          // verify user 3 cannot read the data
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1336,7 +1357,7 @@ public class GroupsPermissionTest {
          assertEquals(0, table.getNumberOfRows());
 
          // verify user 2 can change value
-         switchToUser2();
+         switchToUser2(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 2);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1353,7 +1374,7 @@ public class GroupsPermissionTest {
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
-         switchToUser1();
+         switchToUser1(serviceInterface);
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
          table = serviceInterface
@@ -1389,7 +1410,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -1444,20 +1465,20 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // user 3 should not be able to see the row
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(0, table.getNumberOfRows());
 
          // user 2 should be in the group and be able to see the row
-         switchToUser2();
+         switchToUser2(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
          //  switch the filter value to verify user 1 super user can still see row
-         switchToUser1();
+         switchToUser1(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
          cv.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_2);
@@ -1511,7 +1532,7 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // verify user 3 now succeeds with the correct groups
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
@@ -1533,7 +1554,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1570,7 +1591,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
@@ -1602,7 +1623,7 @@ public class GroupsPermissionTest {
          cv.put(DataTableColumns.SYNC_STATE, SyncState.synced.name());
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
 
          // verify user 2 can read
          table = serviceInterface
@@ -1615,7 +1636,7 @@ public class GroupsPermissionTest {
          assertEquals(TEST_GRP_2, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
 
          // verify user 3 cannot read the data
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1623,7 +1644,7 @@ public class GroupsPermissionTest {
          assertEquals(0, table.getNumberOfRows());
 
          // verify user 2 can change value
-         switchToUser2();
+         switchToUser2(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 2);
          serviceInterface.updateRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
@@ -1640,7 +1661,7 @@ public class GroupsPermissionTest {
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
          // delete row
-         switchToUser1();
+         switchToUser1(serviceInterface);
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
          table = serviceInterface
@@ -1676,7 +1697,7 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -1730,20 +1751,20 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // user 3 should not be able to see the row
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(0, table.getNumberOfRows());
 
          // user 2 should be in the group and be able to see the row
-         switchToUser2();
+         switchToUser2(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
          //  switch the filter value to verify user 1 super user can still see row
-         switchToUser1();
+         switchToUser1(serviceInterface);
          cv = new ContentValues();
          cv.put(COL_INTEGER_ID, 3);
          cv.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_2);
@@ -1797,7 +1818,7 @@ public class GroupsPermissionTest {
              .SAVEPOINT_CREATOR));
 
          // verify user 3 now succeeds with the correct groups
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
@@ -1819,7 +1840,7 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1();
+         switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1856,7 +1877,7 @@ public class GroupsPermissionTest {
 
       try {
 
-         switchToUser1();
+         switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
          List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
@@ -1904,14 +1925,14 @@ public class GroupsPermissionTest {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(90, table.getNumberOfRows());
 
-         switchToUser2();
+         switchToUser2(serviceInterface);
          table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
              null, null, null, null, null, -1, 0);
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(30, table.getNumberOfRows());
          helperCheckFunction(table, TEST_GRP_2);
 
-         switchToUser3();
+         switchToUser3(serviceInterface);
          table = serviceInterface.simpleQuery(APPNAME, db, DB_TABLE_ID, columns, null,
              null, null, null, null, null, -1, 0);
          assertEquals(DB_TABLE_ID, table.getTableId());

@@ -26,10 +26,9 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.FormsColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -73,10 +72,8 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
 
     OdkConnectionInterface db = null;
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
-    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
@@ -102,7 +99,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
       BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
@@ -126,7 +123,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
             tableSetChanged = true;
             // Use privileged user roles since we are taking the server's values
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
-                mTableId, rowId, activeUser, userSelectedDefaultLocale);
+                mTableId, rowId, aul.activeUser, aul.locale);
           }
         }
 
@@ -232,7 +229,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       }
     }
     String formDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName, mTableId,
-        userSelectedDefaultLocale, nameToUse.formDisplayName);
+        aul.locale, nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {

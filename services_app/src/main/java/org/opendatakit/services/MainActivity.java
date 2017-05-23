@@ -28,6 +28,7 @@ import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.fragment.AboutMenuFragment;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
@@ -137,7 +138,7 @@ public class MainActivity extends Activity implements IAppAwareActivity {
 
     if (id == R.id.action_logout) {
 
-      CommonToolProperties.get(this, mAppName).clearActiveUser();
+      ODKServicesPropertyUtils.clearActiveUser(CommonToolProperties.get(this, mAppName));
       return true;
     }
 

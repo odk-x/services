@@ -29,9 +29,7 @@ import android.util.Log;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.TableMetaDataEntries;
-import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
