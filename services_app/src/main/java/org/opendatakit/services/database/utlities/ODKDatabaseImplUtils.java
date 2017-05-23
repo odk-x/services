@@ -19,7 +19,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -1399,11 +1398,10 @@ public class ODKDatabaseImplUtils {
       seu.deleteAllSyncETagsForTableId(db, tableId);
 
       // Delete the table definition for the tableId
-      int count;
       {
         String whereClause = K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM;
 
-        count = db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
+        db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
       }
 
       // Delete the column definitions for this tableId

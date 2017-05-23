@@ -27,7 +27,6 @@ import java.net.URI;
 import java.util.ArrayList;
 
 public class SyncETagsUtils {
-  private static final String TAG = "SyncETagsUtils";
 
   /**
    * For ease of mocking...
