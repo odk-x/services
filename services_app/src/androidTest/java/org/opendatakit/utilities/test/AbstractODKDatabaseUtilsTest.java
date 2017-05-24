@@ -4201,6 +4201,55 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
+      assertTrue( "did not expect effective privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
+        ", " + DataTableColumns.ROW_OWNER +
+        ", " + DataTableColumns.GROUP_READ_ONLY +
+        ", " + DataTableColumns.GROUP_MODIFY +
+        ", " + DataTableColumns.SYNC_STATE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
+        accessContext);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect effective privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
+        ", " + DataTableColumns.ROW_OWNER +
+        ", " + DataTableColumns.GROUP_PRIVILEGED +
+        ", " + DataTableColumns.GROUP_MODIFY +
+        ", " + DataTableColumns.SYNC_STATE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
+        accessContext);
+    if ( c.moveToFirst() ) {
+      assertTrue( "did not expect effective privileges column",
+          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+    } else {
+      assertTrue("should not get here", false);
+    }
+    c.close();
+
+    sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
+        ", " + DataTableColumns.ROW_OWNER +
+        ", " + DataTableColumns.GROUP_READ_ONLY +
+        ", " + DataTableColumns.GROUP_MODIFY +
+        ", " + DataTableColumns.GROUP_PRIVILEGED +
+        ", " + DataTableColumns.SYNC_STATE +
+        " from " + testTable;
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
+        accessContext);
+    if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
     } else {
