@@ -257,6 +257,7 @@
     <string name="admin_password_disabled">Admin password disabled</string>
     <string name="admin_password_enabled">Admin password enabled</string>
     <string name="password_mismatch">Sorry, passwords do not match!</string>
+    <string name="show_password_text">Show password</string>
 
     <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
     <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>

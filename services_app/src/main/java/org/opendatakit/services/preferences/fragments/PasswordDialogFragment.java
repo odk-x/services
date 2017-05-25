@@ -16,6 +16,7 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.app.DialogFragment;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.CheckBox;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -40,7 +42,7 @@ public class PasswordDialogFragment extends DialogFragment {
 
   private String passwordPropertyName;
   private EditText passwordEditText;
-  private EditText verifyEditText;
+  private CheckBox togglePasswordText;
   private PropertiesSingleton props;
   private OnChangePassword callback;
 
@@ -84,19 +86,18 @@ public class PasswordDialogFragment extends DialogFragment {
     heading.setText((isAdminPassword ?
         R.string.change_admin_password : R.string.change_server_password));
     passwordEditText = (EditText) view.findViewById(R.id.pwd_field);
-    verifyEditText = (EditText) view.findViewById(R.id.verify_field);
 
-    String adminPW = "";
-    if (props.getProperty(passwordPropertyName) != null) {
-    	adminPW =  props.getProperty(passwordPropertyName);
-    }
-
-    // populate the fields if a pw exists
-    if (!adminPW.equalsIgnoreCase("")) {
-      passwordEditText.setText(adminPW);
-      passwordEditText.setSelection(passwordEditText.getText().length());
-      verifyEditText.setText(adminPW);
-    }
+    togglePasswordText = (CheckBox) view.findViewById(R.id.show_pwd);
+    togglePasswordText.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if(togglePasswordText.isChecked()) {
+          passwordEditText.setTransformationMethod(null);
+        } else {
+          passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
+        }
+      }
+    });
 
     Button positiveButton = (Button) view.findViewById(R.id.positive_button);
     positiveButton.setOnClickListener(new View.OnClickListener() {
@@ -104,26 +105,8 @@ public class PasswordDialogFragment extends DialogFragment {
       public void onClick(View v) {
 
         String pw = passwordEditText.getText().toString();
-        String ver = verifyEditText.getText().toString();
-        
-        if (!pw.equalsIgnoreCase("") && !ver.equalsIgnoreCase("") && pw.equals(ver)) {
-          // passwords are the same
-          Map<String,String> properties = new HashMap<String,String>();
-          properties.put(passwordPropertyName, pw);
-          if ( !isAdminPassword ) {
-            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-          }
-          props.setProperties(properties);
 
-          Toast.makeText(PasswordDialogFragment.this.getActivity(),
-              R.string.password_changed, Toast.LENGTH_SHORT).show();
-          PasswordDialogFragment.this.getDialog().dismiss();
-          if ( callback != null ) {
-            callback.passwordChanged();
-          }
-        } else if (pw.equalsIgnoreCase("") && ver.equalsIgnoreCase("")) {
+        if (pw.equalsIgnoreCase("")) {
           Map<String,String> properties = new HashMap<String,String>();
           properties.put(passwordPropertyName, "");
           if ( !isAdminPassword ) {
@@ -143,8 +126,21 @@ public class PasswordDialogFragment extends DialogFragment {
             callback.passwordChanged();
           }
         } else {
+          Map<String,String> properties = new HashMap<String,String>();
+          properties.put(passwordPropertyName, pw);
+          if ( !isAdminPassword ) {
+            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+          }
+          props.setProperties(properties);
+
           Toast.makeText(PasswordDialogFragment.this.getActivity(),
-              R.string.password_mismatch, Toast.LENGTH_SHORT).show();
+              R.string.password_changed, Toast.LENGTH_SHORT).show();
+          PasswordDialogFragment.this.getDialog().dismiss();
+          if ( callback != null ) {
+            callback.passwordChanged();
+          }
         }
       }
     });
