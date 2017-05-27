@@ -870,7 +870,8 @@ public class HttpRestProtocolWrapper {
 
       // if we do not find our header in the response, then this is most likely a
       // wifi network login screen.
-      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
+      Header[] odkHeaders = response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER);
+      if (odkHeaders == null || odkHeaders.length == 0) {
         throw new NotOpenDataKitServerException(request, response);
       }
 
