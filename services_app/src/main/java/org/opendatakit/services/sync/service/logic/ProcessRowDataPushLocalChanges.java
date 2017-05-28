@@ -195,6 +195,10 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
               (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
           values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
 
+          values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
+          values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
+          values.put(DataTableColumns.GROUP_PRIVILEGED, serverRow.getRowFilterScope().getGroupPrivileged());
+
           sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), db,
               resource.getTableId(),
               orderedColumns, values, serverRow.getRowId());

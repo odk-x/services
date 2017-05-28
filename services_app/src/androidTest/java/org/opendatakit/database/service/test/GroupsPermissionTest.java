@@ -207,7 +207,7 @@ public class GroupsPermissionTest {
       cv.put(COL_STRING_ID, TEST_STR_1);
       cv.put(COL_INTEGER_ID, TEST_INT_1);
       cv.put(COL_NUMBER_ID, TEST_NUM_1);
-      cv.put(DataTableColumns.GROUP_READ_ONLY, RowFilterScope.Access.FULL.name());
+      cv.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
       cv.put(DataTableColumns.GROUP_MODIFY, TEST_GROUP_1);
       cv.putNull(DataTableColumns.GROUP_PRIVILEGED);
 
@@ -218,7 +218,7 @@ public class GroupsPermissionTest {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID), Integer.toString(TEST_INT_1));
       assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
-      assertEquals(row.getDataByKey(DataTableColumns.GROUP_READ_ONLY),
+      assertEquals(row.getDataByKey(DataTableColumns.DEFAULT_ACCESS),
               RowFilterScope.Access.FULL.name());
       assertEquals(TEST_GROUP_1, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
       assertNull(row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
@@ -1131,10 +1131,17 @@ public class GroupsPermissionTest {
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
              colList, metaData, false);
 
+         ContentValues cv2 = new ContentValues();
+         cv2.put(COL_STRING_ID, TEST_STR_1);
+         cv2.put(COL_INTEGER_ID, TEST_INT_1);
+         cv2.put(COL_NUMBER_ID, TEST_NUM_1);
+         cv2.put(DataTableColumns.ROW_OWNER, "mailto:" + TEST_USER_2);
+         cv2.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
+         cv2.put(DataTableColumns.GROUP_MODIFY, TEST_GROUP_1);
 
          // insert row
          serviceInterface
-             .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
+             .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv2,
                  rowId.toString());
 
          UserTable table = serviceInterface

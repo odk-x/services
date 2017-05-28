@@ -16,28 +16,45 @@ package org.opendatakit.utilities.test;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.support.test.runner.AndroidJUnit4;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.commons.lang3.CharEncoding;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.opendatakit.database.RoleConsts;
-import org.opendatakit.aggregate.odktables.rest.*;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.RFC4180CsvReader;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.database.data.*;
+import org.opendatakit.database.RoleConsts;
+import org.opendatakit.database.data.BaseTable;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.utilities.QueryUtil;
-import org.opendatakit.provider.*;
+import org.opendatakit.provider.ChoiceListColumns;
+import org.opendatakit.provider.ColumnDefinitionsColumns;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -45,11 +62,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Created by wrb on 9/21/2015.
@@ -1597,7 +1630,6 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testWriteDataAndMetadataIntoExistingTableWithValidValue_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
-    String nullString = null;
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
@@ -1613,16 +1645,19 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(DataTableColumns.ID, uuid);
-    cvValues.put(DataTableColumns.ROW_ETAG, nullString);
+    cvValues.putNull(DataTableColumns.ROW_ETAG);
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-    cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
-    cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
-    cvValues.put(DataTableColumns.FORM_ID, nullString);
-    cvValues.put(DataTableColumns.LOCALE, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+    cvValues.putNull(DataTableColumns.DEFAULT_ACCESS);
+    cvValues.putNull(DataTableColumns.ROW_OWNER);
+    cvValues.putNull(DataTableColumns.GROUP_MODIFY);
+    cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
+    cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
+    cvValues.putNull(DataTableColumns.FORM_ID);
+    cvValues.putNull(DataTableColumns.LOCALE);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TYPE);
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
-    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_CREATOR);
 
     ODKDatabaseImplUtils.get().insertRowWithId(db, tableId, orderedColumns, cvValues, uuid,
         activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
@@ -1653,7 +1688,6 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testWriteDataAndMetadataIntoExistingTableWhenIDIsNull_ExpectFail() throws ActionNotAuthorizedException  {
     String tableId = testTable;
-    String nullString = null;
     boolean thrown = false;
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
@@ -1664,21 +1698,24 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
 
     ContentValues cvValues = new ContentValues();
-    cvValues.put(DataTableColumns.ID, nullString);
-    cvValues.put(DataTableColumns.ROW_ETAG, nullString);
+    cvValues.putNull(DataTableColumns.ID);
+    cvValues.putNull(DataTableColumns.ROW_ETAG);
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-    cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
-    cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
-    cvValues.put(DataTableColumns.FORM_ID, nullString);
-    cvValues.put(DataTableColumns.LOCALE, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+    cvValues.putNull(DataTableColumns.DEFAULT_ACCESS);
+    cvValues.putNull(DataTableColumns.ROW_OWNER);
+    cvValues.putNull(DataTableColumns.GROUP_MODIFY);
+    cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
+    cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
+    cvValues.putNull(DataTableColumns.FORM_ID);
+    cvValues.putNull(DataTableColumns.LOCALE);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TYPE);
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
-    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_CREATOR);
 
     try {
       ODKDatabaseImplUtils.get()
-          .insertRowWithId(db, tableId, orderedColumns, cvValues, nullString, activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
+          .insertRowWithId(db, tableId, orderedColumns, cvValues, null, activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
     } catch (ActionNotAuthorizedException ex) {
       throw ex;
     } catch (Exception e) {
@@ -1700,7 +1737,6 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testWriteDataAndMetadataIntoExistingTableWhenSyncStateIsNull_ExpectSuccess() throws ActionNotAuthorizedException  {
     String tableId = testTable;
-    String nullString = null;
     boolean thrown = false;
     String testColType = ElementDataType.string.name();
     List<Column> columns = new ArrayList<Column>();
@@ -1713,16 +1749,19 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(DataTableColumns.ID, uuid);
-    cvValues.put(DataTableColumns.ROW_ETAG, nullString);
-    cvValues.put(DataTableColumns.SYNC_STATE, nullString);
-    cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
-    cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
-    cvValues.put(DataTableColumns.FORM_ID, nullString);
-    cvValues.put(DataTableColumns.LOCALE, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
+    cvValues.putNull(DataTableColumns.ROW_ETAG);
+    cvValues.putNull(DataTableColumns.SYNC_STATE);
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+    cvValues.putNull(DataTableColumns.DEFAULT_ACCESS);
+    cvValues.putNull(DataTableColumns.ROW_OWNER);
+    cvValues.putNull(DataTableColumns.GROUP_MODIFY);
+    cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
+    cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
+    cvValues.putNull(DataTableColumns.FORM_ID);
+    cvValues.putNull(DataTableColumns.LOCALE);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TYPE);
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
-    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_CREATOR);
 
     try {
       ODKDatabaseImplUtils.get()
@@ -1747,7 +1786,6 @@ public abstract class AbstractODKDatabaseUtilsTest {
   public void testWriteDataAndMetadataIntoExistingTableWhenTimeStampIsNull_ExpectFail() throws ActionNotAuthorizedException  {
     // TODO: should this fail or succeed?
     String tableId = testTable;
-    String nullString = null;
     boolean thrown = false;
 
     String testColType = ElementDataType.string.name();
@@ -1760,16 +1798,19 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(DataTableColumns.ID, uuid);
-    cvValues.put(DataTableColumns.ROW_ETAG, nullString);
+    cvValues.putNull(DataTableColumns.ROW_ETAG);
     cvValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
-    cvValues.put(DataTableColumns.CONFLICT_TYPE, nullString);
-    cvValues.put(DataTableColumns.DEFAULT_ACCESS, nullString);
-    cvValues.put(DataTableColumns.ROW_OWNER, nullString);
-    cvValues.put(DataTableColumns.FORM_ID, nullString);
-    cvValues.put(DataTableColumns.LOCALE, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_TYPE, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, nullString);
-    cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, nullString);
+    cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
+    cvValues.putNull(DataTableColumns.DEFAULT_ACCESS);
+    cvValues.putNull(DataTableColumns.ROW_OWNER);
+    cvValues.putNull(DataTableColumns.GROUP_MODIFY);
+    cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
+    cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
+    cvValues.putNull(DataTableColumns.FORM_ID);
+    cvValues.putNull(DataTableColumns.LOCALE);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TYPE);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_TIMESTAMP);
+    cvValues.putNull(DataTableColumns.SAVEPOINT_CREATOR);
 
     try {
       ODKDatabaseImplUtils.get()
