@@ -89,7 +89,6 @@ public class GroupsPermissionTest {
    private static final String LIMITED_PERMISSION_ROLES_3 = "[\"ROLE_USER\","
        + "\"ROLE_SYNCHRONIZE_TABLES\",\"" + TEST_GRP_3 + "\"]";
 
-   private static int bindToDbServiceCount = 0;
 
    @Rule
    public final ODKServiceTestRule mServiceRule = new ODKServiceTestRule();
@@ -133,8 +132,6 @@ public class GroupsPermissionTest {
 
    @Nullable private UserDbInterface bindToDbService() {
       Context context = InstrumentationRegistry.getContext();
-
-      ++bindToDbServiceCount;
       Intent bind_intent = new Intent();
       bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
           IntentConsts.Database.DATABASE_SERVICE_CLASS);
