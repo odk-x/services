@@ -868,6 +868,16 @@ public class HttpRestProtocolWrapper {
                 request, response);
       }
 
+      // TODO: For now we have to check for 401 Unauthorized before we check the headers because
+      // Spring will spit out a 401 with a bad username/password before it even touches our code
+      int statusCode = response.getStatusLine().getStatusCode();
+      String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
+      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+        log.e(LOGTAG, errorText);
+        // server rejected our request -- mismatched client and server implementations
+        throw new AccessDeniedException(errorText, request, response);
+      }
+
       // if we do not find our header in the response, then this is most likely a
       // wifi network login screen.
       Header[] odkHeaders = response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER);
@@ -875,25 +885,17 @@ public class HttpRestProtocolWrapper {
         throw new NotOpenDataKitServerException(request, response);
       }
 
-      int statusCode = response.getStatusLine().getStatusCode();
       if (handledReturnCodes.contains(statusCode)) {
         success = true;
         return response;
       }
 
-      String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
       if (statusCode >= 200 && statusCode < 300) {
         log.e(LOGTAG, errorText);
         // server returned an unexpected success response --
         // mismatched client and server implementations
         throw new ClientDetectedVersionMismatchedServerResponseException(errorText,
                 request, response);
-      }
-
-      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-        log.e(LOGTAG, errorText);
-        // server rejected our request -- mismatched client and server implementations
-        throw new AccessDeniedException(errorText, request, response);
       }
 
       if (statusCode >= 400 && statusCode < 500) {
