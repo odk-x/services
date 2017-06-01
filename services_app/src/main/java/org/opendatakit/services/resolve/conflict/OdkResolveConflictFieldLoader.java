@@ -194,7 +194,8 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
             mTableId, aul.locale, columnDisplayName);
       } else {
-        columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, NameUtil.constructSimpleDisplayName(elementKey));
       }
       String localRawValue = localRow.getDataByKey(elementKey);
       String localDisplayValue = table.getDisplayTextOfData(localRowIndex, elementType, elementKey);

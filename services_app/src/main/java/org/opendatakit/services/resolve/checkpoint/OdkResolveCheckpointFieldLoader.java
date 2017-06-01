@@ -179,7 +179,8 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
             mTableId, aul.locale, columnDisplayName);
       } else {
-        columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, NameUtil.constructSimpleDisplayName(elementKey));
       }
       String localRawValue = rowEnding.getDataByKey(elementKey);
       String localDisplayValue = table
