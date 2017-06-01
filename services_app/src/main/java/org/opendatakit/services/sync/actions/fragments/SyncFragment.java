@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.services.sync.activities;
+package org.opendatakit.services.sync.actions.fragments;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -36,11 +36,13 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.sync.actions.activities.*;
 import org.opendatakit.sync.service.*;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.services.sync.actions.SyncActions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,6 +84,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
 
   private Button startSync;
   private Button resetServer;
+  private Button changeUser;
 
   private LinearLayout resetButtonPane;
 
@@ -196,6 +199,12 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         onClickResetServer(v);
       }
     });
+    changeUser = (Button) view.findViewById(R.id.change_user_button);
+    changeUser.setOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View v) {
+        onClickChangeUser(v);
+      }
+    });
 
     resetButtonPane = (LinearLayout) view.findViewById(R.id.sync_reset_button_pane);
 
@@ -230,20 +239,30 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
 
     for ( int i = 0 ; i < credentialValues.length ; ++i ) {
       if ( credentialToUse.equals(credentialValues[i]) ) {
-        accountAuthType.setText(credentialEntries[i]);
+        if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
+          accountAuthType.setText(credentialEntries[i]);
+        }
       }
     }
 
     if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
-      accountIdentity.setText("");
+      accountIdentity.setText(getResources().getString(R.string.anonymous));
     } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
       String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-      accountIdentity.setText(username);
+      if (username == null || username.equals("")) {
+        accountIdentity.setText(getResources().getString(R.string.no_account));
+      } else {
+        accountIdentity.setText(username);
+      }
     } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
       String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-      accountIdentity.setText(googleAccount);
+      if (googleAccount == null || googleAccount.equals("")) {
+        accountIdentity.setText(getResources().getString(R.string.no_account));
+      } else {
+        accountIdentity.setText(googleAccount);
+      }
     } else {
-      accountIdentity.setText("");
+      accountIdentity.setText(getResources().getString(R.string.no_account));
     }
 
     String[] syncAttachmentValues =
@@ -294,7 +313,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
 
     // only show information screens if we are the tables admin
     int visibility = isTablesAdmin ? View.VISIBLE : View.GONE;
-    infoPane.setVisibility(visibility);
+    infoPane.setVisibility(View.VISIBLE); // TODO
     resetButtonPane.setVisibility(visibility);
   }
 
@@ -614,6 +633,16 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       syncAction = SyncActions.SYNC;
       prepareForSyncAction();
     }
+  }
+
+  public void onClickChangeUser(View v) {
+    WebLogger.getLogger(getAppName()).d(TAG,
+        "[" + getId() + "] [onClickChangeUser] timestamp: " + System.currentTimeMillis());
+
+     Intent i = new Intent(getActivity(), LoginActivity.class);
+     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+     startActivity(i);
+     return;
   }
 
   public static void invalidateAuthToken(Context context, String appName) {

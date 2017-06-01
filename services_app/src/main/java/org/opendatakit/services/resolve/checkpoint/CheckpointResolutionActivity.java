@@ -123,7 +123,7 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
     menu.findItem(R.id.action_sync).setVisible(false);
-    menu.findItem(R.id.action_logout).setVisible(false);
+    menu.findItem(R.id.action_change_user).setVisible(false);
     return super.onPrepareOptionsMenu(menu);
   }
 

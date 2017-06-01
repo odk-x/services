@@ -28,13 +28,14 @@ import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.fragment.AboutMenuFragment;
+import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.sync.activities.SyncActivity;
+import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
-import org.opendatakit.services.sync.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 
@@ -136,9 +137,11 @@ public class MainActivity extends Activity implements IAppAwareActivity {
       return true;
     }
 
-    if (id == R.id.action_logout) {
+    if (id == R.id.action_change_user) {
 
-      ODKServicesPropertyUtils.clearActiveUser(CommonToolProperties.get(this, mAppName));
+      Intent i = new Intent(this, LoginActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+      startActivity(i);
       return true;
     }
 

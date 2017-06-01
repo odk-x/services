@@ -1,4 +1,4 @@
-package org.opendatakit.services.sync.activities;
+package org.opendatakit.services.sync.actions.activities;
 
 /**
  * @author mitchellsundt@gmail.com

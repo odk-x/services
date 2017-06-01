@@ -31,6 +31,8 @@ public class ODKServicesPropertyUtils {
 
    public static void clearActiveUser(PropertiesSingleton props) {
       Map<String,String> properties = new HashMap<String,String>();
+      properties.put(CommonToolProperties.KEY_USERNAME, "");
+      properties.put(CommonToolProperties.KEY_PASSWORD, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
