@@ -4553,31 +4553,6 @@ public class ODKDatabaseImplUtils {
           t + ": No user supplied conflict type can be included for a checkpoint");
     }
 
-    if (cvValues.containsKey(DataTableColumns.DEFAULT_ACCESS)) {
-      throw new IllegalArgumentException(
-          t + ": No user supplied default access can be included for a checkpoint");
-    }
-
-    if (cvValues.containsKey(DataTableColumns.ROW_OWNER)) {
-      throw new IllegalArgumentException(
-          t + ": No user supplied row owner can be included for a checkpoint");
-    }
-
-    if (cvValues.containsKey(DataTableColumns.GROUP_READ_ONLY)) {
-      throw new IllegalArgumentException(
-          t + ": No user supplied group read only can be included for a checkpoint");
-    }
-
-    if (cvValues.containsKey(DataTableColumns.GROUP_MODIFY)) {
-      throw new IllegalArgumentException(
-          t + ": No user supplied group modify can be included for a checkpoint");
-    }
-
-    if (cvValues.containsKey(DataTableColumns.GROUP_PRIVILEGED)) {
-      throw new IllegalArgumentException(
-          t + ": No user supplied group privileged can be included for a checkpoint");
-    }
-
     // If a rowId is specified, a cursor will be needed to
     // get the current row to create a checkpoint with the relevant data
     Cursor c = null;
@@ -4633,6 +4608,34 @@ public class ODKDatabaseImplUtils {
               t + ":  A checkpoint cannot be added for a row that is in conflict");
         }
 
+        // these are all managed in the database layer...
+        // the user should NOT set them...
+
+        if (cvValues.containsKey(DataTableColumns.DEFAULT_ACCESS)) {
+          throw new IllegalArgumentException(
+              t + ": No user supplied default access can be included for a checkpoint");
+        }
+
+        if (cvValues.containsKey(DataTableColumns.ROW_OWNER)) {
+          throw new IllegalArgumentException(
+              t + ": No user supplied row owner can be included for a checkpoint");
+        }
+
+        if (cvValues.containsKey(DataTableColumns.GROUP_READ_ONLY)) {
+          throw new IllegalArgumentException(
+              t + ": No user supplied group read only can be included for a checkpoint");
+        }
+
+        if (cvValues.containsKey(DataTableColumns.GROUP_MODIFY)) {
+          throw new IllegalArgumentException(
+              t + ": No user supplied group modify can be included for a checkpoint");
+        }
+
+        if (cvValues.containsKey(DataTableColumns.GROUP_PRIVILEGED)) {
+          throw new IllegalArgumentException(
+              t + ": No user supplied group privileged can be included for a checkpoint");
+        }
+
         HashMap<String,Object> currValues = new HashMap<String,Object>();
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
@@ -4652,6 +4655,26 @@ public class ODKDatabaseImplUtils {
         // those values to the content values
         for (int i = 0; i < c.getColumnCount(); i++) {
           String name = c.getColumnName(i);
+
+          if (name.equals(DataTableColumns.DEFAULT_ACCESS)) {
+            priorDefaultAccess = c.getString(i);
+          }
+
+          if (name.equals(DataTableColumns.ROW_OWNER)) {
+            priorOwner = c.getString(i);
+          }
+
+          if (name.equals(DataTableColumns.GROUP_READ_ONLY)) {
+            priorGroupReadOnly = c.getString(i);
+          }
+
+          if (name.equals(DataTableColumns.GROUP_MODIFY)) {
+            priorGroupModify = c.getString(i);
+          }
+
+          if (name.equals(DataTableColumns.GROUP_PRIVILEGED)) {
+            priorGroupPrivileged = c.getString(i);
+          }
 
           if (currValues.containsKey(name)) {
             continue;
@@ -4689,26 +4712,6 @@ public class ODKDatabaseImplUtils {
           Class<?> theClass = CursorUtils.getIndexDataType(c, i);
           Object object = CursorUtils.getIndexAsType(c, theClass, i);
           insertValueIntoContentValues(currValues, theClass, name, object);
-
-          if (name.equals(DataTableColumns.DEFAULT_ACCESS)) {
-            priorDefaultAccess = c.getString(i);
-          }
-
-          if (name.equals(DataTableColumns.ROW_OWNER)) {
-            priorOwner = c.getString(i);
-          }
-
-          if (name.equals(DataTableColumns.GROUP_READ_ONLY)) {
-            priorGroupReadOnly = c.getString(i);
-          }
-
-          if (name.equals(DataTableColumns.GROUP_MODIFY)) {
-            priorGroupModify = c.getString(i);
-          }
-
-          if (name.equals(DataTableColumns.GROUP_PRIVILEGED)) {
-            priorGroupPrivileged = c.getString(i);
-          }
         }
 
         insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
