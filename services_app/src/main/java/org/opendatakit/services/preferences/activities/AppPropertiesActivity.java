@@ -24,7 +24,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
-import org.opendatakit.services.sync.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;

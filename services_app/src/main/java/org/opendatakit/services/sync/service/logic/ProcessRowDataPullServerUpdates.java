@@ -243,6 +243,10 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
           values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
           values.putNull(DataTableColumns.CONFLICT_TYPE);
 
+          values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
+          values.put(DataTableColumns.GROUP_PRIVILEGED, serverRow.getRowFilterScope().getGroupPrivileged());
+          values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
+
           sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), sc
               .getDatabase(), tableId, orderedColumns, values, rowId);
 

@@ -12,12 +12,13 @@
  * the License.
  */
 
-package org.opendatakit.services.sync.activities;
+package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.*;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import org.opendatakit.androidlibrary.R;
+import org.opendatakit.services.sync.actions.activities.ISyncOutcomeHandler;
 
 /**
  * Fragment-version of AlertDialog

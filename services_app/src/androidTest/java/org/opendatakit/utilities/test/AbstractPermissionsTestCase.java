@@ -354,6 +354,10 @@ public class AbstractPermissionsTestCase {
       throw new IllegalArgumentException("unexpected rowId value");
     }
 
+    cvValues.putNull(DataTableColumns.GROUP_MODIFY);
+    cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
+    cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
+
     if (changeArray != null && changeArray.length >= 1 && changeArray[0]) {
       cvValues.put("col1", false); // boolean
     }

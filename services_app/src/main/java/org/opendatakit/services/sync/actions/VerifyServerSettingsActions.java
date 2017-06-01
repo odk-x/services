@@ -12,14 +12,11 @@
  * the License.
  */
 
-package org.opendatakit.services.sync.activities;
+package org.opendatakit.services.sync.actions;
 
 /**
- * Common callback from the outcome dialog when the sync is completed.
- * The enclosing fragment should release resources and return.
- *
  * @author mitchellsundt@gmail.com
  */
-public interface ISyncOutcomeHandler {
-    void onSyncCompleted();
+public enum VerifyServerSettingsActions {
+  IDLE, MONITOR_VERIFYING, VERIFY
 }

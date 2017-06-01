@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.services.sync.activities;
+package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.*;
 import android.content.DialogInterface;
