@@ -19,6 +19,12 @@ package org.opendatakit.services.sync.actions.activities;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.graphics.Rect;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.LoginFragment;
@@ -55,6 +61,23 @@ public class LoginActivity extends SyncBaseActivity {
          WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
          trans.commit();
       }
+   }
+
+   @Override
+   public boolean dispatchTouchEvent(MotionEvent event) {
+      if (event.getAction() == MotionEvent.ACTION_DOWN) {
+         View v = getCurrentFocus();
+         if ( v instanceof EditText) {
+            Rect outRect = new Rect();
+            v.getGlobalVisibleRect(outRect);
+            if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
+               v.clearFocus();
+               InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+               imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+         }
+      }
+      return super.dispatchTouchEvent( event );
    }
 
 }

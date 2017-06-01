@@ -17,15 +17,12 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.services.preferences.fragments.PasswordDialogFragment;
 import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
 import org.opendatakit.services.sync.actions.activities.*;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
