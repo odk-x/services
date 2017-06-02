@@ -16,14 +16,8 @@
 
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.app.*;
+import android.content.*;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -209,7 +203,6 @@ public class SyncBaseActivity extends Activity
 
    @Override
    public boolean onPrepareOptionsMenu(Menu menu) {
-      /// TODO: What are the correct options?
       menu.findItem(R.id.action_sync).setVisible(false);
       menu.findItem(R.id.action_verify_server_settings).setVisible(false);
       menu.findItem(R.id.action_change_user).setVisible(false);
@@ -219,7 +212,6 @@ public class SyncBaseActivity extends Activity
 
    @Override
    public boolean onOptionsItemSelected(MenuItem item) {
-      // TODO: Make sure the correct options are shown
 
       // Handle action bar item clicks here. The action bar will
       // automatically handle clicks on the Home/Up button, so long
@@ -286,5 +278,19 @@ public class SyncBaseActivity extends Activity
          mProps = CommonToolProperties.get(this, mAppName);
       }
       return mProps;
+   }
+
+   public static void showAuthenticationErrorDialog(final Activity activity, String message) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+      builder.setTitle(R.string.authentication_error);
+      builder.setMessage(message);
+      builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            activity.finish();
+            dialog.dismiss();
+         }
+      });
+      AlertDialog dialog = builder.create();
+      dialog.show();
    }
 }

@@ -15,36 +15,15 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.RemoteException;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
 
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
-import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
 
 /**
  * An activity for verifying the server setings and
@@ -92,14 +71,7 @@ public class VerifyServerSettingsActivity extends SyncBaseActivity {
     if ( props.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
         !isAnonymous ) {
 
-      Handler h = new Handler();
-      Toast.makeText(this, R.string.warning_no_user_roles, Toast.LENGTH_LONG).show();
-      h.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          finish();
-        }
-      }, Toast.LENGTH_LONG);
+      SyncBaseActivity.showAuthenticationErrorDialog(this, getString(R.string.warning_no_user_roles));
       return;
     }
     super.onBackPressed();

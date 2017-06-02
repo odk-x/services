@@ -120,6 +120,7 @@ public class OdkSyncService extends Service {
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
+    //android.os.Debug.waitForDebugger();
     WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
         "Sync Service onStartCommand startId: " + startId);
 

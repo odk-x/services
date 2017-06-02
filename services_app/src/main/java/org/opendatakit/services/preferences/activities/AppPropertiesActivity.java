@@ -14,6 +14,9 @@
 
 package org.opendatakit.services.preferences.activities;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
@@ -22,6 +25,7 @@ import android.support.annotation.StringRes;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
@@ -44,6 +48,7 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
   private String mAppName;
   private boolean mAdminMode;
   private boolean mAdminConfigured;
+  private Activity mActivity = this;
   
   private PropertiesSingleton mProps;
 
@@ -236,7 +241,7 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
 
   /**
    * If we are exiting the non-privileged settings screen and the user roles are not
-   * set, then launch the verify user permissions activity (in place of this activity).
+   * set, then prompt the user to verify user permissions or lose their changes
    *
    * Otherwise, exit the settings screen.
    */
@@ -249,14 +254,33 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
       if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
               !isAnonymous ) {
 
-        // this will swap to the new activity and close this one
-        Intent i = new Intent(this, VerifyServerSettingsActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-        startActivity(i);
+        promptToVerifyCredentials();
         return;
       }
     }
     super.onBackPressed();
+  }
+
+  private void promptToVerifyCredentials() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle(R.string.authenticate_credentials);
+    builder.setMessage(R.string.anonymous_warning);
+    builder.setPositiveButton(R.string.new_user, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int id) {
+        // this will swap to the new activity and close this one
+        Intent i = new Intent(mActivity, VerifyServerSettingsActivity.class);
+        i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+        startActivity(i);
+        dialog.dismiss();
+      }
+    });
+    builder.setNegativeButton(R.string.logout, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int id) {
+        finish();
+        dialog.dismiss();
+      }
+    });
+    AlertDialog dialog = builder.create();
+    dialog.show();
   }
 }
