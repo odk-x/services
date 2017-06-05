@@ -39,6 +39,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
 import org.opendatakit.services.sync.actions.activities.*;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
@@ -158,6 +159,12 @@ public class VerifyServerSettingsFragment extends Fragment implements ISyncOutco
       return;
     }
 
+    updateCredentialsUI();
+    perhapsEnableButtons();
+    updateInterface();
+  }
+
+  private void updateCredentialsUI() {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
 
@@ -165,39 +172,32 @@ public class VerifyServerSettingsFragment extends Fragment implements ISyncOutco
     String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
     String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
 
-    if (credentialToUse == null) {
+    if ( credentialToUse == null ) {
       credentialToUse = getString(R.string.credential_type_none);
     }
 
-    for (int i = 0; i < credentialValues.length; ++i) {
-      if (credentialToUse.equals(credentialValues[i])) {
-        accountAuthType.setText(credentialEntries[i]);
+    for ( int i = 0 ; i < credentialValues.length ; ++i ) {
+      if ( credentialToUse.equals(credentialValues[i]) ) {
+        if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
+          accountAuthType.setText(credentialEntries[i]);
+        }
       }
     }
 
-    if (credentialToUse.equals(getString(R.string.credential_type_none))) {
+    String account = ODKServicesPropertyUtils.getActiveUser(props);
+    int indexOfColon = account.indexOf(':');
+    if (indexOfColon > 0) {
+      account = account.substring(indexOfColon + 1);
+    }
+    if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
       accountIdentity.setText(getResources().getString(R.string.anonymous));
-    } else if (credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-      String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-      if (username == null || username.equals("")) {
-        accountIdentity.setText(getResources().getString(R.string.no_account));
-      } else {
-        accountIdentity.setText(username);
-      }
-    } else if (credentialToUse.equals(getString(R.string.credential_type_google_account))) {
-      String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-      if (googleAccount == null || googleAccount.equals("")) {
-        accountIdentity.setText(getResources().getString(R.string.no_account));
-      } else {
-        accountIdentity.setText(googleAccount);
-      }
+    } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
+      accountIdentity.setText(account);
+    } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
+      accountIdentity.setText(account);
     } else {
       accountIdentity.setText(getResources().getString(R.string.no_account));
     }
-
-    perhapsEnableButtons();
-
-    updateInterface();
   }
 
   private void disableButtons() {

@@ -37,6 +37,7 @@ import org.opendatakit.database.RoleConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.sync.actions.activities.*;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.*;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
@@ -226,6 +227,12 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       return;
     }
 
+    updateCredentialsUI();
+    perhapsEnableButtons();
+    updateInterface();
+  }
+
+  private void updateCredentialsUI() {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
 
@@ -245,22 +252,17 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       }
     }
 
+    String account = ODKServicesPropertyUtils.getActiveUser(props);
+    int indexOfColon = account.indexOf(':');
+    if (indexOfColon > 0) {
+      account = account.substring(indexOfColon + 1);
+    }
     if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
       accountIdentity.setText(getResources().getString(R.string.anonymous));
     } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-      String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-      if (username == null || username.equals("")) {
-        accountIdentity.setText(getResources().getString(R.string.no_account));
-      } else {
-        accountIdentity.setText(username);
-      }
+      accountIdentity.setText(account);
     } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
-      String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-      if (googleAccount == null || googleAccount.equals("")) {
-        accountIdentity.setText(getResources().getString(R.string.no_account));
-      } else {
-        accountIdentity.setText(googleAccount);
-      }
+      accountIdentity.setText(account);
     } else {
       accountIdentity.setText(getResources().getString(R.string.no_account));
     }
@@ -273,10 +275,6 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
         break;
       }
     }
-
-    perhapsEnableButtons();
-
-    updateInterface();
   }
 
   private void disableButtons() {
@@ -548,7 +546,11 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
                   if (!completed) {
                     throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
                   }
-                  //getActivity().finish();
+                  //getActivity().finish(); // TODO: Leave this commented out until you can fix
+                  // the lifecycle issues
+                  updateCredentialsUI();
+                  perhapsEnableButtons();
+                  updateInterface();
                   return;
                 } else {
                   WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");
