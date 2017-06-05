@@ -848,13 +848,12 @@ public class SubmissionProvider extends ContentProvider {
   /**
    * This method actually writes the JSON appName-relative manifest to disk.
    *
-   * @param payload
-   * @param outputFilePath
-   * @param  logger
-   * @return
+   * @param payload The json string to be written
+   * @param outputFilePath the path to the file to write
+   * @param  logger a logger to write to, typically gotten with WebLogger.getWebLogger(appName)
+   * @return whether successful or not
    */
   private static boolean exportFile(String payload, File outputFilePath, WebLoggerIf logger) {
-    // write xml file
     FileOutputStream os = null;
     OutputStreamWriter osw = null;
     try {
