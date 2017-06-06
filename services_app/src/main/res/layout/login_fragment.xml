@@ -5,6 +5,17 @@
               android:orientation="vertical">
 
     <TextView
+        android:id="@+id/warn_sync_before_logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
+        android:textSize="20sp"
+        android:textColor="@color/red"
+        android:text="@string/sync_warn_sync_before_logout"/>
+
+    <TextView
             android:id="@+id/sync_uri_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
