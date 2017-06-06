@@ -39,6 +39,7 @@ import java.util.*;
  */
 
 public class CommonTranslationsLocaleScreen extends ListPreference {
+  private static ArrayList<String> savedValues = null;
 
    public static class LocaleStruct {
       public final String localeName;
@@ -164,6 +165,12 @@ public class CommonTranslationsLocaleScreen extends ListPreference {
              (currentDefaultCommonTranslation == null) ? "_" : currentDefaultCommonTranslation,
              localeStructs);
 
+         if (savedValues == null) {
+            savedValues = new ArrayList<>();
+            for (LocaleStruct x : localeResults.locales) {
+              savedValues.add(x.localizedDisplayName);
+            }
+         }
          return localeResults;
       }
    }
@@ -204,9 +211,19 @@ public class CommonTranslationsLocaleScreen extends ListPreference {
       return new LocaleLoaderCallback();
    }
 
+   /**
+    * Called to re-create the list when the screen is rotated. If we don't save the values
+    * earlier and restore the saved values, it just makes an empty selection list. It was a very
+    * interesting bug to track down
+    * @param context the app context (?)
+    * @param attrs a set of attributes (?)
+    */
    public CommonTranslationsLocaleScreen(final Context context, AttributeSet attrs) {
       super(context, attrs);
       String[] value = new String[0];
+      if (savedValues != null) {
+         value = savedValues.toArray(new String[savedValues.size()]);
+      }
       this.setEntryValues(value);
       this.setEntries(value);
    }

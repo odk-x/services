@@ -19,6 +19,7 @@ import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.logging.WebLogger;
 
 public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
+  private static final String TAG = AndroidConnectFactory.class.getSimpleName();
 
   static {
     OdkConnectionFactorySingleton.set(new AndroidConnectFactory());
@@ -50,17 +51,17 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractCl
 
   @Override
   protected void logInfo(String appName, String message) {
-    WebLogger.getLogger(appName).i("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).i(TAG, message);
   }
 
   @Override
   protected void logWarn(String appName, String message) {
-    WebLogger.getLogger(appName).w("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).w(TAG, message);
   }
 
   @Override
   protected void logError(String appName, String message) {
-    WebLogger.getLogger(appName).e("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).e(TAG, message);
   }
 
   @Override
