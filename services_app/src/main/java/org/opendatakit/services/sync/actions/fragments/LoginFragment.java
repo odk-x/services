@@ -41,6 +41,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.LoginActions;
+import org.opendatakit.services.sync.actions.SyncActions;
 import org.opendatakit.services.sync.actions.activities.*;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
@@ -163,8 +164,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
          @Override public void onClick(View v) {
             setNewCredentials();
-            verifyServerSettings(v);
             refreshCredentialsDisplay();
+            verifyServerSettings(v);
          }
       });
 
@@ -251,8 +252,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       }
 
       perhapsEnableButtons();
-
-      updateInterface();
    }
 
    @Override
@@ -414,6 +413,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                    final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
+                   WebLogger.getLogger(getAppName()).e(TAG,"tickleInterface status " + status.name() + " login "
+                       + "action " + loginAction.name());
                    if (status == SyncStatus.SYNCING) {
                       loginAction = LoginActions.MONITOR_VERIFYING;
 
@@ -426,7 +427,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                       });
                       return;
                    }
-
                    switch (loginAction) {
                    case VERIFY:
                       syncServiceInterface.verifyServerSettings(getAppName());
@@ -491,6 +491,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                    final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
+                   WebLogger.getLogger(getAppName()).e(TAG,"updateInterface status " + status.name() + " login "
+                       + "action " + loginAction.name());
                    if (status == SyncStatus.SYNCING) {
                       loginAction = LoginActions.MONITOR_VERIFYING;
 
@@ -502,7 +504,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                          }
                       });
                       return;
-                   } else {
+                   } else if (status != SyncStatus.NONE && loginAction != LoginActions.IDLE) {
                       // request completed
                       loginAction = LoginActions.IDLE;
                       final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
@@ -727,9 +729,11 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             @Override
             public void run() {
                try {
-                  scopedReference.dismiss();
+                  if (scopedReference != null) {
+                     scopedReference.dismiss();
+                  }
                } catch (Exception e) {
-                  // ignore... we tried!
+                  e.printStackTrace();
                }
                perhapsEnableButtons();
             }
@@ -866,9 +870,11 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             @Override
             public void run() {
                try {
-                  scopedReference.dismiss();
+                  if (scopedReference != null) {
+                     scopedReference.dismiss();
+                  }
                } catch (Exception e) {
-                  // ignore... we tried!
+                  e.printStackTrace();
                }
                perhapsEnableButtons();
             }

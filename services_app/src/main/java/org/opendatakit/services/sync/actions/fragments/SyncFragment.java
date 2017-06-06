@@ -76,6 +76,8 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   private DismissableProgressDialogFragment progressDialog = null;
   private DismissableOutcomeDialogFragment outcomeDialog = null;
 
+  private boolean loggingIn = false;
+
   private LinearLayout infoPane;
   private TextView uriField;
   private TextView accountAuthType;
@@ -522,7 +524,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   public void onSyncCompleted() {
     Activity activity = getActivity();
     WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] after getActivity");
-    if ( activity == null ) {
+    if ( activity == null) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] activity == null = return");
       handler.postDelayed(new Runnable() {
@@ -546,11 +548,7 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
                   if (!completed) {
                     throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
                   }
-                  //getActivity().finish(); // TODO: Leave this commented out until you can fix
-                  // the lifecycle issues
-                  updateCredentialsUI();
-                  perhapsEnableButtons();
-                  updateInterface();
+                  getActivity().finish();
                   return;
                 } else {
                   WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");

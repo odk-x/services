@@ -16,16 +16,22 @@
 
 package org.opendatakit.services.sync.actions.activities;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.LoginFragment;
 
@@ -78,6 +84,40 @@ public class LoginActivity extends SyncBaseActivity {
          }
       }
       return super.dispatchTouchEvent( event );
+   }
+
+   @Override
+   public void onBackPressed() {
+      String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+      boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
+          getString(R.string.credential_type_none).equals(authType);
+      if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
+          !isAnonymous ) {
+
+         promptToVerifyCredentials();
+         return;
+      }
+      super.onBackPressed();
+   }
+
+   private void promptToVerifyCredentials() {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setTitle(R.string.authenticate_credentials);
+      builder.setMessage(R.string.anonymous_warning);
+      builder.setPositiveButton(R.string.new_user, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            dialog.dismiss();
+            // Do nothing and stay here
+         }
+      });
+      builder.setNegativeButton(R.string.logout, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            finish();
+            dialog.dismiss();
+         }
+      });
+      AlertDialog dialog = builder.create();
+      dialog.show();
    }
 
 }

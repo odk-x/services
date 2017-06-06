@@ -59,9 +59,10 @@ public class SyncBaseActivity extends Activity
    protected String mAppName;
    protected PropertiesSingleton mProps;
 
-   // odkSyncInterfaceBindComplete guards access to all of the following...
-   protected OdkSyncServiceInterface odkSyncInterface;
-   protected boolean mBound = false;
+   private final Object interfaceGuard = new Object();
+   // interfaceGuard guards access to all of the following...
+   private OdkSyncServiceInterface odkSyncInterfaceGuarded;
+   private boolean mBoundGuarded = false;
    // end guarded access.
 
    @Override public void onServiceConnected(ComponentName name, IBinder service) {
@@ -70,16 +71,21 @@ public class SyncBaseActivity extends Activity
          return;
       }
 
-      odkSyncInterface = (service == null) ?
-          null :
-          OdkSyncServiceInterface.Stub.asInterface(service);
-      setBound(true);
+      synchronized (interfaceGuard) {
+         odkSyncInterfaceGuarded = (service == null) ?
+             null :
+             OdkSyncServiceInterface.Stub.asInterface(service);
+         mBoundGuarded = (odkSyncInterfaceGuarded != null);
+      }
       WebLogger.getLogger(getAppName()).i(TAG, "[onServiceConnected] Bound to sync service");
    }
 
    @Override public void onServiceDisconnected(ComponentName name) {
       WebLogger.getLogger(getAppName()).i(TAG, "[onServiceDisconnected] Unbound to sync service");
-      setBound(false);
+      synchronized (interfaceGuard) {
+         odkSyncInterfaceGuarded = null;
+         mBoundGuarded = false;
+      }
    }
 
    /**
@@ -89,13 +95,15 @@ public class SyncBaseActivity extends Activity
     */
    public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
       try {
-         boolean bound = getBound();
-         if (odkSyncInterface != null && callback != null && bound) {
-            callback.doAction(odkSyncInterface);
-         } else {
-            if (callback != null) {
-               callback.doAction(odkSyncInterface);
-            }
+         boolean bound;
+         OdkSyncServiceInterface theInterface;
+         synchronized (interfaceGuard) {
+            theInterface = odkSyncInterfaceGuarded;
+            bound = mBoundGuarded;
+
+         }
+         if (callback != null) {
+            callback.doAction(theInterface);
          }
       } catch (RemoteException e) {
          WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -116,17 +124,6 @@ public class SyncBaseActivity extends Activity
 
       // Used to ensure that the singleton has been initialized properly
       AndroidConnectFactory.configure();
-
-      try {
-         WebLogger.getLogger(getAppName()).i(TAG, "[onCreate] Attempting bind to sync service");
-         Intent bind_intent = new Intent();
-         bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
-             IntentConsts.Sync.SYNC_SERVICE_CLASS);
-         bindService(bind_intent, this,
-             Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
    }
 
    @Override protected void onResume() {
@@ -143,6 +140,17 @@ public class SyncBaseActivity extends Activity
          return;
       }
 
+      try {
+         WebLogger.getLogger(getAppName()).i(TAG, "[onCreate] Attempting bind to sync service");
+         Intent bind_intent = new Intent();
+         bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
+             IntentConsts.Sync.SYNC_SERVICE_CLASS);
+         bindService(bind_intent, this,
+             Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+
    }
 
    @Override
@@ -150,18 +158,25 @@ public class SyncBaseActivity extends Activity
 
       WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy]");
 
-      if (getBound()) {
-         unbindService(this);
-         setBound(false);
-         WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service");
-      }
-
       super.onDestroy();
    }
 
    @Override
    protected void onPause() {
       super.onPause();
+
+
+      boolean callUnbind = false;
+      synchronized (interfaceGuard) {
+         callUnbind = mBoundGuarded;
+         odkSyncInterfaceGuarded = null;
+         mBoundGuarded = false;
+      }
+
+      if (callUnbind) {
+         unbindService(this);
+         WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service");
+      }
 
       WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
    }
@@ -264,12 +279,10 @@ public class SyncBaseActivity extends Activity
       return super.onOptionsItemSelected(item);
    }
 
-   private void setBound(boolean bound) {
-      mBound = bound;
-   }
-
    private boolean getBound() {
-      return mBound;
+      synchronized (interfaceGuard) {
+         return mBoundGuarded;
+      }
    }
 
    @Override public PropertiesSingleton getProps() {
