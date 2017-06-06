@@ -208,6 +208,14 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
 
    private void logout() {
       ODKServicesPropertyUtils.clearActiveUser(props);
+
+      Map<String, String> properties = new HashMap<String, String>();
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+          getString(R.string.credential_type_username_password));
+      properties.put(CommonToolProperties.KEY_USERNAME, "");
+      properties.put(CommonToolProperties.KEY_AUTH, "");
+      properties.put(CommonToolProperties.KEY_PASSWORD, "");
+
       getActivity().finish();
    }
 
