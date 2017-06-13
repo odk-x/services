@@ -59,6 +59,7 @@ import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.exceptions.AccessDeniedException;
 import org.opendatakit.services.sync.service.exceptions.BadClientConfigException;
@@ -210,7 +211,10 @@ public class AggregateSynchronizer implements Synchronizer {
       }
     } catch ( AccessDeniedException e ) {
       // this must be an anonymousUser
-      return new HashMap<String,Object>();
+      if (sc.getAuthenticationType().equals(sc.getString(R.string.credential_type_none))) {
+        return new HashMap<String,Object>();
+      }
+      throw e;
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());
