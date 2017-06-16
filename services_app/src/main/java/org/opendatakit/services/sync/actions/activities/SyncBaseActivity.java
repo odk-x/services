@@ -272,7 +272,7 @@ public class SyncBaseActivity extends Activity
       if (id == R.id.action_change_user) {
 
          Intent i = new Intent(this, LoginActivity.class);
-         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
          startActivity(i);
          return true;
       }
@@ -288,7 +288,7 @@ public class SyncBaseActivity extends Activity
    @Override public PropertiesSingleton getProps() {
 
       if (mProps == null) {
-         mProps = CommonToolProperties.get(this, mAppName);
+         mProps = CommonToolProperties.get(this, getAppName());
       }
       return mProps;
    }
