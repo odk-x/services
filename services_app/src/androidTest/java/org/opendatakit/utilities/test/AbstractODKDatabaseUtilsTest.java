@@ -17,6 +17,7 @@ package org.opendatakit.utilities.test;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import android.support.test.filters.LargeTest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.apache.commons.lang3.CharEncoding;
@@ -96,6 +97,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
   private static final String TAG = "AbstractODKDatabaseUtilsTest";
 
+  private static final String localTestTable = "L_testTable";
   private static final String testTable = "testTable";
 
   private static final String elemKey = "_element_key";
@@ -364,6 +366,110 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
   }
+
+
+  /*
+   * Test updating the data in a local table with valid values when the id already exists
+   */
+  @Test
+  public void testUpdateDataInExistingLocalTableWithIdWhenIdAlreadyExists_ExpectPass() throws
+      ActionNotAuthorizedException  {
+
+
+    String tableId = localTestTable;
+
+    ODKDatabaseImplUtils.AccessContext accessContext =
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
+            RoleConsts.USER_ROLES_LIST);
+
+    String testCol = "testColumn";
+    String testColType = ElementDataType.integer.name();
+    String testStrCol = "testStrColumn";
+    String testStrColType = ElementDataType.string.name();
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(testCol, testCol, testColType, "[]"));
+    columns.add(new Column(testStrCol, testStrCol, testStrColType, "[]"));
+    OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().createLocalOnlyTableWithColumns
+        (db, tableId, columns);
+
+    int testVal = 5;
+    String testStrVal = "five";
+    boolean thrown = false;
+
+    ContentValues cvValues = new ContentValues();
+    cvValues.put(testCol, testVal);
+    cvValues.put(testStrCol, testStrVal);
+
+    ODKDatabaseImplUtils.get().insertLocalOnlyRow(db, tableId, cvValues);
+
+    // Select everything out of the table
+    String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
+    Object[] selArgs =  new Object[1];
+    selArgs[0] = testVal;
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
+        accessContext);
+    assertEquals(cursor.getCount(), 1);
+
+    int val = 0;
+    String valStr = null;
+    while (cursor.moveToNext()) {
+      {
+        int ind = cursor.getColumnIndex(testCol);
+        int type = cursor.getType(ind);
+        assertEquals(type, Cursor.FIELD_TYPE_INTEGER);
+        val = cursor.getInt(ind);
+      }
+      {
+        int indStr = cursor.getColumnIndex(testStrCol);
+        int typeStr = cursor.getType(indStr);
+        assertEquals(typeStr, Cursor.FIELD_TYPE_STRING);
+        valStr = cursor.getString(indStr);
+      }
+    }
+
+    assertEquals(val, testVal);
+    assertEquals(valStr, testStrVal);
+
+    // Try updating that row in the database
+    int testVal2 = 25;
+    String testStrVal2 = "twenty-five";
+    ContentValues cvValues2 = new ContentValues();
+    cvValues2.put(testCol, testVal2);
+    cvValues2.put(testStrCol, testStrVal2);
+
+    ODKDatabaseImplUtils.get().updateLocalOnlyRow(db, tableId, cvValues2, testCol + "= ?", selArgs);
+
+    // Select everything out of the table
+    String sel2 = "SELECT * FROM " + tableId;
+    Object[] selArgs2 = new Object[0];
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
+        accessContext);
+    assertEquals(cursor2.getCount(), 1);
+
+    int val2 = 0;
+    String valStr2 = null;
+    while (cursor2.moveToNext()) {
+      {
+        int ind = cursor2.getColumnIndex(testCol);
+        int type = cursor2.getType(ind);
+        assertEquals(type, Cursor.FIELD_TYPE_INTEGER);
+        val2 = cursor2.getInt(ind);
+      }
+      {
+        int indStr = cursor2.getColumnIndex(testStrCol);
+        int typeStr = cursor2.getType(indStr);
+        assertEquals(typeStr, Cursor.FIELD_TYPE_STRING);
+        valStr2 = cursor2.getString(indStr);
+      }
+    }
+
+    assertEquals(val2, testVal2);
+    assertEquals(valStr2, testStrVal2);
+
+    // Drop the table now that the test is done
+    ODKDatabaseImplUtils.get().deleteLocalOnlyTable(db, tableId);
+  }
+
 
   /*
    * Test creation of user defined database table with column when table does
@@ -3537,8 +3643,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Now delete the row
     ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db, tableId,
-        rowId,
-        activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        rowId, activeUser);
 
     // Run the query yet again to make sure that things worked as expected
     baseTable = ODKDatabaseImplUtils.get().query(db, tableId, QueryUtil
@@ -6396,14 +6501,13 @@ public abstract class AbstractODKDatabaseUtilsTest {
    * select data from the table, drop the table, and create 2 x ( set of small byte[]
    * allocations ), every iteration, free 1x of the byte[] allocations.
    */
-  @Test
-  public void testMemoryLeakCycling_ExpectPass() throws ActionNotAuthorizedException  {
+  private void internalTestMemoryLeakCycling_ExpectPass(int maxIterations) throws
+      ActionNotAuthorizedException  {
 
     LinkedList<byte[]> byteQueue = new LinkedList<byte[]>();
 
     String tableId = "memoryTest";
     int maxBytes = 32;
-    int maxIterations = 1000;
     String testColType = ElementDataType.string.name();
 
     for (int j = 0 ; j < maxIterations ; ++j ) {
@@ -6499,5 +6603,19 @@ public abstract class AbstractODKDatabaseUtilsTest {
         }
       }
     }
+  }
+
+  @Test
+  public void testMemoryLeakCyclingSubset_ExpectPass() throws ActionNotAuthorizedException {
+    int maxIterations = 200;
+
+    internalTestMemoryLeakCycling_ExpectPass(maxIterations);
+  }
+
+  @LargeTest
+  public void testMemoryLeakCycling_ExpectPass() throws ActionNotAuthorizedException {
+    int maxIterations = 1000;
+
+    internalTestMemoryLeakCycling_ExpectPass(maxIterations);
   }
 }

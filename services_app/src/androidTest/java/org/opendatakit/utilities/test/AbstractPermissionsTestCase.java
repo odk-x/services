@@ -97,9 +97,9 @@ public class AbstractPermissionsTestCase {
   protected static final String currentLocale = "en_US";
 
   protected static final String rowIdInserted = "rowIdInserted";
-  protected static final String rowIdDefaultNull = "rowIdDefaultNull";
-  protected static final String rowIdDefaultCommonNew = "rowIdDefaultCommonNew";
-  protected static final String rowIdDefaultCommon = "rowIdDefaultCommon";
+  protected static final String rowIdFullNull = "rowIdFullNull";
+  protected static final String rowIdFullCommonNew = "rowIdFullCommonNew";
+  protected static final String rowIdFullCommon = "rowIdFullCommon";
   protected static final String rowIdHiddenCommon = "rowIdHiddenCommon";
   protected static final String rowIdReadOnlyCommon = "rowIdReadOnlyCommon";
   protected static final String rowIdModifyCommon = "rowIdModifyCommon";
@@ -138,6 +138,7 @@ public class AbstractPermissionsTestCase {
     boolean changeServerRowPath;
     boolean changeServerFormIdMetadata;
     boolean changeServerPrivilegedMetadata;
+    boolean ableToChangePrivileges;
 
     ServerChangeOutcome outcome;
 
@@ -145,7 +146,8 @@ public class AbstractPermissionsTestCase {
         boolean changeServerBoolean, boolean changeServerInteger,
         boolean changeServerNumber, boolean changeServerString,
         boolean changeServerRowPath, boolean changeServerFormIdMetadata,
-        boolean changeServerPrivilegedMetadata, ServerChangeOutcome outcome) {
+        boolean changeServerPrivilegedMetadata,
+        boolean ableToChangePrivileges, ServerChangeOutcome outcome) {
 
       this.rowId = rowId;
       this.isServerRowDeleted = isServerRowDeleted;
@@ -156,6 +158,7 @@ public class AbstractPermissionsTestCase {
       this.changeServerRowPath = changeServerRowPath;
       this.changeServerFormIdMetadata = changeServerFormIdMetadata;
       this.changeServerPrivilegedMetadata = changeServerPrivilegedMetadata;
+      this.ableToChangePrivileges = ableToChangePrivileges;
 
       this.outcome = outcome;
     }
@@ -330,11 +333,11 @@ public class AbstractPermissionsTestCase {
         SyncState.deleted.name() : SyncState.changed.name()));
 
     RowFilterScope.Access localType;
-    if ( rowId.equals(rowIdDefaultNull) ) {
+    if ( rowId.equals(rowIdFullNull) ) {
       localType = RowFilterScope.Access.FULL;
       cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
       cvValues.putNull(DataTableColumns.ROW_OWNER);
-    } else if ( rowId.equals(rowIdDefaultCommon) ) {
+    } else if ( rowId.equals(rowIdFullCommon) ) {
       localType = RowFilterScope.Access.FULL;
       cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
       cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
@@ -371,10 +374,10 @@ public class AbstractPermissionsTestCase {
       cvValues.put("col4", "a different string from the server"); // string
     }
     if (changeArray != null && changeArray.length >= 5 && changeArray[4]) {
-      File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdDefaultCommon),
+      File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdFullCommon),
           "server_sample.jpg");
       cvValues.put("col7",
-          ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdDefaultCommon, rowFile)); // rowpath
+          ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdFullCommon, rowFile)); // rowpath
     }
     if (changeArray != null && changeArray.length >= 7 && changeArray[6]) {
       if ( type == localType ) {
@@ -402,10 +405,10 @@ public class AbstractPermissionsTestCase {
     // string with 500 varchars allocated to it
     cvValues.put("col5", "and a long string test"); // string(500)
     File configFile = new File(
-        ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId, rowIdDefaultCommon),
+        ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId, rowIdFullCommon),
         "sample.jpg");
     cvValues.put("col6", ODKFileUtils.asConfigRelativePath(getAppName(), configFile)); // configpath
-    File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdDefaultCommon), "sample.jpg");
+    File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdFullCommon), "sample.jpg");
     try {
       Writer writer = new FileWriter(rowFile);
       writer.write("testFile");
@@ -415,7 +418,7 @@ public class AbstractPermissionsTestCase {
       // ignore
     }
     cvValues.put("col7",
-        ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdDefaultCommon, rowFile)); // rowpath
+        ODKFileUtils.asRowpathUri(getAppName(), tableId, rowIdFullCommon, rowFile)); // rowpath
     // object type (geopoint)
     cvValues.put("col8_accuracy", 45.2); // number
     cvValues.put("col8_altitude", 45.3); // number
@@ -463,16 +466,14 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    spewConflictInsert(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewConflictInsert(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
     cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    spewConflictInsert(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewConflictInsert(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
     cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
@@ -527,8 +528,7 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
 
-    spewInsert(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommonNew, commonUser, currentLocale);
+    spewInsert(tableId, orderedColumns, cvValues, rowIdFullCommonNew, commonUser, currentLocale);
 
 
     // now insert rows that have been synced
@@ -540,16 +540,14 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    spewInsert(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewInsert(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
     cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    spewInsert(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewInsert(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     cvValues.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.HIDDEN.name());
     cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
@@ -617,9 +615,9 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    if ( rowIdDefaultNull.equals(rowId) ) {
+    if ( rowIdFullNull.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullNull,
               commonUser, currentLocale, false);
     }
 
@@ -628,9 +626,9 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    if ( rowIdDefaultCommon.equals(rowId) ) {
+    if ( rowIdFullCommon.equals(rowId) ) {
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullCommon,
               commonUser, currentLocale, false);
     }
 
@@ -693,15 +691,15 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
 
-    if ( rowIdDefaultNull.equals(rowId) ) {
+    if ( rowIdFullNull.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullNull,
               commonUser, currentLocale, false);
       cvValues.put("col3",2*Math.PI);
       cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultNull,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullNull,
               commonUser, currentLocale, false);
     }
 
@@ -710,15 +708,15 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_PRIVILEGED);
-    if ( rowIdDefaultCommon.equals(rowId) ) {
+    if ( rowIdFullCommon.equals(rowId) ) {
       cvValues.put(DataTableColumns.CONFLICT_TYPE, localConflictType);
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullCommon,
               commonUser, currentLocale, false);
       cvValues.put("col3",2*Math.PI);
       cvValues.put(DataTableColumns.CONFLICT_TYPE, serverConflictType);
       ODKDatabaseImplUtils.get()
-          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdDefaultCommon,
+          .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowIdFullCommon,
               commonUser, currentLocale, false);
     }
 
@@ -789,14 +787,11 @@ public class AbstractPermissionsTestCase {
 
     cvValues.put("col0", -11); // myothertype:integer
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommonNew, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommonNew, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     spewInsertCheckpoint(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
@@ -825,14 +820,11 @@ public class AbstractPermissionsTestCase {
 
     cvValues.put("col0", -12); // myothertype:integer
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommonNew, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommonNew, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     spewInsertCheckpoint(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
@@ -861,14 +853,11 @@ public class AbstractPermissionsTestCase {
 
     cvValues.put("col0", -11); // myothertype:integer
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommonNew, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommonNew, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     spewInsertCheckpoint(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
@@ -897,14 +886,11 @@ public class AbstractPermissionsTestCase {
 
     cvValues.put("col0", -12); // myothertype:integer
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommonNew, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommonNew, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultNull, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullNull, commonUser, currentLocale);
 
-    spewInsertCheckpoint(tableId, orderedColumns, cvValues,
-        rowIdDefaultCommon, commonUser, currentLocale);
+    spewInsertCheckpoint(tableId, orderedColumns, cvValues, rowIdFullCommon, commonUser, currentLocale);
 
     spewInsertCheckpoint(tableId, orderedColumns, cvValues,
         rowIdHiddenCommon, commonUser, currentLocale);
@@ -1190,7 +1176,7 @@ public class AbstractPermissionsTestCase {
   }
 
   protected void verifySyncOutcome(String tableId, OrderedColumns oc, boolean
-      asPrivilegedUser, RowFilterScope.Access type, SyncParamOutcome spo) {
+      asPrivilegedUser, RowFilterScope.Access serverRowDefaultAccessValue, SyncParamOutcome spo) {
 
     String characterizer;
     {
@@ -1214,7 +1200,7 @@ public class AbstractPermissionsTestCase {
     // and now handle server row changes.
     // this may be deletes with or without changes to any values or filter scopes
     ContentValues cvValues = buildServerRowContent(tableId, spo.rowId,
-        spo.isServerRowDeleted, type,
+        spo.isServerRowDeleted, serverRowDefaultAccessValue,
         new Boolean[] { spo.changeServerBoolean, spo.changeServerInteger, spo.changeServerNumber,
             spo.changeServerString, spo.changeServerRowPath, spo.changeServerFormIdMetadata,
             spo.changeServerPrivilegedMetadata });
@@ -1229,11 +1215,15 @@ public class AbstractPermissionsTestCase {
 
     switch ( spo.outcome ) {
     case LOCALLY_DELETED:
-      assertEquals("row not deleted: " + characterizer, 0, baseTable.getNumberOfRows());
+      if ( 0 != baseTable.getNumberOfRows() ) {
+        assertEquals("row not deleted: " + characterizer, 0, baseTable.getNumberOfRows());
+      }
       break;
     case LOCALLY_SYNCED:
     case LOCALLY_SYNCED_PENDING_FILES:
-      assertEquals("row not resolved: " + characterizer, 1, baseTable.getNumberOfRows());
+      if ( 1 != baseTable.getNumberOfRows() ) {
+        assertEquals("row not resolved: " + characterizer, 1, baseTable.getNumberOfRows());
+      }
       // content should match server cvValues
       for ( String key : cvValues.keySet() ) {
         if ( key.equals(DataTableColumns.SYNC_STATE) ) {
@@ -1259,14 +1249,22 @@ public class AbstractPermissionsTestCase {
           if ( dt == ElementDataType.bool ) {
             serverValue = Integer.toString(DataHelper.boolToInt(cvValues.getAsBoolean(key)));
           }
-          assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue
-              + " ): " + characterizer,
-              ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt) );
+          if ( key.equals(DataTableColumns.CONFLICT_TYPE) ) {
+            assertNull("column " + key + " should be null - was " + localValue, localValue);
+          } else {
+            boolean cmp = ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt);
+            if (!cmp) {
+              assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue + " ): "
+                  + characterizer, cmp);
+            }
+          }
         }
       }
       break;
     case LOCALLY_IN_CONFLICT:
-      assertEquals(2, baseTable.getNumberOfRows());
+      if ( baseTable.getNumberOfRows() != 2 ) {
+        assertTrue("expected 2 conflict rows -- found one", false);
+      }
       Row localRow = null;
       Row serverRow = null;
       for ( int i = 0 ; i < 2 ; ++i ) {
@@ -1320,17 +1318,39 @@ public class AbstractPermissionsTestCase {
         } else {
           String localValue = localRow.getDataByKey(key);
           String originalValue = original.getRowAtIndex(0).getDataByKey(key);
+          String serverValue = cvValues.getAsString(key);
 
-          ElementDataType dt = ElementDataType.string;
-          try {
-            ColumnDefinition cd = oc.find(key);
-            dt = cd.getType().getDataType();
-          } catch ( IllegalArgumentException e ) {
-            // ignore
+          if ((DataTableColumns.DEFAULT_ACCESS.equals(key) ||
+               DataTableColumns.ROW_OWNER.equals(key) ||
+               DataTableColumns.GROUP_READ_ONLY.equals(key) ||
+               DataTableColumns.GROUP_MODIFY.equals(key) ||
+               DataTableColumns.GROUP_PRIVILEGED.equals(key)) ) {
+
+            ElementDataType dt = ElementDataType.string;
+
+            if ( !spo.ableToChangePrivileges ) {
+              assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue + " ): "
+                      + characterizer,
+                  ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt));
+            } else {
+              assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue + " ): "
+                      + characterizer,
+                  ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt));
+            }
+
+
+          } else {
+            ElementDataType dt = ElementDataType.string;
+            try {
+              ColumnDefinition cd = oc.find(key);
+              dt = cd.getType().getDataType();
+            } catch (IllegalArgumentException e) {
+              // ignore
+            }
+            assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue + " ): "
+                    + characterizer,
+                ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt));
           }
-          assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue
-                  + " ): " + characterizer,
-              ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt) );
         }
       }
 
@@ -1338,8 +1358,236 @@ public class AbstractPermissionsTestCase {
     }
   }
 
-  protected ArrayList<SyncParamOutcome> buildSyncParamOutcomesList(boolean privilegedUser,
-      SyncState localRowSyncState,
+  /**
+   * Return true if the commonUser is able to change the row.
+   *
+   * @param rowId
+   * @param isTableLocked   locked tables prohibit changes except for owners.
+   * @param privilegedUser  commonUser is a privileged user -- always able to change row
+   * @param serverRowDefaultAccessValue            for server row???
+   * @param changeServerPrivilegedMetadata true if server is modifying privileges
+   * @return
+   */
+  private boolean ableToChangeRow(String rowId, boolean isTableLocked, boolean privilegedUser,
+                                  RowFilterScope.Access serverRowDefaultAccessValue,
+                                  boolean changeServerPrivilegedMetadata ) {
+    if ( privilegedUser ) {
+      return true;
+    }
+    RowFilterScope.Access localRowDefaultAccessValue = null;
+    if ( rowId.startsWith(rowIdFullNull) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdFullCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdFullCommonNew) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdHiddenCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.HIDDEN;
+    } else if ( rowId.startsWith(rowIdReadOnlyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.READ_ONLY;
+    } else if ( rowId.startsWith(rowIdModifyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.MODIFY;
+    } else {
+      throw new IllegalStateException("Expected all rows to be quantified at this point");
+    }
+
+    if ( isTableLocked ) {
+      if ( rowId.startsWith(rowIdFullNull) ) {
+        // not owner of row, can't change it
+        return false;
+      }
+
+      if ( changeServerPrivilegedMetadata && localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+        // logic will have server change the owner on matching rowDefaultAccessValues
+        // so we will no longer be the owner.
+        return false;
+      }
+
+      return true;
+    }
+
+    // otherwise, we can modify the row as long as the server isn't changing anything
+    if ( !changeServerPrivilegedMetadata ) {
+      // and row type is FULL or MODIFY access
+      if ( localRowDefaultAccessValue == RowFilterScope.Access.FULL || localRowDefaultAccessValue == RowFilterScope.Access.MODIFY ) {
+        return true;
+      }
+      // or we are the owner
+      // TODO: perhaps more logic here if test coverage is more complete
+      if ( !rowId.startsWith(rowIdFullNull) ) {
+        // we are the owner - can change it
+        return true;
+      }
+      // otherwise the row type is hidden or read-only and we can't modify it
+      return false;
+    }
+
+    // otherwise, the server is changing the permissions.
+    if ( serverRowDefaultAccessValue == RowFilterScope.Access.FULL || serverRowDefaultAccessValue == RowFilterScope.Access.MODIFY ) {
+      return true;
+    }
+    // owner changes if server and row types match
+    if ( localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+      // owner changed -- and default access is less than full or modify
+      // cannot make changes
+      return false;
+    }
+
+    if ( rowId.startsWith(rowIdFullNull) ) {
+      // we are not the owner - can't change it
+      return false;
+    }
+    // owner the same -- we can change it
+    return true;
+  }
+
+
+  /**
+   * Return true if the commonUser is able to delete the row.
+   *
+   * @param rowId
+   * @param isTableLocked   locked tables prohibit changes except for owners.
+   * @param privilegedUser  commonUser is a privileged user -- always able to change row
+   * @param serverRowDefaultAccessValue            for server row???
+   * @param changeServerPrivilegedMetadata true if server is modifying privileges
+   * @return
+   */
+  private boolean ableToDeleteRow(String rowId, boolean isTableLocked, boolean privilegedUser,
+                                  RowFilterScope.Access serverRowDefaultAccessValue,
+                                  boolean changeServerPrivilegedMetadata ) {
+    if ( privilegedUser ) {
+      return true;
+    }
+    RowFilterScope.Access localRowDefaultAccessValue = null;
+    if ( rowId.startsWith(rowIdFullNull) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdFullCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdFullCommonNew) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdHiddenCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.HIDDEN;
+    } else if ( rowId.startsWith(rowIdReadOnlyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.READ_ONLY;
+    } else if ( rowId.startsWith(rowIdModifyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.MODIFY;
+    } else {
+      throw new IllegalStateException("Expected all rows to be quantified at this point");
+    }
+
+    if ( isTableLocked ) {
+      if ( rowId.startsWith(rowIdFullNull) ) {
+        // not owner of row, can't change it
+        return false;
+      }
+
+      if ( changeServerPrivilegedMetadata && localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+        // logic will have server change the owner on matching rowTypes
+        // so we will no longer be the owner.
+        return false;
+      }
+
+      // otherwise, only if this is a new row (should be impossible?)
+      return  rowId.startsWith(rowIdFullCommonNew);
+    }
+
+    // otherwise, we can delete the row as long as the server isn't changing anything
+    if ( !changeServerPrivilegedMetadata ) {
+      // and row type is FULL access
+      if ( localRowDefaultAccessValue == RowFilterScope.Access.FULL ) {
+        return true;
+      }
+      // or we are the owner
+      // TODO: perhaps more logic here if test coverage is more complete
+      if ( !rowId.startsWith(rowIdFullNull) ) {
+        // we are the owner - can change it
+        return true;
+      }
+      // otherwise the row type is hidden or read-only or modify and we can't delete it
+      // unless the row is new
+      return rowId.startsWith(rowIdFullCommonNew);
+    }
+
+    // otherwise, the server is changing the permissions.
+    if ( serverRowDefaultAccessValue == RowFilterScope.Access.FULL ) {
+      return true;
+    }
+    // owner changes if server and row types match
+    if ( localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+      // owner changed -- and default access is less than full
+      // cannot make changes
+      return false;
+    }
+
+    if ( rowId.startsWith(rowIdFullNull) ) {
+      // we are not the owner - can't change it
+      return false;
+    }
+    // owner the same -- we can change it
+    return true;
+  }
+
+
+  /**
+   * Determines if the row's privilege columns can be modified.
+   *
+   * @param rowId
+   * @param isTableLocked
+   * @param privilegedUser
+   * @param serverRowDefaultAccessValue
+   * @param changeServerPrivilegedMetadata
+   * @return true if the row's privilege columns can be modified.
+   */
+  private boolean ableToChangeRowPrivilegeColumns(String rowId, boolean isTableLocked, boolean
+      privilegedUser,
+                                  RowFilterScope.Access serverRowDefaultAccessValue,
+                                  boolean changeServerPrivilegedMetadata ) {
+    if ( privilegedUser ) {
+      return true;
+    }
+
+    RowFilterScope.Access localRowDefaultAccessValue = null;
+    boolean isOwner = false;
+    if ( rowId.startsWith(rowIdFullNull) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+    } else if ( rowId.startsWith(rowIdFullCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+      isOwner = true;
+    } else if ( rowId.startsWith(rowIdFullCommonNew) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.FULL;
+      isOwner = true;
+    } else if ( rowId.startsWith(rowIdHiddenCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.HIDDEN;
+      isOwner = true;
+    } else if ( rowId.startsWith(rowIdReadOnlyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.READ_ONLY;
+      isOwner = true;
+    } else if ( rowId.startsWith(rowIdModifyCommon) ) {
+      localRowDefaultAccessValue = RowFilterScope.Access.MODIFY;
+      isOwner = true;
+    } else {
+      throw new IllegalStateException("Expected all rows to be quantified at this point");
+    }
+
+    if ( isTableLocked ) {
+      // only the privileged users are allowed to modify locked table permissions
+      return false;
+    }
+
+    // the owner will have changed on the server record when row types match
+    if ( changeServerPrivilegedMetadata && localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+      return false;
+    }
+
+    // otherwise we cannot unless we are an owner.
+    // i.e., if the row is FULL access, it doesn't allow an unprivileged user to set permissions.
+    return isOwner;
+  }
+
+  protected ArrayList<SyncParamOutcome> buildSyncParamOutcomesList(boolean isTableLocked,
+                                                                   boolean privilegedUser,
+      SyncState localRowSyncState, boolean baseRowPathNotNull,
+      RowFilterScope.Access serverRowDefaultAccessValue,
       boolean isServerRowDeleted,
       boolean changeServerBoolean, boolean changeServerInteger,
       boolean changeServerNumber, boolean changeServerString,
@@ -1347,11 +1595,12 @@ public class AbstractPermissionsTestCase {
       boolean changeServerPrivilegedMetadata) {
 
     ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
-    String[] rowIds = {  rowIdDefaultNull,
-        rowIdDefaultCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
+    String[] rowIds = { rowIdFullNull, rowIdFullCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
 
     for ( String rowId : rowIds ) {
 
+      boolean ableToChangePrivilege = ableToChangeRowPrivilegeColumns(rowId,
+          isTableLocked, privilegedUser, serverRowDefaultAccessValue, changeServerPrivilegedMetadata );
       ServerChangeOutcome sco;
       if ( isServerRowDeleted ) {
         switch (localRowSyncState) {
@@ -1362,7 +1611,12 @@ public class AbstractPermissionsTestCase {
           break;
         case new_row:
         case changed:
-          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToChangeRow(rowId, isTableLocked, privilegedUser, serverRowDefaultAccessValue,
+              changeServerPrivilegedMetadata )) {
+            sco = ServerChangeOutcome.LOCALLY_DELETED;
+          } else {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          }
           break;
         default:
           throw new IllegalStateException("unhandled sync state");
@@ -1370,9 +1624,19 @@ public class AbstractPermissionsTestCase {
       } else {
         switch (localRowSyncState) {
         case deleted:
-          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToDeleteRow(rowId, isTableLocked, privilegedUser, serverRowDefaultAccessValue,
+              changeServerPrivilegedMetadata ) ) {
+            // user doesn't have ability to delete row -- take server's changes
+            // in this case, we don't know the original sync status for rowpath
+            // fields, so we should always end in the pending-files state.
+            sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+          } else {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          }
           break;
         case synced:
+          // TODO: rowpath is non-null if the rowpath is changed. Expand tests to mix null and
+          // TODO: non-null rowpath values.
           if ( !changeServerRowPath ) {
             sco = ServerChangeOutcome.LOCALLY_SYNCED;
           } else {
@@ -1384,32 +1648,51 @@ public class AbstractPermissionsTestCase {
           break;
         case new_row:
         case changed:
-          if ( changeServerBoolean || changeServerInteger ||
-               changeServerNumber || changeServerString ||
-               changeServerRowPath ) {
-            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
-          } else if ( changeServerPrivilegedMetadata && privilegedUser ) {
-            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToChangeRow(rowId, isTableLocked, privilegedUser, serverRowDefaultAccessValue,
+              changeServerPrivilegedMetadata )) {
+            if ( !changeServerRowPath ) {
+              sco = (baseRowPathNotNull ? ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES
+                  : ServerChangeOutcome.LOCALLY_SYNCED);
+            } else {
+              sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+            }
           } else {
-            // user has no say in metadata -- take server's version for those and resolve
-            sco = ServerChangeOutcome.LOCALLY_SYNCED;
+            if (changeServerBoolean || changeServerInteger || changeServerNumber || changeServerString || changeServerRowPath) {
+              sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+            } else if (changeServerPrivilegedMetadata && (ableToChangePrivilege ||
+                privilegedUser)) {
+              sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+            } else {
+              // user has no say in metadata -- take server's version for those and resolve
+              // TODO: rowpath is non-null if the rowpath is changed. Expand tests to mix null and
+              // TODO: non-null rowpath values.
+              if (!changeServerRowPath) {
+                sco = (baseRowPathNotNull ? ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES
+                    : ServerChangeOutcome.LOCALLY_SYNCED);
+              } else {
+                sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+              }
+            }
           }
           break;
         default:
           throw new IllegalStateException("Unexpected sync state");
         }
       }
+
       SyncParamOutcome spo = new SyncParamOutcome(rowId, isServerRowDeleted, changeServerBoolean,
           changeServerInteger, changeServerNumber, changeServerString, changeServerRowPath,
-          changeServerFormIdMetadata, changeServerPrivilegedMetadata, sco);
+          changeServerFormIdMetadata, changeServerPrivilegedMetadata, ableToChangePrivilege, sco);
       cases.add(spo);
     }
     return cases;
   }
 
-  protected ArrayList<SyncParamOutcome> buildConflictingSyncParamOutcomesList(boolean
-      privilegedUser,
+  protected ArrayList<SyncParamOutcome> buildConflictingSyncParamOutcomesList(
+      boolean isTableLocked,
+      boolean privilegedUser,
       int localConflictType,
+      RowFilterScope.Access serverType,
       boolean isServerRowDeleted,
       boolean changeServerBoolean, boolean changeServerInteger,
       boolean changeServerNumber, boolean changeServerString,
@@ -1417,11 +1700,12 @@ public class AbstractPermissionsTestCase {
       boolean changeServerPrivilegedMetadata) {
 
     ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
-    String[] rowIds = {  rowIdDefaultNull,
-        rowIdDefaultCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
+    String[] rowIds = { rowIdFullNull, rowIdFullCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
 
     for ( String rowId : rowIds ) {
 
+      boolean ableToChangePrivilege = ableToChangeRowPrivilegeColumns(rowId,
+          isTableLocked, privilegedUser, serverType, changeServerPrivilegedMetadata );
       ServerChangeOutcome sco;
       if ( isServerRowDeleted ) {
         switch (localConflictType) {
@@ -1429,7 +1713,12 @@ public class AbstractPermissionsTestCase {
           sco = ServerChangeOutcome.LOCALLY_DELETED;
           break;
         case ConflictType.LOCAL_UPDATED_UPDATED_VALUES:
-          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToChangeRow(rowId, isTableLocked, privilegedUser, serverType,
+              changeServerPrivilegedMetadata ) ) {
+            sco = ServerChangeOutcome.LOCALLY_DELETED;
+          } else {
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          }
           break;
         default:
           throw new IllegalStateException("unhandled local conflict type");
@@ -1437,27 +1726,49 @@ public class AbstractPermissionsTestCase {
       } else {
         switch (localConflictType) {
         case ConflictType.LOCAL_DELETED_OLD_VALUES:
-          sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToDeleteRow(rowId, isTableLocked, privilegedUser, serverType,
+              changeServerPrivilegedMetadata ) ) {
+            // user doesn't have ability to delete row -- take server's changes
+            // in this case, we don't know the original sync status for rowpath
+            // fields, so we should always end in the pending-files state.
+            sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+          } else {
+            // force user to reconcile
+            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          }
           break;
         case ConflictType.LOCAL_UPDATED_UPDATED_VALUES:
-          if ( changeServerBoolean || changeServerInteger ||
-              changeServerNumber || changeServerString ||
-              changeServerRowPath ) {
-            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
-          } else if ( changeServerPrivilegedMetadata && privilegedUser ) {
-            sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+          if ( !ableToChangeRow(rowId, isTableLocked, privilegedUser, serverType,
+              changeServerPrivilegedMetadata ) ) {
+            // user doesn't have ability to modify row -- take server's changes
+            // TODO: update to use null values for rowpath in tests
+            // in this case, we don't know the original sync status for rowpath
+            // fields, so we should always end in the pending-files state.
+            sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
           } else {
-            // user has no say in metadata -- take server's version for those and resolve
-            sco = ServerChangeOutcome.LOCALLY_SYNCED;
+            if (changeServerBoolean || changeServerInteger || changeServerNumber || changeServerString || changeServerRowPath) {
+              sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+            } else if (changeServerPrivilegedMetadata && (ableToChangePrivilege ||
+                privilegedUser)) {
+              sco = ServerChangeOutcome.LOCALLY_IN_CONFLICT;
+            } else {
+              // user has no say in metadata -- take server's version for those and resolve
+
+              // TODO: update to use null values for rowpath in tests
+              // in this case, we don't know the original sync status for rowpath
+              // fields, so we should always end in the pending-files state.
+              sco = ServerChangeOutcome.LOCALLY_SYNCED_PENDING_FILES;
+            }
           }
           break;
         default:
           throw new IllegalStateException("unhandled local conflict type");
         }
       }
+
       SyncParamOutcome spo = new SyncParamOutcome(rowId, isServerRowDeleted, changeServerBoolean,
           changeServerInteger, changeServerNumber, changeServerString, changeServerRowPath,
-          changeServerFormIdMetadata, changeServerPrivilegedMetadata, sco);
+          changeServerFormIdMetadata, changeServerPrivilegedMetadata, ableToChangePrivilege, sco);
       cases.add(spo);
     }
     return cases;
@@ -1482,9 +1793,9 @@ public class AbstractPermissionsTestCase {
         }
 
         // anon user can't modify hidden or read-only entries
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -1493,9 +1804,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
         // matching filter value user can do anything
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1504,9 +1815,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, false));
         // non-matching filter value user can't modify hidden or read-only entries
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1515,9 +1826,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, false));
         // super-user can do anything
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1526,9 +1837,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
         // admin user can do anything
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1569,9 +1880,9 @@ public class AbstractPermissionsTestCase {
         // anon user can't modify hidden or read-only entries
         // only modify if not local change delete
         // and can't do anything if locked table.
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1581,9 +1892,9 @@ public class AbstractPermissionsTestCase {
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, isLocked || isLocalDelete));
         // matching filter value user can do anything
         // except delete in a locked table
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, isLocked));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
@@ -1593,9 +1904,9 @@ public class AbstractPermissionsTestCase {
             commonUser, RoleConsts.USER_ROLES_LIST, isLockedAndIsLocalDelete));
         // non-matching filter value user can't modify hidden or read-only entries
         // only modify if not locked and not local change delete
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, isLocked));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, isLocked));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -1604,9 +1915,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             otherUser, RoleConsts.USER_ROLES_LIST, isLocked || isLocalDelete));
         // super-user can do anything
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1615,9 +1926,9 @@ public class AbstractPermissionsTestCase {
         cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon + localConflict + serverConflict,
             superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
         // admin user can do anything
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-        cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon + localConflict + serverConflict,
+        cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
         cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon + localConflict + serverConflict,
             adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1636,11 +1947,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't modify hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1649,11 +1960,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     // matching filter value user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1662,11 +1973,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't modify hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -1675,11 +1986,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1688,11 +1999,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1732,11 +2043,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't delete, modify, hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1745,11 +2056,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1758,11 +2069,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't delete  modify, hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -1771,11 +2082,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1784,11 +2095,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1806,11 +2117,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't modify hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1819,11 +2130,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     // matching filter value user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1832,11 +2143,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't modify hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -1845,11 +2156,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1858,11 +2169,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1902,11 +2213,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't delete modify, hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1915,11 +2226,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -1928,11 +2239,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't delete modify, hidden or read-only entries
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -1941,11 +2252,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -1954,11 +2265,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -1975,11 +2286,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't modify anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -1988,11 +2299,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can modify anything (note that first entry does not match)
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -2001,11 +2312,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't modify anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2014,11 +2325,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -2027,11 +2338,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -2071,11 +2382,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can only delete new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2084,11 +2395,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can only delete new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2097,11 +2408,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
     // non-matching filter value user can only delete new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2110,11 +2421,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -2123,11 +2434,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -2144,11 +2455,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't modify anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2157,11 +2468,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can modify anything (note that first entry does not match)
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
@@ -2170,11 +2481,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
     // non-matching filter value user can't modify anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2183,11 +2494,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -2196,11 +2507,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
@@ -2240,11 +2551,11 @@ public class AbstractPermissionsTestCase {
 
     ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
     // anon user can't delete anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2253,11 +2564,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
     // matching filter value user can't delete anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         commonUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2266,11 +2577,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         commonUser, RoleConsts.USER_ROLES_LIST, true));
     // non-matching filter value user can't delete anything other than the new row
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         otherUser, RoleConsts.USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
@@ -2279,11 +2590,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         otherUser, RoleConsts.USER_ROLES_LIST, true));
     // super-user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
@@ -2292,11 +2603,11 @@ public class AbstractPermissionsTestCase {
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
     // admin user can do anything
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultNull,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommonNew,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
-    cases.add(new AuthParamAndOutcome(tableId, rowIdDefaultCommon,
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));

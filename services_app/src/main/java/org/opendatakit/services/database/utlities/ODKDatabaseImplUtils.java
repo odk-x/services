@@ -2848,39 +2848,144 @@ public class ODKDatabaseImplUtils {
    * @param locale
    */
   public void privilegedPerhapsPlaceRowIntoConflictWithId(OdkConnectionInterface db,
-      String tableId, OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
-      String activeUser, String rolesList, String locale) {
+                                                          String tableId, OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
+                                                          String activeUser, String rolesList, String locale) {
 
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
 
-    // The rolesList of the activeUser does not impact the execution of this action.
     boolean dbWithinTransaction = db.inTransaction();
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
 
-      // delete any existing server conflict row
+      // The rolesList of the activeUser does not impact the execution of this portion of
+      // the action.
+
+      // PLAN:
+      // (1) delete any existing server-conflict row.
+      // (2) if the local row was synced or synced pending changes, then either delete
+      //     the row from the device (if server deleted row) or accept the
+      //     server changes and place the row into synced_pending_changes status.
+      // (3) if the local row was in the new_row state, move it into changed (prior
+      //     to creating a conflict pair in step 5)
+      // (4) if the local row was in conflict, restore it to its pre-conflict state
+      //     (either deleted or changed).
+      // (5) move the local row into conflict and insert the server row, placing it
+      //     into conflict.
+      // (6) enforce permissions on the change. This may immediately resolve conflict
+      //     by taking the server changes or may overwrite the local row's permissions
+      //     column values with those from the server.
+      // (7) optimize the conflict -- perhaps immediately resolving it based upon
+      //     whether the user actually has the privileges to do anything other than
+      //     taking the server changes or if the changes only update the tracking
+      //     and (perhaps) the metadata fields.
+
+
+      // Do it...
+
+      // (1) delete any existing server conflict row
       this.deleteServerConflictRowWithId(db, tableId, rowId);
       // fetch the current local (possibly-in-conflict) row
       BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, activeUser);
-      if ( baseTable.getNumberOfRows() == 0 ) {
+      // throws will abort the transaction, rolling back these changes
+      if (baseTable.getNumberOfRows() == 0) {
         throw new IllegalArgumentException("no matching row found for server conflict");
-      } else if ( baseTable.getNumberOfRows() != 1 ) {
+      } else if (baseTable.getNumberOfRows() != 1) {
         throw new IllegalArgumentException("row has checkpoints or database is corrupt");
       }
 
       Row localRow = baseTable.getRowAtIndex(0);
 
-      if ( localRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE) == null ) {
+      if (localRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE) == null) {
         throw new IllegalArgumentException("row has checkpoints");
       }
 
-      String strSyncState = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
-      SyncState state = SyncState.valueOf(strSyncState);
+      boolean isServerRowDeleted = serverValues.getAsString(DataTableColumns.SYNC_STATE).equals(SyncState.deleted.name());
 
-      int localRowConflictTypeBeforeSync = -1;
-      if (state == SyncState.in_conflict) {
+      SyncState state;
+      {
+        String strSyncState = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
+        state = SyncState.valueOf(strSyncState);
+      }
+      SyncState initialLocalRowState = state;
+
+      if ( state == SyncState.synced || state == SyncState.synced_pending_files ) {
+      // (2) if the local row was synced or synced pending changes, then either delete
+      //     the row from the device (if server deleted row) or accept the
+      //     server changes and place the row into synced_pending_changes status.
+
+      // the server's change should be applied locally.
+      if ( isServerRowDeleted ) {
+        this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+      } else {
+        // Local row needs to be updated with server values.
+        //
+        // detect and handle file attachment column changes
+        if (state == SyncState.synced) {
+          // determine whether there are any changes in the columns that hold file attachments.
+          // if there are, then we need to transition into synced_pending_files. Otherwise, we
+          // can remain in the synced state.
+
+          for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
+            // todo: does not handle array containing (types containing) rowpath elements
+            if (cd.isUnitOfRetention() && cd.getType().getDataType().equals(ElementDataType.rowpath)) {
+              String uriFragment = serverValues.getAsString(cd.getElementKey());
+              String localUriFragment = localRow.getDataByKey(cd.getElementKey());
+              if (uriFragment != null) {
+                if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
+                  state = SyncState.synced_pending_files;
+                  WebLogger.getLogger(db.getAppName()).i(t,
+                      "privilegedPerhapsPlaceRowIntoConflictWithId: revising from synced to "
+                          + "synced_pending_files");
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // update the row from the changes on the server
+        serverValues.put(DataTableColumns.SYNC_STATE, state.name());
+        serverValues.putNull(DataTableColumns.CONFLICT_TYPE);
+        this.privilegedUpdateRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
+            locale, false);
+      }
+
+      // In either case (delete or sync outcome), be sure to commit our changes!!!!
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+      return;
+
+    } else if ( state == SyncState.new_row ) {
+      // (3) if the local row was in the new_row state, move it into changed (prior
+      //     to creating a conflict pair in step 5)
+
+      // update the row with all of the local columns as-is, except the sync state.
+      ContentValues values = new ContentValues();
+      for (int i = 0; i < baseTable.getWidth(); ++i) {
+        String colName = baseTable.getElementKey(i);
+        if (DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
+          continue;
+        }
+        if (localRow.getDataByIndex(i) == null) {
+          values.putNull(colName);
+        } else {
+          values.put(colName, localRow.getDataByIndex(i));
+        }
+      }
+      // move this into the changed state...
+      state = SyncState.changed;
+      values.put(DataTableColumns.SYNC_STATE, state.name());
+
+      this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
+          accessContext.activeUser, locale, false);
+
+    } else if (state == SyncState.in_conflict) {
+        // (4) if the local row was in conflict, restore it to its pre-conflict state
+        //     (either deleted or changed).
+
         // we need to remove the in_conflict records that refer to the
         // prior state of the server
         String localRowConflictTypeBeforeSyncStr = localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE);
@@ -2889,356 +2994,53 @@ public class ODKDatabaseImplUtils {
           throw new IllegalStateException("conflict type is null on an in-conflict row");
         }
 
-        localRowConflictTypeBeforeSync = Integer.parseInt(localRowConflictTypeBeforeSyncStr);
+        int localRowConflictTypeBeforeSync = Integer.parseInt(localRowConflictTypeBeforeSyncStr);
         if (localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES
             || localRowConflictTypeBeforeSync == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
           // should be impossible
           throw new IllegalStateException("only the local conflict record should remain");
         }
+
+        // move the local conflict back into the normal non-conflict (null) state
+        // set the sync state to "changed" temporarily (otherwise we can't update)
+
+        state = ((localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
+            SyncState.deleted : SyncState.changed);
+
+        this.restoreRowFromConflict(db, tableId, rowId, state, localRowConflictTypeBeforeSync);
       }
+      // and drop through if SyncState is changed or deleted
 
-      boolean isServerRowDeleted =
-          serverValues.getAsString(DataTableColumns.SYNC_STATE).equals(SyncState.deleted.name());
+      // (5) move the local row into conflict and insert the server row, placing it
+      //     into conflict.
+      int localRowConflictType = (state == SyncState.deleted) ?
+          ConflictType.LOCAL_DELETED_OLD_VALUES : ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
 
-      boolean executeDropThrough = false;
+      this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
 
-      if ( isServerRowDeleted ) {
-        if ( state == SyncState.synced ) {
-          // the server's change should be applied locally.
-          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-        } else if ( state == SyncState.synced_pending_files ) {
-          // sync logic may want to UPLOAD local files up to server before calling this routine.
-          // this would prevent loss of attachments that have not yet been pushed to server.
+      serverValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+      serverValues.put(DataTableColumns.CONFLICT_TYPE,
+          (isServerRowDeleted ? ConflictType.SERVER_DELETED_OLD_VALUES : ConflictType.SERVER_UPDATED_UPDATED_VALUES));
+      this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
+          locale, false);
 
-          // the server's change should be applied locally.
-          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-        } else if ( (state == SyncState.deleted)  || ((state == SyncState.in_conflict)
-            && (localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES))) {
-          // this occurs if
-          // (1) a delete request was never ACKed but it was performed
-          // on the server.
-          // (2) if there is an unresolved conflict held locally with the
-          // local action being to delete the record, and the prior server
-          // state being a value change, but the newly sync'd state now
-          // reflects a deletion by another party.
-          //
-          // the server's change should be applied locally.
-          this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-        } else {
-          // need to resolve a conflict situation...
-          executeDropThrough = true;
-        }
-      } else if ( state == SyncState.synced || state == SyncState.synced_pending_files ) {
-        // When a prior sync ends with conflicts, we will not update the table's "lastDataETag"
-        // and when we next sync, we will pull the same server row updates as when the
-        // conflicts were raised (elsewhere in the table).
-        //
-        // Therefore, we can expect many server row updates to have already been locally
-        // applied (for the rows were not in conflict). Detect and ignore these already-
-        // processed changes by testing for the server and device having identical field values.
-        //
+      // To get here, the original local row was in some state other than synced or
+      // synced_pending_files. Therefore, any non-empty rowpath fields should drive
+      // the row into the synced_pending_files state if we resolve the row early.
 
-        boolean isDifferent = false;
-        for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
-          String colName = baseTable.getElementKey(i);
-          if ( DataTableColumns.ID.equals(colName) ||
-              DataTableColumns.CONFLICT_TYPE.equals(colName) ||
-              DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ||
-              DataTableColumns.SYNC_STATE.equals(colName) ) {
-            // these values are ignored during comparisons
-            continue;
-          }
-          String localValue = localRow.getDataByKey(colName);
-          String serverValue = serverValues.containsKey(colName) ?
-              serverValues.getAsString(colName) : null;
-
-          ElementDataType dt = ElementDataType.string;
-          try {
-            ColumnDefinition cd = orderedColumns.find(colName);
-            dt = cd.getType().getDataType();
-          } catch ( IllegalArgumentException e ) {
-            // ignore
-          }
-          if ( !identicalValue(localValue, serverValue, dt) ) {
-            isDifferent = true;
-            break;
-          }
-        }
-
-        if ( isDifferent ) {
-          // Local row needs to be updated with server values.
-          //
-          // detect and handle file attachment column changes and sync state
-          // (need to change serverRow value of this)
-          boolean hasNonNullAttachments = false;
-
-          for ( ColumnDefinition cd : orderedColumns.getColumnDefinitions() ) {
-            // todo: does not handle array containing (types containing) rowpath elements
-            if ( cd.isUnitOfRetention() &&
-                cd.getType().getDataType().equals(ElementDataType.rowpath)) {
-              String uriFragment = serverValues.getAsString(cd.getElementKey());
-              String localUriFragment = localRow.getDataByKey(cd.getElementKey());
-              if (uriFragment != null ) {
-                if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
-                  hasNonNullAttachments = true;
-                  break;
-                }
-              }
-            }
-          }
-
-          // update the row from the changes on the server
-          ContentValues values = new ContentValues(serverValues);
-
-          values.put(DataTableColumns.SYNC_STATE, (hasNonNullAttachments ||
-              (state == SyncState.synced_pending_files))
-              ? SyncState.synced_pending_files.name() : SyncState.synced.name());
-          values.putNull(DataTableColumns.CONFLICT_TYPE);
-
-          this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
-              locale, false);
-        }
-
-        // and don't execute the drop-through in this case.
-      } else {
-        executeDropThrough = true;
+      // (6) enforce permissions on the change. This may immediately resolve conflict
+      //     by taking the server changes or may overwrite the local row's permissions
+      //     column values with those from the server.
+      if ( enforcePermissionsAndOptimizeConflictProcessing(db, tableId, orderedColumns, rowId,
+          initialLocalRowState, accessContext, locale) ) {
+        // and...
+        // (7) optimize the conflict -- perhaps immediately resolving it based upon
+        //     whether the user actually has the privileges to do anything other than
+        //     taking the server changes or if the changes only update the tracking
+        //     and (perhaps) the metadata fields.
+        optimizeConflictProcessing(db, tableId, orderedColumns, rowId,
+            initialLocalRowState, accessContext, locale);
       }
-
-      if ( executeDropThrough ) {
-        // SyncState.deleted and server is not deleting
-        // SyncState.new_row and record exists on server
-        // SyncState.changed and new change (or delete) on server
-        // SyncState.in_conflict and new change (or delete) on server
-
-        // ALSO: this case can occur when our prior sync attempt pulled down changes that
-        // placed local row(s) in conflict -- which we have since resolved -- and we are now
-        // issuing a sync to push those changes up to the server.
-        //
-        // This is because we do not update our local table's "lastDataETag" until we have
-        // sync'd and applied all changes from the server and have no local conflicts or
-        // checkpoints on the table. Because of this, when we issue a sync after resolving
-        // a conflict, we will get the set of server row changes that include the row(s)
-        // that were previously in conflict. This will appear as one of:
-        //    changed | changed
-        //    changed | deleted
-        //    deleted | changed
-        //    deleted | deleted
-        //
-        // BUT, this time, however, the local records will have the same rowETag as the
-        // server record, indicating that they are valid changes (or deletions) on top of
-        // the server's current version of this same row.
-        //
-        // If this is the case (the rowETags match), then we should not place the row into
-        // conflict, but should instead ignore the reported content from the server and push
-        // the local row's change or delete up to the server in the next section.
-        //
-        // If not, when we reach this point in the code, the rowETag of the server row
-        // should **not match** our local row -- indicating that the server has a change from
-        // another source, and that we should place the row into conflict.
-        //
-        String localRowETag = localRow.getDataByKey(DataTableColumns.ROW_ETAG);
-        String serverRowETag = serverValues.getAsString(DataTableColumns.ROW_ETAG);
-        boolean isDifferentRowETag = (localRowETag == null) || !localRowETag.equals(serverRowETag);
-        if (!isDifferentRowETag) {
-          // ignore the server record.
-          // This is an update we will push to the server.
-          // todo: make sure local row is not in_conflict at this point.
-          if ( state == SyncState.in_conflict ) {
-            // don't think this is logically possible at this point, but we should
-            // transition record to changed or deleted state.
-            ContentValues values = new ContentValues();
-            for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
-              String colName = baseTable.getElementKey(i);
-              if ( DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ) {
-                continue;
-              }
-              if ( localRow.getDataByIndex(i) == null ) {
-                values.putNull(colName);
-              } else {
-                values.put(colName, localRow.getDataByIndex(i));
-              }
-            }
-            values.put(DataTableColumns.ID, rowId);
-            values.putNull(DataTableColumns.CONFLICT_TYPE);
-            values.put(DataTableColumns.SYNC_STATE,
-                (localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
-                  SyncState.deleted.name() : SyncState.changed.name());
-
-            this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
-                activeUser, locale, false);
-          }
-        } else {
-          // figure out what the localRow conflict type should be...
-          int localRowConflictType;
-          if (state == SyncState.changed) {
-            // SyncState.changed and new change on server
-            localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
-          } else if (state == SyncState.new_row) {
-            // SyncState.new_row and record exists on server
-            // The 'new_row' case occurs if an insert is never ACKed but
-            // completes successfully on the server.
-            localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
-          } else if (state == SyncState.deleted) {
-            // SyncState.deleted and server is not deleting
-            localRowConflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;
-          } else if (state == SyncState.in_conflict) {
-            // SyncState.in_conflict and new change on server
-            // leave the local conflict type unchanged (retrieve it and
-            // use it).
-            localRowConflictType = localRowConflictTypeBeforeSync;
-          } else {
-            throw new IllegalStateException("Unexpected state encountered");
-          }
-
-          boolean isDifferentPrivilegedFields = false;
-          {
-            String[] privilegedColumns = new String[] {
-                DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.ROW_OWNER,
-                DataTableColumns.GROUP_READ_ONLY,
-                DataTableColumns.GROUP_MODIFY,
-                DataTableColumns.GROUP_PRIVILEGED};
-            for ( int i = 0 ; i < privilegedColumns.length ; ++i ) {
-              String colName = privilegedColumns[i];
-              String localValue = localRow.getDataByKey(colName);
-              String serverValue = serverValues.containsKey(colName) ?
-                  serverValues.getAsString(colName) : null;
-
-              ElementDataType dt = ElementDataType.string;
-              try {
-                ColumnDefinition cd = orderedColumns.find(colName);
-                dt = cd.getType().getDataType();
-              } catch ( IllegalArgumentException e ) {
-                // ignore
-              }
-
-              boolean sameValue = identicalValue(localValue, serverValue, dt);
-
-              if (!sameValue) {
-                isDifferentPrivilegedFields = true;
-                break;
-              }
-            }
-          }
-          boolean isDifferentExcludingPrivilegedFields = false;
-          for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
-            String colName = baseTable.getElementKey(i);
-            if ( DataTableColumns.ID.equals(colName) ||
-                DataTableColumns.CONFLICT_TYPE.equals(colName) ||
-                DataTableColumns.EFFECTIVE_ACCESS.equals(colName) ||
-                DataTableColumns.SYNC_STATE.equals(colName) ||
-                DataTableColumns.ROW_ETAG.equals(colName) ||
-                DataTableColumns.DEFAULT_ACCESS.equals(colName) ||
-                DataTableColumns.ROW_OWNER.equals(colName) ||
-                DataTableColumns.GROUP_READ_ONLY.equals(colName) ||
-                DataTableColumns.GROUP_MODIFY.equals(colName) ||
-                DataTableColumns.GROUP_PRIVILEGED.equals(colName)) {
-              // these values are ignored during this comparison
-              continue;
-            }
-            String localValue = localRow.getDataByKey(colName);
-            String serverValue = serverValues.containsKey(colName) ?
-                serverValues.getAsString(colName) : null;
-
-            ElementDataType dt = ElementDataType.string;
-            try {
-              ColumnDefinition cd = orderedColumns.find(colName);
-              dt = cd.getType().getDataType();
-            } catch ( IllegalArgumentException e ) {
-              // ignore
-            }
-
-            if ( serverValue != null && dt == ElementDataType.bool ) {
-              serverValue = Integer.toString(DataHelper.boolToInt(serverValues.getAsBoolean(colName)));
-            }
-            boolean sameValue = identicalValue(localValue, serverValue, dt);
-
-            if ( !sameValue ) {
-              isDifferentExcludingPrivilegedFields = true;
-              break;
-            }
-          }
-
-          boolean hasNonNullDifferingServerAttachments = false;
-
-          if ( isDifferentExcludingPrivilegedFields || (state != SyncState.synced) ) {
-            for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
-              // todo: does not handle array containing (types containing) rowpath elements
-              if (cd.isUnitOfRetention() && cd.getType().getDataType().equals(ElementDataType.rowpath)) {
-                String uriFragment = serverValues.getAsString(cd.getElementKey());
-                String localUriFragment = localRow.getDataByKey(cd.getElementKey());
-                if (uriFragment != null ) {
-                  if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
-                    hasNonNullDifferingServerAttachments = true;
-                  }
-                }
-              }
-            }
-          }
-
-          ContentValues values = new ContentValues(serverValues);
-
-          if ( isDifferentExcludingPrivilegedFields || isDifferentPrivilegedFields ||
-              isDifferentRowETag || isServerRowDeleted ) {
-
-            // TODO: 5/26/2017 Make sure this logic is right for privileged user
-            if ( isDifferentExcludingPrivilegedFields || isServerRowDeleted ||
-                 (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ||
-                 (accessContext.isPrivilegedUser && isDifferentPrivilegedFields) ) {
-
-              this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
-              serverValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
-              serverValues.put(DataTableColumns.CONFLICT_TYPE,
-                  (isServerRowDeleted ?
-                    ConflictType.SERVER_DELETED_OLD_VALUES :
-                    ConflictType.SERVER_UPDATED_UPDATED_VALUES ));
-              this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues,
-                  rowId, activeUser, locale, false);
-            } else {
-              // just apply the server RowETag and filterScope to the local row
-              values.put(DataTableColumns.SYNC_STATE, hasNonNullDifferingServerAttachments
-                  ? SyncState.synced_pending_files.name() : SyncState.synced.name());
-              values.putNull(DataTableColumns.CONFLICT_TYPE);
-
-              // move the local conflict back into the normal non-conflict (null) state
-              // set the sync state to "changed" temporarily (otherwise we can't update)
-
-              this.restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
-                  localRowConflictTypeBeforeSync);
-
-              this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
-                  locale, false);
-            }
-          } else {
-            // data matches -- update row to adjust sync state and conflict type
-            // if needed.
-            SyncState destState = (hasNonNullDifferingServerAttachments ||
-                (state == SyncState.synced_pending_files))
-                ? SyncState.synced_pending_files : SyncState.synced;
-
-            if ((state != destState) || isDifferentRowETag ||
-                (localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE) != null) ) {
-              // todo: handle case where local row was in conflict
-              // server has now matched the local row's state. i.e.,
-              // update rowEtag, clear conflictType and adjust syncState on row.
-              values.put(DataTableColumns.SYNC_STATE, destState.name());
-              values.putNull(DataTableColumns.CONFLICT_TYPE);
-
-              // move the local conflict back into the normal non-conflict (null) state
-              // set the sync state to "changed" temporarily (otherwise we can't update)
-
-              this.restoreRowFromConflict(db, tableId, rowId, SyncState.changed,
-                  localRowConflictTypeBeforeSync);
-
-              this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId, activeUser,
-                  locale, false);
-
-              WebLogger.getLogger(db.getAppName()).w(t, "identical rows returned from server -- " + "SHOULDN'T THESE NOT HAPPEN?");
-            }
-          }
-        }
-      }
-
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -3248,6 +3050,343 @@ public class ODKDatabaseImplUtils {
         db.endTransaction();
       }
     }
+  }
+
+  private static final boolean sameValue(String a, String b) {
+    if ( b == null ) {
+      return (a == null);
+    } else {
+      return (a != null) && a.equals(b);
+    }
+  }
+
+  /**
+   * If the latest row-level permissions from the server prevent the activeUser from
+   * performing the modify or delete action on the row, immediately resolve the conflict
+   * by taking the server's changes.
+   *
+   * If the latest row-level permissions from the server prevent the activeUser from
+   * altering the permissions on the row, reset all of those permissions to match
+   * the server's latest values.
+   *
+   * And, finally, optimize the conflict -- perhaps immediately resolving it based upon
+   * whether the user actually has the privileges to do anything other than
+   * taking the server changes or if the changes only update the tracking
+   * and (perhaps) the metadata fields.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param rowId
+   * @param initialLocalRowState
+   * @param accessContext
+   * @param locale
+   * @return  true if we are still in conflict
+   */
+  private boolean enforcePermissionsAndOptimizeConflictProcessing(OdkConnectionInterface db,
+                                          String tableId, OrderedColumns orderedColumns,
+                                          String rowId, SyncState initialLocalRowState,
+                                          AccessContext accessContext, String locale) {
+
+    // we should have two in-conflict records, on is the local, one is the server
+    BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
+    if (baseTable.getNumberOfRows() != 2) {
+      throw new IllegalStateException("we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
+    }
+    Integer idxServerRow = null;
+    int serverRowConflictType = -1;
+    Integer idxLocalRow = null;
+    int localRowConflictType = -1;
+
+    {
+      for (int idx = 0; idx < 2; ++idx) {
+        String rowConflictTypeStr = baseTable.getRowAtIndex(idx).getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        if (rowConflictTypeStr == null) {
+          // this row is in conflict. It MUST have a non-null conflict type.
+          throw new IllegalStateException("conflict type is null on an in-conflict row");
+        }
+        int rowConflictType = Integer.parseInt(rowConflictTypeStr);
+        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
+          idxLocalRow = idx;
+          localRowConflictType = rowConflictType;
+        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+          idxServerRow = idx;
+          serverRowConflictType = rowConflictType;
+        }
+      }
+
+      if (idxServerRow == null) {
+        throw new IllegalStateException("did not find server conflict row while optimizing " + "the conflict");
+      }
+
+      if (idxLocalRow == null) {
+        throw new IllegalStateException("did not find local conflict row while optimizing " + "the conflict");
+      }
+    }
+
+    Row serverRow = baseTable.getRowAtIndex(idxServerRow);
+    String serverDefaultAccess = serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS);
+    String serverOwner = serverRow.getDataByKey(DataTableColumns.ROW_OWNER);
+    String serverGroupReadOnly = serverRow.getDataByKey(DataTableColumns.GROUP_READ_ONLY);
+    String serverGroupModify = serverRow.getDataByKey(DataTableColumns.GROUP_MODIFY);
+    String serverGroupPrivileged = serverRow.getDataByKey(DataTableColumns.GROUP_PRIVILEGED);
+
+    // Part 1: verify the ability to modify or delete the row fields (excluding permissions)
+
+    // if the server changed privileges in the row such that this user does not have privileges
+    // to modify (if local changed) or delete (if local deleted), then we can immediately
+    // resolve to take server changes.
+    TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
+
+    try {
+      String updatedSyncState = (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
+          SyncState.deleted.name() : SyncState.changed.name();
+      RowChange rowChange = (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
+          RowChange.DELETE_ROW : RowChange.CHANGE_ROW;
+
+      tss.allowRowChange(accessContext.activeUser, accessContext.rolesArray, updatedSyncState,
+          serverDefaultAccess, serverOwner, serverGroupReadOnly, serverGroupModify,
+          serverGroupPrivileged, rowChange);
+
+    } catch (ActionNotAuthorizedException e) {
+      Row localRow = baseTable.getRowAtIndex(idxLocalRow);
+
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
+          orderedColumns, initialLocalRowState,
+          serverRow, localRow, accessContext.activeUser, locale);
+      return false;
+    }
+
+    // Part 2: Test if the permissions fields of the local row are different from any of
+    // those from the server.
+    //
+    // If they are, and the local user is not able to modify permissions fields, silently
+    // update the local in-conflict row to have the same permissions fields as the
+    // server row.
+
+    Row localRow = baseTable.getRowAtIndex(idxLocalRow);
+    String localDefaultAccess = localRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS);
+    String localOwner = localRow.getDataByKey(DataTableColumns.ROW_OWNER);
+    String localGroupReadOnly = localRow.getDataByKey(DataTableColumns.GROUP_READ_ONLY);
+    String localGroupModify = localRow.getDataByKey(DataTableColumns.GROUP_MODIFY);
+    String localGroupPrivileged = localRow.getDataByKey(DataTableColumns.GROUP_PRIVILEGED);
+
+    if (!(sameValue(localDefaultAccess, serverDefaultAccess) && sameValue(localOwner, serverOwner)
+        && sameValue(localGroupReadOnly, serverGroupReadOnly) && sameValue(localGroupModify,
+        serverGroupModify) && sameValue(localGroupPrivileged, serverGroupPrivileged))) {
+
+      // permissions columns have changed
+      // test if we have permissions to make these changes
+      try {
+        tss.canModifyPermissions(accessContext.activeUser, accessContext.rolesArray,
+            serverGroupPrivileged, serverOwner);
+      } catch (ActionNotAuthorizedException e) {
+
+        // don't have permission to alter permissions columns --
+        // update the row with all of the local columns as-is, but override all the
+        // permissions fields with the values from the server.
+        ContentValues values = new ContentValues();
+        for (int i = 0; i < baseTable.getWidth(); ++i) {
+          String colName = baseTable.getElementKey(i);
+          if (DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
+            continue;
+          }
+          if (localRow.getDataByIndex(i) == null) {
+            values.putNull(colName);
+          } else {
+            values.put(colName, localRow.getDataByIndex(i));
+          }
+        }
+        // take the server's permissions fields.
+        if ( serverDefaultAccess == null ) {
+          values.putNull(DataTableColumns.DEFAULT_ACCESS);
+        } else {
+          values.put(DataTableColumns.DEFAULT_ACCESS, serverDefaultAccess);
+        }
+        if ( serverOwner == null ) {
+          values.putNull(DataTableColumns.ROW_OWNER);
+        } else {
+          values.put(DataTableColumns.ROW_OWNER, serverOwner);
+        }
+        if ( serverGroupReadOnly == null ) {
+          values.putNull(DataTableColumns.GROUP_READ_ONLY);
+        } else {
+          values.put(DataTableColumns.GROUP_READ_ONLY, serverGroupReadOnly);
+        }
+        if ( serverGroupModify == null ) {
+          values.putNull(DataTableColumns.GROUP_MODIFY);
+        } else {
+          values.put(DataTableColumns.GROUP_MODIFY, serverGroupModify);
+        }
+        if ( serverGroupPrivileged == null ) {
+          values.putNull(DataTableColumns.GROUP_PRIVILEGED);
+        } else {
+          values.put(DataTableColumns.GROUP_PRIVILEGED, serverGroupPrivileged);
+        }
+
+        this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
+            accessContext.activeUser, locale, false);
+      }
+    }
+
+    // at this point, all of the local row's changes are confirmed to be
+    // able to be made by the active user. i.e.,
+    //
+    // If the local row is deleted, we could push a delete up to the server.
+    //
+    // If the local row is modified, we can push the modification up to the server.
+    //
+    // If the activeUser does not have permission to change the row's permissions,
+    // all of those changes have been reverted to match the values on the server.
+    return true;
+  }
+
+  /**
+   * We have a valid, actionable conflict.
+   *
+   * Silently resolve this conflict if it can be reasonably resolved.
+   *
+   * @param db
+   * @param tableId
+   * @param orderedColumns
+   * @param rowId
+   * @param initialLocalRowState
+   * @param accessContext
+   * @param locale
+   */
+  private void optimizeConflictProcessing(OdkConnectionInterface db,
+                                          String tableId, OrderedColumns orderedColumns,
+                                          String rowId, SyncState initialLocalRowState,
+                                          AccessContext accessContext, String locale) {
+
+    // we should have two in-conflict records, on is the local, one is the server
+    BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
+    if (baseTable.getNumberOfRows() != 2) {
+      throw new IllegalStateException("we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
+    }
+    Integer idxServerRow = null;
+    int serverRowConflictType = -1;
+    Integer idxLocalRow = null;
+    int localRowConflictType = -1;
+
+    {
+      for (int idx = 0; idx < 2; ++idx) {
+        String rowConflictTypeStr = baseTable.getRowAtIndex(idx).getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        if (rowConflictTypeStr == null) {
+          // this row is in conflict. It MUST have a non-null conflict type.
+          throw new IllegalStateException("conflict type is null on an in-conflict row");
+        }
+        int rowConflictType = Integer.parseInt(rowConflictTypeStr);
+        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
+          idxLocalRow = idx;
+          localRowConflictType = rowConflictType;
+        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+          idxServerRow = idx;
+          serverRowConflictType = rowConflictType;
+        }
+      }
+
+      if (idxServerRow == null) {
+        throw new IllegalStateException("did not find server conflict row while optimizing " + "the conflict");
+      }
+
+      if (idxLocalRow == null) {
+        throw new IllegalStateException("did not find local conflict row while optimizing " + "the conflict");
+      }
+    }
+
+    // if the server and device are both trying to delete the row, then silently delete it
+    if ( localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+        serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+
+      // simply apply the server's change locally.
+      resolveServerConflictWithDeleteRowWithId(db, tableId, rowId, accessContext.activeUser);
+      return;
+    }
+
+    // if the server and device are not both modifying the row, then we are done --
+    // user reconciliation is always required when faced with a mix of delete and
+    // modify actions to the same row.
+    if ( localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES ||
+        serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+      return;
+    }
+
+    // Both the server and device are trying to modify this row
+
+    Row serverRow = baseTable.getRowAtIndex(idxServerRow);
+    Row localRow = baseTable.getRowAtIndex(idxLocalRow);
+
+    // Track whether:
+    // (1) any of the user-specified columns are modified
+    // (2) any of the metadata columns are modified
+    // (3) any of the permissions columns are modified
+
+    boolean userSpecifiedColumnsDiffer = false;
+    for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+      String colName = baseTable.getElementKey(i);
+      if ( ADMIN_COLUMNS.contains(colName) ||
+          DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
+        // these values are ignored during comparisons
+        continue;
+      }
+      String localValue = localRow.getDataByKey(colName);
+      String serverValue = serverRow.getDataByKey(colName);
+
+      ElementDataType dt = ElementDataType.string;
+      try {
+        ColumnDefinition cd = orderedColumns.find(colName);
+        dt = cd.getType().getDataType();
+      } catch ( IllegalArgumentException e ) {
+        // ignore
+      }
+      if ( !identicalValue(localValue, serverValue, dt) ) {
+        userSpecifiedColumnsDiffer = true;
+        break;
+      }
+    }
+
+    boolean nonPermissionsMetadataColumnsDiffer = false;
+    boolean permissionsColumnsDiffer = false;
+
+    for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+      String colName = baseTable.getElementKey(i);
+      if ( !ADMIN_COLUMNS.contains(colName) ||
+           DataTableColumns.ID.equals(colName) ||
+           DataTableColumns.CONFLICT_TYPE.equals(colName) ||
+           DataTableColumns.SYNC_STATE.equals(colName) ||
+           DataTableColumns.ROW_ETAG.equals(colName)) {
+        // these values are ignored during comparisons
+        continue;
+      }
+      String localValue = localRow.getDataByKey(colName);
+      String serverValue = serverRow.getDataByKey(colName);
+
+      if ( DataTableColumns.DEFAULT_ACCESS.equals(colName) ||
+           DataTableColumns.ROW_OWNER.equals(colName) ||
+           DataTableColumns.GROUP_READ_ONLY.equals(colName) ||
+           DataTableColumns.GROUP_MODIFY.equals(colName) ||
+           DataTableColumns.GROUP_PRIVILEGED.equals(colName) ) {
+
+        permissionsColumnsDiffer = permissionsColumnsDiffer ||
+            !sameValue(localValue, serverValue);
+      } else {
+        nonPermissionsMetadataColumnsDiffer = nonPermissionsMetadataColumnsDiffer ||
+            !sameValue(localValue, serverValue);
+      }
+    }
+
+    // if the user-specified fields do not differ and the permissions columns do not differ
+    // then we can take the server's changes (updating the metadata fields with those from the
+    // server)
+    if ( !userSpecifiedColumnsDiffer && !permissionsColumnsDiffer ) {
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
+          orderedColumns, initialLocalRowState,
+          serverRow, localRow, accessContext.activeUser, locale);
+      return;
+    }
+
+    // otherwise, we have changes that require reconciliation
   }
 
   /**
@@ -3953,12 +4092,10 @@ public class ODKDatabaseImplUtils {
    * @param tableId
    * @param rowId
    * @param activeUser
-   * @param rolesList
    * @throws ActionNotAuthorizedException
    */
   public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser, String rolesList)
-      throws ActionNotAuthorizedException {
+      String tableId, String rowId, String activeUser) {
 
     // TODO: make sure caller passes in the correct roleList for the use case.
 
@@ -3983,7 +4120,12 @@ public class ODKDatabaseImplUtils {
       }
 
       // move the local conflict back into the normal (null) state
-      deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
+      try {
+        deleteRowWithId(db, tableId, rowId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
+      } catch (ActionNotAuthorizedException e) {
+        WebLogger.getLogger(db.getAppName()).e(t, "unexpected -- should always succeed");
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      }
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -4325,7 +4467,8 @@ public class ODKDatabaseImplUtils {
    * @param locale
    */
   public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser, String locale) {
+      String tableId, String rowId,
+      String activeUser, String locale) {
 
     String rolesList = RoleConsts.ADMIN_ROLES_LIST;
     // TODO: incoming rolesList should be the privileged user roles because we are
@@ -4365,6 +4508,56 @@ public class ODKDatabaseImplUtils {
       Row localRow = table.getRowAtIndex(0);
       Row serverRow = table.getRowAtIndex(1);
 
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
+          orderedColumns, null, serverRow, localRow, activeUser, locale);
+
+      if (!inTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (db != null) {
+        if (!inTransaction) {
+          db.endTransaction();
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve the server conflict by taking the server changes.  This may delete the local row.
+   *
+   * @param db
+   * @param tableId
+   * @param rowId
+   * @param orderedColumns
+   * @param initialLocalRowState -- if not null, what the row started as
+   * @param serverRow
+   * @param localRow
+   * @param activeUser
+   * @param locale
+   */
+  private void internalResolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
+                                                       String tableId, String rowId,
+                                                       OrderedColumns orderedColumns,
+                                                       SyncState initialLocalRowState,
+                                                       Row serverRow, Row localRow,
+                                                       String activeUser, String locale) {
+
+    // TODO: incoming rolesList should be the privileged user roles because we are
+    // TODO: overwriting our local row with everything from the server.
+
+    // we have no way in the resolve conflicts screen to choose which filter scope
+    // to take. Need to allow super-user and above to choose the local filter scope
+    // vs just taking what the server has.
+
+    boolean inTransaction = false;
+    try {
+
+      inTransaction = db.inTransaction();
+      if (!inTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
       int localConflictType = Integer
           .parseInt(localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
 
@@ -4385,65 +4578,31 @@ public class ODKDatabaseImplUtils {
 
       if (serverConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) {
 
-        // delete the record of the server row
-        deleteServerConflictRowWithId(db, tableId, rowId);
-
-        // move the local record into the 'new_row' sync state
-        // so it can be physically deleted.
-
-        if ( !privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
-            activeUser) ) {
-          throw new IllegalArgumentException(
-              "row id " + rowId + " does not have exactly 1 row in table " + tableId);
-        }
-
-        // and delete the local conflict and all of its associated attachments
-        deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
+        resolveServerConflictWithDeleteRowWithId(db, tableId, rowId, activeUser);
 
       } else {
-        // update the local conflict record with the server's changes
+        // construct an update map of all of the server row's values
+        // except CONFLICT_TYPE, which should be null, and SYNC_STATE.
         HashMap<String,Object> updateValues = new HashMap<String,Object>();
-        updateValues.put(DataTableColumns.ID, rowId);
-        updateValues
-            .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
-        // update what was the local conflict record with the server's changes
-        // by the time we apply the update, the local conflict record will be
-        // restored to the proper (conflict_type, sync_state) values.
-        //
-        // No need to specify them here.
-
-        // take the server's metadata values too...
-        updateValues.put(DataTableColumns.DEFAULT_ACCESS,
-            serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-        updateValues.put(DataTableColumns.ROW_OWNER,
-            serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
-        updateValues.put(DataTableColumns.GROUP_READ_ONLY,
-            serverRow.getDataByKey(DataTableColumns.GROUP_READ_ONLY));
-        updateValues.put(DataTableColumns.GROUP_MODIFY,
-            serverRow.getDataByKey(DataTableColumns.GROUP_MODIFY));
-        updateValues.put(DataTableColumns.GROUP_PRIVILEGED,
-            serverRow.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
-        updateValues.put(DataTableColumns.FORM_ID,
-            serverRow.getDataByKey(DataTableColumns.FORM_ID));
-        updateValues.put(DataTableColumns.LOCALE,
-            serverRow.getDataByKey(DataTableColumns.LOCALE));
-        updateValues.put(DataTableColumns.SAVEPOINT_TYPE,
-            serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TYPE));
-        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
-            serverRow.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
-        updateValues.put(DataTableColumns.SAVEPOINT_CREATOR,
-            serverRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
+        for ( String adminColName : ADMIN_COLUMNS ) {
+          if ( adminColName.equals(DataTableColumns.CONFLICT_TYPE) ||
+              adminColName.equals(DataTableColumns.SYNC_STATE) ) {
+            continue;
+          }
+          updateValues.put(adminColName, serverRow.getDataByKey(adminColName) );
+        }
+        updateValues.put(DataTableColumns.CONFLICT_TYPE, null);
 
         // take all the data values from the server...
         for (String elementKey : orderedColumns.getRetentionColumnNames()) {
           updateValues.put(elementKey, serverRow.getDataByKey(elementKey));
         }
 
-        // determine whether we should flag this as pending files
-        // or whether it can transition directly to sync'd.
+        // what the new sync state should be...
         SyncState newState;
         {
+          boolean uriFragmentsChangedOrAppeared = false;
           boolean hasUriFragments = false;
           // we are collapsing to the server state. Examine the
           // server row. Look at all the columns that may contain file
@@ -4463,27 +4622,30 @@ public class ODKDatabaseImplUtils {
             if (v != null && v.length() != 0) {
               // non-null file attachment specified on server row
               hasUriFragments = true;
-              break;
+              String lv = localRow.getDataByKey(cd.getElementKey());
+              uriFragmentsChangedOrAppeared =
+                  uriFragmentsChangedOrAppeared || (lv == null) || !lv.equals(v);
+              if ( initialLocalRowState != SyncState.synced ) {
+                break;
+              }
             }
           }
-          newState = hasUriFragments ? SyncState.synced_pending_files : SyncState.synced;
+
+          if ( initialLocalRowState == SyncState.synced ) {
+            newState = uriFragmentsChangedOrAppeared ? SyncState.synced_pending_files : SyncState.synced;
+          } else {
+            newState = hasUriFragments ? SyncState.synced_pending_files : SyncState.synced;
+          }
         }
+        // save it...
+        updateValues.put(DataTableColumns.SYNC_STATE, newState);
 
-        // delete the record of the server row
-        deleteServerConflictRowWithId(db, tableId, rowId);
+        // delete however many rows there are (might be 2 if in_conflict)
+        privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
 
-        // move the local conflict back into either the synced or synced_pending_files
-        // state
-
-        restoreRowFromConflict(db, tableId, rowId, newState, localConflictType);
-
-        // update local with server's changes
-
-        updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
-            locale);
-
-        // and reset the sync state to whatever it should be (update will make it changed)
-        restoreRowFromConflict(db, tableId, rowId, newState, null);
+        // and insert the server row, but as a local row
+        upsertDataIntoExistingTable(db, tableId, orderedColumns, updateValues, false, true,
+            activeUser, RoleConsts.ADMIN_ROLES_LIST, locale, false);
       }
 
       if (!inTransaction) {
@@ -5419,8 +5581,10 @@ public class ODKDatabaseImplUtils {
             int syncStateCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.SYNC_STATE);
             updatedSyncState = data.getRowAtIndex(0).getDataByIndex(syncStateCursorIndex);
 
-            if (updatedSyncState.equals(SyncState.deleted.name()) || updatedSyncState
-                .equals(SyncState.in_conflict.name())) {
+            // allow updates to in_conflict rows if they are initiated through privileged
+            // code paths (e.g., enforcePermissionsDuringConflictProcessing )
+            if ( updatedSyncState.equals(SyncState.deleted.name()) ||
+                (!asServerRequestedChange && updatedSyncState.equals(SyncState.in_conflict.name()))) {
               throw new IllegalStateException(
                   t + ": Cannot update a deleted or in-conflict row");
             } else if (updatedSyncState.equals(SyncState.synced.name()) || updatedSyncState
