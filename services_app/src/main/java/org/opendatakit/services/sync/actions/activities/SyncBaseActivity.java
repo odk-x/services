@@ -58,6 +58,7 @@ public class SyncBaseActivity extends Activity
 
    protected String mAppName;
    protected PropertiesSingleton mProps;
+   private boolean started = false;
 
    private final Object interfaceGuard = new Object();
    // interfaceGuard guards access to all of the following...
@@ -121,9 +122,22 @@ public class SyncBaseActivity extends Activity
       setContentView(R.layout.sync_activity);
 
       // IMPORTANT NOTE: the Application object is not yet created!
-
       // Used to ensure that the singleton has been initialized properly
       AndroidConnectFactory.configure();
+
+      // Used by odkutil
+      if (getIntent() != null && getIntent().hasExtra("pivotToLogin")) {
+         if (savedInstanceState != null && savedInstanceState.containsKey("started")) {
+            started = savedInstanceState.getBoolean("started");
+         }
+         if (!started) {
+            started = true;
+            Intent i = new Intent(this, LoginActivity.class);
+            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+            startActivity(i);
+         }
+      }
+
    }
 
    @Override protected void onResume() {
@@ -151,6 +165,10 @@ public class SyncBaseActivity extends Activity
          e.printStackTrace();
       }
 
+   }
+
+   @Override public void onSaveInstanceState(Bundle outState) {
+      outState.putBoolean("started", started);
    }
 
    @Override
@@ -205,6 +223,7 @@ public class SyncBaseActivity extends Activity
    @Override public String getAppName() {
       if (mAppName == null) {
          mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+        Log.e(TAG, mAppName);
       }
       return mAppName;
    }
@@ -272,7 +291,7 @@ public class SyncBaseActivity extends Activity
       if (id == R.id.action_change_user) {
 
          Intent i = new Intent(this, LoginActivity.class);
-         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
          startActivity(i);
          return true;
       }
@@ -288,7 +307,7 @@ public class SyncBaseActivity extends Activity
    @Override public PropertiesSingleton getProps() {
 
       if (mProps == null) {
-         mProps = CommonToolProperties.get(this, mAppName);
+         mProps = CommonToolProperties.get(this, getAppName());
       }
       return mProps;
    }
