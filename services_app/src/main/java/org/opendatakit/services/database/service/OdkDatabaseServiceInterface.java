@@ -136,14 +136,12 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    *
    * @param appName
    *
-   * @return empty string or JSON serialization of an array of objects
+   * @return null or JSON serialization of an array of objects
    * structured as { "user_id": "...", "full_name": "...", "roles": ["...",...] }
    */
-  @Override public String getUsersList(String appName) throws RemoteException {
-    // TODO: This is generally unbounded in size. Perhaps it should be chunked? (max 2000 users)
-    // Realistically, each user would be no more than 500 bytes. 1Mb = 2000 users.
+  @Override public DbChunk getUsersList(String appName) throws RemoteException {
     try {
-      return odkDatabaseServiceImpl.getUsersList(appName);
+      return getAndCacheChunksAllowNull(odkDatabaseServiceImpl.getUsersList(appName));
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, null, "getUsersList", e);
     }
@@ -322,11 +320,12 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
    * @param choiceListId -- the md5 hash of the choiceListJSON
    * @return choiceListJSON -- the actual JSON choice list text.
    */
-  @Override public String getChoiceList(String appName, DbHandle dbHandleName,
+  @Override public DbChunk getChoiceList(String appName, DbHandle dbHandleName,
       String choiceListId) throws RemoteException {
 
     try {
-      return odkDatabaseServiceImpl.getChoiceList(appName, dbHandleName, choiceListId);
+      return getAndCacheChunksAllowNull(odkDatabaseServiceImpl.getChoiceList(appName, dbHandleName,
+          choiceListId));
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "getChoiceList", e);
     }
@@ -981,6 +980,13 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     List<DbChunk> chunkList = DbChunkUtil.convertToChunks(data, DatabaseConstants.PARCEL_SIZE);
 
     return getAndCacheChunksHelper(chunkList);
+  }
+
+  private DbChunk getAndCacheChunksAllowNull(Serializable data) {
+    if ( data == null ) {
+      return null;
+    }
+    return getAndCacheChunks(data);
   }
 
   private DbChunk getAndCacheChunks(Serializable data) {

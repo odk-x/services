@@ -143,11 +143,10 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    *
    * @param appName
    *
-   * @return empty string or JSON serialization of an array of objects
+   * @return null or JSON serialization of an array of objects
    * structured as { "user_id": "...", "full_name": "...", "roles": ["...",...] }
    */
    @Override public String getUsersList(String appName) {
-    // TODO: This is generally unbounded in size. Perhaps it should be chunked? (max 2000 users)
     // Realistically, each user would be no more than 500 bytes. 1Mb = 2000 users.
       return getInternalUsersList(appName);
    }
@@ -173,8 +172,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       }
    }
 
-   @Override public void closeDatabase(String appName, DbHandle dbHandleName)
-       {
+   @Override public void closeDatabase(String appName, DbHandle dbHandleName) {
 
       OdkConnectionInterface db = null;
 
