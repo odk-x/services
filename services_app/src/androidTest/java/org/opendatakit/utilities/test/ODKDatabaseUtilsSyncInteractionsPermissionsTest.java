@@ -64,7 +64,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
   }
 
   private void base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(boolean isLocked,
-      boolean canAnonCreate, RowFilterScope.Access type,
+      boolean canAnonCreate, RowFilterScope.Access serverRowDefaultAccessValue,
       SyncState localRowSyncState, boolean asPrivilegedUser) throws ActionNotAuthorizedException {
 
     String tableId;
@@ -104,25 +104,44 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       }
 
       // add local content
+      // this sets up the key-value-store fields for the table, using the
+      // serverRowDefaultAccessValue as the initial value for the default access
+      // on rows created in the table.
       OrderedColumns oc = assertEmptySyncStateTestTable(tableId,
-          isLocked, canAnonCreate, type.name());
+          isLocked, canAnonCreate, serverRowDefaultAccessValue.name());
 
-      // loop over rowId :
-      ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList
-          (asPrivilegedUser, localRowSyncState,
-              options[7], options[0], options[1], options[2], options[3], options[4], options[5],
-              options[6] );
+      // outcome depends upon the server row's DefaultAccess value.
+      // initially assume this will be the incoming value.
+      {
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList(isLocked, asPrivilegedUser,
+            localRowSyncState, true, serverRowDefaultAccessValue, options[7], options[0], options[1], options[2],
+            options[3], options[4], options[5], options[6]);
 
-      for ( SyncParamOutcome spo : spoList ) {
-        assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
-        verifySyncOutcome(tableId, oc, asPrivilegedUser, type, spo);
-        if ( spo.changeServerPrivilegedMetadata ) {
-          // if we are modifying the filter scopes, then supply read-only scope as a challenge
-          // or, if the incoming type is read-only, use hidden
+        for (SyncParamOutcome spo : spoList) {
           assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
-          verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Access.READ_ONLY) ? RowFilterScope.Access.HIDDEN :
-                  RowFilterScope.Access.READ_ONLY, spo);
+          verifySyncOutcome(tableId, oc, asPrivilegedUser, serverRowDefaultAccessValue, spo);
+        }
+      }
+
+      // outcome depends upon the server row's DefaultAccess value.
+      // now limit it to either hidden or read-only.
+      // TODO: It is unclear if this is actually testing new code paths, or just duplicated effort.
+      {
+        RowFilterScope.Access restrictedType = (serverRowDefaultAccessValue == RowFilterScope.Access.READ_ONLY) ?
+            RowFilterScope.Access.HIDDEN : RowFilterScope.Access.READ_ONLY;
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList(isLocked, asPrivilegedUser,
+            localRowSyncState, true, restrictedType, options[7], options[0], options[1],
+            options[2], options[3], options[4], options[5], options[6]);
+
+        for (SyncParamOutcome spo : spoList) {
+          if (spo.changeServerPrivilegedMetadata) {
+            // if we are modifying the filter scopes, then supply read-only scope as a challenge
+            // or, if the incoming type is read-only, use hidden
+            assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
+            verifySyncOutcome(tableId, oc, asPrivilegedUser, restrictedType, spo);
+          }
         }
       }
     }
@@ -158,7 +177,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
   }
 
   private void base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(
-      boolean isLocked, boolean canAnonCreate, RowFilterScope.Access type,
+      boolean isLocked, boolean canAnonCreate, RowFilterScope.Access serverRowDefaultAccessValue,
       int localConflictType, int serverConflictType, boolean asPrivilegedUser) throws
       ActionNotAuthorizedException {
 
@@ -199,25 +218,46 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       }
 
       // add local content
+      // this sets up the key-value-store fields for the table, using the
+      // serverRowDefaultAccessValue as the initial value for the default access
+      // on rows created in the table.
       OrderedColumns oc = assertEmptySyncStateTestTable(tableId,
-          isLocked, canAnonCreate, type.name());
+          isLocked, canAnonCreate, serverRowDefaultAccessValue.name());
 
-      // loop over rowId :
-      ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList
-          (asPrivilegedUser, localConflictType,
-              options[7], options[0], options[1], options[2], options[3], options[4], options[5],
-              options[6] );
+      // outcome depends upon the server row's DefaultAccess value.
+      // initially assume this will be the incoming value.
+      {
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList
+            (isLocked, asPrivilegedUser, localConflictType,
+            serverRowDefaultAccessValue, options[7], options[0], options[1], options[2], options[3], options[4], options[5],
+            options[6]);
 
-      for ( SyncParamOutcome spo : spoList ) {
-        assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType, serverConflictType);
-        verifySyncOutcome(tableId, oc, asPrivilegedUser, type, spo);
-        if ( spo.changeServerPrivilegedMetadata ) {
-          // if we are modifying the filter scopes, then supply read-only scope as a challenge
-          // or, if the incoming type is read-only, use hidden
-          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType, serverConflictType);
+        for (SyncParamOutcome spo : spoList) {
+          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType,
+              serverConflictType);
+          verifySyncOutcome(tableId, oc, asPrivilegedUser, serverRowDefaultAccessValue, spo);
+        }
+      }
+
+      // outcome depends upon the server row's DefaultAccess value.
+      // now limit it to either hidden or read-only.
+      // TODO: It is unclear if this is actually testing new code paths, or just duplicated effort.
+      {
+        RowFilterScope.Access unmodifiableType =  (serverRowDefaultAccessValue == RowFilterScope.Access.READ_ONLY) ?
+            RowFilterScope.Access.HIDDEN : RowFilterScope.Access.READ_ONLY;
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList(
+            isLocked, asPrivilegedUser,
+            localConflictType, unmodifiableType, options[7], options[0], options[1], options[2],
+            options[3], options[4], options[5],
+            options[6]);
+
+        for (SyncParamOutcome spo : spoList) {
+          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType,
+              serverConflictType);
           verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Access.READ_ONLY) ? RowFilterScope.Access.HIDDEN :
-                  RowFilterScope.Access.READ_ONLY, spo);
+              unmodifiableType, spo);
         }
       }
     }

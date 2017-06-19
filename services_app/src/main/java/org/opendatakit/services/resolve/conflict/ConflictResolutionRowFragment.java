@@ -125,7 +125,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
             // This is elevated privileges since we are applying the server's change locally
             ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db,
-                mTableId, mRowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
+                mTableId, mRowId, aul.activeUser);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {

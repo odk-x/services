@@ -1494,7 +1494,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
 
          ODKDatabaseImplUtils.get()
              .resolveServerConflictWithDeleteRowWithId(db, tableId, rowId,
-                 activeUser, RoleConsts.ADMIN_ROLES_LIST);
+                 activeUser);
 
       } finally {
          if (db != null) {

@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -927,9 +928,7 @@ public class OdkDatabaseServiceTest {
       }
    }
 
-   @Test
-   public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
-      final int NUM_ROWS = 10000;
+   private void internalTestDbCreateNDeleteLargeTable(final int NUM_ROWS) throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       if (false) {
          return;
@@ -999,9 +998,19 @@ public class OdkDatabaseServiceTest {
    }
 
    @Test
-   public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
+   public void testDbCreateNDeleteSmallTable() throws ActionNotAuthorizedException {
+      final int NUM_ROWS = 300;
+      internalTestDbCreateNDeleteLargeTable(NUM_ROWS);
+   }
+
+   @LargeTest
+   public void testDbCreateNDeleteLargeTable() throws ActionNotAuthorizedException {
+      final int NUM_ROWS = 10000;
+      internalTestDbCreateNDeleteLargeTable(NUM_ROWS);
+   }
+
+   private void internalTestDbCreateNVerifyNDeleteLargeTableManyColumns(final int NUM_ROWS)
        throws ActionNotAuthorizedException {
-      final int NUM_ROWS = 2500;
       UserDbInterface serviceInterface = bindToDbService();
       if (false) {
          return;
@@ -1078,6 +1087,20 @@ public class OdkDatabaseServiceTest {
          e.printStackTrace();
          fail(e.getMessage());
       }
+   }
+
+   @Test
+   public void testDbCreateNVerifyNDeleteSmallTableManyColumns()
+       throws ActionNotAuthorizedException {
+      final int NUM_ROWS = 300;
+      internalTestDbCreateNVerifyNDeleteLargeTableManyColumns(NUM_ROWS);
+   }
+
+   @LargeTest
+   public void testDbCreateNVerifyNDeleteLargeTableManyColumns()
+       throws ActionNotAuthorizedException {
+      final int NUM_ROWS = 2500;
+      internalTestDbCreateNVerifyNDeleteLargeTableManyColumns(NUM_ROWS);
    }
 
    @Test
