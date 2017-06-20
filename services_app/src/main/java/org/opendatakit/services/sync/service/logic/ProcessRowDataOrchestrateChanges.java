@@ -22,6 +22,7 @@ import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
@@ -331,7 +332,7 @@ public class ProcessRowDataOrchestrateChanges {
         StringBuilder b = new StringBuilder();
         b.append("SELECT ").append(DataTableColumns.ID).append(" FROM ").append(tableId)
             .append(" WHERE ").append(DataTableColumns.SYNC_STATE).append(" = ?");
-        Object[] bindArgs = new Object[]{ SyncState.in_conflict.name() };
+        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name() });
         DbHandle db = null;
         try {
           db = sc.getDatabase();

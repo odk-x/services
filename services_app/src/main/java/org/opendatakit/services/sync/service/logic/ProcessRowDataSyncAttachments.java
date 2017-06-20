@@ -26,6 +26,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
@@ -136,7 +137,8 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
 
         String sqlCommand;
-        Object[] bindArgs = new Object[]{ SyncState.in_conflict.name(), SyncState.synced_pending_files.name() };
+        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+            SyncState.synced_pending_files.name() });
 
         {
           StringBuilder sqlCommandBuilder = new StringBuilder();
@@ -206,7 +208,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
             try {
               db = sc.getDatabase();
               String[] empty = {};
-              Object[] bindArgs = new Object[] {fetchLimit, fetchOffset};
+              BindArgs bindArgs = new BindArgs(new Object[] {fetchLimit, fetchOffset});
 
               localDataTable = sc.getDatabaseService()
                   .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, whereClause,

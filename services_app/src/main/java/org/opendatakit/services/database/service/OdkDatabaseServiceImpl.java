@@ -328,7 +328,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          ODKDatabaseImplUtils.get()
-             .updateLocalOnlyRow(db, tableId, rowValues, whereClause, bindArgs.bindArgs);
+             .updateLocalOnlyRow(db, tableId, rowValues, whereClause,
+                 (bindArgs == null) ? null : bindArgs.bindArgs);
 
       } finally {
          if (db != null) {
@@ -360,7 +361,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          ODKDatabaseImplUtils.get()
-             .deleteLocalOnlyRow(db, tableId, whereClause, bindArgs.bindArgs);
+             .deleteLocalOnlyRow(db, tableId, whereClause,
+                 (bindArgs == null) ? null : bindArgs.bindArgs);
 
       } finally {
          if (db != null) {
@@ -1193,7 +1195,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
 
          BaseTable result = ODKDatabaseImplUtils.get()
-             .query(db, tableId, sqlCommand, bindArgs.bindArgs, sqlQueryBounds, accessContext);
+             .query(db, tableId, sqlCommand,
+                 (bindArgs == null) ? null : bindArgs.bindArgs, sqlQueryBounds, accessContext);
 
          return result;
       } finally {
@@ -1223,7 +1226,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
              .getAccessContext(db, tableId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
          BaseTable result = ODKDatabaseImplUtils.get()
-             .privilegedQuery(db, tableId, sqlCommand, bindArgs.bindArgs, sqlQueryBounds,
+             .privilegedQuery(db, tableId, sqlCommand,
+                 (bindArgs == null) ? null : bindArgs.bindArgs, sqlQueryBounds,
                  accessContext);
 
          return result;
@@ -1248,7 +1252,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
              .getConnection(appName, dbHandleName);
 
          ODKDatabaseImplUtils.get()
-             .privilegedExecute(db, sqlCommand, bindArgs.bindArgs);
+             .privilegedExecute(db, sqlCommand, (bindArgs == null) ? null : bindArgs.bindArgs);
 
       } finally {
          if (db != null) {

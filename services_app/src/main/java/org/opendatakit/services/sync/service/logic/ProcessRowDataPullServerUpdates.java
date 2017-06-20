@@ -30,6 +30,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
@@ -139,8 +140,6 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
         // them all.
         UserTable localDataTable;
         {
-            String[] empty = {};
-
             // To get all the rows that match those sent from the server
             // we create a local table and insert all of the row ids into
             // that table. Then filter against the row ids in that table
@@ -176,7 +175,8 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
             localDataTable = sc.getDatabaseService()
                 .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, b.toString(),
-                    empty, empty, null, new String[] { DataTableColumns.ID }, new String[] { "ASC" },
+                    null, null, null,
+                    new String[] { DataTableColumns.ID }, new String[] { "ASC" },
                     null, null);
         }
 

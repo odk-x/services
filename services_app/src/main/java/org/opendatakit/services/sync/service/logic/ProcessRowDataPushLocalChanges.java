@@ -32,6 +32,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
@@ -297,8 +298,8 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
 
         String sqlCommand;
-        Object[] bindArgs = new Object[]{
-            SyncState.new_row.name(), SyncState.changed.name(), SyncState.deleted.name() };
+        BindArgs bindArgs = new BindArgs(new Object[]{
+            SyncState.new_row.name(), SyncState.changed.name(), SyncState.deleted.name() });
         {
           StringBuilder sqlCommandBuilder = new StringBuilder();
           sqlCommandBuilder.append("INSERT INTO ").append(local_id_table)
@@ -367,7 +368,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
             try {
               db = sc.getDatabase();
               String[] empty = {};
-              Object[] bindArgs = new Object[] {fetchLimit, fetchOffset};
+              BindArgs bindArgs = new BindArgs(new Object[] {fetchLimit, fetchOffset});
 
               localDataTable = sc.getDatabaseService()
                   .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, whereClause,
