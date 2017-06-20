@@ -530,6 +530,18 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
+  @Override public DbChunk getTableHealthStatus(String appName,
+      DbHandle dbHandleName, String tableId) throws RemoteException {
+
+    try {
+      Parcelable healthInfo =
+          odkDatabaseServiceImpl.getTableHealthStatus(appName, dbHandleName, tableId);
+      return getAndCacheChunks(healthInfo);
+    } catch (Throwable t) {
+      throw createWrappingRemoteException(appName, dbHandleName, "getTableHealthStatus", t);
+    }
+  }
+
   @Override public DbChunk getTableHealthStatuses(String appName,
       DbHandle dbHandleName) throws RemoteException {
 

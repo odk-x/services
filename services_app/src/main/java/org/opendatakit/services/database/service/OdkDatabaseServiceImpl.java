@@ -868,6 +868,57 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
     return kvsEntries;
   }
 
+   @Override public TableHealthInfo getTableHealthStatus(String appName, DbHandle dbHandleName,
+       String tableId) {
+
+     long now = System.currentTimeMillis();
+     WebLogger.getLogger(appName).i("getTableHealthStatus",
+         appName + " " + dbHandleName.getDatabaseHandle() + " " + tableId + " "
+             + "getTableHealthStatus -- searching for conflicts and checkpoints ");
+
+     TableHealthInfo  healthInfo;
+     OdkConnectionInterface db = null;
+     TableHealthStatus status = TableHealthStatus.TABLE_HEALTH_IS_CLEAN;
+
+     try {
+       // +1 referenceCount if db is returned (non-null)
+       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+           .getConnection(appName, dbHandleName);
+
+       int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
+       if (health != CursorUtils.TABLE_HEALTH_IS_CLEAN) {
+         switch (health) {
+         case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS:
+           status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
+           break;
+         case CursorUtils.TABLE_HEALTH_HAS_CONFLICTS:
+           status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
+           break;
+         case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS:
+           status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
+           break;
+         }
+       }
+
+       healthInfo = new TableHealthInfo(tableId, status);
+
+       long elapsed = System.currentTimeMillis() - now;
+       WebLogger.getLogger(appName).i("getTableHealthStatus",
+           appName + " " + dbHandleName.getDatabaseHandle() + " " + tableId + " "
+               + "getTableHealthStatus -- full table scan completed: " + Long.toString(elapsed)
+               + " ms");
+
+       return healthInfo;
+     } finally {
+       if (db != null) {
+         // release the reference...
+         // this does not necessarily close the db handle
+         // or terminate any pending transaction
+         db.releaseReference();
+       }
+     }
+   }
+
    @Override public ArrayList<TableHealthInfo> getTableHealthStatuses(String appName,
        DbHandle dbHandleName) {
 
