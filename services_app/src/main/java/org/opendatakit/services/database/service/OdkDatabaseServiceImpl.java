@@ -928,40 +928,14 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
               "getTableHealthStatuses -- searching for conflicts and checkpoints ");
 
       ArrayList<TableHealthInfo> problems = new ArrayList<>();
+      ArrayList<String> tableIds = null;
       OdkConnectionInterface db = null;
+
       try {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
-
-         for (String tableId : tableIds) {
-            int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-            if (health != CursorUtils.TABLE_HEALTH_IS_CLEAN) {
-               TableHealthStatus status = TableHealthStatus.TABLE_HEALTH_IS_CLEAN;
-               switch (health) {
-               case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS:
-                  status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
-                  break;
-               case CursorUtils.TABLE_HEALTH_HAS_CONFLICTS:
-                  status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
-                  break;
-               case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS:
-                  status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
-                  break;
-               }
-               TableHealthInfo info = new TableHealthInfo(tableId, status);
-               problems.add(info);
-            }
-         }
-
-         long elapsed = System.currentTimeMillis() - now;
-         WebLogger.getLogger(appName)
-             .i("getTableHealthStatuses", appName + " " + dbHandleName.getDatabaseHandle() + " " +
-                 "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed)
-                 + " ms");
-
-         return problems;
+         tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
       } finally {
          if (db != null) {
             // release the reference...
@@ -970,6 +944,19 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
             db.releaseReference();
          }
       }
+
+     for (String tableId : tableIds) {
+       TableHealthInfo info = getTableHealthStatus(appName, dbHandleName, tableId);
+       problems.add(info);
+     }
+
+     long elapsed = System.currentTimeMillis() - now;
+     WebLogger.getLogger(appName)
+         .i("getTableHealthStatuses", appName + " " + dbHandleName.getDatabaseHandle() + " " +
+             "getTableHealthStatuses -- full table scan completed: " + Long.toString(elapsed)
+             + " ms");
+
+     return problems;
    }
 
    @Override public String[] getExportColumns() {
