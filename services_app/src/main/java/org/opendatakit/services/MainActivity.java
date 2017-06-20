@@ -22,24 +22,21 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
-import org.opendatakit.services.sync.actions.activities.LoginActivity;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
+import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.sync.actions.activities.LoginActivity;
+import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.utilities.ODKFileUtils;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 
-  private static final String TAG = "MainActivity";
+  private static final String TAG = MainActivity.class.getSimpleName();
 
   private int SYNC_ACTIVITY_RESULT_CODE = 10;
   private int VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE = 20;
@@ -73,10 +70,10 @@ public class MainActivity extends Activity implements IAppAwareActivity {
     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null) {
       mAppName = ODKFileUtils.getOdkDefaultAppName();
-//      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
-//      setResult(Activity.RESULT_CANCELED);
-//      finish();
-//      return;
+      //      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
+      //      setResult(Activity.RESULT_CANCELED);
+      //      finish();
+      //      return;
     }
   }
 
@@ -118,7 +115,7 @@ public class MainActivity extends Activity implements IAppAwareActivity {
 
       FragmentManager mgr = getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
-      if ( newFragment == null ) {
+      if (newFragment == null) {
         newFragment = new AboutMenuFragment();
       }
       FragmentTransaction trans = mgr.beginTransaction();
@@ -148,7 +145,8 @@ public class MainActivity extends Activity implements IAppAwareActivity {
     return super.onOptionsItemSelected(item);
   }
 
-  @Override public String getAppName() {
+  @Override
+  public String getAppName() {
     return mAppName;
   }
 }

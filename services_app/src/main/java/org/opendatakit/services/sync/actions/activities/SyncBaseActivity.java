@@ -125,8 +125,8 @@ public class SyncBaseActivity extends Activity
       // Used to ensure that the singleton has been initialized properly
       AndroidConnectFactory.configure();
 
-      // Used by odkutil
-      if (getIntent() != null && getIntent().hasExtra("pivotToLogin")) {
+      // Used by app designer grunt task "clean"
+      if (getIntent() != null && getIntent().hasExtra("showLogin")) {
          if (savedInstanceState != null && savedInstanceState.containsKey("started")) {
             started = savedInstanceState.getBoolean("started");
          }
