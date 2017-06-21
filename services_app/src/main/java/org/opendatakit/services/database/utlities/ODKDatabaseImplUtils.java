@@ -1335,7 +1335,9 @@ public class ODKDatabaseImplUtils {
   public int getTableHealth(OdkConnectionInterface db, String tableId) {
     StringBuilder b = new StringBuilder();
     b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
-        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from ")
+        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts,")
+        .append("SUM(case when _sync_state is 'synced' then 0 when _sync_state is "
+            + "'synced_pending_files' then 0 else 1 end) as changes FROM")
         .append(tableId);
 
     Cursor c = null;
@@ -1343,22 +1345,28 @@ public class ODKDatabaseImplUtils {
       c = db.rawQuery(b.toString(), null);
       Integer checkpoints = null;
       Integer conflicts = null;
+      Integer changes = null;
       if (c != null) {
         if (c.moveToFirst()) {
           int idxCheckpoints = c.getColumnIndex("checkpoints");
           int idxConflicts = c.getColumnIndex("conflicts");
+          int idxChanges = c.getColumnIndex("changes");
           checkpoints = CursorUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
           conflicts = CursorUtils.getIndexAsType(c, Integer.class, idxConflicts);
+          changes = CursorUtils.getIndexAsType(c, Integer.class, idxChanges);
         }
         c.close();
       }
 
       int outcome = CursorUtils.TABLE_HEALTH_IS_CLEAN;
       if (checkpoints != null && checkpoints != 0) {
-        outcome += CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS;
+        outcome = CursorUtils.setTableHealthHasCheckpoints(outcome);
       }
       if (conflicts != null && conflicts != 0) {
-        outcome += CursorUtils.TABLE_HEALTH_HAS_CONFLICTS;
+        outcome = CursorUtils.setTableHealthHasConflicts(outcome);
+      }
+      if (changes != null && changes != 0) {
+        outcome = CursorUtils.setTableHealthHasChanges(outcome);
       }
       return outcome;
     } finally {

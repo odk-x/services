@@ -886,21 +886,19 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
            .getConnection(appName, dbHandleName);
 
        int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-       if (health != CursorUtils.TABLE_HEALTH_IS_CLEAN) {
-         switch (health) {
-         case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS:
-           status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
-           break;
-         case CursorUtils.TABLE_HEALTH_HAS_CONFLICTS:
-           status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
-           break;
-         case CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS:
-           status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
-           break;
-         }
+       boolean hasConflicts = CursorUtils.getTableHealthHasConflicts(health);
+       boolean hasCheckpoints = CursorUtils.getTableHealthHasCheckpoints(health);
+       boolean hasChanges = CursorUtils.getTableHealthHasChanges(health);
+
+       if (hasCheckpoints && hasConflicts) {
+         status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS;
+       } else if (hasCheckpoints) {
+         status = TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS;
+       } else if (hasConflicts) {
+         status = TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS;
        }
 
-       healthInfo = new TableHealthInfo(tableId, status);
+       healthInfo = new TableHealthInfo(tableId, status, hasChanges);
 
        long elapsed = System.currentTimeMillis() - now;
        WebLogger.getLogger(appName).i("getTableHealthStatus",
