@@ -4164,7 +4164,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Test that the health of the table is CLEAN
     int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
-    assertEquals(health, CursorUtils.TABLE_HEALTH_IS_CLEAN);
+    assertTrue(CursorUtils.getTableHealthIsClean(health));
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -4518,7 +4518,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Test that the health of the table is CLEAN
     int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
-    assertEquals(health, CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS);
+    assertTrue(CursorUtils.getTableHealthHasChanges(health));
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
