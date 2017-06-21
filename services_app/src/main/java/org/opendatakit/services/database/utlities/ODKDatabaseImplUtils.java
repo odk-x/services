@@ -1337,7 +1337,7 @@ public class ODKDatabaseImplUtils {
     b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
         .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts,")
         .append("SUM(case when _sync_state is 'synced' then 0 when _sync_state is "
-            + "'synced_pending_files' then 0 else 1 end) as changes FROM")
+            + "'synced_pending_files' then 0 else 1 end) as changes FROM ")
         .append(tableId);
 
     Cursor c = null;
