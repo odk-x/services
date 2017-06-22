@@ -284,6 +284,7 @@ public class GroupsPermissionTest {
           InstrumentationRegistry.getTargetContext()
           .getString(org.opendatakit.androidlibrary.R.string.credential_type_google_account));
       properties.put(CommonToolProperties.KEY_ACCOUNT, activeUser);
+      properties.put(CommonToolProperties.KEY_AUTHENTICATED_USER_ID, "mailto:" + activeUser);
       // this is stored in SharedPreferences
       properties.put(CommonToolProperties.KEY_PASSWORD, password);
       properties.put(CommonToolProperties.KEY_ROLES_LIST, roleListJSONstring);

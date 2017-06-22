@@ -226,10 +226,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return password;
   }
 
-  public void setRolesListAndDefaultGroup(String rolesList, String defaultGroup) {
+  public void setUserIdRolesListAndDefaultGroup(String user_id, String rolesList, String
+      defaultGroup) {
     PropertiesSingleton props = CommonToolProperties.get(application, appName);
 
     Map<String,String> properties = new HashMap<String,String>();
+    properties.put(CommonToolProperties.KEY_AUTHENTICATED_USER_ID, user_id);
     properties.put(CommonToolProperties.KEY_ROLES_LIST, rolesList);
     properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, defaultGroup);
     props.setProperties(properties);

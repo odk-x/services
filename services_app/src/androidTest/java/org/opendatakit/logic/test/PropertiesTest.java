@@ -83,6 +83,7 @@ public class PropertiesTest {
         String[] secureKeys = {
             CommonToolProperties.KEY_AUTH,
             CommonToolProperties.KEY_PASSWORD,
+            CommonToolProperties.KEY_AUTHENTICATED_USER_ID,
             CommonToolProperties.KEY_ROLES_LIST,
             CommonToolProperties.KEY_DEFAULT_GROUP,
             CommonToolProperties.KEY_USERS_LIST,

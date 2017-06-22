@@ -23,6 +23,7 @@ import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.sync.service.OdkSyncService;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
@@ -137,7 +138,7 @@ public class ProcessAppAndTableLevelChanges {
       log.w(TAG,
           "[verifyServerConfiguration] no rolesAndGroupsMap returned or missing roles and/or "
               + "defaultGroup keys -- perhaps an anonymousUser or older server?");
-      sc.setRolesListAndDefaultGroup("", "");
+      sc.setUserIdRolesListAndDefaultGroup(CommonToolProperties.ANONYMOUS_USER, "", "");
       sc.setUsersList("");
       return;
     }
@@ -166,7 +167,10 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    sc.setRolesListAndDefaultGroup(roleListJSONString, defaultGroup);
+    // update the authenticated user
+    sc.setUserIdRolesListAndDefaultGroup(rolesAndDefaultGroupMap.getUser_id(),
+        roleListJSONString, defaultGroup);
+
     if (roleListJSONString.isEmpty()) {
       sc.setUsersList("");
     } else {
