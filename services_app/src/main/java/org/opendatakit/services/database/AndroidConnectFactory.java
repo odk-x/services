@@ -25,7 +25,7 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractCl
     OdkConnectionFactorySingleton.set(new AndroidConnectFactory());
 
     // register a state-reset manipulator for 'connectionFactory' field.
-    StaticStateManipulator.get().register(50, new IStaticFieldManipulator() {
+    StaticStateManipulator.get().register(new IStaticFieldManipulator() {
 
       @Override
       public void reset() {

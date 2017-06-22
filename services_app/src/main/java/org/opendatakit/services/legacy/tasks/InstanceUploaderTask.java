@@ -86,7 +86,7 @@ import java.util.Map;
  */
 public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUploadOutcome> {
 
-  private static final String t = "InstanceUploaderTask";
+  private static final String TAG = InstanceUploaderTask.class.getSimpleName();
   private static final String fail = "Error: ";
 
   private Application appContext;
@@ -216,7 +216,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
           // may be a server that does not handle
           WebUtils.get().discardEntityBytes(response);
 
-          WebLogger.getLogger(appName).w(t, "Status code on Head request: " + statusCode);
+          WebLogger.getLogger(appName).w(TAG, "Status code on Head request: " + statusCode);
           if (statusCode >= 200 && statusCode <= 299) {
             mOutcome.mResults
                 .put(
@@ -230,14 +230,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         }
       } catch (ClientProtocolException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Client Protocol Exception");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (ConnectTimeoutException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Connection Timeout");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
@@ -245,20 +245,20 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       } catch (UnknownHostException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         mOutcome.mResults.put(id, fail + e.getMessage() + " :: Network Connection Failed");
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (SocketTimeoutException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Connection Timeout");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (HttpHostConnectException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.toString());
+        WebLogger.getLogger(appName).e(TAG, e.toString());
         mOutcome.mResults.put(id, fail + "Network Connection Refused");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
@@ -266,7 +266,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         mOutcome.mResults.put(id, fail + "Generic Exception");
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
@@ -310,7 +310,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       // add the submission file first...
       builder.addBinaryBody("xml_submission_file", instanceFile,
           ContentType.TEXT_XML.withCharset(Charset.forName(CharEncoding.UTF_8)), instanceFile.getName());
-      WebLogger.getLogger(appName).i(t, "added xml_submission_file: " + instanceFile.getName());
+      WebLogger.getLogger(appName).i(TAG, "added xml_submission_file: " + instanceFile.getName());
       byteCount += instanceFile.length();
 
       for (; j < files.size(); j++) {
@@ -320,14 +320,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
         builder.addBinaryBody(f.getName(), f, ContentType.create(contentType), f.getName());
         byteCount += f.length();
-        WebLogger.getLogger(appName).i(t, "added " + contentType + " file " + f.getName());
+        WebLogger.getLogger(appName).i(TAG, "added " + contentType + " file " + f.getName());
 
         // we've added at least one attachment to the request...
         if (j + 1 < files.size()) {
           long nextFileLength = (files.get(j + 1).file.length());
           if ((j - lastJ + 1 > 100) || (byteCount + nextFileLength > 10000000L)) {
             // the next file would exceed the 10MB threshold...
-            WebLogger.getLogger(appName).i(t, "Extremely long post is being split into multiple posts");
+            WebLogger.getLogger(appName).i(TAG, "Extremely long post is being split into multiple posts");
             try {
               builder.addTextBody("*isIncomplete*", "yes",
                   ContentType.TEXT_PLAIN.withCharset(Charset.forName((CharEncoding.UTF_8))));
@@ -349,7 +349,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         int responseCode = response.getStatusLine().getStatusCode();
         WebUtils.get().discardEntityBytes(response);
 
-        WebLogger.getLogger(appName).i(t, "Response code:" + responseCode);
+        WebLogger.getLogger(appName).i(TAG, "Response code:" + responseCode);
         // verify that the response was a 201 or 202.
         // If it wasn't, the submission has failed.
         if (responseCode != 201 && responseCode != 202) {
@@ -402,7 +402,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
     InputStream is = appContext.getContentResolver().openInputStream(manifest);
 
-    FileSet f = FileSet.parse(appContext, appName, is);
+    FileSet f = FileSet.parse(appName, is);
     return f;
   }
 
@@ -444,14 +444,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
     List<AuthScope> asList = buildAuthScopes(host);
 
     // ensure that this is the only authentication available for this host...
-    WebLogger.getLogger(appName).i(t, "clearHostCredentials: " + host);
+    WebLogger.getLogger(appName).i(TAG, "clearHostCredentials: " + host);
     for (AuthScope a : asList) {
       credsProvider.setCredentials(a, null);
     }
 
     // add username
     if (username != null && username.trim().length() != 0) {
-      WebLogger.getLogger(appName).i(t, "adding credential for host: " + host + " username:" + username);
+      WebLogger.getLogger(appName).i(TAG, "adding credential for host: " + host + " username:" + username);
       Credentials c = new UsernamePasswordCredentials(username, password);
 
       for (AuthScope a : asList) {

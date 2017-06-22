@@ -381,7 +381,7 @@ public class ODKDatabaseImplUtils {
 
   static {
     // register a state-reset manipulator for 'databaseUtil' field.
-    StaticStateManipulator.get().register(50, new IStaticFieldManipulator() {
+    StaticStateManipulator.get().register(new IStaticFieldManipulator() {
 
       @Override public void reset() {
         databaseUtil = new ODKDatabaseImplUtils();

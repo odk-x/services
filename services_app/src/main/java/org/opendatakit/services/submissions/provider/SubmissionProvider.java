@@ -805,7 +805,7 @@ public class SubmissionProvider extends ContentProvider {
               String doc = b.toString();
               exportFile(doc, submissionXml, logger);
             }
-            exportFile(freturn.serializeUriFragmentList(getContext()), manifest, logger);
+            exportFile(freturn.serializeUriFragmentList(), manifest, logger);
             return ParcelFileDescriptor.open(manifest, ParcelFileDescriptor.MODE_READ_ONLY);
 
           }
