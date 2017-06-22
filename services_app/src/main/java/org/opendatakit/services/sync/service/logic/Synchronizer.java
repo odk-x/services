@@ -72,7 +72,7 @@ public interface Synchronizer {
   void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
 
   /**
-   * Returns a map:
+   * Returns null OR an object containing:
    *  {
    *    "roles" : list of the roles and groups assigned to the user,
    *    "defaultGroup" : defaultGroup the user belongs to
@@ -85,11 +85,14 @@ public interface Synchronizer {
    * The defaultGroup can be null and, if not null, must appear in the list
    * of roles and groups assigned to the user.
    *
+   * If null is returned, then the user is either anonymous or the server is old.
+   * In either case, the user should be treated as an anonymous user.
+   *
    * @return
    * @throws HttpClientWebException
    * @throws IOException
      */
-  HashMap<String,Object> getUserRolesAndDefaultGroup() throws HttpClientWebException,
+  PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException,
       IOException;
 
   /**
@@ -104,7 +107,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
     */
-  ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException;
+  UserInfoList  getUsers() throws HttpClientWebException, IOException;
 
   /**
    * Construct the URI for fetching the app-level config files manifest.

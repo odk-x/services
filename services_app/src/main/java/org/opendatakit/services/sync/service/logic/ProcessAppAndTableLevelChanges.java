@@ -18,10 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TableDefinitionEntry;
@@ -125,7 +122,7 @@ public class ProcessAppAndTableLevelChanges {
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
 
-    HashMap<String,Object> rolesAndDefaultGroupMap;
+    PrivilegesInfo rolesAndDefaultGroupMap;
     try {
       rolesAndDefaultGroupMap = sc.getSynchronizer().getUserRolesAndDefaultGroup();
     } catch (Exception e) {
@@ -136,9 +133,7 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    if ( rolesAndDefaultGroupMap == null ||
-         !rolesAndDefaultGroupMap.containsKey("roles") ||
-         !rolesAndDefaultGroupMap.containsKey("defaultGroup") ) {
+    if ( rolesAndDefaultGroupMap == null ) {
       log.w(TAG,
           "[verifyServerConfiguration] no rolesAndGroupsMap returned or missing roles and/or "
               + "defaultGroup keys -- perhaps an anonymousUser or older server?");
@@ -149,19 +144,18 @@ public class ProcessAppAndTableLevelChanges {
 
     String defaultGroup = "";
     {
-      Object o = rolesAndDefaultGroupMap.get("defaultGroup");
-      if ( o != null ) {
-        defaultGroup = o.toString();
+      String reportedDefaultGroup = rolesAndDefaultGroupMap.getDefaultGroup();
+      if ( reportedDefaultGroup != null ) {
+        defaultGroup = reportedDefaultGroup;
       }
     }
 
     String roleListJSONString = "";
     try {
-      Object o = rolesAndDefaultGroupMap.get("roles");
-      if ( o != null ) {
-        ArrayList<String> roleList = (ArrayList<String>) o;
-        if ( !roleList.isEmpty() ) {
-          roleListJSONString = ODKFileUtils.mapper.writeValueAsString(roleList);
+      List<String> reportedRoles = rolesAndDefaultGroupMap.getRoles();
+      if ( reportedRoles != null ) {
+        if ( !reportedRoles.isEmpty() ) {
+          roleListJSONString = ODKFileUtils.mapper.writeValueAsString(reportedRoles);
         }
       }
     } catch (JsonProcessingException e) {
@@ -176,7 +170,7 @@ public class ProcessAppAndTableLevelChanges {
     if (roleListJSONString.isEmpty()) {
       sc.setUsersList("");
     } else {
-      ArrayList<Map<String,Object>> usersList;
+      UserInfoList usersList;
       try {
         usersList = sc.getSynchronizer().getUsers();
       } catch (Exception e) {

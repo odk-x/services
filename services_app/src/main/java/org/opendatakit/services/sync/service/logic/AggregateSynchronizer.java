@@ -19,21 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.aggregate.odktables.rest.entity.AppNameList;
-import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.Row;
-import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
-import org.opendatakit.aggregate.odktables.rest.entity.RowList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
-import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.httpclientandroidlib.Header;
@@ -177,7 +163,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public HashMap<String,Object> getUserRolesAndDefaultGroup() throws HttpClientWebException,
+  public PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException,
       IOException {
 
     HttpGet request = new HttpGet();
@@ -192,15 +178,14 @@ public class AggregateSynchronizer implements Synchronizer {
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         // perhaps an older server (pre-v1.4.11) ?
-        return new HashMap<String,Object>();
+        return null;
       }
 
       String res = wrapper.convertResponseToString(response);
-      TypeReference ref = new TypeReference<HashMap<String,Object>>() { };
 
-      HashMap<String,Object> rolesAndDefaultGroupMap = ODKFileUtils.mapper.readValue(res, ref);
+      PrivilegesInfo privilegesInfo = ODKFileUtils.mapper.readValue(res, PrivilegesInfo.class);
 
-      return rolesAndDefaultGroupMap;
+      return privilegesInfo;
 
     } catch ( NetworkTransmissionException e ) {
       if (e.getCause() != null && e.getCause() instanceof ConnectTimeoutException) {
@@ -212,7 +197,7 @@ public class AggregateSynchronizer implements Synchronizer {
     } catch ( AccessDeniedException e ) {
       // this must be an anonymousUser
       if (sc.getAuthenticationType().equals(sc.getString(R.string.credential_type_none))) {
-        return new HashMap<String,Object>();
+        return null;
       }
       throw e;
     } finally {
@@ -224,7 +209,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public   ArrayList<Map<String,Object>>  getUsers() throws HttpClientWebException, IOException {
+  public   UserInfoList getUsers() throws HttpClientWebException, IOException {
 
     HttpGet request = new HttpGet();
     CloseableHttpResponse response = null;
@@ -238,13 +223,12 @@ public class AggregateSynchronizer implements Synchronizer {
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         // perhaps an older server (pre-v1.4.11) ?
-        return new ArrayList<Map<String,Object>>();
+        return new UserInfoList();
       }
 
       String res = wrapper.convertResponseToString(response);
-      TypeReference ref = new TypeReference<ArrayList<Map<String,Object>>>() { };
 
-      ArrayList<Map<String,Object>> rolesList = ODKFileUtils.mapper.readValue(res, ref);
+      UserInfoList rolesList = ODKFileUtils.mapper.readValue(res, UserInfoList.class);
 
       return rolesList;
 
@@ -257,7 +241,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
     } catch ( AccessDeniedException e ) {
       // this must be an anonymousUser
-      return new ArrayList<Map<String,Object>>();
+      return new UserInfoList();
     } finally {
       if ( response != null ) {
         EntityUtils.consumeQuietly(response.getEntity());

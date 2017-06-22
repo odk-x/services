@@ -279,12 +279,14 @@ public class HttpRestProtocolWrapper {
   }
 
   public URI constructListOfUserRolesAndDefaultGroupUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/grantedDefault");
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/privilegesInfo");
     return uri;
   }
 
   public URI constructListOfUsersUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/users/list");
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/usersInfo");
     return uri;
   }
 
