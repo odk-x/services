@@ -34,9 +34,9 @@ package fi.iki.elonen;
  */
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.BufferedInputStream;
@@ -258,7 +258,8 @@ public abstract class NanoHTTPD {
             if ( enableResponseLogging ) {
                 String fn = UUID.randomUUID().toString();
                 File loc = new File( ODKFileUtils.getOutputFolder(appName), fn);
-                Log.i("NanoHTTPD", "sendResponse(): response written to " + fn);
+                WebLogger.getLogger(appName).i("NanoHTTPD", "sendResponse(): response written to "
+                    + fn);
                 OutputStream s = new FileOutputStream(loc);
                 s.write(bao.toByteArray());
                 s.close();
