@@ -4164,7 +4164,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Test that the health of the table is CLEAN
     int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
-    assertTrue(CursorUtils.getTableHealthIsClean(health));
+    assertFalse(CursorUtils.getTableHealthHasConflictsOrCheckpoints(health));
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
