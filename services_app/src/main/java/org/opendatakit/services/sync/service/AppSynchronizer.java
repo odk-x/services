@@ -38,6 +38,8 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class AppSynchronizer {
@@ -248,6 +250,7 @@ public class AppSynchronizer {
 
     private void sync(SyncNotification syncProgress) {
 
+      SyncExecutionContext sharedContext = null;
       try {
         WebLogger.getLogger(appName).i(TAG, "APPNAME IN SERVICE: " + appName);
         WebLogger.getLogger(appName).i(TAG, "[SyncThread] begin SYNCING timestamp: " + System.currentTimeMillis());
@@ -267,7 +270,7 @@ public class AppSynchronizer {
         //
         // NOTE: server limits this string to 10 characters
 
-        SyncExecutionContext sharedContext = new SyncExecutionContext(application,
+        sharedContext = new SyncExecutionContext(application,
             application.getVersionCodeString(), appName, syncProgress, syncResult);
 
         Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -366,6 +369,15 @@ public class AppSynchronizer {
         status = SyncStatus.SYNC_COMPLETE;
       } else {
         status = finalStatus;
+      }
+
+      HashMap<String,Object> deviceInfo = sharedContext.getDeviceInfo();
+      deviceInfo.put("status", status.name());
+      try {
+        sharedContext.getSynchronizer().publishDeviceInformation(deviceInfo);
+      } catch (IOException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
+        WebLogger.getLogger(appName).e(TAG, "Unable to publish device info to server");
       }
 
       // stop the in-progress notification and report an overall success/failure

@@ -392,4 +392,14 @@ public interface Synchronizer {
    */
   void publishTableSyncStatus(TableResource tableResource, Map<String, Object> statusJSON)
       throws HttpClientWebException, IOException;
+
+  /**
+   * Report this device's information to the server. Done once all sync activity has completed.
+   *
+   * @param infoJSON
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void publishDeviceInformation(Map<String, Object> infoJSON)
+      throws HttpClientWebException, IOException;
 }

@@ -20,6 +20,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -31,6 +32,7 @@ import org.opendatakit.database.service.*;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -79,6 +81,8 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String password;
   private final String installationId;
 
+  private final String deviceId;
+
   private final SyncNotification syncProgress;
 
   // set this later
@@ -105,7 +109,12 @@ public class SyncExecutionContext implements SynchronizerStatus {
     this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
+
     this.installationId = props.getProperty(CommonToolProperties.KEY_INSTALLATION_ID);
+
+    PropertyManager propertyManager = new PropertyManager(context);
+    this.deviceId = propertyManager.getSingularProperty(PropertyManager.OR_DEVICE_ID_PROPERTY,
+        null);
 
     this.nMajorSyncSteps = 1;
     this.GRAINS_PER_MAJOR_SYNC_STEP = (OVERALL_PROGRESS_BAR_LENGTH / nMajorSyncSteps);
@@ -230,6 +239,23 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getInstallationId() {
     return installationId;
+  }
+
+  public HashMap<String,Object> getDeviceInfo() {
+    HashMap<String,Object> deviceInfo = new HashMap<>();
+    deviceInfo.put("androidSdkInt", Build.VERSION.SDK_INT);
+    deviceInfo.put("androidDevice", Build.DEVICE);
+    deviceInfo.put("androidDeviceDisplayString", Build.DISPLAY);
+    deviceInfo.put("androidBuildFingerprint", Build.FINGERPRINT);
+    deviceInfo.put("androidHardware", Build.HARDWARE);
+    deviceInfo.put("androidId", Build.ID);
+    deviceInfo.put("androidBrand", Build.BRAND);
+    deviceInfo.put("androidManufacturer", Build.MANUFACTURER);
+    deviceInfo.put("androidModel", Build.MODEL);
+    deviceInfo.put("androidHardware", Build.HARDWARE);
+    deviceInfo.put("androidProduct", Build.PRODUCT);
+    deviceInfo.put(PropertyManager.OR_DEVICE_ID_PROPERTY, deviceId );
+    return deviceInfo;
   }
 
   public void setUserIdRolesListAndDefaultGroup(String user_id, String rolesList, String

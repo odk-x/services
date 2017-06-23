@@ -290,6 +290,12 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
+  public URI constructDeviceInformationUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/installationInfo");
+    return uri;
+  }
+
   /**
    * Uri that will return the list of tables on the server.
    *
