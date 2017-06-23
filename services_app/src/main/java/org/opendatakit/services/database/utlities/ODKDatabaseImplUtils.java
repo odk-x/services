@@ -462,7 +462,7 @@ public class ODKDatabaseImplUtils {
           throw new IllegalStateException("should be impossible");
         }
 
-        isLocked = KeyValueStoreUtils.getBoolean(db.getAppName(), lockedList.get(0));
+        isLocked = KeyValueStoreUtils.getBoolean(lockedList.get(0));
       }
     }
 
@@ -491,7 +491,7 @@ public class ODKDatabaseImplUtils {
           throw new IllegalStateException("should be impossible");
         }
 
-        canCreateRow = KeyValueStoreUtils.getBoolean(db.getAppName(), canUnverifiedCreateList.get(0));
+        canCreateRow = KeyValueStoreUtils.getBoolean(canUnverifiedCreateList.get(0));
       }
     } else {
       canCreateRow = true;
@@ -5445,14 +5445,14 @@ public class ODKDatabaseImplUtils {
     }
 
     Boolean isLocked = (locked != null) ?
-        KeyValueStoreUtils.getBoolean(db.getAppName(), locked) :
+        KeyValueStoreUtils.getBoolean(locked) :
         null;
     if (isLocked == null) {
       isLocked = false;
     }
 
     Boolean canUnverifiedUserCreateRow = (unverifiedUserCanCreate != null) ?
-        KeyValueStoreUtils.getBoolean(db.getAppName(), unverifiedUserCanCreate) :
+        KeyValueStoreUtils.getBoolean(unverifiedUserCanCreate) :
         null;
     if (canUnverifiedUserCreateRow == null) {
       canUnverifiedUserCreateRow = true;

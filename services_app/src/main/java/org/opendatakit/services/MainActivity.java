@@ -36,7 +36,8 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 public class MainActivity extends Activity implements IAppAwareActivity {
 
-  private static final String TAG = MainActivity.class.getSimpleName();
+  // Used for logging
+  @SuppressWarnings("unused") private static final String TAG = MainActivity.class.getSimpleName();
 
   private int SYNC_ACTIVITY_RESULT_CODE = 10;
   private int VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE = 20;
