@@ -37,9 +37,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.KeyValueStoreColumns;
@@ -246,14 +244,10 @@ public class SubmissionProvider extends ContentProvider {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
     WebLoggerIf logger = WebLogger.getLogger(appName);
-    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
 
     final String tableId = segments.get(1);
     final String instanceId = segments.get(2);
     final String submissionInstanceId = segments.get(3);
-    
-    String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-    String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
 
     ActiveUserAndLocale aul =
         ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
@@ -541,7 +535,7 @@ public class SubmissionProvider extends ContentProvider {
               d.appendChild(e);
               e.setAttribute("id", tableId);
               DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
-                  tableId, instanceId, aul.activeUser, aul.locale, username, userEmail);
+                  tableId, instanceId, aul.activeUser, aul.locale);
 
               int idx = 0;
               Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");
