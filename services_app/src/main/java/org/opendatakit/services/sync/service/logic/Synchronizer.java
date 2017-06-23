@@ -28,6 +28,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
+import org.opendatakit.sync.service.TableLevelResult;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
@@ -50,13 +51,11 @@ public interface Synchronizer {
      * @param state
      * @param textResource
      * @param formatArgVals
-     * @param progressPercentage
-     *          0..100
-     * @param indeterminateProgress
-     *          true if progressGrains is N/A
+     * @param progressPercentage    0..100
+     * @param indeterminateProgress true if progressGrains is N/A
      */
     void updateNotification(SyncProgressState state, int textResource, Object[] formatArgVals,
-        Double progressPercentage, boolean indeterminateProgress);
+                            Double progressPercentage, boolean indeterminateProgress);
   }
 
   interface OnTablePropertiesChanged {
@@ -73,27 +72,26 @@ public interface Synchronizer {
 
   /**
    * Returns null OR an object containing:
-   *  {
-   *    "roles" : list of the roles and groups assigned to the user,
-   *    "defaultGroup" : defaultGroup the user belongs to
-   *  }
-   *
+   * {
+   * "roles" : list of the roles and groups assigned to the user,
+   * "defaultGroup" : defaultGroup the user belongs to
+   * }
+   * <p>
    * The server requires that the user be authenticated during this call. By
    * using the local context on all subsequent interactions, we are able to
    * use the negotiated identity when accessing subsequent APIs.
-   *
+   * <p>
    * The defaultGroup can be null and, if not null, must appear in the list
    * of roles and groups assigned to the user.
-   *
+   * <p>
    * If null is returned, then the user is either anonymous or the server is old.
    * In either case, the user should be treated as an anonymous user.
    *
    * @return
    * @throws HttpClientWebException
    * @throws IOException
-     */
-  PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException,
-      IOException;
+   */
+  PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException, IOException;
 
   /**
    * If this user is a registered user with Tables Super-user, Administer Tables,
@@ -106,8 +104,8 @@ public interface Synchronizer {
    * @return
    * @throws HttpClientWebException
    * @throws IOException
-    */
-  UserInfoList  getUsers() throws HttpClientWebException, IOException;
+   */
+  UserInfoList getUsers() throws HttpClientWebException, IOException;
 
   /**
    * Construct the URI for fetching the app-level config files manifest.
@@ -126,6 +124,7 @@ public interface Synchronizer {
 
   /**
    * Construct the URI for the Realized Table (tableId & schemaETag)
+   *
    * @param tableId
    * @param schemaETag
    * @return
@@ -175,14 +174,11 @@ public interface Synchronizer {
   /**
    * Assert that a table with the given id and schema exists on the server.
    *
-   * @param tableId
-   *          the unique identifier of the table
-   * @param schemaETag
-   *          the current schemaETag for the table
-   * @param columns
-   *          an array of the columns for this table.
+   * @param tableId    the unique identifier of the table
+   * @param schemaETag the current schemaETag for the table
+   * @param columns    an array of the columns for this table.
    * @return the TableResource for the table (the server may return different
-   *         SyncTag values)
+   * SyncTag values)
    * @throws HttpClientWebException
    * @throws IOException
    */
@@ -192,8 +188,7 @@ public interface Synchronizer {
   /**
    * Delete the table with the given id from the server.
    *
-   * @param table
-   *          the realizedTable resource to delete
+   * @param table the realizedTable resource to delete
    * @throws HttpClientWebException
    * @throws IOException
    */
@@ -208,8 +203,8 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
-  ChangeSetList getChangeSets(TableResource tableResource, String dataETag) throws
-      HttpClientWebException, IOException;
+  ChangeSetList getChangeSets(TableResource tableResource, String dataETag)
+      throws HttpClientWebException, IOException;
 
   /**
    * Retrieve the change set for the indicated dataETag
@@ -222,30 +217,26 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly, String websafeResumeCursor)
+  RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly,
+                               String websafeResumeCursor)
       throws HttpClientWebException, IOException;
 
   /**
    * Retrieve changes in the server state since the last synchronization.
    *
-   * @param tableResource
-   *          the TableResource from the server for a tableId
-   * @param dataETag
-   *          tracks the last dataETag successfully pulled into
-   *          the local data table. Fetches changes after that dataETag.
-   * @param websafeResumeCursor
-   *          either null or a value used to resume a prior query.
-   * @param fetchLimit
-   *          the number of rows that should be returned in one chunk.
-   *          Used to limit memory usage during sync and presumably improve
-   *          performance.
-   *          
+   * @param tableResource       the TableResource from the server for a tableId
+   * @param dataETag            tracks the last dataETag successfully pulled into
+   *                            the local data table. Fetches changes after that dataETag.
+   * @param websafeResumeCursor either null or a value used to resume a prior query.
+   * @param fetchLimit          the number of rows that should be returned in one chunk.
+   *                            Used to limit memory usage during sync and presumably improve
+   *                            performance.
    * @return an RowResourceList of the changes on the server since that dataETag.
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowResourceList getUpdates(TableResource tableResource, String dataETag, String
-      websafeResumeCursor, int fetchLimit)
+  RowResourceList getUpdates(TableResource tableResource, String dataETag,
+                             String websafeResumeCursor, int fetchLimit)
       throws HttpClientWebException, IOException;
 
   /**
@@ -254,8 +245,7 @@ public interface Synchronizer {
    * The dataETag for the changeSet made by this call is returned to the
    * caller via the RowOutcomeList.
    *
-   * @param tableResource
-   *          the TableResource from the server for a tableId
+   * @param tableResource              the TableResource from the server for a tableId
    * @param orderedColumns
    * @param rowsToInsertUpdateOrDelete
    * @return null if the server's dataETag is different than ours and we need to re-pull server
@@ -263,8 +253,8 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns,
-      List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete) throws HttpClientWebException, IOException;
+  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete)
+      throws HttpClientWebException, IOException;
 
   /**
    * Request the app-level manifest. This uses a NOT_MODIFIED header to detect
@@ -272,15 +262,15 @@ public interface Synchronizer {
    * expected to update the ETag after they have made the device match the
    * content reported by the server (or vice-versa on a push).
    *
-   * @param lastKnownLocalAppLevelManifestETag  the app-level file manifest etag we last knew of.
-   * @param serverReportedAppLevelETag  the app-level file manifest etag found in TableResourceList
+   * @param lastKnownLocalAppLevelManifestETag the app-level file manifest etag we last knew of.
+   * @param serverReportedAppLevelETag         the app-level file manifest etag found in TableResourceList
    * @param pushLocalFiles
    * @return
    * @throws HttpClientWebException
    * @throws IOException
    */
-  FileManifestDocument getAppLevelFileManifest(
-      String lastKnownLocalAppLevelManifestETag, String serverReportedAppLevelETag, boolean pushLocalFiles)
+  FileManifestDocument getAppLevelFileManifest(String lastKnownLocalAppLevelManifestETag, String serverReportedAppLevelETag,
+                                               boolean pushLocalFiles)
       throws HttpClientWebException, IOException;
 
   /**
@@ -290,22 +280,22 @@ public interface Synchronizer {
    * content reported by the server (or vice-versa on a push).
    *
    * @param tableId
-   * @param lastKnownLocalTableLevelManifestETag  the table-level file manifest etag we last knew.
-   * @param serverReportedTableLevelETag  the table-level file manifest etag found in
-   *                                      TableResourceList
+   * @param lastKnownLocalTableLevelManifestETag the table-level file manifest etag we last knew.
+   * @param serverReportedTableLevelETag         the table-level file manifest etag found in
+   *                                             TableResourceList
    * @param pushLocalFiles
    * @return
    * @throws IOException
    * @throws HttpClientWebException
    */
-  FileManifestDocument getTableLevelFileManifest(String tableId,
-      String lastKnownLocalTableLevelManifestETag, String serverReportedTableLevelETag,
-      boolean pushLocalFiles) throws IOException, HttpClientWebException;
+  FileManifestDocument getTableLevelFileManifest(String tableId, String lastKnownLocalTableLevelManifestETag,
+                                                 String serverReportedTableLevelETag, boolean pushLocalFiles)
+      throws IOException, HttpClientWebException;
 
   /**
    * Get the manifest for the row attachments for the given tableId and row (instance) Id.
    * Use the attachmentState and localRowAttachmentHash to qualify the ETag to use.
-   *
+   * <p>
    * This uses a NOT_MODIFIED header to detect
    * not-changed status. However, it does not update that value. The caller is
    * expected to update the ETag after they have made the device match the
@@ -314,17 +304,15 @@ public interface Synchronizer {
    * @param serverInstanceFileUri
    * @param tableId
    * @param instanceId
-   * @param attachmentState that we are trying to enforce.
+   * @param attachmentState                    that we are trying to enforce.
    * @param lastKnownLocalRowLevelManifestETag the eTag for the manifest we last had
    * @return
    * @throws HttpClientWebException
    * @throws IOException
    */
-  FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri,
-      String tableId, String instanceId, SyncAttachmentState attachmentState,
-      String lastKnownLocalRowLevelManifestETag) throws
-      HttpClientWebException,
-      IOException;
+  FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri, String tableId, String instanceId,
+                                               SyncAttachmentState attachmentState, String lastKnownLocalRowLevelManifestETag)
+      throws HttpClientWebException, IOException;
 
   /**
    * Download a file from the given Uri and store it in the destFile.
@@ -346,7 +334,6 @@ public interface Synchronizer {
   void deleteConfigFile(File localFile) throws HttpClientWebException, IOException;
 
   /**
-   *
    * @param localFile
    * @return
    * @throws HttpClientWebException
@@ -355,7 +342,6 @@ public interface Synchronizer {
   void uploadConfigFile(File localFile) throws HttpClientWebException, IOException;
 
   /**
-   *
    * @param file
    * @param instanceFileUri
    * @throws HttpClientWebException
@@ -364,18 +350,16 @@ public interface Synchronizer {
   void uploadInstanceFile(File file, URI instanceFileUri) throws HttpClientWebException, IOException;
 
   /**
-   *
    * @param serverInstanceFileUri
    * @param tableId
    * @param instanceId
    * @param rowpathUri
    * @return
    */
-  CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri,
-      String tableId, String instanceId, String rowpathUri);
+  CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri, String tableId, String instanceId,
+                                                            String rowpathUri);
 
   /**
-   *
    * @param batch
    * @param serverInstanceFileUri
    * @param instanceId
@@ -383,11 +367,11 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
-  void uploadInstanceFileBatch(List<CommonFileAttachmentTerms> batch,
-      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
+  void uploadInstanceFileBatch(List<CommonFileAttachmentTerms> batch, String serverInstanceFileUri,
+                               String instanceId, String tableId)
+      throws HttpClientWebException, IOException;
 
   /**
-   *
    * @param filesToDownload
    * @param serverInstanceFileUri
    * @param instanceId
@@ -396,5 +380,16 @@ public interface Synchronizer {
    * @throws IOException
    */
   void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
-      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException;
+                                 String serverInstanceFileUri, String instanceId, String tableId)
+      throws HttpClientWebException, IOException;
+
+  /**
+   * Report the sync status for this device to the server
+   * @param tableResource
+   * @param statusJSON
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void publishTableSyncStatus(TableResource tableResource, Map<String, Object> statusJSON)
+      throws HttpClientWebException, IOException;
 }

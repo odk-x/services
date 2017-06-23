@@ -77,6 +77,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String googleAccount;
   private final String username;
   private final String password;
+  private final String installationId;
 
   private final SyncNotification syncProgress;
 
@@ -104,6 +105,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
     this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
+    this.installationId = props.getProperty(CommonToolProperties.KEY_INSTALLATION_ID);
 
     this.nMajorSyncSteps = 1;
     this.GRAINS_PER_MAJOR_SYNC_STEP = (OVERALL_PROGRESS_BAR_LENGTH / nMajorSyncSteps);
@@ -224,6 +226,10 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getPassword() {
     return password;
+  }
+
+  public String getInstallationId() {
+    return installationId;
   }
 
   public void setUserIdRolesListAndDefaultGroup(String user_id, String rolesList, String

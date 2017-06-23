@@ -15,8 +15,6 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.*;
@@ -1137,4 +1135,29 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
+  @Override
+  public void publishTableSyncStatus(TableResource resource, Map<String, Object> statusMap)
+      throws HttpClientWebException, IOException {
+
+    // build request
+    URI uri = wrapper.constructRealizedTableIdSyncStatusUri(resource.getTableId(),
+        resource.getSchemaETag());
+    CloseableHttpResponse response = null;
+    HttpPost request = new HttpPost();
+    wrapper.buildJsonContentJsonResponseRequest(uri, request);
+
+    // and augment with info about the
+    HttpEntity entity = new GzipCompressingEntity(
+        new StringEntity(ODKFileUtils.mapper.writeValueAsString(statusMap), Charset.forName("UTF-8")));
+    request.setEntity(entity);
+
+    try {
+      response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
+    } finally {
+      if (response != null) {
+        EntityUtils.consumeQuietly(response.getEntity());
+        response.close();
+      }
+    }
+  }
 }

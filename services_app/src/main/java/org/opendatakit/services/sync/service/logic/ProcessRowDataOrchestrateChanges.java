@@ -18,10 +18,7 @@ package org.opendatakit.services.sync.service.logic;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.database.data.BaseTable;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -38,6 +35,7 @@ import org.opendatakit.sync.service.TableLevelResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -166,6 +164,53 @@ public class ProcessRowDataOrchestrateChanges {
 
       synchronizeTableDataRowsAndAttachments(te, orderedDefns, displayName,
           attachmentState);
+
+      // report our table-level sync status up to the server.
+      TableLevelResult tlr = sc.getTableLevelResult(tableId);
+      try {
+
+        int checkpoints = 0;
+        int conflicts = 0;
+        int rows = 0;
+        try {
+          db = sc.getDatabase();
+          // get counts of checkpoints, conflicts and rows in the table
+          BaseTable t = sc.getDatabaseService().arbitrarySqlQuery(sc.getAppName(), db, null,
+              "SELECT sum(case when " + DataTableColumns.SAVEPOINT_TYPE +
+                  " IS NULL THEN 1 ELSE 0 END) as n_checkpoints,"
+                  + " sum(case when " + DataTableColumns.CONFLICT_TYPE +
+                  " IS NOT NULL THEN 1 ELSE 0 END) as n_dblconflicts,"
+                  + " count(*) as n_rows"
+                  + " FROM " + tableId, null, null, null );
+          if ( t.getNumberOfRows() == 1 ) {
+            Row row = t.getRowAtIndex(0);
+            String checkpointStr = row.getDataByKey("n_checkpoints");
+            String dblconflictsStr = row.getDataByKey("n_dblconflicts");
+            String rowsStr = row.getDataByKey("n_rows");
+            checkpoints = (checkpointStr == null) ? 0 : Integer.valueOf(checkpointStr);
+            conflicts = (dblconflictsStr == null) ? 0 : Integer.valueOf(dblconflictsStr) / 2;
+            rows = (rowsStr == null) ? 0 : Integer.valueOf(rowsStr);
+          }
+        } finally {
+          sc.releaseDatabase(db);
+          db = null;
+        }
+
+        // get sync status details
+        HashMap<String, Object> statusMap = tlr.getStatusMap();
+        statusMap.put("localNumCheckpoints", checkpoints);
+        statusMap.put("localNumConflicts", conflicts);
+        statusMap.put("localNumRows", rows);
+        sc.getSynchronizer().publishTableSyncStatus(tableResource, statusMap);
+      } catch (Exception e) {
+        log.e(
+            TAG,
+            "synchronizeDataRowsAndAttachments - unable to report sync status: "
+                + tableId);
+        log.printStackTrace(e);
+        return;
+      }
+
       sc.incMajorSyncStep();
     }
   }

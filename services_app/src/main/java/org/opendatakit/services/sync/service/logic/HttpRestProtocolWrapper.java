@@ -363,6 +363,12 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
+  public URI constructRealizedTableIdSyncStatusUri(String tableId, String schemaETag) {
+    URI uri = normalizeUri(sc.getAggregateUri(), getTablesUriFragment() + tableId + "/ref/" +
+        schemaETag + "/installationStatus");
+    return uri;
+  }
+
   public URI constructTableDiffChangeSetsUri(String tableIdDiffUri, String fromDataETag) {
     URI uri = normalizeUri(tableIdDiffUri, "/changeSets");
 
@@ -524,6 +530,7 @@ public class HttpRestProtocolWrapper {
     // report our locale... (not currently used by server)
     request.addHeader("Accept-Language", Locale.getDefault().getLanguage());
     request.addHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER, ApiConstants.OPEN_DATA_KIT_VERSION);
+    request.addHeader(ApiConstants.OPEN_DATA_KIT_INSTALLATION_HEADER, sc.getInstallationId());
     request.addHeader(ApiConstants.ACCEPT_CONTENT_ENCODING_HEADER, ApiConstants.GZIP_CONTENT_ENCODING);
     request.addHeader(HttpHeaders.USER_AGENT, sc.getUserAgent());
 
