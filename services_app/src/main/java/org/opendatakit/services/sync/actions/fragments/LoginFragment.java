@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +36,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.TableHealthInfo;
+import org.opendatakit.database.service.TableHealthStatus;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.services.application.Services;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -50,8 +61,7 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -278,6 +288,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          return;
       }
 
+      verifyTableHealth();
       updateCredentialsUI();
       perhapsEnableButtons();
       updateInterface();
@@ -895,6 +906,88 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          throw new IllegalStateException("appName not yet initialized");
       }
       return mAppName;
+   }
+
+   private void verifyTableHealth() {
+      WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [verifyTableHealth]");
+
+      OdkConnectionInterface db = null;
+      DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
+
+      List<String> checkpointTables = new LinkedList<>();
+      List<String> conflictTables = new LinkedList<>();
+      boolean hasChanges = false;
+
+      try {
+         // +1 referenceCount if db is returned (non-null)
+         db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+             .getConnection(getAppName(), dbHandleName);
+         List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+
+         for (String tableId : tableIds) {
+            int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
+
+            if (CursorUtils.getTableHealthIsClean(health)) {
+               continue;
+            }
+
+            if (!hasChanges && CursorUtils.getTableHealthHasChanges(health)) {
+               hasChanges = true;
+            }
+
+            if (CursorUtils.getTableHealthHasConflicts(health)) {
+               conflictTables.add(tableId);
+            }
+
+            if (CursorUtils.getTableHealthHasCheckpoints(health)) {
+               checkpointTables.add(tableId);
+            }
+         }
+      } finally {
+         if (db != null) {
+            // release the reference...
+            // this does not necessarily close the db handle
+            // or terminate any pending transaction
+            db.releaseReference();
+         }
+      }
+
+      WebLogger.getLogger(getAppName()).i(TAG,
+          "[" + getId() + "] [verifyTableHealth] " + "summary:\n\tUnsynced changes present: "
+              + hasChanges + "\n\tNumber of conflict rows present: " + conflictTables.size()
+              + "\n\tNumber of checkpoint rows present: " + checkpointTables.size());
+
+      // TODO: Add UI to tell user we're about to resolve checkpoints and conflicts
+      // TODO: Deal with conflicts and checkpoints (desktop file)
+
+      if (hasChanges) {
+         promptToResolveChanges();
+      }
+   }
+
+   private void promptToResolveChanges() {
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setTitle(R.string.sync_pending_changes);
+      builder.setMessage(R.string.resolve_pending_changes);
+      builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            dialog.dismiss();
+            // Do nothing and continue to login screen
+         }
+      });
+      builder.setNegativeButton(R.string.resolve_with_sync, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            dialog.dismiss();
+
+            // Launch the Sync activity to sync your changes.
+            // TODO: Can we check if we just came from sync and if so just return to that?
+            Intent i = new Intent(getActivity(), SyncActivity.class);
+            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+            startActivity(i);
+         }
+      });
+      AlertDialog dialog = builder.create();
+      dialog.show();
    }
 
 }
