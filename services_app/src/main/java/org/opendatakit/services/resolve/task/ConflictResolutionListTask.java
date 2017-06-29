@@ -61,11 +61,11 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
         try {
 
           if ( mTakeLocal ) {
-            ODKDatabaseImplUtils.get()
+            ODKDatabaseImplUtils
                 .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
                     aul.activeUser, aul.rolesList, aul.locale);
           } else {
-            ODKDatabaseImplUtils.get()
+            ODKDatabaseImplUtils
                 .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
                     aul.activeUser, aul.locale);
           }

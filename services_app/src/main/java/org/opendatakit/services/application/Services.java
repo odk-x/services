@@ -17,6 +17,9 @@ package org.opendatakit.services.application;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 
+/**
+ * The application object
+ */
 public class Services extends ToolAwareApplication {
 
   @Override

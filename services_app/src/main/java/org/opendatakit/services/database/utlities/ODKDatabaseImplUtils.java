@@ -17,48 +17,24 @@ package org.opendatakit.services.database.utlities;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.opendatakit.aggregate.odktables.rest.ConflictType;
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
-import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
+import org.opendatakit.aggregate.odktables.rest.*;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.RoleConsts;
-import org.opendatakit.database.data.BaseTable;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.TableDefinitionEntry;
-import org.opendatakit.database.data.TableMetaDataEntries;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.QueryBounds;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.provider.ChoiceListColumns;
-import org.opendatakit.provider.ColumnDefinitionsColumns;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.provider.FormsColumns;
-import org.opendatakit.provider.InstanceColumns;
-import org.opendatakit.provider.KeyValueStoreColumns;
-import org.opendatakit.provider.SyncETagColumns;
-import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.provider.*;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
@@ -67,22 +43,18 @@ import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 
-public class ODKDatabaseImplUtils {
+/**
+ * TODO what does this class do?
+ */
+public final class ODKDatabaseImplUtils {
 
-  private static final String t = "ODKDatabaseImplUtils";
+  private static final String TAG = ODKDatabaseImplUtils.class.getSimpleName();
 
   /**
    * Constants to minimize creation of String objects on the stack.
-   *
+   * <p>
    * Used with StringBuilder to reduce GC overhead
    */
   private static final String K_SELECT_FROM = "SELECT * FROM ";
@@ -94,126 +66,23 @@ public class ODKDatabaseImplUtils {
   private static final String K_LIMIT = " LIMIT ";
   private static final String K_OFFSET = " OFFSET ";
 
-  private static final String K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM = TableDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
+  private static final String K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM =
+      TableDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
 
-  private static final String K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM = ColumnDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
+  private static final String K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM =
+      ColumnDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
 
-  private static final String K_KVS_TABLE_ID_EQUALS_PARAM = KeyValueStoreColumns.TABLE_ID + S_EQUALS_PARAM;
-  private static final String K_KVS_PARTITION_EQUALS_PARAM = KeyValueStoreColumns.PARTITION + S_EQUALS_PARAM;
-  private static final String K_KVS_ASPECT_EQUALS_PARAM = KeyValueStoreColumns.ASPECT + S_EQUALS_PARAM;
+  private static final String K_KVS_TABLE_ID_EQUALS_PARAM =
+      KeyValueStoreColumns.TABLE_ID + S_EQUALS_PARAM;
+  private static final String K_KVS_PARTITION_EQUALS_PARAM =
+      KeyValueStoreColumns.PARTITION + S_EQUALS_PARAM;
+  private static final String K_KVS_ASPECT_EQUALS_PARAM =
+      KeyValueStoreColumns.ASPECT + S_EQUALS_PARAM;
   private static final String K_KVS_KEY_EQUALS_PARAM = KeyValueStoreColumns.KEY + S_EQUALS_PARAM;
 
   private static final String K_DATATABLE_ID_EQUALS_PARAM = DataTableColumns.ID + S_EQUALS_PARAM;
-
-  /**
-   * The rolesList expansion is very time consuming.
-   * Implement a simple 1-deep cache and a
-   * special expansion of the privileged user roles list.
-   */
-  private static String cachedRolesList;
-  private static List<String> cachedRolesArray;
   private static final List<String> cachedAdminRolesArray;
   private static final TypeReference<ArrayList<String>> arrayListTypeReference;
-
-  static {
-    arrayListTypeReference = new TypeReference<ArrayList<String>>() {};
-
-    ArrayList<String> rolesArray = null;
-    {
-      try {
-        rolesArray = ODKFileUtils.mapper.readValue(RoleConsts.ADMIN_ROLES_LIST,
-            arrayListTypeReference);
-      } catch (IOException e) {
-        throw new IllegalStateException("this should never happen");
-      }
-    }
-    cachedAdminRolesArray = Collections.unmodifiableList(rolesArray);
-  }
-
-  private static List<String> getRolesArray(String rolesList) {
-
-    if ( rolesList == null || rolesList.length() == 0 ) {
-      return null;
-    } else if ( RoleConsts.ADMIN_ROLES_LIST.equals(rolesList) ) {
-      return cachedAdminRolesArray;
-    } else if ( cachedRolesList != null && cachedRolesList.equals(rolesList) ) {
-      return cachedRolesArray;
-    }
-    // figure out whether we have a privileged user or not
-    ArrayList<String> rolesArray = null;
-    {
-      try {
-        rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
-      } catch (IOException e) {
-        throw new IllegalStateException("this should never happen");
-      }
-    }
-    cachedRolesArray = Collections.unmodifiableList(rolesArray);
-    cachedRolesList = rolesList;
-    return cachedRolesArray;
-  }
-
-
-  public enum AccessColumnType {
-    NO_EFFECTIVE_ACCESS_COLUMN,
-    LOCKED_EFFECTIVE_ACCESS_COLUMN,
-    UNLOCKED_EFFECTIVE_ACCESS_COLUMN }
-
-  public static class AccessContext {
-    public final AccessColumnType accessColumnType;
-    public final boolean canCreateRow;
-    public final String activeUser;
-    // true if user is a super-user or administrator
-    public final boolean isPrivilegedUser;
-    public final boolean isUnverifiedUser;
-    private final List<String> rolesArray;
-    private final List<String> groupArray;
-
-    AccessContext(AccessColumnType accessColumnType, boolean canCreateRow, String activeUser,
-        List<String> rolesArray) {
-      if ( activeUser == null ) {
-        throw new IllegalStateException("activeUser cannot be null!");
-      }
-      this.accessColumnType = accessColumnType;
-      this.canCreateRow = canCreateRow;
-      this.activeUser = activeUser;
-      this.rolesArray = rolesArray;
-      this.groupArray = new ArrayList<String>();
-
-      if ( rolesArray == null ) {
-        this.isPrivilegedUser = false;
-        this.isUnverifiedUser = true;
-      } else {
-        this.isPrivilegedUser = rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-            rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
-        this.isUnverifiedUser = false;
-
-        for(String role : rolesArray) {
-          if(role.startsWith("GROUP_"));
-            groupArray.add(role);
-        }
-      }
-    }
-
-    public boolean hasRole(String role) {
-      return (rolesArray == null) ? false : rolesArray.contains(role);
-    }
-
-    public AccessContext cloneAsPrivilegedUser() {
-
-
-      // figure out whether we have a privileged user or not
-      List<String> rolesArray = getRolesArray(RoleConsts.ADMIN_ROLES_LIST);
-
-      AccessContext that = new AccessContext(accessColumnType, true, activeUser, rolesArray);
-      return that;
-    }
-
-    public List<String> getGroupsArray() {
-      return groupArray;
-    }
-  }
-
   /*
    * These are the columns that are present in any row in the database. Each row
    * should have these in addition to the user-defined columns. If you add a
@@ -221,68 +90,66 @@ public class ODKDatabaseImplUtils {
    * statement, which can't be programmatically created easily.
    */
   private static final List<String> ADMIN_COLUMNS;
-
   /**
    * These are the columns that should be exported
    */
   private static final List<String> EXPORT_COLUMNS;
-
   /**
    * When a KVS change is made, enforce in the database layer that the
    * value_type of some KVS entries is a specific type.  Log an error
    * if the user attempts to do something differently, but correct
    * the error. This is largely for migration / forward compatibility.
    */
-  private static final ArrayList<Object[]> knownKVSValueTypeRestrictions = new ArrayList<Object[]>();
-
+  private static final Collection<Object[]> knownKVSValueTypeRestrictions = new ArrayList<>();
   /**
-   * Same as above, but quick access via the key.
-   * For now, we know that the keys are all unique.
+   * Same as above, but quick access via the key. For now, we know that the keys are all unique.
    * Eventually this might need to be a MultiMap.
    */
-  private static final TreeMap<String, ArrayList<Object[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<String, ArrayList<Object[]>>();
+  private static final Map<String, ArrayList<Object[]>> keyToKnownKVSValueTypeRestrictions = new TreeMap<>();
+  /**
+   * The rolesList expansion is very time consuming.
+   * Implement a simple 1-deep cache and a
+   * special expansion of the privileged user roles list.
+   */
+  private static String cachedRolesList = null;
+  private static List<String> cachedRolesArray = null;
+  private static ODKDatabaseImplUtils databaseUtil = new ODKDatabaseImplUtils();
 
-  private static void updateKeyToKnownKVSValueTypeRestrictions(Object[] field) {
-    ArrayList<Object[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
-    if (fields == null) {
-      fields = new ArrayList<Object[]>();
-      keyToKnownKVSValueTypeRestrictions.put((String) field[2], fields);
+  static {
+    arrayListTypeReference = new TypeReference<ArrayList<String>>() {
+    };
+
+    ArrayList<String> rolesArray;
+    {
+      try {
+        rolesArray = ODKFileUtils.mapper
+            .readValue(RoleConsts.ADMIN_ROLES_LIST, arrayListTypeReference);
+      } catch (IOException ignored) {
+        throw new IllegalStateException("this should never happen");
+      }
     }
-    fields.add(field);
+    cachedAdminRolesArray = Collections.unmodifiableList(rolesArray);
   }
 
   static {
-    ArrayList<String> adminColumns = new ArrayList<String>();
-    adminColumns.add(DataTableColumns.ID);
-    adminColumns.add(DataTableColumns.ROW_ETAG);
-    adminColumns.add(DataTableColumns.SYNC_STATE); // not exportable
-    adminColumns.add(DataTableColumns.CONFLICT_TYPE); // not exportable
-    adminColumns.add(DataTableColumns.DEFAULT_ACCESS);
-    adminColumns.add(DataTableColumns.ROW_OWNER);
-    adminColumns.add(DataTableColumns.GROUP_READ_ONLY);
-    adminColumns.add(DataTableColumns.GROUP_MODIFY);
-    adminColumns.add(DataTableColumns.GROUP_PRIVILEGED);
-    adminColumns.add(DataTableColumns.FORM_ID);
-    adminColumns.add(DataTableColumns.LOCALE);
-    adminColumns.add(DataTableColumns.SAVEPOINT_TYPE);
-    adminColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-    adminColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
+    List<String> adminColumns = new ArrayList<>(
+        Arrays.asList(DataTableColumns.ID, DataTableColumns.ROW_ETAG, DataTableColumns.SYNC_STATE,
+            // not exportable
+            DataTableColumns.CONFLICT_TYPE, // not exportable
+            DataTableColumns.DEFAULT_ACCESS, DataTableColumns.ROW_OWNER,
+            DataTableColumns.GROUP_READ_ONLY, DataTableColumns.GROUP_MODIFY,
+            DataTableColumns.GROUP_PRIVILEGED, DataTableColumns.FORM_ID, DataTableColumns.LOCALE,
+            DataTableColumns.SAVEPOINT_TYPE, DataTableColumns.SAVEPOINT_TIMESTAMP,
+            DataTableColumns.SAVEPOINT_CREATOR));
     Collections.sort(adminColumns);
     ADMIN_COLUMNS = Collections.unmodifiableList(adminColumns);
 
-    ArrayList<String> exportColumns = new ArrayList<String>();
-    exportColumns.add(DataTableColumns.ID);
-    exportColumns.add(DataTableColumns.ROW_ETAG);
-    exportColumns.add(DataTableColumns.DEFAULT_ACCESS);
-    exportColumns.add(DataTableColumns.ROW_OWNER);
-    exportColumns.add(DataTableColumns.GROUP_READ_ONLY);
-    exportColumns.add(DataTableColumns.GROUP_MODIFY);
-    exportColumns.add(DataTableColumns.GROUP_PRIVILEGED);
-    exportColumns.add(DataTableColumns.FORM_ID);
-    exportColumns.add(DataTableColumns.LOCALE);
-    exportColumns.add(DataTableColumns.SAVEPOINT_TYPE);
-    exportColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-    exportColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
+    List<String> exportColumns = new ArrayList<>(Arrays
+        .asList(DataTableColumns.ID, DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ACCESS,
+            DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY,
+            DataTableColumns.GROUP_MODIFY, DataTableColumns.GROUP_PRIVILEGED,
+            DataTableColumns.FORM_ID, DataTableColumns.LOCALE, DataTableColumns.SAVEPOINT_TYPE,
+            DataTableColumns.SAVEPOINT_TIMESTAMP, DataTableColumns.SAVEPOINT_CREATOR));
     Collections.sort(exportColumns);
     EXPORT_COLUMNS = Collections.unmodifiableList(exportColumns);
 
@@ -377,19 +244,59 @@ public class ODKDatabaseImplUtils {
     AndroidConnectFactory.configure();
   }
 
-  private static ODKDatabaseImplUtils databaseUtil = new ODKDatabaseImplUtils();
-
   static {
     // register a state-reset manipulator for 'databaseUtil' field.
     StaticStateManipulator.get().register(new IStaticFieldManipulator() {
 
-      @Override public void reset() {
+      @Override
+      public void reset() {
         databaseUtil = new ODKDatabaseImplUtils();
       }
 
     });
   }
 
+  private ODKDatabaseImplUtils() {
+  }
+
+  private static List<String> getRolesArray(String rolesList) {
+
+    if (rolesList == null || rolesList.isEmpty()) {
+      return null;
+    } else if (RoleConsts.ADMIN_ROLES_LIST.equals(rolesList)) {
+      return cachedAdminRolesArray;
+    } else if (rolesList.equals(cachedRolesList)) {
+      return cachedRolesArray;
+    }
+    // figure out whether we have a privileged user or not
+    ArrayList<String> rolesArray;
+    {
+      try {
+        rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
+      } catch (IOException ignored) {
+        throw new IllegalStateException("this should never happen");
+      }
+    }
+    cachedRolesArray = Collections.unmodifiableList(rolesArray);
+    cachedRolesList = rolesList;
+    return cachedRolesArray;
+  }
+
+  private static void updateKeyToKnownKVSValueTypeRestrictions(Object[] field) {
+    // I agree with the linter here, this is suspicious
+    ArrayList<Object[]> fields = keyToKnownKVSValueTypeRestrictions.get(field[2]);
+    if (fields == null) {
+      fields = new ArrayList<>();
+      keyToKnownKVSValueTypeRestrictions.put((String) field[2], fields);
+    }
+    fields.add(field);
+  }
+
+  /**
+   * Public accessor for the database util object
+   *
+   * @return a databaseutil object
+   */
   public static ODKDatabaseImplUtils get() {
     return databaseUtil;
   }
@@ -397,13 +304,56 @@ public class ODKDatabaseImplUtils {
   /**
    * For mocking -- supply a mocked object.
    *
-   * @param util
+   * @param util the util to set
    */
   public static void set(ODKDatabaseImplUtils util) {
     databaseUtil = util;
   }
 
-  private ODKDatabaseImplUtils() {
+  private static boolean sameValue(Object a, Object b) {
+    if (b == null) {
+      return a == null;
+    } else {
+      return b.equals(a);
+    }
+  }
+
+  /**
+   * Thin wrapper for {@link #commonTableDefn(OdkConnectionInterface)}
+   *
+   * @param db an active database connection to use
+   */
+  public static void initializeDatabase(OdkConnectionInterface db) {
+    commonTableDefn(db);
+  }
+
+  private static void commonTableDefn(OdkConnectionInterface db) {
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
+    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
+    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME), null);
+    WebLogger.getLogger(db.getAppName())
+        .i("commonTableDefn", DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
+    db.execSQL(
+        ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME),
+        null);
+    WebLogger.getLogger(db.getAppName())
+        .i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
+    db.execSQL(
+        KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME),
+        null);
+    WebLogger.getLogger(db.getAppName())
+        .i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
+    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME),
+        null);
+    WebLogger.getLogger(db.getAppName())
+        .i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
+    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME), null);
+    WebLogger.getLogger(db.getAppName())
+        .i("commonTableDefn", DatabaseConstants.CHOICE_LIST_TABLE_NAME);
+    db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME), null);
+    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
   }
 
   /**
@@ -412,7 +362,7 @@ public class ODKDatabaseImplUtils {
    *
    * @return
    */
-  public List<String> getAdminColumns() {
+  public static List<String> getAdminColumns() {
     return ADMIN_COLUMNS;
   }
 
@@ -422,136 +372,69 @@ public class ODKDatabaseImplUtils {
    *
    * @return
    */
-  public List<String> getExportColumns() {
+  public static List<String> getExportColumns() {
     return EXPORT_COLUMNS;
   }
-  
-  private String applyQueryBounds(String sqlCommand, QueryBounds sqlQueryBounds) {
+
+  private static String applyQueryBounds(String sqlCommand, QueryBounds sqlQueryBounds) {
     if (sqlCommand == null || sqlQueryBounds == null) {
       return sqlCommand;
     }
 
-    StringBuilder b = new StringBuilder();
-    b.append(sqlCommand).append(K_LIMIT).append(sqlQueryBounds.mLimit)
-        .append(K_OFFSET).append(sqlQueryBounds.mOffset);
-    return b.toString();
-  }
-
-  public AccessContext getAccessContext(OdkConnectionInterface db, String tableId,
-                                        String activeUser, String rolesList ) {
-
-    // figure out whether we have a privileged user or not
-    List<String> rolesArray = getRolesArray(rolesList);
-
-    if ( tableId == null ) {
-      return new AccessContext(AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN, false, activeUser, rolesArray);
-    }
-    if ( tableId.trim().length() == 0 ) {
-      throw new IllegalArgumentException("tableId can be null but cannot be blank");
-    }
-
-    Boolean isLocked = false;
-    {
-      ArrayList<KeyValueStoreEntry> lockedList = this
-          .getTableMetadata(db, tableId, KeyValueStoreConstants.PARTITION_TABLE,
-              LocalKeyValueStoreConstants.TableSecurity.ASPECT,
-              LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED).getEntries();
-
-      if (lockedList.size() != 0) {
-        if (lockedList.size() != 1) {
-          throw new IllegalStateException("should be impossible");
-        }
-
-        isLocked = KeyValueStoreUtils.getBoolean(lockedList.get(0));
-      }
-    }
-
-    AccessColumnType accessColumnType = (isLocked ?
-        AccessColumnType.LOCKED_EFFECTIVE_ACCESS_COLUMN :
-        AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN);
-    boolean canCreateRow = false;
-    if ( isLocked ) {
-      // only super-user or tables administrator can create rows in locked tables.
-      if (rolesList != null) {
-        canCreateRow = rolesList.contains(RoleConsts.ROLE_SUPER_USER) ||
-                rolesList.contains(RoleConsts.ROLE_ADMINISTRATOR);
-      }
-
-    } else if ( rolesList == null ) {
-      // this is the unverified user case. By default, they can create rows.
-      // Administrator can use table properties to manage that capability.
-      canCreateRow = true;
-      ArrayList<KeyValueStoreEntry> canUnverifiedCreateList = this.getTableMetadata(db, tableId,
-          KeyValueStoreConstants.PARTITION_TABLE,
-          LocalKeyValueStoreConstants.TableSecurity.ASPECT,
-          LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE).getEntries();
-
-      if ( canUnverifiedCreateList.size() != 0 ) {
-        if ( canUnverifiedCreateList.size() != 1 ) {
-          throw new IllegalStateException("should be impossible");
-        }
-
-        canCreateRow = KeyValueStoreUtils.getBoolean(canUnverifiedCreateList.get(0));
-      }
-    } else {
-      canCreateRow = true;
-    }
-
-    return new AccessContext (accessColumnType, canCreateRow, activeUser, rolesArray);
+    return sqlCommand + K_LIMIT + sqlQueryBounds.mLimit + K_OFFSET + sqlQueryBounds.mOffset;
   }
 
   /**
    * Optionally add the _effective_access column to the SELECT statement.
    *
-   * @param b
-   * @param wrappedSqlArgs
-   * @param accessContext
+   * @param b              A stringbuilder to add rights to
+   * @param wrappedSqlArgs a collection to put groups into
+   * @param accessContext  An AccessContext object that gets what kind of rights the user has
    */
-  private void buildAccessRights(StringBuilder b, ArrayList<Object> wrappedSqlArgs,
-                  AccessContext accessContext ) {
+  private static void buildAccessRights(StringBuilder b, Collection<Object> wrappedSqlArgs,
+      AccessContext accessContext) {
 
-    if ( accessContext.accessColumnType == AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN ) {
+    if (accessContext.accessColumnType == AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN) {
       return;
     }
 
     b.append(", ");
-    if ( accessContext.isPrivilegedUser ) {
+    if (accessContext.isPrivilegedUser) {
       // privileged user
       b.append("\"rwdp\" as ").append(DataTableColumns.EFFECTIVE_ACCESS);
-    } else if ( accessContext.isUnverifiedUser ) {
+    } else if (accessContext.isUnverifiedUser) {
       // un-verified user or anonymous user
-      if ( accessContext.accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN ) {
+      if (accessContext.accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN) {
         // unlocked tables have r, rw (modify) and rwd (full defaultAccess or new_row) options
-        b.append("case when T.").append(DataTableColumns.SYNC_STATE)
-            .append("= \"").append(SyncState.new_row.name()).append("\" then \"rwd\" ")
-            .append(" when T.").append(DataTableColumns.DEFAULT_ACCESS)
-            .append("= \"").append(RowFilterScope.Access.FULL.name()).append("\" then \"rwd\" ")
-            .append(" when T.").append(DataTableColumns.DEFAULT_ACCESS)
-            .append("= \"").append(RowFilterScope.Access.MODIFY.name()).append("\" then \"rw\" ")
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+            .append(SyncState.new_row.name()).append("\" then \"rwd\" ").append(" when T.")
+            .append(DataTableColumns.DEFAULT_ACCESS).append("= \"")
+            .append(RowFilterScope.Access.FULL.name()).append("\" then \"rwd\" ").append(" when T.")
+            .append(DataTableColumns.DEFAULT_ACCESS).append("= \"")
+            .append(RowFilterScope.Access.MODIFY.name()).append("\" then \"rw\" ")
             .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
       } else {
         // locked tables have just rwd (new_row) and r options
-        b.append("case when T.").append(DataTableColumns.SYNC_STATE)
-            .append("= \"").append(SyncState.new_row.name()).append("\" then \"rwd\" ")
+        b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
+            .append(SyncState.new_row.name()).append("\" then \"rwd\" ")
             .append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
       }
     } else {
       // ordinary user
-      if ( accessContext.accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN ) {
+      if (accessContext.accessColumnType == AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN) {
         // unlocked tables have r, rw (modify), rwd (full defaultAccess), rwdp (rowOwner,
         // groupPrivileged) options
         b.append("case when T.").append(DataTableColumns.SYNC_STATE).append("= \"")
-            .append(SyncState.new_row.name()).append("\" then \"rwdp\" ")
-            .append(" when T.").append(DataTableColumns.ROW_OWNER).append("= ?")
-            .append(" then \"rwdp\" ");
+            .append(SyncState.new_row.name()).append("\" then \"rwdp\" ").append(" when T.")
+            .append(DataTableColumns.ROW_OWNER).append("= ?").append(" then \"rwdp\" ");
 
         wrappedSqlArgs.add(accessContext.activeUser);
 
         // Add in _group_privileged
         List<String> groups = accessContext.getGroupsArray();
-        for(String group : groups) {
+        for (String group : groups) {
           b.append(" when T.").append(DataTableColumns.GROUP_PRIVILEGED).append(" = ?")
-            .append(" then \"rwdp\" ");
+              .append(" then \"rwdp\" ");
           wrappedSqlArgs.add(group);
         }
 
@@ -562,9 +445,9 @@ public class ODKDatabaseImplUtils {
             .append(RowFilterScope.Access.MODIFY.name()).append("\" then \"rw\" ");
 
         // Add in _group_modify
-        for(String group : groups) {
+        for (String group : groups) {
           b.append(" when T.").append(DataTableColumns.GROUP_MODIFY).append(" = ?")
-            .append(" then \"rw\" ");
+              .append(" then \"rw\" ");
           wrappedSqlArgs.add(group);
         }
 
@@ -578,14 +461,14 @@ public class ODKDatabaseImplUtils {
 
         // Add in _group_privileged
         List<String> groups = accessContext.getGroupsArray();
-        for(String group : groups) {
+        for (String group : groups) {
           b.append(" when T.").append(DataTableColumns.GROUP_PRIVILEGED).append(" = ?")
-                  .append(" then \"rwdp\" ");
+              .append(" then \"rwdp\" ");
           wrappedSqlArgs.add(group);
         }
 
         b.append(" when T.").append(DataTableColumns.ROW_OWNER).append("= ?")
-                .append(" then \"rw\" ");
+            .append(" then \"rw\" ");
         wrappedSqlArgs.add(accessContext.activeUser);
 
         b.append(" else \"r\" end as ").append(DataTableColumns.EFFECTIVE_ACCESS);
@@ -596,18 +479,18 @@ public class ODKDatabaseImplUtils {
   /**
    * Perform a raw query with bind parameters.
    *
-   * @param db
-   * @param sqlCommand
-   * @param selectionArgs
+   * @param db             an open database connection to use
+   * @param sqlCommand     the sql query to run
+   * @param selectionArgs  The args to replace the ?s in the final query
    * @param sqlQueryBounds offset and max number of rows to return (zero is infinite)
    * @param accessContext  for managing what effective accesses to return
-   * @return
+   * @return A cursor with the results of the first row of the query
    */
-  public Cursor rawQuery(OdkConnectionInterface db, String sqlCommand, Object[] selectionArgs,
-      QueryBounds sqlQueryBounds, AccessContext accessContext) {
+  public static Cursor rawQuery(OdkConnectionInterface db, String sqlCommand,
+      Object[] selectionArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
 
     Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
-    if (c.moveToFirst() ) {
+    if (c.moveToFirst()) {
       // see if we have the columns needed to apply row-level filtering
       boolean hasDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS) != -1;
       boolean hasOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER) != -1;
@@ -618,8 +501,8 @@ public class ODKDatabaseImplUtils {
 
       c.close();
 
-      if ( !(hasDefaultAccess && hasOwner && hasSyncState &&
-             hasGroupReadOnly && hasGroupModify && hasGroupPrivileged) ) {
+      if (!(hasDefaultAccess && hasOwner && hasSyncState && hasGroupReadOnly && hasGroupModify
+          && hasGroupPrivileged)) {
         // nope. we require all 6 to apply row-level filtering
 
         // no need to filter this resultset
@@ -630,24 +513,22 @@ public class ODKDatabaseImplUtils {
 
       // augment query result list with the effective access controls for the row ("r", "rw", or "rwd")
       StringBuilder b = new StringBuilder();
-      ArrayList<Object> wrappedSqlArgs = new ArrayList<Object>();
+      Collection<Object> wrappedSqlArgs = new ArrayList<>();
 
       b.append("SELECT *");
       buildAccessRights(b, wrappedSqlArgs, accessContext);
       b.append(" FROM (").append(sqlCommand).append(") AS T");
-      if ( selectionArgs != null ) {
+      if (selectionArgs != null) {
         Collections.addAll(wrappedSqlArgs, selectionArgs);
       }
       // apply row-level visibility filter only if we are not privileged
       // privileged users see everything.
-      if ( !accessContext.isPrivilegedUser ) {
-        b.append(" WHERE T.")
-            .append(DataTableColumns.DEFAULT_ACCESS)
-            .append(" != \"").append(RowFilterScope.Access.HIDDEN.name()).append("\" OR T.")
-            .append(DataTableColumns.SYNC_STATE)
-            .append(" = \"").append(SyncState.new_row.name()).append("\"");
-        if (!accessContext.isUnverifiedUser && accessContext.activeUser != null &&
-            accessContext.hasRole(RoleConsts.ROLE_USER)) {
+      if (!accessContext.isPrivilegedUser) {
+        b.append(" WHERE T.").append(DataTableColumns.DEFAULT_ACCESS).append(" != \"")
+            .append(RowFilterScope.Access.HIDDEN.name()).append("\" OR T.")
+            .append(DataTableColumns.SYNC_STATE).append(" = \"").append(SyncState.new_row.name())
+            .append("\"");
+        if (!accessContext.isUnverifiedUser && accessContext.hasRole(RoleConsts.ROLE_USER)) {
           // visible if activeUser matches the filter value
           b.append(" OR T.").append(DataTableColumns.ROW_OWNER).append(" = ?");
           wrappedSqlArgs.add(accessContext.activeUser);
@@ -656,7 +537,7 @@ public class ODKDatabaseImplUtils {
         {
           // row is visible if group_read_only is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
-          for(String group : groups) {
+          for (String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_READ_ONLY).append(" = ?");
             wrappedSqlArgs.add(group);
           }
@@ -665,7 +546,7 @@ public class ODKDatabaseImplUtils {
         {
           // row is visible if group_modify is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
-          for(String group : groups) {
+          for (String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_MODIFY).append(" = ?");
             wrappedSqlArgs.add(group);
           }
@@ -674,7 +555,7 @@ public class ODKDatabaseImplUtils {
         {
           // row is visible if group_privileged is one of the groups the user belongs to.
           List<String> groups = accessContext.getGroupsArray();
-          for(String group : groups) {
+          for (String group : groups) {
             b.append(" OR T.").append(DataTableColumns.GROUP_PRIVILEGED).append(" = ?");
             wrappedSqlArgs.add(group);
           }
@@ -690,269 +571,132 @@ public class ODKDatabaseImplUtils {
     }
   }
 
+  /*
+   * Build the start of a create table statement -- specifies all the metadata
+   * columns. Caller must then add all the user-defined column definitions and
+   * closing parentheses.
+   */
+  private static void addMetadataFieldsToTableCreationStatement(StringBuilder b) {
+    /*
+     * Resulting string should be the following String createTableCmd =
+     * "CREATE TABLE IF NOT EXISTS " + tableId + " (" + DataTableColumns.ID +
+     * " TEXT NOT NULL, " + DataTableColumns.ROW_ETAG + " TEXT NULL, " +
+     * DataTableColumns.SYNC_STATE + " TEXT NOT NULL, " +
+     * DataTableColumns.CONFLICT_TYPE + " INTEGER NULL," +
+     * DataTableColumns.DEFAULT_ACCESS + " TEXT NULL," +
+     * DataTableColumns.ROW_OWNER + " TEXT NULL," +
+     * DataTableColumns.GROUP_READ_ONLY + " TEXT NULL," +
+     * DataTableColumns.GROUP_MODIFY + " TEXT NULL," +
+     * DataTableColumns.GROUP_PRIVILEGED + " TEXT NULL," +
+     * DataTableColumns.FORM_ID + " TEXT NULL," +
+     * DataTableColumns.LOCALE + " TEXT NULL," +
+     * DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL," +
+     * DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL," +
+     * DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL";
+     */
+
+    List<String> cols = getAdminColumns();
+
+    String endSeq = ", ";
+    for (int i = 0; i < cols.size(); ++i) {
+      if (i == cols.size() - 1) {
+        endSeq = "";
+      }
+      String colName = cols.get(i);
+      switch (colName) {
+      case DataTableColumns.ID:
+      case DataTableColumns.SYNC_STATE:
+      case DataTableColumns.SAVEPOINT_TIMESTAMP:
+        b.append(colName).append(" TEXT NOT NULL").append(endSeq);
+        continue;
+      case DataTableColumns.ROW_ETAG:
+      case DataTableColumns.DEFAULT_ACCESS:
+      case DataTableColumns.ROW_OWNER:
+      case DataTableColumns.GROUP_READ_ONLY:
+      case DataTableColumns.GROUP_MODIFY:
+      case DataTableColumns.GROUP_PRIVILEGED:
+      case DataTableColumns.FORM_ID:
+      case DataTableColumns.LOCALE:
+      case DataTableColumns.SAVEPOINT_TYPE:
+      case DataTableColumns.SAVEPOINT_CREATOR:
+        b.append(colName).append(" TEXT NULL").append(endSeq);
+        continue;
+      case DataTableColumns.CONFLICT_TYPE:
+        b.append(colName).append(" INTEGER NULL").append(endSeq);
+        continue;
+      default:
+      }
+    }
+  }
+
   /**
    * TESTING ONLY
    * <p/>
    * Perform a query with the given parameters.
    *
-   * @param db
-   * @param table
-   * @param columns
-   * @param selection
-   * @param selectionArgs
-   * @param groupBy
-   * @param having
-   * @param orderBy
-   * @param limit
-   * @return
+   * @param db            an open database connection to use
+   * @param columns       the columns to return from the query
+   * @param selection     TODO what is this?
+   * @param selectionArgs The strings to replace ?s in the query
+   * @param orderBy       the column to order by
+   * @param table         the table id
+   * @param groupBy       an array of elementKeys
+   * @param having        part of the sql query
+   * @param limit         the maximum number of rows to return
+   * @return a cursor with the result of the query
+   * @throws SQLiteException if there's a sqlite problem
    */
-  public Cursor queryDistinctForTest(OdkConnectionInterface db, String table, String[] columns,
-      String selection, Object[] selectionArgs, String groupBy, String having, String orderBy,
-      String limit) throws SQLiteException {
-    Cursor c = db
+  public static Cursor queryDistinctForTest(OdkConnectionInterface db, String table,
+      String[] columns, String selection, Object[] selectionArgs, String groupBy, String having,
+      String orderBy, String limit) throws SQLiteException {
+    return db
         .queryDistinct(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-    return c;
   }
 
   /**
    * TESTING ONLY
    *
-   * @param db
-   * @param table
-   * @param columns
-   * @param selection
-   * @param selectionArgs
-   * @param groupBy
-   * @param having
-   * @param orderBy
-   * @param limit
-   * @return
-   * @throws SQLiteException
+   * @param db            an open database connection to use
+   * @param columns       the columns to return from the query
+   * @param selection     TODO what is this?
+   * @param selectionArgs The strings to replace ?s in the query
+   * @param orderBy       the column to order by
+   * @param table         the table id
+   * @param groupBy       an array of elementKeys
+   * @param having        part of the sql query
+   * @param limit         the maximum number of rows to return
+   * @return a cursor with the result of the query
+   * @throws SQLiteException if there's a sqlite problem
    */
-  public Cursor queryForTest(OdkConnectionInterface db, String table, String[] columns, String
-      selection,
-      Object[] selectionArgs, String groupBy, String having, String orderBy, String limit)
-      throws SQLiteException {
-    Cursor c = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
-    return c;
-  }
-
-  /**
-   * Get a {@link BaseTable} for this table based on the given sql query. All
-   * columns from the table are returned.  Up to sqlLimit rows are returned
-   * (zero is infinite).
-   * <p/>
-   * The result set is filtered according to the supplied rolesList if there
-   * is a DEFAULT_ACCESS column present in the result set.
-   *
-   * @param db
-   * @param sqlCommand     the query to run
-   * @param sqlBindArgs    the selection parameters
-   * @param sqlCommand
-   * @param sqlQueryBounds offset and max number of rows to return (zero is infinite)
-   * @param accessContext  for managing what effective accesses to return
-   * @return
-   */
-  public BaseTable query(OdkConnectionInterface db, String tableId, String sqlCommand,
-      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
-
-    Cursor c = null;
-    try {
-      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
-      BaseTable table = buildBaseTable(db, c, tableId, accessContext.canCreateRow);
-      return table;
-    } finally {
-      if (c != null && !c.isClosed()) {
-        c.close();
-      }
-    }
-  }
-
-  /**
-   * Get a {@link BaseTable} for this table based on the given sql query. All
-   * columns from the table are returned.
-   * <p/>
-   * The number of rows returned are limited to no greater than the sqlLimit (zero is infinite).
-   *
-   * @param db
-   * @param sqlCommand     the query to run
-   * @param sqlBindArgs    the selection parameters
-   * @param sqlQueryBounds the number of rows to return (zero is infinite)
-   * @param accessContext  for managing what effective accesses to return
-   * @return
-   */
-  public BaseTable privilegedQuery(OdkConnectionInterface db, String tableId, String sqlCommand,
-      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
-
-    if (!accessContext.isPrivilegedUser) {
-      accessContext = accessContext.cloneAsPrivilegedUser();
-    }
-    return query(db, tableId, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
+  public static Cursor queryForTest(OdkConnectionInterface db, String table, String[] columns,
+      String selection, Object[] selectionArgs, String groupBy, String having, String orderBy,
+      String limit) throws SQLiteException {
+    return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
   }
 
   /**
    * Privileged execute of an arbitrary SQL command.
    * For obvious reasons, this is very dangerous!
-   *
+   * <p>
    * The sql command can be any valid SQL command that does not return a result set.
    * No data is returned (e.g., insert into table ... or similar).
    *
-   * @param db
-   * @param sqlCommand
-   * @param sqlBindArgs
+   * @param db          an open database connection to use
+   * @param sqlCommand  the raw query to execute
+   * @param sqlBindArgs the objects to replace the ?s in the query
    */
-  public void privilegedExecute(OdkConnectionInterface db, String sqlCommand, Object[]
-      sqlBindArgs) {
+  public static void privilegedExecute(OdkConnectionInterface db, String sqlCommand,
+      Object[] sqlBindArgs) {
     db.execSQL(sqlCommand, sqlBindArgs);
-  }
-
-  private BaseTable buildBaseTable(OdkConnectionInterface db, Cursor c, String tableId,
-      boolean canCreateRow) {
-
-    HashMap<String, Integer> mElementKeyToIndex = null;
-    String[] mElementKeyForIndex = null;
-
-    if (!c.moveToFirst()) {
-
-      // Attempt to retrieve the columns from the cursor.
-      // These may not be available if there were no rows returned.
-      // It depends upon the cursor implementation.
-      try {
-        int columnCount = c.getColumnCount();
-        mElementKeyForIndex = new String[columnCount];
-        mElementKeyToIndex = new HashMap<>(columnCount);
-        int i;
-
-        for (i = 0; i < columnCount; ++i) {
-          String columnName = c.getColumnName(i);
-          mElementKeyForIndex[i] = columnName;
-          mElementKeyToIndex.put(columnName, i);
-        }
-      } catch (Exception e) {
-        // ignore.
-      }
-
-      // if they were not available, declare an empty array.
-      if (mElementKeyForIndex == null) {
-        mElementKeyForIndex = new String[0];
-      }
-      c.close();
-
-      // we have no idea what the table should contain because it has no rows...
-      BaseTable table = new BaseTable(null, mElementKeyForIndex, mElementKeyToIndex, 0);
-      table.setEffectiveAccessCreateRow(canCreateRow);
-      return table;
-    }
-
-    int rowCount = c.getCount();
-    int columnCount = c.getColumnCount();
-
-    BaseTable table = null;
-
-    // These maps will map the element key to the corresponding index in
-    // either data or metadata. If the user has defined a column with the
-    // element key _my_data, and this column is at index 5 in the data
-    // array, dataKeyToIndex would then have a mapping of _my_data:5.
-    // The sync_state column, if present at index 7, would have a mapping
-    // in metadataKeyToIndex of sync_state:7.
-    mElementKeyForIndex = new String[columnCount];
-    mElementKeyToIndex = new HashMap<>(columnCount);
-
-    int i;
-
-    for (i = 0; i < columnCount; ++i) {
-      String columnName = c.getColumnName(i);
-      mElementKeyForIndex[i] = columnName;
-      mElementKeyToIndex.put(columnName, i);
-    }
-
-    table = new BaseTable(null, mElementKeyForIndex, mElementKeyToIndex, rowCount);
-
-    String[] rowData = new String[columnCount];
-    do {
-      // First get the user-defined data for this row.
-      for (i = 0; i < columnCount; i++) {
-        String value = CursorUtils.getIndexAsString(c, i);
-        rowData[i] = value;
-      }
-
-      Row nextRow = new Row(rowData.clone(), table);
-      table.addRow(nextRow);
-    } while (c.moveToNext());
-    c.close();
-
-    table.setEffectiveAccessCreateRow(canCreateRow);
-
-    if (tableId != null) {
-      table.setMetaDataRev(getTableDefinitionRevId(db, tableId));
-    }
-    return table;
-  }
-
-  /************** LOCAL ONLY TABLE OPERATIONS ***************/
-
-  /**
-   * Create a local only table and prepend the given id with an "L_"
-   *
-   * @param db
-   * @param tableId
-   * @param columns
-   * @return
-   */
-  public OrderedColumns createLocalOnlyTableWithColumns(OdkConnectionInterface db,
-      String tableId, List<Column> columns) {
-
-    boolean dbWithinTransaction = db.inTransaction();
-    boolean success = false;
-
-    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      createTableWithColumns(db, tableId, orderedDefs, false);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-      success = true;
-      return orderedDefs;
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-      if (!success) {
-
-        // Get the names of the columns
-        StringBuilder colNames = new StringBuilder();
-        if (columns != null) {
-          for (Column column : columns) {
-            colNames.append(" ").append(column.getElementKey()).append(",");
-          }
-          if (colNames != null && colNames.length() > 0) {
-            colNames.deleteCharAt(colNames.length() - 1);
-            WebLogger.getLogger(db.getAppName()).e(t,
-                "createLocalOnlyTableWithColumns: Error while adding table " + tableId
-                    + " with columns:" + colNames.toString());
-          }
-        } else {
-          WebLogger.getLogger(db.getAppName()).e(t,
-              "createLocalOnlyTableWithColumns: Error while adding table " + tableId
-                  + " with columns: null");
-        }
-      }
-    }
   }
 
   /**
    * Drop the given local only table
    *
-   * @param db
-   * @param tableId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
    */
-  public void deleteLocalOnlyTable(OdkConnectionInterface db,
-      String tableId) {
+  public static void deleteLocalOnlyTable(OdkConnectionInterface db, String tableId) {
 
     boolean dbWithinTransaction = db.inTransaction();
 
@@ -962,9 +706,7 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      StringBuilder b = new StringBuilder();
-      b.append("DROP TABLE IF EXISTS ").append(tableId).append(";");
-      db.execSQL(b.toString(), null);
+      db.execSQL("DROP TABLE IF EXISTS " + tableId + ";", null);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -980,20 +722,19 @@ public class ODKDatabaseImplUtils {
   /**
    * Insert a row into a local only table
    *
-   * @param db
-   * @param tableId
-   * @param rowValues
-   * @throws ActionNotAuthorizedException
+   * @param db        an open database connection to use
+   * @param tableId   the table to update
+   * @param rowValues the data for the new row
    */
-  public void insertLocalOnlyRow(OdkConnectionInterface db, String tableId,
-      ContentValues rowValues) throws IllegalArgumentException {
+  public static void insertLocalOnlyRow(OdkConnectionInterface db, String tableId,
+      ContentValues rowValues) {
 
     if (rowValues == null || rowValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
-    for ( String key : rowValues.keySet() ) {
+    Map<String, Object> cvDataTableVal = new HashMap<>();
+    for (String key : rowValues.keySet()) {
       cvDataTableVal.put(key, rowValues.get(key));
     }
 
@@ -1018,23 +759,21 @@ public class ODKDatabaseImplUtils {
   /**
    * Update a row in a local only table
    *
-   * @param db
-   * @param tableId
-   * @param rowValues
-   * @param whereClause
-   * @param bindArgs
-   * @throws ActionNotAuthorizedException
+   * @param db          an open database connection to use
+   * @param tableId     the table to update
+   * @param rowValues   the data to be written over the existing row
+   * @param whereClause a clause that should limit the query to only the row to be updated
+   * @param bindArgs    the values to replace the ?s in the query
    */
-  public void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
-      ContentValues rowValues, String whereClause, Object[] bindArgs)
-      throws IllegalArgumentException {
+  public static void updateLocalOnlyRow(OdkConnectionInterface db, String tableId,
+      ContentValues rowValues, String whereClause, Object[] bindArgs) {
 
     if (rowValues == null || rowValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
-    for ( String key : rowValues.keySet() ) {
+    Map<String, Object> cvDataTableVal = new HashMap<>();
+    for (String key : rowValues.keySet()) {
       cvDataTableVal.put(key, rowValues.get(key));
     }
 
@@ -1059,14 +798,13 @@ public class ODKDatabaseImplUtils {
   /**
    * Delete a row in a local only table
    *
-   * @param db
-   * @param tableId
-   * @param whereClause
-   * @param bindArgs
-   * @throws ActionNotAuthorizedException
+   * @param db          an open database connection to use
+   * @param tableId     the table to update
+   * @param whereClause a clause that should limit the query to only the rows to be deleted
+   * @param bindArgs    the values to replace the ?s in the query
    */
-  public void deleteLocalOnlyRow(OdkConnectionInterface db, String tableId, String whereClause,
-      Object[] bindArgs) {
+  public static void deleteLocalOnlyRow(OdkConnectionInterface db, String tableId,
+      String whereClause, Object[] bindArgs) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -1086,123 +824,11 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  /**
-   * Return the row(s) for the given tableId and rowId. If the row has
-   * checkpoints or conflicts, the returned BaseTable will have more than one
-   * Row returned. Otherwise, it will contain a single row.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @return
-   */
-  public BaseTable getRowsWithId(OdkConnectionInterface db, String tableId, String rowId,
-      String activeUser, String rolesList ) {
-
-    AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
-
-    BaseTable table = query(db, tableId, QueryUtil
-        .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
-            QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
-        accessContext);
-
-    return table;
-  }
-
-  /**
-   * Return the row(s) for the given tableId and rowId. If the row has
-   * checkpoints or conflicts, the returned BaseTable will have more than one
-   * Row returned. Otherwise, it will contain a single row.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @return
-   */
-  public BaseTable privilegedGetRowsWithId(OdkConnectionInterface db, String tableId, String
-      rowId, String activeUser ) {
-
-    AccessContext accessContext = getAccessContext(db, tableId, activeUser, RoleConsts
-        .ADMIN_ROLES_LIST);
-
-    BaseTable table = privilegedQuery(db, tableId, QueryUtil
-        .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
-            QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
-        accessContext);
-
-    return table;
-  }
-
-  /**
-   * Return the row with the most recent changes for the given tableId and rowId.
-   * If the rowId does not exist, it returns an empty BaseTable for this tableId.
-   * If the row has conflicts, it throws an exception. Otherwise, it returns the
-   * most recent checkpoint or non-checkpoint value; it will contain a single row.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @return
-   */
-  public BaseTable getMostRecentRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId, String activeUser, String rolesList) {
-
-    BaseTable table = getRowsWithId(db, tableId, rowId, activeUser, rolesList);
-
-    if (table.getNumberOfRows() == 0) {
-      return table;
-    }
-
-    // most recent savepoint timestamp...
-    BaseTable t = new BaseTable(table, Collections.singletonList(0));
-
-    if (hasConflictRows(t)) {
-      throw new IllegalStateException("row is in conflict");
-    }
-    return t;
-  }
-
-  /**
-   * Return the row with the most recent changes for the given tableId and rowId.
-   * If the rowId does not exist, it returns an empty BaseTable for this tableId.
-   * If the row has conflicts, it throws an exception. Otherwise, it returns the
-   * most recent checkpoint or non-checkpoint value; it will contain a single row.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @return
-   */
-  public BaseTable privilegedGetMostRecentRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId, String activeUser) {
-
-    BaseTable table = privilegedGetRowsWithId(db, tableId, rowId, activeUser);
-
-    if (table.getNumberOfRows() == 0) {
-      return table;
-    }
-
-    // most recent savepoint timestamp...
-    BaseTable t = new BaseTable(table, Collections.singletonList(0));
-
-    if (hasConflictRows(t)) {
-      throw new IllegalStateException("row is in conflict");
-    }
-    return t;
-  }
-
-  private boolean hasConflictRows(BaseTable table) {
+  private static boolean hasConflictRows(BaseTable table) {
     List<Row> rows = table.getRows();
     for (Row row : rows) {
       String conflictType = row.getDataByKey(DataTableColumns.CONFLICT_TYPE);
-      if (conflictType != null && conflictType.length() != 0) {
+      if (conflictType != null && !conflictType.isEmpty()) {
         return true;
       }
     }
@@ -1215,16 +841,14 @@ public class ODKDatabaseImplUtils {
    * non-managed tables. It does not access any metadata and therefore will not
    * report non-unit-of-retention (grouping) columns.
    *
-   * @param db
-   * @param tableId
-   * @return
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @return the list of column names in an array
    */
-  public String[] getAllColumnNames(OdkConnectionInterface db, String tableId) {
+  public static String[] getAllColumnNames(OdkConnectionInterface db, Object tableId) {
     Cursor cursor = null;
     try {
-      StringBuilder b = new StringBuilder();
-      b.append(K_SELECT_FROM).append(tableId).append(K_LIMIT).append("1");
-      cursor = db.rawQuery(b.toString(), null);
+      cursor = db.rawQuery(K_SELECT_FROM + tableId + K_LIMIT + "1", null);
       // If this query has been executed before, the cursor is created using the
       // previously-constructed PreparedStatement for the query. There is no actual
       // interaction with the database itself at the time the Cursor is constructed.
@@ -1236,8 +860,7 @@ public class ODKDatabaseImplUtils {
       cursor.getCount();
       // Otherwise, when cached, getting the column names doesn't call into the database
       // and will not, itself, detect that the table has been dropped.
-      String[] colNames = cursor.getColumnNames();
-      return colNames;
+      return cursor.getColumnNames();
     } finally {
       if (cursor != null && !cursor.isClosed()) {
         cursor.close();
@@ -1250,14 +873,12 @@ public class ODKDatabaseImplUtils {
    * for that table. Returns the unit-of-retention and non-unit-of-retention
    * (grouping) columns.
    *
-   * @param db
-   * @param tableId
-   * @return
+   * @param db      an open database connection to use
+   * @param tableId the table to query
+   * @return the list of non-admin columns in the table
    */
-  public OrderedColumns getUserDefinedColumns(OdkConnectionInterface db,
-      String tableId) {
-    ArrayList<Column> userDefinedColumns = new ArrayList<Column>();
-    String selection = K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM;
+  public static OrderedColumns getUserDefinedColumns(OdkConnectionInterface db, String tableId) {
+    ArrayList<Column> userDefinedColumns = new ArrayList<>();
     Object[] selectionArgs = { tableId };
     //@formatter:off
     String[] cols = {
@@ -1269,8 +890,9 @@ public class ODKDatabaseImplUtils {
     //@formatter:on
     Cursor c = null;
     try {
-      c = db.query(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, cols, selection, selectionArgs,
-          null, null, ColumnDefinitionsColumns.ELEMENT_KEY + " ASC", null);
+      c = db.query(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, cols,
+          K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM, selectionArgs, null, null,
+          ColumnDefinitionsColumns.ELEMENT_KEY + " ASC", null);
 
       int elemKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
       int elemNameIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_NAME);
@@ -1297,11 +919,11 @@ public class ODKDatabaseImplUtils {
   /**
    * Verifies that the tableId exists in the database.
    *
-   * @param db
-   * @param tableId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
    * @return true if table is listed in table definitions.
    */
-  public boolean hasTableId(OdkConnectionInterface db, String tableId) {
+  public static boolean hasTableId(OdkConnectionInterface db, String tableId) {
     Cursor c = null;
     try {
       //@formatter:off
@@ -1311,7 +933,7 @@ public class ODKDatabaseImplUtils {
       //@formatter:on
       // we know about the table...
       // tableId is the database table name...
-      return (c != null) && c.moveToFirst() && (c.getCount() != 0);
+      return c != null && c.moveToFirst() && c.getCount() != 0;
     } finally {
       if (c != null && !c.isClosed()) {
         c.close();
@@ -1328,17 +950,16 @@ public class ODKDatabaseImplUtils {
    * <li>TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS = 3</li>
    * <ul>
    *
-   * @param db
-   * @param tableId
-   * @return
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @return the table health
    */
-  public int getTableHealth(OdkConnectionInterface db, String tableId) {
+  public static int getTableHealth(OdkConnectionInterface db, String tableId) {
     StringBuilder b = new StringBuilder();
     b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
-        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts,")
-        .append("SUM(case when _sync_state is 'synced' then 0 when _sync_state is "
-            + "'synced_pending_files' then 0 else 1 end) as changes FROM ")
-        .append(tableId);
+        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts,").append(
+        "SUM(case when _sync_state is 'synced' then 0 when _sync_state is "
+            + "'synced_pending_files' then 0 else 1 end) as changes FROM ").append(tableId);
 
     Cursor c = null;
     try {
@@ -1379,11 +1000,11 @@ public class ODKDatabaseImplUtils {
   /**
    * Return all the tableIds in the database.
    *
-   * @param db
+   * @param db an open database connection to use
    * @return an ArrayList<String> of tableIds
    */
-  public ArrayList<String> getAllTableIds(OdkConnectionInterface db) {
-    ArrayList<String> tableIds = new ArrayList<String>();
+  public static ArrayList<String> getAllTableIds(OdkConnectionInterface db) {
+    ArrayList<String> tableIds = new ArrayList<>();
     Cursor c = null;
     try {
       c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME,
@@ -1394,7 +1015,7 @@ public class ODKDatabaseImplUtils {
         int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
         do {
           String tableId = c.getString(idxId);
-          if (tableId == null || tableId.length() == 0) {
+          if (tableId == null || tableId.isEmpty()) {
             c.close();
             throw new IllegalStateException("getAllTableIds: Unexpected tableId found!");
           }
@@ -1413,11 +1034,10 @@ public class ODKDatabaseImplUtils {
    * Drop the given tableId and remove all the files (both configuration and
    * data attachments) associated with that table.
    *
-   * @param db
-   * @param tableId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
    */
-  public void deleteTableAndAllData(OdkConnectionInterface db,
-      final String tableId) {
+  public static void deleteTableAndAllData(OdkConnectionInterface db, final String tableId) {
 
     SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
@@ -1430,25 +1050,23 @@ public class ODKDatabaseImplUtils {
       }
 
       // Drop the table used for the formId
-      StringBuilder b = new StringBuilder();
-      b.append("DROP TABLE IF EXISTS ").append(tableId).append(";");
-      db.execSQL(b.toString(), null);
+      db.execSQL("DROP TABLE IF EXISTS " + tableId + ";", null);
 
       // Delete the server sync ETags associated with this table
       seu.deleteAllSyncETagsForTableId(db, tableId);
 
       // Delete the table definition for the tableId
       {
-        String whereClause = K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM;
 
-        db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
+        db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM,
+            whereArgs);
       }
 
       // Delete the column definitions for this tableId
       {
-        String whereClause = K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM;
 
-        db.delete(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME, whereClause, whereArgs);
+        db.delete(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME,
+            K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM, whereArgs);
       }
 
       // Delete the uploads for the tableId
@@ -1459,9 +1077,9 @@ public class ODKDatabaseImplUtils {
 
       // Delete the values from the 4 key value stores
       {
-        String whereClause = K_KVS_TABLE_ID_EQUALS_PARAM;
 
-        db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
+        db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, K_KVS_TABLE_ID_EQUALS_PARAM,
+            whereArgs);
       }
 
       if (!dbWithinTransaction) {
@@ -1478,9 +1096,9 @@ public class ODKDatabaseImplUtils {
     String tableDir = ODKFileUtils.getTablesFolder(db.getAppName(), tableId);
     try {
       ODKFileUtils.deleteDirectory(new File(tableDir));
-    } catch (IOException e1) {
-      e1.printStackTrace();
-      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
+    } catch (IOException e) {
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e);
     }
 
     String assetsCsvDir = ODKFileUtils.getAssetsCsvFolder(db.getAppName());
@@ -1489,28 +1107,34 @@ public class ODKDatabaseImplUtils {
       if (file.exists()) {
         Collection<File> files = ODKFileUtils.listFiles(file, new IOFileFilter() {
 
-          @Override public boolean accept(File file) {
+          @Override
+          public boolean accept(File file) {
             String[] parts = file.getName().split("\\.");
-            return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (
-                parts.length == 2 || parts.length == 3 || (parts.length == 4 && parts[parts.length
-                    - 2].equals("properties"))));
+            //noinspection UnnecessaryParentheses
+            return (parts[0].equals(tableId) && "csv".equals(parts[parts.length - 1]) && (
+                parts.length == 2 || parts.length == 3 || (parts.length == 4 && "properties"
+                    .equals(parts[parts.length - 2]))));
           }
 
-          @Override public boolean accept(File dir, String name) {
+          @Override
+          public boolean accept(File dir, String name) {
             String[] parts = name.split("\\.");
-            return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (
-                parts.length == 2 || parts.length == 3 || (parts.length == 4 && parts[parts.length
-                    - 2].equals("properties"))));
+            //noinspection UnnecessaryParentheses
+            return (parts[0].equals(tableId) && "csv".equals(parts[parts.length - 1]) && (
+                parts.length == 2 || parts.length == 3 || (parts.length == 4 && "properties"
+                    .equals(parts[parts.length - 2]))));
           }
         }, new IOFileFilter() {
 
           // don't traverse into directories
-          @Override public boolean accept(File arg0) {
+          @Override
+          public boolean accept(File arg0) {
             return false;
           }
 
           // don't traverse into directories
-          @Override public boolean accept(File arg0, String arg1) {
+          @Override
+          public boolean accept(File arg0, String arg1) {
             return false;
           }
         });
@@ -1520,27 +1144,28 @@ public class ODKDatabaseImplUtils {
           ODKFileUtils.deleteQuietly(f);
         }
       }
-    } catch (IOException e1) {
-      e1.printStackTrace();
-      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
+    } catch (IOException e) {
+      WebLogger.getLogger(db.getAppName()).printStackTrace(e);
+      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e);
     }
   }
 
   /**
    * Update the schema and data-modification ETags of a given tableId.
    *
-   * @param db
-   * @param tableId
-   * @param schemaETag
-   * @param lastDataETag
+   * @param db           an open database connection to use
+   * @param tableId      the table to update
+   * @param schemaETag   TODO
+   * @param lastDataETag TODO
    */
-  public void privilegedUpdateTableETags(OdkConnectionInterface db, String tableId,
+  public static void privilegedUpdateTableETags(OdkConnectionInterface db, CharSequence tableId,
       String schemaETag, String lastDataETag) {
     if (tableId == null || tableId.length() <= 0) {
-      throw new IllegalArgumentException(t + ": application name and table name must be specified");
+      throw new IllegalArgumentException(
+          TAG + ": application name and table name must be specified");
     }
 
-    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
+    Map<String, Object> cvTableDef = new TreeMap<>();
     cvTableDef.put(TableDefinitionsColumns.SCHEMA_ETAG, schemaETag);
     cvTableDef.put(TableDefinitionsColumns.LAST_DATA_ETAG, lastDataETag);
 
@@ -1567,15 +1192,17 @@ public class ODKDatabaseImplUtils {
    * Update the timestamp of the last entirely-successful synchronization
    * attempt of this table.
    *
-   * @param db
-   * @param tableId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
    */
-  public void privilegedUpdateTableLastSyncTime(OdkConnectionInterface db, String tableId) {
+  public static void privilegedUpdateTableLastSyncTime(OdkConnectionInterface db,
+      CharSequence tableId) {
     if (tableId == null || tableId.length() <= 0) {
-      throw new IllegalArgumentException(t + ": application name and table name must be specified");
+      throw new IllegalArgumentException(
+          TAG + ": application name and table name must be specified");
     }
 
-    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
+    Map<String, Object> cvTableDef = new TreeMap<>();
     cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME,
         TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 
@@ -1602,21 +1229,20 @@ public class ODKDatabaseImplUtils {
    * ETag, the data-modification ETag, and the date-time of the last successful
    * sync of the table to the server.
    *
-   * @param db
-   * @param tableId
-   * @return
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @return the requested table definition entry
    */
-  public TableDefinitionEntry getTableDefinitionEntry(OdkConnectionInterface db, String tableId) {
+  public static TableDefinitionEntry getTableDefinitionEntry(OdkConnectionInterface db,
+      String tableId) {
 
     TableDefinitionEntry e = null;
     Cursor c = null;
     try {
-      StringBuilder b = new StringBuilder();
-      ArrayList<String> selArgs = new ArrayList<String>();
-      b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
+      Collection<String> selArgs = new ArrayList<>();
       selArgs.add(tableId);
 
-      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, b.toString(),
+      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, K_KVS_TABLE_ID_EQUALS_PARAM,
           selArgs.toArray(new String[selArgs.size()]), null, null, null, null);
       if (c.moveToFirst()) {
         int idxSchemaETag = c.getColumnIndex(TableDefinitionsColumns.SCHEMA_ETAG);
@@ -1643,16 +1269,21 @@ public class ODKDatabaseImplUtils {
     return e;
   }
 
-  public String getTableDefinitionRevId(OdkConnectionInterface db, String tableId) {
+  /**
+   * gets the rev id of the given table
+   *
+   * @param db      a database connection to use
+   * @param tableId the id of the table to get the rev id for
+   * @return the rev id of the requested table
+   */
+  public static String getTableDefinitionRevId(OdkConnectionInterface db, String tableId) {
     String revId = null;
     Cursor c = null;
     try {
-      StringBuilder b = new StringBuilder();
-      ArrayList<String> selArgs = new ArrayList<String>();
-      b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
+      Collection<String> selArgs = new ArrayList<>();
       selArgs.add(tableId);
 
-      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, b.toString(),
+      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, K_KVS_TABLE_ID_EQUALS_PARAM,
           selArgs.toArray(new String[selArgs.size()]), null, null, null, null);
       if (c.moveToFirst()) {
         int idxRevId = c.getColumnIndex(TableDefinitionsColumns.REV_ID);
@@ -1672,73 +1303,18 @@ public class ODKDatabaseImplUtils {
     return revId;
   }
 
-  /*
-   * Build the start of a create table statement -- specifies all the metadata
-   * columns. Caller must then add all the user-defined column definitions and
-   * closing parentheses.
-   */
-  private void addMetadataFieldsToTableCreationStatement(StringBuilder b) {
-    /*
-     * Resulting string should be the following String createTableCmd =
-     * "CREATE TABLE IF NOT EXISTS " + tableId + " (" + DataTableColumns.ID +
-     * " TEXT NOT NULL, " + DataTableColumns.ROW_ETAG + " TEXT NULL, " +
-     * DataTableColumns.SYNC_STATE + " TEXT NOT NULL, " +
-     * DataTableColumns.CONFLICT_TYPE + " INTEGER NULL," +
-     * DataTableColumns.DEFAULT_ACCESS + " TEXT NULL," +
-     * DataTableColumns.ROW_OWNER + " TEXT NULL," +
-     * DataTableColumns.GROUP_READ_ONLY + " TEXT NULL," +
-     * DataTableColumns.GROUP_MODIFY + " TEXT NULL," +
-     * DataTableColumns.GROUP_PRIVILEGED + " TEXT NULL," +
-     * DataTableColumns.FORM_ID + " TEXT NULL," +
-     * DataTableColumns.LOCALE + " TEXT NULL," +
-     * DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL," +
-     * DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL," +
-     * DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL";
-     */
-
-    List<String> cols = getAdminColumns();
-
-    String endSeq = ", ";
-    for (int i = 0; i < cols.size(); ++i) {
-      if (i == cols.size() - 1) {
-        endSeq = "";
-      }
-      String colName = cols.get(i);
-      //@formatter:off
-      if (colName.equals(DataTableColumns.ID)
-          || colName.equals(DataTableColumns.SYNC_STATE)
-          || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-        b.append(colName).append(" TEXT NOT NULL").append(endSeq);
-      } else if (colName.equals(DataTableColumns.ROW_ETAG)
-          || colName.equals(DataTableColumns.DEFAULT_ACCESS)
-          || colName.equals(DataTableColumns.ROW_OWNER)
-          || colName.equals(DataTableColumns.GROUP_READ_ONLY)
-          || colName.equals(DataTableColumns.GROUP_MODIFY)
-          || colName.equals(DataTableColumns.GROUP_PRIVILEGED)
-          || colName.equals(DataTableColumns.FORM_ID)
-          || colName.equals(DataTableColumns.LOCALE)
-          || colName.equals(DataTableColumns.SAVEPOINT_TYPE)
-          || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
-        b.append(colName).append(" TEXT NULL").append(endSeq);
-      } else if (colName.equals(DataTableColumns.CONFLICT_TYPE)) {
-        b.append(colName).append(" INTEGER NULL").append(endSeq);
-      }
-      //@formatter:on
-    }
-  }
-
   /**
    * Ensure that the kvs entry is valid.
    *
-   * @param appName
-   * @param tableId
-   * @param kvs
-   * @throws IllegalArgumentException
+   * @param appName the app name
+   * @param tableId the table to update
+   * @param kvs     a key value store entry to validate
+   * @throws IllegalArgumentException if there was a problem validating the kvs entry
    */
-  private void validateKVSEntry(String appName, String tableId, KeyValueStoreEntry kvs)
+  private static void validateKVSEntry(String appName, String tableId, KeyValueStoreEntry kvs)
       throws IllegalArgumentException {
 
-    if (kvs.tableId == null || kvs.tableId.trim().length() == 0) {
+    if (kvs.tableId == null || kvs.tableId.trim().isEmpty()) {
       throw new IllegalArgumentException("KVS entry has a null or empty tableId");
     }
 
@@ -1746,22 +1322,22 @@ public class ODKDatabaseImplUtils {
       throw new IllegalArgumentException("KVS entry has a mismatched tableId");
     }
 
-    if (kvs.partition == null || kvs.partition.trim().length() == 0) {
+    if (kvs.partition == null || kvs.partition.trim().isEmpty()) {
       throw new IllegalArgumentException("KVS entry has a null or empty partition");
     }
 
-    if (kvs.aspect == null || kvs.aspect.trim().length() == 0) {
+    if (kvs.aspect == null || kvs.aspect.trim().isEmpty()) {
       throw new IllegalArgumentException("KVS entry has a null or empty aspect");
     }
 
-    if (kvs.key == null || kvs.key.trim().length() == 0) {
+    if (kvs.key == null || kvs.key.trim().isEmpty()) {
       throw new IllegalArgumentException("KVS entry has a null or empty key");
     }
 
     // a null value will remove the entry from the KVS
-    if (kvs.value != null && kvs.value.trim().length() != 0) {
+    if (kvs.value != null && !kvs.value.trim().isEmpty()) {
       // validate the type....
-      if (kvs.type == null || kvs.type.trim().length() == 0) {
+      if (kvs.type == null || kvs.type.trim().isEmpty()) {
         throw new IllegalArgumentException("KVS entry has a null or empty type");
       }
 
@@ -1780,12 +1356,10 @@ public class ODKDatabaseImplUtils {
               // TODO: detect whether the value conforms to the specified type.
               enforceKVSValueType(kvs, ElementDataType.valueOf(kvs.type));
 
-              WebLogger.getLogger(appName)
-                  .w("validateKVSEntry", "Client Error: KVS value type reset from " + type +
-                      " to " + restriction[0] +
-                      " table: " + kvs.tableId +
-                      " partition: " + restriction[1] +
-                      " key: " + restriction[2]);
+              WebLogger.getLogger(appName).w("validateKVSEntry",
+                  "Client Error: KVS value type reset from " + type + " to " + restriction[0]
+                      + " table: " + kvs.tableId + " partition: " + restriction[1] + " key: "
+                      + restriction[2]);
             }
           }
         }
@@ -1793,49 +1367,6 @@ public class ODKDatabaseImplUtils {
     } else {
       // makes later tests easier...
       kvs.value = null;
-    }
-  }
-
-  private void enforceKVSValueType(KeyValueStoreEntry e, ElementDataType type) {
-    e.type = type.name();
-    if (e.value != null) {
-      if (type == ElementDataType.integer) {
-        // TODO: can add matcher if we want to
-      } else if (type == ElementDataType.number) {
-        // TODO: can add matcher if we want to
-      } else if (type == ElementDataType.bool) {
-        // TODO: can add matcher if we want to
-      } else if (type == ElementDataType.string ||
-          type == ElementDataType.rowpath || type == ElementDataType.configpath) {
-        // anything goes here...
-      } else if (type == ElementDataType.array) {
-        // minimal test for valid representation
-        if (!e.value.startsWith("[") || !e.value.endsWith("]")) {
-          throw new IllegalArgumentException("array value type is not an array! " +
-              "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
-              " Key: " + e.key);
-        }
-      } else if (type == ElementDataType.object) {
-        // this could be any value type
-        // TODO: test for any of the above values...
-        if (e.value.startsWith("\"") && !e.value.endsWith("\"")) {
-          throw new IllegalArgumentException("object value type is a malformed string! " +
-              "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
-              " Key: " + e.key);
-        }
-        if (e.value.startsWith("[") && !e.value.endsWith("]")) {
-          throw new IllegalArgumentException("object value type is a malformed array! " +
-              "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
-              " Key: " + e.key);
-        }
-        if (e.value.startsWith("{") && !e.value.endsWith("}")) {
-          throw new IllegalArgumentException("object value type is a malformed object! " +
-              "TableId: " + e.tableId + " Partition: " + e.partition + " Aspect: " + e.aspect +
-              " Key: " + e.key);
-        }
-      } else {
-        // and who knows what goes here...
-      }
     }
   }
 
@@ -1847,18 +1378,57 @@ public class ODKDatabaseImplUtils {
    * *********************************************************************************************
    */
 
+  @SuppressWarnings("StatementWithEmptyBody")
+  private static void enforceKVSValueType(KeyValueStoreEntry e, ElementDataType type) {
+    e.type = type.name();
+    if (e.value != null) {
+      if (type.equals(ElementDataType.integer) || type.equals(ElementDataType.number) || type
+          .equals(ElementDataType.bool) || type.equals(ElementDataType.string) || type
+          .equals(ElementDataType.rowpath) || type.equals(ElementDataType.configpath)) {
+        // TODO: can add matcher if we want to
+      } else if (type.equals(ElementDataType.array)) {
+        // minimal test for valid representation
+        if (!e.value.startsWith("[") || !e.value.endsWith("]")) {
+          throw new IllegalArgumentException(
+              "array value type is not an array! " + "TableId: " + e.tableId + " Partition: "
+                  + e.partition + " Aspect: " + e.aspect + " Key: " + e.key);
+        }
+      } else if (type.equals(ElementDataType.object)) {
+        // this could be any value type
+        // TODO: test for any of the above values...
+        if (e.value.startsWith("\"") && !e.value.endsWith("\"")) {
+          throw new IllegalArgumentException(
+              "object value type is a malformed string! " + "TableId: " + e.tableId + " Partition: "
+                  + e.partition + " Aspect: " + e.aspect + " Key: " + e.key);
+        }
+        if (e.value.startsWith("[") && !e.value.endsWith("]")) {
+          throw new IllegalArgumentException(
+              "object value type is a malformed array! " + "TableId: " + e.tableId + " Partition: "
+                  + e.partition + " Aspect: " + e.aspect + " Key: " + e.key);
+        }
+        if (e.value.startsWith("{") && !e.value.endsWith("}")) {
+          throw new IllegalArgumentException(
+              "object value type is a malformed object! " + "TableId: " + e.tableId + " Partition: "
+                  + e.partition + " Aspect: " + e.aspect + " Key: " + e.key);
+        }
+      } else {
+        // and who knows what goes here...
+      }
+    }
+  }
+
   /**
    * Insert or update a single table-level metadata KVS entry.
    * The tableId, partition, aspect and key cannot be null or empty strings.
    * If e.value is null or an empty string, the entry is deleted.
    *
-   * @param db
+   * @param db an open database connection to use
    * @param e  a KeyValueStoreEntry. If e.value is null or an empty string, the entry is deleted.
    */
-  public void replaceTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
+  public static void replaceTableMetadata(OdkConnectionInterface db, KeyValueStoreEntry e) {
     validateKVSEntry(db.getAppName(), e.tableId, e);
 
-    TreeMap<String,Object> values = new TreeMap<String,Object>();
+    Map<String, Object> values = new TreeMap<>();
     values.put(KeyValueStoreColumns.TABLE_ID, e.tableId);
     values.put(KeyValueStoreColumns.PARTITION, e.partition);
     values.put(KeyValueStoreColumns.ASPECT, e.aspect);
@@ -1866,7 +1436,7 @@ public class ODKDatabaseImplUtils {
     values.put(KeyValueStoreColumns.VALUE_TYPE, e.type);
     values.put(KeyValueStoreColumns.VALUE, e.value);
 
-    TreeMap<String, Object> metadataRev = new TreeMap<String, Object>();
+    Map<String, Object> metadataRev = new TreeMap<>();
     metadataRev.put(TableDefinitionsColumns.REV_ID, UUID.randomUUID().toString());
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -1874,7 +1444,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
-      if (e.value == null || e.value.trim().length() == 0) {
+      if (e.value == null || e.value.trim().isEmpty()) {
         deleteTableMetadata(db, e.tableId, e.partition, e.aspect, e.key);
       } else {
         db.replaceOrThrow(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, null, values);
@@ -1883,90 +1453,7 @@ public class ODKDatabaseImplUtils {
       // Update the table definition table with a new revision ID, essentially telling all caches
       // of this table's metadata that they are dirty.
       db.update(DatabaseConstants.TABLE_DEFS_TABLE_NAME, metadataRev,
-          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM, new Object[] {e.tableId});
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  /**
-   * Insert or update a list of table-level metadata KVS entries. If clear is
-   * true, then delete the existing set of values for this tableId before
-   * inserting the new values.
-   *
-   * @param db
-   * @param tableId
-   * @param metadata a List<KeyValueStoreEntry>
-   * @param clear    if true then delete the existing set of values for this tableId
-   *                 before inserting the new ones.
-   */
-  public void replaceTableMetadata(OdkConnectionInterface db, String tableId,
-      List<KeyValueStoreEntry> metadata, boolean clear) {
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      if (clear) {
-        db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
-            K_KVS_TABLE_ID_EQUALS_PARAM, new Object[] { tableId });
-      }
-
-      for (KeyValueStoreEntry e : metadata) {
-        replaceTableMetadata(db, e);
-      }
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  public void replaceTableMetadataSubList(OdkConnectionInterface db, String tableId,
-      String partition, String aspect, List<KeyValueStoreEntry> metadata) {
-
-    StringBuilder b = new StringBuilder();
-    ArrayList<Object> whereArgsList = new ArrayList<Object>();
-
-    if (tableId == null || tableId.trim().length() == 0) {
-      throw new IllegalArgumentException("tableId cannot be null or an empty string");
-    }
-    b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
-    whereArgsList.add(tableId);
-    if (partition != null) {
-      b.append(S_AND).append(K_KVS_PARTITION_EQUALS_PARAM);
-      whereArgsList.add(partition);
-    }
-    if (aspect != null) {
-      b.append(S_AND).append(K_KVS_ASPECT_EQUALS_PARAM);
-      whereArgsList.add(aspect);
-    }
-    String whereClause = b.toString();
-    Object[] whereArgs = whereArgsList.toArray(new Object[whereArgsList.size()]);
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
-
-      for (KeyValueStoreEntry e : metadata) {
-        replaceTableMetadata(db, e);
-      }
+          K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM, new Object[] { e.tableId });
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -1982,17 +1469,17 @@ public class ODKDatabaseImplUtils {
    * The deletion filter includes all non-null arguments. If all arguments
    * (except the db) are null, then all properties are removed.
    *
-   * @param db
-   * @param tableId
-   * @param partition
-   * @param aspect
-   * @param key
+   * @param db        an open database connection to use
+   * @param tableId   the table to update
+   * @param partition part of the kvs triplet
+   * @param aspect    part of the kvs triplet
+   * @param key       part of the kvs triplet
    */
-  public void deleteTableMetadata(OdkConnectionInterface db, String tableId, String partition,
-      String aspect, String key) {
+  public static void deleteTableMetadata(OdkConnectionInterface db, String tableId,
+      String partition, String aspect, String key) {
 
     StringBuilder b = new StringBuilder();
-    ArrayList<String> selArgs = new ArrayList<String>();
+    Collection<String> selArgs = new ArrayList<>();
     if (tableId != null) {
       b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
       selArgs.add(tableId);
@@ -2041,14 +1528,14 @@ public class ODKDatabaseImplUtils {
   /**
    * Filters results by all non-null field values.
    *
-   * @param db
-   * @param tableId
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
+   * @param db        an open database connection to use
+   * @param tableId   the table to update
+   * @param partition part of the kvs triplet
+   * @param aspect    part of the kvs triplet
+   * @param key       part of the kvs triplet
+   * @return the entire metadata for the table
    */
-  public TableMetaDataEntries getTableMetadata(OdkConnectionInterface db, String tableId,
+  public static TableMetaDataEntries getTableMetadata(OdkConnectionInterface db, String tableId,
       String partition, String aspect, String key) {
 
     TableMetaDataEntries metadata = new TableMetaDataEntries(tableId,
@@ -2057,7 +1544,7 @@ public class ODKDatabaseImplUtils {
     Cursor c = null;
     try {
       StringBuilder b = new StringBuilder();
-      ArrayList<String> selArgs = new ArrayList<String>();
+      Collection<String> selArgs = new ArrayList<>();
       if (tableId != null) {
         b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
         selArgs.add(tableId);
@@ -2118,9 +1605,9 @@ public class ODKDatabaseImplUtils {
    * enforcing the proper data types regardless of what the values are in the
    * imported CSV files.
    *
-   * @param db
+   * @param db an open database connection to use
    */
-  private void enforceTypesTableMetadata(OdkConnectionInterface db) {
+  private static void enforceTypesTableMetadata(OdkConnectionInterface db) {
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -2128,17 +1615,9 @@ public class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
-      StringBuilder b = new StringBuilder();
-      b.setLength(0);
-      //@formatter:off
-      b.append("UPDATE ").append(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME)
-          .append(" SET ").append(KeyValueStoreColumns.VALUE_TYPE).append(S_EQUALS_PARAM)
-          .append(K_WHERE)
-          .append(K_KVS_PARTITION_EQUALS_PARAM).append(S_AND)
-          .append(K_KVS_KEY_EQUALS_PARAM);
-      //@formatter:on
-
-      String sql = b.toString();
+      String sql = "UPDATE " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " SET "
+          + KeyValueStoreColumns.VALUE_TYPE + S_EQUALS_PARAM + K_WHERE
+          + K_KVS_PARTITION_EQUALS_PARAM + S_AND + K_KVS_KEY_EQUALS_PARAM;
 
       for (Object[] fields : knownKVSValueTypeRestrictions) {
         db.execSQL(sql, fields);
@@ -2155,16 +1634,17 @@ public class ODKDatabaseImplUtils {
   }
 
   /*
-   * Create a user defined database table metadata - table definiton and KVS
+   * Create a user defined database table metadata - table definition and KVS
    * values
    */
-  private void createTableMetadata(OdkConnectionInterface db, String tableId) {
+  private static void createTableMetadata(OdkConnectionInterface db, CharSequence tableId) {
     if (tableId == null || tableId.length() <= 0) {
-      throw new IllegalArgumentException(t + ": application name and table name must be specified");
+      throw new IllegalArgumentException(
+          TAG + ": application name and table name must be specified");
     }
 
     // Add the table id into table definitions
-    TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
+    Map<String, Object> cvTableDef = new TreeMap<>();
     cvTableDef.put(TableDefinitionsColumns.TABLE_ID, tableId);
     cvTableDef.put(TableDefinitionsColumns.REV_ID, UUID.randomUUID().toString());
     cvTableDef.put(TableDefinitionsColumns.SCHEMA_ETAG, null);
@@ -2174,19 +1654,20 @@ public class ODKDatabaseImplUtils {
     db.replaceOrThrow(DatabaseConstants.TABLE_DEFS_TABLE_NAME, null, cvTableDef);
   }
 
-  /*
-   * Create a user defined database table metadata - table definiton and KVS
+  /**
+   * Create a user defined database table metadata - table definition and KVS
    * values
    *
-   * @param db
-   * @param tableId
-   * @param orderedDefs
+   * @param db          an open database connection to use
+   * @param tableId     the table to update
+   * @param orderedDefs the columns that should be in the table
    */
-  private void createTableWithColumns(OdkConnectionInterface db, String tableId,
+  private static void createTableWithColumns(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedDefs, boolean isSynchronized) {
 
     if (tableId == null || tableId.length() <= 0) {
-      throw new IllegalArgumentException(t + ": application name and table name must be specified");
+      throw new IllegalArgumentException(
+          TAG + ": application name and table name must be specified");
     }
 
     StringBuilder createTableCmdWithCols = new StringBuilder();
@@ -2205,21 +1686,18 @@ public class ODKDatabaseImplUtils {
 
       ElementDataType dataType = elementType.getDataType();
       String dbType;
-      if (dataType == ElementDataType.array) {
+      if (dataType.equals(ElementDataType.array)) {
         dbType = "TEXT";
-      } else if (dataType == ElementDataType.bool) {
+      } else if (dataType.equals(ElementDataType.bool)) {
         dbType = "INTEGER";
-      } else if (dataType == ElementDataType.configpath) {
+      } else if (dataType.equals(ElementDataType.configpath)) {
         dbType = "TEXT";
-      } else if (dataType == ElementDataType.integer) {
+      } else if (dataType.equals(ElementDataType.integer)) {
         dbType = "INTEGER";
-      } else if (dataType == ElementDataType.number) {
+      } else if (dataType.equals(ElementDataType.number)) {
         dbType = "REAL";
-      } else if (dataType == ElementDataType.object) {
-        dbType = "TEXT";
-      } else if (dataType == ElementDataType.rowpath) {
-        dbType = "TEXT";
-      } else if (dataType == ElementDataType.string) {
+      } else if (dataType.equals(ElementDataType.object) || dataType.equals(ElementDataType.rowpath)
+          || dataType.equals(ElementDataType.string)) {
         dbType = "TEXT";
       } else {
         throw new IllegalStateException("unexpected ElementDataType: " + dataType.name());
@@ -2253,12 +1731,12 @@ public class ODKDatabaseImplUtils {
    * Create a new column metadata in the database - add column values to KVS and
    * column definitions
    */
-  private void createNewColumnMetadata(OdkConnectionInterface db, String tableId,
+  private static void createNewColumnMetadata(OdkConnectionInterface db, String tableId,
       ColumnDefinition column) {
     String colName = column.getElementKey();
 
     // Create column definition
-    TreeMap<String,Object> cvColDefVal = new TreeMap<String,Object>();
+    Map<String, Object> cvColDefVal = new TreeMap<>();
     cvColDefVal.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_KEY, colName);
     cvColDefVal.put(ColumnDefinitionsColumns.ELEMENT_NAME, column.getElementName());
@@ -2273,11 +1751,11 @@ public class ODKDatabaseImplUtils {
   /**
    * Verifies that the schema the client has matches that of the given tableId.
    *
-   * @param db
-   * @param tableId
-   * @param orderedDefs
+   * @param db          an open database connection to use
+   * @param tableId     the table to update
+   * @param orderedDefs the columns that should be in the table
    */
-  private void verifyTableSchema(OdkConnectionInterface db, String tableId,
+  private static void verifyTableSchema(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedDefs) {
     // confirm that the column definitions are unchanged...
     OrderedColumns existingDefns = getUserDefinedColumns(db, tableId);
@@ -2290,6 +1768,7 @@ public class ODKDatabaseImplUtils {
       try {
         existingDefn = existingDefns.find(ci.getElementKey());
       } catch (IllegalArgumentException e) {
+        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
         throw new IllegalStateException(
             "Unexpectedly failed to match elementKey: " + ci.getElementKey());
       }
@@ -2325,11 +1804,11 @@ public class ODKDatabaseImplUtils {
    * and register the tuple of (choiceListId, choiceListJSON).
    * Return choiceListId.
    *
-   * @param db
+   * @param db             an open database connection to use
    * @param choiceListJSON -- the actual JSON choice list text.
    * @return choiceListId -- the unique code mapping to the choiceListJSON
    */
-  public String setChoiceList(OdkConnectionInterface db, String choiceListJSON) {
+  public static String setChoiceList(OdkConnectionInterface db, String choiceListJSON) {
     ChoiceListUtils utils = new ChoiceListUtils();
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -2337,7 +1816,7 @@ public class ODKDatabaseImplUtils {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
       }
-      if (choiceListJSON == null || choiceListJSON.trim().length() == 0) {
+      if (choiceListJSON == null || choiceListJSON.trim().isEmpty()) {
         return null;
       }
 
@@ -2357,7 +1836,7 @@ public class ODKDatabaseImplUtils {
       if (!success) {
 
         WebLogger.getLogger(db.getAppName())
-            .e(t, "setChoiceList: Error while updating choiceList entry " + choiceListJSON);
+            .e(TAG, "setChoiceList: Error while updating choiceList entry " + choiceListJSON);
       }
     }
   }
@@ -2365,14 +1844,14 @@ public class ODKDatabaseImplUtils {
   /**
    * Return the choice list JSON corresponding to the choiceListId
    *
-   * @param db
+   * @param db           an open database connection to use
    * @param choiceListId -- the md5 hash of the choiceListJSON
    * @return choiceListJSON -- the actual JSON choice list text.
    */
-  public String getChoiceList(OdkConnectionInterface db, String choiceListId) {
+  public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
     ChoiceListUtils utils = new ChoiceListUtils();
 
-    if (choiceListId == null || choiceListId.trim().length() == 0) {
+    if (choiceListId == null || choiceListId.trim().isEmpty()) {
       return null;
     }
     return utils.getChoiceList(db, choiceListId);
@@ -2385,12 +1864,12 @@ public class ODKDatabaseImplUtils {
    * <p/>
    * If the tableId is present, then this is a no-op.
    *
-   * @param db
-   * @param tableId
-   * @param columns
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param columns the columns of the new table
    * @return the ArrayList<ColumnDefinition> of the user columns in the table.
    */
-  public OrderedColumns createOrOpenTableWithColumns(OdkConnectionInterface db,
+  public static OrderedColumns createOrOpenTableWithColumns(OdkConnectionInterface db,
       String tableId, List<Column> columns) {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
@@ -2423,96 +1902,20 @@ public class ODKDatabaseImplUtils {
           for (Column column : columns) {
             colNames.append(" ").append(column.getElementKey()).append(",");
           }
-          if (colNames != null && colNames.length() > 0) {
+          if (colNames.length() > 0) {
             colNames.deleteCharAt(colNames.length() - 1);
-            WebLogger.getLogger(db.getAppName()).e(t,
+            WebLogger.getLogger(db.getAppName()).e(TAG,
                 "createOrOpenTableWithColumns: Error while adding table " + tableId
-                    + " with columns:" + colNames.toString());
+                    + " with columns:" + colNames);
           }
         } else {
-          WebLogger.getLogger(db.getAppName()).e(t,
+          WebLogger.getLogger(db.getAppName()).e(TAG,
               "createOrOpenTableWithColumns: Error while adding table " + tableId
                   + " with columns: null");
         }
       }
     }
   }
-
-  /**
-   * If the tableId is not recorded in the TableDefinition metadata table, then
-   * create the tableId with the indicated columns. This will synthesize
-   * reasonable metadata KVS entries for table.
-   * <p/>
-   * If the tableId is present, then this is a no-op.
-   *
-   * @param db
-   * @param tableId
-   * @param columns
-   * @return the ArrayList<ColumnDefinition> of the user columns in the table.
-   */
-  public OrderedColumns createOrOpenTableWithColumnsAndProperties(OdkConnectionInterface db,
-      String tableId, List<Column> columns, List<KeyValueStoreEntry> metaData,
-      boolean clear) {
-    boolean dbWithinTransaction = db.inTransaction();
-    boolean success = false;
-
-    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
-
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-      boolean created = false;
-      if (!hasTableId(db, tableId)) {
-        createTableWithColumns(db, tableId, orderedDefs, true);
-        created = true;
-      } else {
-        // confirm that the column definitions are unchanged...
-        verifyTableSchema(db, tableId, orderedDefs);
-      }
-
-      replaceTableMetadata(db, tableId, metaData, (clear || created));
-      enforceTypesTableMetadata(db);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-      success = true;
-      return orderedDefs;
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-      if (!success) {
-
-        // Get the names of the columns
-        StringBuilder colNames = new StringBuilder();
-        if (columns != null) {
-          for (Column column : columns) {
-            colNames.append(" ").append(column.getElementKey()).append(",");
-          }
-          if (colNames != null && colNames.length() > 0) {
-            colNames.deleteCharAt(colNames.length() - 1);
-            WebLogger.getLogger(db.getAppName()).e(t,
-                "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
-                    + " with columns:" + colNames.toString());
-          }
-        } else {
-          WebLogger.getLogger(db.getAppName()).e(t,
-              "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
-                  + " with columns: null");
-        }
-      }
-    }
-  }
-
-  /***********************************************************************************************
-   * REVISIT THESE TO ENFORCE SAFE UPDATES OF KVS database
-   * *********************************************************************************************
-   * *********************************************************************************************
-   * *********************************************************************************************
-   * *********************************************************************************************
-   */
 
   /**
    * SYNC only
@@ -2532,18 +1935,18 @@ public class ODKDatabaseImplUtils {
    * sync'd to the server.</li>
    * </ul>
    *
-   * @param db
-   * @param tableId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
    */
-  private void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
+  private static void changeDataRowsToNewRowState(OdkConnectionInterface db, String tableId) {
 
     StringBuilder b = new StringBuilder();
 
     // remove server conflicting rows
     b.setLength(0);
-    b.append("DELETE FROM ").append(tableId).append(K_WHERE)
-        .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.CONFLICT_TYPE).append(" IN (?, ?)");
+    b.append("DELETE FROM ").append(tableId).append(K_WHERE).append(DataTableColumns.SYNC_STATE)
+        .append(S_EQUALS_PARAM).append(S_AND).append(DataTableColumns.CONFLICT_TYPE)
+        .append(" IN (?, ?)");
 
     String sqlConflictingServer = b.toString();
     //@formatter:off
@@ -2572,7 +1975,6 @@ public class ODKDatabaseImplUtils {
     //@formatter:on
 
     // update local update conflicts to updates
-    String sqlConflictingLocalUpdating = sqlConflictingLocalDeleting;
     //@formatter:off
     String argsConflictingLocalUpdating[] = {
         SyncState.changed.name(),
@@ -2596,7 +1998,6 @@ public class ODKDatabaseImplUtils {
       };
     //@formatter:on
 
-    String sqlRestPendingFiles = sqlRest;
     //@formatter:off
     String argsRestPendingFiles[] = {
         SyncState.new_row.name(),
@@ -2612,9 +2013,9 @@ public class ODKDatabaseImplUtils {
 
       db.execSQL(sqlConflictingServer, argsConflictingServer);
       db.execSQL(sqlConflictingLocalDeleting, argsConflictingLocalDeleting);
-      db.execSQL(sqlConflictingLocalUpdating, argsConflictingLocalUpdating);
+      db.execSQL(sqlConflictingLocalDeleting, argsConflictingLocalUpdating);
       db.execSQL(sqlRest, argsRest);
-      db.execSQL(sqlRestPendingFiles, argsRestPendingFiles);
+      db.execSQL(sqlRest, argsRestPendingFiles);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2663,12 +2064,12 @@ public class ODKDatabaseImplUtils {
    * deleteAllSyncETagsUnderServer(sc.getAppName(), db, tableInstanceFilesUri);
    * }
    *
-   * @param db
-   * @param tableId
-   * @param tableInstanceFilesUri
-   * @parma schemaETag
+   * @param db                    an open database connection to use
+   * @param tableId               the table to update
+   * @param schemaETag            The new schema etag
+   * @param tableInstanceFilesUri TODO
    */
-  public void serverTableSchemaETagChanged(OdkConnectionInterface db, String tableId,
+  public static void serverTableSchemaETagChanged(OdkConnectionInterface db, String tableId,
       String schemaETag, String tableInstanceFilesUri) {
 
     boolean dbWithinTransaction = db.inTransaction();
@@ -2699,17 +2100,17 @@ public class ODKDatabaseImplUtils {
   /**
    * Deletes the server conflict row (if any) for this rowId in this tableId.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param rowId   which row in the table to update
    */
-  private void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId,
+  private static void deleteServerConflictRowWithId(OdkConnectionInterface db, String tableId,
       String rowId) {
     // delete the old server-values in_conflict row if it exists
     StringBuilder b = new StringBuilder();
-    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.SYNC_STATE).append(S_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.CONFLICT_TYPE).append(" IN ( ?, ? )");
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND).append(DataTableColumns.SYNC_STATE)
+        .append(S_EQUALS_PARAM).append(S_AND).append(DataTableColumns.CONFLICT_TYPE)
+        .append(" IN ( ?, ? )");
     Object[] whereArgs = { rowId, SyncState.in_conflict.name(),
         String.valueOf(ConflictType.SERVER_DELETED_OLD_VALUES),
         String.valueOf(ConflictType.SERVER_UPDATED_UPDATED_VALUES) };
@@ -2733,47 +2134,15 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
-   * Delete any prior server conflict row.
-   * Move the local row into the indicated local conflict state.
-   * Insert a server row with the values specified in the cvValues array.
+   * Checks if the two strings have the same value
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param serverValues
-   * @param rowId
-   * @param localRowConflictType
-   * @param activeUser
-   * @param locale
+   * @param localValue  the local cell
+   * @param serverValue the server cell
+   * @param dt          the data type
+   * @return whether the values are the same or not
    */
-  public void privilegedPlaceRowIntoConflictWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
-      int localRowConflictType,
-      String activeUser, String locale) {
-
-    // The rolesList of the activeUser does not impact the execution of this action.
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      this.deleteServerConflictRowWithId(db, tableId, rowId);
-      this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
-      this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues,
-          rowId, activeUser, locale, false);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  public boolean identicalValue(String localValue, String serverValue, ElementDataType dt) {
+  @SuppressWarnings("MagicNumber")
+  public static boolean identicalValue(String localValue, String serverValue, ElementDataType dt) {
 
     if (localValue == null && serverValue == null) {
       return true;
@@ -2789,7 +2158,7 @@ public class ODKDatabaseImplUtils {
     // which may have rounding due to different database implementations,
     // data representations, and marshaling libraries.
     //
-    if (dt == ElementDataType.number) {
+    if (dt.equals(ElementDataType.number)) {
       // !!Important!! Double.valueOf(str) handles NaN and +/-Infinity
       Double localNumber = Double.valueOf(localValue);
       Double serverNumber = Double.valueOf(serverValue);
@@ -2800,11 +2169,8 @@ public class ODKDatabaseImplUtils {
         return true;
       } else if (localNumber.isInfinite() && serverNumber.isInfinite()) {
         // if they are both plus or both minus infinity, we have a match
-        if (Math.signum(localNumber) == Math.signum(serverNumber)) {
-          return true;
-        } else {
-          return false;
-        }
+        //noinspection FloatingPointEquality
+        return Math.signum(localNumber) == Math.signum(serverNumber);
       } else if (localNumber.isNaN() || localNumber.isInfinite() || serverNumber.isNaN()
           || serverNumber.isInfinite()) {
         // one or the other is special1
@@ -2812,28 +2178,900 @@ public class ODKDatabaseImplUtils {
       } else {
         double localDbl = localNumber;
         double serverDbl = serverNumber;
+        //noinspection FloatingPointEquality
         if (localDbl == serverDbl) {
           return true;
         }
         // OK. We have two values like 9.80 and 9.8
         // consider them equal if they are adjacent to each other.
         double localNear = localDbl;
-        int idist = 0;
+        int idist;
         int idistMax = 128;
         for (idist = 0; idist < idistMax; ++idist) {
           localNear = Math.nextAfter(localNear, serverDbl);
+          //noinspection FloatingPointEquality
           if (localNear == serverDbl) {
             break;
           }
         }
-        if (idist < idistMax) {
-          return true;
-        }
-        return false;
+        return idist < idistMax;
       }
     } else {
       // textual identity is required!
       return false;
+    }
+  }
+
+  /**
+   * Change the conflictType for the given row from null (not in conflict) to
+   * the specified one.
+   *
+   * @param db           an open database connection to use
+   * @param tableId      the table to update
+   * @param rowId        which row in the table to update
+   * @param conflictType expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
+   *                     ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
+   */
+  private static void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId,
+      int conflictType) {
+
+    StringBuilder b = new StringBuilder();
+    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND).append(DataTableColumns.CONFLICT_TYPE)
+        .append(S_IS_NULL);
+    Object[] whereArgs = { rowId };
+
+    Map<String, Object> cv = new TreeMap<>();
+    cv.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
+    cv.put(DataTableColumns.CONFLICT_TYPE, conflictType);
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.update(tableId, cv, b.toString(), whereArgs);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Changes the conflictType for the given row from the specified one to null
+   * and set the sync state of this row to the indicated value. In general, you
+   * should first update the local conflict record with its new values, then
+   * call deleteServerConflictRowWithId(...) and then call this method.
+   *
+   * @param db           an open database connection to use
+   * @param tableId      the table to update
+   * @param rowId        which row in the table to update
+   * @param syncState    the current status of the sync
+   * @param conflictType the type of conflict
+   */
+  private static void restoreRowFromConflict(OdkConnectionInterface db, String tableId,
+      String rowId, @SuppressWarnings("TypeMayBeWeakened") SyncState syncState,
+      Integer conflictType) {
+
+    // TODO: is roleList applicable here?
+
+    StringBuilder b = new StringBuilder();
+    Object[] whereArgs;
+
+    if (conflictType == null) {
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND).append(DataTableColumns.CONFLICT_TYPE)
+          .append(S_IS_NULL);
+      whereArgs = new Object[] { rowId };
+    } else {
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND).append(DataTableColumns.CONFLICT_TYPE)
+          .append(S_EQUALS_PARAM);
+      whereArgs = new Object[] { rowId, conflictType };
+    }
+
+    Map<String, Object> cv = new TreeMap<>();
+    cv.put(DataTableColumns.CONFLICT_TYPE, null);
+    cv.put(DataTableColumns.SYNC_STATE, syncState.name());
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.update(tableId, cv, b.toString(), whereArgs);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param rowId   which row in the table to update
+   * @return the sync state of the row (see {@link SyncState}), or null if the
+   * row does not exist.  Rows are required to have non-null sync states.
+   * @throws IllegalStateException if the row has a null sync state or has
+   *                               2+ conflicts or checkpoints and
+   *                               those do not have matching sync states!
+   */
+  public static SyncState getSyncState(OdkConnectionInterface db, String tableId, String rowId)
+      throws IllegalStateException {
+    Cursor c = null;
+    try {
+      c = db
+          .query(tableId, new String[] { DataTableColumns.SYNC_STATE }, K_DATATABLE_ID_EQUALS_PARAM,
+              new Object[] { rowId }, null, null, null, null);
+
+      if (c.moveToFirst()) {
+        int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
+        if (c.isNull(syncStateIndex)) {
+          throw new IllegalStateException(TAG + ": row had a null sync state!");
+        }
+        String val = CursorUtils.getIndexAsString(c, syncStateIndex);
+        while (c.moveToNext()) {
+          if (c.isNull(syncStateIndex)) {
+            throw new IllegalStateException(TAG + ": row had a null sync state!");
+          }
+          String otherVal = CursorUtils.getIndexAsString(c, syncStateIndex);
+          if (otherVal != null && !otherVal.equals(val)) {
+            throw new IllegalStateException(TAG + ": row with 2+ conflicts or checkpoints does "
+                + "not have matching sync states!");
+          }
+        }
+        return SyncState.valueOf(val);
+      }
+      return null;
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+  }
+
+  /**
+   * Update all rows for the given rowId to SavepointType 'INCOMPLETE' and
+   * remove all but the most recent row. When used with a rowId that has
+   * checkpoints, this updates to the most recent checkpoint and removes any
+   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
+   * the general effect of resetting the rowId to an INCOMPLETE state.
+   *
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param rowId   which row in the table to update
+   */
+  public static void saveAsIncompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db,
+      String tableId, String rowId) {
+
+    // TODO: if user becomes unverified, we still allow them to save-as-incomplete ths record.
+    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      StringBuilder b = new StringBuilder();
+      b.append("UPDATE ").append(tableId).append(" SET ").append(DataTableColumns.SAVEPOINT_TYPE)
+          .append(S_EQUALS_PARAM).append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM);
+      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.incomplete(), rowId });
+      b.setLength(0);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Update all rows for the given rowId to SavepointType 'COMPLETE' and
+   * remove all but the most recent row. When used with a rowId that has
+   * checkpoints, this updates to the most recent checkpoint and removes any
+   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
+   * the general effect of resetting the rowId to an COMPLETE state.
+   *
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param rowId   which row in the table to update
+   */
+  public static void saveAsCompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db,
+      String tableId, String rowId) {
+
+    // TODO: if user becomes unverified, we still allow them to save-as-complete ths record.
+    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      StringBuilder b = new StringBuilder();
+      b.append("UPDATE ").append(tableId).append(" SET ").append(DataTableColumns.SAVEPOINT_TYPE)
+          .append(S_EQUALS_PARAM).append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM);
+      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.complete(), rowId });
+
+      b.setLength(0);
+      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
+          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Gets the users permission on a particular table
+   *
+   * @param db         A database connection to use
+   * @param tableId    the id of the table to get the access context for
+   * @param activeUser the current user
+   * @param rolesList  the list of roles the user has
+   * @return the access context for that user on that table
+   */
+  public static AccessContext getAccessContext(OdkConnectionInterface db, String tableId,
+      String activeUser, String rolesList) {
+
+    // figure out whether we have a privileged user or not
+    List<String> rolesArray = getRolesArray(rolesList);
+
+    if (tableId == null) {
+      return new AccessContext(AccessColumnType.NO_EFFECTIVE_ACCESS_COLUMN, false, activeUser,
+          rolesArray);
+    }
+    if (tableId.trim().isEmpty()) {
+      throw new IllegalArgumentException("tableId can be null but cannot be blank");
+    }
+
+    Boolean isLocked = false;
+    {
+      ArrayList<KeyValueStoreEntry> lockedList = getTableMetadata(db, tableId,
+          KeyValueStoreConstants.PARTITION_TABLE, LocalKeyValueStoreConstants.TableSecurity.ASPECT,
+          LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED).getEntries();
+
+      if (!lockedList.isEmpty()) {
+        if (lockedList.size() != 1) {
+          throw new IllegalStateException("should be impossible");
+        }
+
+        isLocked = KeyValueStoreUtils.getBoolean(lockedList.get(0));
+      }
+    }
+
+    AccessColumnType accessColumnType = isLocked ?
+        AccessColumnType.LOCKED_EFFECTIVE_ACCESS_COLUMN :
+        AccessColumnType.UNLOCKED_EFFECTIVE_ACCESS_COLUMN;
+    boolean canCreateRow = false;
+    if (isLocked) {
+      // only super-user or tables administrator can create rows in locked tables.
+      if (rolesList != null) {
+        canCreateRow = rolesList.contains(RoleConsts.ROLE_SUPER_USER) || rolesList
+            .contains(RoleConsts.ROLE_ADMINISTRATOR);
+      }
+
+    } else if (rolesList == null) {
+      // this is the unverified user case. By default, they can create rows.
+      // Administrator can use table properties to manage that capability.
+      canCreateRow = true;
+      ArrayList<KeyValueStoreEntry> canUnverifiedCreateList = getTableMetadata(db, tableId,
+          KeyValueStoreConstants.PARTITION_TABLE, LocalKeyValueStoreConstants.TableSecurity.ASPECT,
+          LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE).getEntries();
+
+      if (!canUnverifiedCreateList.isEmpty()) {
+        if (canUnverifiedCreateList.size() != 1) {
+          throw new IllegalStateException("should be impossible");
+        }
+
+        // TODO why doesn't the linter like this?
+        canCreateRow = KeyValueStoreUtils.getBoolean(canUnverifiedCreateList.get(0));
+      }
+    } else {
+      canCreateRow = true;
+    }
+
+    return new AccessContext(accessColumnType, canCreateRow, activeUser, rolesArray);
+  }
+
+  /**
+   * Get a {@link BaseTable} for this table based on the given sql query. All
+   * columns from the table are returned.  Up to sqlLimit rows are returned
+   * (zero is infinite).
+   * <p/>
+   * The result set is filtered according to the supplied rolesList if there
+   * is a DEFAULT_ACCESS column present in the result set.
+   *
+   * @param db             an open database connection to use
+   * @param tableId        the id of the table to query on
+   * @param sqlCommand     the query to run
+   * @param sqlBindArgs    the selection parameters
+   * @param sqlQueryBounds offset and max number of rows to return (zero is infinite)
+   * @param accessContext  for managing what effective accesses to return
+   * @return a table with the query results in it
+   */
+  public static BaseTable query(OdkConnectionInterface db, String tableId, String sqlCommand,
+      Object[] sqlBindArgs, QueryBounds sqlQueryBounds, AccessContext accessContext) {
+
+    Cursor c = null;
+    try {
+      c = rawQuery(db, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
+      return buildBaseTable(db, c, tableId, accessContext.canCreateRow);
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+  }
+
+  /**
+   * Get a {@link BaseTable} for this table based on the given sql query. All
+   * columns from the table are returned.
+   * <p/>
+   * The number of rows returned are limited to no greater than the sqlLimit (zero is infinite).
+   *
+   * @param db             an open database connection to use
+   * @param tableId        the table id to query
+   * @param sqlCommand     the query to run
+   * @param sqlBindArgs    the selection parameters
+   * @param sqlQueryBounds the number of rows to return (zero is infinite)
+   * @param accessContext  for managing what effective accesses to return
+   * @return the results of the query in a BaseTable
+   */
+  public static BaseTable privilegedQuery(OdkConnectionInterface db, String tableId,
+      String sqlCommand, Object[] sqlBindArgs, QueryBounds sqlQueryBounds,
+      AccessContext accessContext) {
+
+    if (!accessContext.isPrivilegedUser) {
+      accessContext = accessContext.copyAsPrivilegedUser();
+    }
+    return query(db, tableId, sqlCommand, sqlBindArgs, sqlQueryBounds, accessContext);
+  }
+
+  /************** LOCAL ONLY TABLE OPERATIONS ***************/
+
+  private static BaseTable buildBaseTable(OdkConnectionInterface db, Cursor c, String tableId,
+      boolean canCreateRow) {
+
+    HashMap<String, Integer> mElementKeyToIndex = null;
+    String[] mElementKeyForIndex = null;
+
+    if (!c.moveToFirst()) {
+
+      // Attempt to retrieve the columns from the cursor.
+      // These may not be available if there were no rows returned.
+      // It depends upon the cursor implementation.
+      try {
+        int columnCount = c.getColumnCount();
+        mElementKeyForIndex = new String[columnCount];
+        mElementKeyToIndex = new HashMap<>(columnCount);
+        int i;
+
+        for (i = 0; i < columnCount; ++i) {
+          String columnName = c.getColumnName(i);
+          mElementKeyForIndex[i] = columnName;
+          mElementKeyToIndex.put(columnName, i);
+        }
+      } catch (Exception ignored) {
+        // ignore.
+      }
+
+      // if they were not available, declare an empty array.
+      if (mElementKeyForIndex == null) {
+        mElementKeyForIndex = new String[0];
+      }
+      c.close();
+
+      // we have no idea what the table should contain because it has no rows...
+      BaseTable table = new BaseTable(null, mElementKeyForIndex, mElementKeyToIndex, 0);
+      table.setEffectiveAccessCreateRow(canCreateRow);
+      return table;
+    }
+
+    int rowCount = c.getCount();
+    int columnCount = c.getColumnCount();
+
+    BaseTable table;
+
+    // These maps will map the element key to the corresponding index in
+    // either data or metadata. If the user has defined a column with the
+    // element key _my_data, and this column is at index 5 in the data
+    // array, dataKeyToIndex would then have a mapping of _my_data:5.
+    // The sync_state column, if present at index 7, would have a mapping
+    // in metadataKeyToIndex of sync_state:7.
+    mElementKeyForIndex = new String[columnCount];
+    mElementKeyToIndex = new HashMap<>(columnCount);
+
+    int i;
+
+    for (i = 0; i < columnCount; ++i) {
+      String columnName = c.getColumnName(i);
+      mElementKeyForIndex[i] = columnName;
+      mElementKeyToIndex.put(columnName, i);
+    }
+
+    table = new BaseTable(null, mElementKeyForIndex, mElementKeyToIndex, rowCount);
+
+    String[] rowData = new String[columnCount];
+    do {
+      // First get the user-defined data for this row.
+      for (i = 0; i < columnCount; i++) {
+        String value = CursorUtils.getIndexAsString(c, i);
+        rowData[i] = value;
+      }
+
+      Row nextRow = new Row(rowData.clone(), table);
+      table.addRow(nextRow);
+    } while (c.moveToNext());
+    c.close();
+
+    table.setEffectiveAccessCreateRow(canCreateRow);
+
+    if (tableId != null) {
+      table.setMetaDataRev(getTableDefinitionRevId(db, tableId));
+    }
+    return table;
+  }
+
+  /**
+   * Create a local only table and prepend the given id with an "L_"
+   *
+   * @param db      an open database connection to use
+   * @param tableId the table to update
+   * @param columns the columns we want in the results
+   * @return the columns that were created in an OrderedColumns object
+   */
+  public static OrderedColumns createLocalOnlyTableWithColumns(OdkConnectionInterface db,
+      String tableId, List<Column> columns) {
+
+    boolean dbWithinTransaction = db.inTransaction();
+    boolean success = false;
+
+    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      createTableWithColumns(db, tableId, orderedDefs, false);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+      success = true;
+      return orderedDefs;
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+      if (!success) {
+
+        // Get the names of the columns
+        StringBuilder colNames = new StringBuilder();
+        if (columns != null) {
+          for (Column column : columns) {
+            colNames.append(" ").append(column.getElementKey()).append(",");
+          }
+          if (colNames.length() > 0) {
+            colNames.deleteCharAt(colNames.length() - 1);
+            WebLogger.getLogger(db.getAppName()).e(TAG,
+                "createLocalOnlyTableWithColumns: Error while adding table " + tableId
+                    + " with columns:" + colNames);
+          }
+        } else {
+          WebLogger.getLogger(db.getAppName()).e(TAG,
+              "createLocalOnlyTableWithColumns: Error while adding table " + tableId
+                  + " with columns: null");
+        }
+      }
+    }
+  }
+
+  /**
+   * Return the row(s) for the given tableId and rowId. If the row has
+   * checkpoints or conflicts, the returned BaseTable will have more than one
+   * Row returned. Otherwise, it will contain a single row.
+   *
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles that that user has
+   * @return the requested rows in a BaseTable
+   */
+  public static BaseTable getRowsWithId(OdkConnectionInterface db, String tableId, String rowId,
+      String activeUser, String rolesList) {
+
+    AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
+
+    return query(db, tableId, QueryUtil.buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
+        QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
+        QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS, QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR),
+        new String[] { rowId }, null, accessContext);
+  }
+
+  /**
+   * Return the row(s) for the given tableId and rowId. If the row has
+   * checkpoints or conflicts, the returned BaseTable will have more than one
+   * Row returned. Otherwise, it will contain a single row.
+   *
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @return the requested rows in a BaseTable
+   */
+  public static BaseTable privilegedGetRowsWithId(OdkConnectionInterface db, String tableId,
+      String rowId, String activeUser) {
+
+    AccessContext accessContext = getAccessContext(db, tableId, activeUser,
+        RoleConsts.ADMIN_ROLES_LIST);
+
+    return privilegedQuery(db, tableId, QueryUtil
+            .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
+                QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
+                QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS, QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR),
+        new String[] { rowId }, null, accessContext);
+  }
+
+  /**
+   * Return the row with the most recent changes for the given tableId and rowId.
+   * If the rowId does not exist, it returns an empty BaseTable for this tableId.
+   * If the row has conflicts, it throws an exception. Otherwise, it returns the
+   * most recent checkpoint or non-checkpoint value; it will contain a single row.
+   *
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles that the user has
+   * @return the requested row in a base table
+   */
+  public static BaseTable getMostRecentRowWithId(OdkConnectionInterface db, String tableId,
+      String rowId, String activeUser, String rolesList) {
+
+    BaseTable table = getRowsWithId(db, tableId, rowId, activeUser, rolesList);
+
+    if (table.getNumberOfRows() == 0) {
+      return table;
+    }
+
+    // most recent savepoint timestamp...
+    BaseTable t = new BaseTable(table, Collections.singletonList(0));
+
+    if (hasConflictRows(t)) {
+      throw new IllegalStateException("row is in conflict");
+    }
+    return t;
+  }
+
+  /**
+   * Return the row with the most recent changes for the given tableId and rowId.
+   * If the rowId does not exist, it returns an empty BaseTable for this tableId.
+   * If the row has conflicts, it throws an exception. Otherwise, it returns the
+   * most recent checkpoint or non-checkpoint value; it will contain a single row.
+   *
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @return the requested row in a base table
+   */
+  public static BaseTable privilegedGetMostRecentRowWithId(OdkConnectionInterface db,
+      String tableId, String rowId, String activeUser) {
+
+    BaseTable table = privilegedGetRowsWithId(db, tableId, rowId, activeUser);
+
+    if (table.getNumberOfRows() == 0) {
+      return table;
+    }
+
+    // most recent savepoint timestamp...
+    BaseTable t = new BaseTable(table, Collections.singletonList(0));
+
+    if (hasConflictRows(t)) {
+      throw new IllegalStateException("row is in conflict");
+    }
+    return t;
+  }
+
+  /**
+   * Insert or update a list of table-level metadata KVS entries. If clear is
+   * true, then delete the existing set of values for this tableId before
+   * inserting the new values.
+   *
+   * @param db       an open database connection to use
+   * @param tableId  the table to update
+   * @param metadata a List<KeyValueStoreEntry>
+   * @param clear    if true then delete the existing set of values for this tableId
+   *                 before inserting the new ones.
+   */
+  public static void replaceTableMetadata(OdkConnectionInterface db, String tableId,
+      Iterable<KeyValueStoreEntry> metadata, boolean clear) {
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      if (clear) {
+        db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, K_KVS_TABLE_ID_EQUALS_PARAM,
+            new Object[] { tableId });
+      }
+
+      for (KeyValueStoreEntry e : metadata) {
+        replaceTableMetadata(db, e);
+      }
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * replaces one partition of the the table metadata
+   *
+   * @param db        a database interface to use
+   * @param tableId   the id of the table to update
+   * @param partition part of the kvs triplet
+   * @param aspect    part of the kvs triplet
+   * @param metadata  the new metadata
+   */
+  public static void replaceTableMetadataSubList(OdkConnectionInterface db, String tableId,
+      String partition, String aspect, Iterable<KeyValueStoreEntry> metadata) {
+
+    StringBuilder b = new StringBuilder();
+    Collection<Object> whereArgsList = new ArrayList<>();
+
+    if (tableId == null || tableId.trim().isEmpty()) {
+      throw new IllegalArgumentException("tableId cannot be null or an empty string");
+    }
+    b.append(K_KVS_TABLE_ID_EQUALS_PARAM);
+    whereArgsList.add(tableId);
+    if (partition != null) {
+      b.append(S_AND).append(K_KVS_PARTITION_EQUALS_PARAM);
+      whereArgsList.add(partition);
+    }
+    if (aspect != null) {
+      b.append(S_AND).append(K_KVS_ASPECT_EQUALS_PARAM);
+      whereArgsList.add(aspect);
+    }
+    String whereClause = b.toString();
+    Object[] whereArgs = whereArgsList.toArray(new Object[whereArgsList.size()]);
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      db.delete(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, whereClause, whereArgs);
+
+      for (KeyValueStoreEntry e : metadata) {
+        replaceTableMetadata(db, e);
+      }
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * If the tableId is not recorded in the TableDefinition metadata table, then
+   * create the tableId with the indicated columns. This will synthesize
+   * reasonable metadata KVS entries for table.
+   * <p/>
+   * If the tableId is present, then this is a no-op.
+   *
+   * @param db       an open database connection to use
+   * @param tableId  the table to update
+   * @param columns  the columns that should be in the table
+   * @param metaData the table metadata
+   * @param clear    whether or not to clear the existing metadata
+   * @return the ArrayList<ColumnDefinition> of the user columns in the table.
+   */
+  public static OrderedColumns createOrOpenTableWithColumnsAndProperties(OdkConnectionInterface db,
+      String tableId, List<Column> columns, Iterable<KeyValueStoreEntry> metaData, boolean clear) {
+    boolean dbWithinTransaction = db.inTransaction();
+    boolean success = false;
+
+    OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
+
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+      boolean created = false;
+      if (!hasTableId(db, tableId)) {
+        createTableWithColumns(db, tableId, orderedDefs, true);
+        created = true;
+      } else {
+        // confirm that the column definitions are unchanged...
+        verifyTableSchema(db, tableId, orderedDefs);
+      }
+
+      replaceTableMetadata(db, tableId, metaData, clear || created);
+      enforceTypesTableMetadata(db);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+      success = true;
+      return orderedDefs;
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+      if (!success) {
+
+        // Get the names of the columns
+        StringBuilder colNames = new StringBuilder();
+        if (columns != null) {
+          for (Column column : columns) {
+            colNames.append(" ").append(column.getElementKey()).append(",");
+          }
+          if (colNames.length() > 0) {
+            colNames.deleteCharAt(colNames.length() - 1);
+            WebLogger.getLogger(db.getAppName()).e(TAG,
+                "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
+                    + " with columns:" + colNames);
+          }
+        } else {
+          WebLogger.getLogger(db.getAppName()).e(TAG,
+              "createOrOpenTableWithColumnsAndProperties: Error while adding table " + tableId
+                  + " with columns: null");
+        }
+      }
+    }
+  }
+
+  private static void insertValueIntoContentValues(Map<String, Object> cv, Class<?> theClass,
+      String name, Object obj) {
+
+    if (obj == null) {
+      cv.put(name, null);
+      return;
+    }
+
+    // Couldn't use the CursorUtils.getIndexAsType
+    // because assigning the result to Object v
+    // would not work for the currValues.put function
+    if (theClass == Long.class || theClass == Integer.class || theClass == Double.class
+        || theClass == String.class || theClass == Boolean.class || theClass == ArrayList.class
+        || theClass == HashMap.class) {
+      cv.put(name, obj);
+    } else {
+      throw new IllegalStateException("Unexpected data type in SQLite table " + theClass);
+    }
+  }
+
+  /**
+   * Update the ETag and SyncState of a given rowId. There should be exactly one
+   * record for this rowId in the database (i.e., no conflicts or checkpoints).
+   *
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param rowETag    the new eTag for the row
+   * @param state      the current sync state
+   * @param activeUser the currently logged in user
+   * @return true if rowId exists. False otherwise.
+   */
+  public static boolean privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db,
+      String tableId, String rowId, String rowETag,
+      @SuppressWarnings("TypeMayBeWeakened") SyncState state, String activeUser) {
+
+    String whereClause = K_DATATABLE_ID_EQUALS_PARAM;
+    Object[] whereArgs = { rowId };
+
+    Map<String, Object> cvDataTableVal = new TreeMap<>();
+
+    cvDataTableVal.put(DataTableColumns.ROW_ETAG, rowETag);
+    cvDataTableVal.put(DataTableColumns.SYNC_STATE, state.name());
+
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      AccessContext accessContext = getAccessContext(db, tableId, activeUser,
+          RoleConsts.ADMIN_ROLES_LIST);
+
+      BaseTable data = privilegedQuery(db, tableId, K_SELECT_FROM + tableId + K_WHERE + whereClause,
+          whereArgs, null, accessContext);
+
+      // There must be only one row in the db
+      if (data.getNumberOfRows() != 1) {
+        return false;
+      }
+
+      db.update(tableId, cvDataTableVal, whereClause, whereArgs);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+      return true;
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
+    }
+  }
+
+  /**
+   * Delete any prior server conflict row.
+   * Move the local row into the indicated local conflict state.
+   * Insert a server row with the values specified in the cvValues array.
+   *
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param orderedColumns       the columns of the table that has the conflict
+   * @param serverValues         the values as the server reports them (ignoring client side changes)
+   * @param rowId                which row in the table to update
+   * @param localRowConflictType the type of conflict
+   * @param activeUser           the currently logged in user
+   * @param locale               the users locale
+   */
+  public static void privilegedPlaceRowIntoConflictWithId(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
+      int localRowConflictType, String activeUser, String locale) {
+
+    // The rolesList of the activeUser does not impact the execution of this action.
+    boolean dbWithinTransaction = db.inTransaction();
+    try {
+      if (!dbWithinTransaction) {
+        db.beginTransactionNonExclusive();
+      }
+
+      deleteServerConflictRowWithId(db, tableId, rowId);
+      placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
+      privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
+          locale, false);
+
+      if (!dbWithinTransaction) {
+        db.setTransactionSuccessful();
+      }
+    } finally {
+      if (!dbWithinTransaction) {
+        db.endTransaction();
+      }
     }
   }
 
@@ -2843,21 +3081,22 @@ public class ODKDatabaseImplUtils {
    * server values to the database. This might delete the existing row, update
    * it, or create a conflict row.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param serverValues  field values for this row coming from server.
-   *                      All fields must have values. The SyncState field
-   *                      (a local field that does not come from the server)
-   *                      should be "changed" or "deleted"
-   * @param rowId
-   * @param activeUser
-   * @param rolesList  passed in to determine if the current user is a privileged user
-   * @param locale
+   * @param db             an open database connection to use
+   * @param tableId        the table to update
+   * @param orderedColumns the columns of the row
+   * @param serverValues   field values for this row coming from server.
+   *                       All fields must have values. The SyncState field
+   *                       (a local field that does not come from the server)
+   *                       should be "changed" or "deleted"
+   * @param rowId          which row in the table to update
+   * @param activeUser     the currently logged in user
+   * @param rolesList      passed in to determine if the current user is a privileged user
+   * @param locale         the users selected locale
    */
-  public void privilegedPerhapsPlaceRowIntoConflictWithId(OdkConnectionInterface db,
-                                                          String tableId, OrderedColumns orderedColumns, ContentValues serverValues, String rowId,
-                                                          String activeUser, String rolesList, String locale) {
+  public static void privilegedPerhapsPlaceRowIntoConflictWithId(OdkConnectionInterface db, String
+      tableId,
+      OrderedColumns orderedColumns, ContentValues serverValues, String rowId, String activeUser,
+      String rolesList, String locale) {
 
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
 
@@ -2889,13 +3128,12 @@ public class ODKDatabaseImplUtils {
       //     taking the server changes or if the changes only update the tracking
       //     and (perhaps) the metadata fields.
 
-
       // Do it...
 
       // (1) delete any existing server conflict row
-      this.deleteServerConflictRowWithId(db, tableId, rowId);
+      deleteServerConflictRowWithId(db, tableId, rowId);
       // fetch the current local (possibly-in-conflict) row
-      BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, activeUser);
+      BaseTable baseTable = privilegedGetRowsWithId(db, tableId, rowId, activeUser);
       // throws will abort the transaction, rolling back these changes
       if (baseTable.getNumberOfRows() == 0) {
         throw new IllegalArgumentException("no matching row found for server conflict");
@@ -2909,7 +3147,8 @@ public class ODKDatabaseImplUtils {
         throw new IllegalArgumentException("row has checkpoints");
       }
 
-      boolean isServerRowDeleted = serverValues.getAsString(DataTableColumns.SYNC_STATE).equals(SyncState.deleted.name());
+      boolean isServerRowDeleted = serverValues.getAsString(DataTableColumns.SYNC_STATE)
+          .equals(SyncState.deleted.name());
 
       SyncState state;
       {
@@ -2918,85 +3157,87 @@ public class ODKDatabaseImplUtils {
       }
       SyncState initialLocalRowState = state;
 
-      if ( state == SyncState.synced || state == SyncState.synced_pending_files ) {
-      // (2) if the local row was synced or synced pending changes, then either delete
-      //     the row from the device (if server deleted row) or accept the
-      //     server changes and place the row into synced_pending_changes status.
+      if (state == SyncState.synced || state == SyncState.synced_pending_files) {
+        // (2) if the local row was synced or synced pending changes, then either delete
+        //     the row from the device (if server deleted row) or accept the
+        //     server changes and place the row into synced_pending_changes status.
 
-      // the server's change should be applied locally.
-      if ( isServerRowDeleted ) {
-        this.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-      } else {
-        // Local row needs to be updated with server values.
-        //
-        // detect and handle file attachment column changes
-        if (state == SyncState.synced) {
-          // determine whether there are any changes in the columns that hold file attachments.
-          // if there are, then we need to transition into synced_pending_files. Otherwise, we
-          // can remain in the synced state.
+        // the server's change should be applied locally.
+        if (isServerRowDeleted) {
+          privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+        } else {
+          // Local row needs to be updated with server values.
+          //
+          // detect and handle file attachment column changes
+          if (state == SyncState.synced) {
+            // determine whether there are any changes in the columns that hold file attachments.
+            // if there are, then we need to transition into synced_pending_files. Otherwise, we
+            // can remain in the synced state.
 
-          for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
-            // todo: does not handle array containing (types containing) rowpath elements
-            if (cd.isUnitOfRetention() && cd.getType().getDataType().equals(ElementDataType.rowpath)) {
-              String uriFragment = serverValues.getAsString(cd.getElementKey());
-              String localUriFragment = localRow.getDataByKey(cd.getElementKey());
-              if (uriFragment != null) {
-                if (localUriFragment == null || !localUriFragment.equals(uriFragment)) {
-                  state = SyncState.synced_pending_files;
-                  WebLogger.getLogger(db.getAppName()).i(t,
-                      "privilegedPerhapsPlaceRowIntoConflictWithId: revising from synced to "
-                          + "synced_pending_files");
-                  break;
+            for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
+              // todo: does not handle array containing (types containing) rowpath elements
+              if (cd.isUnitOfRetention() && cd.getType().getDataType()
+                  .equals(ElementDataType.rowpath)) {
+                String uriFragment = serverValues.getAsString(cd.getElementKey());
+                String localUriFragment = localRow.getDataByKey(cd.getElementKey());
+                if (uriFragment != null) {
+                  if (!uriFragment.equals(localUriFragment)) {
+                    state = SyncState.synced_pending_files;
+                    WebLogger.getLogger(db.getAppName()).i(TAG,
+                        "privilegedPerhapsPlaceRowIntoConflictWithId: revising from synced to "
+                            + "synced_pending_files");
+                    break;
+                  }
                 }
               }
             }
           }
+
+          // update the row from the changes on the server
+          serverValues.put(DataTableColumns.SYNC_STATE, state.name());
+          serverValues.putNull(DataTableColumns.CONFLICT_TYPE);
+          privilegedUpdateRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
+              locale, false);
         }
 
-        // update the row from the changes on the server
-        serverValues.put(DataTableColumns.SYNC_STATE, state.name());
-        serverValues.putNull(DataTableColumns.CONFLICT_TYPE);
-        this.privilegedUpdateRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
-            locale, false);
-      }
-
-      // In either case (delete or sync outcome), be sure to commit our changes!!!!
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-      return;
-
-    } else if ( state == SyncState.new_row ) {
-      // (3) if the local row was in the new_row state, move it into changed (prior
-      //     to creating a conflict pair in step 5)
-
-      // update the row with all of the local columns as-is, except the sync state.
-      ContentValues values = new ContentValues();
-      for (int i = 0; i < baseTable.getWidth(); ++i) {
-        String colName = baseTable.getElementKey(i);
-        if (DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
-          continue;
+        // In either case (delete or sync outcome), be sure to commit our changes!!!!
+        if (!dbWithinTransaction) {
+          db.setTransactionSuccessful();
         }
-        if (localRow.getDataByIndex(i) == null) {
-          values.putNull(colName);
-        } else {
-          values.put(colName, localRow.getDataByIndex(i));
+        return;
+
+      } else if (state == SyncState.new_row) {
+        // (3) if the local row was in the new_row state, move it into changed (prior
+        //     to creating a conflict pair in step 5)
+
+        // update the row with all of the local columns as-is, except the sync state.
+        ContentValues values = new ContentValues();
+        for (int i = 0; i < baseTable.getWidth(); ++i) {
+          String colName = baseTable.getElementKey(i);
+          if (DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
+            continue;
+          }
+          if (localRow.getDataByIndex(i) == null) {
+            values.putNull(colName);
+          } else {
+            values.put(colName, localRow.getDataByIndex(i));
+          }
         }
-      }
-      // move this into the changed state...
-      state = SyncState.changed;
-      values.put(DataTableColumns.SYNC_STATE, state.name());
+        // move this into the changed state...
+        state = SyncState.changed;
+        values.put(DataTableColumns.SYNC_STATE, state.name());
 
-      this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
-          accessContext.activeUser, locale, false);
+        privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
+            accessContext.activeUser, locale, false);
 
-    } else if (state == SyncState.in_conflict) {
+      } else if (state == SyncState.in_conflict) {
         // (4) if the local row was in conflict, restore it to its pre-conflict state
         //     (either deleted or changed).
 
         // we need to remove the in_conflict records that refer to the
         // prior state of the server
-        String localRowConflictTypeBeforeSyncStr = localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        String localRowConflictTypeBeforeSyncStr = localRow
+            .getDataByKey(DataTableColumns.CONFLICT_TYPE);
         if (localRowConflictTypeBeforeSyncStr == null) {
           // this row is in conflict. It MUST have a non-null conflict type.
           throw new IllegalStateException("conflict type is null on an in-conflict row");
@@ -3012,24 +3253,27 @@ public class ODKDatabaseImplUtils {
         // move the local conflict back into the normal non-conflict (null) state
         // set the sync state to "changed" temporarily (otherwise we can't update)
 
-        state = ((localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
-            SyncState.deleted : SyncState.changed);
+        state = localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES ?
+            SyncState.deleted :
+            SyncState.changed;
 
-        this.restoreRowFromConflict(db, tableId, rowId, state, localRowConflictTypeBeforeSync);
+        restoreRowFromConflict(db, tableId, rowId, state, localRowConflictTypeBeforeSync);
       }
       // and drop through if SyncState is changed or deleted
 
       // (5) move the local row into conflict and insert the server row, placing it
       //     into conflict.
-      int localRowConflictType = (state == SyncState.deleted) ?
-          ConflictType.LOCAL_DELETED_OLD_VALUES : ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
+      int localRowConflictType = state == SyncState.deleted ?
+          ConflictType.LOCAL_DELETED_OLD_VALUES :
+          ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
 
-      this.placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
+      placeRowIntoConflict(db, tableId, rowId, localRowConflictType);
 
       serverValues.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
-      serverValues.put(DataTableColumns.CONFLICT_TYPE,
-          (isServerRowDeleted ? ConflictType.SERVER_DELETED_OLD_VALUES : ConflictType.SERVER_UPDATED_UPDATED_VALUES));
-      this.privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
+      serverValues.put(DataTableColumns.CONFLICT_TYPE, isServerRowDeleted ?
+          ConflictType.SERVER_DELETED_OLD_VALUES :
+          ConflictType.SERVER_UPDATED_UPDATED_VALUES);
+      privilegedInsertRowWithId(db, tableId, orderedColumns, serverValues, rowId, activeUser,
           locale, false);
 
       // To get here, the original local row was in some state other than synced or
@@ -3039,15 +3283,15 @@ public class ODKDatabaseImplUtils {
       // (6) enforce permissions on the change. This may immediately resolve conflict
       //     by taking the server changes or may overwrite the local row's permissions
       //     column values with those from the server.
-      if ( enforcePermissionsAndOptimizeConflictProcessing(db, tableId, orderedColumns, rowId,
-          initialLocalRowState, accessContext, locale) ) {
+      if (enforcePermissionsAndOptimizeConflictProcessing(db, tableId, orderedColumns, rowId,
+          initialLocalRowState, accessContext, locale)) {
         // and...
         // (7) optimize the conflict -- perhaps immediately resolving it based upon
         //     whether the user actually has the privileges to do anything other than
         //     taking the server changes or if the changes only update the tracking
         //     and (perhaps) the metadata fields.
-        optimizeConflictProcessing(db, tableId, orderedColumns, rowId,
-            initialLocalRowState, accessContext, locale);
+        optimizeConflictProcessing(db, tableId, orderedColumns, rowId, initialLocalRowState,
+            accessContext, locale);
       }
 
       if (!dbWithinTransaction) {
@@ -3060,75 +3304,70 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private static final boolean sameValue(String a, String b) {
-    if ( b == null ) {
-      return (a == null);
-    } else {
-      return (a != null) && a.equals(b);
-    }
-  }
-
   /**
    * If the latest row-level permissions from the server prevent the activeUser from
    * performing the modify or delete action on the row, immediately resolve the conflict
    * by taking the server's changes.
-   *
+   * <p>
    * If the latest row-level permissions from the server prevent the activeUser from
    * altering the permissions on the row, reset all of those permissions to match
    * the server's latest values.
-   *
+   * <p>
    * And, finally, optimize the conflict -- perhaps immediately resolving it based upon
    * whether the user actually has the privileges to do anything other than
    * taking the server changes or if the changes only update the tracking
    * and (perhaps) the metadata fields.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param rowId
-   * @param initialLocalRowState
-   * @param accessContext
-   * @param locale
-   * @return  true if we are still in conflict
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param orderedColumns       the columns of the
+   * @param rowId                which row in the table to update
+   * @param initialLocalRowState the state of the row on the server
+   * @param accessContext        the users permissions
+   * @param locale               the users selected locale
+   * @return true if we are still in conflict
    */
-  private boolean enforcePermissionsAndOptimizeConflictProcessing(OdkConnectionInterface db,
-                                          String tableId, OrderedColumns orderedColumns,
-                                          String rowId, SyncState initialLocalRowState,
-                                          AccessContext accessContext, String locale) {
+  private static boolean enforcePermissionsAndOptimizeConflictProcessing(OdkConnectionInterface db,
+      String tableId, OrderedColumns orderedColumns, String rowId, SyncState initialLocalRowState,
+      AccessContext accessContext, String locale) {
 
     // we should have two in-conflict records, on is the local, one is the server
-    BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
+    BaseTable baseTable = privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
     if (baseTable.getNumberOfRows() != 2) {
-      throw new IllegalStateException("we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
+      throw new IllegalStateException(
+          "we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
     }
     Integer idxServerRow = null;
-    int serverRowConflictType = -1;
     Integer idxLocalRow = null;
     int localRowConflictType = -1;
 
     {
       for (int idx = 0; idx < 2; ++idx) {
-        String rowConflictTypeStr = baseTable.getRowAtIndex(idx).getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        String rowConflictTypeStr = baseTable.getRowAtIndex(idx)
+            .getDataByKey(DataTableColumns.CONFLICT_TYPE);
         if (rowConflictTypeStr == null) {
           // this row is in conflict. It MUST have a non-null conflict type.
           throw new IllegalStateException("conflict type is null on an in-conflict row");
         }
         int rowConflictType = Integer.parseInt(rowConflictTypeStr);
-        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
+        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES
+            || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
           idxLocalRow = idx;
           localRowConflictType = rowConflictType;
-        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES
+            || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
           idxServerRow = idx;
-          serverRowConflictType = rowConflictType;
         }
       }
 
       if (idxServerRow == null) {
-        throw new IllegalStateException("did not find server conflict row while optimizing " + "the conflict");
+        throw new IllegalStateException(
+            "did not find server conflict row while optimizing " + "the conflict");
       }
 
       if (idxLocalRow == null) {
-        throw new IllegalStateException("did not find local conflict row while optimizing " + "the conflict");
+        throw new IllegalStateException(
+            "did not find local conflict row while optimizing " + "the conflict");
       }
     }
 
@@ -3147,21 +3386,22 @@ public class ODKDatabaseImplUtils {
     TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
 
     try {
-      String updatedSyncState = (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
-          SyncState.deleted.name() : SyncState.changed.name();
-      RowChange rowChange = (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ?
-          RowChange.DELETE_ROW : RowChange.CHANGE_ROW;
+      String updatedSyncState = localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES ?
+          SyncState.deleted.name() :
+          SyncState.changed.name();
+      RowChange rowChange = localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES ?
+          RowChange.DELETE_ROW :
+          RowChange.CHANGE_ROW;
 
       tss.allowRowChange(accessContext.activeUser, accessContext.rolesArray, updatedSyncState,
-          serverDefaultAccess, serverOwner, serverGroupReadOnly, serverGroupModify,
+          serverDefaultAccess, serverOwner, serverGroupModify,
           serverGroupPrivileged, rowChange);
 
-    } catch (ActionNotAuthorizedException e) {
+    } catch (ActionNotAuthorizedException ignored) {
       Row localRow = baseTable.getRowAtIndex(idxLocalRow);
 
-      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
-          orderedColumns, initialLocalRowState,
-          serverRow, localRow, accessContext.activeUser, locale);
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId, orderedColumns,
+          initialLocalRowState, serverRow, localRow, accessContext.activeUser, locale);
       return false;
     }
 
@@ -3188,7 +3428,7 @@ public class ODKDatabaseImplUtils {
       try {
         tss.canModifyPermissions(accessContext.activeUser, accessContext.rolesArray,
             serverGroupPrivileged, serverOwner);
-      } catch (ActionNotAuthorizedException e) {
+      } catch (ActionNotAuthorizedException ignored) {
 
         // don't have permission to alter permissions columns --
         // update the row with all of the local columns as-is, but override all the
@@ -3206,33 +3446,33 @@ public class ODKDatabaseImplUtils {
           }
         }
         // take the server's permissions fields.
-        if ( serverDefaultAccess == null ) {
+        if (serverDefaultAccess == null) {
           values.putNull(DataTableColumns.DEFAULT_ACCESS);
         } else {
           values.put(DataTableColumns.DEFAULT_ACCESS, serverDefaultAccess);
         }
-        if ( serverOwner == null ) {
+        if (serverOwner == null) {
           values.putNull(DataTableColumns.ROW_OWNER);
         } else {
           values.put(DataTableColumns.ROW_OWNER, serverOwner);
         }
-        if ( serverGroupReadOnly == null ) {
+        if (serverGroupReadOnly == null) {
           values.putNull(DataTableColumns.GROUP_READ_ONLY);
         } else {
           values.put(DataTableColumns.GROUP_READ_ONLY, serverGroupReadOnly);
         }
-        if ( serverGroupModify == null ) {
+        if (serverGroupModify == null) {
           values.putNull(DataTableColumns.GROUP_MODIFY);
         } else {
           values.put(DataTableColumns.GROUP_MODIFY, serverGroupModify);
         }
-        if ( serverGroupPrivileged == null ) {
+        if (serverGroupPrivileged == null) {
           values.putNull(DataTableColumns.GROUP_PRIVILEGED);
         } else {
           values.put(DataTableColumns.GROUP_PRIVILEGED, serverGroupPrivileged);
         }
 
-        this.privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
+        privilegedUpdateRowWithId(db, tableId, orderedColumns, values, rowId,
             accessContext.activeUser, locale, false);
       }
     }
@@ -3251,26 +3491,26 @@ public class ODKDatabaseImplUtils {
 
   /**
    * We have a valid, actionable conflict.
-   *
+   * <p>
    * Silently resolve this conflict if it can be reasonably resolved.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param rowId
-   * @param initialLocalRowState
-   * @param accessContext
-   * @param locale
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param orderedColumns       the columns of the row
+   * @param rowId                which row in the table to update
+   * @param initialLocalRowState the initial data in the local row
+   * @param accessContext        the permissions of the currently logged in row
+   * @param locale               the users selected locale
    */
-  private void optimizeConflictProcessing(OdkConnectionInterface db,
-                                          String tableId, OrderedColumns orderedColumns,
-                                          String rowId, SyncState initialLocalRowState,
-                                          AccessContext accessContext, String locale) {
+  private static void optimizeConflictProcessing(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, String rowId, SyncState initialLocalRowState,
+      AccessContext accessContext, String locale) {
 
     // we should have two in-conflict records, on is the local, one is the server
-    BaseTable baseTable = this.privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
+    BaseTable baseTable = privilegedGetRowsWithId(db, tableId, rowId, accessContext.activeUser);
     if (baseTable.getNumberOfRows() != 2) {
-      throw new IllegalStateException("we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
+      throw new IllegalStateException(
+          "we should have exactly two rows -- one local-conflict and " + "one server-conflict row");
     }
     Integer idxServerRow = null;
     int serverRowConflictType = -1;
@@ -3279,33 +3519,38 @@ public class ODKDatabaseImplUtils {
 
     {
       for (int idx = 0; idx < 2; ++idx) {
-        String rowConflictTypeStr = baseTable.getRowAtIndex(idx).getDataByKey(DataTableColumns.CONFLICT_TYPE);
+        String rowConflictTypeStr = baseTable.getRowAtIndex(idx)
+            .getDataByKey(DataTableColumns.CONFLICT_TYPE);
         if (rowConflictTypeStr == null) {
           // this row is in conflict. It MUST have a non-null conflict type.
           throw new IllegalStateException("conflict type is null on an in-conflict row");
         }
         int rowConflictType = Integer.parseInt(rowConflictTypeStr);
-        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
+        if (rowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES
+            || rowConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
           idxLocalRow = idx;
           localRowConflictType = rowConflictType;
-        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+        } else if (rowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES
+            || rowConflictType == ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
           idxServerRow = idx;
           serverRowConflictType = rowConflictType;
         }
       }
 
       if (idxServerRow == null) {
-        throw new IllegalStateException("did not find server conflict row while optimizing " + "the conflict");
+        throw new IllegalStateException(
+            "did not find server conflict row while optimizing " + "the conflict");
       }
 
       if (idxLocalRow == null) {
-        throw new IllegalStateException("did not find local conflict row while optimizing " + "the conflict");
+        throw new IllegalStateException(
+            "did not find local conflict row while optimizing " + "the conflict");
       }
     }
 
     // if the server and device are both trying to delete the row, then silently delete it
-    if ( localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES &&
-        serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+    if (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES
+        && serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) {
 
       // simply apply the server's change locally.
       resolveServerConflictWithDeleteRowWithId(db, tableId, rowId, accessContext.activeUser);
@@ -3315,8 +3560,8 @@ public class ODKDatabaseImplUtils {
     // if the server and device are not both modifying the row, then we are done --
     // user reconciliation is always required when faced with a mix of delete and
     // modify actions to the same row.
-    if ( localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES ||
-        serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES ) {
+    if (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES
+        || serverRowConflictType == ConflictType.SERVER_DELETED_OLD_VALUES) {
       return;
     }
 
@@ -3331,10 +3576,9 @@ public class ODKDatabaseImplUtils {
     // (3) any of the permissions columns are modified
 
     boolean userSpecifiedColumnsDiffer = false;
-    for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+    for (int i = 0; i < baseTable.getWidth(); ++i) {
       String colName = baseTable.getElementKey(i);
-      if ( ADMIN_COLUMNS.contains(colName) ||
-          DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
+      if (ADMIN_COLUMNS.contains(colName) || DataTableColumns.EFFECTIVE_ACCESS.equals(colName)) {
         // these values are ignored during comparisons
         continue;
       }
@@ -3345,10 +3589,10 @@ public class ODKDatabaseImplUtils {
       try {
         ColumnDefinition cd = orderedColumns.find(colName);
         dt = cd.getType().getDataType();
-      } catch ( IllegalArgumentException e ) {
+      } catch (IllegalArgumentException ignored) {
         // ignore
       }
-      if ( !identicalValue(localValue, serverValue, dt) ) {
+      if (!identicalValue(localValue, serverValue, dt)) {
         userSpecifiedColumnsDiffer = true;
         break;
       }
@@ -3357,178 +3601,38 @@ public class ODKDatabaseImplUtils {
     boolean nonPermissionsMetadataColumnsDiffer = false;
     boolean permissionsColumnsDiffer = false;
 
-    for ( int i = 0 ; i < baseTable.getWidth() ; ++i ) {
+    for (int i = 0; i < baseTable.getWidth(); ++i) {
       String colName = baseTable.getElementKey(i);
-      if ( !ADMIN_COLUMNS.contains(colName) ||
-           DataTableColumns.ID.equals(colName) ||
-           DataTableColumns.CONFLICT_TYPE.equals(colName) ||
-           DataTableColumns.SYNC_STATE.equals(colName) ||
-           DataTableColumns.ROW_ETAG.equals(colName)) {
+      if (!ADMIN_COLUMNS.contains(colName) || DataTableColumns.ID.equals(colName)
+          || DataTableColumns.CONFLICT_TYPE.equals(colName) || DataTableColumns.SYNC_STATE
+          .equals(colName) || DataTableColumns.ROW_ETAG.equals(colName)) {
         // these values are ignored during comparisons
         continue;
       }
       String localValue = localRow.getDataByKey(colName);
       String serverValue = serverRow.getDataByKey(colName);
 
-      if ( DataTableColumns.DEFAULT_ACCESS.equals(colName) ||
-           DataTableColumns.ROW_OWNER.equals(colName) ||
-           DataTableColumns.GROUP_READ_ONLY.equals(colName) ||
-           DataTableColumns.GROUP_MODIFY.equals(colName) ||
-           DataTableColumns.GROUP_PRIVILEGED.equals(colName) ) {
+      if (DataTableColumns.DEFAULT_ACCESS.equals(colName) || DataTableColumns.ROW_OWNER
+          .equals(colName) || DataTableColumns.GROUP_READ_ONLY.equals(colName)
+          || DataTableColumns.GROUP_MODIFY.equals(colName) || DataTableColumns.GROUP_PRIVILEGED
+          .equals(colName)) {
 
-        permissionsColumnsDiffer = permissionsColumnsDiffer ||
-            !sameValue(localValue, serverValue);
+        permissionsColumnsDiffer = permissionsColumnsDiffer || !sameValue(localValue, serverValue);
       } else {
-        nonPermissionsMetadataColumnsDiffer = nonPermissionsMetadataColumnsDiffer ||
-            !sameValue(localValue, serverValue);
+        nonPermissionsMetadataColumnsDiffer =
+            nonPermissionsMetadataColumnsDiffer || !sameValue(localValue, serverValue);
       }
     }
 
     // if the user-specified fields do not differ and the permissions columns do not differ
     // then we can take the server's changes (updating the metadata fields with those from the
     // server)
-    if ( !userSpecifiedColumnsDiffer && !permissionsColumnsDiffer ) {
-      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
-          orderedColumns, initialLocalRowState,
-          serverRow, localRow, accessContext.activeUser, locale);
-      return;
+    if (!userSpecifiedColumnsDiffer && !permissionsColumnsDiffer) {
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId, orderedColumns,
+          initialLocalRowState, serverRow, localRow, accessContext.activeUser, locale);
     }
 
     // otherwise, we have changes that require reconciliation
-  }
-
-  /**
-   * Change the conflictType for the given row from null (not in conflict) to
-   * the specified one.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param conflictType expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
-   *                     ConflictType.LOCAL_UPDATED_UPDATED_VALUES (1)
-   */
-  private void placeRowIntoConflict(OdkConnectionInterface db, String tableId, String rowId,
-      int conflictType) {
-
-    StringBuilder b = new StringBuilder();
-    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NULL);
-    Object[] whereArgs = { rowId };
-
-    TreeMap<String,Object> cv = new TreeMap<String,Object>();
-    cv.put(DataTableColumns.SYNC_STATE, SyncState.in_conflict.name());
-    cv.put(DataTableColumns.CONFLICT_TYPE, conflictType);
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      db.update(tableId, cv, b.toString(), whereArgs);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  /**
-   * Changes the conflictType for the given row from the specified one to null
-   * and set the sync state of this row to the indicated value. In general, you
-   * should first update the local conflict record with its new values, then
-   * call deleteServerConflictRowWithId(...) and then call this method.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param syncState
-   * @param conflictType
-   */
-  private void restoreRowFromConflict(OdkConnectionInterface db, String tableId, String rowId,
-      SyncState syncState, Integer conflictType) {
-
-    // TODO: is roleList applicable here?
-
-    StringBuilder b = new StringBuilder();
-    Object[] whereArgs;
-
-    if (conflictType == null) {
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NULL);
-      whereArgs = new Object[] { rowId };
-    } else {
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.CONFLICT_TYPE).append(S_EQUALS_PARAM);
-      whereArgs = new Object[] { rowId, conflictType };
-    }
-
-    TreeMap<String,Object> cv = new TreeMap<String,Object>();
-    cv.put(DataTableColumns.CONFLICT_TYPE, null);
-    cv.put(DataTableColumns.SYNC_STATE, syncState.name());
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      db.update(tableId, cv, b.toString(), whereArgs);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  /**
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @return the sync state of the row (see {@link SyncState}), or null if the
-   * row does not exist.  Rows are required to have non-null sync states.
-   * @throws IllegalStateException if the row has a null sync state or has
-   *                               2+ conflicts or checkpoints and
-   *                               those do not have matching sync states!
-   */
-  public SyncState getSyncState(OdkConnectionInterface db, String tableId,
-      String rowId) throws IllegalStateException {
-    Cursor c = null;
-    try {
-      c = db.query(tableId, new String[] { DataTableColumns.SYNC_STATE },
-          K_DATATABLE_ID_EQUALS_PARAM, new Object[] { rowId }, null, null, null, null);
-
-      if (c.moveToFirst()) {
-        int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
-        if (c.isNull(syncStateIndex)) {
-          throw new IllegalStateException(t + ": row had a null sync state!");
-        }
-        String val = CursorUtils.getIndexAsString(c, syncStateIndex);
-        while (c.moveToNext()) {
-          if (c.isNull(syncStateIndex)) {
-            throw new IllegalStateException(t + ": row had a null sync state!");
-          }
-          String otherVal = CursorUtils.getIndexAsString(c, syncStateIndex);
-          if (!val.equals(otherVal)) {
-            throw new IllegalStateException(t + ": row with 2+ conflicts or checkpoints does "
-                + "not have matching sync states!");
-          }
-        }
-        return SyncState.valueOf(val);
-      }
-      return null;
-    } finally {
-      if (c != null && !c.isClosed()) {
-        c.close();
-      }
-    }
   }
 
   /**
@@ -3544,15 +3648,15 @@ public class ODKDatabaseImplUtils {
    * deleted (in this case, unless the record on the server was already deleted,
    * it will remain and not be deleted during any subsequent synchronizations).
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @throws ActionNotAuthorizedException
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles the user has
+   * @throws ActionNotAuthorizedException if the user isn't allowed to delete the row
    */
-  public void deleteRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId, String activeUser, String rolesList) throws ActionNotAuthorizedException {
+  public static void deleteRowWithId(OdkConnectionInterface db, String tableId, String rowId,
+      String activeUser, String rolesList) throws ActionNotAuthorizedException {
 
     // TODO: rolesList of user may impact whether we can delete the record.
     // Particularly with sync'd records, is there anything special to do here?
@@ -3578,16 +3682,14 @@ public class ODKDatabaseImplUtils {
       try {
         c = db.query(tableId,
             new String[] { DataTableColumns.SYNC_STATE, DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns.GROUP_MODIFY,
-                DataTableColumns.GROUP_PRIVILEGED},
-            whereClause, whereArgs, null, null,
-                DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
+                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY,
+                DataTableColumns.GROUP_MODIFY, DataTableColumns.GROUP_PRIVILEGED }, whereClause,
+            whereArgs, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP + " ASC", null);
         boolean hasFirst = c.moveToFirst();
 
         int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
         int idxDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
         int idxOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER);
-        int idxGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY);
         int idxGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY);
         int idxGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED);
 
@@ -3595,18 +3697,22 @@ public class ODKDatabaseImplUtils {
 
         TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
 
-        if ( hasFirst ) {
+        if (hasFirst) {
           do {
             // verify each row
             String priorSyncState = c.getString(idxSyncState);
-            String priorDefaultAccess = c.isNull(idxDefaultAccess) ? null : c.getString(idxDefaultAccess);
+            String priorDefaultAccess = c.isNull(idxDefaultAccess) ?
+                null :
+                c.getString(idxDefaultAccess);
             String priorOwner = c.isNull(idxOwner) ? null : c.getString(idxOwner);
-            String priorGroupReadOnly = c.isNull(idxGroupReadOnly) ? null : c.getString(idxGroupReadOnly);
             String priorGroupModify = c.isNull(idxGroupModify) ? null : c.getString(idxGroupModify);
-            String priorGroupPrivileged = c.isNull(idxGroupPrivileged) ?  null : c.getString(idxGroupPrivileged);
+            String priorGroupPrivileged = c.isNull(idxGroupPrivileged) ?
+                null :
+                c.getString(idxGroupPrivileged);
 
             tss.allowRowChange(activeUser, rolesArray, priorSyncState, priorDefaultAccess,
-                priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.DELETE_ROW);
+                priorOwner, priorGroupModify, priorGroupPrivileged,
+                RowChange.DELETE_ROW);
 
           } while (c.moveToNext());
         }
@@ -3615,11 +3721,11 @@ public class ODKDatabaseImplUtils {
         if (c != null && !c.isClosed()) {
           c.close();
         }
-        c = null;
       }
 
       // delete any checkpoints
-      whereClause = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TYPE + S_IS_NULL;
+      whereClause =
+          K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TYPE + S_IS_NULL;
       db.delete(tableId, whereClause, whereArgs);
 
       // this will return null if there are no rows.
@@ -3638,7 +3744,7 @@ public class ODKDatabaseImplUtils {
 
       } else if (syncState != SyncState.in_conflict) {
 
-        TreeMap<String,Object> values = new TreeMap<String,Object>();
+        Map<String, Object> values = new TreeMap<>();
         values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
         values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
             TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
@@ -3657,18 +3763,13 @@ public class ODKDatabaseImplUtils {
     }
 
     if (shouldPhysicallyDelete) {
-      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
+      File instanceFolder = new File(
+          ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
       try {
         ODKFileUtils.deleteDirectory(instanceFolder);
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        WebLogger.getLogger(db.getAppName())
-            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
-        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
       } catch (Exception e) {
-        // TODO Auto-generated catch block
         WebLogger.getLogger(db.getAppName())
-            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+            .e(TAG, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
         WebLogger.getLogger(db.getAppName()).printStackTrace(e);
       }
     }
@@ -3677,18 +3778,18 @@ public class ODKDatabaseImplUtils {
   /*
     * Internal method to execute a delete checkpoint statement with the given where clause
     *
-    * @param db
-    * @param tableId
-    * @param rowId
+    * @param db an open database connection to use
+    * @param tableId the table to update
+    * @param rowId which row in the table to update
     * @param whereClause
     * @param whereArgs
     * @param activeUser
     * @param rolesList
     * @throws ActionNotAuthorizedException
    */
-  private void rawCheckpointDeleteDataInTable(OdkConnectionInterface db,
-      String tableId, String rowId, String whereClause, Object[] whereArgs, String activeUser,
-      String rolesList) throws ActionNotAuthorizedException {
+  private static void rawCheckpointDeleteDataInTable(OdkConnectionInterface db, String tableId,
+      String rowId, String whereClause, Object[] whereArgs, String activeUser, String rolesList)
+      throws ActionNotAuthorizedException {
 
     boolean shouldPhysicallyDelete = false;
 
@@ -3704,15 +3805,14 @@ public class ODKDatabaseImplUtils {
       try {
         c = db.query(tableId,
             new String[] { DataTableColumns.SYNC_STATE, DataTableColumns.DEFAULT_ACCESS,
-                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY, DataTableColumns
-                .GROUP_MODIFY, DataTableColumns.GROUP_PRIVILEGED}, whereClause,
+                DataTableColumns.ROW_OWNER, DataTableColumns.GROUP_READ_ONLY,
+                DataTableColumns.GROUP_MODIFY, DataTableColumns.GROUP_PRIVILEGED }, whereClause,
             whereArgs, null, null, null, null);
         boolean hasRow = c.moveToFirst();
 
         int idxSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE);
         int idxDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS);
         int idxOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER);
-        int idxGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY);
         int idxGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY);
         int idxGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED);
 
@@ -3720,18 +3820,22 @@ public class ODKDatabaseImplUtils {
 
         TableSecuritySettings tss = getTableSecuritySettings(db, tableId);
 
-        if ( hasRow ) {
+        if (hasRow) {
           do {
             // the row is entirely removed -- delete the attachments
             String priorSyncState = c.getString(idxSyncState);
-            String priorDefaultAccess = c.isNull(idxDefaultAccess) ? null : c.getString(idxDefaultAccess);
+            String priorDefaultAccess = c.isNull(idxDefaultAccess) ?
+                null :
+                c.getString(idxDefaultAccess);
             String priorOwner = c.isNull(idxOwner) ? null : c.getString(idxOwner);
-            String priorGroupReadOnly = c.isNull(idxGroupReadOnly) ? null : c.getString(idxGroupReadOnly);
             String priorGroupModify = c.isNull(idxGroupModify) ? null : c.getString(idxGroupModify);
-            String priorGroupPrivileged = c.isNull(idxGroupPrivileged) ? null : c.getString(idxGroupPrivileged);
+            String priorGroupPrivileged = c.isNull(idxGroupPrivileged) ?
+                null :
+                c.getString(idxGroupPrivileged);
 
             tss.allowRowChange(activeUser, rolesArray, priorSyncState, priorDefaultAccess,
-                priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.DELETE_ROW);
+                priorOwner, priorGroupModify, priorGroupPrivileged,
+                RowChange.DELETE_ROW);
           } while (c.moveToNext());
         }
 
@@ -3739,7 +3843,6 @@ public class ODKDatabaseImplUtils {
         if (c != null && !c.isClosed()) {
           c.close();
         }
-        c = null;
       }
 
       db.delete(tableId, whereClause, whereArgs);
@@ -3752,7 +3855,7 @@ public class ODKDatabaseImplUtils {
             K_DATATABLE_ID_EQUALS_PARAM, new Object[] { rowId }, null, null, null, null);
         c.moveToFirst();
         // the row is entirely removed -- delete the attachments
-        shouldPhysicallyDelete = (c.getCount() == 0);
+        shouldPhysicallyDelete = c.getCount() == 0;
       } finally {
         if (c != null && !c.isClosed()) {
           c.close();
@@ -3769,18 +3872,14 @@ public class ODKDatabaseImplUtils {
     }
 
     if (shouldPhysicallyDelete) {
-      File instanceFolder = new File(ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
+      File instanceFolder = new File(
+          ODKFileUtils.getInstanceFolder(db.getAppName(), tableId, rowId));
       try {
         ODKFileUtils.deleteDirectory(instanceFolder);
-      } catch (IOException e) {
+      } catch (Exception e) {
         // TODO Auto-generated catch block
         WebLogger.getLogger(db.getAppName())
-            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
-        WebLogger.getLogger(db.getAppName()).printStackTrace(e);
-      } catch (Exception e ) {
-        // TODO Auto-generated catch block
-        WebLogger.getLogger(db.getAppName())
-            .e(t, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+            .e(TAG, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
         WebLogger.getLogger(db.getAppName()).printStackTrace(e);
       }
     }
@@ -3792,23 +3891,20 @@ public class ODKDatabaseImplUtils {
    * filling-in of the form. They act as restore points in the Survey, should
    * the application die.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @throws ActionNotAuthorizedException
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles the user has
+   * @throws ActionNotAuthorizedException if the user isn't allowed to perform the action
    */
-  public void deleteAllCheckpointRowsWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser, String rolesList)
-      throws ActionNotAuthorizedException {
-    StringBuilder b = new StringBuilder();
-    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.SAVEPOINT_TYPE).append(S_IS_NULL);
+  public static void deleteAllCheckpointRowsWithId(OdkConnectionInterface db, String tableId,
+      String rowId,
+      String activeUser, String rolesList) throws ActionNotAuthorizedException {
+    String b = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TYPE + S_IS_NULL;
 
-    rawCheckpointDeleteDataInTable(db, tableId, rowId,
-        b.toString(),
-        new Object[] { rowId }, activeUser, rolesList);
+    rawCheckpointDeleteDataInTable(db, tableId, rowId, b, new Object[] { rowId }, activeUser,
+        rolesList);
   }
 
   /**
@@ -3817,116 +3913,24 @@ public class ODKDatabaseImplUtils {
    * filling-in of the form. They act as restore points in the Survey, should
    * the application die.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @throws ActionNotAuthorizedException
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles the user has
+   * @throws ActionNotAuthorizedException if the user isn't allowed to perform the action
    */
-  public void deleteLastCheckpointRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser, String rolesList)
-      throws ActionNotAuthorizedException {
-    StringBuilder b = new StringBuilder();
-    b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-        .append(DataTableColumns.SAVEPOINT_TYPE).append(S_IS_NULL).append(S_AND)
-        .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" IN (SELECT MAX(")
-             .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
-           .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
+  public static void deleteLastCheckpointRowWithId(OdkConnectionInterface db, String tableId,
+      String rowId,
+      String activeUser, String rolesList) throws ActionNotAuthorizedException {
+    String b =
+        K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TYPE + S_IS_NULL + S_AND
+            + DataTableColumns.SAVEPOINT_TIMESTAMP + " IN (SELECT MAX("
+            + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM " + tableId + K_WHERE
+            + K_DATATABLE_ID_EQUALS_PARAM + ")";
 
-    rawCheckpointDeleteDataInTable(db, tableId, rowId,
-        b.toString(), new Object[] { rowId, rowId }, activeUser, rolesList);
-  }
-
-  /**
-   * Update all rows for the given rowId to SavepointType 'INCOMPLETE' and
-   * remove all but the most recent row. When used with a rowId that has
-   * checkpoints, this updates to the most recent checkpoint and removes any
-   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
-   * the general effect of resetting the rowId to an INCOMPLETE state.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   */
-  public void saveAsIncompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId) {
-
-    // TODO: if user becomes unverified, we still allow them to save-as-incomplete ths record.
-    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      StringBuilder b = new StringBuilder();
-      b.append("UPDATE ").append(tableId).append(" SET ")
-          .append(DataTableColumns.SAVEPOINT_TYPE).append(S_EQUALS_PARAM).append(K_WHERE)
-          .append(K_DATATABLE_ID_EQUALS_PARAM);
-      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.incomplete(), rowId });
-      b.setLength(0);
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
-          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
-          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
-      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  /**
-   * Update all rows for the given rowId to SavepointType 'COMPLETE' and
-   * remove all but the most recent row. When used with a rowId that has
-   * checkpoints, this updates to the most recent checkpoint and removes any
-   * earlier checkpoints, incomplete or complete savepoints. Otherwise, it has
-   * the general effect of resetting the rowId to an COMPLETE state.
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   */
-  public void saveAsCompleteMostRecentCheckpointRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId) {
-
-    // TODO: if user becomes unverified, we still allow them to save-as-complete ths record.
-    // Is this the behavior we want?  I think it would be difficult to explain otherwise.
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      StringBuilder b = new StringBuilder();
-      b.append("UPDATE ").append(tableId).append(" SET ")
-          .append(DataTableColumns.SAVEPOINT_TYPE).append(S_EQUALS_PARAM).append(K_WHERE)
-          .append(K_DATATABLE_ID_EQUALS_PARAM);
-      db.execSQL(b.toString(), new Object[] { SavepointTypeManipulator.complete(), rowId });
-
-      b.setLength(0);
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" NOT IN (SELECT MAX(")
-               .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
-          .append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
-      db.delete(tableId, b.toString(), new Object[] { rowId, rowId });
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
+    rawCheckpointDeleteDataInTable(db, tableId, rowId, b, new Object[] { rowId, rowId }, activeUser,
+        rolesList);
   }
 
   /**
@@ -3936,16 +3940,17 @@ public class ODKDatabaseImplUtils {
    * metadata fields, then an exception may be thrown if there are more than one
    * row matching this rowId.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @param locale
+   * @param db             an open database connection to use
+   * @param tableId        the table to update
+   * @param orderedColumns the columns of the table with the row to update
+   * @param cvValues       the new values
+   * @param rowId          which row in the table to update
+   * @param activeUser     the currently logged in user
+   * @param rolesList      the list of roles the user has
+   * @param locale         the users currently selected locale
+   * @throws ActionNotAuthorizedException if the user isn't allowed to perform the action
    */
-  public void updateRowWithId(OdkConnectionInterface db, String tableId,
+  public static void updateRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
@@ -3953,12 +3958,12 @@ public class ODKDatabaseImplUtils {
     // TODO: for multi-step sync actions, we probably need an internal variant of this.
 
     if (cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    Map<String, Object> cvDataTableVal = new HashMap<>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    for (String key: cvValues.keySet()) {
+    for (String key : cvValues.keySet()) {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
@@ -3966,23 +3971,23 @@ public class ODKDatabaseImplUtils {
         activeUser, rolesList, locale, false);
   }
 
-  private void updateRowWithId(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, Map<String,Object> cvValues, String activeUser,
+  private static void updateRowWithId(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, Map<String, Object> cvValues, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
     // TODO: make sure caller passes in the correct roleList for the use case.
     // TODO: for multi-step sync actions, we probably need an internal variant of this.
 
     if (cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
     if (!cvValues.containsKey(DataTableColumns.ID)) {
-      throw new IllegalArgumentException(t + ": No rowId in cvValues map " + tableId);
+      throw new IllegalArgumentException(TAG + ": No rowId in cvValues map " + tableId);
     }
 
-    upsertDataIntoExistingTable(db, tableId, orderedColumns, cvValues, true, false,
-        activeUser, rolesList, locale, false);
+    upsertDataIntoExistingTable(db, tableId, orderedColumns, cvValues, true, false, activeUser,
+        rolesList, locale, false);
   }
 
   /**
@@ -3992,16 +3997,15 @@ public class ODKDatabaseImplUtils {
    * there isn't a row matching this rowId or if there are checkpoint or
    * conflict entries for this rowId.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param activeUser
-   * @param locale
-   * @param asCsvRequestedChange
+   * @param db             an open database connection to use
+   * @param tableId        the table to update
+   * @param orderedColumns the columns of the table with the row to update
+   * @param cvValues       the new values
+   * @param rowId          which row in the table to update
+   * @param activeUser     the currently logged in user
+   * @param locale         the users currently selected locale
    */
-  private void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
+  private static void privilegedUpdateRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String locale, boolean asCsvRequestedChange) {
 
@@ -4011,12 +4015,12 @@ public class ODKDatabaseImplUtils {
     String rolesList = RoleConsts.ADMIN_ROLES_LIST;
 
     if (cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    Map<String, Object> cvDataTableVal = new HashMap<>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    for (String key: cvValues.keySet()) {
+    for (String key : cvValues.keySet()) {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
@@ -4034,13 +4038,14 @@ public class ODKDatabaseImplUtils {
    * <p/>
    * Delete the local row.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
    */
-  public void privilegedDeleteRowWithId(OdkConnectionInterface db, String tableId,
-      String rowId, String activeUser) {
+  public static void privilegedDeleteRowWithId(OdkConnectionInterface db, String tableId, String
+      rowId,
+      String activeUser) {
 
     // TODO: make sure caller passes in the correct roleList for the use case.
     String rolesList = RoleConsts.ADMIN_ROLES_LIST;
@@ -4059,8 +4064,8 @@ public class ODKDatabaseImplUtils {
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
 
-      if ( privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
-          activeUser) ) {
+      if (privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
+          activeUser)) {
 
         // delete what was the local conflict record
         deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
@@ -4096,14 +4101,14 @@ public class ODKDatabaseImplUtils {
    * // move the local conflict back into the normal (null) state
    * deleteRowWithId(appName, dbHandleName, tableId, rowId);
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @throws ActionNotAuthorizedException
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
    */
-  public void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser) {
+  public static void resolveServerConflictWithDeleteRowWithId(OdkConnectionInterface db, String
+      tableId,
+      String rowId, String activeUser) {
 
     // TODO: make sure caller passes in the correct roleList for the use case.
 
@@ -4121,8 +4126,8 @@ public class ODKDatabaseImplUtils {
       // move the local record into the 'new_row' sync state
       // so it can be physically deleted.
 
-      if ( !privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
-          activeUser) ) {
+      if (!privilegedUpdateRowETagAndSyncState(db, tableId, rowId, null, SyncState.new_row,
+          activeUser)) {
         throw new IllegalArgumentException(
             "row id " + rowId + " does not have exactly 1 row in table " + tableId);
       }
@@ -4131,7 +4136,7 @@ public class ODKDatabaseImplUtils {
       try {
         deleteRowWithId(db, tableId, rowId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
       } catch (ActionNotAuthorizedException e) {
-        WebLogger.getLogger(db.getAppName()).e(t, "unexpected -- should always succeed");
+        WebLogger.getLogger(db.getAppName()).e(TAG, "unexpected -- should always succeed");
         WebLogger.getLogger(db.getAppName()).printStackTrace(e);
       }
 
@@ -4152,15 +4157,17 @@ public class ODKDatabaseImplUtils {
    * If the local changes are to delete this record, the record will be deleted
    * upon the next successful sync.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @param locale
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles that the user has
+   * @param locale     the users currently selected locale
+   * @throws ActionNotAuthorizedException if the user can't make the change
    */
-  public void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId, String activeUser, String rolesList, String locale)
+  public static void resolveServerConflictTakeLocalRowWithId(OdkConnectionInterface db, String
+      tableId,
+      String rowId, String activeUser, String rolesList, String locale)
       throws ActionNotAuthorizedException {
 
     // TODO: if rolesList contains RoleConsts.ROLE_ADMINISTRATOR or  RoleConsts.ROLE_SUPER_USER
@@ -4185,12 +4192,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      StringBuilder b = new StringBuilder();
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
-      BaseTable table = privilegedQuery(db, tableId,
-          QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
-              new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
+      String b =
+          K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL;
+      BaseTable table = privilegedQuery(db, tableId, QueryUtil
+              .buildSqlStatement(tableId, b, null, null,
+                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
       if (table.getNumberOfRows() != 2) {
@@ -4223,18 +4229,18 @@ public class ODKDatabaseImplUtils {
       // restored to the proper (conflict_type, sync_state) values.
       //
       // No need to specify them here.
-      TreeMap<String,Object> updateValues = new TreeMap<String,Object>();
+      Map<String, Object> updateValues = new TreeMap<>();
       updateValues.put(DataTableColumns.ID, rowId);
       updateValues
           .put(DataTableColumns.ROW_ETAG, serverRow.getDataByKey(DataTableColumns.ROW_ETAG));
 
       // take the server's filter metadata values ...
-      TreeMap<String,Object> privilegedUpdateValues = new TreeMap<String,Object>();
+      Map<String, Object> privilegedUpdateValues = new TreeMap<>();
       privilegedUpdateValues.put(DataTableColumns.ID, rowId);
       privilegedUpdateValues.put(DataTableColumns.DEFAULT_ACCESS,
           serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-      privilegedUpdateValues.put(DataTableColumns.ROW_OWNER,
-          serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
+      privilegedUpdateValues
+          .put(DataTableColumns.ROW_OWNER, serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
       privilegedUpdateValues.put(DataTableColumns.GROUP_READ_ONLY,
           serverRow.getDataByKey(DataTableColumns.GROUP_READ_ONLY));
       privilegedUpdateValues.put(DataTableColumns.GROUP_MODIFY,
@@ -4251,11 +4257,7 @@ public class ODKDatabaseImplUtils {
 
       SyncState finalSyncState = SyncState.changed;
 
-      if (localConflictType == ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
-        // We are updating -- preserve the local metadata and column values
-        // this is a no-op, as we are updating the local record, so we don't
-        // need to do anything special.
-      } else {
+      if (localConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
         finalSyncState = SyncState.deleted;
 
         // Deletion is really a "TakeServerChanges" action, but ending with 'deleted' as
@@ -4276,6 +4278,11 @@ public class ODKDatabaseImplUtils {
         for (String elementKey : orderedColumns.getRetentionColumnNames()) {
           updateValues.put(elementKey, serverRow.getDataByKey(elementKey));
         }
+        //} else {
+        // We are updating -- preserve the local metadata and column values
+        // this is a no-op, as we are updating the local record, so we don't
+        // need to do anything special.
+        //}
       }
 
       // delete the record of the server row
@@ -4287,17 +4294,16 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with the changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
-          locale);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList, locale);
 
       // update as if user has admin privileges.
       // do this so we can update the filter type and filter value
-      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues,
-          activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
+      updateRowWithId(db, tableId, orderedColumns, privilegedUpdateValues, activeUser,
+          RoleConsts.ADMIN_ROLES_LIST, locale);
 
       // and if we are deleting, try to delete it.
       // this may throw an ActionNotAuthorizedException
-      if ( finalSyncState == SyncState.deleted ) {
+      if (finalSyncState == SyncState.deleted) {
         deleteRowWithId(db, tableId, rowId, activeUser, rolesList);
       }
 
@@ -4320,17 +4326,19 @@ public class ODKDatabaseImplUtils {
    * <p/>
    * It is an error to call this if the local change is to delete the row.
    *
-   * @param db
-   * @param tableId
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
    * @param cvValues   key-value pairs from the server record that we should incorporate.
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @param locale
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param rolesList  the list of roles that the user has
+   * @param locale     the users currently selected locale
+   * @throws ActionNotAuthorizedException if the user can't make the change
    */
-  public void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface db,
-      String tableId, ContentValues cvValues, String rowId, String activeUser,
-      String rolesList, String locale) throws ActionNotAuthorizedException {
+  public static void resolveServerConflictTakeLocalRowPlusServerDeltasWithId(OdkConnectionInterface
+      db,
+      String tableId, ContentValues cvValues, String rowId, String activeUser, String rolesList,
+      String locale) throws ActionNotAuthorizedException {
 
     // TODO: if rolesList does not contain RoleConsts.ROLE_SUPER_USER or RoleConsts.ROLE_ADMINISTRATOR
     // TODO: then take the server's rowFilterScope rather than the user's values of those.
@@ -4355,10 +4363,9 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      BaseTable table = privilegedQuery(db, tableId,
-          QueryUtil.buildSqlStatement(tableId, K_DATATABLE_ID_EQUALS_PARAM +
-                  S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL, null, null,
-              new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
+      BaseTable table = privilegedQuery(db, tableId, QueryUtil.buildSqlStatement(tableId,
+          K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL,
+          null, null, new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
       if (table.getNumberOfRows() != 2) {
@@ -4391,7 +4398,7 @@ public class ODKDatabaseImplUtils {
             "Local row is marked for deletion -- blending does not make sense for rowId: " + rowId);
       }
 
-      HashMap<String,Object> updateValues = new HashMap<String,Object>();
+      Map<String, Object> updateValues = new HashMap<>();
       for (String key : cvValues.keySet()) {
         updateValues.put(key, cvValues.get(key));
       }
@@ -4420,12 +4427,12 @@ public class ODKDatabaseImplUtils {
           localRow.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
       // take the server's filter metadata values ...
-      TreeMap<String,Object> privilegedUpdateValues = new TreeMap<String,Object>();
+      Map<String, Object> privilegedUpdateValues = new TreeMap<>();
       privilegedUpdateValues.put(DataTableColumns.ID, rowId);
       privilegedUpdateValues.put(DataTableColumns.DEFAULT_ACCESS,
           serverRow.getDataByKey(DataTableColumns.DEFAULT_ACCESS));
-      privilegedUpdateValues.put(DataTableColumns.ROW_OWNER,
-          serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
+      privilegedUpdateValues
+          .put(DataTableColumns.ROW_OWNER, serverRow.getDataByKey(DataTableColumns.ROW_OWNER));
       privilegedUpdateValues.put(DataTableColumns.GROUP_READ_ONLY,
           serverRow.getDataByKey(DataTableColumns.GROUP_READ_ONLY));
       privilegedUpdateValues.put(DataTableColumns.GROUP_MODIFY,
@@ -4445,13 +4452,12 @@ public class ODKDatabaseImplUtils {
       restoreRowFromConflict(db, tableId, rowId, SyncState.changed, localConflictType);
 
       // update local with server's changes
-      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList,
-          locale);
+      updateRowWithId(db, tableId, orderedColumns, updateValues, activeUser, rolesList, locale);
 
       // update as if user has admin privileges.
       // do this so we can update the filter type and filter value
-      updateRowWithId( db, tableId, orderedColumns, privilegedUpdateValues,
-          activeUser, RoleConsts.ADMIN_ROLES_LIST, locale);
+      updateRowWithId(db, tableId, orderedColumns, privilegedUpdateValues, activeUser,
+          RoleConsts.ADMIN_ROLES_LIST, locale);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -4468,17 +4474,16 @@ public class ODKDatabaseImplUtils {
   /**
    * Resolve the server conflict by taking the server changes.  This may delete the local row.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param activeUser
-   * @param locale
+   * @param db         an open database connection to use
+   * @param tableId    the table to update
+   * @param rowId      which row in the table to update
+   * @param activeUser the currently logged in user
+   * @param locale     the users currently selected locale
    */
-  public void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
-      String tableId, String rowId,
-      String activeUser, String locale) {
+  public static void resolveServerConflictTakeServerRowWithId(OdkConnectionInterface db, String
+      tableId,
+      String rowId, String activeUser, String locale) {
 
-    String rolesList = RoleConsts.ADMIN_ROLES_LIST;
     // TODO: incoming rolesList should be the privileged user roles because we are
     // TODO: overwriting our local row with everything from the server.
 
@@ -4501,12 +4506,11 @@ public class ODKDatabaseImplUtils {
 
       // get both conflict records for this row.
       // the local record is always before the server record (due to conflict_type values)
-      StringBuilder b = new StringBuilder();
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.CONFLICT_TYPE).append(S_IS_NOT_NULL);
-      BaseTable table = privilegedQuery(db, tableId,
-          QueryUtil.buildSqlStatement(tableId, b.toString(), null, null,
-              new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
+      String b =
+          K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NOT_NULL;
+      BaseTable table = privilegedQuery(db, tableId, QueryUtil
+              .buildSqlStatement(tableId, b, null, null,
+                  new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new Object[] { rowId }, null, accessContext);
 
       if (table.getNumberOfRows() != 2) {
@@ -4516,8 +4520,8 @@ public class ODKDatabaseImplUtils {
       Row localRow = table.getRowAtIndex(0);
       Row serverRow = table.getRowAtIndex(1);
 
-      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId,
-          orderedColumns, null, serverRow, localRow, activeUser, locale);
+      internalResolveServerConflictTakeServerRowWithId(db, tableId, rowId, orderedColumns, null,
+          serverRow, localRow, activeUser, locale);
 
       if (!inTransaction) {
         db.setTransactionSuccessful();
@@ -4534,22 +4538,19 @@ public class ODKDatabaseImplUtils {
   /**
    * Resolve the server conflict by taking the server changes.  This may delete the local row.
    *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param orderedColumns
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param rowId                which row in the table to update
+   * @param orderedColumns       the columns in the row
    * @param initialLocalRowState -- if not null, what the row started as
-   * @param serverRow
-   * @param localRow
-   * @param activeUser
-   * @param locale
+   * @param serverRow            the server's version of the row
+   * @param localRow             the local version of the row
+   * @param activeUser           the currently logged in user
+   * @param locale               the users currently selected locale
    */
-  private void internalResolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
-                                                       String tableId, String rowId,
-                                                       OrderedColumns orderedColumns,
-                                                       SyncState initialLocalRowState,
-                                                       Row serverRow, Row localRow,
-                                                       String activeUser, String locale) {
+  private static void internalResolveServerConflictTakeServerRowWithId(OdkConnectionInterface db,
+      String tableId, String rowId, OrderedColumns orderedColumns, SyncState initialLocalRowState,
+      Row serverRow, Row localRow, String activeUser, String locale) {
 
     // TODO: incoming rolesList should be the privileged user roles because we are
     // TODO: overwriting our local row with everything from the server.
@@ -4591,14 +4592,14 @@ public class ODKDatabaseImplUtils {
       } else {
         // construct an update map of all of the server row's values
         // except CONFLICT_TYPE, which should be null, and SYNC_STATE.
-        HashMap<String,Object> updateValues = new HashMap<String,Object>();
+        Map<String, Object> updateValues = new HashMap<>();
 
-        for ( String adminColName : ADMIN_COLUMNS ) {
-          if ( adminColName.equals(DataTableColumns.CONFLICT_TYPE) ||
-              adminColName.equals(DataTableColumns.SYNC_STATE) ) {
+        for (String adminColName : ADMIN_COLUMNS) {
+          if (adminColName.equals(DataTableColumns.CONFLICT_TYPE) || adminColName
+              .equals(DataTableColumns.SYNC_STATE)) {
             continue;
           }
-          updateValues.put(adminColName, serverRow.getDataByKey(adminColName) );
+          updateValues.put(adminColName, serverRow.getDataByKey(adminColName));
         }
         updateValues.put(DataTableColumns.CONFLICT_TYPE, null);
 
@@ -4622,25 +4623,27 @@ public class ODKDatabaseImplUtils {
           // ensures that we will pull down those attachments at the next
           // sync.
           for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
-            if (cd.getType().getDataType() != ElementDataType.rowpath) {
+            if (!cd.getType().getDataType().equals(ElementDataType.rowpath)) {
               // not a file attachment
               continue;
             }
             String v = serverRow.getDataByKey(cd.getElementKey());
-            if (v != null && v.length() != 0) {
+            if (v != null && !v.isEmpty()) {
               // non-null file attachment specified on server row
               hasUriFragments = true;
               String lv = localRow.getDataByKey(cd.getElementKey());
               uriFragmentsChangedOrAppeared =
-                  uriFragmentsChangedOrAppeared || (lv == null) || !lv.equals(v);
-              if ( initialLocalRowState != SyncState.synced ) {
+                  uriFragmentsChangedOrAppeared || lv == null || !lv.equals(v);
+              if (initialLocalRowState != SyncState.synced) {
                 break;
               }
             }
           }
 
-          if ( initialLocalRowState == SyncState.synced ) {
-            newState = uriFragmentsChangedOrAppeared ? SyncState.synced_pending_files : SyncState.synced;
+          if (initialLocalRowState == SyncState.synced) {
+            newState = uriFragmentsChangedOrAppeared ?
+                SyncState.synced_pending_files :
+                SyncState.synced;
           } else {
             newState = hasUriFragments ? SyncState.synced_pending_files : SyncState.synced;
           }
@@ -4677,22 +4680,23 @@ public class ODKDatabaseImplUtils {
    * filling-in of the form. They act as restore points in the Survey, should
    * the application die.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @param locale
+   * @param db             an open database connection to use
+   * @param tableId        the table to update
+   * @param orderedColumns the columns in the row to insert
+   * @param cvValues       the values of the row
+   * @param rowId          which row in the table to update
+   * @param activeUser     the currently logged in user
+   * @param rolesList      the roles that the user has
+   * @param locale         the users selected locale
+   * @throws ActionNotAuthorizedException if the user can't insert the row
    */
-  public void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
+  public static void insertCheckpointRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
     if (cvValues.size() <= 0) {
       throw new IllegalArgumentException(
-          t + ": No values to add into table for checkpoint" + tableId);
+          TAG + ": No values to add into table for checkpoint" + tableId);
     }
 
     // these are all managed in the database layer...
@@ -4700,27 +4704,27 @@ public class ODKDatabaseImplUtils {
 
     if (cvValues.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
       throw new IllegalArgumentException(
-          t + ": No user supplied savepoint timestamp can be included for a checkpoint");
+          TAG + ": No user supplied savepoint timestamp can be included for a checkpoint");
     }
 
     if (cvValues.containsKey(DataTableColumns.SAVEPOINT_TYPE)) {
       throw new IllegalArgumentException(
-          t + ": No user supplied savepoint type can be included for a checkpoint");
+          TAG + ": No user supplied savepoint type can be included for a checkpoint");
     }
 
     if (cvValues.containsKey(DataTableColumns.ROW_ETAG)) {
       throw new IllegalArgumentException(
-          t + ": No user supplied row ETag can be included for a checkpoint");
+          TAG + ": No user supplied row ETag can be included for a checkpoint");
     }
 
     if (cvValues.containsKey(DataTableColumns.SYNC_STATE)) {
       throw new IllegalArgumentException(
-          t + ": No user supplied sync state can be included for a checkpoint");
+          TAG + ": No user supplied sync state can be included for a checkpoint");
     }
 
     if (cvValues.containsKey(DataTableColumns.CONFLICT_TYPE)) {
       throw new IllegalArgumentException(
-          t + ": No user supplied conflict type can be included for a checkpoint");
+          TAG + ": No user supplied conflict type can be included for a checkpoint");
     }
 
     // If a rowId is specified, a cursor will be needed to
@@ -4734,7 +4738,7 @@ public class ODKDatabaseImplUtils {
         // TODO: is this even valid any more? I think we disallow this in the AIDL flow.
 
         String rowIdToUse = LocalizationUtils.genUUID();
-        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        HashMap<String, Object> currValues = new HashMap<>();
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
         }
@@ -4745,22 +4749,20 @@ public class ODKDatabaseImplUtils {
         return;
       }
 
-      StringBuilder b = new StringBuilder();
-      b.append(K_DATATABLE_ID_EQUALS_PARAM).append(S_AND)
-          .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(" IN (SELECT MAX(")
-              .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ")
-                 .append(tableId).append(K_WHERE).append(K_DATATABLE_ID_EQUALS_PARAM).append(")");
-      c = db.query(tableId, null, b.toString(), new Object[] { rowId, rowId }, null,
-          null, null, null);
+      String b = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.SAVEPOINT_TIMESTAMP
+          + " IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM " + tableId
+          + K_WHERE + K_DATATABLE_ID_EQUALS_PARAM + ")";
+      c = db.query(tableId, null, b, new Object[] { rowId, rowId }, null, null, null,
+          null);
       c.moveToFirst();
 
       if (c.getCount() > 1) {
-        throw new IllegalStateException(t + ": More than one checkpoint at a timestamp");
+        throw new IllegalStateException(TAG + ": More than one checkpoint at a timestamp");
       }
 
       // Inserting a checkpoint for the first time
       if (c.getCount() <= 0) {
-        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        HashMap<String, Object> currValues = new HashMap<>();
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
         }
@@ -4768,14 +4770,13 @@ public class ODKDatabaseImplUtils {
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, true, null, null, null, null, null);
-        return;
       } else {
         // Make sure that the conflict_type of any existing row
         // is null, otherwise throw an exception
         int conflictIndex = c.getColumnIndex(DataTableColumns.CONFLICT_TYPE);
         if (!c.isNull(conflictIndex)) {
           throw new IllegalStateException(
-              t + ":  A checkpoint cannot be added for a row that is in conflict");
+              TAG + ":  A checkpoint cannot be added for a row that is in conflict");
         }
 
         // these are all managed in the database layer...
@@ -4783,30 +4784,30 @@ public class ODKDatabaseImplUtils {
 
         if (cvValues.containsKey(DataTableColumns.DEFAULT_ACCESS)) {
           throw new IllegalArgumentException(
-              t + ": No user supplied default access can be included for a checkpoint");
+              TAG + ": No user supplied default access can be included for a checkpoint");
         }
 
         if (cvValues.containsKey(DataTableColumns.ROW_OWNER)) {
           throw new IllegalArgumentException(
-              t + ": No user supplied row owner can be included for a checkpoint");
+              TAG + ": No user supplied row owner can be included for a checkpoint");
         }
 
         if (cvValues.containsKey(DataTableColumns.GROUP_READ_ONLY)) {
           throw new IllegalArgumentException(
-              t + ": No user supplied group read only can be included for a checkpoint");
+              TAG + ": No user supplied group read only can be included for a checkpoint");
         }
 
         if (cvValues.containsKey(DataTableColumns.GROUP_MODIFY)) {
           throw new IllegalArgumentException(
-              t + ": No user supplied group modify can be included for a checkpoint");
+              TAG + ": No user supplied group modify can be included for a checkpoint");
         }
 
         if (cvValues.containsKey(DataTableColumns.GROUP_PRIVILEGED)) {
           throw new IllegalArgumentException(
-              t + ": No user supplied group privileged can be included for a checkpoint");
+              TAG + ": No user supplied group privileged can be included for a checkpoint");
         }
 
-        HashMap<String,Object> currValues = new HashMap<String,Object>();
+        HashMap<String, Object> currValues = new HashMap<>();
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
         }
@@ -4895,40 +4896,6 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  private void insertValueIntoContentValues(Map<String,Object> cv, Class<?> theClass, String name,
-      Object obj) {
-
-    if (obj == null) {
-      cv.put(name, null);
-      return;
-    }
-
-    // Couldn't use the CursorUtils.getIndexAsType
-    // because assigning the result to Object v
-    // would not work for the currValues.put function
-    if (theClass == Long.class) {
-      cv.put(name, (Long) obj);
-    } else if (theClass == Integer.class) {
-      cv.put(name, (Integer) obj);
-    } else if (theClass == Double.class) {
-      cv.put(name, (Double) obj);
-    } else if (theClass == String.class) {
-      cv.put(name, (String) obj);
-    } else if (theClass == Boolean.class) {
-      // stored as integers
-      Integer v = (Integer) obj;
-      cv.put(name, Boolean.valueOf(v != 0));
-    } else if (theClass == ArrayList.class) {
-      cv.put(name, (String) obj);
-    } else if (theClass == HashMap.class) {
-      // json deserialization of an object
-      cv.put(name, (String) obj);
-    } else {
-      throw new IllegalStateException(
-          "Unexpected data type in SQLite table " + theClass.toString());
-    }
-  }
-
   /**
    * Insert the given rowId with the values in the cvValues. All metadata field
    * values must be specified in the cvValues. This is called from Sync for inserting
@@ -4936,28 +4903,28 @@ public class ODKDatabaseImplUtils {
    * <p/>
    * If a row with this rowId is present, then an exception is thrown.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param activeUser
-   * @param locale
-   * @param asCsvRequestedChange
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param orderedColumns       the columns in the row to insert
+   * @param cvValues             the cells of the row to insert
+   * @param rowId                which row in the table to update
+   * @param activeUser           the currently logged in user
+   * @param locale               the users selected locale
+   * @param asCsvRequestedChange whether it's from a csv import
    */
-  public void privilegedInsertRowWithId(OdkConnectionInterface db, String tableId,
+  public static void privilegedInsertRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String locale, boolean asCsvRequestedChange) {
 
     String rolesList = RoleConsts.ADMIN_ROLES_LIST;
 
     if (cvValues == null || cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    Map<String, Object> cvDataTableVal = new HashMap<>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    for ( String key : cvValues.keySet() ) {
+    for (String key : cvValues.keySet()) {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
@@ -4979,26 +4946,27 @@ public class ODKDatabaseImplUtils {
    * If a row with this rowId and certain matching metadata fields is present,
    * then an exception is thrown.
    *
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param rowId
-   * @param activeUser
-   * @param rolesList
-   * @param locale
+   * @param db             an open database connection to use
+   * @param tableId        the table to update
+   * @param orderedColumns the columns of the row to insert
+   * @param cvValues       the data in the cells of the row to insert
+   * @param rowId          which row in the table to update
+   * @param activeUser     the currently logged in user
+   * @param rolesList      the roles that the user has
+   * @param locale         the users selected locale
+   * @throws ActionNotAuthorizedException if the user can't insert the row
    */
-  public void insertRowWithId(OdkConnectionInterface db, String tableId,
+  public static void insertRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
     if (cvValues == null || cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
+    Map<String, Object> cvDataTableVal = new HashMap<>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
-    for ( String key : cvValues.keySet() ) {
+    for (String key : cvValues.keySet()) {
       cvDataTableVal.put(key, cvValues.get(key));
     }
 
@@ -5008,32 +4976,32 @@ public class ODKDatabaseImplUtils {
 
   /**
    * Write checkpoint into the database
-   * @param db
-   * @param tableId
-   * @param orderedColumns
-   * @param cvValues
-   * @param activeUser
-   * @param rolesList
-   * @param locale
-   * @param isNewRow
-   * @param priorGroupReadOnly
-   * @param priorGroupModify
-   * @param priorGroupPrivileged
+   *
+   * @param db                   an open database connection to use
+   * @param tableId              the table to update
+   * @param orderedColumns       the columns of the row to insert
+   * @param cvValues             the data in the cells of the row to insert
+   * @param activeUser           the currently logged in user
+   * @param rolesList            the roles that the user has
+   * @param locale               the users selected locale
+   * @param isNewRow             Whether the row is a new row or not
+   * @param priorGroupReadOnly   whether the group has read only permissions
+   * @param priorGroupModify     whether the group has modify permissions
+   * @param priorGroupPrivileged whether the group has full permissions
    */
-  private void insertCheckpointIntoExistingTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, HashMap<String, Object> cvValues, String activeUser, String rolesList,
-      String locale, boolean isNewRow, String priorDefaultAccess, String priorOwner,
-      String priorGroupReadOnly, String priorGroupModify, String priorGroupPrivileged)
-      throws ActionNotAuthorizedException {
+  private static void insertCheckpointIntoExistingTable(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, HashMap<String, Object> cvValues, String activeUser,
+      String rolesList, String locale, boolean isNewRow, String priorDefaultAccess,
+      String priorOwner, String priorGroupReadOnly, String priorGroupModify,
+      String priorGroupPrivileged) throws ActionNotAuthorizedException {
 
-    String rowId = null;
+    String rowId;
 
     if (cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
-    cvDataTableVal.putAll(cvValues);
+    Map<String, Object> cvDataTableVal = new HashMap<>(cvValues);
 
     if (cvDataTableVal.containsKey(DataTableColumns.ID)) {
 
@@ -5042,7 +5010,7 @@ public class ODKDatabaseImplUtils {
         throw new IllegalArgumentException(DataTableColumns.ID + ", if specified, cannot be null");
       }
     } else {
-      throw new IllegalArgumentException(t
+      throw new IllegalArgumentException(TAG
           + ": rowId should not be null in insertCheckpointIntoExistingTable in the ContentValues");
     }
 
@@ -5059,13 +5027,13 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(DataTableColumns.FORM_ID, null);
     }
 
-    if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
-        cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+    if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+        || cvDataTableVal.get(DataTableColumns.LOCALE) == null) {
       cvDataTableVal.put(DataTableColumns.LOCALE, locale);
     }
 
-    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) || (
-        cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+        || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null) {
       cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, null);
     }
 
@@ -5075,8 +5043,8 @@ public class ODKDatabaseImplUtils {
       cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
     }
 
-    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
-        cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+    if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+        || cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null) {
       cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
     }
 
@@ -5097,8 +5065,8 @@ public class ODKDatabaseImplUtils {
 
         // ensure that filter type and value are defined. Use defaults if not.
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || (
-            cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS)
+            || cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null) {
           cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
         }
 
@@ -5106,25 +5074,26 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY) || (
-            cvDataTableVal.get(DataTableColumns.GROUP_READ_ONLY) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY)
+            || cvDataTableVal.get(DataTableColumns.GROUP_READ_ONLY) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_READ_ONLY, null);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_MODIFY) ||
-            cvDataTableVal.get(DataTableColumns.GROUP_MODIFY) == null) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_MODIFY)
+            || cvDataTableVal.get(DataTableColumns.GROUP_MODIFY) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_MODIFY, null);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_PRIVILEGED) ||
-            cvDataTableVal.get(DataTableColumns.GROUP_PRIVILEGED) == null) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_PRIVILEGED)
+            || cvDataTableVal.get(DataTableColumns.GROUP_PRIVILEGED) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_PRIVILEGED, null);
         }
 
         cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
 
         tss.allowRowChange(activeUser, rolesArray, SyncState.new_row.name(), priorDefaultAccess,
-            priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.NEW_ROW);
+            priorOwner, priorGroupModify, priorGroupPrivileged,
+            RowChange.NEW_ROW);
 
       } else {
 
@@ -5143,7 +5112,8 @@ public class ODKDatabaseImplUtils {
 
         tss.allowRowChange(activeUser, rolesArray,
             (String) cvDataTableVal.get(DataTableColumns.SYNC_STATE), priorDefaultAccess,
-            priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.CHANGE_ROW);
+            priorOwner, priorGroupModify, priorGroupPrivileged,
+            RowChange.CHANGE_ROW);
       }
 
       db.insertOrThrow(tableId, null, cvDataTableVal);
@@ -5159,270 +5129,14 @@ public class ODKDatabaseImplUtils {
 
   }
 
-  private enum RowChange {
-    NEW_ROW,
-    CHANGE_ROW,
-    DELETE_ROW
-  }
-
-  private class TableSecuritySettings {
-    final String tableId;
-    final boolean isLocked;
-    final boolean canUnverifiedUserCreateRow;
-    final String defaultAccessOnCreation;
-
-    public TableSecuritySettings(final String tableId, final boolean isLocked,
-        final boolean canUnverifiedUserCreateRow, final String defaultAccessOnCreation) {
-      this.tableId = tableId;
-      this.isLocked = isLocked;
-      this.canUnverifiedUserCreateRow = canUnverifiedUserCreateRow;
-      this.defaultAccessOnCreation = defaultAccessOnCreation;
-    }
-
-    public void canModifyPermissions(String activeUser, List<String> rolesArray,
-                                     String groupPrivileged,
-                                     String priorOwner)
-        throws ActionNotAuthorizedException {
-
-      if (rolesArray == null) {
-        // unverified user
-
-        // throw an exception
-        throw new ActionNotAuthorizedException(
-            t + ": unverified users cannot modify defaultAccess, rowOwner, or group" +
-            "permission fields in (any) table " + tableId);
-
-      } else if (!((rolesArray.contains(RoleConsts.ROLE_SUPER_USER)) ||
-                  (rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)) ||
-                  (groupPrivileged != null && rolesArray.contains(groupPrivileged)))) {
-
-        // not (super-user or administrator or groupPrivileged or (rowOwner in unlocked table))
-        // NOTE: in a new row priorOwner will be defaultRowOwner
-        if (!isLocked && (priorOwner == DataTableColumns.DEFAULT_ROW_OWNER ||
-                priorOwner != null && activeUser.equals(priorOwner))) {
-          return;
-        }
-
-        // throw an exception
-        throw new ActionNotAuthorizedException(t
-            + ": user does not have the privileges (super-user or administrator or group_privileged"
-            + " or (row_owner in unlocked table)) to modify defaultAccess, rowOwner, or group"
-            + " permission fields in table "
-            + tableId);
-      }
-    }
-
-    public void allowRowChange(String activeUser, List<String> rolesArray, String updatedSyncState,
-                               String priorDefaultAccess, String priorOwner, String priorGroupReadOnly,
-                               String priorGroupModify, String priorGroupPrivileged, RowChange rowChange)
-            throws ActionNotAuthorizedException {
-
-      switch (rowChange) {
-      case NEW_ROW:
-
-        // enforce restrictions:
-        // 1. if locked, only super-user, administrator, and group_privileged members can create rows.
-        // 2. otherwise, if unverified user, allow creation based upon unverifedUserCanCreate flag
-        if (isLocked) {
-          // inserting into a LOCKED table
-
-          if (rolesArray == null) {
-            // unverified user
-
-            // throw an exception
-            throw new ActionNotAuthorizedException(
-                t + ": unverified users cannot create a row in a locked table " + tableId);
-          }
-
-          if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
-                (priorGroupPrivileged != null && rolesArray.contains(priorGroupPrivileged)))) {
-            // bad JSON
-            // not a super-user and not an administrator
-
-            // throw an exception
-            throw new ActionNotAuthorizedException(t
-                + ": user does not have the privileges (super-user or administrator or group_privileged) " +
-                    "to create a row in a locked table "
-                + tableId);
-          }
-
-        } else if (rolesArray == null) {
-          // inserting into an UNLOCKED table
-
-          // unverified user
-          if (!canUnverifiedUserCreateRow) {
-
-            // throw an exception
-            throw new ActionNotAuthorizedException(t
-                + ": unverified users do not have the privileges to create a row in this unlocked table "
-                + tableId);
-          }
-        }
-        break;
-      case CHANGE_ROW:
-
-        // if SyncState is new_row then allow edits in both locked and unlocked tables
-        if (!updatedSyncState.equals(SyncState.new_row.name())) {
-
-          if (isLocked) {
-            // modifying a LOCKED table
-
-            // disallow edits if:
-            // 1. user is unverified
-            // 2. existing owner is null or does not match the activeUser AND
-            //    the activeUser is neither a super-user nor an administrator nor a member of
-            //    group_privileged.
-
-            if (rolesArray == null || rolesArray.isEmpty()) {
-              // unverified user
-
-              // throw an exception
-              throw new ActionNotAuthorizedException(
-                  t + ": unverified users cannot modify rows in a locked table " + tableId);
-            }
-
-            // allow if prior owner matches activeUser
-            if (!(priorOwner != null && activeUser.equals(priorOwner))) {
-              // otherwise...
-              // reject if the activeUser is not a super-user or administrator or member of
-              // group_privileged
-
-              if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) ||
-                      rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR) ||
-                      (priorGroupPrivileged != null && rolesArray.contains(priorGroupPrivileged)))) {
-                // bad JSON or
-                // not a super-user and not an administrator
-
-                // throw an exception
-                throw new ActionNotAuthorizedException(t + ": user does not have the privileges (super-user or " +
-                        "administrator or group_privileged) to modify rows in a locked table "
-                        + tableId);
-              }
-            }
-
-          } else {
-            // modifying an UNLOCKED table
-            boolean groupAuth = false;
-
-            if (rolesArray != null) {
-              if (priorGroupModify != null) {
-                groupAuth |= rolesArray.contains(priorGroupModify);
-              }
-
-              if (priorGroupPrivileged != null) {
-                groupAuth |= rolesArray.contains(priorGroupPrivileged);
-              }
-            }
-            // allow if group authorized
-            if(!groupAuth) {
-              // allow if defaultAccess is MODIFY or FULL
-              if (priorDefaultAccess == null || !(priorDefaultAccess.equals(RowFilterScope.Access.MODIFY.name()) ||
-                  priorDefaultAccess.equals(RowFilterScope.Access.FULL.name()))) {
-                // otherwise...
-
-                // allow if prior owner matches activeUser
-                if (priorOwner == null || !activeUser.equals(priorOwner)) {
-                  // otherwise...
-                  // reject if the activeUser is not a super-user or administrator
-
-                  if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                      || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
-                    // bad JSON or
-                    // not a super-user and not an administrator
-
-                    // throw an exception
-                    throw new ActionNotAuthorizedException(t + ": user does not have the privileges (super-user or administrator) " +
-                            "to modify hidden or read-only rows in an unlocked table "
-                        + tableId);
-                  }
-                }
-              }
-            }
-          }
-        }
-        break;
-      case DELETE_ROW:
-
-        // if SyncState is new_row then allow deletes in both locked and unlocked tables
-        if (!updatedSyncState.equals(SyncState.new_row.name())) {
-
-          if (isLocked) {
-            // deleting a LOCKED table
-
-            // disallow deletes if:
-            // 1. user is unverified
-            // 2. user is not a super-user or an administrator or member of group_privileged
-
-            if (rolesArray == null) {
-              // unverified user
-
-              // throw an exception
-              throw new ActionNotAuthorizedException(
-                  t + ": unverified users cannot delete rows in a locked table " + tableId);
-            }
-
-            // reject if the activeUser is not a super-user or administrator
-
-            if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
-                || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR)
-                || (priorGroupPrivileged != null && rolesArray.contains(priorGroupPrivileged)))) {
-              // bad JSON or
-              // not a super-user and not an administrator
-
-              // throw an exception
-              throw new ActionNotAuthorizedException(t
-                  + ": user does not have the privileges (super-user or administrator or group_privileged) " +
-                      "to delete rows in a locked table "
-                  + tableId);
-            }
-          } else {
-            // delete in an UNLOCKED table
-
-            boolean groupAuth = false;
-
-            if (rolesArray != null) {
-              if (priorGroupPrivileged != null) {
-                groupAuth |= rolesArray.contains(priorGroupPrivileged);
-              }
-            }
-
-            if(!groupAuth) {
-              // allow if defaultAccess is FULL
-              if (priorDefaultAccess == null || !(priorDefaultAccess.equals(RowFilterScope.Access.FULL.name()))) {
-                // otherwise...
-
-                // allow if prior owner matches activeUser
-                if (priorOwner == null || !activeUser.equals(priorOwner)) {
-                  // otherwise...
-                  // reject if the activeUser is not a super-user or administrator
-
-                  if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
-                    // bad JSON or
-                    // not a super-user and not an administrator
-
-                    // throw an exception
-                    throw new ActionNotAuthorizedException(t + ": user does not have the privileges (super-user or administrator) to delete hidden or read-only rows in an unlocked table "
-                        + tableId);
-                  }
-                }
-              }
-            }
-          }
-        }
-        break;
-      }
-    }
-  }
-
   /**
    * Get the table's security settings.
    *
-   * @param db
-   * @param tableId
-   * @return
+   * @param db      an open database connection to use
+   * @param tableId the table to read from
+   * @return the TableSecuritySettings object for the requested table
    */
-  private TableSecuritySettings getTableSecuritySettings(OdkConnectionInterface db,
+  private static TableSecuritySettings getTableSecuritySettings(OdkConnectionInterface db,
       String tableId) {
 
     // get the security settings
@@ -5434,31 +5148,34 @@ public class ODKDatabaseImplUtils {
     KeyValueStoreEntry defaultAccessOnCreation = null;
     KeyValueStoreEntry unverifiedUserCanCreate = null;
     for (KeyValueStoreEntry entry : entries) {
-      if (entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_DEFAULT_ACCESS_ON_CREATION)) {
+      switch (entry.key) {
+      case LocalKeyValueStoreConstants.TableSecurity.KEY_DEFAULT_ACCESS_ON_CREATION:
         defaultAccessOnCreation = entry;
-      } else if (entry.key
-          .equals(LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE)) {
+        break;
+      case LocalKeyValueStoreConstants.TableSecurity.KEY_UNVERIFIED_USER_CAN_CREATE:
         unverifiedUserCanCreate = entry;
-      } else if (entry.key.equals(LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED)) {
+        break;
+      case LocalKeyValueStoreConstants.TableSecurity.KEY_LOCKED:
         locked = entry;
+        break;
+      default:
+        break;
       }
     }
 
-    Boolean isLocked = (locked != null) ?
-        KeyValueStoreUtils.getBoolean(locked) :
-        null;
+    Boolean isLocked = locked != null ? KeyValueStoreUtils.getBoolean(locked) : null;
     if (isLocked == null) {
       isLocked = false;
     }
 
-    Boolean canUnverifiedUserCreateRow = (unverifiedUserCanCreate != null) ?
+    Boolean canUnverifiedUserCreateRow = unverifiedUserCanCreate != null ?
         KeyValueStoreUtils.getBoolean(unverifiedUserCanCreate) :
         null;
     if (canUnverifiedUserCreateRow == null) {
       canUnverifiedUserCreateRow = true;
     }
 
-    String defaultAccess = (defaultAccessOnCreation != null) ? defaultAccessOnCreation.value : null;
+    String defaultAccess = defaultAccessOnCreation != null ? defaultAccessOnCreation.value : null;
     if (defaultAccess == null) {
       defaultAccess = DataTableColumns.DEFAULT_DEFAULT_ACCESS;
     }
@@ -5471,48 +5188,46 @@ public class ODKDatabaseImplUtils {
    *
    * TODO: This is broken w.r.t. updates of partial fields
    */
-  private void upsertDataIntoExistingTable(OdkConnectionInterface db, String tableId,
-      OrderedColumns orderedColumns, Map<String,Object> cvValues, boolean shouldUpdate,
+  private static void upsertDataIntoExistingTable(OdkConnectionInterface db, String tableId,
+      OrderedColumns orderedColumns, Map<String, Object> cvValues, boolean shouldUpdate,
       boolean asServerRequestedChange, String activeUser, String rolesList, String locale,
       boolean asCsvRequestedChange) throws ActionNotAuthorizedException {
 
-    String rowId = null;
+    String rowId;
     String whereClause = null;
     boolean specifiesConflictType = cvValues.containsKey(DataTableColumns.CONFLICT_TYPE);
     boolean nullConflictType =
-        specifiesConflictType && (cvValues.get(DataTableColumns.CONFLICT_TYPE) == null);
-    Object[] whereArgs = new Object[specifiesConflictType ? (1 + (nullConflictType ? 0 : 1)) : 1];
+        specifiesConflictType && cvValues.get(DataTableColumns.CONFLICT_TYPE) == null;
+    Object[] whereArgs = new Object[specifiesConflictType ? 1 + (nullConflictType ? 0 : 1) : 1];
     boolean update = false;
     String updatedSyncState = SyncState.new_row.name();
     String priorDefaultAccess = DataTableColumns.DEFAULT_DEFAULT_ACCESS;
     String priorOwner = DataTableColumns.DEFAULT_ROW_OWNER;
-    String priorGroupReadOnly = DataTableColumns.DEFAULT_GROUP_READ_ONLY;
     String priorGroupModify = DataTableColumns.DEFAULT_GROUP_MODDIFY;
     String priorGroupPrivileged = DataTableColumns.DEFAULT_GROUP_PRIVILEGED;
 
     if (cvValues.size() <= 0) {
-      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+      throw new IllegalArgumentException(TAG + ": No values to add into table " + tableId);
     }
 
-    HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
-    cvDataTableVal.putAll(cvValues);
+    HashMap<String, Object> cvDataTableVal = new HashMap<>(cvValues);
 
     // if this is a server-requested change, all the user fields and admin columns should be specified.
     if (asServerRequestedChange && !asCsvRequestedChange) {
       for (String columnName : orderedColumns.getRetentionColumnNames()) {
         if (!cvDataTableVal.containsKey(columnName)) {
           throw new IllegalArgumentException(
-              t + ": Not all user field values are set during server " +
-                  (shouldUpdate ? "update" : "insert") + " in table " + tableId + " missing: " +
-                  columnName);
+              TAG + ": Not all user field values are set during server " + (shouldUpdate ?
+                  "update" :
+                  "insert") + " in table " + tableId + " missing: " + columnName);
         }
       }
       for (String columnName : ADMIN_COLUMNS) {
         if (!cvDataTableVal.containsKey(columnName)) {
           throw new IllegalArgumentException(
-              t + ": Not all metadata field values are set during server " +
-                  (shouldUpdate ? "update" : "insert") + " in table " + tableId + " missing: " +
-                  columnName);
+              TAG + ": Not all metadata field values are set during server " + (shouldUpdate ?
+                  "update" :
+                  "insert") + " in table " + tableId + " missing: " + columnName);
         }
       }
     }
@@ -5548,12 +5263,12 @@ public class ODKDatabaseImplUtils {
 
         if (specifiesConflictType) {
           if (nullConflictType) {
-            whereClause = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE
-                + S_IS_NULL;
+            whereClause =
+                K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_IS_NULL;
             whereArgs[0] = rowId;
           } else {
-            whereClause =
-                K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE + S_EQUALS_PARAM;
+            whereClause = K_DATATABLE_ID_EQUALS_PARAM + S_AND + DataTableColumns.CONFLICT_TYPE
+                + S_EQUALS_PARAM;
             whereArgs[0] = rowId;
             whereArgs[1] = cvValues.get(DataTableColumns.CONFLICT_TYPE);
           }
@@ -5565,25 +5280,27 @@ public class ODKDatabaseImplUtils {
         AccessContext accessContext = getAccessContext(db, tableId, activeUser,
             RoleConsts.ADMIN_ROLES_LIST);
 
-        StringBuilder b = new StringBuilder();
-        b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
-        BaseTable data = privilegedQuery(db, tableId, b.toString(), whereArgs, null, accessContext);
+        BaseTable data = privilegedQuery(db, tableId,
+            K_SELECT_FROM + tableId + K_WHERE + whereClause, whereArgs, null, accessContext);
 
         // There must be only one row in the db for the update to work
         if (shouldUpdate) {
           if (data.getNumberOfRows() == 1) {
-            int defaultAccessCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.DEFAULT_ACCESS);
+            int defaultAccessCursorIndex = data
+                .getColumnIndexOfElementKey(DataTableColumns.DEFAULT_ACCESS);
             priorDefaultAccess = data.getRowAtIndex(0).getDataByIndex(defaultAccessCursorIndex);
             if (priorDefaultAccess == null) {
               priorDefaultAccess = DataTableColumns.DEFAULT_DEFAULT_ACCESS;
             }
             int ownerCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.ROW_OWNER);
-            priorOwner =  data.getRowAtIndex(0).getDataByIndex(ownerCursorIndex);
-            int groupReadOnlyCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.GROUP_READ_ONLY);
-            priorGroupReadOnly =  data.getRowAtIndex(0).getDataByIndex(groupReadOnlyCursorIndex);
-            int groupModifyCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.GROUP_MODIFY);
-            priorGroupModify =  data.getRowAtIndex(0).getDataByIndex(groupModifyCursorIndex);
-            int groupPrivilegedCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.GROUP_PRIVILEGED);
+            priorOwner = data.getRowAtIndex(0).getDataByIndex(ownerCursorIndex);
+            int groupReadOnlyCursorIndex = data
+                .getColumnIndexOfElementKey(DataTableColumns.GROUP_READ_ONLY);
+            int groupModifyCursorIndex = data
+                .getColumnIndexOfElementKey(DataTableColumns.GROUP_MODIFY);
+            priorGroupModify = data.getRowAtIndex(0).getDataByIndex(groupModifyCursorIndex);
+            int groupPrivilegedCursorIndex = data
+                .getColumnIndexOfElementKey(DataTableColumns.GROUP_PRIVILEGED);
             priorGroupPrivileged = data.getRowAtIndex(0).getDataByIndex(groupPrivilegedCursorIndex);
 
             int syncStateCursorIndex = data.getColumnIndexOfElementKey(DataTableColumns.SYNC_STATE);
@@ -5591,10 +5308,10 @@ public class ODKDatabaseImplUtils {
 
             // allow updates to in_conflict rows if they are initiated through privileged
             // code paths (e.g., enforcePermissionsDuringConflictProcessing )
-            if ( updatedSyncState.equals(SyncState.deleted.name()) ||
-                (!asServerRequestedChange && updatedSyncState.equals(SyncState.in_conflict.name()))) {
-              throw new IllegalStateException(
-                  t + ": Cannot update a deleted or in-conflict row");
+            if (updatedSyncState.equals(SyncState.deleted.name())
+                || !asServerRequestedChange && updatedSyncState
+                .equals(SyncState.in_conflict.name())) {
+              throw new IllegalStateException(TAG + ": Cannot update a deleted or in-conflict row");
             } else if (updatedSyncState.equals(SyncState.synced.name()) || updatedSyncState
                 .equals(SyncState.synced_pending_files.name())) {
               updatedSyncState = SyncState.changed.name();
@@ -5602,17 +5319,17 @@ public class ODKDatabaseImplUtils {
             update = true;
           } else if (data.getNumberOfRows() > 1) {
             throw new IllegalArgumentException(
-                t + ": row id " + rowId + " has more than 1 row in table " + tableId);
+                TAG + ": row id " + rowId + " has more than 1 row in table " + tableId);
           }
         } else {
           if (data.getNumberOfRows() > 0) {
             throw new IllegalArgumentException(
-                t + ": row id " + rowId + " is already present in table " + tableId);
+                TAG + ": row id " + rowId + " is already present in table " + tableId);
           }
         }
 
       } else {
-        rowId = "uuid:" + UUID.randomUUID().toString();
+        rowId = "uuid:" + UUID.randomUUID();
       }
 
       // TODO: This is broken w.r.t. updates of partial fields
@@ -5632,12 +5349,12 @@ public class ODKDatabaseImplUtils {
       if (!asServerRequestedChange) {
         // do not allow _default_access, _row_owner, _sync_state, _group_privileged
         // _group_modify, _group_read_only to be modified in normal workflow
-        if (cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) ||
-            cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER) ||
-            cvDataTableVal.containsKey(DataTableColumns.GROUP_PRIVILEGED) ||
-            cvDataTableVal.containsKey(DataTableColumns.GROUP_MODIFY) ||
-            cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY)) {
-            tss.canModifyPermissions(activeUser, rolesArray, priorGroupPrivileged, priorOwner);
+        if (cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) || cvDataTableVal
+            .containsKey(DataTableColumns.ROW_OWNER) || cvDataTableVal
+            .containsKey(DataTableColumns.GROUP_PRIVILEGED) || cvDataTableVal
+            .containsKey(DataTableColumns.GROUP_MODIFY) || cvDataTableVal
+            .containsKey(DataTableColumns.GROUP_READ_ONLY)) {
+          tss.canModifyPermissions(activeUser, rolesArray, priorGroupPrivileged, priorOwner);
         }
       }
 
@@ -5645,8 +5362,8 @@ public class ODKDatabaseImplUtils {
 
         // MODIFYING
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE) || (
-            cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
+            || cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null) {
           cvDataTableVal.put(DataTableColumns.SYNC_STATE, updatedSyncState);
         }
 
@@ -5655,17 +5372,18 @@ public class ODKDatabaseImplUtils {
           // apply row access restrictions
           // this will throw an IllegalArgumentException
           tss.allowRowChange(activeUser, rolesArray, updatedSyncState, priorDefaultAccess,
-              priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.CHANGE_ROW);
+              priorOwner, priorGroupModify, priorGroupPrivileged,
+              RowChange.CHANGE_ROW);
 
         }
 
-        if (cvDataTableVal.containsKey(DataTableColumns.LOCALE) && (
-            cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+        if (cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+            && cvDataTableVal.get(DataTableColumns.LOCALE) == null) {
           cvDataTableVal.put(DataTableColumns.LOCALE, locale);
         }
 
-        if (cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) && (
-            cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+        if (cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+            && cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null) {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
         }
 
@@ -5675,8 +5393,8 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
-            cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+            || cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null) {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
         }
       } else {
@@ -5688,8 +5406,8 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.ROW_ETAG, DataTableColumns.DEFAULT_ROW_ETAG);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE) || (
-            cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.SYNC_STATE)
+            || cvDataTableVal.get(DataTableColumns.SYNC_STATE) == null) {
           cvDataTableVal.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         }
 
@@ -5699,32 +5417,33 @@ public class ODKDatabaseImplUtils {
 
         if (!asServerRequestedChange) {
 
-          if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS) ||
-              cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null) {
+          if (!cvDataTableVal.containsKey(DataTableColumns.DEFAULT_ACCESS)
+              || cvDataTableVal.get(DataTableColumns.DEFAULT_ACCESS) == null) {
             cvDataTableVal.put(DataTableColumns.DEFAULT_ACCESS, tss.defaultAccessOnCreation);
           }
 
           // activeUser
-          if (!cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER) ||
-              cvDataTableVal.get(DataTableColumns.ROW_OWNER) == null) {
+          if (!cvDataTableVal.containsKey(DataTableColumns.ROW_OWNER)
+              || cvDataTableVal.get(DataTableColumns.ROW_OWNER) == null) {
             cvDataTableVal.put(DataTableColumns.ROW_OWNER, activeUser);
           }
 
           tss.allowRowChange(activeUser, rolesArray, updatedSyncState, priorDefaultAccess,
-              priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.NEW_ROW);
+              priorOwner, priorGroupModify, priorGroupPrivileged,
+              RowChange.NEW_ROW);
         }
 
         if (!cvDataTableVal.containsKey(DataTableColumns.FORM_ID)) {
           cvDataTableVal.put(DataTableColumns.FORM_ID, null);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE) || (
-            cvDataTableVal.get(DataTableColumns.LOCALE) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.LOCALE)
+            || cvDataTableVal.get(DataTableColumns.LOCALE) == null) {
           cvDataTableVal.put(DataTableColumns.LOCALE, locale);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE) || (
-            cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TYPE)
+            || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TYPE) == null) {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
         }
 
@@ -5734,23 +5453,23 @@ public class ODKDatabaseImplUtils {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR) || (
-            cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_CREATOR)
+            || cvDataTableVal.get(DataTableColumns.SAVEPOINT_CREATOR) == null) {
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_CREATOR, activeUser);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY) || (
-            cvDataTableVal.get(DataTableColumns.GROUP_READ_ONLY) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_READ_ONLY)
+            || cvDataTableVal.get(DataTableColumns.GROUP_READ_ONLY) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_READ_ONLY, null);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_MODIFY) || (
-            cvDataTableVal.get(DataTableColumns.GROUP_MODIFY) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_MODIFY)
+            || cvDataTableVal.get(DataTableColumns.GROUP_MODIFY) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_MODIFY, null);
         }
 
-        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_PRIVILEGED) || (
-            cvDataTableVal.get(DataTableColumns.GROUP_PRIVILEGED) == null)) {
+        if (!cvDataTableVal.containsKey(DataTableColumns.GROUP_PRIVILEGED)
+            || cvDataTableVal.get(DataTableColumns.GROUP_PRIVILEGED) == null) {
           cvDataTableVal.put(DataTableColumns.GROUP_PRIVILEGED, null);
         }
       }
@@ -5774,105 +5493,40 @@ public class ODKDatabaseImplUtils {
   }
 
   /**
-   * Update the ETag and SyncState of a given rowId. There should be exactly one
-   * record for this rowId in the database (i.e., no conflicts or checkpoints).
-   *
-   * @param db
-   * @param tableId
-   * @param rowId
-   * @param rowETag
-   * @param state
-   * @return true if rowId exists. False otherwise.
-   */
-  public boolean privilegedUpdateRowETagAndSyncState(OdkConnectionInterface db, String tableId,
-      String rowId, String rowETag, SyncState state, String activeUser) {
-
-    String whereClause = K_DATATABLE_ID_EQUALS_PARAM;
-    Object[] whereArgs = { rowId };
-
-    TreeMap<String,Object> cvDataTableVal = new TreeMap<String,Object>();
-
-    cvDataTableVal.put(DataTableColumns.ROW_ETAG, rowETag);
-    cvDataTableVal.put(DataTableColumns.SYNC_STATE, state.name());
-
-    boolean dbWithinTransaction = db.inTransaction();
-    try {
-      if (!dbWithinTransaction) {
-        db.beginTransactionNonExclusive();
-      }
-
-      AccessContext accessContext = getAccessContext(db, tableId, activeUser,
-          RoleConsts.ADMIN_ROLES_LIST);
-
-      StringBuilder b = new StringBuilder();
-      b.append(K_SELECT_FROM).append(tableId).append(K_WHERE).append(whereClause);
-      BaseTable data = privilegedQuery(db, tableId, b.toString(), whereArgs, null, accessContext);
-
-      // There must be only one row in the db
-      if (data.getNumberOfRows() != 1) {
-        return false;
-      }
-
-      db.update(tableId, cvDataTableVal, whereClause, whereArgs);
-
-      if (!dbWithinTransaction) {
-        db.setTransactionSuccessful();
-      }
-      return true;
-    } finally {
-      if (!dbWithinTransaction) {
-        db.endTransaction();
-      }
-    }
-  }
-
-  /**
    * If the caller specified a complex json value for a structured type, flush
    * the value through to the individual columns.
    *
-   * @param orderedColumns
-   * @param values
+   * @param orderedColumns TODO what?
+   * @param values TODO what?
    */
-  private void cleanUpValuesMap(OrderedColumns orderedColumns, Map<String,Object> values) {
+  private static void cleanUpValuesMap(OrderedColumns orderedColumns, Map<String, Object> values) {
 
-    TreeMap<String, String> toBeResolved = new TreeMap<String, String>();
+    Map<String, String> toBeResolved = new TreeMap<>();
 
-    for (String key : values.keySet()) {
-      if (DataTableColumns.CONFLICT_TYPE.equals(key)) {
-        continue;
-      } else if (DataTableColumns.DEFAULT_ACCESS.equals(key)) {
-        continue;
-      } else if (DataTableColumns.ROW_OWNER.equals(key)) {
-        continue;
-      } else if (DataTableColumns.GROUP_READ_ONLY.equals(key)) {
-        continue;
-      } else if (DataTableColumns.GROUP_MODIFY.equals(key)) {
-        continue;
-      } else if (DataTableColumns.GROUP_PRIVILEGED.equals(key)) {
-        continue;
-      } else if (DataTableColumns.FORM_ID.equals(key)) {
-        continue;
-      } else if (DataTableColumns.ID.equals(key)) {
-        continue;
-      } else if (DataTableColumns.LOCALE.equals(key)) {
-        continue;
-      } else if (DataTableColumns.ROW_ETAG.equals(key)) {
-        continue;
-      } else if (DataTableColumns.SAVEPOINT_CREATOR.equals(key)) {
-        continue;
-      } else if (DataTableColumns.SAVEPOINT_TIMESTAMP.equals(key)) {
-        continue;
-      } else if (DataTableColumns.SAVEPOINT_TYPE.equals(key)) {
-        continue;
-      } else if (DataTableColumns.SYNC_STATE.equals(key)) {
-        continue;
-      } else if (DataTableColumns._ID.equals(key)) {
+    for (Map.Entry<String, Object> stringObjectEntry : values.entrySet()) {
+      //@formatter:off
+      if (stringObjectEntry.getKey().equals(DataTableColumns.CONFLICT_TYPE)
+          || stringObjectEntry.getKey().equals(DataTableColumns.DEFAULT_ACCESS)
+          || stringObjectEntry.getKey().equals(DataTableColumns.ROW_OWNER)
+          || stringObjectEntry.getKey().equals(DataTableColumns.GROUP_READ_ONLY)
+          || stringObjectEntry.getKey().equals(DataTableColumns.GROUP_MODIFY)
+          || stringObjectEntry.getKey().equals(DataTableColumns.GROUP_PRIVILEGED)
+          || stringObjectEntry.getKey().equals(DataTableColumns.FORM_ID)
+          || stringObjectEntry.getKey().equals(DataTableColumns.ID)
+          || stringObjectEntry.getKey().equals(DataTableColumns.LOCALE)
+          || stringObjectEntry.getKey().equals(DataTableColumns.ROW_ETAG)
+          || stringObjectEntry.getKey().equals(DataTableColumns.SAVEPOINT_CREATOR)
+          || stringObjectEntry.getKey().equals(DataTableColumns.SAVEPOINT_TIMESTAMP)
+          || stringObjectEntry.getKey().equals(DataTableColumns.SAVEPOINT_TYPE)
+          || stringObjectEntry.getKey().equals(DataTableColumns.SYNC_STATE)
+          || stringObjectEntry.getKey().equals(DataTableColumns._ID)) {
         continue;
       }
+      //@formatter:on
       // OK it is one of the data columns
-      ColumnDefinition cp = orderedColumns.find(key);
+      ColumnDefinition cp = orderedColumns.find(stringObjectEntry.getKey());
       if (!cp.isUnitOfRetention()) {
-        toBeResolved.put(key, (String) values.get(key));
+        toBeResolved.put(stringObjectEntry.getKey(), (String) stringObjectEntry.getValue());
       }
     }
 
@@ -5883,7 +5537,7 @@ public class ODKDatabaseImplUtils {
 
     while (!toBeResolved.isEmpty()) {
 
-      TreeMap<String, String> moreToResolve = new TreeMap<String, String>();
+      Map<String, String> moreToResolve = new TreeMap<>();
 
       for (Map.Entry<String, String> entry : toBeResolved.entrySet()) {
         String key = entry.getKey();
@@ -5903,16 +5557,7 @@ public class ODKDatabaseImplUtils {
             ColumnDefinition subcp = orderedColumns.find(subkey);
             if (subcp.isUnitOfRetention()) {
               ElementType subtype = subcp.getType();
-              ElementDataType type = subtype.getDataType();
-              if (type == ElementDataType.integer) {
-                values.put(subkey, (Integer) struct.get(subcp.getElementName()));
-              } else if (type == ElementDataType.number) {
-                values.put(subkey, (Double) struct.get(subcp.getElementName()));
-              } else if (type == ElementDataType.bool) {
-                values.put(subkey, ((Boolean) struct.get(subcp.getElementName())) ? 1 : 0);
-              } else {
-                values.put(subkey, (String) struct.get(subcp.getElementName()));
-              }
+              values.put(subkey, struct.get(subcp.getElementName()));
             } else {
               // this must be a javascript structure... re-JSON it and save (for
               // next round).
@@ -5920,14 +5565,8 @@ public class ODKDatabaseImplUtils {
                   ODKFileUtils.mapper.writeValueAsString(struct.get(subcp.getElementName())));
             }
           }
-        } catch (JsonParseException e) {
-          e.printStackTrace();
-          throw new IllegalStateException("should not be happening");
-        } catch (JsonMappingException e) {
-          e.printStackTrace();
-          throw new IllegalStateException("should not be happening");
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(null).printStackTrace(e);
           throw new IllegalStateException("should not be happening");
         }
       }
@@ -5936,36 +5575,353 @@ public class ODKDatabaseImplUtils {
     }
   }
 
-  public static void initializeDatabase(OdkConnectionInterface db) {
-    commonTableDefn(db);
+  /**
+   * TODO What is this for?
+   */
+  @SuppressWarnings("JavaDoc")
+  public enum AccessColumnType {
+    NO_EFFECTIVE_ACCESS_COLUMN, LOCKED_EFFECTIVE_ACCESS_COLUMN, UNLOCKED_EFFECTIVE_ACCESS_COLUMN
   }
 
-  private static void commonTableDefn(OdkConnectionInterface db) {
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
-    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
-    db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME), null);
-    WebLogger.getLogger(db.getAppName())
-        .i("commonTableDefn", DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME);
-    db.execSQL(
-        ColumnDefinitionsColumns.getTableCreateSql(DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME),
-        null);
-    WebLogger.getLogger(db.getAppName())
-        .i("commonTableDefn", DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-    db.execSQL(
-        KeyValueStoreColumns.getTableCreateSql(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME),
-        null);
-    WebLogger.getLogger(db.getAppName())
-        .i("commonTableDefn", DatabaseConstants.TABLE_DEFS_TABLE_NAME);
-    db.execSQL(TableDefinitionsColumns.getTableCreateSql(DatabaseConstants.TABLE_DEFS_TABLE_NAME),
-        null);
-    WebLogger.getLogger(db.getAppName())
-        .i("commonTableDefn", DatabaseConstants.SYNC_ETAGS_TABLE_NAME);
-    db.execSQL(SyncETagColumns.getTableCreateSql(DatabaseConstants.SYNC_ETAGS_TABLE_NAME), null);
-    WebLogger.getLogger(db.getAppName())
-        .i("commonTableDefn", DatabaseConstants.CHOICE_LIST_TABLE_NAME);
-    db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME), null);
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
+  private enum RowChange {
+    NEW_ROW, CHANGE_ROW, DELETE_ROW
+  }
+
+  /**
+   * A class that represents a users permissions
+   */
+  public static class AccessContext {
+    /**
+     * TODO what?
+     */
+    public final AccessColumnType accessColumnType;
+    /**
+     * Whether the user can create a row
+     */
+    public final boolean canCreateRow;
+    /**
+     * The username of the user
+     */
+    public final String activeUser;
+    /** true if user is a super-user or administrator */
+    public final boolean isPrivilegedUser;
+    /**
+     * Whether the user has verified the permissions against the server or not
+     */
+    public final boolean isUnverifiedUser;
+    private final List<String> rolesArray;
+    private final List<String> groupArray;
+
+    /**
+     * Constructor that stores its arguments and sets up some internal variables based on the
+     * users roles
+     * @param accessColumnType TODO what?
+     * @param canCreateRow whether the user can create a row or not
+     * @param activeUser the user's username
+     * @param rolesArray a list of the user's roles
+     */
+    AccessContext(AccessColumnType accessColumnType, boolean canCreateRow, String activeUser,
+        List<String> rolesArray) {
+      if (activeUser == null) {
+        throw new IllegalStateException("activeUser cannot be null!");
+      }
+      this.accessColumnType = accessColumnType;
+      this.canCreateRow = canCreateRow;
+      this.activeUser = activeUser;
+      this.rolesArray = rolesArray;
+      this.groupArray = new ArrayList<>();
+
+      if (rolesArray == null) {
+        this.isPrivilegedUser = false;
+        this.isUnverifiedUser = true;
+      } else {
+        this.isPrivilegedUser = rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
+            .contains(RoleConsts.ROLE_ADMINISTRATOR);
+        this.isUnverifiedUser = false;
+
+        for (String role : rolesArray) {
+          groupArray.add(role);
+        }
+      }
+    }
+
+    /**
+     * Returns whether the user has the passed role
+     * @param role The role to check against
+     * @return whether the user has the passed role
+     */
+    public boolean hasRole(String role) {
+      return rolesArray != null && rolesArray.contains(role);
+    }
+
+    /**
+     * Returns a copy of this object, but as a privileged user
+     * @return A copy of this object, but as a privilegeduser
+     */
+    public AccessContext copyAsPrivilegedUser() {
+
+      // figure out whether we have a privileged user or not
+      List<String> rolesArray = getRolesArray(RoleConsts.ADMIN_ROLES_LIST);
+
+      return new AccessContext(accessColumnType, true, activeUser, rolesArray);
+    }
+
+    /**
+     * Returns the groups
+     * @return the roles that the user has
+     */
+    public List<String> getGroupsArray() {
+      return groupArray;
+    }
+  }
+
+  private static class TableSecuritySettings {
+    final String tableId;
+    final boolean isLocked;
+    final boolean canUnverifiedUserCreateRow;
+    final String defaultAccessOnCreation;
+
+    public TableSecuritySettings(final String tableId, final boolean isLocked,
+        final boolean canUnverifiedUserCreateRow, final String defaultAccessOnCreation) {
+      this.tableId = tableId;
+      this.isLocked = isLocked;
+      this.canUnverifiedUserCreateRow = canUnverifiedUserCreateRow;
+      this.defaultAccessOnCreation = defaultAccessOnCreation;
+    }
+
+    public void canModifyPermissions(String activeUser, Collection<String> rolesArray,
+        String groupPrivileged, String priorOwner) throws ActionNotAuthorizedException {
+
+      if (rolesArray == null) {
+        // unverified user
+
+        // throw an exception
+        throw new ActionNotAuthorizedException(
+            TAG + ": unverified users cannot modify defaultAccess, rowOwner, or group"
+                + "permission fields in (any) table " + tableId);
+
+      } else if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
+          .contains(RoleConsts.ROLE_ADMINISTRATOR) || groupPrivileged != null && rolesArray
+          .contains(groupPrivileged))) {
+
+        // not (super-user or administrator or groupPrivileged or (rowOwner in unlocked table))
+        // NOTE: in a new row priorOwner will be defaultRowOwner
+        if (!isLocked && (DataTableColumns.DEFAULT_ROW_OWNER.equals(priorOwner)
+            || priorOwner != null && activeUser.equals(priorOwner))) {
+          return;
+        }
+
+        // throw an exception
+        throw new ActionNotAuthorizedException(TAG
+            + ": user does not have the privileges (super-user or administrator or group_privileged"
+            + " or (row_owner in unlocked table)) to modify defaultAccess, rowOwner, or group"
+            + " permission fields in table " + tableId);
+      }
+    }
+
+    public void allowRowChange(String activeUser, Collection<String> rolesArray, String updatedSyncState,
+        String priorDefaultAccess, String priorOwner, String priorGroupModify, String priorGroupPrivileged,
+        RowChange rowChange)
+        throws ActionNotAuthorizedException {
+
+      switch (rowChange) {
+      case NEW_ROW:
+
+        // enforce restrictions:
+        // 1. if locked, only super-user, administrator, and group_privileged members can create rows.
+        // 2. otherwise, if unverified user, allow creation based upon unverifedUserCanCreate flag
+        if (isLocked) {
+          // inserting into a LOCKED table
+
+          if (rolesArray == null) {
+            // unverified user
+
+            // throw an exception
+            throw new ActionNotAuthorizedException(
+                TAG + ": unverified users cannot create a row in a locked table " + tableId);
+          }
+
+          if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
+              .contains(RoleConsts.ROLE_ADMINISTRATOR) || priorGroupPrivileged != null && rolesArray
+              .contains(priorGroupPrivileged))) {
+            // bad JSON
+            // not a super-user and not an administrator
+
+            // throw an exception
+            throw new ActionNotAuthorizedException(TAG
+                + ": user does not have the privileges (super-user or administrator or group_privileged) "
+                + "to create a row in a locked table " + tableId);
+          }
+
+        } else if (rolesArray == null) {
+          // inserting into an UNLOCKED table
+
+          // unverified user
+          if (!canUnverifiedUserCreateRow) {
+
+            // throw an exception
+            throw new ActionNotAuthorizedException(TAG
+                + ": unverified users do not have the privileges to create a row in this unlocked table "
+                + tableId);
+          }
+        }
+        break;
+      case CHANGE_ROW:
+
+        // if SyncState is new_row then allow edits in both locked and unlocked tables
+        if (!updatedSyncState.equals(SyncState.new_row.name())) {
+
+          if (isLocked) {
+            // modifying a LOCKED table
+
+            // disallow edits if:
+            // 1. user is unverified
+            // 2. existing owner is null or does not match the activeUser AND
+            //    the activeUser is neither a super-user nor an administrator nor a member of
+            //    group_privileged.
+
+            if (rolesArray == null || rolesArray.isEmpty()) {
+              // unverified user
+
+              // throw an exception
+              throw new ActionNotAuthorizedException(
+                  TAG + ": unverified users cannot modify rows in a locked table " + tableId);
+            }
+
+            // allow if prior owner matches activeUser
+            if (!(priorOwner != null && activeUser.equals(priorOwner))) {
+              // otherwise...
+              // reject if the activeUser is not a super-user or administrator or member of
+              // group_privileged
+
+              if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
+                  .contains(RoleConsts.ROLE_ADMINISTRATOR)
+                  || priorGroupPrivileged != null && rolesArray.contains(priorGroupPrivileged))) {
+                // bad JSON or
+                // not a super-user and not an administrator
+
+                // throw an exception
+                throw new ActionNotAuthorizedException(
+                    TAG + ": user does not have the privileges (super-user or "
+                        + "administrator or group_privileged) to modify rows in a locked table "
+                        + tableId);
+              }
+            }
+
+          } else {
+            // modifying an UNLOCKED table
+            boolean groupAuth = false;
+
+            if (rolesArray != null) {
+              if (priorGroupModify != null) {
+                groupAuth = rolesArray.contains(priorGroupModify);
+              }
+
+              if (priorGroupPrivileged != null) {
+                groupAuth |= rolesArray.contains(priorGroupPrivileged);
+              }
+            }
+            // allow if group authorized
+            if (!groupAuth) {
+              // allow if defaultAccess is MODIFY or FULL
+              if (priorDefaultAccess == null || !(
+                  priorDefaultAccess.equals(RowFilterScope.Access.MODIFY.name())
+                      || priorDefaultAccess.equals(RowFilterScope.Access.FULL.name()))) {
+                // otherwise...
+
+                // allow if prior owner matches activeUser
+                if (priorOwner == null || !activeUser.equals(priorOwner)) {
+                  // otherwise...
+                  // reject if the activeUser is not a super-user or administrator
+
+                  if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
+                      || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                    // bad JSON or
+                    // not a super-user and not an administrator
+
+                    // throw an exception
+                    throw new ActionNotAuthorizedException(
+                        TAG + ": user does not have the privileges (super-user or administrator) "
+                            + "to modify hidden or read-only rows in an unlocked table " + tableId);
+                  }
+                }
+              }
+            }
+          }
+        }
+        break;
+      case DELETE_ROW:
+
+        // if SyncState is new_row then allow deletes in both locked and unlocked tables
+        if (!updatedSyncState.equals(SyncState.new_row.name())) {
+
+          if (isLocked) {
+            // deleting a LOCKED table
+
+            // disallow deletes if:
+            // 1. user is unverified
+            // 2. user is not a super-user or an administrator or member of group_privileged
+
+            if (rolesArray == null) {
+              // unverified user
+
+              // throw an exception
+              throw new ActionNotAuthorizedException(
+                  TAG + ": unverified users cannot delete rows in a locked table " + tableId);
+            }
+
+            // reject if the activeUser is not a super-user or administrator
+
+            if (!(rolesArray.contains(RoleConsts.ROLE_SUPER_USER) || rolesArray
+                .contains(RoleConsts.ROLE_ADMINISTRATOR)
+                || priorGroupPrivileged != null && rolesArray.contains(priorGroupPrivileged))) {
+              // bad JSON or
+              // not a super-user and not an administrator
+
+              // throw an exception
+              throw new ActionNotAuthorizedException(TAG
+                  + ": user does not have the privileges (super-user or administrator or group_privileged) "
+                  + "to delete rows in a locked table " + tableId);
+            }
+          } else {
+            // delete in an UNLOCKED table
+
+            boolean groupAuth = false;
+
+            if (rolesArray != null) {
+              if (priorGroupPrivileged != null) {
+                groupAuth = rolesArray.contains(priorGroupPrivileged);
+              }
+            }
+
+            if (!groupAuth) {
+              // allow if defaultAccess is FULL
+              if (priorDefaultAccess == null || !priorDefaultAccess
+                  .equals(RowFilterScope.Access.FULL.name())) {
+                // otherwise...
+
+                // allow if prior owner matches activeUser
+                if (priorOwner == null || !activeUser.equals(priorOwner)) {
+                  // otherwise...
+                  // reject if the activeUser is not a super-user or administrator
+
+                  if (rolesArray == null || !(rolesArray.contains(RoleConsts.ROLE_SUPER_USER)
+                      || rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR))) {
+                    // bad JSON or
+                    // not a super-user and not an administrator
+
+                    // throw an exception
+                    throw new ActionNotAuthorizedException(TAG
+                        + ": user does not have the privileges (super-user or administrator) to delete hidden or read-only rows in an unlocked table "
+                        + tableId);
+                  }
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+    }
   }
 }

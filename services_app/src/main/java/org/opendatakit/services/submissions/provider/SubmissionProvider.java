@@ -260,7 +260,7 @@ public class SubmissionProvider extends ContentProvider {
 
       boolean success = false;
       try {
-        success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
+        success = ODKDatabaseImplUtils.hasTableId(db, tableId);
       } catch (Exception e) {
         logger.printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
@@ -317,7 +317,7 @@ public class SubmissionProvider extends ContentProvider {
           c = null;
         }
 
-        OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
+        OrderedColumns orderedDefns = ODKDatabaseImplUtils
             .getUserDefinedColumns(db, tableId);
 
         // Retrieve the values of the record to be emitted...
@@ -344,10 +344,10 @@ public class SubmissionProvider extends ContentProvider {
         try {
 
           ODKDatabaseImplUtils.AccessContext accessContext =
-              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, aul.activeUser,
+              ODKDatabaseImplUtils.getAccessContext(db, tableId, aul.activeUser,
                   aul.rolesList);
 
-          c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,
+          c = ODKDatabaseImplUtils.rawQuery(db, b.toString(), selectionArgs, null,
               accessContext);
           b.setLength(0);
 

@@ -58,7 +58,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       PropertiesSingleton props =
           CommonToolProperties.get(context, appName);
       String value = props.getProperty(CommonToolProperties.KEY_DEFAULT_GROUP);
-      if ( value != null && value.length() == 0 ) {
+      if ( value != null && value.isEmpty()) {
          return null;
       } else {
          return value;
@@ -69,7 +69,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       PropertiesSingleton props =
           CommonToolProperties.get(context, appName);
       String value = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-      if ( value != null && value.length() == 0 ) {
+      if ( value != null && value.isEmpty()) {
          return null;
       } else {
          return value;
@@ -80,7 +80,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       PropertiesSingleton props =
           CommonToolProperties.get(context, appName);
       String value = props.getProperty(CommonToolProperties.KEY_USERS_LIST);
-      if ( value != null && value.length() == 0 ) {
+      if ( value != null && value.isEmpty()) {
          return null;
       } else {
          return value;
@@ -97,7 +97,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * Return the active user or "anonymous" if the user
    * has not been authenticated against the server.
    *
-   * @param appName
+   * @param appName the app name
    *
    * @return the user reported from the server or "anonymous" if
    * server authentication has not been completed.
@@ -116,7 +116,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * or if the server settings specify to use an anonymous user,
    * then return an empty string.
    *
-   * @param appName
+   * @param appName the app name
    *
    * @return empty string or JSON serialization of an array of ROLES. See RoleConsts for possible values.
    */
@@ -141,7 +141,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * the current user. If the user is syncing anonymously with the
    * server, this returns an empty string.
    *
-   * @param appName
+   * @param appName the app name
    *
    * @return null or JSON serialization of an array of objects
    * structured as { "user_id": "...", "full_name": "...", "roles": ["...",...] }
@@ -220,9 +220,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Create a local only table and prepend the given id with an "L_"
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    * @param columns
    * @return
    */
@@ -236,7 +236,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         OrderedColumns results = ODKDatabaseImplUtils.get()
+         OrderedColumns results = ODKDatabaseImplUtils
              .createLocalOnlyTableWithColumns(db, tableId, columns.getColumns());
 
          return results;
@@ -253,9 +253,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Drop the given local only table
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    */
    @Override public void deleteLocalOnlyTable(String appName, DbHandle dbHandleName, String tableId)
        {
@@ -266,7 +266,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().deleteLocalOnlyTable(db, tableId);
+         ODKDatabaseImplUtils.deleteLocalOnlyTable(db, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -280,9 +280,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Insert a row into a local only table
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    * @param rowValues
    * @throws ActionNotAuthorizedException
    */
@@ -295,7 +295,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().insertLocalOnlyRow(db, tableId, rowValues);
+         ODKDatabaseImplUtils.insertLocalOnlyRow(db, tableId, rowValues);
       } finally {
          if (db != null) {
             // release the reference...
@@ -309,9 +309,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Update a row in a local only table
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    * @param rowValues
    * @param whereClause
    * @param bindArgs
@@ -327,7 +327,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .updateLocalOnlyRow(db, tableId, rowValues, whereClause,
                  (bindArgs == null) ? null : bindArgs.bindArgs);
 
@@ -344,9 +344,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Delete a row in a local only table
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    * @param whereClause
    * @param bindArgs
    * @throws ActionNotAuthorizedException
@@ -360,7 +360,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .deleteLocalOnlyRow(db, tableId, whereClause,
                  (bindArgs == null) ? null : bindArgs.bindArgs);
 
@@ -377,9 +377,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * SYNC Only. ADMIN Privileges
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
    * @param schemaETag
    * @param tableInstanceFilesUri
      */
@@ -393,7 +393,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().serverTableSchemaETagChanged(db, tableId, schemaETag,
+         ODKDatabaseImplUtils.serverTableSchemaETagChanged(db, tableId, schemaETag,
              tableInstanceFilesUri);
       } finally {
          if (db != null) {
@@ -410,8 +410,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * and register the tuple of (choiceListId, choiceListJSON).
    * Return choiceListId.
    *
-   * @param appName -- application name
-   * @param dbHandleName -- database handle
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
    * @param choiceListJSON -- the actual JSON choice list text.
    * @return choiceListId -- the unique code mapping to the choiceListJSON
    */
@@ -424,7 +424,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         return ODKDatabaseImplUtils.get().setChoiceList(db, choiceListJSON);
+         return ODKDatabaseImplUtils.setChoiceList(db, choiceListJSON);
       } finally {
          if (db != null) {
             // release the reference...
@@ -438,8 +438,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * Return the choice list JSON corresponding to the choiceListId
    *
-   * @param appName -- application name
-   * @param dbHandleName -- database handle
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
    * @param choiceListId -- the md5 hash of the choiceListJSON
    * @return choiceListJSON -- the actual JSON choice list text.
    */
@@ -452,7 +452,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         return ODKDatabaseImplUtils.get().getChoiceList(db, choiceListId);
+         return ODKDatabaseImplUtils.getChoiceList(db, choiceListId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -473,7 +473,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         OrderedColumns results = ODKDatabaseImplUtils.get()
+         OrderedColumns results = ODKDatabaseImplUtils
              .createOrOpenTableWithColumns(db, tableId, columns.getColumns());
 
          return results;
@@ -498,7 +498,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          OrderedColumns results =
-             ODKDatabaseImplUtils.get()
+             ODKDatabaseImplUtils
                  .createOrOpenTableWithColumnsAndProperties(db, tableId, columns.getColumns(),
                      metaData, clear);
 
@@ -527,9 +527,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, tableId, rowId,
+         ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, tableId, rowId,
              activeUser, rolesList);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -558,9 +558,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().deleteLastCheckpointRowWithId(db, tableId, rowId,
+         ODKDatabaseImplUtils.deleteLastCheckpointRowWithId(db, tableId, rowId,
              activeUser, rolesList);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -584,7 +584,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
+         ODKDatabaseImplUtils.deleteTableAndAllData(db, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -604,7 +604,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
+         ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
       } finally {
          if (db != null) {
             // release the reference...
@@ -629,9 +629,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().deleteRowWithId(db, tableId, rowId,
+         ODKDatabaseImplUtils.deleteRowWithId(db, tableId, rowId,
              activeUser, rolesList);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -649,10 +649,10 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
   /**
    * SYNC Only. ADMIN Privileges!
    *
-   * @param appName
-   * @param dbHandleName
-   * @param tableId
-   * @param rowId
+   * @param appName the app name
+   * @param dbHandleName a database handle to use
+   * @param tableId the table to update
+   * @param rowId which row in the table to update
    * @return
      */
    @Override public BaseTable privilegedDeleteRowWithId(String appName, DbHandle dbHandleName,
@@ -668,8 +668,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
-         BaseTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
+         ODKDatabaseImplUtils.privilegedDeleteRowWithId(db, tableId, rowId, activeUser);
+         BaseTable t = ODKDatabaseImplUtils.privilegedGetMostRecentRowWithId(db, tableId,
              rowId, activeUser);
          db.setTransactionSuccessful();
          return t;
@@ -686,7 +686,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
 
    @Override public String[] getAdminColumns() {
 
-      List<String> cols = ODKDatabaseImplUtils.get().getAdminColumns();
+      List<String> cols = ODKDatabaseImplUtils.getAdminColumns();
       String[] results = cols.toArray(new String[cols.size()]);
 
       return results;
@@ -701,7 +701,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         String[] results =  ODKDatabaseImplUtils.get().getAllColumnNames(db, tableId);
+         String[] results =  ODKDatabaseImplUtils.getAllColumnNames(db, tableId);
 
          return results;
       } finally {
@@ -723,7 +723,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         List<String> results = ODKDatabaseImplUtils.get().getAllTableIds(db);
+         List<String> results = ODKDatabaseImplUtils.getAllTableIds(db);
 
          return results;
       } finally {
@@ -748,7 +748,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         BaseTable results = ODKDatabaseImplUtils.get()
+         BaseTable results = ODKDatabaseImplUtils
              .getRowsWithId(db, tableId, rowId, activeUser, rolesList);
 
          return results;
@@ -774,7 +774,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         BaseTable results = ODKDatabaseImplUtils.get()
+         BaseTable results = ODKDatabaseImplUtils
              .privilegedGetRowsWithId(db, tableId, rowId, activeUser);
 
          return results;
@@ -800,7 +800,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         BaseTable results = ODKDatabaseImplUtils.get()
+         BaseTable results = ODKDatabaseImplUtils
              .getMostRecentRowWithId(db, tableId, rowId, activeUser, rolesList);
 
          return results;
@@ -825,7 +825,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      kvsEntries = ODKDatabaseImplUtils.get()
+      kvsEntries = ODKDatabaseImplUtils
           .getTableMetadata(db, tableId, partition, aspect, key);
     } finally {
       if (db != null) {
@@ -850,11 +850,11 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
-      String currentRevId = ODKDatabaseImplUtils.get().getTableDefinitionRevId(db, tableId);
+      String currentRevId = ODKDatabaseImplUtils.getTableDefinitionRevId(db, tableId);
       if (revId != null && revId.equals(currentRevId)) {
         kvsEntries = new TableMetaDataEntries(tableId, revId);
       } else {
-        kvsEntries = ODKDatabaseImplUtils.get().getTableMetadata(db, tableId, null, null, null);
+        kvsEntries = ODKDatabaseImplUtils.getTableMetadata(db, tableId, null, null, null);
       }
     } finally {
       if (db != null) {
@@ -885,7 +885,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
        db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
            .getConnection(appName, dbHandleName);
 
-       int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
+       int health = ODKDatabaseImplUtils.getTableHealth(db, tableId);
        boolean hasConflicts = CursorUtils.getTableHealthHasConflicts(health);
        boolean hasCheckpoints = CursorUtils.getTableHealthHasCheckpoints(health);
        boolean hasChanges = CursorUtils.getTableHealthHasChanges(health);
@@ -933,7 +933,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+         tableIds = ODKDatabaseImplUtils.getAllTableIds(db);
       } finally {
          if (db != null) {
             // release the reference...
@@ -958,7 +958,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    }
 
    @Override public String[] getExportColumns() {
-      List<String> exports = ODKDatabaseImplUtils.get().getExportColumns();
+      List<String> exports = ODKDatabaseImplUtils.getExportColumns();
       String[] results =  exports.toArray(new String[exports.size()]);
 
       return results;
@@ -973,7 +973,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncState state = ODKDatabaseImplUtils.get().getSyncState(db, tableId, rowId);
+         SyncState state = ODKDatabaseImplUtils.getSyncState(db, tableId, rowId);
          return state.name();
       } finally {
          if (db != null) {
@@ -994,7 +994,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         TableDefinitionEntry results = ODKDatabaseImplUtils.get()
+         TableDefinitionEntry results = ODKDatabaseImplUtils
              .getTableDefinitionEntry(db, tableId);
 
          return results;
@@ -1017,7 +1017,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         OrderedColumns results = ODKDatabaseImplUtils.get()
+         OrderedColumns results = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
 
          return results;
@@ -1040,7 +1040,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         return ODKDatabaseImplUtils.get().hasTableId(db, tableId);
+         return ODKDatabaseImplUtils.hasTableId(db, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1066,12 +1066,12 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+         OrderedColumns orderedColumns = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .insertCheckpointRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
                  rolesList, userSelectedDefaultLocale);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -1101,12 +1101,12 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+         OrderedColumns orderedColumns = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .insertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
                  userSelectedDefaultLocale);
-         BaseTable t = ODKDatabaseImplUtils.get()
+         BaseTable t = ODKDatabaseImplUtils
              .getMostRecentRowWithId(db, tableId, rowId, activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -1124,11 +1124,11 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    /**
     * SYNC Only. ADMIN Privileges!
     *
-    * @param appName
-    * @param dbHandleName
-    * @param tableId
+    * @param appName the app name
+    * @param dbHandleName a database handle to use
+    * @param tableId the table to update
     * @param cvValues
-    * @param rowId
+    * @param rowId which row in the table to update
     * @param asCsvRequestedChange
     * @return
     */
@@ -1146,12 +1146,12 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+         OrderedColumns orderedColumns = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .privilegedInsertRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser,
                  userSelectedDefaultLocale, asCsvRequestedChange);
-         BaseTable t = ODKDatabaseImplUtils.get().privilegedGetMostRecentRowWithId(db, tableId,
+         BaseTable t = ODKDatabaseImplUtils.privilegedGetMostRecentRowWithId(db, tableId,
              rowId, activeUser);
          db.setTransactionSuccessful();
          return t;
@@ -1169,13 +1169,13 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    /**
     * SYNC Only. ADMIN Privileges!
     *
-    * @param appName
-    * @param dbHandleName
-    * @param tableId
+    * @param appName the app name
+    * @param dbHandleName a database handle to use
+    * @param tableId the table to update
     * @param cvValues  server's field values for this row
-    * @param rowId
+    * @param rowId which row in the table to update
     *          expected to be one of ConflictType.LOCAL_DELETED_OLD_VALUES (0) or
-    * @return
+    * @return The updated row, in a table
     */
    @Override public BaseTable privilegedPerhapsPlaceRowIntoConflictWithId(String appName,
        DbHandle dbHandleName, String tableId, ContentValues cvValues,
@@ -1192,12 +1192,12 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+         OrderedColumns orderedColumns = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .privilegedPerhapsPlaceRowIntoConflictWithId(db, tableId, orderedColumns, cvValues, rowId,
                  activeUser, rolesList, userSelectedDefaultLocale);
-         BaseTable t = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, tableId,
+         BaseTable t = ODKDatabaseImplUtils.privilegedGetRowsWithId(db, tableId,
              rowId, activeUser);
          db.setTransactionSuccessful();
          return t;
@@ -1228,13 +1228,11 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
 
 
          ODKDatabaseImplUtils.AccessContext accessContext =
-             ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
+             ODKDatabaseImplUtils.getAccessContext(db, tableId, activeUser, rolesList);
 
-         BaseTable result = ODKDatabaseImplUtils.get()
-             .query(db, tableId, sqlCommand,
-                 (bindArgs == null) ? null : bindArgs.bindArgs, sqlQueryBounds, accessContext);
-
-         return result;
+        return ODKDatabaseImplUtils
+            .query(db, tableId, sqlCommand,
+                bindArgs == null ? null : bindArgs.bindArgs, sqlQueryBounds, accessContext);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1258,15 +1256,13 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
 
-         ODKDatabaseImplUtils.AccessContext accessContext = ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils.AccessContext accessContext = ODKDatabaseImplUtils
              .getAccessContext(db, tableId, activeUser, RoleConsts.ADMIN_ROLES_LIST);
 
-         BaseTable result = ODKDatabaseImplUtils.get()
-             .privilegedQuery(db, tableId, sqlCommand,
-                 (bindArgs == null) ? null : bindArgs.bindArgs, sqlQueryBounds,
-                 accessContext);
-
-         return result;
+        return ODKDatabaseImplUtils
+            .privilegedQuery(db, tableId, sqlCommand,
+                bindArgs == null ? null : bindArgs.bindArgs, sqlQueryBounds,
+                accessContext);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1287,8 +1283,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
 
-         ODKDatabaseImplUtils.get()
-             .privilegedExecute(db, sqlCommand, (bindArgs == null) ? null : bindArgs.bindArgs);
+         ODKDatabaseImplUtils
+             .privilegedExecute(db, sqlCommand, bindArgs == null ? null : bindArgs.bindArgs);
 
       } finally {
          if (db != null) {
@@ -1309,7 +1305,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().replaceTableMetadata(db, entry);
+         ODKDatabaseImplUtils.replaceTableMetadata(db, entry);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1330,7 +1326,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().replaceTableMetadata(db, tableId, entries, clear);
+         ODKDatabaseImplUtils.replaceTableMetadata(db, tableId, entries, clear);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1351,7 +1347,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .replaceTableMetadataSubList(db, tableId, partition, aspect, entries);
       } finally {
          if (db != null) {
@@ -1377,9 +1373,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, tableId,
+         ODKDatabaseImplUtils.saveAsIncompleteMostRecentCheckpointRowWithId(db, tableId,
              rowId);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -1408,8 +1404,8 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         ODKDatabaseImplUtils.get().saveAsCompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         ODKDatabaseImplUtils.saveAsCompleteMostRecentCheckpointRowWithId(db, tableId, rowId);
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -1427,11 +1423,11 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    /**
     * SYNC Only. ADMIN Privileges
     *
-    * @param appName
-    * @param dbHandleName
-    * @param tableId
-    * @param schemaETag
-    * @param lastDataETag
+    * @param appName the app name
+    * @param dbHandleName a database handle to use
+    * @param tableId the table to update
+    * @param schemaETag TODO what?
+    * @param lastDataETag TODO what?
     */
    @Override public void privilegedUpdateTableETags(String appName, DbHandle dbHandleName,
        String tableId, String schemaETag, String lastDataETag)
@@ -1443,7 +1439,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().privilegedUpdateTableETags(db, tableId, schemaETag,
+         ODKDatabaseImplUtils.privilegedUpdateTableETags(db, tableId, schemaETag,
              lastDataETag);
       } finally {
          if (db != null) {
@@ -1458,9 +1454,9 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    /**
     * SYNC Only. ADMIN Privileges
     *
-    * @param appName
-    * @param dbHandleName
-    * @param tableId
+    * @param appName the app name
+    * @param dbHandleName a database handle to use
+    * @param tableId the table to update
     */
    @Override public void privilegedUpdateTableLastSyncTime(String appName, DbHandle dbHandleName,
        String tableId) {
@@ -1471,7 +1467,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         ODKDatabaseImplUtils.get().privilegedUpdateTableLastSyncTime(db, tableId);
+         ODKDatabaseImplUtils.privilegedUpdateTableLastSyncTime(db, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1497,12 +1493,12 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
          db.beginTransactionExclusive();
-         OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
+         OrderedColumns orderedColumns = ODKDatabaseImplUtils
              .getUserDefinedColumns(db, tableId);
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .updateRowWithId(db, tableId, orderedColumns, cvValues, rowId, activeUser, rolesList,
                  userSelectedDefaultLocale);
-         BaseTable t = ODKDatabaseImplUtils.get().getMostRecentRowWithId(db, tableId, rowId,
+         BaseTable t = ODKDatabaseImplUtils.getMostRecentRowWithId(db, tableId, rowId,
              activeUser, rolesList);
          db.setTransactionSuccessful();
          return t;
@@ -1530,7 +1526,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
 
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .resolveServerConflictWithDeleteRowWithId(db, tableId, rowId,
                  activeUser);
 
@@ -1559,7 +1555,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
 
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .resolveServerConflictTakeLocalRowWithId(db, tableId, rowId, activeUser, rolesList,
                  userSelectedDefaultLocale);
 
@@ -1588,7 +1584,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
 
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .resolveServerConflictTakeLocalRowPlusServerDeltasWithId(db, tableId, cvValues,
                  rowId, activeUser, rolesList, userSelectedDefaultLocale);
 
@@ -1616,7 +1612,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
              .getConnection(appName, dbHandleName);
 
          // regardless of the roles available to the user, act as god.
-         ODKDatabaseImplUtils.get()
+         ODKDatabaseImplUtils
              .resolveServerConflictTakeServerRowWithId(db, tableId, rowId, activeUser,
                  userSelectedDefaultLocale);
 
@@ -1633,11 +1629,11 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    /**
     * SYNC Only. ADMIN Privileges!
     *
-    * @param appName
-    * @param dbHandleName
-    * @param tableId
-    * @param rowId
-    * @param rowETag
+    * @param appName the app name
+    * @param dbHandleName a database handle to use
+    * @param tableId the table to update
+    * @param rowId which row in the table to update
+    * @param rowETag The new etag for the row
     * @param syncState - the SyncState.name()
     */
    @Override public void privilegedUpdateRowETagAndSyncState(String appName, DbHandle dbHandleName,
@@ -1652,7 +1648,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         if ( !ODKDatabaseImplUtils.get().privilegedUpdateRowETagAndSyncState(db, tableId, rowId, rowETag,
+         if ( !ODKDatabaseImplUtils.privilegedUpdateRowETagAndSyncState(db, tableId, rowId, rowETag,
              SyncState.valueOf(syncState), activeUser) ) {
             throw new IllegalArgumentException(
                 "row id " + rowId + " does not have exactly 1 row in table " + tableId);
