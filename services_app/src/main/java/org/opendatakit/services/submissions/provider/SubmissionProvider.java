@@ -22,119 +22,77 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
 import android.util.Log;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.provider.ProviderConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
+import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.properties.DynamicPropertiesCallback;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.provider.ProviderConsts;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.utilities.EncryptionUtils;
 import org.opendatakit.services.utilities.EncryptionUtils.EncryptedFormInformation;
 import org.opendatakit.utilities.FileSet;
-import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.logging.WebLoggerIf;
-import org.opendatakit.database.service.DbHandle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.Text;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * The WebKit does better if there is a content provider vending files to it.
  * This provider vends files under the Forms and Instances directories (only).
  *
  * @author mitchellsundt@gmail.com
- *
  */
 public class SubmissionProvider extends ContentProvider {
   private static final String ISO8601_DATE_ONLY_FORMAT = "yyyy-MM-dd";
   private static final String ISO8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
 
-  private static final String t = "SubmissionProvider";
+  private static final String TAG = "SubmissionProvider";
 
   private static final String XML_OPENROSA_NAMESPACE = "http://openrosa.org/xforms";
   // // any
   // arbitrary
   // namespace
-  private static final String NEW_LINE = "\n";
 
   /**
    * change to true expression if you want to debug this content provider
    */
   private static void possiblyWaitForContentProviderDebugger() {
-    if ( false ) {
+    if (false) {
       android.os.Debug.waitForDebugger();
       int len = "for setting breakpoint".length();
     }
   }
 
-  @Override
-  public boolean onCreate() {
-
-    // IMPORTANT NOTE: the Application object is not yet created!
-    try {
-      ODKFileUtils.verifyExternalStorageAvailability();
-      File f = new File(ODKFileUtils.getOdkFolder());
-      if (!f.exists()) {
-        f.mkdir();
-      } else if (!f.isDirectory()) {
-        Log.e(t, f.getAbsolutePath() + " is not a directory!");
-        return false;
-      }
-    } catch (Exception e) {
-      Log.e(t, "External storage not available");
-      return false;
-    }
-
-    return true;
-  }
-
   @SuppressWarnings("unchecked")
   private static void putElementValue(HashMap<String, Object> dataMap, ColumnDefinition defn,
       Object value) {
-    List<ColumnDefinition> nesting = new ArrayList<ColumnDefinition>();
+    List<ColumnDefinition> nesting = new ArrayList<>();
     ColumnDefinition cur = defn.getParent();
     while (cur != null) {
       nesting.add(cur);
@@ -155,38 +113,25 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   @SuppressWarnings("unchecked")
-  private static int generateXmlHelper(Document d, Element data, int idx, String key,
+  private static int generateXmlHelper(Document d, Node data, int idx, String key,
       Map<String, Object> values, WebLoggerIf logger) {
     Object o = values.get(key);
 
     Element e = d.createElement(key);
 
     if (o == null) {
-      logger.e(t, "Unexpected null value");
-    } else if (o instanceof Integer) {
-      Text txtNode = d.createTextNode(((Integer) o).toString());
+      logger.e(TAG, "Unexpected null value");
+    } else if (o instanceof Integer || o instanceof Double || o instanceof Boolean
+        || o instanceof String) {
+      Text txtNode = d.createTextNode(o.toString());
       e.appendChild(txtNode);
-    } else if (o instanceof Double) {
-      Text txtNode = d.createTextNode(((Double) o).toString());
-      e.appendChild(txtNode);
-    } else if (o instanceof Boolean) {
-      Text txtNode = d.createTextNode(((Boolean) o).toString());
-      e.appendChild(txtNode);
-    } else if (o instanceof String) {
-      Text txtNode = d.createTextNode(((String) o));
-      e.appendChild(txtNode);
-    } else if (o instanceof List) {
+    } else if (o instanceof Iterable) {
       StringBuilder b = new StringBuilder();
-      List<Object> al = (List<Object>) o;
+      Iterable<Object> al = (Iterable<Object>) o;
       for (Object ob : al) {
-        if (ob instanceof Integer) {
-          b.append(((Integer) ob).toString());
-        } else if (ob instanceof Double) {
-          b.append(((Double) ob).toString());
-        } else if (ob instanceof Boolean) {
-          b.append(((Boolean) ob).toString());
-        } else if (ob instanceof String) {
-          b.append(((String) ob));
+        if (ob instanceof Integer || ob instanceof Double || ob instanceof Boolean
+            || ob instanceof String) {
+          b.append(ob);
         } else {
           throw new IllegalArgumentException("Unexpected type in XML submission serializer");
         }
@@ -199,8 +144,7 @@ public class SubmissionProvider extends ContentProvider {
       Map<String, Object> m = (Map<String, Object>) o;
       int nidx = 0;
 
-      ArrayList<String> entryNames = new ArrayList<String>();
-      entryNames.addAll(m.keySet());
+      List<String> entryNames = new ArrayList<>(m.keySet());
       Collections.sort(entryNames);
       for (String name : entryNames) {
         nidx = generateXmlHelper(d, e, nidx, name, m, logger);
@@ -213,20 +157,81 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   /**
+   * This method actually writes the JSON appName-relative manifest to disk.
+   *
+   * @param payload        The json string to be written
+   * @param outputFilePath the path to the file to write
+   * @param logger         a logger to write to, typically gotten with WebLogger.getWebLogger(appName)
+   * @return whether successful or not
+   */
+  private static boolean exportFile(String payload, File outputFilePath, WebLoggerIf logger) {
+    FileOutputStream os = null;
+    OutputStreamWriter osw = null;
+    try {
+      os = new FileOutputStream(outputFilePath, false);
+      // TODO handle this better
+      osw = new OutputStreamWriter(os, CharEncoding.UTF_8);
+      osw.write(payload);
+      osw.flush();
+      osw.close();
+      return true;
+
+    } catch (IOException e) {
+      logger.e(TAG, "Error writing file");
+      logger.printStackTrace(e);
+      try {
+        if (osw != null)
+          osw.close();
+        if (os != null)
+          os.close();
+      } catch (IOException ex) {
+        logger.printStackTrace(ex);
+      }
+      return false;
+    }
+  }
+
+  @Override
+  public boolean onCreate() {
+
+    // IMPORTANT NOTE: the Application object is not yet created!
+    try {
+      ODKFileUtils.verifyExternalStorageAvailability();
+      File f = new File(ODKFileUtils.getOdkFolder());
+      if (!f.exists()) {
+        // TODO check return value here
+        f.mkdir();
+      } else if (!f.isDirectory()) {
+        Log.e(TAG, f.getAbsolutePath() + " is not a directory!");
+        return false;
+      }
+    } catch (Exception ignored) {
+      Log.e(TAG, "External storage not available");
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * The incoming URI is of the form:
    * ..../appName/tableId/instanceId?formId=&formVersion=
-   *
+   * <p>
    * where instanceId is the DataTableColumns._ID
+   * <p>
+   * TODO This method appears entirely unused
    */
   @SuppressWarnings("unchecked")
   @Override
-  public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+  public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode)
+      throws FileNotFoundException {
 
     possiblyWaitForContentProviderDebugger();
 
-    final boolean asXml = uri.getAuthority().equalsIgnoreCase(ProviderConsts.XML_SUBMISSION_AUTHORITY);
+    final boolean asXml = uri.getAuthority()
+        .equalsIgnoreCase(ProviderConsts.XML_SUBMISSION_AUTHORITY);
 
-    if (mode != null && !mode.equals("r")) {
+    if (mode != null && !"r".equals(mode)) {
       throw new IllegalArgumentException("Only read access is supported");
     }
 
@@ -249,16 +254,17 @@ public class SubmissionProvider extends ContentProvider {
     final String instanceId = segments.get(2);
     final String submissionInstanceId = segments.get(3);
 
-    ActiveUserAndLocale aul =
-        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
+    ActiveUserAndLocale aul = ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
 
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
 
-      boolean success = false;
+      boolean success;
       try {
         success = ODKDatabaseImplUtils.hasTableId(db, tableId);
       } catch (Exception e) {
@@ -281,16 +287,17 @@ public class SubmissionProvider extends ContentProvider {
 
         Cursor c = null;
         try {
-          c = db.query(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME, new String[] {
-              KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE }, KeyValueStoreColumns.TABLE_ID
-              + "=? AND " + KeyValueStoreColumns.PARTITION + "=? AND "
-              + KeyValueStoreColumns.ASPECT + "=? AND " + KeyValueStoreColumns.KEY
-              + " IN (?,?,?,?,?)", new String[] { tableId, KeyValueStoreConstants.PARTITION_TABLE,
-              KeyValueStoreConstants.ASPECT_DEFAULT, KeyValueStoreConstants.XML_INSTANCE_NAME,
-              KeyValueStoreConstants.XML_ROOT_ELEMENT_NAME,
-              KeyValueStoreConstants.XML_DEVICE_ID_PROPERTY_NAME,
-              KeyValueStoreConstants.XML_USER_ID_PROPERTY_NAME,
-              KeyValueStoreConstants.XML_BASE64_RSA_PUBLIC_KEY }, null, null, null, null);
+          c = db.query(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
+              new String[] { KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE },
+              KeyValueStoreColumns.TABLE_ID + "=? AND " + KeyValueStoreColumns.PARTITION + "=? AND "
+                  + KeyValueStoreColumns.ASPECT + "=? AND " + KeyValueStoreColumns.KEY
+                  + " IN (?,?,?,?,?)",
+              new String[] { tableId, KeyValueStoreConstants.PARTITION_TABLE,
+                  KeyValueStoreConstants.ASPECT_DEFAULT, KeyValueStoreConstants.XML_INSTANCE_NAME,
+                  KeyValueStoreConstants.XML_ROOT_ELEMENT_NAME,
+                  KeyValueStoreConstants.XML_DEVICE_ID_PROPERTY_NAME,
+                  KeyValueStoreConstants.XML_USER_ID_PROPERTY_NAME,
+                  KeyValueStoreConstants.XML_BASE64_RSA_PUBLIC_KEY }, null, null, null, null);
           c.moveToFirst();
 
           if (c.getCount() > 0) {
@@ -317,12 +324,11 @@ public class SubmissionProvider extends ContentProvider {
           c = null;
         }
 
-        OrderedColumns orderedDefns = ODKDatabaseImplUtils
-            .getUserDefinedColumns(db, tableId);
+        OrderedColumns orderedDefns = ODKDatabaseImplUtils.getUserDefinedColumns(db, tableId);
 
         // Retrieve the values of the record to be emitted...
 
-        HashMap<String, Object> values = new HashMap<String, Object>();
+        HashMap<String, Object> values = new HashMap<>();
 
         // issue query to retrieve the most recent non-checkpoint data record
         // for the instanceId
@@ -331,10 +337,10 @@ public class SubmissionProvider extends ContentProvider {
             .append(DataTableColumns.ID).append("=?").append(" AND ")
             .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NOT NULL AND ")
             .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append("=(SELECT max(V.")
-                .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
-                   .append(" as V WHERE V.").append(DataTableColumns.ID).append("=T.")
-                   .append(DataTableColumns.ID).append(" AND V.")
-                   .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NOT NULL").append(")");
+            .append(DataTableColumns.SAVEPOINT_TIMESTAMP).append(") FROM ").append(tableId)
+            .append(" as V WHERE V.").append(DataTableColumns.ID).append("=T.")
+            .append(DataTableColumns.ID).append(" AND V.").append(DataTableColumns.SAVEPOINT_TYPE)
+            .append(" IS NOT NULL").append(")");
 
         String[] selectionArgs = new String[] { instanceId };
         FileSet freturn = new FileSet(appName);
@@ -343,12 +349,10 @@ public class SubmissionProvider extends ContentProvider {
 
         try {
 
-          ODKDatabaseImplUtils.AccessContext accessContext =
-              ODKDatabaseImplUtils.getAccessContext(db, tableId, aul.activeUser,
-                  aul.rolesList);
+          ODKDatabaseImplUtils.AccessContext accessContext = ODKDatabaseImplUtils
+              .getAccessContext(db, tableId, aul.activeUser, aul.rolesList);
 
-          c = ODKDatabaseImplUtils.rawQuery(db, b.toString(), selectionArgs, null,
-              accessContext);
+          c = ODKDatabaseImplUtils.rawQuery(db, b.toString(), selectionArgs, null, accessContext);
           b.setLength(0);
 
           if (c.moveToFirst() && c.getCount() == 1) {
@@ -371,7 +375,7 @@ public class SubmissionProvider extends ContentProvider {
               String columnName = c.getColumnName(i);
               try {
                 defn = orderedDefns.find(columnName);
-              } catch (IllegalArgumentException e) {
+              } catch (IllegalArgumentException ignored) {
                 // ignore...
               }
               if (defn != null && !c.isNull(i)) {
@@ -382,42 +386,43 @@ public class SubmissionProvider extends ContentProvider {
                 ElementType type = defn.getType();
                 ElementDataType dataType = type.getDataType();
 
-                logger.i(t, "element type: " + defn.getElementType());
-                if (dataType == ElementDataType.integer) {
+                logger.i(TAG, "element type: " + defn.getElementType());
+                if (dataType.equals(ElementDataType.integer)) {
                   Integer value = CursorUtils.getIndexAsType(c, Integer.class, i);
                   putElementValue(values, defn, value);
-                } else if (dataType == ElementDataType.number) {
+                } else if (dataType.equals(ElementDataType.number)) {
                   Double value = CursorUtils.getIndexAsType(c, Double.class, i);
                   putElementValue(values, defn, value);
-                } else if (dataType == ElementDataType.bool) {
+                } else if (dataType.equals(ElementDataType.bool)) {
                   Integer tmp = CursorUtils.getIndexAsType(c, Integer.class, i);
-                  Boolean value = tmp == null ? null : (tmp != 0);
+                  Boolean value = tmp == null ? null : tmp != 0;
                   putElementValue(values, defn, value);
-                } else if (type.getElementType().equals("date")) {
+                } else if ("date".equals(type.getElementType())) {
                   String value = CursorUtils.getIndexAsString(c, i);
-                  String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
-                      ISO8601_DATE_ONLY_FORMAT, Locale.US)).format(new Date(TableConstants
-                      .milliSecondsFromNanos(value)));
+                  String jrDatestamp = value == null ?
+                      null :
+                      new SimpleDateFormat(ISO8601_DATE_ONLY_FORMAT, Locale.US)
+                          .format(new Date(TableConstants.milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
-                } else if (type.getElementType().equals("dateTime")) {
+                } else if ("dateTime".equals(type.getElementType())) {
                   String value = CursorUtils.getIndexAsString(c, i);
-                  String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
-                      ISO8601_DATE_FORMAT, Locale.US)).format(new Date(TableConstants
-                      .milliSecondsFromNanos(value)));
+                  String jrDatestamp = value == null ?
+                      null :
+                      new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.US)
+                          .format(new Date(TableConstants.milliSecondsFromNanos(value)));
                   putElementValue(values, defn, jrDatestamp);
-                } else if (type.getElementType().equals("time")) {
+                } else if ("time".equals(type.getElementType())) {
                   String value = CursorUtils.getIndexAsString(c, i);
                   putElementValue(values, defn, value);
-                } else if (dataType == ElementDataType.array) {
-                  ArrayList<Object> al = CursorUtils.getIndexAsType(c, ArrayList.class,
-                      i);
+                } else if (dataType.equals(ElementDataType.array)) {
+                  ArrayList<Object> al = CursorUtils.getIndexAsType(c, ArrayList.class, i);
                   putElementValue(values, defn, al);
-                } else if (dataType == ElementDataType.string) {
+                } else if (dataType.equals(ElementDataType.string)) {
                   String value = CursorUtils.getIndexAsString(c, i);
                   putElementValue(values, defn, value);
-                } else /* unrecognized */{
-                  throw new IllegalStateException("unrecognized data type: "
-                      + defn.getElementType());
+                } else /* unrecognized */ {
+                  throw new IllegalStateException(
+                      "unrecognized data type: " + defn.getElementType());
                 }
 
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
@@ -450,11 +455,14 @@ public class SubmissionProvider extends ContentProvider {
             // OK got all the values into the values map -- emit
             // contents
             b.setLength(0);
-            File submissionXml = new File(ODKFileUtils.getInstanceFolder(appName, tableId,
-                instanceId), (asXml ? "submission.xml" : "submission.json"));
+            File submissionXml = new File(
+                ODKFileUtils.getInstanceFolder(appName, tableId, instanceId),
+                asXml ? "submission.xml" : "submission.json");
             File manifest = new File(ODKFileUtils.getInstanceFolder(appName, tableId, instanceId),
                 "manifest.json");
+            // TODO check return value here
             submissionXml.delete();
+            // TODO check return value here
             manifest.delete();
             freturn.instanceFile = submissionXml;
 
@@ -464,11 +472,11 @@ public class SubmissionProvider extends ContentProvider {
               for (ColumnDefinition defn : orderedDefns.getColumnDefinitions()) {
                 ElementType type = defn.getType();
                 ElementDataType dataType = type.getDataType();
-                if (dataType == ElementDataType.object
-                    && (type.getElementType().equals("geopoint") || type.getElementType().equals(
-                        "mimeUri"))) {
-                  Map<String, Object> parent = null;
-                  List<ColumnDefinition> parents = new ArrayList<ColumnDefinition>();
+                if (dataType.equals(ElementDataType.object) && (
+                    "geopoint".equals(type.getElementType()) || "mimeUri"
+                        .equals(type.getElementType()))) {
+                  Map<String, Object> parent;
+                  List<ColumnDefinition> parents = new ArrayList<>();
                   ColumnDefinition d = defn.getParent();
                   while (d != null) {
                     parents.add(d);
@@ -486,7 +494,7 @@ public class SubmissionProvider extends ContentProvider {
                   if (parent != null) {
                     Object o = parent.get(defn.getElementName());
                     if (o != null) {
-                      if (type.getElementType().equals("geopoint")) {
+                      if ("geopoint".equals(type.getElementType())) {
                         Map<String, Object> geopoint = (Map<String, Object>) o;
                         // OK. we have geopoint -- get the
                         // lat, long, alt, etc.
@@ -494,10 +502,9 @@ public class SubmissionProvider extends ContentProvider {
                         Double longitude = (Double) geopoint.get("longitude");
                         Double altitude = (Double) geopoint.get("altitude");
                         Double accuracy = (Double) geopoint.get("accuracy");
-                        String gpt = "" + latitude + " " + longitude + " " + altitude + " "
-                            + accuracy;
+                        String gpt = latitude + " " + longitude + " " + altitude + " " + accuracy;
                         parent.put(defn.getElementName(), gpt);
-                      } else if (type.getElementType().equals("mimeUri")) {
+                      } else if ("mimeUri".equals(type.getElementType())) {
                         Map<String, Object> mimeuri = (Map<String, Object>) o;
                         String uriFragment = (String) mimeuri.get("uriFragment");
                         String contentType = (String) mimeuri.get("contentType");
@@ -519,25 +526,24 @@ public class SubmissionProvider extends ContentProvider {
                 }
               }
 
-              datestamp = (new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.US))
+              datestamp = new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.US)
                   .format(new Date(TableConstants.milliSecondsFromNanos(savepointTimestamp)));
 
               // For XML, we traverse the map to serialize it
               DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
               DocumentBuilder docBuilder = dbf.newDocumentBuilder();
-              
+
               Document d = docBuilder.newDocument();
 
               d.setXmlStandalone(true);
-              
-              Element e = d.createElement(
-                  (xmlRootElementName == null) ? "data" : xmlRootElementName);
+
+              Element e = d.createElement(xmlRootElementName == null ? "data" : xmlRootElementName);
               d.appendChild(e);
               e.setAttribute("id", tableId);
-              DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
-                  tableId, instanceId, aul.activeUser, aul.locale);
+              DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName, tableId,
+                  instanceId, aul.activeUser, aul.locale);
 
-              int idx = 0;
+              int idx;
               Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");
               meta.setPrefix("jr");
 
@@ -674,8 +680,7 @@ public class SubmissionProvider extends ContentProvider {
               e.appendChild(meta);
 
               idx = 3;
-              ArrayList<String> entryNames = new ArrayList<String>();
-              entryNames.addAll(values.keySet());
+              List<String> entryNames = new ArrayList<>(values.keySet());
               Collections.sort(entryNames);
               for (String name : entryNames) {
                 idx = generateXmlHelper(d, e, idx, name, values, logger);
@@ -684,18 +689,18 @@ public class SubmissionProvider extends ContentProvider {
               TransformerFactory factory = TransformerFactory.newInstance();
               Transformer transformer = factory.newTransformer();
               Properties outFormat = new Properties();
-              outFormat.setProperty( OutputKeys.INDENT, "no" );
-              outFormat.setProperty( OutputKeys.METHOD, "xml" );
-              outFormat.setProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
-              outFormat.setProperty( OutputKeys.VERSION, "1.0" );
-              outFormat.setProperty( OutputKeys.ENCODING, "UTF-8" );
-              transformer.setOutputProperties( outFormat );
+              outFormat.setProperty(OutputKeys.INDENT, "no");
+              outFormat.setProperty(OutputKeys.METHOD, "xml");
+              outFormat.setProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+              outFormat.setProperty(OutputKeys.VERSION, "1.0");
+              outFormat.setProperty(OutputKeys.ENCODING, "UTF-8");
+              transformer.setOutputProperties(outFormat);
 
               ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-              DOMSource domSource = new DOMSource( d.getDocumentElement() );
-              StreamResult result = new StreamResult( out );
-              transformer.transform( domSource, result );
+              Source domSource = new DOMSource(d.getDocumentElement());
+              Result result = new StreamResult(out);
+              transformer.transform(domSource, result);
 
               out.flush();
               out.close();
@@ -709,18 +714,20 @@ public class SubmissionProvider extends ContentProvider {
 
               // see if the form is encrypted and we can
               // encrypt it...
-              EncryptedFormInformation formInfo = EncryptionUtils.getEncryptedFormInformation(
-                  appName, tableId, xmlBase64RsaPublicKey, instanceId);
+              EncryptedFormInformation formInfo = EncryptionUtils
+                  .getEncryptedFormInformation(appName, tableId, xmlBase64RsaPublicKey, instanceId);
               if (formInfo != null) {
                 File submissionXmlEnc = new File(submissionXml.getParentFile(),
                     submissionXml.getName() + ".enc");
+                // TODO check return value here
                 submissionXmlEnc.delete();
                 // if we are encrypting, the form cannot be
                 // reopened afterward
                 // and encrypt the submission (this is a
                 // one-way operation)...
-                if (!EncryptionUtils.generateEncryptedSubmission(freturn, doc, submissionXml,
-                    submissionXmlEnc, formInfo)) {
+                if (!EncryptionUtils
+                    .generateEncryptedSubmission(freturn, doc, submissionXml, submissionXmlEnc,
+                        formInfo)) {
                   return null;
                 }
                 // at this point, the freturn object has
@@ -736,9 +743,10 @@ public class SubmissionProvider extends ContentProvider {
                 ElementType type = defn.getType();
                 ElementDataType dataType = type.getDataType();
 
-                if (dataType == ElementDataType.object && type.getElementType().equals("mimeUri")) {
-                  Map<String, Object> parent = null;
-                  List<ColumnDefinition> parents = new ArrayList<ColumnDefinition>();
+                if (dataType.equals(ElementDataType.object) && "mimeUri"
+                    .equals(type.getElementType())) {
+                  Map<String, Object> parent;
+                  List<ColumnDefinition> parents = new ArrayList<>();
                   ColumnDefinition d = defn.getParent();
                   while (d != null) {
                     parents.add(d);
@@ -756,14 +764,15 @@ public class SubmissionProvider extends ContentProvider {
                   if (parent != null) {
                     Object o = parent.get(defn.getElementName());
                     if (o != null) {
-                      if (dataType == ElementDataType.object
-                          && type.getElementType().equals("mimeUri")) {
+                      if (dataType.equals(ElementDataType.object) && "mimeUri"
+                          .equals(type.getElementType())) {
                         Map<String, Object> mimeuri = (Map<String, Object>) o;
                         String uriFragment = (String) mimeuri.get("uriFragment");
                         String contentType = (String) mimeuri.get("contentType");
                         File f = ODKFileUtils.getAsFile(appName, uriFragment);
                         if (f.equals(manifest)) {
-                          throw new IllegalStateException("Unexpected collision with manifest.json");
+                          throw new IllegalStateException(
+                              "Unexpected collision with manifest.json");
                         }
                         freturn.addAttachmentFile(f, contentType);
                         parent.put(defn.getElementName(), f.getName());
@@ -777,16 +786,16 @@ public class SubmissionProvider extends ContentProvider {
 
               // For JSON, we construct the model, then emit model +
               // meta + data
-              HashMap<String, Object> wrapper = new HashMap<String, Object>();
+              HashMap<String, Object> wrapper = new HashMap<>();
               wrapper.put("tableId", tableId);
               wrapper.put("instanceId", instanceId);
-              HashMap<String, Object> formDef = new HashMap<String, Object>();
+              Map<String, Object> formDef = new HashMap<>();
               formDef.put("table_id", tableId);
               formDef.put("model", orderedDefns.getDataModel());
               wrapper.put("formDef", formDef);
               wrapper.put("data", values);
               wrapper.put("metadata", new HashMap<String, Object>());
-              HashMap<String, Object> elem = (HashMap<String, Object>) wrapper.get("metadata");
+              Map<String, Object> elem = (Map<String, Object>) wrapper.get("metadata");
               if (instanceName != null) {
                 elem.put("instanceName", instanceName);
               }
@@ -806,24 +815,15 @@ public class SubmissionProvider extends ContentProvider {
         } finally {
           if (c != null && !c.isClosed()) {
             c.close();
-            c = null;
           }
         }
 
-      } catch (ParserConfigurationException e) {
-        logger.printStackTrace(e);
-      } catch (TransformerException e) {
-        logger.printStackTrace(e);
-      } catch (JsonParseException e) {
-        logger.printStackTrace(e);
-      } catch (JsonMappingException e) {
-        logger.printStackTrace(e);
-      } catch (IOException e) {
+      } catch (ParserConfigurationException | TransformerException | IOException e) {
         logger.printStackTrace(e);
       }
 
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         try {
           // release the reference...
           // this does not necessarily close the db handle
@@ -831,44 +831,12 @@ public class SubmissionProvider extends ContentProvider {
           db.releaseReference();
         } finally {
           // this will release the final reference and close the database
-          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
-              dbHandleName);
+          OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+              .removeConnection(appName, dbHandleName);
         }
       }
     }
     return null;
-  }
-
-  /**
-   * This method actually writes the JSON appName-relative manifest to disk.
-   *
-   * @param payload The json string to be written
-   * @param outputFilePath the path to the file to write
-   * @param  logger a logger to write to, typically gotten with WebLogger.getWebLogger(appName)
-   * @return whether successful or not
-   */
-  private static boolean exportFile(String payload, File outputFilePath, WebLoggerIf logger) {
-    FileOutputStream os = null;
-    OutputStreamWriter osw = null;
-    try {
-      os = new FileOutputStream(outputFilePath, false);
-      osw = new OutputStreamWriter(os, CharEncoding.UTF_8);
-      osw.write(payload);
-      osw.flush();
-      osw.close();
-      return true;
-
-    } catch (IOException e) {
-      logger.e(t, "Error writing file");
-      logger.printStackTrace(e);
-      try {
-        osw.close();
-        os.close();
-      } catch (IOException ex) {
-        logger.printStackTrace(ex);
-      }
-      return false;
-    }
   }
 
   @Override
@@ -887,13 +855,14 @@ public class SubmissionProvider extends ContentProvider {
   }
 
   @Override
-  public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs,
-      String sortOrder) {
+  public Cursor query(@NonNull Uri uri, String[] projection, String selection,
+      String[] selectionArgs, String sortOrder) {
     return null;
   }
 
   @Override
-  public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+  public int update(@NonNull Uri uri, ContentValues values, String selection,
+      String[] selectionArgs) {
     return 0;
   }
 

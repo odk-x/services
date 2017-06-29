@@ -17,10 +17,12 @@ package org.opendatakit.services.database.utlities;
 
 import android.database.Cursor;
 import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.provider.ChoiceListColumns;
+import org.opendatakit.services.database.OdkConnectionInterface;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Manipulator class for setting and getting choiceList definitions.
@@ -34,28 +36,27 @@ public class ChoiceListUtils {
   }
 
   /**
-   * @param db
-   * @param choiceListId
+   * TODO what does this do?
+   *
+   * @param db           a database connection to use
+   * @param choiceListId which row of choices to get from the database
    * @return
    */
-  public String getChoiceList(OdkConnectionInterface db, String choiceListId) {
+  public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
 
-    if ( choiceListId == null || choiceListId.trim().length() == 0 ) {
+    if (choiceListId == null || choiceListId.trim().isEmpty()) {
       return null;
     }
 
-    ArrayList<String> bindArgs = new ArrayList<String>();
-    StringBuilder b = new StringBuilder();
-    //@formatter:off
-    b.append("SELECT ").append(ChoiceListColumns.CHOICE_LIST_JSON).append(" FROM ")
-     .append("\"").append(DatabaseConstants.CHOICE_LIST_TABLE_NAME).append("\" WHERE ")
-     .append(ChoiceListColumns.CHOICE_LIST_ID).append("=?");
-    //@formatter:on
+    Collection<String> bindArgs = new ArrayList<>();
     bindArgs.add(choiceListId);
+    String query = "SELECT " + ChoiceListColumns.CHOICE_LIST_JSON + " FROM " + "\""
+        + DatabaseConstants.CHOICE_LIST_TABLE_NAME + "\" WHERE " + ChoiceListColumns.CHOICE_LIST_ID
+        + "=?";
 
     Cursor c = null;
     try {
-      c = db.rawQuery(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+      c = db.rawQuery(query, bindArgs.toArray(new String[bindArgs.size()]));
 
       c.moveToFirst();
       if (c.getCount() == 0) {
@@ -74,66 +75,65 @@ public class ChoiceListUtils {
         return null;
       }
       String value = c.getString(idx);
-      if (value == null || value.trim().length() == 0) {
+      if (value == null || value.trim().isEmpty()) {
         // also shouldn't happen...
         return null;
       }
 
       return value;
     } finally {
-      if ( c != null && !c.isClosed()) {
+      if (c != null && !c.isClosed()) {
         c.close();
       }
     }
   }
 
-  public void setChoiceList(OdkConnectionInterface db, String choiceListId,
-      String choiceListJSON) {
+  /**
+   * Updates the choice just row with the given id to have the new json
+   *
+   * @param db             a database connection to use
+   * @param choiceListId   the id of the row in the choice list table
+   * @param choiceListJSON json representing the new set of choices
+   */
+  public void setChoiceList(OdkConnectionInterface db, String choiceListId, String choiceListJSON) {
 
-    if ( choiceListId == null || choiceListId.trim().length() == 0 ) {
+    if (choiceListId == null || choiceListId.trim().isEmpty()) {
       throw new IllegalArgumentException("setChoiceList: choiceListId cannot be null or empty");
     }
-    if ( choiceListJSON == null || choiceListJSON.trim().length() == 0 ) {
+    if (choiceListJSON == null || choiceListJSON.trim().isEmpty()) {
       throw new IllegalArgumentException("setChoiceList: choiceListJSON cannot be null or empty");
     }
-    if ( !choiceListJSON.trim().equals(choiceListJSON) ) {
+    if (!choiceListJSON.trim().equals(choiceListJSON)) {
       throw new IllegalArgumentException(
           "setChoiceList: choiceListJSON cannot have excess white space");
     }
 
-    ArrayList<String> bindArgs = new ArrayList<String>();
-    StringBuilder b = new StringBuilder();
-    //@formatter:off
-    b.append("DELETE FROM ")
-     .append("\"").append(DatabaseConstants.CHOICE_LIST_TABLE_NAME).append("\" WHERE ")
-     .append(ChoiceListColumns.CHOICE_LIST_ID).append("=?");
-    //@formatter:on
+    Collection<String> bindArgs = new ArrayList<>();
+    String query = "DELETE FROM " + "\"" + DatabaseConstants.CHOICE_LIST_TABLE_NAME + "\" WHERE "
+        + ChoiceListColumns.CHOICE_LIST_ID + "=?";
     bindArgs.add(choiceListId);
 
     boolean inTransaction = db.inTransaction();
     try {
-      if ( !inTransaction ) {
+      if (!inTransaction) {
         db.beginTransactionNonExclusive();
       }
-      db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+      db.execSQL(query, bindArgs.toArray(new String[bindArgs.size()]));
 
-      b.setLength(0);
       bindArgs.clear();
-      //@formatter:off
-      b.append("INSERT INTO \"").append(DatabaseConstants.CHOICE_LIST_TABLE_NAME).append("\" (")
-       .append(ChoiceListColumns.CHOICE_LIST_ID).append(",")
-       .append(ChoiceListColumns.CHOICE_LIST_JSON).append(") VALUES (?,?)");
-      //@formatter:on
+      String second_query = "INSERT INTO \"" + DatabaseConstants.CHOICE_LIST_TABLE_NAME + "\" ("
+          + ChoiceListColumns.CHOICE_LIST_ID + "," + ChoiceListColumns.CHOICE_LIST_JSON
+          + ") VALUES (?,?)";
       bindArgs.add(choiceListId);
       bindArgs.add(choiceListJSON);
 
-      db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
+      db.execSQL(second_query, bindArgs.toArray(new String[bindArgs.size()]));
 
-      if ( !inTransaction ) {
+      if (!inTransaction) {
         db.setTransactionSuccessful();
       }
     } finally {
-      if ( !inTransaction ) {
+      if (!inTransaction) {
         db.endTransaction();
       }
     }

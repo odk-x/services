@@ -1854,7 +1854,7 @@ public final class ODKDatabaseImplUtils {
     if (choiceListId == null || choiceListId.trim().isEmpty()) {
       return null;
     }
-    return utils.getChoiceList(db, choiceListId);
+    return ChoiceListUtils.getChoiceList(db, choiceListId);
   }
 
   /**
