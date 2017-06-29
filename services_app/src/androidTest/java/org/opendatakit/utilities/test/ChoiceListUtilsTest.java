@@ -29,13 +29,13 @@ public class ChoiceListUtilsTest {
   private static final String key = "key that's unlikely to be in use";
 
   private OdkConnectionInterface db;
-  private static boolean initialzied = false;
+  private static boolean initialized = false;
 
   @Before
   public void setUp() throws Throwable {
     ODKFileUtils.assertDirectoryStructure(getAppName());
-    if (!initialzied) {
-      initialzied = true;
+    if (!initialized) {
+      initialized = true;
       AndroidConnectFactory.configure();
     }
     DbHandle uniqueKey = new DbHandle(
@@ -57,7 +57,7 @@ public class ChoiceListUtilsTest {
     }
   }
 
-  private String getAppName() {
+  private static String getAppName() {
     return "some app name";
   }
 
