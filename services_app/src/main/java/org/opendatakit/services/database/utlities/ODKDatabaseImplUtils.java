@@ -17,6 +17,7 @@ package org.opendatakit.services.database.utlities;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.provider.BaseColumns;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.opendatakit.aggregate.odktables.rest.*;
@@ -4742,7 +4743,7 @@ public final class ODKDatabaseImplUtils {
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
         }
-        currValues.put(DataTableColumns._ID, rowIdToUse);
+        currValues.put(BaseColumns._ID, rowIdToUse);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, true, null, null, null, null, null);
@@ -4766,7 +4767,7 @@ public final class ODKDatabaseImplUtils {
         for (String key : cvValues.keySet()) {
           currValues.put(key, cvValues.get(key));
         }
-        currValues.put(DataTableColumns._ID, rowId);
+        currValues.put(BaseColumns._ID, rowId);
         currValues.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         insertCheckpointIntoExistingTable(db, tableId, orderedColumns, currValues, activeUser,
             rolesList, locale, true, null, null, null, null, null);
@@ -5519,7 +5520,7 @@ public final class ODKDatabaseImplUtils {
           || stringObjectEntry.getKey().equals(DataTableColumns.SAVEPOINT_TIMESTAMP)
           || stringObjectEntry.getKey().equals(DataTableColumns.SAVEPOINT_TYPE)
           || stringObjectEntry.getKey().equals(DataTableColumns.SYNC_STATE)
-          || stringObjectEntry.getKey().equals(DataTableColumns._ID)) {
+          || stringObjectEntry.getKey().equals(BaseColumns._ID)) {
         continue;
       }
       //@formatter:on
