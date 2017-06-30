@@ -24,14 +24,14 @@ public class FormsProviderTest {
   private static boolean initialized = false;
   private FormsProvider p;
 
-  private static ContentValues getCvs(String id) {
+  public static ContentValues getCvs(String id) {
     ContentValues c = new ContentValues();
     c.put(FormsColumns.TABLE_ID, id);
     c.put(FormsColumns.FORM_ID, id);
     return c;
   }
 
-  private static String getAppName() {
+  public static String getAppName() {
     return "default";
   }
 

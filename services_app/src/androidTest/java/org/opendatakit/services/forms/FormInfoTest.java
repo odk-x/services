@@ -1,6 +1,7 @@
 package org.opendatakit.services.forms;
 
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
@@ -12,11 +13,14 @@ import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.forms.provider.FormsProvider;
+import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.utilities.LocalizationUtils;
 
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
+import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 
 /**
  * Created by Niles on 6/29/17.
@@ -24,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class FormInfoTest {
-  public FormInfo info;
+  private FormInfo info;
 
   private static String join(String s, String[] arr) {
     StringBuilder b = new StringBuilder();
@@ -47,23 +51,15 @@ public class FormInfoTest {
         getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection("default", uniqueKey);
-    Cursor c = db.rawQuery(
-        "SELECT " + join(", ", FormsColumns.formsDataColumnNames) + " FROM "
+    insert("breathcounter");
+    Cursor c = db.rawQuery("SELECT " + join(", ", FormsColumns.formsDataColumnNames) + " FROM "
             + DatabaseConstants.FORMS_TABLE_NAME + " WHERE " + FormsColumns.FORM_ID + " =?",
         new String[] { "breathcounter" });
-    c.moveToNext();
+    c.moveToFirst();
     info = new FormInfo("default", c, false);
     assertEquals(info.tableId, "breathcounter");
     assertEquals(info.formVersion, "20130408");
     assertEquals(info.formDef, null);
-  }
-
-  private String[] reverse(String[] in) {
-    String[] out = new String[in.length];
-    for (int i = 0; i < in.length; i++) {
-      out[in.length - i - 1] = in[i];
-    }
-    return out;
   }
 
   @Before
@@ -72,10 +68,21 @@ public class FormInfoTest {
   }
 
   public void setUp(String app, String form) {
+    insert(form);
     info = new FormInfo(null, "default", new File(
         Environment.getExternalStorageDirectory().getPath() + "/opendatakit/" + app
             + "/config/tables/" + form + "/forms" + "/" + form + "/formDef.json"));
+  }
 
+  public void insert(String form) {
+    try {
+      new FormsProviderTest().setUp();
+      // make sure it's in the database when we try to query it
+      new FormsProvider().insert(new Uri.Builder().appendPath(getAppName()).build(),
+          FormsProviderTest.getCvs(form));
+    } catch (Throwable ignored) {
+      // ignore
+    }
   }
 
   @Test

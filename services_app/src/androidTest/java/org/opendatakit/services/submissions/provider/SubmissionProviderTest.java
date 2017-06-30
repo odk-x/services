@@ -19,7 +19,7 @@ public class SubmissionProviderTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testOpenFileBadMode() throws Throwable {
-    new SubmissionProvider().openFile(new Uri.Builder().build(), "w");
+    new SubmissionProvider().openFile(new Uri.Builder().authority("unused").build(), "w");
   }
 
 }
