@@ -3,8 +3,10 @@ package org.opendatakit.services.forms.provider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.utilities.LocalizationUtils;
@@ -18,7 +20,11 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by Niles on 6/29/17.
  */
+@RunWith(AndroidJUnit4.class)
 public class FormsProviderTest {
+  @Test public void noop() {
+
+  }
   /*
   private static Uri uri = new Uri.Builder().appendPath(getAppName()).build();
   //private OdkConnectionInterface db;
