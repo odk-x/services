@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
  * Created by Niles on 6/29/17.
  */
 public class FormsProviderTest {
+  /*
   private static Uri uri = new Uri.Builder().appendPath(getAppName()).build();
   //private OdkConnectionInterface db;
   private static boolean initialized = false;
@@ -47,7 +48,7 @@ public class FormsProviderTest {
         getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection(getAppName(), uniqueKey);
-    */
+    * /
 
     p = new FormsProvider();
   }
@@ -133,4 +134,5 @@ public class FormsProviderTest {
     c.close();
     assertEquals(p.update(uri, null, null, null), expected);
   }
+  */
 }
