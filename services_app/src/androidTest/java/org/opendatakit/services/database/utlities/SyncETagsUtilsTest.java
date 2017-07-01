@@ -6,6 +6,7 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.SyncETagColumns;
@@ -15,8 +16,7 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import static org.apache.commons.lang3.StringUtils.join;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Niles on 6/30/17.
@@ -38,7 +38,7 @@ public class SyncETagsUtilsTest {
   }
 
   @Before
-  public void setUp() throws Throwable {
+  public void setUp() {
     ODKFileUtils.assertDirectoryStructure(getAppName());
     if (!initialized) {
       initialized = true;
@@ -58,7 +58,7 @@ public class SyncETagsUtilsTest {
   private void insert(String id, int bool) {
     String[] all = new String[] { cTable, cManifest, cUrl, cModified, cMd5 };
     db.rawQuery("INSERT INTO " + table + " (" + join(all, ", ") + ") VALUES (?, ?, ?, ?, ?);",
-        new Object[] { bool, "md5 goes here", "date goes here", id, "http://url.here" }).close();
+        new Object[] { id, bool, "http://url.here", "date goes here", "md5 goes here" }).close();
   }
 
   private Cursor get(String id) {
@@ -94,17 +94,133 @@ public class SyncETagsUtilsTest {
 
   @Test
   public void testDeleteAllSyncETagsExceptForServer() {
+    // Null should delete everything
     insert("Tea_houses");
     s.deleteAllSyncETagsExceptForServer(db, null);
     expectGone("Tea_houses");
+
+    // giving it a uri should delete everything without that base uri
     insert("Tea_houses");
-    insert("test");
+    insertWithUrl("test", "https://new.url");
+    s.deleteAllSyncETagsExceptForServer(db, "http://url.here");
+    expectPresent("Tea_houses");
+    expectGone("test");
+
+    // only the URI's scheme and host should make a difference
+    insertWithUrl("Tea_houses", "http://url.here/abcd");
+    insertWithUrl("test", "https://new.url/efgh");
+    s.deleteAllSyncETagsExceptForServer(db, "http://url.here/ijkl");
+    expectPresent("Tea_houses");
+    expectGone("test");
+
+  }
+
+  @Test
+  public void testDeleteAllSyncETagsUnderServer() {
+    insert("Tea_houses");
+    insertWithUrl("test", "https://new.url/abcdef");
+    s.deleteAllSyncETagsUnderServer(db, "https://new.url/");
+    expectPresent("Tea_houses");
+    expectGone("test");
+    boolean worked = false;
+    try {
+      s.deleteAllSyncETagsUnderServer(db, null);
+    } catch (IllegalArgumentException ignored) {
+      worked = true;
+    }
+    assertTrue(worked);
+  }
+
+  @Test
+  public void testGetManifestSyncETag() {
+    insert("Tea_houses");
+    String md5 = s.getManifestSyncETag(db, "http://url.here", "Tea_houses");
+    assertEquals(md5, "md5 goes here");
+    assertNull(s.getManifestSyncETag(db, "http://other.url", "Tea_houses"));
+    ///
+    insert("test", 0);
+    assertNull(s.getManifestSyncETag(db, "http://url.here", "test"));
+  }
+
+  @Test
+  public void testUpdateManifestSyncETag() {
+    insert("Tea_houses");
+    s.updateManifestSyncETag(db, "http://url.here", "Tea_houses", "new etag");
+    Cursor c = db.rawQuery("SELECT * FROM " + table + ";", new String[0]);
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "new etag");
+    c.close();
+    // does not update when manifest = false
+    insert("test", 0);
+    s.updateManifestSyncETag(db, "http://url.here", "test", "new etag");
+    c = db
+        .rawQuery("SELECT * FROM " + table + " WHERE " + cManifest + " =?;", new String[] { "0" });
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "md5 goes here");
+    c.close();
+
+  }
+
+  @Test
+  public void testGetFileSyncETag() {
+    insert("Tea_houses");
+    setDate("Tea_houses", 6L);
+    insert("test", 0);
+    setDate("test", 5L);
+    assertNull(s.getFileSyncETag(db, "http://url.here", "Tea_houses", 6));
+    assertEquals(s.getFileSyncETag(db, "http://url.here", "test", 5), "md5 goes here");
+    // returns null if given a bad date or bad url
+    assertNull(s.getFileSyncETag(db, "http://wrong.url", "test", 5));
+    assertNull(s.getFileSyncETag(db, "http://url.here", "test", 9));
+  }
+
+  @Test
+  public void testUpdateFileSyncETag() {
+    // should not set with manifest = 1
+    insert("Tea_houses");
+    setDate("Tea_houses", 6L);
+    s.updateFileSyncETag(db, "http://url.here", "Tea_houses", 6, "new etag");
+    Cursor c = db
+        .rawQuery("SELECT * FROM " + table + " WHERE " + cManifest + " =?;", new Object[] { "1" });
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "md5 goes here");
+    setUp();
+    // should set with manifest = 0
+    insert("Tea_houses", 0);
+    setDate("Tea_houses", 6L);
+    s.updateFileSyncETag(db, "http://url.here", "Tea_houses", 6, "new etag");
+    c = db.rawQuery("SELECT * FROM " + table + ";", new Object[0]);
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "new etag");
+    setUp();
+    // Should have no effect with wrong url
+    insert("Tea_houses", 0);
+    setDate("Tea_houses", 6L);
+    s.updateFileSyncETag(db, "http://wrong.url", "Tea_houses", 6, "new etag");
+    c = db.rawQuery("SELECT * FROM " + table + ";", new Object[0]);
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "md5 goes here");
+    setUp();
+    // Should update date
+    insert("Tea_houses", 0);
+    setDate("Tea_houses", 6L);
+    s.updateFileSyncETag(db, "http://url.here", "Tea_houses", 7, "new etag");
+    c = db.rawQuery("SELECT * FROM " + table + ";", new Object[0]);
+    c.moveToFirst();
+    assertEquals(gets(c, cMd5), "new etag");
+    assertEquals(gets(c, cModified), TableConstants.nanoSecondsFromMillis(7L));
+  }
+
+  private void setDate(String id, Long date) {
+    db.execSQL("UPDATE " + table + " SET " + cModified + " =? WHERE " + cTable + " =?;",
+        new String[] { TableConstants.nanoSecondsFromMillis(date), id });
+
+  }
+
+  private void insertWithUrl(String id, String url) {
+    insert(id);
     db.rawQuery("UPDATE " + table + " SET " + cUrl + " = ? WHERE " + cTable + " = ?;",
-        new Object[] { "https://new.url", "test" }).close();
-    if (true) return; // TODO
-    s.deleteAllSyncETagsExceptForServer(db, "new u");
-    expectPresent("test");
-    expectGone("Tea_houses");
+        new Object[] { url, id }).close();
   }
 
   public void expectGone(String id) {
@@ -125,9 +241,11 @@ public class SyncETagsUtilsTest {
     assertEquals(gets(c, cModified), "date goes here");
     c.close();
   }
+
   public String gets(Cursor c, String col) {
     return c.getString(idx(c, col));
   }
+
   public int idx(Cursor c, String col) {
     return c.getColumnIndexOrThrow(col);
   }
