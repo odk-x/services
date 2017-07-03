@@ -330,8 +330,8 @@ public final class ODKDatabaseImplUtils {
 
   private static void commonTableDefn(OdkConnectionInterface db) {
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "starting");
-    WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
-    db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
+    //WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.UPLOADS_TABLE_NAME);
+    //db.execSQL(InstanceColumns.getTableCreateSql(DatabaseConstants.UPLOADS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", DatabaseConstants.FORMS_TABLE_NAME);
     db.execSQL(FormsColumns.getTableCreateSql(DatabaseConstants.FORMS_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName())
@@ -1072,8 +1072,8 @@ public final class ODKDatabaseImplUtils {
 
       // Delete the uploads for the tableId
       {
-        String uploadWhereClause = InstanceColumns.DATA_TABLE_TABLE_ID + " = ?";
-        db.delete(DatabaseConstants.UPLOADS_TABLE_NAME, uploadWhereClause, whereArgs);
+        //String uploadWhereClause = InstanceColumns.DATA_TABLE_TABLE_ID + " = ?";
+        //db.delete(DatabaseConstants.UPLOADS_TABLE_NAME, uploadWhereClause, whereArgs);
       }
 
       // Delete the values from the 4 key value stores
