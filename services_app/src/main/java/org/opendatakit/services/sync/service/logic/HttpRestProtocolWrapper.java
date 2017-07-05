@@ -520,9 +520,6 @@ public class HttpRestProtocolWrapper {
    */
   public void buildBasicRequest(URI uri, HttpRequestBase request) {
 
-    String agg_uri = uri.toString();
-    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
-
     if (uri == null) {
       throw new IllegalArgumentException("buildBasicRequest: URI cannot be null");
     }
@@ -530,6 +527,9 @@ public class HttpRestProtocolWrapper {
     if (request == null) {
       throw new IllegalArgumentException("buildBasicRequest: HttpRequest cannot be null");
     }
+
+    String agg_uri = uri.toString();
+    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
 
     request.setURI(uri);
 
@@ -961,10 +961,11 @@ public class HttpRestProtocolWrapper {
 
   public String extractInstanceFileRelativeFilename(String header) {
     // Get the file name
-    int firstIndex = header.indexOf(multipartFileHeader) + multipartFileHeader.length();
+    int firstIndex = header.indexOf(multipartFileHeader);
     if ( firstIndex == -1 ) {
       return null;
     }
+    firstIndex += multipartFileHeader.length();
     int lastIndex = header.lastIndexOf("\"");
     String partialPath = header.substring(firstIndex, lastIndex);
     return partialPath;
