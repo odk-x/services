@@ -137,7 +137,7 @@ public class AggregateSynchronizer implements Synchronizer {
                 request, response);
       }
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       appNameList = ODKFileUtils.mapper.readValue(res, AppNameList.class);
 
@@ -179,7 +179,7 @@ public class AggregateSynchronizer implements Synchronizer {
         return null;
       }
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       PrivilegesInfo privilegesInfo = ODKFileUtils.mapper.readValue(res, PrivilegesInfo.class);
 
@@ -224,7 +224,7 @@ public class AggregateSynchronizer implements Synchronizer {
         return new UserInfoList();
       }
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       UserInfoList rolesList = ODKFileUtils.mapper.readValue(res, UserInfoList.class);
 
@@ -263,7 +263,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       tableResources = ODKFileUtils.mapper.readValue(res, TableResourceList.class);
 
@@ -291,7 +291,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       tableResource = ODKFileUtils.mapper.readValue(res, TableResource.class);
 
@@ -319,7 +319,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       definitionRes = ODKFileUtils.mapper.readValue(res, TableDefinitionResource.class);
 
@@ -355,7 +355,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // TODO: we also need to put up the key value store/properties.
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       resource = ODKFileUtils.mapper.readValue(res, TableResource.class);
       return resource;
@@ -404,7 +404,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       ChangeSetList changeSets = ODKFileUtils.mapper.readValue(res, ChangeSetList.class);
 
@@ -437,7 +437,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
@@ -472,7 +472,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       RowResourceList rows = ODKFileUtils.mapper.readValue(res, RowResourceList.class);
 
@@ -538,7 +538,7 @@ public class AggregateSynchronizer implements Synchronizer {
       if ( response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT ) {
         return null;
       }
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
       outcomes = ODKFileUtils.mapper.readValue(res, RowOutcomeList.class);
       return outcomes;
     } finally {
@@ -586,7 +586,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // update the manifest ETag record...
       String eTag = response.getFirstHeader(HttpHeaders.ETAG).getValue();
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
 
       // retrieve the manifest...
       OdkTablesFileManifest manifest;
@@ -660,7 +660,7 @@ public class AggregateSynchronizer implements Synchronizer {
       Header eTagHdr = response.getFirstHeader(HttpHeaders.ETAG);
       String eTag = eTagHdr.getValue();
 
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
       OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
 
       if (manifest != null) {
@@ -720,7 +720,7 @@ public class AggregateSynchronizer implements Synchronizer {
       String eTag = eTagHdr.getValue();
 
       // retrieve the manifest...
-      String res = wrapper.convertResponseToString(response);
+      String res = HttpRestProtocolWrapper.convertResponseToString(response);
       OdkTablesFileManifest manifest = ODKFileUtils.mapper.readValue(res, OdkTablesFileManifest.class);
 
       if (manifest != null) {
@@ -892,7 +892,7 @@ public class AggregateSynchronizer implements Synchronizer {
         localFile);
     URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
     log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
-    String ct = wrapper.determineContentType(localFile.getName());
+    String ct = HttpRestProtocolWrapper.determineContentType(localFile.getName());
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
@@ -917,7 +917,7 @@ public class AggregateSynchronizer implements Synchronizer {
       IOException
   {
     log.i(LOGTAG, "[uploadInstanceFile] filePostUri: " + instanceFileUri.toString());
-    String ct = wrapper.determineContentType(file.getName());
+    String ct = HttpRestProtocolWrapper.determineContentType(file.getName());
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
@@ -978,7 +978,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     for (CommonFileAttachmentTerms cat : batch) {
       log.i(LOGTAG, "[uploadFile] filePostUri: " + cat.instanceFileDownloadUri.toString());
-      String ct = wrapper.determineContentType(cat.localFile.getName());
+      String ct = HttpRestProtocolWrapper.determineContentType(cat.localFile.getName());
 
       String filename = ODKFileUtils
           .asRowpathUri(sc.getAppName(), tableId, instanceId, cat.localFile);
@@ -1100,7 +1100,7 @@ public class AggregateSynchronizer implements Synchronizer {
         String header = multipartStream.readHeaders();
         System.out.println("Headers: " + header);
 
-        String partialPath = wrapper.extractInstanceFileRelativeFilename(header);
+        String partialPath = HttpRestProtocolWrapper.extractInstanceFileRelativeFilename(header);
 
         if (partialPath == null) {
           log.e("putAttachments", "Server did not identify the rowPathUri for the file");
