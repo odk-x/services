@@ -19,13 +19,7 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.database.data.BaseTable;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.ColumnList;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.TableDefinitionEntry;
-import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -37,6 +31,7 @@ import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.TableLevelResult;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -44,7 +39,6 @@ import java.util.List;
  *
  * @author the.dylan.price@gmail.com
  * @author sudar.sam@gmail.com
- *
  */
 class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
@@ -55,6 +49,11 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
   private final ProcessManifestContentAndFileChanges manifestProcessor;
 
+  /**
+   * Simple constructor, sets up the manifest processor
+   *
+   * @param sharedContext the sync execution context
+   */
   public ProcessRowDataSyncAttachments(SyncExecutionContext sharedContext) {
     super(sharedContext);
     this.manifestProcessor = new ProcessManifestContentAndFileChanges(sc);
@@ -71,31 +70,27 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
    * This method does NOT synchronize any non-instance files; it assumes the
    * database schema has already been sync'd.
    *
-   * @param tableResource
-   *          the table resource from the server, either from the getTables()
-   *          call or from a createTable() response.
-   * @param te
-   *          definition of the table to synchronize
-   * @param orderedColumns
-   *          well-formed ordered list of columns in this table.
-   * @param fileAttachmentColumns
-   *          list of columns that might contain file attachment filenames.
-   * @param attachmentState
-   * @return true if changes need to be pulled from the server before continuing
-   * @throws ServicesAvailabilityException
+   * @param tableResource         the table resource from the server, either from the getTables()
+   *                              call or from a createTable() response.
+   * @param te                    definition of the table to synchronize
+   * @param orderedColumns        well-formed ordered list of columns in this table.
+   * @param fileAttachmentColumns list of columns that might contain file attachment filenames.
+   * @param attachmentState       whether we're uploading, downloading, syncing or not doing anything
+   *                              to the file
+   * @throws ServicesAvailabilityException if the database is down
    */
-  public void syncAttachments(TableResource tableResource,
-      TableDefinitionEntry te, OrderedColumns orderedColumns,
-      ArrayList<ColumnDefinition> fileAttachmentColumns,
+  @SuppressWarnings("ConstantConditions") // "Too complex"
+  public void syncAttachments(TableResource tableResource, TableDefinitionEntry te,
+      OrderedColumns orderedColumns, Collection<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
 
     // Prepare the tableLevelResult.
     String tableId = te.getTableId();
     TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
-    getLogger().i( TAG, "syncAttachments - tableId: " + tableId +
-        " attachmentState: " + attachmentState.toString());
+    getLogger()
+        .i(TAG, "syncAttachments - tableId: " + tableId + " attachmentState: " + attachmentState);
 
-    if ( fileAttachmentColumns.isEmpty() ) {
+    if (fileAttachmentColumns.isEmpty()) {
       publishUpdateNotification(R.string.sync_attachment_no_changes, tableId, maxPercentage);
       return;
     }
@@ -111,9 +106,6 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
       try {
         db = sc.getDatabase();
 
-
-
-
         // We need to create a temporary table and fill it with all the IDs of
         // the rows that may have attachments that should be sync'd to the server.
         //
@@ -124,10 +116,8 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
         // were used to select the rows with attachments to sync, and would lose
         // track of where the second batch of rows with attachments to sync begins.
         //
-        List<Column> columns = new ArrayList<Column>();
-        columns.add(
-            new Column(ID_COLUMN, ID_COLUMN, ElementDataType.string.name(),
-                "[]"));
+        List<Column> columns = new ArrayList<>();
+        columns.add(new Column(ID_COLUMN, ID_COLUMN, ElementDataType.string.name(), "[]"));
         ColumnList columnList = new ColumnList(columns);
 
         // create the table (drop it first -- to get an empty table)
@@ -135,37 +125,30 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
         sc.getDatabaseService()
             .createLocalOnlyTableWithColumns(sc.getAppName(), db, local_id_table, columnList);
 
-
         String sqlCommand;
-        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
-            SyncState.synced_pending_files.name() });
+        BindArgs bindArgs = new BindArgs(
+            new Object[] { SyncState.in_conflict.name(), SyncState.synced_pending_files.name() });
 
         {
-          StringBuilder sqlCommandBuilder = new StringBuilder();
-          sqlCommandBuilder.append("INSERT INTO ").append(local_id_table)
-              .append(" (").append(ID_COLUMN).append(" ) SELECT DISTINCT ")
-              .append(DataTableColumns.ID).append(" FROM ").append(tableId)
-              .append(" WHERE ")
-              .append(DataTableColumns.SYNC_STATE).append(" IN (?, ?) AND ")
-              .append(DataTableColumns.ID).append(" NOT IN (SELECT DISTINCT ")
-              .append(DataTableColumns.ID).append(" FROM ").append(tableId).append(" WHERE ")
-              .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NULL)");
-          sqlCommand = sqlCommandBuilder.toString();
+          String sqlCommandBuilder =
+              "INSERT INTO " + local_id_table + " (" + ID_COLUMN + " ) SELECT DISTINCT "
+                  + DataTableColumns.ID + " FROM " + tableId + " WHERE "
+                  + DataTableColumns.SYNC_STATE + " IN (?, ?) AND " + DataTableColumns.ID
+                  + " NOT IN (SELECT DISTINCT " + DataTableColumns.ID + " FROM " + tableId
+                  + " WHERE " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL)";
+          sqlCommand = sqlCommandBuilder;
         }
 
         // create the list of IDs
         sc.getDatabaseService().privilegedExecute(sc.getAppName(), db, sqlCommand, bindArgs);
 
         // now count the number
-        StringBuilder b = new StringBuilder();
-        b.append("SELECT COUNT(*) as rowCount FROM ").append(local_id_table);
 
         BaseTable bt = sc.getDatabaseService().arbitrarySqlQuery(sc.getAppName(), db, null,
-            b.toString(), null, null, null);
-        if ( bt.getNumberOfRows() != 1 || bt.getColumnIndexOfElementKey("rowCount") != 0 ) {
-          tableLevelResult
-              .setMessage("Unable to retrieve count of rows with attachments to reconcile with "
-                  + "server");
+            "SELECT COUNT(*) as rowCount FROM " + local_id_table, null, null, null);
+        if (bt.getNumberOfRows() != 1 || bt.getColumnIndexOfElementKey("rowCount") != 0) {
+          tableLevelResult.setMessage(
+              "Unable to retrieve count of rows with attachments to reconcile with " + "server");
           tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
           return;
         }
@@ -173,29 +156,27 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
       } finally {
         sc.releaseDatabase(db);
-        db = null;
       }
     }
 
     SyncOutcome tableLevelSyncOutcome = SyncOutcome.WORKING;
 
-    if ( rowsToSyncCount != 0 ) {
+    if (rowsToSyncCount != 0) {
       setUpdateNotificationBounds(minPercentage, maxPercentage, rowsToSyncCount);
 
       int fetchOffset = 0;
-      int fetchLimit = (orderedColumns.getColumnDefinitions().size() > maxColumnsToUseLargeFetchLimit)
-          ? smallFetchLimit : largeFetchLimit;
+      int fetchLimit = orderedColumns.getColumnDefinitions().size()
+          > maxColumnsToUseLargeFetchLimit ? smallFetchLimit : largeFetchLimit;
 
       String whereClause;
       {
-        StringBuilder whereClauseBuilder = new StringBuilder();
-        whereClauseBuilder.append(DataTableColumns.ID).append(" IN (SELECT ")
-            .append(ID_COLUMN).append(" FROM ").append(local_id_table)
-            .append(" LIMIT ? OFFSET ? )");
-        whereClause = whereClauseBuilder.toString();
+        String whereClauseBuilder =
+            DataTableColumns.ID + " IN (SELECT " + ID_COLUMN + " FROM " + local_id_table
+                + " LIMIT ? OFFSET ? )";
+        whereClause = whereClauseBuilder;
       }
 
-      for (; ; ) {
+      while (true) {
 
         publishUpdateNotification(R.string.sync_fetch_batch_attachment_changes, tableId, -1.0);
 
@@ -208,7 +189,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
             try {
               db = sc.getDatabase();
               String[] empty = {};
-              BindArgs bindArgs = new BindArgs(new Object[] {fetchLimit, fetchOffset});
+              BindArgs bindArgs = new BindArgs(new Object[] { fetchLimit, fetchOffset });
 
               localDataTable = sc.getDatabaseService()
                   .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, whereClause,
@@ -216,23 +197,23 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                       new String[] { "ASC" }, fetchLimit, fetchOffset);
             } finally {
               sc.releaseDatabase(db);
-              db = null;
             }
           }
 
           fetchOffset += localDataTable.getNumberOfRows();
 
-          /**************************
-           * PART 2: UPDATE THE DATA
-           **************************/
+          ///////////////////////////
+          // PART 2: UPDATE THE DATA
+          ///////////////////////////
 
           // loop through the localRow table
           for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
             Row localRow = localDataTable.getRowAtIndex(i);
             String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
-            SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
+            SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
-            getLogger().i(TAG, "syncAttachments examining row " + localRow.getDataByKey(DataTableColumns.ID));
+            getLogger().i(TAG,
+                "syncAttachments examining row " + localRow.getDataByKey(DataTableColumns.ID));
 
             boolean syncAttachments = false;
             // the local row wasn't impacted by a server change
@@ -252,13 +233,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
             if (syncAttachments) {
               // And try to push the file attachments...
               try {
-                boolean outcome = true;
-
-                SyncAttachmentState filteredAttachmentState = (state == SyncState.in_conflict ?
-                    SyncAttachmentState.DOWNLOAD :
-                    attachmentState);
-
-                outcome = manifestProcessor.
+                boolean outcome = manifestProcessor.
                     syncRowLevelFileAttachments(tableResource.getInstanceFilesUri(), tableId,
                         localRow, fileAttachmentColumns, attachmentState);
 
@@ -271,25 +246,29 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                       db = sc.getDatabase();
                       sc.getDatabaseService()
                           .privilegedUpdateRowETagAndSyncState(sc.getAppName(), db, tableId,
-                              localRow.getDataByKey(DataTableColumns.ID), localRow.getDataByKey(DataTableColumns.ROW_ETAG),
+                              localRow.getDataByKey(DataTableColumns.ID),
+                              localRow.getDataByKey(DataTableColumns.ROW_ETAG),
                               SyncState.synced.name());
                     } finally {
                       sc.releaseDatabase(db);
-                      db = null;
                     }
                   }
                 }
               } catch (Throwable e) {
                 getLogger().printStackTrace(e);
                 tableLevelSyncOutcome = sc.exceptionEquivalentOutcome(e);
-                getLogger().e(TAG, "[synchronizeTableRest] error synchronizing attachments " + e.toString());
+                getLogger().e(TAG,
+                    "[synchronizeTableRest] error synchronizing attachments " + e);
               }
               tableLevelResult.incLocalAttachmentRetries();
 
-              getLogger().i(TAG, "syncAttachments completed processing for " + localRow.getDataByKey(DataTableColumns.ID));
+              getLogger().i(TAG, "syncAttachments completed processing for " + localRow
+                  .getDataByKey(DataTableColumns.ID));
 
               int idString;
               switch (attachmentState) {
+              // without this, it complains that idString may not be initialized
+              //noinspection UnnecessaryDefault
               default:
               case NONE:
                 idString = R.string.sync_skipping_attachments_server_row;
@@ -327,7 +306,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
       }
     }
 
-    if ( tableLevelSyncOutcome != SyncOutcome.WORKING ) {
+    if (tableLevelSyncOutcome != SyncOutcome.WORKING) {
       tableLevelResult.setSyncOutcome(tableLevelSyncOutcome);
       tableLevelResult.setMessage("exception while syncing row-level attachments");
     }
@@ -335,6 +314,5 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
     publishUpdateNotification(R.string.sync_attachment_completed, tableId, maxPercentage);
 
     // if we got here, perhaps some of the attachments were sync'd.
-    return;
   }
 }
