@@ -23,12 +23,9 @@ import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import android.content.Context;
 import android.database.Cursor;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import org.opendatakit.logging.WebLogger;
 
 /**
@@ -159,10 +156,6 @@ public class FormInfo {
       HashMap<String, Object> om = null;
       try {
         om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
-      } catch (JsonParseException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-      } catch (JsonMappingException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
       } catch (IOException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
       }
@@ -177,19 +170,18 @@ public class FormInfo {
 
   /**
    *
-   * @param c
    * @param appName
    * @param formDefFile
    */
   @SuppressWarnings("unchecked")
-  public FormInfo(Context c, String appName, File formDefFile) {
+  public FormInfo(String appName, File formDefFile) {
 
     // save the appName
     this.appName = appName;
     // save the File of the formDef...
     this.formDefFile = formDefFile;
 
-    /**
+    /*
      * IMPORTANT: called for its side-effect
      *  -- throws IllegalArgumentException if file is not under appName
      */ 
@@ -199,10 +191,6 @@ public class FormInfo {
     HashMap<String, Object> om = null;
     try {
       om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
-    } catch (JsonParseException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } catch (JsonMappingException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (IOException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
     }
@@ -240,12 +228,12 @@ public class FormInfo {
       throw new IllegalArgumentException("Settings could not be re-serialized!");
     }
     
-    Map<String, Object> setting = null;
+    Map<String, Object> setting;
 
     setting = (Map<String, Object>) settings.get(FORMDEF_FORM_ID);
     if (setting != null) {
       Object o = setting.get(FORMDEF_VALUE);
-      if (o == null || !(o instanceof String)) {
+      if (!(o instanceof String)) {
         throw new IllegalArgumentException(
             "formId is not specified or invalid in the formdef json file! "
                 + formDefFile.getAbsolutePath());

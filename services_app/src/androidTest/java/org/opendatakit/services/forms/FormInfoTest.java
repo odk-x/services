@@ -16,10 +16,16 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.forms.provider.FormsProvider;
 import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
+import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 //import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 
@@ -30,28 +36,11 @@ import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppNa
 @RunWith(AndroidJUnit4.class)
 public class FormInfoTest {
   private FormInfo info;
-
-  private static String join(String s, String[] arr) {
-    StringBuilder b = new StringBuilder();
-    boolean first = true;
-    for (String item : arr) {
-      if (first) {
-        first = false;
-      } else {
-        b.append(s);
-      }
-      b.append(item);
-    }
-    return b.toString();
-  }
+  private boolean initialized = false;
+  private OdkConnectionInterface db;
 
   @Test
   public void testCursorConstructor() throws Throwable {
-    AndroidConnectFactory.configure();
-    DbHandle uniqueKey = new DbHandle(
-        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
-    OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-        .getConnection("default", uniqueKey);
     insert("breathcounter");
     Cursor c = db.rawQuery("SELECT " + join(", ", FormsColumns.formsDataColumnNames) + " FROM "
             + DatabaseConstants.FORMS_TABLE_NAME + " WHERE " + FormsColumns.FORM_ID + " =?",
@@ -63,14 +52,89 @@ public class FormInfoTest {
     assertEquals(info.formDef, null);
   }
 
+  @Test
+  public void testCursorConstructorNotJson() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        OutputStream f = new FileOutputStream(a);
+        f.write("Not a valid json file".getBytes());
+        f.close();
+      }
+    });
+  }
+
+  public void testCursorConstructorBadFormdef(ArgRunnable r) throws Exception {
+    AndroidConnectFactory.configure();
+    DbHandle uniqueKey = new DbHandle(
+        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+    OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .getConnection("default", uniqueKey);
+    File a = new File(ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + '/'
+        + ODKFileUtils.FORMDEF_JSON_FILENAME);
+    File b = new File(ODKFileUtils.getAppFolder(getAppName()) + "/formDef-backup.json");
+    if (b.exists() && !b.delete()) {
+      throw new IOException("should have been able to delete temporary copy of formdef");
+    }
+    ODKFileUtils.copyFile(a, b);
+    r.run(a);
+    Cursor c = db.rawQuery(
+        "SELECT * FROM " + DatabaseConstants.FORMS_TABLE_NAME + " WHERE " + FormsColumns.FORM_ID
+            + " = ?;", new String[] { "Tea_houses" });
+    boolean failed = false;
+    boolean worked = false;
+    if (c == null) {
+      failed = true;
+    } else {
+      c.moveToFirst();
+      try {
+        //noinspection ResultOfObjectAllocationIgnored
+        new FormInfo("default", c, true);
+      } catch (IllegalArgumentException ignored) {
+        worked = true;
+      }
+      c.close();
+    }
+    if (!a.getParentFile().exists() && !a.getParentFile().mkdirs()) {
+      throw new IOException("should have been able to recreate tables/Tea_houses/forms/Tea_houses");
+    }
+    ODKFileUtils.copyFile(b, a);
+    if (!b.delete()) {
+      throw new IOException("should have been able to delete temporary copy of formdef");
+    }
+    if (failed)
+      throw new Exception("Null cursor");
+    assertTrue(worked);
+  }
+
+  @Test
+  public void testCursorConstructorFormdefDoesntExist() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        if (!a.delete()) {
+          throw new IOException("Should have been able to delete real formdef");
+        }
+      }
+    });
+  }
+
   @Before
   public void setUp() {
     setUp("default", "Tea_houses_editable");
+    if (!initialized) {
+      AndroidConnectFactory.configure();
+      DbHandle uniqueKey = new DbHandle(
+          getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection("default", uniqueKey);
+      initialized = true;
+    }
   }
 
   public void setUp(String app, String form) {
     insert(form);
-    info = new FormInfo(null, "default", new File(
+    info = new FormInfo("default", new File(
         Environment.getExternalStorageDirectory().getPath() + "/opendatakit/" + app
             + "/config/tables/" + form + "/forms" + "/" + form + "/formDef.json"));
   }
@@ -93,6 +157,8 @@ public class FormInfoTest {
     assertEquals(local, "Tea Houses Editable");
     assertEquals(res[1], "default");
     assertEquals(res[2], "Tea_houses_editable");
+    res = info.asRowValues(null);
+    assertEquals(res.length, FormsColumns.formsDataColumnNames.length);
   }
 
   @Test
@@ -123,5 +189,9 @@ public class FormInfoTest {
     assertEquals(LocalizationUtils
             .getLocalizedDisplayName("default", info.tableId, "default", info.formTitle),
         "Two Part Validation Test");
+  }
+
+  private interface ArgRunnable {
+    void run(File a) throws Exception;
   }
 }
