@@ -27,9 +27,8 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -79,9 +78,8 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
     OrderedColumns orderedDefns;
     Map<String, String> persistedDisplayNames = new HashMap<String, String>();
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     OdkConnectionInterface db = null;
 
@@ -92,11 +90,11 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mTableId);
+      orderedDefns = ODKDatabaseImplUtils.getUserDefinedColumns(db, mTableId);
 
 
       List<KeyValueStoreEntry> columnDisplayNames =
-          ODKDatabaseImplUtils.get().getTableMetadata(db, mTableId,
+          ODKDatabaseImplUtils.getTableMetadata(db, mTableId,
               KeyValueStoreConstants.PARTITION_COLUMN, null,
               KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();
 
@@ -115,14 +113,14 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       // the local record is always before the server record (due to conflict_type values)
       String whereClause = DataTableColumns.ID + "=?" +
           " AND " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL";
-      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, null, null,
                   new String[] { DataTableColumns.CONFLICT_TYPE }, new String[] { "ASC" }),
           new String[] { mRowId }, null, accessContextPrivileged);
@@ -193,9 +191,11 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
       ElementType elementType = cd.getType();
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
-        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(columnDisplayName);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, columnDisplayName);
       } else {
-        columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, NameUtil.constructSimpleDisplayName(elementKey));
       }
       String localRawValue = localRow.getDataByKey(elementKey);
       String localDisplayValue = table.getDisplayTextOfData(localRowIndex, elementType, elementKey);

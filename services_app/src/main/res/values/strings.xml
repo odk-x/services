@@ -7,6 +7,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
     <string name="action_sync">Sync</string>
+    <!--<string name="action_logout">Logout</string>-->
+    <string name="action_change_user">Change User/Logout</string>
     <string name="action_resolve_conflict">Resolve Conflicts</string>
     <string name="action_verify_server_settings">Update User Permissions</string>
 
@@ -56,7 +58,7 @@
 	<string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
     <string name="checkpoint_take_newest_with_deltas_warning">Apply Indicated Changes, Save as Incomplete and Proceed?</string>
 
-    <string name="checkpoint_auto_apply">No user-defined field differences -- automatically discarding checkpoint.</string>
+    <string name="checkpoint_auto_apply">No user-defined field differences &#8212; automatically discarding checkpoint.</string>
     <string name="checkpoint_auto_apply_all">No user-defined field differences in any rows\nAutomatically discarded checkpoints.</string>
 
     <string name="select_conflict_to_resolve">Select the row with conflicts to resolve</string>
@@ -80,10 +82,10 @@
 	<string name="conflict_enforce_local_delete">Delete record on server</string>
 	<string name="conflict_apply_delete_from_server">Delete local record</string>
 
-    <string name="conflict_auto_apply">No user-defined field differences -- automatically taking server metadata revisions.</string>
+    <string name="conflict_auto_apply">No user-defined field differences &#8212; automatically taking server metadata revisions.</string>
     <string name="conflict_auto_apply_all">No user-defined field differences in any rows.\nAutomatically took server revisions.</string>
 
-    <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts -- contact the ODK Team</string>
+    <string name="conflict_database_consistency_error">Database consistency issue when resolving conflicts &#8212; contact the ODK Team</string>
 
     <string name="resolve_row_display_name">Form: %1$s Instance: %2$s</string>
     <!-- Sync Service and Notifications stuff -->
@@ -171,7 +173,7 @@
 
     <!-- Sync User Interface stuff -->
     <string name="sync_details">Sync Configuration:</string>
-    <string name="sync_server_url">Aggregate URL:</string>
+    <string name="sync_server_url">Server URL</string>
     <string name="sync_default_server_url">http://opendatakit-2.appspot.com</string>
     <string name="sync_account">Account:</string>
     <string name="sync_progress_state_label">Sync Progress State</string>
@@ -182,6 +184,8 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
+    <string name="sync_warn_sync_before_logout">WARNING: Be sure to sync before changing
+        users or logging out</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have sync\'d now may no longer be able to be sync\'d.</string>
@@ -225,14 +229,15 @@
     <string name="sync_notification_success_pending_attachments_text">"Sync Completed with %1$d tables having out-of-date row attachments.</string>
     <string name="sync_status_network_transport_error">Network Error.\r\nPlease verify your device browser can access your server.</string>
     <string name="sync_status_device_internal_error">Internal Error.\r\nPlease submit a bug report</string>
-    <string name="sync_status_authentication_error">Authentication Error.\r\nPlease verify your account and server access.</string>
+    <string name="sync_status_authentication_error">Authentication Error.\r\nPlease verify your
+        username/password or your account access.</string>
     <string name="sync_status_internal_server_error">Internal Server Error (out of quota?).\r\nPlease notify your server administrator.</string>
     <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway or Configuration Error.\r\nPlease verify the server URL and that your device browser can access your server.</string>
     <string name="sync_status_request_or_protocol_error">Protocol Error.\r\nPlease verify that the server and device are compatible.</string>
     <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\r\nPlease verify server configuration.</string>
     <string name="sync_status_server_missing_config_files">Server does not have all app-level or table-level configuration for this APK version.\r\nDid you intend to reset the server?</string>
     <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration.\r\nDid you intend to sync to server?</string>
-    <string name="sync_status_resync_because_config_has_been_reset_error">Sync was interrupted by another device.\r\nPlease re-start sync.</string>
+    <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>
@@ -250,12 +255,26 @@
     <string name="enter_admin_password">Enter Admin password:</string>
 
     <string name="click_to_change_password">Click to change password</string>
-    <string name="enter_new_password">Enter new password</string>
+
+    <string name="current_user">Currently logged in as:</string>
+
+    <string name="change_user">Change User</string>
+    <string name="new_user">Authenticate New User</string>
+    <string name="logout">Log Out</string>
+    <string name="authenticate_credentials">Authenticate Credentials</string>
+
+    <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
+        you choose not verify your credentials you will be logged out.</string>
+    <string name="authentication_error">Authentication Error</string>
+
+    <string name="enter_new_user">Enter new username:</string>
+    <string name="enter_new_password">Enter new password:</string>
     <string name="verify_new_password">Re-enter new password</string>
     <string name="password_changed">Password successfully changed</string>
     <string name="admin_password_disabled">Admin password disabled</string>
     <string name="admin_password_enabled">Admin password enabled</string>
     <string name="password_mismatch">Sorry, passwords do not match!</string>
+    <string name="show_password_text">Show password</string>
 
     <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
     <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>
@@ -286,6 +305,8 @@
     <string name="google_account">Select Google Account</string>
     <string name="selected_google_account_text">Google Account</string>
     <string name="no_account">No account</string>
+    <string name="anonymous">None (anonymous access)</string>
+    <string name="credential_type_prefix">Credentials: </string>
 
     <string name="restrict_device_settings_summary">Limit non-Admin ability to change Device Settings</string>
     <string name="restrict_device">Manage ability to change Device Settings</string>
@@ -294,6 +315,9 @@
     <string name="device">Device Settings</string>
     <string name="device_restrictions_apply">Device Settings (non-Admin restrictions apply)</string>
 
+    <string name="default_locale">Default Locale</string>
+    <string name="change_default_locale">Change Default Locale</string>
+    <string name="system_locale">Device Locale (%1$s)</string>
     <string name="font_size">Text Font Size</string>
     <string name="change_font_size">Text Font Size</string>
 

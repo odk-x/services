@@ -30,6 +30,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
@@ -139,8 +140,6 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
         // them all.
         UserTable localDataTable;
         {
-            String[] empty = {};
-
             // To get all the rows that match those sent from the server
             // we create a local table and insert all of the row ids into
             // that table. Then filter against the row ids in that table
@@ -176,7 +175,8 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
             localDataTable = sc.getDatabaseService()
                 .privilegedSimpleQuery(sc.getAppName(), db, tableId, orderedColumns, b.toString(),
-                    empty, empty, null, new String[] { DataTableColumns.ID }, new String[] { "ASC" },
+                    null, null, null,
+                    new String[] { DataTableColumns.ID }, new String[] { "ASC" },
                     null, null);
         }
 
@@ -237,11 +237,15 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
           values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
           values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
           values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-          RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
-          values.put(DataTableColumns.FILTER_TYPE,
-              (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
-          values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+          RowFilterScope.Access type = serverRow.getRowFilterScope().getDefaultAccess();
+          values.put(DataTableColumns.DEFAULT_ACCESS,
+              (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
+          values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
           values.putNull(DataTableColumns.CONFLICT_TYPE);
+
+          values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
+          values.put(DataTableColumns.GROUP_PRIVILEGED, serverRow.getRowFilterScope().getGroupPrivileged());
+          values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
 
           sc.getDatabaseService().privilegedPerhapsPlaceRowIntoConflictWithId(sc.getAppName(), sc
               .getDatabase(), tableId, orderedColumns, values, rowId);
@@ -290,10 +294,15 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, serverRow.getSavepointTimestamp());
             values.put(DataTableColumns.SAVEPOINT_CREATOR, serverRow.getSavepointCreator());
             values.put(DataTableColumns.SAVEPOINT_TYPE, serverRow.getSavepointType());
-            RowFilterScope.Type type = serverRow.getRowFilterScope().getType();
-            values.put(DataTableColumns.FILTER_TYPE,
-                (type == null) ? RowFilterScope.Type.DEFAULT.name() : type.name());
-            values.put(DataTableColumns.FILTER_VALUE, serverRow.getRowFilterScope().getValue());
+            RowFilterScope.Access type = serverRow.getRowFilterScope().getDefaultAccess();
+            values.put(DataTableColumns.DEFAULT_ACCESS,
+                (type == null) ? RowFilterScope.Access.FULL.name() : type.name());
+            values.put(DataTableColumns.ROW_OWNER, serverRow.getRowFilterScope().getRowOwner());
+
+            values.put(DataTableColumns.GROUP_READ_ONLY, serverRow.getRowFilterScope().getGroupReadOnly());
+            values.put(DataTableColumns.GROUP_MODIFY, serverRow.getRowFilterScope().getGroupModify());
+            values.put(DataTableColumns.GROUP_PRIVILEGED, serverRow.getRowFilterScope().getGroupPrivileged());
+
             values.putNull(DataTableColumns.CONFLICT_TYPE);
 
             sc.getDatabaseService().privilegedInsertRowWithId(sc.getAppName(), db,

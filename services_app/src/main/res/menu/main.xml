@@ -31,6 +31,13 @@
             android:title="@string/action_settings"/>
 
     <item
+            android:id="@+id/action_change_user"
+            android:orderInCategory="50"
+            android:showAsAction="never"
+            android:icon="@drawable/ic_sync_disabled_black_24dp"
+            android:title="@string/action_change_user"/>
+
+    <item
             android:id="@+id/action_about"
             android:orderInCategory="100"
             android:showAsAction="never"

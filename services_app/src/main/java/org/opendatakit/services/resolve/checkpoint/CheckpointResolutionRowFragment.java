@@ -35,12 +35,10 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.services.resolve.views.components.Resolution;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
@@ -122,7 +120,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
+            ODKDatabaseImplUtils.saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
                 mRowId);
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -194,18 +192,8 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             }
           }
 
-          String activeUser;
-          String rolesList;
-          String locale;
-
-          {
-            PropertiesSingleton props =
-              CommonToolProperties.get(getActivity(), mAppName);
-
-            activeUser = props.getActiveUser();
-            rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-            locale = props.getLocale();
-          }
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -213,13 +201,13 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // create a new checkpoint with the revisions
-            OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
+            OrderedColumns orderedColumns = ODKDatabaseImplUtils.getUserDefinedColumns(db,
                 mTableId);
-            ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
-                values, mRowId, activeUser, rolesList, locale);
+            ODKDatabaseImplUtils.insertCheckpointRowWithId(db, mTableId, orderedColumns,
+                values, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             // and save that checkpoint as incomplete
-            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
+            ODKDatabaseImplUtils.saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
                 mRowId);
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -292,7 +280,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
                 mRowId, aul.activeUser, aul.rolesList );
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -367,7 +355,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
                 mRowId, aul.activeUser, aul.rolesList );
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -432,7 +420,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId, mRowId,
+      ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId, mRowId,
           aul.activeUser, aul.rolesList);
       getActivity().setResult(Activity.RESULT_OK);
     } catch (Exception e) {

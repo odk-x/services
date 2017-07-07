@@ -1,7 +1,11 @@
 package org.opendatakit.logic.test;
 
-import android.test.AndroidTestCase;
-
+import android.content.Context;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.androidlibrary.R;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -10,16 +14,23 @@ import org.opendatakit.utilities.StaticStateManipulator;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 /**
  * @author mitchellsundt@gmail.com
  */
-public class PropertiesTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class PropertiesTest {
 
     private static final String APPNAME = "unittestProp";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(APPNAME);
 
@@ -27,23 +38,30 @@ public class PropertiesTest extends AndroidTestCase {
         WebLogger.setFactory(new WebLoggerDesktopFactoryImpl());
     }
 
+    @Test
     public void testSimpleProperties() {
 
-        PropertiesSingleton props = CommonToolProperties.get(getContext(), APPNAME);
+        Context context = InstrumentationRegistry.getTargetContext();
+
+        PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
+        Map<String,String> properties = new HashMap<String,String>();
+
         // non-default value for font size
-        props.setProperty(CommonToolProperties.KEY_FONT_SIZE, "29");
+        properties.put(CommonToolProperties.KEY_FONT_SIZE, "29");
         // these are stored in devices
-        props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getContext().getString(R.string.credential_type_google_account));
-        props.setProperty(CommonToolProperties.KEY_ACCOUNT, "mitchs.test@gmail.com");
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+            context.getString(R.string.credential_type_google_account));
+        properties.put(CommonToolProperties.KEY_ACCOUNT, "mitchs.test@gmail.com");
         // this is stored in SharedPreferences
-        props.setProperty(CommonToolProperties.KEY_PASSWORD, "asdf");
+        properties.put(CommonToolProperties.KEY_PASSWORD, "asdf");
+        props.setProperties(properties);
 
         StaticStateManipulator.get().reset();
 
-        props = CommonToolProperties.get(getContext(), APPNAME);
+        props = CommonToolProperties.get(context, APPNAME);
         assertEquals(props.getProperty(CommonToolProperties.KEY_FONT_SIZE), "29");
         assertEquals(props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE),
-                getContext().getString(R.string.credential_type_google_account));
+            context.getString(R.string.credential_type_google_account));
         assertEquals(props.getProperty(CommonToolProperties.KEY_ACCOUNT),
                 "mitchs.test@gmail.com");
         assertEquals(props.getProperty(CommonToolProperties.KEY_PASSWORD), "asdf");
@@ -54,30 +72,33 @@ public class PropertiesTest extends AndroidTestCase {
      * Setting or removing secure properties from a
      * non-privileged APK should fail.
      */
+    @Test
     public void testSecureSetProperties() {
+
+        Context context = InstrumentationRegistry.getTargetContext();
 
         StaticStateManipulator.get().reset();
 
-        PropertiesSingleton props = CommonToolProperties.get(getContext(), APPNAME);
+        PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
         String[] secureKeys = {
             CommonToolProperties.KEY_AUTH,
             CommonToolProperties.KEY_PASSWORD,
+            CommonToolProperties.KEY_AUTHENTICATED_USER_ID,
             CommonToolProperties.KEY_ROLES_LIST,
+            CommonToolProperties.KEY_DEFAULT_GROUP,
             CommonToolProperties.KEY_USERS_LIST,
             CommonToolProperties.KEY_ADMIN_PW
         };
 
-        for ( int i = 0 ; i < secureKeys.length ; ++i ) {
+        for ( String secureKey : secureKeys ) {
             // this is stored in SharedPreferences
-            boolean threwError = false;
-
-            props.setProperty(secureKeys[i], "asdf" + secureKeys[i].hashCode());
-            assertEquals(props.getProperty(secureKeys[i]), "asdf" + secureKeys[i].hashCode());
+            props.setProperties(Collections.singletonMap(secureKey, "asdf" + secureKey.hashCode()));
+            assertEquals(props.getProperty(secureKey), "asdf" + secureKey.hashCode());
 
             // and verify remove works
-            props.removeProperty(secureKeys[i]);
+            props.setProperties(Collections.singletonMap(secureKey, (String) null));
 
-            assertNull("remove: " + secureKeys[i], props.getProperty(secureKeys[i]));
+            assertNull("remove: " + secureKey, props.getProperty(secureKey));
 
         }
     }

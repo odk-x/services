@@ -28,7 +28,6 @@ import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.StatFs;
 import org.opendatakit.utilities.ODKFileUtils;
-/* import android.os.SystemProperties; */
 
 /**
  * Provides access to SQLite functions that affect all database connection,
@@ -38,9 +37,6 @@ import org.opendatakit.utilities.ODKFileUtils;
  * using sqlite3_config() then calls sqlite3_initialize() to ensure that the SQLite
  * library is properly initialized exactly once before any other framework or application
  * code has a chance to run.
- *
- * Verbose SQLite logging is enabled if the "log.tag.SQLiteLog" property is set to "V".
- * (per {@link SQLiteDebug#DEBUG_SQL_LOG}).
  *
  * @hide
  */

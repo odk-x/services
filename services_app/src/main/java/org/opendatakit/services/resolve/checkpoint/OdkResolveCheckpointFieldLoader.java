@@ -25,9 +25,8 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -71,9 +70,8 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
 
     OdkConnectionInterface db = null;
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     UserTable table = null;
 
@@ -82,11 +80,11 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mTableId);
+      orderedDefns = ODKDatabaseImplUtils.getUserDefinedColumns(db, mTableId);
 
 
       List<KeyValueStoreEntry> columnDisplayNames =
-          ODKDatabaseImplUtils.get().getTableMetadata(db, mTableId,
+          ODKDatabaseImplUtils.getTableMetadata(db, mTableId,
               KeyValueStoreConstants.PARTITION_COLUMN, null,
               KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();
 
@@ -100,11 +98,11 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
         }
       }
 
-      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, mTableId,
-          mRowId, activeUser);
+      BaseTable baseTable = ODKDatabaseImplUtils.privilegedGetRowsWithId(db, mTableId,
+          mRowId, aul.activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {
       String msg = e.getLocalizedMessage();
@@ -178,9 +176,11 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       ElementType elementType = cd.getType();
       String columnDisplayName = persistedDisplayNames.get(elementKey);
       if (columnDisplayName != null) {
-        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(columnDisplayName);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, columnDisplayName);
       } else {
-        columnDisplayName = NameUtil.constructSimpleDisplayName(elementKey);
+        columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
+            mTableId, aul.locale, NameUtil.constructSimpleDisplayName(elementKey));
       }
       String localRawValue = rowEnding.getDataByKey(elementKey);
       String localDisplayValue = table

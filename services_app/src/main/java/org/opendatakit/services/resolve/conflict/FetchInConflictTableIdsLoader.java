@@ -55,11 +55,10 @@ public class FetchInConflictTableIdsLoader extends AsyncTaskLoader<ArrayList<Str
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ArrayList<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
+      ArrayList<String> tableIds = ODKDatabaseImplUtils.getAllTableIds(db);
       for ( String tableId : tableIds ) {
-        int status = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-        if ( status == CursorUtils.TABLE_HEALTH_HAS_CONFLICTS ||
-             status == CursorUtils.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS ) {
+        int status = ODKDatabaseImplUtils.getTableHealth(db, tableId);
+        if (CursorUtils.getTableHealthHasConflicts(status)){
           conflictingTableIds.add(tableId);
         }
       }

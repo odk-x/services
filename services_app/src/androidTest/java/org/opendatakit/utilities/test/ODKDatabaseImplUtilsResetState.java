@@ -1,9 +1,13 @@
 package org.opendatakit.utilities.test;
 
-import android.test.RenamingDelegatingContext;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -13,6 +17,7 @@ import org.opendatakit.provider.KeyValueStoreColumns;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.utilities.StaticStateManipulator;
 
 import java.io.File;
 
@@ -24,9 +29,8 @@ import java.io.File;
  * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
  * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest {
-    private static final String TEST_FILE_PREFIX = "test_";
-    private static final String DATABASE_NAME = "test.db";
 
     private DbHandle uniqueKey;
 
@@ -72,9 +76,8 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         }
     }
 
-    @Override
-    protected synchronized void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public synchronized void setUp() throws Exception {
 
         //StaticStateManipulator.get().reset();
 
@@ -82,11 +85,8 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         AndroidConnectFactory.configure();
         uniqueKey = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
 
-        RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(),
-                TEST_FILE_PREFIX);
-
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
-        FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+        OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
+        ODKFileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
 
         ODKFileUtils.verifyExternalStorageAvailability();
 
@@ -98,14 +98,13 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         DatabaseInitializer.onCreate(db);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
 
         if (db != null) {
             db.releaseReference();
         }
 
-        RenamingDelegatingContext context = new RenamingDelegatingContext(getContext(), TEST_FILE_PREFIX);
         OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
             getAppName(), uniqueKey);
         OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllConnections();
@@ -114,11 +113,9 @@ public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest
         // C++ layer that were orphaned in Java
         Thread.sleep(100L);
         try {
-           FileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
+            ODKFileUtils.deleteDirectory(new File(ODKFileUtils.getAppFolder(getAppName())));
         } catch ( Exception e) {
            // ignore
         }
-
-        super.tearDown();
     }
 }

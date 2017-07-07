@@ -23,12 +23,9 @@ import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import android.content.Context;
 import android.database.Cursor;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import org.opendatakit.logging.WebLogger;
 
 /**
@@ -159,10 +156,6 @@ public class FormInfo {
       HashMap<String, Object> om = null;
       try {
         om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
-      } catch (JsonParseException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-      } catch (JsonMappingException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
       } catch (IOException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
       }
@@ -177,19 +170,18 @@ public class FormInfo {
 
   /**
    *
-   * @param c
    * @param appName
    * @param formDefFile
    */
   @SuppressWarnings("unchecked")
-  public FormInfo(Context c, String appName, File formDefFile) {
+  public FormInfo(String appName, File formDefFile) {
 
     // save the appName
     this.appName = appName;
     // save the File of the formDef...
     this.formDefFile = formDefFile;
 
-    /**
+    /*
      * IMPORTANT: called for its side-effect
      *  -- throws IllegalArgumentException if file is not under appName
      */ 
@@ -199,10 +191,6 @@ public class FormInfo {
     HashMap<String, Object> om = null;
     try {
       om = ODKFileUtils.mapper.readValue(formDefFile, HashMap.class);
-    } catch (JsonParseException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } catch (JsonMappingException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (IOException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
     }
@@ -240,12 +228,12 @@ public class FormInfo {
       throw new IllegalArgumentException("Settings could not be re-serialized!");
     }
     
-    Map<String, Object> setting = null;
+    Map<String, Object> setting;
 
     setting = (Map<String, Object>) settings.get(FORMDEF_FORM_ID);
     if (setting != null) {
       Object o = setting.get(FORMDEF_VALUE);
-      if (o == null || !(o instanceof String)) {
+      if (!(o instanceof String)) {
         throw new IllegalArgumentException(
             "formId is not specified or invalid in the formdef json file! "
                 + formDefFile.getAbsolutePath());
@@ -271,32 +259,35 @@ public class FormInfo {
           + formDefFile.getAbsolutePath());
     }
 
-    Map<String, Object> formDefStruct = null;
+
     setting = (Map<String, Object>) settings.get(FORMDEF_SURVEY_SETTINGS);
-    if ( setting != null ) {
-      setting = (Map<String, Object>) setting.get(FORMDEF_DISPLAY_ELEMENT);
-      if ( setting != null ) {
+    if ( setting != null) {
+      setting =(Map<String, Object>) setting.get(FORMDEF_DISPLAY_ELEMENT);
+      if ( setting != null && setting.containsKey(FORMDEF_TITLE_ELEMENT) ) {
         Object o = setting.get(FORMDEF_TITLE_ELEMENT);
-        if (o == null) {
-          throw new IllegalArgumentException(
-              "title is not specified in the display section of the survey settings of the formdef json file! "
-                  + formDefFile.getAbsolutePath());
-        }
-        try {
-          formTitle = ODKFileUtils.mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
-              + formDefFile.getAbsolutePath());
+        if ( o != null ) {
+          try {
+            formTitle = ODKFileUtils.mapper.writeValueAsString(o);
+          } catch (JsonProcessingException e) {
+            WebLogger.getLogger(appName).printStackTrace(e);
+            throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
+                + formDefFile.getAbsolutePath());
+          }
+        } else {
+          throw new IllegalArgumentException("display.title (form display name) is "
+              + "null for row 'survey' in the settings of formdef json file! "
+                + formDefFile.getAbsolutePath());
         }
       } else {
-	    throw new IllegalArgumentException("display entry is not specified in the survey section of the settings of formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	  }
-	} else {
-	    throw new IllegalArgumentException("survey entry is not specified in the settings of formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	}
+        throw new IllegalArgumentException("survey row's display.title (form display name) is not "
+            + "found on the settings sheet of formdef json file! "
+            + formDefFile.getAbsolutePath());
+      }
+    } else {
+        throw new IllegalArgumentException("row for 'survey' is missing in "
+            + "the settings sheet of formdef json file! "
+                + formDefFile.getAbsolutePath());
+    }
 
     setting = (Map<String, Object>) settings.get(FORMDEF_INSTANCE_NAME);
     if (setting != null) {

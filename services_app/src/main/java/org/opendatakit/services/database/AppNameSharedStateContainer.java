@@ -177,7 +177,7 @@ public class AppNameSharedStateContainer {
 
          b.append("\n-----pendingDestruction------------\n\n");
 
-         for (WeakHashMap.Entry<OdkConnectionInterface, Long> dbconnectionPD : pendingDestruction.entrySet()) {
+         for (Map.Entry<OdkConnectionInterface, Long> dbconnectionPD : pendingDestruction.entrySet()) {
             OdkConnectionInterface dbConnection = dbconnectionPD.getKey();
 
             if (dbConnection != null) {

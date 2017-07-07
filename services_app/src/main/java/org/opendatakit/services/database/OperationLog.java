@@ -277,8 +277,7 @@ public final class OperationLog {
             operation.mEndTime = System.currentTimeMillis();
             operation.mFinished = true;
          }
-         return SQLiteDebug.DEBUG_LOG_SLOW_QUERIES && SQLiteDebug
-             .shouldLogSlowQuery(operation.mEndTime - operation.mStartTime);
+         return SQLiteDebug.shouldLogSlowQuery(operation.mEndTime - operation.mStartTime);
       }
       return false;
    }

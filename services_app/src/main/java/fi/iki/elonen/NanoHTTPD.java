@@ -34,9 +34,9 @@ package fi.iki.elonen;
  */
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.BufferedInputStream;
@@ -162,7 +162,7 @@ public abstract class NanoHTTPD {
     public synchronized static Boolean getEnableLog(String appName) {
         Boolean enableLog = appNameToEnableLogMap.get(appName);
         if (enableLog == null) {
-            enableLog = new Boolean(false);
+            enableLog = Boolean.FALSE;
             appNameToEnableLogMap.put(appName, enableLog);
         }
 
@@ -173,7 +173,7 @@ public abstract class NanoHTTPD {
         Boolean currVal = getEnableLog(appName);
 
         if (currVal.booleanValue() != shouldEnableLog) {
-            appNameToEnableLogMap.put(appName, new Boolean(shouldEnableLog));
+            appNameToEnableLogMap.put(appName, Boolean.valueOf(shouldEnableLog));
         }
     }
 
@@ -258,7 +258,8 @@ public abstract class NanoHTTPD {
             if ( enableResponseLogging ) {
                 String fn = UUID.randomUUID().toString();
                 File loc = new File( ODKFileUtils.getOutputFolder(appName), fn);
-                Log.i("NanoHTTPD", "sendResponse(): response written to " + fn);
+                WebLogger.getLogger(appName).i("NanoHTTPD", "sendResponse(): response written to "
+                    + fn);
                 OutputStream s = new FileOutputStream(loc);
                 s.write(bao.toByteArray());
                 s.close();
@@ -1640,7 +1641,7 @@ public abstract class NanoHTTPD {
         private final Map<String, String> header = new HashMap<String, String>() {
 
             public String put(String key, String value) {
-                lowerCaseHeader.put(key == null ? key : key.toLowerCase(), value);
+                lowerCaseHeader.put(key == null ? key : key.toLowerCase(Locale.US), value);
                 return super.put(key, value);
             };
         };
@@ -1728,7 +1729,7 @@ public abstract class NanoHTTPD {
         }
 
         public String getHeader(String name) {
-            return this.lowerCaseHeader.get(name.toLowerCase());
+            return this.lowerCaseHeader.get(name.toLowerCase(Locale.US));
         }
 
         public String getMimeType() {
@@ -2176,7 +2177,7 @@ public abstract class NanoHTTPD {
         int dot = uri.lastIndexOf('.');
         String mime = null;
         if (dot >= 0) {
-            mime = mimeTypes().get(uri.substring(dot + 1).toLowerCase());
+            mime = mimeTypes().get(uri.substring(dot + 1).toLowerCase(Locale.US));
         }
         return mime == null ? "application/octet-stream" : mime;
     }
@@ -2350,7 +2351,9 @@ public abstract class NanoHTTPD {
      */
     @SuppressWarnings("static-method")
     protected boolean useGzipWhenAccepted(Response r) {
-        return r.getMimeType() != null && (r.getMimeType().toLowerCase().contains("text/") || r.getMimeType().toLowerCase().contains("/json"));
+        return r.getMimeType() != null &&
+            (r.getMimeType().toLowerCase(Locale.US).contains("text/") ||
+             r.getMimeType().toLowerCase(Locale.US).contains("/json"));
     }
 
     public final int getListeningPort() {

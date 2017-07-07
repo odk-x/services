@@ -23,6 +23,8 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.DatabaseConstants;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.provider.DataTableColumns;
@@ -36,7 +38,7 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.utilities.QueryUtil;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -80,6 +82,10 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
 
     OdkConnectionInterface db = null;
 
+    PropertiesSingleton props =
+        CommonToolProperties.get(getContext(), mAppName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
     ArrayList<FormDefinition> formDefinitions = new ArrayList<FormDefinition>();
     String tableDisplayName = null;
     Cursor forms = null;
@@ -93,25 +99,25 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils
           .getUserDefinedColumns(db, mTableId);
       String whereClause = DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
       String[] orderByDir = new String[] { "DESC" };
 
-      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextBase =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
+          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
               aul.rolesList);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
+          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           null, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -131,13 +137,13 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
 
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
                 rowId, aul.activeUser, aul.rolesList);
           }
         }
 
         if ( tableSetChanged ) {
-          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
+          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -145,14 +151,14 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       }
 
       // The display name is the table display name, not the form display name...
-      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db,
+      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.getTableMetadata(db,
           mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
           KeyValueStoreConstants.TABLE_DISPLAY_NAME).getEntries();
 
       tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(mTableId)) : entries.get(0).value;
 
-      forms = ODKDatabaseImplUtils.get().rawQuery(db,
+      forms = ODKDatabaseImplUtils.rawQuery(db,
           "SELECT " + FormsColumns.INSTANCE_NAME +
               " , " + FormsColumns.FORM_ID +
               " , " + FormsColumns.DISPLAY_NAME +
@@ -233,7 +239,8 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName, mTableId,
+        userSelectedDefaultLocale, nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {

@@ -11,9 +11,7 @@
           android:layout_width = "match_parent"
           android:layout_height="2dip"
           android:layout_marginTop="4dip"
-          android:layout_marginBottom="4dip"
-          android:layout_centerVertical ="true"
-          android:layout_alignParentTop="true"/>
+          android:layout_marginBottom="4dip"/>
 
     <TextView android:layout_width="wrap_content"
               android:layout_height="wrap_content"
@@ -21,8 +19,7 @@
               android:textStyle="bold"
               android:textAlignment="viewStart"
               android:gravity="start"
-              android:layout_gravity="start"
-              android:layout_centerVertical="true" />
+              android:layout_gravity="start" />
 
     <!-- The local row. -->
     <RelativeLayout
@@ -55,6 +52,8 @@
 	    <TextView
 	        android:id="@+id/list_item_local_text"
             android:textAlignment="viewEnd"
+			android:layout_toEndOf="@id/list_item_local_radio_button"
+			android:layout_toRightOf="@id/list_item_local_radio_button"
             android:gravity="end"
             android:layout_gravity="fill_horizontal"
             android:layout_alignParentEnd="true"
@@ -95,6 +94,8 @@
 	    <TextView
 	        android:id="@+id/list_item_server_text"
             android:textAlignment="viewEnd"
+			android:layout_toEndOf="@id/list_item_server_radio_button"
+			android:layout_toRightOf="@id/list_item_server_radio_button"
             android:gravity="end"
             android:layout_gravity="fill_horizontal"
             android:layout_alignParentEnd="true"

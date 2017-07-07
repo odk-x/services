@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
 
+    <permission-group android:description="@string/services_permissions_description"
+                      android:icon="@drawable/odk_services"
+                      android:label="@string/services_permission_tree"
+                      android:name="org.opendatakit.services.permissions" />
+
     <permission-tree
         android:icon="@drawable/odk_services"
                      android:label="@string/services_permission_tree"
@@ -24,21 +29,25 @@
                      android:name="org.opendatakit.webkitserver" />
     
     <permission android:name="org.opendatakit.webkitserver.RUN_WEBSERVER"
-        android:label="@string/webkit_launch_permission" 
-        android:protectionLevel="signature"></permission>
+                android:label="@string/webkit_launch_permission"
+                android:permissionGroup="org.opendatakit.services.permissions"
+                android:protectionLevel="signature"></permission>
     
     <permission android:name="org.opendatakit.database.RUN_DATABASE"
-        android:label="@string/database_launch_permission" 
-        android:protectionLevel="signature"></permission>
+                android:label="@string/database_launch_permission"
+                android:permissionGroup="org.opendatakit.services.permissions"
+                android:protectionLevel="signature"></permission>
 
     <permission android:name="org.opendatakit.sync.RUN_SYNC"
                 android:label="@string/sync_launch_permission"
+                android:permissionGroup="org.opendatakit.services.permissions"
                 android:protectionLevel="signature"></permission>
 
     <application
         android:name="org.opendatakit.services.application.Services"
         android:allowBackup="true"
         android:largeHeap="true"
+        android:supportsRtl="true"
         android:installLocation="auto"
         android:icon="@drawable/odk_services"
         android:logo="@drawable/odk_services"
@@ -76,13 +85,6 @@
         <provider
             android:exported="true"
 	        android:syncable="false"
-	        android:initOrder="3"
-            android:process=":providers"
-            android:authorities="org.opendatakit.provider.instances"
-            android:name=".instance.provider.InstanceProvider" />
-        <provider
-            android:exported="true"
-	        android:syncable="false"
 	        android:initOrder="4"
             android:process=":providers"
             android:authorities="org.opendatakit.provider.submission.xml;org.opendatakit.provider.submission.json"
@@ -114,19 +116,25 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".sync.activities.AccountInfoActivity">
+        <activity android:name=".sync.actions.activities.AccountInfoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".sync.activities.SyncActivity">
+        <activity android:name=".sync.actions.activities.SyncActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".sync.activities.VerifyServerSettingsActivity">
+        <activity android:name=".sync.actions.activities.LoginActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".sync.actions.activities.VerifyServerSettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />

@@ -14,6 +14,9 @@
 
 package org.opendatakit.utilities.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -21,18 +24,23 @@ import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 
 import java.util.ArrayList;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Permissions tests in the database.
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsDeletePermissionsTest";
 
+  @Test
   public void testDeleteUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -68,11 +76,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -108,11 +117,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -148,11 +158,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -188,11 +199,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -217,11 +229,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteUnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -246,11 +259,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedNoAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -275,11 +289,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteLockedYesAnonCreate0() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -304,11 +319,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -346,11 +362,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableUnlockedYesAnonCreate,
-        false, true, RowFilterScope.Type.DEFAULT.name());
+        false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -388,11 +405,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsLockedNoAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableLockedNoAnonCreate,
-        true, false, RowFilterScope.Type.DEFAULT.name());
+        true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -430,11 +448,12 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteWithCheckpointsLockedYesAnonCreate() throws ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable(testTableLockedYesAnonCreate,
-        true, true, RowFilterScope.Type.DEFAULT.name());
+        true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -472,13 +491,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-        false, false, RowFilterScope.Type.DEFAULT.name());
+        false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -516,13 +536,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -561,13 +582,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -606,13 +628,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertTwoCheckpointAsUpdatePopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -651,13 +674,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate1()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -695,13 +719,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate1()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -740,13 +765,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate1()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -785,13 +811,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate1()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertOneCheckpointAsUpdatePopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -830,13 +857,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate0()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -874,13 +902,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate0()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -919,13 +948,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate0()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -964,13 +994,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate0()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
@@ -1009,12 +1040,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertUnlockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
-            false, false, RowFilterScope.Type.DEFAULT.name());
+            false, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
 
@@ -1047,13 +1079,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertUnlockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableUnlockedYesAnonCreate,
-            false, true, RowFilterScope.Type.DEFAULT.name());
+            false, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
 
@@ -1086,13 +1119,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertLockedNoAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedNoAnonCreate,
-            true, false, RowFilterScope.Type.DEFAULT.name());
+            true, false, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
 
@@ -1125,13 +1159,14 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     }
   }
 
+  @Test
   public void testDeleteAllCheckpointsAsInsertLockedYesAnonCreate()
       throws  ActionNotAuthorizedException {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable
         (testTableLockedYesAnonCreate,
-            true, true, RowFilterScope.Type.DEFAULT.name());
+            true, true, RowFilterScope.Access.FULL.name());
 
     ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
 
