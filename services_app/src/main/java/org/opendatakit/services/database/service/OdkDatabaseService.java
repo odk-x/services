@@ -114,7 +114,7 @@ public class OdkDatabaseService extends Service {
    *
    * @param chunkList The extra data to be stored
    */
-  public void putParceledChunks(List<DbChunk> chunkList) {
+  public void putParceledChunks(Iterable<DbChunk> chunkList) {
     if (chunkList == null) {
       WebLogger.getLogger(null).e(TAG, "Attempted to store a null chunk list");
       return;
