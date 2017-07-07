@@ -1,23 +1,39 @@
 package org.opendatakit.services.database.service;
 
+import android.database.Cursor;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.application.Services;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.utilities.ODKFileUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
+import static org.opendatakit.services.tables.provider.TablesProviderTest.get;
 
 /**
  * Created by Niles on 7/6/17.
  */
 public class OdkDatabaseServiceImplTest {
+  private static final String TAG = OdkDatabaseServiceImplTest.class.getSimpleName();
+  private static boolean initialized = false;
   private OdkDatabaseServiceImpl d;
   private PropertiesSingleton props;
+  private DbHandle dbHandle;
+  private OdkConnectionInterface db;
 
   private static String getAppName() {
     return "default";
@@ -25,9 +41,24 @@ public class OdkDatabaseServiceImplTest {
 
   @Before
   public void setUp() {
-    d = new OdkDatabaseServiceImpl(Services._please_dont_use_getInstance());
     props = CommonToolProperties.get(Services._please_dont_use_getInstance(), getAppName());
     props.clearSettings();
+    ODKFileUtils.assertDirectoryStructure(getAppName());
+    if (!initialized) {
+      initialized = true;
+      AndroidConnectFactory.configure();
+    }
+    DbHandle uniqueKey = new DbHandle(
+        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+    db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .getConnection(getAppName(), uniqueKey);
+    d = new OdkDatabaseServiceImpl(Services._please_dont_use_getInstance());
+    dbHandle = d.openDatabase(getAppName());
+  }
+
+  @After
+  public void cleanUp() {
+    d.closeDatabase(getAppName(), dbHandle);
   }
 
   @Test
@@ -78,28 +109,64 @@ public class OdkDatabaseServiceImplTest {
 
   @Test
   public void testGetDefaultGroup() throws Exception {
-    assertEquals(d.getDefaultGroup(getAppName()),
-        props.getProperty(CommonToolProperties.KEY_DEFAULT_GROUP));
+    String defaultGroup = d.getDefaultGroup(getAppName());
+    assertTrue(defaultGroup == null || defaultGroup.isEmpty());
+    setProp(CommonToolProperties.KEY_DEFAULT_GROUP, "default group here");
+    assertEquals(d.getDefaultGroup(getAppName()), "default group here");
   }
 
   @Test
   public void testGetUsersList() throws Exception {
-
+    assertNull(d.getUsersList(getAppName()));
+    setProp(CommonToolProperties.KEY_USERS_LIST, "test");
+    assertEquals(d.getUsersList(getAppName()), "test");
   }
 
   @Test
   public void testOpenDatabase() throws Exception {
-
+    // Should not throw an exception
+    String qualifier = d.openDatabase(getAppName()).getDatabaseHandle();
+    assertNotNull(qualifier);
+    assertFalse(qualifier.isEmpty());
+    d.closeDatabase(getAppName(), new DbHandle(qualifier));
   }
 
   @Test
   public void testCloseDatabase() throws Exception {
-
+    // Should not throw an exception
+    d.closeDatabase(getAppName(), d.openDatabase(getAppName()));
   }
 
   @Test
   public void testCreateLocalOnlyTableWithColumns() throws Exception {
-
+    try {
+      db.execSQL("DROP TABLE tbl", new String[0]);
+    } catch (Exception ignored) {
+      // ignore
+    }
+    d.createLocalOnlyTableWithColumns(getAppName(), dbHandle, "tbl", new ColumnList(Arrays.asList(
+        new Column[] {
+            new Column("columnId", "Column Name", ElementDataType.string.name(), "[]"),
+            new Column("columnId2", "Second Column Name", ElementDataType.integer.name(),
+                "[]") })));
+    db.execSQL("INSERT INTO tbl (columnId, columnId2) VALUES ('ayy lmao', 3);", new String[0]);
+    Cursor c = db.rawQuery("SELECT * FROM tbl", new String[0]);
+    assertNotNull(c);
+    c.moveToFirst();
+    assertEquals(get(c, "columnId"), "ayy lmao");
+    assertEquals(get(c, "columnId2"), "3");
+    boolean worked = false;
+    try {
+      db.execSQL("INSERT INTO tbl (columnId, columnId2) VALUES ('test', 'string');", new String[0]);
+    } catch (Exception ignored) {
+      worked = true;
+    }
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] {"test"});
+    c.moveToFirst();
+    WebLogger.getLogger(getAppName()).e(TAG, get(c, "columnId2"));
+    c.close();
+    // Broken right now because sqlite lets you put 'string' into an integer field for some reason
+    //assertTrue(worked);
   }
 
   @Test
