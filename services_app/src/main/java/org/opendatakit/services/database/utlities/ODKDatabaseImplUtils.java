@@ -1850,8 +1850,6 @@ public final class ODKDatabaseImplUtils {
    * @return choiceListJSON -- the actual JSON choice list text.
    */
   public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
-    ChoiceListUtils utils = new ChoiceListUtils();
-
     if (choiceListId == null || choiceListId.trim().isEmpty()) {
       return null;
     }
