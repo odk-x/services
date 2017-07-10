@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.database.service.OdkDatabaseServiceImplTest;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -51,6 +52,8 @@ public class FormsProviderTest {
 
   @Test
   public void testQueryBlankFormId() throws Exception {
+    new OdkDatabaseServiceImplTest().insertMetadata("Tea_houses", "SurveyUtil", "default",
+        "SurveyUtil.formId", "Tea_Houses"); // Set default form id
     // Should pull default form id from the database/KVS
     Cursor result = p.query(
         new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("").build(),
@@ -190,6 +193,7 @@ public class FormsProviderTest {
   @Test
   public void testQueryExistingForm() throws Exception {
     // just app name
+    try { testInsertExistingForm(); } catch (Exception ignored) {} // is supposed to throw exception
     Cursor result = p.query(uri, FormsColumns.formsDataColumnNames, FormsColumns.TABLE_ID + " =?",
         new String[] { "Tea_houses" }, FormsColumns.TABLE_ID);
     assertTeaHouses(result);
