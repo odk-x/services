@@ -733,14 +733,13 @@ public class OdkDatabaseServiceImplTest {
     assertTrue(worked);
   }
 
-  private void insertMetadata(String table, String partition, String aspect, String key,
+  public void insertMetadata(String table, String partition, String aspect, String key,
       String value) {
     db.rawQuery(
         "INSERT INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " (" + join(", ",
             new String[] { KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
                 KeyValueStoreColumns.ASPECT, KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE,
-                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, "
-            + "?, ?, ?);",
+                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, ?, ?, ?);",
         new String[] { table, partition, aspect, key, value, "TEXT" });
   }
 
@@ -880,7 +879,6 @@ public class OdkDatabaseServiceImplTest {
     }
   }
 
-  /*
   @Test
   public void testGetMostRecentRowWithId() throws Exception {
     createTeaHouses();
@@ -981,6 +979,7 @@ public class OdkDatabaseServiceImplTest {
     assertFalse(res.hasChanges());
   }
 
+  /*
   @Test
   public void testGetTableHealthStatuses() throws Exception {
 
