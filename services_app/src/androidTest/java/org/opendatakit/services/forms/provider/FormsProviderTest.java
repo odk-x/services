@@ -67,16 +67,25 @@ public class FormsProviderTest {
     OdkDatabaseServiceImplTest test = new OdkDatabaseServiceImplTest();
     test.setUp();
     test.insertMetadata("Tea_houses", "SurveyUtil", "default", "SurveyUtil.formId",
-        "Tea_Houses"); // Set default form id
+        "Tea_houses"); // Set default form id
+    db.rawQuery("INSERT INTO " + DatabaseConstants.FORMS_TABLE_NAME + " (" + join(", ",
+        FormsColumns.formsDataColumnNames) + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        new String[] { "Tea_houses", "Tea_houses", "SETTINGS", "FORM_VERSION",
+            "{\"text\": " + "\"Tea Houses\"}", "default", "INSTANCE_NAME", "JSON_MD5_HASH",
+            "FILE_LENGTH", "DATE" }).close();
     // Should pull default form id from the database/KVS
     Uri uri = new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
-        .appendEncodedPath("").build();
+        .appendEncodedPath("_").build();
+    /*
+    result = p.query(
+        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
+            .build(), FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
+        new String[] { "default" }, FormsColumns.TABLE_ID);
+        */
     Cursor result = p
-        .query(uri, new String[] { FormsColumns.DISPLAY_NAME, FormsColumns.DEFAULT_FORM_LOCALE },
+        .query(uri, FormsColumns.formsDataColumnNames,
             null, null, null);
-    // This test is currently broken because "/default/Tea_houses/" and "/default/Tea_houses"
-    // both return two fragments instead of 3 and 2, for no good reason
-    //assertTeaHouses(result);
+    assertTeaHouses(result);
   }
 
   @Before
@@ -145,22 +154,21 @@ public class FormsProviderTest {
 
   @Test
   public void testDeleteExistingAndInsertNewFormNoFormId() throws Exception {
-      /*
       deleteExistingAndInsertNewForm(new Runnable() {
         @Override
         public void run() {
-          p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
+          p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath
+              ("_")
               .build(), null, null);
         }
       });
-      */
   }
 
-  private void deleteExistingAndInsertNewForm(Runnable r) throws Exception {
+  private static void deleteExistingAndInsertNewForm(Runnable r) throws Exception {
     boolean failed = false;
     try {
       r.run();
-    } catch (Exception e) {
+    } catch (Exception ignored) {
       failed = true;
     }
     // make sure it was actually removed
