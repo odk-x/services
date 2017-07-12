@@ -278,6 +278,7 @@ public class HttpRestProtocolWrapper {
         asList.add(a);
         // this might be disabled in production builds...
         if ( sc.getAllowUnsafeAuthentication() ) {
+          log.e(LOGTAG, "Enabling Unsafe Authentication!");
           a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
           asList.add(a);
         }
