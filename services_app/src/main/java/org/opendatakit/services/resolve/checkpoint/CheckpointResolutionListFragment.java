@@ -222,8 +222,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   private void resolveConflictList(boolean takeNewest) {
     if (mAdapter.getCount() > 0) {
       if (checkpointResolutionListTask == null) {
-        checkpointResolutionListTask = new CheckpointResolutionListTask(getActivity(), takeNewest);
-        checkpointResolutionListTask.setAppName(mAppName);
+        checkpointResolutionListTask = new CheckpointResolutionListTask(getActivity(), takeNewest, mAppName);
         checkpointResolutionListTask.setTableId(mTableId);
         checkpointResolutionListTask.setResolveRowEntryAdapter(mAdapter);
         checkpointResolutionListTask.setResolutionListener(this);
