@@ -22,7 +22,6 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Manipulator class for setting and getting choiceList definitions.
@@ -95,7 +94,8 @@ public class ChoiceListUtils {
    * @param choiceListId   the id of the row in the choice list table
    * @param choiceListJSON json representing the new set of choices
    */
-  public void setChoiceList(OdkConnectionInterface db, String choiceListId, String choiceListJSON) {
+  public static void setChoiceList(OdkConnectionInterface db, String choiceListId,
+      String choiceListJSON) {
 
     if (choiceListId == null || choiceListId.trim().isEmpty()) {
       throw new IllegalArgumentException("setChoiceList: choiceListId cannot be null or empty");

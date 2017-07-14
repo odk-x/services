@@ -32,7 +32,10 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   String mProgress = "";
   String mResult = null;
 
-  public CheckpointResolutionListTask(Context context, boolean takeNewest) {
+  public CheckpointResolutionListTask(Context context, boolean takeNewest, String appName) {
+    // There are times when this constructor is called and mAppName has no value
+    // and getActiveUserAndLocale crashes so we need the appName in the constructor
+    mAppName = appName;
     aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
 
     formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
