@@ -268,7 +268,7 @@
         the server. If you change users or logout before syncing these changes, you may
         lose them.</string>
     <string name="resolve_with_sync">Sync Changes</string>
-    <string name="ignore_changes">Discard Unsynced Changes</string>
+    <string name="ignore_changes">Ignore Unsynced Changes</string>
 
     <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
