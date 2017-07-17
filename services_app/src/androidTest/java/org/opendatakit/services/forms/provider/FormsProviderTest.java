@@ -3,6 +3,7 @@ package org.opendatakit.services.forms.provider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.*;
 import org.junit.runner.RunWith;
