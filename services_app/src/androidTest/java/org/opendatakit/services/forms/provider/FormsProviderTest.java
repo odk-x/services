@@ -3,7 +3,6 @@ package org.opendatakit.services.forms.provider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -87,7 +86,6 @@ public class FormsProviderTest {
             null, null, null);
     assertTeaHouses(result);
   }
-
   @Before
   public void setUp() throws Exception {
     ODKFileUtils.assertDirectoryStructure(getAppName());
@@ -255,15 +253,15 @@ public class FormsProviderTest {
     c.close();
   }
 
-  @Test
-  public void testUpdate() throws Exception {
-    Cursor c = p.query(uri, new String[0], null, null, FormsColumns.FORM_ID);
-    if (c == null)
-      throw new Exception("Null cursor");
-    int expected = c.getCount();
-    c.close();
-    assertEquals(p.update(uri, null, null, null), expected);
-  }
+//  @Test
+//  public void testUpdate() throws Exception {
+//    Cursor c = p.query(uri, new String[0], null, null, FormsColumns.FORM_ID);
+//    if (c == null)
+//      throw new Exception("Null cursor");
+//    int expected = c.getCount();
+//    c.close();
+//    assertEquals(p.update(uri, null, null, null), expected);
+//  }
 
   @Test
   public void testOnCreate() throws Exception {
