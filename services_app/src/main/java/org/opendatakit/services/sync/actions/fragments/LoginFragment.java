@@ -20,12 +20,15 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.provider.SyncStateContract;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,8 +37,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
@@ -957,22 +962,23 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
               + hasChanges + "\n\tNumber of conflict rows present: " + conflictTables.size()
               + "\n\tNumber of checkpoint rows present: " + checkpointTables.size());
 
-      // TODO: Add UI to tell user we're about to resolve checkpoints and conflicts
-      // TODO: Deal with conflicts and checkpoints (desktop file)
 
       if (hasChanges) {
-         promptToResolveChanges();
+         promptToResolveChanges(checkpointTables, conflictTables);
+      } else  {
+         checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
       }
    }
 
-   private void promptToResolveChanges() {
+   private void promptToResolveChanges(final List<String> checkpointTables,
+                                       final List<String> conflictTables) {
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
       builder.setTitle(R.string.sync_pending_changes);
       builder.setMessage(R.string.resolve_pending_changes);
       builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
          public void onClick(DialogInterface dialog, int id) {
             dialog.dismiss();
-            // Do nothing and continue to login screen
+            checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
          }
       });
       builder.setNegativeButton(R.string.resolve_with_sync, new DialogInterface.OnClickListener() {
@@ -990,4 +996,60 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       dialog.show();
    }
 
+   private void checkForCheckpointAndConflictTables(List<String> checkpointTables,
+                                                    List<String> conflictTables) {
+
+      if ((checkpointTables != null && !checkpointTables.isEmpty()) ||
+              (conflictTables != null && !conflictTables.isEmpty())) {
+         promptToResolveCheckpointsAndConflicts(checkpointTables, conflictTables);
+      }
+
+   }
+
+   private void promptToResolveCheckpointsAndConflicts(final List<String> checkpointTables,
+                                                       final List<String> conflictTables) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setTitle(R.string.resolve_checkpoints_and_conflicts);
+      builder.setMessage(R.string.resolve_pending_checkpoints_and_conflicts);
+      builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+         public void onClick(DialogInterface dialog, int id) {
+            dialog.dismiss();
+            resolveConflictsAndCheckpoints(checkpointTables, conflictTables);
+         }
+      });
+      AlertDialog dialog = builder.create();
+      dialog.show();
+   }
+
+   private void resolveConflictsAndCheckpoints(List<String> checkpointTables, List<String> conflictTables) {
+
+      if (checkpointTables != null && !checkpointTables.isEmpty()) {
+         Iterator<String> iterator = checkpointTables.iterator();
+         String tableId = iterator.next();
+         checkpointTables.remove(tableId);
+
+         Intent i;
+         i = new Intent();
+         i.setComponent(new ComponentName(IntentConsts.ResolveCheckpoint.APPLICATION_NAME,
+                 IntentConsts.ResolveCheckpoint.ACTIVITY_NAME));
+         i.setAction(Intent.ACTION_EDIT);
+         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+         i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
+         this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+      }
+      if (conflictTables != null && !conflictTables.isEmpty()) {
+         Iterator<String> iterator = conflictTables.iterator();
+         String tableId = iterator.next();
+         conflictTables.remove(tableId);
+
+         Intent i;
+         i = new Intent();
+         i.setComponent(new ComponentName(IntentConsts.ResolveConflict.APPLICATION_NAME,
+                 IntentConsts.ResolveConflict.ACTIVITY_NAME));
+         i.setAction(Intent.ACTION_EDIT);
+         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+         i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
+         this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+      }
+   }
 }

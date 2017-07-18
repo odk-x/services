@@ -19,6 +19,7 @@ import android.accounts.AccountManager;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;
@@ -46,6 +48,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -360,9 +363,9 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     return true;
   }
 
+
     private void verifyTableHealth() {
         String appName = ((AppPropertiesActivity) getActivity()).getAppName();
-
         WebLogger.getLogger(appName).i(t, "[" + getId() + "] [verifyTableHealth]");
 
         OdkConnectionInterface db = null;
@@ -411,22 +414,25 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
                         + hasChanges + "\n\tNumber of conflict rows present: " + conflictTables.size()
                         + "\n\tNumber of checkpoint rows present: " + checkpointTables.size());
 
-        // TODO: Add UI to tell user we're about to resolve checkpoints and conflicts
-        // TODO: Deal with conflicts and checkpoints (desktop file)
 
         if (hasChanges) {
-            promptToResolveChanges(appName);
+            promptToResolveChanges(checkpointTables, conflictTables);
+        } else {
+            checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
         }
     }
 
-    private void promptToResolveChanges(final String appName) {
+    private void promptToResolveChanges(final List<String> checkpointTables,
+                                        final List<String> conflictTables) {
+        final String appName = ((AppPropertiesActivity) getActivity()).getAppName();
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.sync_pending_changes);
         builder.setMessage(R.string.resolve_pending_changes);
         builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.dismiss();
-                // Do nothing and continue to login screen
+                checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
             }
         });
         builder.setNegativeButton(R.string.resolve_with_sync, new DialogInterface.OnClickListener() {
@@ -442,5 +448,63 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void checkForCheckpointAndConflictTables(List<String> checkpointTables,
+                                                     List<String> conflictTables) {
+
+        if ((checkpointTables != null && !checkpointTables.isEmpty()) ||
+                (conflictTables != null && !conflictTables.isEmpty())) {
+            promptToResolveCheckpointsAndConflicts(checkpointTables, conflictTables);
+        }
+
+    }
+
+    private void promptToResolveCheckpointsAndConflicts(final List<String> checkpointTables,
+                                                        final List<String> conflictTables) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.resolve_checkpoints_and_conflicts);
+        builder.setMessage(R.string.resolve_pending_checkpoints_and_conflicts);
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+                resolveConflictsAndCheckpoints(checkpointTables, conflictTables);
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void resolveConflictsAndCheckpoints(List<String> checkpointTables, List<String> conflictTables) {
+        String appName = ((AppPropertiesActivity) getActivity()).getAppName();
+
+        if (checkpointTables != null && !checkpointTables.isEmpty()) {
+            Iterator<String> iterator = checkpointTables.iterator();
+            String tableId = iterator.next();
+            checkpointTables.remove(tableId);
+
+            Intent i;
+            i = new Intent();
+            i.setComponent(new ComponentName(IntentConsts.ResolveCheckpoint.APPLICATION_NAME,
+                    IntentConsts.ResolveCheckpoint.ACTIVITY_NAME));
+            i.setAction(Intent.ACTION_EDIT);
+            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+            i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
+            this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+        }
+        if (conflictTables != null && !conflictTables.isEmpty()) {
+            Iterator<String> iterator = conflictTables.iterator();
+            String tableId = iterator.next();
+            conflictTables.remove(tableId);
+
+            Intent i;
+            i = new Intent();
+            i.setComponent(new ComponentName(IntentConsts.ResolveConflict.APPLICATION_NAME,
+                    IntentConsts.ResolveConflict.ACTIVITY_NAME));
+            i.setAction(Intent.ACTION_EDIT);
+            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+            i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
+            this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+        }
     }
 }
