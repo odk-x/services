@@ -16,6 +16,7 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -42,6 +43,8 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.actions.LoginActions;
+import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.utilities.TableHealthValidator;
 
@@ -368,6 +371,13 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     return true;
   }
 
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
 
+    if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
+        requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER) {
+      healthValidator.verifyTableHealth();
+    }
+  }
 
 }
