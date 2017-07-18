@@ -270,6 +270,9 @@
     <string name="resolve_with_sync">Sync Changes</string>
     <string name="ignore_changes">Ignore Unsynced Changes</string>
 
+    <string name="resolve_checkpoints_and_conflicts">Resolve Checkpoints and Conflicts</string>
+    <string name="resolve_pending_checkpoints_and_conflicts">You have checkpoint rows and/or conflicts with the server that must be resolved before you can change your authenticated user.</string>
+
     <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
     <string name="authentication_error">Authentication Error</string>
