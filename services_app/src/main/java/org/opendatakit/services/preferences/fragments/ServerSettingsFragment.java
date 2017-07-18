@@ -364,6 +364,14 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   }
 
 
+    /**
+     * The functions below verify that the database is clean, with no new changes, conflicts, or
+     * checkpoint rows, before proceeding to let the user change server settings or authenticate
+     * as a new user.
+     *
+     * This logic is very similar in LoginFragment.java, so any changes here should be considered in
+     * that file as well.
+     */
     private void verifyTableHealth() {
         String appName = ((AppPropertiesActivity) getActivity()).getAppName();
         WebLogger.getLogger(appName).i(t, "[" + getId() + "] [verifyTableHealth]");

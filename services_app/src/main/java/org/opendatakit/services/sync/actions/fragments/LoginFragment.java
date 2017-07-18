@@ -913,6 +913,13 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       return mAppName;
    }
 
+    /**
+     * The functions below verify that the database is clean, with no new changes, conflicts, or
+     * checkpoint rows, before proceeding to let the user authenticate as a new user.
+     *
+     * This logic is very similar in ServerSettingsFragment.java, so any changes here should be
+     * considered in that file as well.
+     */
    private void verifyTableHealth() {
       WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [verifyTableHealth]");
 
