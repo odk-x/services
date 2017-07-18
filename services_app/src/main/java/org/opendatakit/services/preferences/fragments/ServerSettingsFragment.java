@@ -43,6 +43,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.utilities.TableHealthValidator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,12 +63,16 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   private ListPreference mSignOnCredentialPreference;
   private EditTextPreference mUsernamePreference;
   private ListPreference mSelectedGoogleAccountPreference;
+  private TableHealthValidator healthValidator;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+
+    String appName = ((AppPropertiesActivity) getActivity()).getAppName();
+    healthValidator = new TableHealthValidator(appName, getActivity());
 
     addPreferencesFromResource(R.xml.server_preferences);
 
@@ -300,7 +305,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
       serverCategory.setTitle(R.string.server_restrictions_apply);
     }
 
-    verifyTableHealth();
+    healthValidator.verifyTableHealth();
   }
 
   /**
@@ -364,155 +369,5 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   }
 
 
-    /**
-     * The functions below verify that the database is clean, with no new changes, conflicts, or
-     * checkpoint rows, before proceeding to let the user change server settings or authenticate
-     * as a new user.
-     *
-     * This logic is very similar in LoginFragment.java, so any changes here should be considered in
-     * that file as well.
-     */
-    private void verifyTableHealth() {
-        String appName = ((AppPropertiesActivity) getActivity()).getAppName();
-        WebLogger.getLogger(appName).i(t, "[" + getId() + "] [verifyTableHealth]");
 
-        OdkConnectionInterface db = null;
-        DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
-
-        List<String> checkpointTables = new LinkedList<>();
-        List<String> conflictTables = new LinkedList<>();
-        boolean hasChanges = false;
-
-        try {
-            // +1 referenceCount if db is returned (non-null)
-            db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                    .getConnection(appName, dbHandleName);
-            List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
-
-            for (String tableId : tableIds) {
-                int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
-
-                if (CursorUtils.getTableHealthIsClean(health)) {
-                    continue;
-                }
-
-                if (!hasChanges && CursorUtils.getTableHealthHasChanges(health)) {
-                    hasChanges = true;
-                }
-
-                if (CursorUtils.getTableHealthHasConflicts(health)) {
-                    conflictTables.add(tableId);
-                }
-
-                if (CursorUtils.getTableHealthHasCheckpoints(health)) {
-                    checkpointTables.add(tableId);
-                }
-            }
-        } finally {
-            if (db != null) {
-                // release the reference...
-                // this does not necessarily close the db handle
-                // or terminate any pending transaction
-                db.releaseReference();
-            }
-        }
-
-        WebLogger.getLogger(appName).i(t,
-                "[" + getId() + "] [verifyTableHealth] " + "summary:\n\tUnsynced changes present: "
-                        + hasChanges + "\n\tNumber of conflict rows present: " + conflictTables.size()
-                        + "\n\tNumber of checkpoint rows present: " + checkpointTables.size());
-
-
-        if (hasChanges) {
-            promptToResolveChanges(checkpointTables, conflictTables);
-        } else {
-            checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
-        }
-    }
-
-    private void promptToResolveChanges(final List<String> checkpointTables,
-                                        final List<String> conflictTables) {
-        final String appName = ((AppPropertiesActivity) getActivity()).getAppName();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.sync_pending_changes);
-        builder.setMessage(R.string.resolve_pending_changes);
-        builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-                checkForCheckpointAndConflictTables(checkpointTables, conflictTables);
-            }
-        });
-        builder.setNegativeButton(R.string.resolve_with_sync, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-
-                // Launch the Sync activity to sync your changes.
-                // TODO: Can we check if we just came from sync and if so just return to that?
-                Intent i = new Intent(getActivity(), SyncActivity.class);
-                i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
-                startActivity(i);
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    private void checkForCheckpointAndConflictTables(List<String> checkpointTables,
-                                                     List<String> conflictTables) {
-
-        if ((checkpointTables != null && !checkpointTables.isEmpty()) ||
-                (conflictTables != null && !conflictTables.isEmpty())) {
-            promptToResolveCheckpointsAndConflicts(checkpointTables, conflictTables);
-        }
-
-    }
-
-    private void promptToResolveCheckpointsAndConflicts(final List<String> checkpointTables,
-                                                        final List<String> conflictTables) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.resolve_checkpoints_and_conflicts);
-        builder.setMessage(R.string.resolve_pending_checkpoints_and_conflicts);
-        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-                resolveConflictsAndCheckpoints(checkpointTables, conflictTables);
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    private void resolveConflictsAndCheckpoints(List<String> checkpointTables, List<String> conflictTables) {
-        String appName = ((AppPropertiesActivity) getActivity()).getAppName();
-
-        if (checkpointTables != null && !checkpointTables.isEmpty()) {
-            Iterator<String> iterator = checkpointTables.iterator();
-            String tableId = iterator.next();
-            checkpointTables.remove(tableId);
-
-            Intent i;
-            i = new Intent();
-            i.setComponent(new ComponentName(IntentConsts.ResolveCheckpoint.APPLICATION_NAME,
-                    IntentConsts.ResolveCheckpoint.ACTIVITY_NAME));
-            i.setAction(Intent.ACTION_EDIT);
-            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
-            i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
-            this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
-        }
-        if (conflictTables != null && !conflictTables.isEmpty()) {
-            Iterator<String> iterator = conflictTables.iterator();
-            String tableId = iterator.next();
-            conflictTables.remove(tableId);
-
-            Intent i;
-            i = new Intent();
-            i.setComponent(new ComponentName(IntentConsts.ResolveConflict.APPLICATION_NAME,
-                    IntentConsts.ResolveConflict.ACTIVITY_NAME));
-            i.setAction(Intent.ACTION_EDIT);
-            i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
-            i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
-            this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
-        }
-    }
 }
