@@ -70,7 +70,6 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
    */
   public ConflictResolutionListTask(Context context, boolean takeLocal, String appName) {
     super();
-    // TODO this is the constructor! mAppName hasn't been set yet!
     this.mAppName = appName;
     aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
 
