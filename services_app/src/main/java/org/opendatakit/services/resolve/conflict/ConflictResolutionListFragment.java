@@ -224,8 +224,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   private void resolveConflictList(boolean takeLocal) {
     if (mAdapter.getCount() > 0) {
       if (conflictResolutionListTask == null) {
-        conflictResolutionListTask = new ConflictResolutionListTask(getActivity(), takeLocal);
-        conflictResolutionListTask.setAppName(mAppName);
+        conflictResolutionListTask = new ConflictResolutionListTask(getActivity(), takeLocal, mAppName);
         conflictResolutionListTask.setTableId(mTableId);
         conflictResolutionListTask.setResolveRowEntryAdapter(mAdapter);
         conflictResolutionListTask.setResolutionListener(this);
