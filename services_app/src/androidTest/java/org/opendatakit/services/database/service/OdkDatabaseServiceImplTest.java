@@ -3,6 +3,7 @@ package org.opendatakit.services.database.service;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +15,12 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.RoleConsts;
-import org.opendatakit.database.data.*;
+import org.opendatakit.database.data.BaseTable;
+import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TableMetaDataEntries;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
@@ -22,19 +28,34 @@ import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.provider.*;
+import org.opendatakit.provider.ChoiceListColumns;
+import org.opendatakit.provider.ColumnDefinitionsColumns;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.tables.provider.TablesProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static android.text.TextUtils.join;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.opendatakit.services.tables.provider.TablesProviderTest.get;
 
 /**
@@ -45,6 +66,7 @@ public class OdkDatabaseServiceImplTest {
   private static final String TAG = OdkDatabaseServiceImplTest.class.getSimpleName();
   private static final double delta = 0.00001;
   private static boolean initialized = false;
+  private static String[] thUserColumns = { "Customers", "Date_Opened", "District", "Hot", "Iced", "Location_accuracy", "Location_altitude", "Location_latitude", "Location_longitude", "Name", "Neighborhood", "Phone_Number", "Region", "Specialty_Type_id", "State", "Store_Owner", "Visits", "WiFi" };
   private OdkDatabaseServiceImpl d;
   private PropertiesSingleton props;
   private DbHandle dbHandle;
@@ -106,9 +128,17 @@ public class OdkDatabaseServiceImplTest {
     }
     assertTrue(instanceFolder.exists());
     FileOutputStream f = new FileOutputStream(new File(instanceFolder.getPath() + "/temp"));
-    f.write(new byte[] { 97, 98, 99 });
+    f.write(new byte[]{ 97, 98, 99 });
     f.close();
     return instanceFolder;
+  }
+
+  private static ContentValues makeThCvs(String... args) {
+    ContentValues res = new ContentValues();
+    for (int i = 0; i < args.length; i++) {
+      res.put(thUserColumns[i], args[i]);
+    }
+    return res;
   }
 
   @Before
@@ -126,6 +156,8 @@ public class OdkDatabaseServiceImplTest {
         .getConnection(getAppName(), uniqueKey);
     d = new OdkDatabaseServiceImpl(Services._please_dont_use_getInstance());
     dbHandle = d.openDatabase(getAppName());
+    truncate(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
+    truncate(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
   }
 
   @After
@@ -213,12 +245,12 @@ public class OdkDatabaseServiceImplTest {
   public void testCreateLocalOnlyTableWithColumns() throws Exception {
     drop("tbl");
     d.createLocalOnlyTableWithColumns(getAppName(), dbHandle, "tbl", new ColumnList(Arrays.asList(
-        new Column[] { new Column("columnId", "Column Name", ElementDataType.string.name(), "[]"),
+        new Column[]{ new Column("columnId", "Column Name", ElementDataType.string.name(), "[]"),
             new Column("columnId3", "Column Name", ElementDataType.number.name(), "[]"),
             new Column("columnId2", "Second Column Name", ElementDataType.integer.name(),
                 "[]") })));
     db.execSQL("INSERT INTO tbl (columnId, columnId2) VALUES (?, ?);",
-        new Object[] { "ayy lmao", 3 });
+        new Object[]{ "ayy lmao", 3 });
     Cursor c = db.rawQuery("SELECT * FROM tbl", new String[0]);
     assertNotNull(c);
     c.moveToFirst();
@@ -281,34 +313,34 @@ public class OdkDatabaseServiceImplTest {
     d.insertLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test2", 15, 3.1415));
     d.insertLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test", 15, 3.1415));
     d.updateLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test", 16, 3.1415),
-        "columnId = ?", new BindArgs(new String[] { "test" }));
-    Cursor c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "test" });
+        "columnId = ?", new BindArgs(new String[]{ "test" }));
+    Cursor c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "test" });
     c.moveToFirst();
     assertEquals(getInt(c, "columnId2"), 16);
     c.close();
-    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "test2" });
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "test2" });
     c.moveToFirst();
     assertEquals(getInt(c, "columnId2"), 15);
     c.close();
     ContentValues cv = new ContentValues();
     cv.put("columnId3", 9.5);
     d.updateLocalOnlyRow(getAppName(), dbHandle, "tbl", cv, "columnId2 = ?",
-        new BindArgs(new Object[] { 16 }));
-    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "test" });
+        new BindArgs(new Object[]{ 16 }));
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "test" });
     c.moveToFirst();
     assertEquals(getDouble(c, "columnId3"), 9.5, delta);
     c.close();
-    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "test2" });
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "test2" });
     c.moveToFirst();
     assertEquals(getDouble(c, "columnId3"), 3.1415, delta);
     c.close();
     d.updateLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("a", 2, 3.1415), null, null);
-    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "a" });
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "a" });
     assertEquals(c.getCount(), 2);
     c.close();
     d.updateLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test", 16, 3.1415),
-        "columnId = ?", new BindArgs(new String[] { "test" }));
-    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[] { "a" });
+        "columnId = ?", new BindArgs(new String[]{ "test" }));
+    c = db.rawQuery("SELECT * FROM tbl WHERE columnId = ?", new String[]{ "a" });
     assertEquals(c.getCount(), 2);
     c.close();
   }
@@ -318,14 +350,14 @@ public class OdkDatabaseServiceImplTest {
     testCreateLocalOnlyTableWithColumns();
     d.insertLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test", 15, 3.1415));
     d.deleteLocalOnlyRow(getAppName(), dbHandle, "tbl", "columnId = ?",
-        new BindArgs(new String[] { "test" }));
+        new BindArgs(new String[]{ "test" }));
     Cursor c = db.rawQuery("SELECT * FROM tbl;", new String[0]);
     assertEquals(c.getCount(), 0);
     c.close();
     d.insertLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test", 15, 3.1415));
     d.insertLocalOnlyRow(getAppName(), dbHandle, "tbl", makeTblCvs("test2", 18, 9.813793));
     d.deleteLocalOnlyRow(getAppName(), dbHandle, "tbl", "columnId = ?",
-        new BindArgs(new String[] { "test" }));
+        new BindArgs(new String[]{ "test" }));
     c = db.rawQuery("SELECT * FROM tbl;", new String[0]);
     assertEquals(c.getCount(), 1);
     c.moveToFirst();
@@ -357,10 +389,10 @@ public class OdkDatabaseServiceImplTest {
     createTeaHouses();
     truncate(TableDefinitionsColumns.TABLE_ID);
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
-        new String[] { TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
+        new String[]{ TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
             TableDefinitionsColumns.LAST_SYNC_TIME, TableDefinitionsColumns.SCHEMA_ETAG,
             TableDefinitionsColumns.REV_ID }) + ") VALUES (?, ?, ?, ?, ?);",
-        new String[] { "Tea_houses", "data etag", "sync time", "schema etag", "revid" }).close();
+        new String[]{ "Tea_houses", "data etag", "sync time", "schema etag", "revid" }).close();
 
     // TODO test that it deletes old files
     thInsert("id1", SyncState.synced, ConflictType.LOCAL_DELETED_OLD_VALUES);
@@ -383,7 +415,7 @@ public class OdkDatabaseServiceImplTest {
     d.privilegedServerTableSchemaETagChanged(getAppName(), dbHandle, "Tea_houses", "new_etag",
         null);
     Cursor c = db.rawQuery("SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " WHERE "
-        + TableDefinitionsColumns.TABLE_ID + " = ?;", new String[] { "Tea_houses" });
+        + TableDefinitionsColumns.TABLE_ID + " = ?;", new String[]{ "Tea_houses" });
     c.moveToFirst();
     assertEquals(get(c, TableDefinitionsColumns.SCHEMA_ETAG), "new_etag");
     c.close();
@@ -402,13 +434,13 @@ public class OdkDatabaseServiceImplTest {
   }
 
   private void thAssertGone(String id) throws Exception {
-    Cursor c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?;", new String[] { id });
+    Cursor c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?;", new String[]{ id });
     assertEquals(c.getCount(), 0);
   }
 
   private void thAssertPresent(String id, @SuppressWarnings("TypeMayBeWeakened") SyncState state,
-      boolean conflictTypeShouldBeNull) {
-    Cursor c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?;", new String[] { id });
+                               boolean conflictTypeShouldBeNull) {
+    Cursor c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?;", new String[]{ id });
     c.moveToFirst();
     if (state != null) {
       assertEquals(get(c, "_sync_state"), state.name());
@@ -422,14 +454,14 @@ public class OdkDatabaseServiceImplTest {
 
   private void thInsert(String id, String savepointType) {
     db.execSQL("INSERT INTO Tea_houses (_id, _sync_state, _savepoint_timestamp, _savepoint_type) "
-        + "VALUES (?, ?, ?, ?)", new Object[] { id, SyncState.synced.name(), "", savepointType });
+        + "VALUES (?, ?, ?, ?)", new Object[]{ id, SyncState.synced.name(), "", savepointType });
   }
 
   private void thInsert(String id, @SuppressWarnings("TypeMayBeWeakened") SyncState syncState,
-      int conflictType) {
+                        int conflictType) {
     db.execSQL("INSERT INTO Tea_houses (_id, _savepoint_timestamp, _sync_state, "
             + "_conflict_type) VALUES (?, ?, ?, ?)",
-        new Object[] { id, "", syncState.name(), conflictType });
+        new Object[]{ id, "", syncState.name(), conflictType });
   }
 
   @Test
@@ -437,14 +469,14 @@ public class OdkDatabaseServiceImplTest {
     String id = d.setChoiceList(getAppName(), dbHandle, "[]");
     assertEquals(id, "d751713988987e9331980363e24189ce");
     Cursor c = db.rawQuery("SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME + " WHERE "
-        + ChoiceListColumns.CHOICE_LIST_ID + " = ?;", new String[] { id });
+        + ChoiceListColumns.CHOICE_LIST_ID + " = ?;", new String[]{ id });
     c.moveToFirst();
     assertEquals(get(c, ChoiceListColumns.CHOICE_LIST_JSON), "[]");
     c.close();
     id = d.setChoiceList(getAppName(), dbHandle, "['a', 'b']");
     assertEquals(id, "ce75bd1cd721f68dd62b65e2868a1951");
     c = db.rawQuery("SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME + " WHERE "
-        + ChoiceListColumns.CHOICE_LIST_ID + " = ?;", new String[] { id });
+        + ChoiceListColumns.CHOICE_LIST_ID + " = ?;", new String[]{ id });
     c.moveToFirst();
     assertEquals(get(c, ChoiceListColumns.CHOICE_LIST_JSON), "['a', 'b']");
     c.close();
@@ -470,7 +502,7 @@ public class OdkDatabaseServiceImplTest {
     truncate(DatabaseConstants.CHOICE_LIST_TABLE_NAME);
     db.rawQuery("INSERT INTO " + DatabaseConstants.CHOICE_LIST_TABLE_NAME + " ("
         + ChoiceListColumns.CHOICE_LIST_ID + ", " + ChoiceListColumns.CHOICE_LIST_JSON + ") VALUES "
-        + "(?, ?);", new String[] { "3fb5e8ac474a9076c6be893398b03a8f", "['val']" }).close();
+        + "(?, ?);", new String[]{ "3fb5e8ac474a9076c6be893398b03a8f", "['val']" }).close();
     assertEquals(d.getChoiceList(getAppName(), dbHandle, "3fb5e8ac474a9076c6be893398b03a8f"),
         "['val']");
     assertNull(d.getChoiceList(getAppName(), dbHandle, null));
@@ -619,7 +651,7 @@ public class OdkDatabaseServiceImplTest {
   private void assertNoMdat(String k) {
     Cursor c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
-            + KeyValueStoreColumns.KEY + "= ?;", new String[] { k });
+            + KeyValueStoreColumns.KEY + "= ?;", new String[]{ k });
     assertEquals(c.getCount(), 0);
     c.close();
   }
@@ -627,7 +659,7 @@ public class OdkDatabaseServiceImplTest {
   private void assertMdat(String k, String v) {
     Cursor c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
-            + KeyValueStoreColumns.KEY + "= ?;", new String[] { k });
+            + KeyValueStoreColumns.KEY + "= ?;", new String[]{ k });
     assertEquals(c.getCount(), 1);
     c.moveToFirst();
     assertEquals(get(c, KeyValueStoreColumns.VALUE), v);
@@ -668,7 +700,7 @@ public class OdkDatabaseServiceImplTest {
 
   private void thSet(String id, String col, Object val) throws Exception {
     db.rawQuery("UPDATE Tea_houses SET " + col + " = " + (val == null ? "NULL" : "?") + " "
-        + "WHERE _id = ?", val == null ? new String[] { id } : new Object[] { val, id });
+        + "WHERE _id = ?", val == null ? new String[]{ id } : new Object[]{ val, id });
   }
 
   @Test
@@ -697,30 +729,30 @@ public class OdkDatabaseServiceImplTest {
     assertColType("Tea_houses", "_id", "TEXT");
     thInsert("t1", SavepointTypeManipulator.checkpoint());
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
-        new String[] { TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
+        new String[]{ TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
             TableDefinitionsColumns.LAST_SYNC_TIME, TableDefinitionsColumns.SCHEMA_ETAG,
             TableDefinitionsColumns.REV_ID }) + ") VALUES (?, ?, ?, ?, ?);",
-        new String[] { "Tea_houses", "data etag", "sync time", "schema etag", "revid" }).close();
+        new String[]{ "Tea_houses", "data etag", "sync time", "schema etag", "revid" }).close();
     thAssertPresent("t1", null, false);
     insertMetadata("Tea_houses", "partition", "aspect", "key", "value");
     db.rawQuery("INSERT INTO " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME + " (" + join(", ",
-        new String[] { ColumnDefinitionsColumns.TABLE_ID,
+        new String[]{ ColumnDefinitionsColumns.TABLE_ID,
             ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, ColumnDefinitionsColumns.ELEMENT_KEY,
             ColumnDefinitionsColumns.ELEMENT_NAME, ColumnDefinitionsColumns.ELEMENT_TYPE }) + ") "
             + "VALUES (?, ?, ?, ?, ?);",
-        new String[] { "Tea_houses", "[]", "Customers", "Customers", "integer" });
+        new String[]{ "Tea_houses", "[]", "Customers", "Customers", "integer" });
     d.deleteTableAndAllData(getAppName(), dbHandle, "Tea_houses");
     Cursor c = db.rawQuery("SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " WHERE "
-        + TableDefinitionsColumns.TABLE_ID + " = ?;", new String[] { "Tea_houses" });
+        + TableDefinitionsColumns.TABLE_ID + " = ?;", new String[]{ "Tea_houses" });
     assertEquals(c.getCount(), 0);
     c.close();
     c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
-            + KeyValueStoreColumns.TABLE_ID + " = ?;", new String[] { "Tea_houses" });
+            + KeyValueStoreColumns.TABLE_ID + " = ?;", new String[]{ "Tea_houses" });
     assertEquals(c.getCount(), 0);
     c.close();
     c = db.rawQuery("SELECT * FROM " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME + " WHERE "
-        + ColumnDefinitionsColumns.TABLE_ID + " = ?;", new String[] { "Tea_houses" });
+        + ColumnDefinitionsColumns.TABLE_ID + " = ?;", new String[]{ "Tea_houses" });
     assertEquals(c.getCount(), 0);
     c.close();
     boolean worked = false;
@@ -734,14 +766,14 @@ public class OdkDatabaseServiceImplTest {
   }
 
   private void insertMetadata(String table, String partition, String aspect, String key,
-      String value) {
+                              String value) {
     db.rawQuery(
         "INSERT INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " (" + join(", ",
-            new String[] { KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
+            new String[]{ KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
                 KeyValueStoreColumns.ASPECT, KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE,
                 KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, "
             + "?, ?, ?);",
-        new String[] { table, partition, aspect, key, value, "TEXT" });
+        new String[]{ table, partition, aspect, key, value, "TEXT" });
   }
 
   @Test
@@ -752,12 +784,12 @@ public class OdkDatabaseServiceImplTest {
     d.deleteTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "key");
     Cursor c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
-            + KeyValueStoreColumns.KEY + " = ?;", new String[] { "key" });
+            + KeyValueStoreColumns.KEY + " = ?;", new String[]{ "key" });
     assertEquals(c.getCount(), 0);
     c.close();
     c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
-            + KeyValueStoreColumns.KEY + " = ?;", new String[] { "some_other_key" });
+            + KeyValueStoreColumns.KEY + " = ?;", new String[]{ "some_other_key" });
     assertEquals(c.getCount(), 1);
     c.close();
   }
@@ -781,6 +813,7 @@ public class OdkDatabaseServiceImplTest {
     thInsert("t1", null);
     d.deleteRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
   }
+
   @Test
   public void testPrivilegedDeleteRowWithId() throws Exception {
     createTeaHouses();
@@ -818,15 +851,15 @@ public class OdkDatabaseServiceImplTest {
   public void testGetAllTableIds() throws Exception {
     truncate(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
-        new String[] { TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
+        new String[]{ TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
             TableDefinitionsColumns.LAST_SYNC_TIME, TableDefinitionsColumns.SCHEMA_ETAG,
             TableDefinitionsColumns.REV_ID }) + ") VALUES (?, ?, ?, ?, ?);",
-        new String[] { "fields", "data etag", "sync time", "schema etag", "revid" }).close();
+        new String[]{ "fields", "data etag", "sync time", "schema etag", "revid" }).close();
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
-        new String[] { TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
+        new String[]{ TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
             TableDefinitionsColumns.LAST_SYNC_TIME, TableDefinitionsColumns.SCHEMA_ETAG,
             TableDefinitionsColumns.REV_ID }) + ") VALUES (?, ?, ?, ?, ?);",
-        new String[] { "breathcounter", "data etag", "sync time", "schema etag", "revid" }).close();
+        new String[]{ "breathcounter", "data etag", "sync time", "schema etag", "revid" }).close();
     List<String> tables = d.getAllTableIds(getAppName(), dbHandle);
     assertTrue(tables.size() == 2);
     // Test that it returns list in sorted order
@@ -843,6 +876,7 @@ public class OdkDatabaseServiceImplTest {
     BaseTable t = d.getRowsWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(t.getNumberOfRows(), 0);
   }
+
   @Test
   public void testGetRowsWithId() throws Exception {
     setSuperuser();
@@ -880,14 +914,14 @@ public class OdkDatabaseServiceImplTest {
     }
   }
 
-  /*
   @Test
   public void testGetMostRecentRowWithId() throws Exception {
     createTeaHouses();
+    setSuperuser();
     thInsert("t1", SavepointTypeManipulator.incomplete());
-    thSet("t1", DataTableColumns.SAVEPOINT_TIMESTAMP, "bbb");
+    thSet("t1", DataTableColumns.SAVEPOINT_TIMESTAMP, "2016-01-01T00:00:00.000000000");
     thInsert("t2", SavepointTypeManipulator.complete());
-    thSet("t2", DataTableColumns.SAVEPOINT_TIMESTAMP, "aaa");
+    thSet("t2", DataTableColumns.SAVEPOINT_TIMESTAMP, "2017-01-01T00:00:00.000000000");
     thSet("t2", "_id", "t1");
     BaseTable result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 1);
@@ -898,10 +932,22 @@ public class OdkDatabaseServiceImplTest {
     assertEquals(result.getNumberOfRows(), 0);
   }
 
-  private void thSetRevid(String revId) throws Exception {
-    db.rawQuery("UPDATE " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " SET " +
-        TableDefinitionsColumns.REV_ID + " = ?", new String[] {revId});
+  private void ensureTableDefinition(String table) throws Exception {
+    Cursor c = db.rawQuery("SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " WHERE _table_id = ?", new String[]{ table });
+    if (c.getCount() == 0) {
+      TablesProviderTest test = new TablesProviderTest();
+      test.setUp();
+      test.insertTable(table);
+    }
+    c.close();
   }
+
+  private void thSetRevid(String revId) throws Exception {
+    ensureTableDefinition("Tea_houses");
+    db.rawQuery("UPDATE " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " SET " +
+        TableDefinitionsColumns.REV_ID + " = ? WHERE _table_id = ?", new String[]{ revId, "Tea_houses" }).close();
+  }
+
   @Test
   public void testGetTableMetadata() throws Exception {
     insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
@@ -959,6 +1005,7 @@ public class OdkDatabaseServiceImplTest {
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
     thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
     thSet("t1", "_conflict_type", null);
+    thSet("t1", "_savepoint_type", "INCOMPLETE");
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
     assertTrue(res.hasChanges());
@@ -966,11 +1013,13 @@ public class OdkDatabaseServiceImplTest {
     truncate("Tea_houses");
     thInsert("t1", SyncState.synced, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
     thSet("t1", "_conflict_type", ConflictType.LOCAL_DELETED_OLD_VALUES);
+    thSet("t1", "_savepoint_type", "INCOMPLETE");
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS);
     assertFalse(res.hasChanges());
 
     thSet("t1", "_savepoint_type", null);
+    thSet("t1", "_sync_state", SyncState.new_row);
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
     assertTrue(res.hasChanges());
@@ -983,173 +1032,313 @@ public class OdkDatabaseServiceImplTest {
 
   @Test
   public void testGetTableHealthStatuses() throws Exception {
-
+    createTeaHouses();
+    ensureTableDefinition("Tea_houses");
+    truncate("Tea_houses");
+    thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+    thSet("t1", "_savepoint_type", null);
+    ArrayList<TableHealthInfo> res = d.getTableHealthStatuses("default", dbHandle);
+    assertEquals(res.size(), 1);
+    TableHealthInfo x = res.get(0);
+    assertEquals(x.getTableId(), "Tea_houses");
+    assertEquals(x.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+    assertTrue(x.hasChanges());
+    testCreateLocalOnlyTableWithColumns();
+    ensureTableDefinition("tbl");
+    boolean worked = false;
+    try {
+      d.getTableHealthStatuses("default", dbHandle);
+    } catch (Exception ignored) {
+      worked = true;
+    }
+    assertTrue(worked);
   }
 
   @Test
   public void testGetExportColumns() throws Exception {
-
+    createTeaHouses();
+    ensureTableDefinition("Tea_houses");
+    Collection<String> expected = new ArrayList<>();
+    Collections.addAll(expected, "_default_access", "_form_id", "_group_modify", "_group_privileged", "_group_read_only", "_id", "_locale", "_row_etag", "_row_owner", "_savepoint_creator", "_savepoint_timestamp", "_savepoint_type");
+    String[] result = d.getExportColumns();
+    for (String column : result) {
+      assertTrue(expected.contains(column));
+      expected.remove(column);
+    }
+    assertEquals(expected.size(), 0);
   }
 
   @Test
   public void testGetSyncState() throws Exception {
+    createTeaHouses();
+    thInsert("t1", SyncState.in_conflict, ConflictType.SERVER_DELETED_OLD_VALUES);
+    thInsert("t2", SyncState.new_row, ConflictType.SERVER_DELETED_OLD_VALUES);
+    thInsert("t2", SyncState.new_row, ConflictType.SERVER_DELETED_OLD_VALUES);
+    String r = d.getSyncState(getAppName(), dbHandle, "Tea_houses", "t1");
+    assertEquals(r, "in_conflict");
+    // Shouldn't fail on two rows with the same id
+    r = d.getSyncState(getAppName(), dbHandle, "Tea_houses", "t2");
+    assertEquals(r, "new_row");
+  }
 
+  @Test(expected = IllegalStateException.class)
+  public void testGetSyncStateMoreThanOneState() throws Exception {
+    createTeaHouses();
+    thInsert("t1", SyncState.new_row, ConflictType.SERVER_DELETED_OLD_VALUES);
+    thInsert("t1", SyncState.changed, ConflictType.SERVER_DELETED_OLD_VALUES);
+    d.getSyncState(getAppName(), dbHandle, "Tea_houses", "t1");
+  }
+
+  @Test(expected = Exception.class)
+  public void testGetSyncStateNullState() throws Exception {
+    // If we are able to set it to null, getSyncState should throw an IllegalStateException
+    // But sqlite might throw an exception due to the NOT NULL clause on the _sync_state row
+    createTeaHouses();
+    thInsert("t1", SyncState.new_row, ConflictType.SERVER_DELETED_OLD_VALUES);
+    thSet("t1", "_sync_state", null);
+    d.getSyncState(getAppName(), dbHandle, "Tea_houses", "t1");
   }
 
   @Test
   public void testGetTableDefinitionEntry() throws Exception {
-
+    TablesProviderTest t = new TablesProviderTest();
+    t.setUp(); // will truncate TABLE_DEFS_TABLE_NAME
+    createTeaHouses();
+    ensureTableDefinition("Tea_houses");
+    TableDefinitionEntry e = d.getTableDefinitionEntry(getAppName(), dbHandle, "Tea_houses");
+    Cursor c = t.query(TablesProviderTest.makeUri("Tea_houses"), TablesProviderTest.all, null, null, null);
+    c.moveToFirst();
+    assertEquals(get(c, TableDefinitionsColumns.SCHEMA_ETAG), e.getSchemaETag());
+    assertEquals(get(c, TableDefinitionsColumns.LAST_DATA_ETAG), e.getLastDataETag());
+    assertEquals(get(c, TableDefinitionsColumns.REV_ID), e.getRevId());
+    c.close();
   }
 
   @Test
   public void testGetUserDefinedColumns() throws Exception {
-
+    createTeaHouses();
+    ensureTableDefinition("Tea_houses");
+    Collection<String> expected = new ArrayList<>();
+    Collections.addAll(expected, thUserColumns);
+    for (String c : expected) {
+      db.execSQL("INSERT INTO " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME + " (_table_id, _element_key, _element_name, _element_type, _list_child_element_keys) VALUES (?, ?, ?, ?, ?)", new String[]{ "Tea_houses", c, c, "string", "[]" });
+    }
+    OrderedColumns t = d.getUserDefinedColumns(getAppName(), dbHandle, "Tea_houses");
+    for (Column x : t.getColumns()) {
+      assertTrue(expected.contains(x.getElementKey()));
+      expected.remove(x.getElementKey());
+    }
+    assertEquals(expected.size(), 0);
   }
 
   @Test
   public void testHasTableId() throws Exception {
-
+    createTeaHouses();
+    ensureTableDefinition("Tea_houses");
+    assertTrue(d.hasTableId(getAppName(), dbHandle, "Tea_houses"));
+    assertFalse(d.hasTableId(getAppName(), dbHandle, "dne"));
   }
 
   @Test
   public void testInsertCheckpointRowWithId() throws Exception {
+    createTeaHouses();
+    d.insertCheckpointRowWithId(getAppName(), dbHandle, "Tea_houses", makeThCvs("10", "March 17th", "Belltown"), null);
+    Cursor c = db.rawQuery("SELECT * FROM Tea_houses", new String[0]);
+    assertEquals(c.getCount(), 1);
+    c.moveToFirst();
+    assertEquals(get(c, "_savepoint_type"), null);
+    String id = get(c, "_id");
+    c.close();
+    d.insertCheckpointRowWithId(getAppName(), dbHandle, "Tea_houses", makeThCvs("10", "March 17th", "Westlake", "Yes"), id);
+    c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?", new String[]{ id });
+    assertEquals(c.getCount(), 2);
+    boolean worked = false;
+    while (c.moveToNext()) {
+      try {
+        if (get(c, "Hot").equals("Yes")) worked = true;
+      } catch (Exception ignored) {
+        // continue
+      }
+    }
+    assertTrue(worked);
+  }
 
+  @Test
+  public void testInsertCheckpointRowWithIdBadKeys() throws Exception {
+    createTeaHouses();
+    d.insertCheckpointRowWithId(getAppName(), dbHandle, "Tea_houses", makeThCvs("10", "March 17th", "Belltown"), null);
+    Cursor c = db.rawQuery("SELECT * FROM Tea_houses", new String[0]);
+    c.moveToFirst();
+    String id = get(c, "_id");
+    c.close();
+    for (String row : new String[]{ "_savepoint_timestamp", "_savepoint_type", "_sync_state", "_row_etag", "_conflict_type", "_default_access", "_row_owner", "_group_read_only", "_group_modify", "_group_privileged" }) {
+      ContentValues cvs = makeThCvs("10");
+      cvs.put(row, "something");
+      boolean worked = false;
+      try {
+        d.insertCheckpointRowWithId(getAppName(), dbHandle, "Tea_houses", cvs, id);
+      } catch (Exception ignored) {
+        worked = true;
+      }
+      assertTrue("Shouldn't have been able to specify " + row, worked);
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInsertCheckpointRowWithIdNoKeys() throws Exception {
+    createTeaHouses();
+    d.insertCheckpointRowWithId(getAppName(), dbHandle, "Tea_houses", new ContentValues(), "t1");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInsertRowWithIdNoCvs() throws Exception {
+    createTeaHouses();
+    d.insertRowWithId(getAppName(), dbHandle, "Tea_houses", new ContentValues(), "t1");
   }
 
   @Test
   public void testInsertRowWithId() throws Exception {
-
+    createTeaHouses();
+    d.insertRowWithId(getAppName(), dbHandle, "Tea_houses", makeThCvs("10"), "t1");
+    d.insertRowWithId(getAppName(), dbHandle, "Tea_houses", makeThCvs("12"), "t2");
+    Cursor c = db.rawQuery("SELECT * FROM Tea_houses WHERE _id = ?;", new String[]{ "t1" });
+    assertEquals(c.getCount(), 1);
+    c.moveToFirst();
+    assertEquals(get(c, "_id"), "t1");
+    assertEquals(get(c, "Customers"), "10");
+    c.close();
   }
 
-  @Test
-  public void testPrivilegedInsertRowWithId() throws Exception {
+    /*
+    @Test
+    public void testPrivilegedInsertRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedPerhapsPlaceRowIntoConflictWithId() throws Exception {
+    @Test
+    public void testPrivilegedPerhapsPlaceRowIntoConflictWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testSimpleQuery() throws Exception {
+    @Test
+    public void testSimpleQuery() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedSimpleQuery() throws Exception {
+    @Test
+    public void testPrivilegedSimpleQuery() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedExecute() throws Exception {
+    @Test
+    public void testPrivilegedExecute() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testReplaceTableMetadata() throws Exception {
+    @Test
+    public void testReplaceTableMetadata() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testReplaceTableMetadataList() throws Exception {
+    @Test
+    public void testReplaceTableMetadataList() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testReplaceTableMetadataSubList() throws Exception {
+    @Test
+    public void testReplaceTableMetadataSubList() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testSaveAsIncompleteMostRecentCheckpointRowWithId() throws Exception {
+    @Test
+    public void testSaveAsIncompleteMostRecentCheckpointRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testSaveAsCompleteMostRecentCheckpointRowWithId() throws Exception {
+    @Test
+    public void testSaveAsCompleteMostRecentCheckpointRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedUpdateTableETags() throws Exception {
+    @Test
+    public void testPrivilegedUpdateTableETags() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedUpdateTableLastSyncTime() throws Exception {
+    @Test
+    public void testPrivilegedUpdateTableLastSyncTime() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testUpdateRowWithId() throws Exception {
+    @Test
+    public void testUpdateRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testResolveServerConflictWithDeleteRowWithId() throws Exception {
+    @Test
+    public void testResolveServerConflictWithDeleteRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testResolveServerConflictTakeLocalRowWithId() throws Exception {
+    @Test
+    public void testResolveServerConflictTakeLocalRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testResolveServerConflictTakeLocalRowPlusServerDeltasWithId() throws Exception {
+    @Test
+    public void testResolveServerConflictTakeLocalRowPlusServerDeltasWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testResolveServerConflictTakeServerRowWithId() throws Exception {
+    @Test
+    public void testResolveServerConflictTakeServerRowWithId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testPrivilegedUpdateRowETagAndSyncState() throws Exception {
+    @Test
+    public void testPrivilegedUpdateRowETagAndSyncState() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testDeleteAppAndTableLevelManifestSyncETags() throws Exception {
+    @Test
+    public void testDeleteAppAndTableLevelManifestSyncETags() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testDeleteAllSyncETagsForTableId() throws Exception {
+    @Test
+    public void testDeleteAllSyncETagsForTableId() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testDeleteAllSyncETagsExceptForServer() throws Exception {
+    @Test
+    public void testDeleteAllSyncETagsExceptForServer() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testDeleteAllSyncETagsUnderServer() throws Exception {
+    @Test
+    public void testDeleteAllSyncETagsUnderServer() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testGetFileSyncETag() throws Exception {
+    @Test
+    public void testGetFileSyncETag() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testGetManifestSyncETag() throws Exception {
+    @Test
+    public void testGetManifestSyncETag() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testUpdateFileSyncETag() throws Exception {
+    @Test
+    public void testUpdateFileSyncETag() throws Exception {
 
-  }
+    }
 
-  @Test
-  public void testUpdateManifestSyncETag() throws Exception {
+    @Test
+    public void testUpdateManifestSyncETag() throws Exception {
 
-  }
+    }
   */
 
 }

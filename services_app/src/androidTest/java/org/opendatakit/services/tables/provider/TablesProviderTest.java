@@ -34,7 +34,7 @@ public class TablesProviderTest {
   private static String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
   private static String cTime = TableDefinitionsColumns.LAST_SYNC_TIME;
   private static String cRev = TableDefinitionsColumns.REV_ID;
-  private static String[] all = { cId, cSchema, cData, cTime, cRev };
+  public static String[] all = { cId, cSchema, cData, cTime, cRev };
 
   private OdkConnectionInterface db;
   private TablesProvider p;
@@ -43,7 +43,7 @@ public class TablesProviderTest {
     return "default";
   }
 
-  private static Uri makeUri(String id) {
+  public static Uri makeUri(String id) {
     return new Uri.Builder().appendPath(getAppName()).appendPath(id).build();
   }
 
@@ -66,7 +66,7 @@ public class TablesProviderTest {
     db.execSQL("DELETE FROM " + tTable + ";", new String[0]);
   }
 
-  private void insertTable(String id) {
+  public void insertTable(String id) {
     db.execSQL("INSERT INTO " + tTable + " (" + join(", ", all) + ") VALUES (?, ?, ?, ?, ?);",
         new String[] { id, "schema etag here", "data etag here", "timestamp here", "revId here" });
   }
@@ -143,8 +143,8 @@ public class TablesProviderTest {
     c.close();
   }
 
-  private Cursor query(Uri uri, String[] columns, String where, String[] whereArgs,
-      String sortOrder) throws Exception {
+  public Cursor query(Uri uri, String[] columns, String where, String[] whereArgs,
+                      String sortOrder) throws Exception {
     Cursor result = p.query(uri, columns, where, whereArgs, sortOrder);
     if (result == null)
       throw new Exception("Null cursor");

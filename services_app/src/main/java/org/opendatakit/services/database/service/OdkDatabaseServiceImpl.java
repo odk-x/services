@@ -851,6 +851,7 @@ public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       String currentRevId = ODKDatabaseImplUtils.getTableDefinitionRevId(db, tableId);
+        WebLogger.getLogger(appName).e("OdkDatabaseServiceImpl", revId + " " + currentRevId);
       if (revId != null && revId.equals(currentRevId)) {
         kvsEntries = new TableMetaDataEntries(tableId, revId);
       } else {
