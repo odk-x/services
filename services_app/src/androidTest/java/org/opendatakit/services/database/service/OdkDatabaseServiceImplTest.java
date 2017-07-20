@@ -27,6 +27,8 @@ import org.opendatakit.services.application.Services;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.forms.provider.FormsProviderTest;
+import org.opendatakit.services.tables.provider.TablesProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
@@ -49,6 +51,7 @@ public class OdkDatabaseServiceImplTest {
   private PropertiesSingleton props;
   private DbHandle dbHandle;
   private OdkConnectionInterface db;
+  private FormsProviderTest test;
 
   private static String getAppName() {
     return "default";
@@ -112,7 +115,7 @@ public class OdkDatabaseServiceImplTest {
   }
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     props = CommonToolProperties.get(Services._please_dont_use_getInstance(), getAppName());
     props.clearSettings();
     ODKFileUtils.assertDirectoryStructure(getAppName());
@@ -126,11 +129,15 @@ public class OdkDatabaseServiceImplTest {
         .getConnection(getAppName(), uniqueKey);
     d = new OdkDatabaseServiceImpl(Services._please_dont_use_getInstance());
     dbHandle = d.openDatabase(getAppName());
+    db.execSQL("DELETE FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + ";", null);
+    test = new FormsProviderTest();
+    test.setUp();
   }
 
   @After
-  public void cleanUp() {
+  public void cleanUp() throws Exception {
     d.closeDatabase(getAppName(), dbHandle);
+    test.after();
   }
 
   @Test
@@ -733,14 +740,14 @@ public class OdkDatabaseServiceImplTest {
     assertTrue(worked);
   }
 
-  private void insertMetadata(String table, String partition, String aspect, String key,
+  public void insertMetadata(String table, String partition, String aspect, String key,
       String value) {
     db.rawQuery(
-        "INSERT INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " (" + join(", ",
+        "INSERT OR REPLACE INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " ("
+            + join(", ",
             new String[] { KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
                 KeyValueStoreColumns.ASPECT, KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE,
-                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, "
-            + "?, ?, ?);",
+                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, ?, ?, ?);",
         new String[] { table, partition, aspect, key, value, "TEXT" });
   }
 
@@ -781,6 +788,7 @@ public class OdkDatabaseServiceImplTest {
     thInsert("t1", null);
     d.deleteRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
   }
+
   @Test
   public void testPrivilegedDeleteRowWithId() throws Exception {
     createTeaHouses();
@@ -843,6 +851,7 @@ public class OdkDatabaseServiceImplTest {
     BaseTable t = d.getRowsWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(t.getNumberOfRows(), 0);
   }
+
   @Test
   public void testGetRowsWithId() throws Exception {
     setSuperuser();
@@ -880,34 +889,38 @@ public class OdkDatabaseServiceImplTest {
     }
   }
 
-  /*
   @Test
   public void testGetMostRecentRowWithId() throws Exception {
     createTeaHouses();
     thInsert("t1", SavepointTypeManipulator.incomplete());
     thSet("t1", DataTableColumns.SAVEPOINT_TIMESTAMP, "bbb");
+    thSet("t1", "_default_access", "FULL");
     thInsert("t2", SavepointTypeManipulator.complete());
     thSet("t2", DataTableColumns.SAVEPOINT_TIMESTAMP, "aaa");
+    thSet("t2", "_default_access", "FULL");
     thSet("t2", "_id", "t1");
     BaseTable result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 1);
     assertEquals(result.getRowAtIndex(0).getDataByKey("_savepoint_type"),
-        SavepointTypeManipulator.complete());
+        SavepointTypeManipulator.incomplete());
     truncate("Tea_houses");
     result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 0);
   }
 
   private void thSetRevid(String revId) throws Exception {
-    db.rawQuery("UPDATE " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " SET " +
-        TableDefinitionsColumns.REV_ID + " = ?", new String[] {revId});
+    db.rawQuery("DELETE FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + ";", null);
+    db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
+        TablesProviderTest.all) + ") VALUES (?, ?, ?, ?, ?);",
+        new String[] { "Tea_houses", "schema etag", "data etag", "time", revId });
   }
+
   @Test
   public void testGetTableMetadata() throws Exception {
     insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
     insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses",
-        "partition", "aspect", "key");
+    TableMetaDataEntries result = d
+        .getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "key");
     assertEquals(result.getEntries().size(), 1);
     assertEquals(result.getEntries().get(0).value, "val");
     result = d.getTableMetadata(getAppName(), dbHandle, null, null, null, null);
@@ -920,17 +933,17 @@ public class OdkDatabaseServiceImplTest {
       assertEquals(a, "other val");
       assertEquals(b, "val");
     }
-    result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect",
-        "k3");
+    result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "k3");
     assertEquals(result.getEntries().size(), 0);
   }
 
   @Test
   public void testGetTableMetadataIfChangedChanged() throws Exception {
+    createTeaHouses();
     insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
     insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadataIfChanged(getAppName(), dbHandle,
-        "Tea_houses", "old and invalid revId");
+    TableMetaDataEntries result = d
+        .getTableMetadataIfChanged(getAppName(), dbHandle, "Tea_houses", "old and invalid revId");
     assertEquals(result.getEntries().size(), 2);
     String a = result.getEntries().get(0).value;
     String b = result.getEntries().get(1).value;
@@ -959,6 +972,7 @@ public class OdkDatabaseServiceImplTest {
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
     thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
     thSet("t1", "_conflict_type", null);
+    thSet("t1", "_savepoint_type", SavepointTypeManipulator.complete());
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
     assertTrue(res.hasChanges());
@@ -966,21 +980,26 @@ public class OdkDatabaseServiceImplTest {
     truncate("Tea_houses");
     thInsert("t1", SyncState.synced, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
     thSet("t1", "_conflict_type", ConflictType.LOCAL_DELETED_OLD_VALUES);
+    thSet("t1", "_savepoint_type", SavepointTypeManipulator.complete());
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
     assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS);
     assertFalse(res.hasChanges());
 
     thSet("t1", "_savepoint_type", null);
+    thSet("t1", "_sync_state", SyncState.changed);
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+    assertEquals(res.getHealthStatus(),
+        TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
     assertTrue(res.hasChanges());
 
     thSet("t1", "_sync_state", SyncState.synced_pending_files);
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+    assertEquals(res.getHealthStatus(),
+        TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
     assertFalse(res.hasChanges());
   }
 
+  /*
   @Test
   public void testGetTableHealthStatuses() throws Exception {
 
