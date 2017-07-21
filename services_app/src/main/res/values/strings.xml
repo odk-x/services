@@ -43,7 +43,7 @@
     <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
     <string name="checkpoint_take_all_oldest_or_remove">Discard All Checkpoints</string>
     <string name="checkpoint_take_all_newest">Update All Checkpoints to Incomplete State</string>
-    <string name="silently_resolved_single_checkpoint">a checkpoint on an unmodifiable row was
+    <string name="silently_resolved_single_checkpoint">A checkpoint on an unmodifiable row was
         silently rolled back.</string>
     <string name="silently_resolved_checkpoints">%1$d checkpoints on unmodifiable rows were
         silently rolled back.</string>
@@ -69,6 +69,10 @@
     <string name="no_items_display_conflicts">Please Wait&#8230;\nSearching for conflicting rows to resolve.</string>
     <string name="conflict_take_all_local_updates">Take Local Version - Reject All Server Changes</string>
     <string name="conflict_take_all_server_updates">Take Server Version - Discard Local Changes</string>
+    <string name="silently_resolved_single_conflict">A conflict on an unmodifiable row was
+        silently resolved using the server\'s changes.</string>
+    <string name="silently_resolved_conflicts">%1$d conflicts on unmodifiable rows were
+        silently resolved using the server\'s changes.</string>
 
     <string name="conflict_resolving_all">Resolving All Conflicts</string>
     <string name="resolving_row_n_of_m">Resolving row %1$d of %2$d</string>
