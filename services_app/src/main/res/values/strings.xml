@@ -43,6 +43,10 @@
     <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
     <string name="checkpoint_take_all_oldest_or_remove">Discard All Checkpoints</string>
     <string name="checkpoint_take_all_newest">Update All Checkpoints to Incomplete State</string>
+    <string name="silently_resolved_single_checkpoint">a checkpoint on an unmodifiable row was
+        silently rolled back.</string>
+    <string name="silently_resolved_checkpoints">%1$d checkpoints on unmodifiable rows were
+        silently rolled back.</string>
 
     <string name="checkpoint_radio_local">Apply:</string>
     <string name="checkpoint_radio_server">Restore:</string>
