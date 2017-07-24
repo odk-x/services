@@ -33,7 +33,16 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
   String mProgress = "";
   String mResult = null;
 
-  public ConflictResolutionListTask(Context context, boolean takeLocal) {
+  /**
+   * Saves its arguments and pulls string resources from the passed context
+   * @param context a context to pull string resources from
+   * @param takeLocal whether to take local or server changes
+   * @param appName the app name
+   */
+  public ConflictResolutionListTask(Context context, boolean takeLocal, String appName) {
+    super();
+    // TODO this is the constructor! mAppName hasn't been set yet!
+    this.mAppName = appName;
     aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
 
     formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
@@ -180,14 +189,14 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     return mAppName;
   }
 
+  public String getTableId() {
+    return mTableId;
+  }
+
   public void setTableId(String tableId) {
     synchronized (this) {
       this.mTableId = tableId;
     }
-  }
-
-  public String getTableId() {
-    return mTableId;
   }
 
   public void setResolveRowEntryAdapter(ArrayAdapter<ResolveRowEntry> adapter) {
