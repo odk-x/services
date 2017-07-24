@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
 
+import org.opendatakit.database.RoleConsts;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -64,11 +65,13 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
         try {
 
           if ( mTakeNewest ) {
-            ODKDatabaseImplUtils.get()
+            // this may fail if user does not have permissions for modifying row
+            ODKDatabaseImplUtils
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
-                entry.rowId, aul.activeUser, aul.rolesList);
+            // allow all users to automatically roll back
+            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+                entry.rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
 
         } catch (Exception e) {

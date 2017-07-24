@@ -43,9 +43,7 @@ import org.opendatakit.services.resolve.views.components.ResolveActionList;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -55,6 +53,7 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
   private final String mAppName;
   private final String mTableId;
   private final boolean mHaveResolvedMetadataConflicts;
+  private int mNumberRowsSilentlyReverted = 0;
 
   private static class FormDefinition {
     String instanceName;
@@ -68,6 +67,10 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
     this.mAppName = appName;
     this.mTableId = tableId;
     this.mHaveResolvedMetadataConflicts = haveResolvedMetadataConflicts;
+  }
+
+  public int getNumberRowsSilentlyReverted() {
+    return mNumberRowsSilentlyReverted;
   }
 
   @Override
@@ -137,14 +140,60 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
 
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
-            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
-                rowId, aul.activeUser, aul.rolesList);
+            // act as a privileged user so that we always restore to original row
+            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+                rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
         }
 
         if ( tableSetChanged ) {
           baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+              null, null, accessContextPrivileged);
+          table = new UserTable(baseTable, orderedDefns, adminColArr);
+        }
+      }
+
+      // Now run the same query --  but as an unprivileged query (with the current user's
+      // permissions).
+      // Then construct a set of ids that were returned by the privileged query but that were
+      // either not in the unprivileged result set (i.e., are hidden to this user) or for which
+      // the current user does not have modify ("w") access. Revert these, as the user does not
+      // have permission to modify them. And, finally, if that set is non-empty, re-fetch the
+      // table, as it will now have fewer rows.
+      {
+        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.query(db, mTableId, QueryUtil
+                .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir), null,
+            null, accessContextBase);
+        UserTable unprivilegedTable = new UserTable(unprivilegedBaseTable, orderedDefns, adminColArr);
+
+        // build up the set of ids missing from the unprivilegedTable vs. the (privilegedQuery)
+        // table and any ids that the user does not have the ability to modify ("w" access).
+        Set<String> ids = new HashSet<String>();
+        for (int i = 0; i < table.getNumberOfRows(); ++i) {
+          ids.add(table.getRowId(i));
+        }
+        for (int i = 0; i < unprivilegedTable.getNumberOfRows(); ++i) {
+          Row theRow = unprivilegedTable.getRowAtIndex(i);
+          // only display a checkpoint if the user is able to modify the row
+          if (theRow.getDataByKey(DataTableColumns.EFFECTIVE_ACCESS).contains("w")) {
+            ids.remove(unprivilegedTable.getRowId(i));
+          }
+        }
+        mNumberRowsSilentlyReverted = ids.size();
+
+        // the ids remaining in 'ids' are either hidden to the user or the user does not have
+        // the ability to modify those rows. Resolve all of these by deleting the checkpoints.
+        for (String rowId : ids) {
+          // act as a privileged user so that we always restore to original row
+          ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId, rowId, aul.activeUser,
+              RoleConsts.ADMIN_ROLES_LIST);
+        }
+
+        if ( mNumberRowsSilentlyReverted != 0 ) {
+          // update the privileged query table again
+          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+                  .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }

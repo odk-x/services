@@ -1103,14 +1103,11 @@ public class ODKDatabaseImplUtils {
 
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
 
-    BaseTable table = query(db, tableId, QueryUtil
-        .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
-            QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
-        accessContext);
-
-    return table;
+    return query(db, tableId, QueryUtil.buildSqlStatement(tableId,
+        QueryUtil.WHERE_CLAUSE_ROWS_WITH_ID_EQUALS,
+        null, null,
+        QueryUtil.ORDER_BY_SAVEPOINT_TIMESTAMP, QueryUtil.ORDER_BY_DESCENDING),
+        new String[] { rowId }, null, accessContext);
   }
 
   /**
@@ -1130,14 +1127,11 @@ public class ODKDatabaseImplUtils {
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, RoleConsts
         .ADMIN_ROLES_LIST);
 
-    BaseTable table = privilegedQuery(db, tableId, QueryUtil
-        .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
-            QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS,
-            QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR), new String[] { rowId }, null,
-        accessContext);
-
-    return table;
+     return privilegedQuery(db, tableId, QueryUtil
+            .buildSqlStatement(tableId, QueryUtil.WHERE_CLAUSE_ROWS_WITH_ID_EQUALS,
+                null, null,
+                QueryUtil.ORDER_BY_SAVEPOINT_TIMESTAMP, QueryUtil.ORDER_BY_DESCENDING),
+         new String[] { rowId }, null, accessContext);
   }
 
   /**
