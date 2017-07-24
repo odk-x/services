@@ -39,6 +39,7 @@ public class TablesProviderTest {
 
   private static OdkConnectionInterface db;
   private static TablesProvider p;
+  FormsProviderTest test;
 
   @Before
   public void setUp() throws Exception {
@@ -55,6 +56,10 @@ public class TablesProviderTest {
     db.execSQL("DELETE FROM " + tTable + ";", new String[0]);
     test = new FormsProviderTest();
     test.setUp();
+  }
+  @After
+  public void after() throws Exception {
+    test.after();
   }
 
   @Test(expected = CursorIndexOutOfBoundsException.class)

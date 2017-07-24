@@ -37,6 +37,7 @@ import org.opendatakit.services.application.Services;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.services.tables.provider.TablesProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -56,6 +57,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.opendatakit.services.database.service.OdkDatabaseServiceImplTestUtils.insertMetadata;
 import static org.opendatakit.services.tables.provider.TablesProviderColumns.all;
 import static org.opendatakit.services.tables.provider.TablesProviderColumns.get;
 import static org.opendatakit.services.tables.provider.TablesProviderColumns.insertTable;
@@ -162,6 +164,8 @@ public class OdkDatabaseServiceImplTest {
     dbHandle = d.openDatabase(getAppName());
     truncate(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
     truncate(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
+    test = new FormsProviderTest();
+    test.setUp();
   }
 
   @After
@@ -739,7 +743,7 @@ public class OdkDatabaseServiceImplTest {
             TableDefinitionsColumns.REV_ID }) + ") VALUES (?, ?, ?, ?, ?);",
         new String[]{ "Tea_houses", "data etag", "sync time", "schema etag", "revid" }).close();
     thAssertPresent("t1", null, false);
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "value");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key", "value");
     db.rawQuery("INSERT INTO " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME + " (" + join(", ",
         new String[]{ ColumnDefinitionsColumns.TABLE_ID,
             ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, ColumnDefinitionsColumns.ELEMENT_KEY,
@@ -770,22 +774,11 @@ public class OdkDatabaseServiceImplTest {
     assertTrue(worked);
   }
 
-  private void insertMetadata(String table, String partition, String aspect, String key,
-                              String value) {
-    db.rawQuery(
-        "INSERT INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " (" + join(", ",
-            new String[]{ KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
-                KeyValueStoreColumns.ASPECT, KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE,
-                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, "
-            + "?, ?, ?);",
-        new String[]{ table, partition, aspect, key, value, "TEXT" });
-  }
-
   @Test
   public void testDeleteTableMetadata() throws Exception {
     createTeaHouses();
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "value");
-    insertMetadata("Tea_houses", "partition", "aspect", "some_other_key", "value");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key", "value");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "some_other_key", "value");
     d.deleteTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "key");
     Cursor c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
@@ -931,7 +924,7 @@ public class OdkDatabaseServiceImplTest {
     BaseTable result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 1);
     assertEquals(result.getRowAtIndex(0).getDataByKey("_savepoint_type"),
-        SavepointTypeManipulator.incomplete());
+        SavepointTypeManipulator.complete());
     truncate("Tea_houses");
     result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 0);
@@ -953,8 +946,8 @@ public class OdkDatabaseServiceImplTest {
 
   @Test
   public void testGetTableMetadata() throws Exception {
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
-    insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key", "val");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key2", "other val");
     TableMetaDataEntries result = d
         .getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "key");
     assertEquals(result.getEntries().size(), 1);
@@ -976,8 +969,8 @@ public class OdkDatabaseServiceImplTest {
   @Test
   public void testGetTableMetadataIfChangedChanged() throws Exception {
     createTeaHouses();
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
-    insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key", "val");
+    insertMetadata(db, "Tea_houses", "partition", "aspect", "key2", "other val");
     TableMetaDataEntries result = d
         .getTableMetadataIfChanged(getAppName(), dbHandle, "Tea_houses", "old and invalid revId");
     assertEquals(result.getEntries().size(), 2);
