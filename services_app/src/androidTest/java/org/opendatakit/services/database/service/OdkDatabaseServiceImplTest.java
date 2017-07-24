@@ -56,14 +56,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.opendatakit.services.tables.provider.TablesProviderTest.get;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.all;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.get;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.insertTable;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.makeUri;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.query;
 
 /**
  * Created by Niles on 7/6/17.
  */
 @RunWith(AndroidJUnit4.class)
 public class OdkDatabaseServiceImplTest {
-  private static final String TAG = OdkDatabaseServiceImplTest.class.getSimpleName();
   private static final double delta = 0.00001;
   private static boolean initialized = false;
   private static String[] thUserColumns = { "Customers", "Date_Opened", "District", "Hot", "Iced", "Location_accuracy", "Location_altitude", "Location_latitude", "Location_longitude", "Name", "Neighborhood", "Phone_Number", "Region", "Specialty_Type_id", "State", "Store_Owner", "Visits", "WiFi" };
@@ -935,9 +938,7 @@ public class OdkDatabaseServiceImplTest {
   private void ensureTableDefinition(String table) throws Exception {
     Cursor c = db.rawQuery("SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " WHERE _table_id = ?", new String[]{ table });
     if (c.getCount() == 0) {
-      TablesProviderTest test = new TablesProviderTest();
-      test.setUp();
-      test.insertTable(table);
+      insertTable(db, table);
     }
     c.close();
   }
@@ -1106,7 +1107,7 @@ public class OdkDatabaseServiceImplTest {
     createTeaHouses();
     ensureTableDefinition("Tea_houses");
     TableDefinitionEntry e = d.getTableDefinitionEntry(getAppName(), dbHandle, "Tea_houses");
-    Cursor c = t.query(TablesProviderTest.makeUri("Tea_houses"), TablesProviderTest.all, null, null, null);
+    Cursor c = query(t.getProvider(), all, null, null, null, makeUri("Tea_houses"));
     c.moveToFirst();
     assertEquals(get(c, TableDefinitionsColumns.SCHEMA_ETAG), e.getSchemaETag());
     assertEquals(get(c, TableDefinitionsColumns.LAST_DATA_ETAG), e.getLastDataETag());
