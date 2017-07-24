@@ -66,11 +66,11 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
           if ( mTakeNewest ) {
             // this may fail if user does not have permissions for modifying row
-            ODKDatabaseImplUtils
+            ODKDatabaseImplUtils.get()
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
             // allow all users to automatically roll back
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 entry.rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
 

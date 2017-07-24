@@ -141,7 +141,7 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
             // act as a privileged user so that we always restore to original row
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
         }
@@ -162,7 +162,7 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       // have permission to modify them. And, finally, if that set is non-empty, re-fetch the
       // table, as it will now have fewer rows.
       {
-        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.query(db, mTableId, QueryUtil
+        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.get().query(db, mTableId, QueryUtil
                 .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir), null,
             null, accessContextBase);
         UserTable unprivilegedTable = new UserTable(unprivilegedBaseTable, orderedDefns, adminColArr);
@@ -186,13 +186,13 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
         // the ability to modify those rows. Resolve all of these by deleting the checkpoints.
         for (String rowId : ids) {
           // act as a privileged user so that we always restore to original row
-          ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId, rowId, aul.activeUser,
+          ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId, rowId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
         }
 
         if ( mNumberRowsSilentlyReverted != 0 ) {
           // update the privileged query table again
-          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
