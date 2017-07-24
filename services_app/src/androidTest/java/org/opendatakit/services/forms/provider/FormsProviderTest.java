@@ -27,6 +27,7 @@ import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.opendatakit.services.database.service.OdkDatabaseServiceImplTestUtils.insertMetadata;
 
 /**
  * Created by Niles on 6/29/17.
@@ -64,9 +65,7 @@ public class FormsProviderTest {
 
   @Test
   public void testQueryBlankFormId() throws Exception {
-    OdkDatabaseServiceImplTest test = new OdkDatabaseServiceImplTest();
-    test.setUp();
-    test.insertMetadata("Tea_houses", "SurveyUtil", "default", "SurveyUtil.formId",
+    insertMetadata(db, "Tea_houses", "SurveyUtil", "default", "SurveyUtil.formId",
         "Tea_houses"); // Set default form id
     db.rawQuery("INSERT INTO " + DatabaseConstants.FORMS_TABLE_NAME + " (" + join(", ",
         FormsColumns.formsDataColumnNames) + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",

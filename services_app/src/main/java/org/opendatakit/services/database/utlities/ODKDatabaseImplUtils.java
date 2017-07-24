@@ -4736,6 +4736,7 @@ public final class ODKDatabaseImplUtils {
       if (rowId == null) {
 
         // TODO: is this even valid any more? I think we disallow this in the AIDL flow.
+        // Update as of 2017-07-19, I'm testing this in OdkDatabaseServiceImplTest#testInsertCheckpointRowWithId and it seems to work. - Niles
 
         String rowIdToUse = LocalizationUtils.genUUID();
         HashMap<String, Object> currValues = new HashMap<>();

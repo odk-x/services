@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.provider.TablesProviderAPI;
@@ -16,9 +15,19 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.all;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.cData;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.cId;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.cRev;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.get;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.getAppName;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.makeUri;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.tTable;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.uri;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.insertTable;
+import static org.opendatakit.services.tables.provider.TablesProviderColumns.query;
 
 /**
  * Created by Niles on 7/6/17.
@@ -27,29 +36,10 @@ import static org.junit.Assert.assertTrue;
 public class TablesProviderTest {
 
   private static boolean initialized = false;
-  private static Uri uri = new Uri.Builder().appendPath(getAppName()).build();
-  private static String tTable = DatabaseConstants.TABLE_DEFS_TABLE_NAME;
-  private static String cId = TableDefinitionsColumns.TABLE_ID;
-  private static String cSchema = TableDefinitionsColumns.SCHEMA_ETAG;
-  private static String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
-  private static String cTime = TableDefinitionsColumns.LAST_SYNC_TIME;
-  private static String cRev = TableDefinitionsColumns.REV_ID;
-  public static String[] all = { cId, cSchema, cData, cTime, cRev };
 
   private static OdkConnectionInterface db;
   private static TablesProvider p;
-
-  public static String getAppName() {
-    return "default";
-  }
-
-  private static Uri makeUri(String id) {
-    return new Uri.Builder().appendPath(getAppName()).appendPath(id).build();
-  }
-
-  public static String get(Cursor c, String col) {
-    return c.getString(c.getColumnIndexOrThrow(col));
-  }
+  FormsProviderTest test;
 
   @Before
   public void setUp() throws Exception {
@@ -67,14 +57,9 @@ public class TablesProviderTest {
     test = new FormsProviderTest();
     test.setUp();
   }
-  FormsProviderTest test;
   @After
   public void after() throws Exception {
     test.after();
-  }
-  private static void insertTable(String id) {
-    db.execSQL("INSERT INTO " + tTable + " (" + join(", ", all) + ") VALUES (?, ?, ?, ?, ?);",
-        new String[] { id, "schema etag here", "data etag here", "timestamp here", "revId here" });
   }
 
   @Test(expected = CursorIndexOutOfBoundsException.class)
@@ -89,7 +74,7 @@ public class TablesProviderTest {
 
   @Test(expected = CursorIndexOutOfBoundsException.class)
   public void testQueryNoTable() throws Exception {
-    insertTable("test");
+    insertTable(db, "test");
     Cursor c = p.query(makeUri("Tea_houses"), null, null, null, null);
     if (c == null)
       throw new Exception("null cursor");
@@ -112,49 +97,41 @@ public class TablesProviderTest {
 
   @Test
   public void testQuery() throws Exception {
-    insertTable("Tea_houses");
-    Cursor c = query(makeUri("Tea_houses"), all, null, null, null);
+    insertTable(db, "Tea_houses");
+    Cursor c = query(p, all, null, null, null, makeUri("Tea_houses"));
     c.moveToFirst();
     assertEquals(get(c, cId), "Tea_houses");
     assertEquals(get(c, cData), "data etag here");
     c.close();
-    c = query(uri, all, null, null, null);
+    c = query(p, all, null, null, null, uri);
     c.moveToFirst();
     assertEquals(get(c, cId), "Tea_houses");
     assertEquals(get(c, cData), "data etag here");
     c.close();
-    insertTable("test");
+    insertTable(db, "test");
     db.execSQL("UPDATE " + tTable + " SET " + cData + " = ? WHERE " + cId + " = ?;",
-        new String[] { "new data etag", "test" });
-    c = query(uri, all, null, null, null);
+        new String[]{ "new data etag", "test" });
+    c = query(p, all, null, null, null, uri);
     assertEquals(c.getCount(), 2);
     c.close();
-    c = query(uri, all, cId + " = ?", new String[] { "test" }, null);
+    c = query(p, all, cId + " = ?", new String[]{ "test" }, null, uri);
     assertEquals(c.getCount(), 1);
     c.moveToFirst();
     assertEquals(get(c, cData), "new data etag");
     c.close();
-    c = query(makeUri("test"), all, null, null, null);
+    c = query(p, all, null, null, null, makeUri("test"));
     assertEquals(c.getCount(), 1);
     c.moveToFirst();
     assertEquals(get(c, cData), "new data etag");
     c.close();
-    c = query(makeUri("test"), all, cData + " = ?", new String[] { "new data etag" }, null);
+    c = query(p, all, cData + " = ?", new String[]{ "new data etag" }, null, makeUri("test"));
     assertEquals(c.getCount(), 1);
     c.moveToFirst();
     assertEquals(get(c, cData), "new data etag");
     c.close();
-    c = query(makeUri("test"), all, cData + " = ?", new String[] { "data etag here" }, null);
+    c = query(p, all, cData + " = ?", new String[]{ "data etag here" }, null, makeUri("test"));
     assertEquals(c.getCount(), 0);
     c.close();
-  }
-
-  private Cursor query(Uri uri, String[] columns, String where, String[] whereArgs,
-      String sortOrder) throws Exception {
-    Cursor result = p.query(uri, columns, where, whereArgs, sortOrder);
-    if (result == null)
-      throw new Exception("Null cursor");
-    return result;
   }
 
   @Test
@@ -206,43 +183,43 @@ public class TablesProviderTest {
     //
     setUp();
     insertTables("Tea_houses", "test");
-    assertEquals(p.delete(makeUri("test"), cData + " = ?", new String[] { "data etag here" }), 1);
+    assertEquals(p.delete(makeUri("test"), cData + " = ?", new String[]{ "data etag here" }), 1);
     expectPresent("Tea_houses");
     expectGone("test");
     //
     setUp();
     insertTables("Tea_houses", "test");
     db.execSQL("UPDATE " + tTable + " SET " + cData + " = ? WHERE " + cId + " = ?;",
-        new String[] { "new data etag", "test" });
-    assertEquals(p.delete(uri, cData + " = ?", new String[] { "new data etag" }), 1);
+        new String[]{ "new data etag", "test" });
+    assertEquals(p.delete(uri, cData + " = ?", new String[]{ "new data etag" }), 1);
     expectPresent("Tea_houses");
     expectGone("test");
     //
     setUp();
     insertTables("Tea_houses", "test");
     db.execSQL("UPDATE " + tTable + " SET " + cData + " = ? WHERE " + cId + " = ?;",
-        new String[] { "new data etag", "test" });
-    assertEquals(p.delete(makeUri("test"), cData + " = ?", new String[] { "data etag here" }), 0);
+        new String[]{ "new data etag", "test" });
+    assertEquals(p.delete(makeUri("test"), cData + " = ?", new String[]{ "data etag here" }), 0);
     expectPresent("Tea_houses");
     expectPresent("test");
   }
 
   private void insertTables(String... ids) throws Exception {
     for (String id : ids) {
-      insertTable(id);
+      insertTable(db, id);
     }
   }
 
   private void expectGone(String id) throws Exception {
     Cursor c = db
-        .rawQuery("SELECT * FROM " + tTable + " WHERE " + cId + " = ?;", new String[] { id });
+        .rawQuery("SELECT * FROM " + tTable + " WHERE " + cId + " = ?;", new String[]{ id });
     assertEquals(c.getCount(), 0);
     c.close();
   }
 
   private void expectPresent(String id) throws Exception {
     Cursor c = db
-        .rawQuery("SELECT * FROM " + tTable + " WHERE " + cId + " = ?;", new String[] { id });
+        .rawQuery("SELECT * FROM " + tTable + " WHERE " + cId + " = ?;", new String[]{ id });
     c.moveToFirst();
     assertTrue(c.getCount() > 0);
     assertEquals(get(c, cId), id);
@@ -268,4 +245,7 @@ public class TablesProviderTest {
     p.onCreate(); // shouldn't throw an exception
   }
 
+  public TablesProvider getProvider() {
+    return p;
+  }
 }
