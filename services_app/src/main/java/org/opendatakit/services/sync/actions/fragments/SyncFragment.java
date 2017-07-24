@@ -548,7 +548,6 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
                   if (!completed) {
                     throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
                   }
-                  getActivity().finish();
                   return;
                 } else {
                   WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");

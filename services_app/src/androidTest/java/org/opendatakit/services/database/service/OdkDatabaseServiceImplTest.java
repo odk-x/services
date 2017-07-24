@@ -74,6 +74,7 @@ public class OdkDatabaseServiceImplTest {
   private PropertiesSingleton props;
   private DbHandle dbHandle;
   private OdkConnectionInterface db;
+  private FormsProviderTest test;
 
   private static String getAppName() {
     return "default";
@@ -145,7 +146,7 @@ public class OdkDatabaseServiceImplTest {
   }
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     props = CommonToolProperties.get(Services._please_dont_use_getInstance(), getAppName());
     props.clearSettings();
     ODKFileUtils.assertDirectoryStructure(getAppName());
@@ -164,8 +165,9 @@ public class OdkDatabaseServiceImplTest {
   }
 
   @After
-  public void cleanUp() {
+  public void cleanUp() throws Exception {
     d.closeDatabase(getAppName(), dbHandle);
+    test.after();
   }
 
   @Test
@@ -929,7 +931,7 @@ public class OdkDatabaseServiceImplTest {
     BaseTable result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 1);
     assertEquals(result.getRowAtIndex(0).getDataByKey("_savepoint_type"),
-        SavepointTypeManipulator.complete());
+        SavepointTypeManipulator.incomplete());
     truncate("Tea_houses");
     result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
     assertEquals(result.getNumberOfRows(), 0);
@@ -953,8 +955,8 @@ public class OdkDatabaseServiceImplTest {
   public void testGetTableMetadata() throws Exception {
     insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
     insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses",
-        "partition", "aspect", "key");
+    TableMetaDataEntries result = d
+        .getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "key");
     assertEquals(result.getEntries().size(), 1);
     assertEquals(result.getEntries().get(0).value, "val");
     result = d.getTableMetadata(getAppName(), dbHandle, null, null, null, null);
@@ -967,17 +969,17 @@ public class OdkDatabaseServiceImplTest {
       assertEquals(a, "other val");
       assertEquals(b, "val");
     }
-    result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect",
-        "k3");
+    result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect", "k3");
     assertEquals(result.getEntries().size(), 0);
   }
 
   @Test
   public void testGetTableMetadataIfChangedChanged() throws Exception {
+    createTeaHouses();
     insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
     insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadataIfChanged(getAppName(), dbHandle,
-        "Tea_houses", "old and invalid revId");
+    TableMetaDataEntries result = d
+        .getTableMetadataIfChanged(getAppName(), dbHandle, "Tea_houses", "old and invalid revId");
     assertEquals(result.getEntries().size(), 2);
     String a = result.getEntries().get(0).value;
     String b = result.getEntries().get(1).value;
@@ -1022,15 +1024,18 @@ public class OdkDatabaseServiceImplTest {
     thSet("t1", "_savepoint_type", null);
     thSet("t1", "_sync_state", SyncState.new_row);
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+    assertEquals(res.getHealthStatus(),
+        TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
     assertTrue(res.hasChanges());
 
     thSet("t1", "_sync_state", SyncState.synced_pending_files);
     res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+    assertEquals(res.getHealthStatus(),
+        TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
     assertFalse(res.hasChanges());
   }
 
+  /*
   @Test
   public void testGetTableHealthStatuses() throws Exception {
     createTeaHouses();

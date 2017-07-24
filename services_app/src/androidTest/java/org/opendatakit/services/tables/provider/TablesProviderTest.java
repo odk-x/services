@@ -4,9 +4,7 @@ import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.support.test.runner.AndroidJUnit4;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.TableDefinitionsColumns;
@@ -14,6 +12,7 @@ import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import static org.junit.Assert.assertEquals;
@@ -38,8 +37,8 @@ public class TablesProviderTest {
 
   private static boolean initialized = false;
 
-  private OdkConnectionInterface db;
-  private TablesProvider p;
+  private static OdkConnectionInterface db;
+  private static TablesProvider p;
 
   @Before
   public void setUp() throws Exception {
@@ -49,11 +48,13 @@ public class TablesProviderTest {
       AndroidConnectFactory.configure();
     }
     DbHandle uniqueKey = new DbHandle(
-        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        FormsProviderTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection(getAppName(), uniqueKey);
     p = new TablesProvider();
     db.execSQL("DELETE FROM " + tTable + ";", new String[0]);
+    test = new FormsProviderTest();
+    test.setUp();
   }
 
   @Test(expected = CursorIndexOutOfBoundsException.class)
