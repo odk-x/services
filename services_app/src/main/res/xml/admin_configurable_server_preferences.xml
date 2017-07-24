@@ -25,6 +25,13 @@
             android:key="common.change_google_account"
             android:title="@string/selected_google_account_text" 
             android:persistent="false" />
+        <CheckBoxPreference
+                android:id="@+id/allow_non_secure_authentications"
+                android:defaultValue="false"
+                android:key="common.non_secure_authentication"
+                android:title="@string/non_secure_authentication"
+                android:summary="@string/non_secure_summary"
+                android:persistent="false"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

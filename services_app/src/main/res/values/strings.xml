@@ -293,7 +293,8 @@
 
     <string name="restrict_server_settings_summary">Limit non-Admin ability to change Server Settings</string>
     <string name="restrict_server">Manage ability to change Server Settings</string>
-
+    <string name="non_secure_authentication">Allow unsafe/unsecure Authentication</string>
+    <string name="non_secure_summary">Authenticate over http: (testing support)</string>
     <string name="credential">Server Sign-on Credential</string>
     <string name="change_credential">Change Sign-on Credential</string>
 

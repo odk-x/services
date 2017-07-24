@@ -187,7 +187,6 @@ public class HttpRestProtocolWrapper {
   // cookie manager
   private final CookieManager cm;
 
-
   private final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
     URI uriBase = URI.create(aggregateUri).normalize();
     String term = uriBase.getPath();
@@ -693,13 +692,19 @@ public class HttpRestProtocolWrapper {
         AuthScope a;
         // allow digest auth on any port...
         // TODO switch this to digest
-        a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
         asList.add(a);
         // and allow basic auth on the standard TLS/SSL ports...
         a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
         asList.add(a);
         a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
         asList.add(a);
+        // this might be disabled in production builds...
+        if ( sc.getAllowUnsafeAuthentication() ) {
+          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
+
       }
 
       // add username
