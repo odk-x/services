@@ -671,7 +671,8 @@ public class HttpRestProtocolWrapper {
     cookieStore = new BasicCookieStore();
     credsProvider = new BasicCredentialsProvider();
 
-    String host = this.baseUri.getHost();
+    URI destination = normalizeUri(sc.getAggregateUri(), "/");
+    String host = destination.getHost();
     String authenticationType = sc.getAuthenticationType();
 
     if ( sc.getString(R.string.credential_type_google_account)
@@ -694,13 +695,14 @@ public class HttpRestProtocolWrapper {
         // TODO switch this to digest
         a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
         asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
+        if ( destination.getScheme().equals("https")) {
+          // and allow basic auth on https connections...
+          a = new AuthScope(host, destination.getPort(), null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
         // this might be disabled in production builds...
         if ( sc.getAllowUnsafeAuthentication() ) {
+          log.e(LOGTAG, "Enabling Unsafe Authentication!");
           a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
           asList.add(a);
         }
