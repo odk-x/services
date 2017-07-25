@@ -123,7 +123,7 @@ public class SyncETagsUtils {
       likePrefix = likePrefix.replace("%", "\\%");
       likePrefix = likePrefix.replace("_", "\\_");
 
-      likePrefix += "%";
+      likePrefix = likePrefix + "%";
 
       b.append(" OR ").append(SyncETagColumns.URL).append(" NOT LIKE ? ESCAPE ?");
       bindArgs.add(likePrefix);
