@@ -8,6 +8,7 @@ import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpHeaders;
+import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
 import org.opendatakit.httpclientandroidlib.client.methods.*;
 import org.opendatakit.httpclientandroidlib.client.utils.URIBuilder;
 import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
@@ -318,14 +319,14 @@ public class HttpRestProtocolWrapperTest {
   public void testConvertResponseToStringAndHttpClientExecute() throws Exception {
     HttpRequestBase req = new HttpGet("https://gstatic.com/generate_204");
     CloseableHttpResponse response = h.httpClientExecute(req, Collections.singletonList(204));
-    assertEquals(HttpRestProtocolWrapper.convertResponseToString(response), "");
+    assertEquals(h.convertResponseToString(response), "");
     req = new HttpGet("https://raw.githubusercontent.com/does_not_exist");
     response = h.httpClientExecute(req, Collections.singletonList(400));
-    assertEquals(HttpRestProtocolWrapper.convertResponseToString(response), "400: Invalid request");
+    assertEquals(h.convertResponseToString(response), "400: Invalid request");
     req = new HttpGet(
         "https://raw.githubusercontent.com/nilesr/emulator/tree/master/does_not_exist");
     response = h.httpClientExecute(req, Collections.singletonList(404));
-    assertEquals(HttpRestProtocolWrapper.convertResponseToString(response), "404: Not Found");
+    assertEquals(h.convertResponseToString(response), "404: Not Found");
   }
 
   //@Test(expected = ServerDetectedVersionMismatchedClientRequestException.class)
@@ -346,18 +347,18 @@ public class HttpRestProtocolWrapperTest {
 
   @Test
   public void testDetermineContentType() throws Exception {
-    assertEquals(HttpRestProtocolWrapper.determineContentType(
+    assertEquals(h.determineContentType(
         ODKFileUtils.getFormFolder("default", "Tea_houses", "Tea_houses") + "/"
             + ODKFileUtils.FORMDEF_JSON_FILENAME), "application/x-javascript");
-    assertEquals(HttpRestProtocolWrapper.determineContentType("file with no extension"), "application/octet-stream");
-    assertEquals(HttpRestProtocolWrapper.determineContentType("something.tiff"), "image/tiff");
+    assertEquals(h.determineContentType("file with no extension"), "application/octet-stream");
+    assertEquals(h.determineContentType("something.tiff"), "image/tiff");
   }
 
   @Test
   public void testExtractInstanceFileRelativeFilename() throws Exception {
     assertEquals(
-        HttpRestProtocolWrapper.extractInstanceFileRelativeFilename("something filename=\"test\"..."), "test");
-    assertNull(HttpRestProtocolWrapper.extractInstanceFileRelativeFilename("something filename=bad format"));
+        h.extractInstanceFileRelativeFilename("something filename=\"test\"..."), "test");
+    assertNull(h.extractInstanceFileRelativeFilename("something filename=bad format"));
   }
 
   @Test(expected = IllegalArgumentException.class)
