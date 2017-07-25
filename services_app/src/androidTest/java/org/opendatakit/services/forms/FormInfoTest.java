@@ -27,7 +27,6 @@ import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
-import static org.opendatakit.services.forms.provider.FormsProviderTest.getCvs;
 //import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 
 /**
@@ -78,12 +77,6 @@ public class FormInfoTest {
       throw new IOException("should have been able to delete temporary copy of formdef");
     }
     ODKFileUtils.copyFile(a, b);
-    try {
-      new FormsProvider()
-          .insert(new Uri.Builder().appendPath(getAppName()).build(), getCvs("Tea_houses"));
-    } catch (Exception ignored) {
-      // ignore
-    }
     r.run(a);
     Cursor c = db.rawQuery(
         "SELECT * FROM " + DatabaseConstants.FORMS_TABLE_NAME + " WHERE " + FormsColumns.FORM_ID
