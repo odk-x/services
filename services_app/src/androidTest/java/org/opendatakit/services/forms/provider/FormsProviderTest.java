@@ -208,7 +208,6 @@ public class FormsProviderTest {
     c.close();
     assertEquals(p.update(uri, null, null, null), expected);
   }
-<<<<<<< HEAD
 
   @Test
   public void testOnCreate() throws Exception {
@@ -216,6 +215,3 @@ public class FormsProviderTest {
     p.onCreate();
   }
 }
-=======
-}
->>>>>>> parent of 97bb841... Beef up tests a bit
