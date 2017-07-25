@@ -19,9 +19,15 @@ import org.opendatakit.services.R;
 
 public class Services extends ToolAwareApplication {
 
-  @Override
-  public int getApkDisplayNameResourceId() {
+  private static Services singleton = null;
+
+  @Override public int getApkDisplayNameResourceId() {
     return R.string.app_name;
   }
 
+  @Override
+  public void onCreate() {
+    singleton = this;
+    super.onCreate();
+  }
 }
