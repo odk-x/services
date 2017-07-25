@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 public class FormsProviderTest {
   private static Uri uri = new Uri.Builder().appendPath(getAppName()).build();
   //private OdkConnectionInterface db;
-  private static boolean initialized = false;
+  private static boolean initialzied = false;
   private FormsProvider p;
 
   private static ContentValues getCvs(String id) {
@@ -67,8 +67,8 @@ public class FormsProviderTest {
   @Before
   public void setUp() throws Throwable {
     ODKFileUtils.assertDirectoryStructure(getAppName());
-    if (!initialized) {
-      initialized = true;
+    if (!initialzied) {
+      initialzied = true;
       AndroidConnectFactory.configure();
     }
     /*
@@ -83,12 +83,6 @@ public class FormsProviderTest {
 
   @Test(expected = android.database.SQLException.class)
   public void testInsertExistingForm() throws Exception {
-    // Try the insert once and it might succeed if the user never opened tables before (i.e jenkins)
-    try {
-      p.insert(uri, getCvs("Tea_houses_editable"));
-    } catch (Throwable ignored) {
-      // ignore
-    }
     p.insert(uri, getCvs("Tea_houses_editable"));
   }
 
