@@ -14,30 +14,13 @@
 
 package org.opendatakit.services.application;
 
-import android.content.Context;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
-
-import java.lang.ref.WeakReference;
 
 /**
  * The application object
  */
 public class Services extends ToolAwareApplication {
-  private static WeakReference<Services> ref = null;
-
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    ref = new WeakReference<>(this);
-  }
-
-  @Deprecated
-  public static Context _please_dont_use_getInstance() {
-    if (ref == null || ref.get() == null)
-      return null;
-    return ref.get().getApplicationContext();
-  }
 
   @Override
   public int getApkDisplayNameResourceId() {
