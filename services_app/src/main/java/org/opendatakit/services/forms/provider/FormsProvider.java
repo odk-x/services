@@ -23,7 +23,6 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.SQLException;
 import android.net.Uri;
-import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
@@ -394,11 +393,11 @@ public class FormsProvider extends ContentProvider {
       // either a tableId or a numericFormId is specified.
       // combine this filter with the where clause the user supplied.
       if (TextUtils.isEmpty(where)) {
-        pf.whereId = (pf.isNumericFormId ? BaseColumns._ID : FormsColumns.TABLE_ID) + "=?";
+        pf.whereId = (pf.isNumericFormId ? FormsColumns._ID : FormsColumns.TABLE_ID) + "=?";
         pf.whereIdArgs = new String[1];
         pf.whereIdArgs[0] = (pf.isNumericFormId ? pf.numericFormId : pf.tableId);
       } else {
-        pf.whereId = (pf.isNumericFormId ? BaseColumns._ID : FormsColumns.TABLE_ID) + "=? AND (" + where
+        pf.whereId = (pf.isNumericFormId ? FormsColumns._ID : FormsColumns.TABLE_ID) + "=? AND (" + where
             + ")";
         pf.whereIdArgs = new String[whereArgs.length + 1];
         pf.whereIdArgs[0] =  (pf.isNumericFormId ? pf.numericFormId : pf.tableId);
@@ -532,7 +531,7 @@ public class FormsProvider extends ContentProvider {
     PatchedFilter pf = extractUriFeatures( uri, segments, where, whereArgs );
     WebLoggerIf logger = WebLogger.getLogger(pf.appName);
 
-    String[] projection = { BaseColumns._ID, FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
+    String[] projection = { FormsColumns._ID, FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
 
     HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
 
@@ -558,7 +557,7 @@ public class FormsProvider extends ContentProvider {
             + " -- unable to query for existing records");
       }
 
-      int idxId = c.getColumnIndex(BaseColumns._ID);
+      int idxId = c.getColumnIndex(FormsColumns._ID);
       int idxTableId = c.getColumnIndex(FormsColumns.TABLE_ID);
       int idxFormId = c.getColumnIndex(FormsColumns.FORM_ID);
 
@@ -589,7 +588,7 @@ public class FormsProvider extends ContentProvider {
 
         try {
           ODKFileUtils.moveDirectory(srcDir, destDir);
-          if ( db.delete(DatabaseConstants.FORMS_TABLE_NAME, BaseColumns._ID + "=?", new String[] { id }) > 0 ) {
+          if ( db.delete(DatabaseConstants.FORMS_TABLE_NAME, FormsColumns._ID + "=?", new String[] { id }) > 0 ) {
             fs.success = true;
           }
         } catch (IOException e) {
@@ -720,7 +719,7 @@ public class FormsProvider extends ContentProvider {
               + " -- query for existing row did not return a cursor");
         }
         if (c.moveToFirst()) {
-          int idxId = c.getColumnIndex(BaseColumns._ID);
+          int idxId = c.getColumnIndex(FormsColumns._ID);
           int idxTableId = c.getColumnIndex(FormsColumns.TABLE_ID);
           int idxFormId = c.getColumnIndex(FormsColumns.FORM_ID);
 
@@ -750,7 +749,7 @@ public class FormsProvider extends ContentProvider {
             cv.put(FormsColumns.FORM_ID, formIdValue);
             for ( int idx = 0 ; idx < c.getColumnCount() ; ++idx ) {
               String colName = c.getColumnName(idx);
-              if ( colName.equals(BaseColumns._ID)) {
+              if ( colName.equals(FormsColumns._ID)) {
                 // don't insert the PK
                 continue;
               }
@@ -793,7 +792,7 @@ public class FormsProvider extends ContentProvider {
         HashMap<String,Object> cv = e.getValue();
 
         if ( db.update(DatabaseConstants.FORMS_TABLE_NAME, cv,
-            BaseColumns._ID + "=?", new String[] { fs._id }) > 0 ) {
+            FormsColumns._ID + "=?", new String[] { fs._id }) > 0 ) {
           fs.success = true;
         }
       }

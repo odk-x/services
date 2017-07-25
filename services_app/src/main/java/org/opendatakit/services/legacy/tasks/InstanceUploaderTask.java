@@ -20,7 +20,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import android.provider.BaseColumns;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -532,7 +531,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         if (c.getCount() == 1 && c.moveToFirst()) {
 
           String id = CursorUtils.getIndexAsString(c,
-              c.getColumnIndex(BaseColumns._ID));
+              c.getColumnIndex(InstanceColumns._ID));
           String dataTableInstanceId = CursorUtils.getIndexAsString(c,
               c.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
           String lastOutcome = CursorUtils.getIndexAsString(c,
