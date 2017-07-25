@@ -3,15 +3,16 @@ package org.opendatakit.services.resolve.task;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.R;
+
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
-import org.opendatakit.services.utilities.ActiveUserAndLocale;
+import org.opendatakit.services.R;
 
 import java.util.UUID;
 
@@ -20,56 +21,19 @@ import java.util.UUID;
  */
 public class ConflictResolutionListTask extends AsyncTask<Void, String, String> {
 
-  /**
-   * Holds the currently logged in user and their selected locale
-   */
   ActiveUserAndLocale aul;
-  /**
-   * A string resources for the row resolution status
-   */
   String formatStrResolvingRowNofM;
-  /**
-   * A string resource for when the row has been completely resolved
-   */
   String formatStrDone;
 
-  /**
-   * Whether to tahe local changes or take the server changes
-   */
   boolean mTakeLocal;
-  /**
-   * The app name
-   */
   String mAppName;
-  /**
-   * The id of the table that needs resolving
-   */
   String mTableId;
-  /**
-   * An adapter between the list view and the entries in the row that need to be resolved
-   */
   ArrayAdapter<ResolveRowEntry> mAdapter;
-  /**
-   * An object to be notified when the row has ben resolved
-   */
   ResolutionListener rl;
-  /**
-   * Changed on progress update, passed to resolutionProgress on the resolution listener
-   */
   String mProgress = "";
-  /**
-   * Set if canceled or on a result, passed to resolutionComplete on the resolution listener
-   */
   String mResult = null;
 
-  /**
-   * Saves its arguments and pulls string resources from the passed context
-   * @param context a context to pull string resources from
-   * @param takeLocal whether to take local or server changes
-   */
   public ConflictResolutionListTask(Context context, boolean takeLocal) {
-    super();
-    // TODO this is the constructor! mAppName hasn't been set yet!
     aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
 
     formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
@@ -77,8 +41,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     mTakeLocal = takeLocal;
   }
 
-  @Override
-  protected String doInBackground(Void... params) {
+  @Override protected String doInBackground(Void... params) {
 
     OdkConnectionInterface db = null;
 
@@ -91,22 +54,20 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      for (int i = 0; i < mAdapter.getCount(); ++i) {
-        this.publishProgress(String.format(formatStrResolvingRowNofM, i + 1, mAdapter.getCount()));
+      for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
+        this.publishProgress(String.format(formatStrResolvingRowNofM, i+1, mAdapter.getCount()));
 
         ResolveRowEntry entry = mAdapter.getItem(i);
         try {
 
-          if (entry != null) {
-            if (mTakeLocal) {
-              ODKDatabaseImplUtils
-                  .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
-                      aul.activeUser, aul.rolesList, aul.locale);
-            } else {
-              ODKDatabaseImplUtils
-                  .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
-                      aul.activeUser, aul.locale);
-            }
+          if ( mTakeLocal ) {
+            ODKDatabaseImplUtils
+                .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
+                    aul.activeUser, aul.rolesList, aul.locale);
+          } else {
+            ODKDatabaseImplUtils
+                .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
+                    aul.activeUser, aul.locale);
           }
 
         } catch (Exception e) {
@@ -116,8 +77,8 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
           if (msg == null)
             msg = e.toString();
           msg = "Exception: " + msg;
-          WebLogger.getLogger(mAppName)
-              .e("takeAllLocal", mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
+          WebLogger.getLogger(mAppName).e("takeAllLocal",
+              mAppName + " " + dbHandleName.getDatabaseHandle() + " " + msg);
           WebLogger.getLogger(mAppName).printStackTrace(e);
 
           if (exceptions == null) {
@@ -133,7 +94,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
 
           dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
-          if (dbOld != null) {
+          if ( dbOld != null ) {
             dbOld.releaseReference();
           }
 
@@ -144,6 +105,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
       }
       this.publishProgress(formatStrDone);
 
+
     } finally {
       if (db != null) {
         // release the reference...
@@ -152,7 +114,7 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
         db.releaseReference();
       }
     }
-    return exceptions != null ? exceptions.toString() : null;
+    return (exceptions != null) ? exceptions.toString() : null;
   }
 
   @Override
@@ -200,21 +162,12 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     }
   }
 
-  /**
-   * Clears the saved listener but only if the passed listener is the current one
-   * @param listener the listener to compare to
-   */
   public void clearResolutionListener(ResolutionListener listener) {
     synchronized (this) {
-      //noinspection ObjectEquality
       if (rl == listener) {
         rl = null;
       }
     }
-  }
-
-  public String getAppName() {
-    return mAppName;
   }
 
   public void setAppName(String appName) {
@@ -223,8 +176,8 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     }
   }
 
-  public String getTableId() {
-    return mTableId;
+  public String getAppName() {
+    return mAppName;
   }
 
   public void setTableId(String tableId) {
@@ -233,8 +186,8 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
     }
   }
 
-  public ArrayAdapter<ResolveRowEntry> getResolveRowEntryAdapter() {
-    return mAdapter;
+  public String getTableId() {
+    return mTableId;
   }
 
   public void setResolveRowEntryAdapter(ArrayAdapter<ResolveRowEntry> adapter) {
@@ -243,5 +196,10 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
       this.mProgress = String.format(formatStrResolvingRowNofM, 1, mAdapter.getCount());
     }
   }
+
+  public ArrayAdapter<ResolveRowEntry> getResolveRowEntryAdapter() {
+    return mAdapter;
+  }
+
 
 }

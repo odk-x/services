@@ -5174,7 +5174,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
    * Test set choice list
    */
   @Test
-  public void testSetChoiceList() throws Throwable {
+  public void testSetChoiceList() {
     ArrayList<Object> values = new ArrayList<Object>();
     Map<String,Object> myMap = new TreeMap<String,Object>();
     Map<String, Object> displayText = new TreeMap<String, Object>();
