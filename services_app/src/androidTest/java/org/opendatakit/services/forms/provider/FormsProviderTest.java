@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -102,37 +101,37 @@ public class FormsProviderTest {
     p.insert(new Uri.Builder().build(), null);
   }
 
-//  @Test
-//  public void testDeleteExistingAndInsertNewFormUsingWhereClause() throws Exception {
-//    deleteExistingAndInsertNewForm(new Runnable() {
-//      @Override
-//      public void run() {
-//        p.delete(uri, FormsColumns.TABLE_ID + " =?", new String[] { "Tea_houses" });
-//      }
-//    });
-//  }
+  @Test
+  public void testDeleteExistingAndInsertNewFormUsingWhereClause() throws Exception {
+    deleteExistingAndInsertNewForm(new Runnable() {
+      @Override
+      public void run() {
+        p.delete(uri, FormsColumns.TABLE_ID + " =?", new String[] { "Tea_houses" });
+      }
+    });
+  }
 
-//  @Test
-//  public void testDeleteExistingAndInsertNewFormUsingUri() throws Exception {
-//    deleteExistingAndInsertNewForm(new Runnable() {
-//      @Override
-//      public void run() {
-//        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
-//            .appendPath("Tea_houses").build(), null, null);
-//      }
-//    });
-//  }
+  @Test
+  public void testDeleteExistingAndInsertNewFormUsingUri() throws Exception {
+    deleteExistingAndInsertNewForm(new Runnable() {
+      @Override
+      public void run() {
+        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
+            .appendPath("Tea_houses").build(), null, null);
+      }
+    });
+  }
 
-//  @Test
-//  public void testDeleteExistingAndInsertNewFormNoFormId() throws Exception {
-//    deleteExistingAndInsertNewForm(new Runnable() {
-//      @Override
-//      public void run() {
-//        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
-//            .build(), null, null);
-//      }
-//    });
-//  }
+  @Test
+  public void testDeleteExistingAndInsertNewFormNoFormId() throws Exception {
+    deleteExistingAndInsertNewForm(new Runnable() {
+      @Override
+      public void run() {
+        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
+            .build(), null, null);
+      }
+    });
+  }
 
   private void deleteExistingAndInsertNewForm(Runnable r) throws Exception {
     File a = new File(ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + '/'
