@@ -20,7 +20,7 @@ import org.opendatakit.utilities.LocalizationUtils;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
-//import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
+import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 
 /**
  * Created by Niles on 6/29/17.
@@ -28,7 +28,6 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class FormInfoTest {
-  /*
   private FormInfo info;
 
   private static String join(String s, String[] arr) {
@@ -124,5 +123,5 @@ public class FormInfoTest {
             .getLocalizedDisplayName("default", info.tableId, "default", info.formTitle),
         "Two Part Validation Test");
   }
-  */
+
 }
