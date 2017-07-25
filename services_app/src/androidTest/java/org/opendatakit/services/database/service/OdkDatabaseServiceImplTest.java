@@ -17,12 +17,13 @@ import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.TableHealthInfo;
-import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.provider.*;
+import org.opendatakit.provider.ChoiceListColumns;
+import org.opendatakit.provider.ColumnDefinitionsColumns;
+import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -739,8 +740,7 @@ public class OdkDatabaseServiceImplTest {
         "INSERT INTO " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " (" + join(", ",
             new String[] { KeyValueStoreColumns.TABLE_ID, KeyValueStoreColumns.PARTITION,
                 KeyValueStoreColumns.ASPECT, KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE,
-                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, "
-            + "?, ?, ?);",
+                KeyValueStoreColumns.VALUE_TYPE }) + ") VALUES (?, ?, ?, ?, ?, ?);",
         new String[] { table, partition, aspect, key, value, "TEXT" });
   }
 
@@ -883,102 +883,22 @@ public class OdkDatabaseServiceImplTest {
   /*
   @Test
   public void testGetMostRecentRowWithId() throws Exception {
-    createTeaHouses();
-    thInsert("t1", SavepointTypeManipulator.incomplete());
-    thSet("t1", DataTableColumns.SAVEPOINT_TIMESTAMP, "bbb");
-    thInsert("t2", SavepointTypeManipulator.complete());
-    thSet("t2", DataTableColumns.SAVEPOINT_TIMESTAMP, "aaa");
-    thSet("t2", "_id", "t1");
-    BaseTable result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
-    assertEquals(result.getNumberOfRows(), 1);
-    assertEquals(result.getRowAtIndex(0).getDataByKey("_savepoint_type"),
-        SavepointTypeManipulator.complete());
-    truncate("Tea_houses");
-    result = d.getMostRecentRowWithId(getAppName(), dbHandle, "Tea_houses", "t1");
-    assertEquals(result.getNumberOfRows(), 0);
+
   }
 
-  private void thSetRevid(String revId) throws Exception {
-    db.rawQuery("UPDATE " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " SET " +
-        TableDefinitionsColumns.REV_ID + " = ?", new String[] {revId});
-  }
   @Test
   public void testGetTableMetadata() throws Exception {
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
-    insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses",
-        "partition", "aspect", "key");
-    assertEquals(result.getEntries().size(), 1);
-    assertEquals(result.getEntries().get(0).value, "val");
-    result = d.getTableMetadata(getAppName(), dbHandle, null, null, null, null);
-    assertEquals(result.getEntries().size(), 2);
-    String a = result.getEntries().get(0).value;
-    String b = result.getEntries().get(1).value;
-    if (a.equals("val")) {
-      assertEquals(b, "other val");
-    } else {
-      assertEquals(a, "other val");
-      assertEquals(b, "val");
-    }
-    result = d.getTableMetadata(getAppName(), dbHandle, "Tea_houses", "partition", "aspect",
-        "k3");
-    assertEquals(result.getEntries().size(), 0);
+
   }
 
   @Test
-  public void testGetTableMetadataIfChangedChanged() throws Exception {
-    insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
-    insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-    TableMetaDataEntries result = d.getTableMetadataIfChanged(getAppName(), dbHandle,
-        "Tea_houses", "old and invalid revId");
-    assertEquals(result.getEntries().size(), 2);
-    String a = result.getEntries().get(0).value;
-    String b = result.getEntries().get(1).value;
-    if (a.equals("val")) {
-      assertEquals(b, "other val");
-    } else {
-      assertEquals(a, "other val");
-      assertEquals(b, "val");
-    }
-    thSetRevid("new revid");
-    result = d.getTableMetadataIfChanged(getAppName(), dbHandle, "Tea_houses", "new revid");
-    assertEquals(result.getEntries().size(), 0);
-    result = d.getTableMetadataIfChanged(getAppName(), dbHandle, "Tea_houses", "old revid again");
-    assertEquals(result.getEntries().size(), 2);
-    result = d.getTableMetadataIfChanged(getAppName(), dbHandle, "table_dne", "revid");
-    assertEquals(result.getEntries().size(), 0);
+  public void testGetTableMetadataIfChanged() throws Exception {
+
   }
 
   @Test
   public void testGetTableHealthStatus() throws Exception {
-    //_savepoint_type is null -> + 1 checkpoint
-    //_conflict_type not is null -> + 1 conflict
-    //_sync_state not in [synced, pending_files] -> + 1 changes
-    createTeaHouses();
-    TableHealthInfo res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
-    thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
-    thSet("t1", "_conflict_type", null);
-    res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
-    assertTrue(res.hasChanges());
 
-    truncate("Tea_houses");
-    thInsert("t1", SyncState.synced, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
-    thSet("t1", "_conflict_type", ConflictType.LOCAL_DELETED_OLD_VALUES);
-    res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS);
-    assertFalse(res.hasChanges());
-
-    thSet("t1", "_savepoint_type", null);
-    res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
-    assertTrue(res.hasChanges());
-
-    thSet("t1", "_sync_state", SyncState.synced_pending_files);
-    res = d.getTableHealthStatus(getAppName(), dbHandle, "Tea_houses");
-    assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
-    assertFalse(res.hasChanges());
   }
 
   @Test
