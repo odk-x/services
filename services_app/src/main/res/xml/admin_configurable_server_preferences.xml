@@ -1,4 +1,4 @@
-<PreferenceScreen xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory android:title="@string/user_access_preferences" >
         <CheckBoxPreference
@@ -25,15 +25,6 @@
             android:key="common.change_google_account"
             android:title="@string/selected_google_account_text" 
             android:persistent="false" />
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/testing_support">
-        <CheckBoxPreference
-                android:id="@+id/allow_non_secure_authentications"
-                android:defaultValue="false"
-                android:key="common.non_secure_authentication"
-                android:title="@string/non_secure_authentication"
-                android:summary="@string/non_secure_summary"
-                android:persistent="false"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -1,20 +1,18 @@
 package org.opendatakit.services.sync.service.logic;
 
 import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.Header;
+import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpHeaders;
-import org.opendatakit.httpclientandroidlib.client.methods.CloseableHttpResponse;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPut;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpRequestBase;
+import org.opendatakit.httpclientandroidlib.client.methods.*;
 import org.opendatakit.httpclientandroidlib.client.utils.URIBuilder;
+import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
 import org.opendatakit.httpclientandroidlib.entity.ContentType;
+import org.opendatakit.httpclientandroidlib.entity.HttpEntityWrapper;
 import org.opendatakit.services.application.Services;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.exceptions.NotOpenDataKitServerException;
@@ -22,12 +20,15 @@ import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.utilities.ODKFileUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by Niles on 7/3/17.
@@ -365,25 +366,25 @@ public class HttpRestProtocolWrapperTest {
     h.makeHttpEntity(null);
   }
 
-//  @Test
-//  public void testMakeHttpEntity() throws Exception {
-//    File file = new File(ODKFileUtils.getFormFolder("default", "Tea_houses", "Tea_houses") + "/"
-//        + ODKFileUtils.FORMDEF_JSON_FILENAME);
-//    HttpEntity res = h.makeHttpEntity(file);
-//    HttpEntityWrapper e = (HttpEntityWrapper) res;
-//    // I swear to god there is no easier way to do this, e.getContent() is useless
-//    Field f = HttpEntityWrapper.class.getDeclaredField("wrappedEntity");
-//    f.setAccessible(true);
-//    ByteArrayEntity bae = (ByteArrayEntity) f.get(e);
-//    f = ByteArrayEntity.class.getDeclaredField("b");
-//    f.setAccessible(true);
-//    byte[] bytes = (byte[]) f.get(bae);
-//    //noinspection IOResourceOpenedButNotSafelyClosed if it throws an exception, let the test fail
-//    InputStream is = new FileInputStream(file);
-//    byte[] realBytes = new byte[bytes.length];
-//    assertNotEquals(0, is.read(realBytes));
-//    assertArrayEquals(bytes, realBytes);
-//    is.close();
-//  }
+  @Test
+  public void testMakeHttpEntity() throws Exception {
+    File file = new File(ODKFileUtils.getFormFolder("default", "Tea_houses", "Tea_houses") + "/"
+        + ODKFileUtils.FORMDEF_JSON_FILENAME);
+    HttpEntity res = h.makeHttpEntity(file);
+    HttpEntityWrapper e = (HttpEntityWrapper) res;
+    // I swear to god there is no easier way to do this, e.getContent() is useless
+    Field f = HttpEntityWrapper.class.getDeclaredField("wrappedEntity");
+    f.setAccessible(true);
+    ByteArrayEntity bae = (ByteArrayEntity) f.get(e);
+    f = ByteArrayEntity.class.getDeclaredField("b");
+    f.setAccessible(true);
+    byte[] bytes = (byte[]) f.get(bae);
+    //noinspection IOResourceOpenedButNotSafelyClosed if it throws an exception, let the test fail
+    InputStream is = new FileInputStream(file);
+    byte[] realBytes = new byte[bytes.length];
+    assertNotEquals(0, is.read(realBytes));
+    assertArrayEquals(bytes, realBytes);
+    is.close();
+  }
 
 }

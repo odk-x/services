@@ -4,7 +4,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,7 +19,9 @@ import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
@@ -52,17 +53,17 @@ public class FormInfoTest {
     assertEquals(info.formDef, null);
   }
 
-//  @Test
-//  public void testCursorConstructorNotJson() throws Exception {
-//    testCursorConstructorBadFormdef(new ArgRunnable() {
-//      @Override
-//      public void run(File a) throws Exception {
-//        OutputStream f = new FileOutputStream(a);
-//        f.write("Not a valid json file".getBytes());
-//        f.close();
-//      }
-//    });
-//  }
+  @Test
+  public void testCursorConstructorNotJson() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        OutputStream f = new FileOutputStream(a);
+        f.write("Not a valid json file".getBytes());
+        f.close();
+      }
+    });
+  }
 
   public void testCursorConstructorBadFormdef(ArgRunnable r) throws Exception {
     AndroidConnectFactory.configure();
@@ -113,17 +114,17 @@ public class FormInfoTest {
     assertTrue(worked);
   }
 
-//  @Test
-//  public void testCursorConstructorFormdefDoesntExist() throws Exception {
-//    testCursorConstructorBadFormdef(new ArgRunnable() {
-//      @Override
-//      public void run(File a) throws Exception {
-//        if (!a.delete()) {
-//          throw new IOException("Should have been able to delete real formdef");
-//        }
-//      }
-//    });
-//  }
+  @Test
+  public void testCursorConstructorFormdefDoesntExist() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        if (!a.delete()) {
+          throw new IOException("Should have been able to delete real formdef");
+        }
+      }
+    });
+  }
 
   @Before
   public void setUp() {

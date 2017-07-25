@@ -3,6 +3,7 @@ package org.opendatakit.services.forms.provider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -58,6 +59,31 @@ public class FormsProviderTest {
 //        null);
 //    assertTeaHouses(result);
 //  }
+  @Test
+  public void testQueryBlankFormId() throws Exception {
+    OdkDatabaseServiceImplTest test = new OdkDatabaseServiceImplTest();
+    test.setUp();
+    test.insertMetadata("Tea_houses", "SurveyUtil", "default", "SurveyUtil.formId",
+        "Tea_houses"); // Set default form id
+    db.rawQuery("INSERT INTO " + DatabaseConstants.FORMS_TABLE_NAME + " (" + join(", ",
+        FormsColumns.formsDataColumnNames) + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        new String[] { "Tea_houses", "Tea_houses", "SETTINGS", "FORM_VERSION",
+            "{\"text\": " + "\"Tea Houses\"}", "default", "INSTANCE_NAME", "JSON_MD5_HASH",
+            "FILE_LENGTH", "DATE" }).close();
+    // Should pull default form id from the database/KVS
+    Uri uri = new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
+        .appendEncodedPath("_").build();
+    /*
+    result = p.query(
+        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
+            .build(), FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
+        new String[] { "default" }, FormsColumns.TABLE_ID);
+        */
+    Cursor result = p
+        .query(uri, FormsColumns.formsDataColumnNames,
+            null, null, null);
+    assertTeaHouses(result);
+  }
 
   @Before
   public void setUp() throws Throwable {
@@ -218,15 +244,15 @@ public class FormsProviderTest {
     c.close();
   }
 
-//  @Test
-//  public void testUpdate() throws Exception {
-//    Cursor c = p.query(uri, new String[0], null, null, FormsColumns.FORM_ID);
-//    if (c == null)
-//      throw new Exception("Null cursor");
-//    int expected = c.getCount();
-//    c.close();
-//    assertEquals(p.update(uri, null, null, null), expected);
-//  }
+  @Test
+  public void testUpdate() throws Exception {
+    Cursor c = p.query(uri, new String[0], null, null, FormsColumns.FORM_ID);
+    if (c == null)
+      throw new Exception("Null cursor");
+    int expected = c.getCount();
+    c.close();
+    assertEquals(p.update(uri, null, null, null), expected);
+  }
 
   @Test
   public void testOnCreate() throws Exception {

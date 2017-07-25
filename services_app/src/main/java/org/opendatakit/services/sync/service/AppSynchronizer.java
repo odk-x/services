@@ -384,24 +384,13 @@ public class AppSynchronizer {
         status = finalStatus;
       }
 
-      // Only attempt to write a device status record if we are not the anonymous
-      // user, the server is an ODK server, its appName matches ours,
-      // accepts our authentication, and there isn't a network transport error
-      // (which might indicate a network login screen).
-      if ((!sharedContext.getAuthenticationType().equals(
-              sharedContext.getString(R.string.credential_type_none))) &&
-          !( status == SyncStatus.SERVER_IS_NOT_ODK_SERVER ||
-             status == SyncStatus.APPNAME_NOT_SUPPORTED_BY_SERVER ||
-            status == SyncStatus.AUTHENTICATION_ERROR ||
-            status == SyncStatus.NETWORK_TRANSPORT_ERROR )) {
-        HashMap<String, Object> deviceInfo = sharedContext.getDeviceInfo();
-        deviceInfo.put("status", status.name());
-        try {
-          sharedContext.getSynchronizer().publishDeviceInformation(deviceInfo);
-        } catch (Exception e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          WebLogger.getLogger(appName).e(TAG, "Unable to publish device info to server");
-        }
+      HashMap<String,Object> deviceInfo = sharedContext.getDeviceInfo();
+      deviceInfo.put("status", status.name());
+      try {
+        sharedContext.getSynchronizer().publishDeviceInformation(deviceInfo);
+      } catch (IOException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
+        WebLogger.getLogger(appName).e(TAG, "Unable to publish device info to server");
       }
 
       // stop the in-progress notification and report an overall success/failure

@@ -80,7 +80,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private final String username;
   private final String password;
   private final String installationId;
-  private final Boolean allowUnsafeAuthentication;
 
   private final String deviceId;
 
@@ -112,8 +111,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
     this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
 
     this.installationId = props.getProperty(CommonToolProperties.KEY_INSTALLATION_ID);
-    this.allowUnsafeAuthentication = props.getBooleanProperty(CommonToolProperties
-        .KEY_ALLOW_NON_SECURE_AUTHENTICATION);
 
     PropertyManager propertyManager = new PropertyManager(context);
     this.deviceId = propertyManager.getSingularProperty(PropertyManager.OR_DEVICE_ID_PROPERTY,
@@ -242,14 +239,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   public String getInstallationId() {
     return installationId;
-  }
-
-  public boolean getAllowUnsafeAuthentication() {
-    if ( allowUnsafeAuthentication == null ) {
-      return false;
-    } else {
-      return allowUnsafeAuthentication;
-    }
   }
 
   public HashMap<String,Object> getDeviceInfo() {

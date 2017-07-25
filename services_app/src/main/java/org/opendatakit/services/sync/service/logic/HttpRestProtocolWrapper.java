@@ -251,8 +251,7 @@ public class HttpRestProtocolWrapper {
     CookieStore cookieStore = new BasicCookieStore();
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
 
-    URI destination = normalizeUri(sc.getAggregateUri(), "/");
-    String host = destination.getHost();
+    String host = normalizeUri(sc.getAggregateUri(), "/").getHost();
     String authenticationType = sc.getAuthenticationType();
 
     if (sc.getString(R.string.credential_type_google_account).equals(authenticationType)) {
@@ -270,19 +269,14 @@ public class HttpRestProtocolWrapper {
       {
         AuthScope a;
         // allow digest auth on any port...
-        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
+        // TODO switch this to digest
+        a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
         asList.add(a);
-        if ( destination.getScheme().equals("https")) {
-          // and allow basic auth on https connections...
-          a = new AuthScope(host, destination.getPort(), null, AuthSchemes.BASIC);
-          asList.add(a);
-        }
-        // this might be disabled in production builds...
-        if ( sc.getAllowUnsafeAuthentication() ) {
-          log.e(LOGTAG, "Enabling Unsafe Authentication!");
-          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
-          asList.add(a);
-        }
+        // and allow basic auth on the standard TLS/SSL ports...
+        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
+        asList.add(a);
+        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
+        asList.add(a);
       }
 
       // add username
