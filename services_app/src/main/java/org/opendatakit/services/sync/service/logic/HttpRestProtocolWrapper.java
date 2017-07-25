@@ -187,95 +187,6 @@ public class HttpRestProtocolWrapper {
   // cookie manager
   private final CookieManager cm;
 
-  /**
-   * Constructor that stores the given sync execution context and sets up the cookie manager,
-   * http auth client, etc..
-   *
-   * @param sc the sync execution context to use to pull the aggregate URI, string resources and
-   *           app name from
-   * @throws InvalidAuthTokenException
-   */
-  public HttpRestProtocolWrapper(SyncExecutionContext sc) throws InvalidAuthTokenException {
-    this.sc = sc;
-    this.log = WebLogger.getLogger(sc.getAppName());
-    log.e(LOGTAG, "AggregateUri: " + sc.getAggregateUri());
-    log.e(LOGTAG, "baseUri: " + normalizeUri(sc.getAggregateUri(), "/"));
-
-    // This is technically not correct, as we should really have a global
-    // that we manage for this... If there are two or more service threads
-    // running, we could forget other session cookies. But, by creating a
-    // new cookie manager here, we ensure that we don't have any stale
-    // session cookies at the start of each sync.
-
-    CookieHandler cm = new CookieManager();
-    CookieHandler.setDefault(cm);
-
-    // HttpClient for auth tokens
-    localAuthContext = new BasicHttpContext();
-
-    SocketConfig socketAuthConfig = SocketConfig.copy(SocketConfig.DEFAULT)
-        .setSoTimeout(2 * CONNECTION_TIMEOUT).build();
-
-    RequestConfig requestAuthConfig = RequestConfig.copy(RequestConfig.DEFAULT)
-        .setConnectTimeout(CONNECTION_TIMEOUT)
-        // support authenticating
-        .setAuthenticationEnabled(true)
-        // support redirecting to handle http: => https: transition
-        .setRedirectsEnabled(true)
-        // max redirects is set to 4
-        .setMaxRedirects(4).setCircularRedirectsAllowed(true)
-        //.setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
-        .setCookieSpec(CookieSpecs.DEFAULT).build();
-
-    httpAuthClient = HttpClientBuilder.create().setDefaultSocketConfig(socketAuthConfig)
-        .setDefaultRequestConfig(requestAuthConfig).build();
-
-    // Context
-    // context holds authentication state machine, so it cannot be
-    // shared across independent activities.
-    localContext = new BasicHttpContext();
-
-    CookieStore cookieStore = new BasicCookieStore();
-    CredentialsProvider credsProvider = new BasicCredentialsProvider();
-
-    String host = normalizeUri(sc.getAggregateUri(), "/").getHost();
-    String authenticationType = sc.getAuthenticationType();
-
-    if (sc.getString(R.string.credential_type_google_account).equals(authenticationType)) {
-
-      String accessToken = sc.getAccessToken();
-      checkAccessToken(accessToken);
-      this.accessToken = accessToken;
-
-    } else if (sc.getString(R.string.credential_type_username_password)
-        .equals(authenticationType)) {
-      String username = sc.getUsername();
-      String password = sc.getPassword();
-
-      Collection<AuthScope> asList = new ArrayList<>();
-      {
-        AuthScope a;
-        // allow digest auth on any port...
-        // TODO switch this to digest
-        a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
-        asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
-      }
-
-      // add username
-      if (username != null && !username.trim().isEmpty()) {
-        log.i(LOGTAG, "adding credential for host: " + host + " username:" + username);
-        Credentials c = new UsernamePasswordCredentials(username, password);
-
   private final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
     URI uriBase = URI.create(aggregateUri).normalize();
     String term = uriBase.getPath();
@@ -760,7 +671,8 @@ public class HttpRestProtocolWrapper {
     cookieStore = new BasicCookieStore();
     credsProvider = new BasicCredentialsProvider();
 
-    String host = this.baseUri.getHost();
+    URI destination = normalizeUri(sc.getAggregateUri(), "/");
+    String host = destination.getHost();
     String authenticationType = sc.getAuthenticationType();
 
     if ( sc.getString(R.string.credential_type_google_account)
@@ -781,13 +693,20 @@ public class HttpRestProtocolWrapper {
         AuthScope a;
         // allow digest auth on any port...
         // TODO switch this to digest
-        a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
         asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
+        if ( destination.getScheme().equals("https")) {
+          // and allow basic auth on https connections...
+          a = new AuthScope(host, destination.getPort(), null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
+        // this might be disabled in production builds...
+        if ( sc.getAllowUnsafeAuthentication() ) {
+          log.e(LOGTAG, "Enabling Unsafe Authentication!");
+          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
+
       }
 
       // add username

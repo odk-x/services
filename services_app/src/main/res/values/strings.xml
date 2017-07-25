@@ -43,6 +43,10 @@
     <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
     <string name="checkpoint_take_all_oldest_or_remove">Discard All Checkpoints</string>
     <string name="checkpoint_take_all_newest">Update All Checkpoints to Incomplete State</string>
+    <string name="silently_resolved_single_checkpoint">a checkpoint on an unmodifiable row was
+        silently rolled back.</string>
+    <string name="silently_resolved_checkpoints">%1$d checkpoints on unmodifiable rows were
+        silently rolled back.</string>
 
     <string name="checkpoint_radio_local">Apply:</string>
     <string name="checkpoint_radio_server">Restore:</string>
@@ -184,8 +188,6 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
-    <string name="sync_warn_sync_before_logout">WARNING: Be sure to sync before changing
-        users or logging out</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have sync\'d now may no longer be able to be sync\'d.</string>
@@ -268,7 +270,10 @@
         the server. If you change users or logout before syncing these changes, you may
         lose them.</string>
     <string name="resolve_with_sync">Sync Changes</string>
-    <string name="ignore_changes">Discard Unsynced Changes</string>
+    <string name="ignore_changes">Ignore Unsynced Changes</string>
+
+    <string name="resolve_checkpoints_and_conflicts">Resolve Checkpoints and Conflicts</string>
+    <string name="resolve_pending_checkpoints_and_conflicts">You have checkpoint rows and/or conflicts with the server that must be resolved before you can change your authenticated user.</string>
 
     <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
@@ -313,6 +318,10 @@
     <string name="no_account">No account</string>
     <string name="anonymous">None (anonymous access)</string>
     <string name="credential_type_prefix">Credentials: </string>
+
+    <string name="testing_support">Non-Production (Test) Settings:</string>
+    <string name="non_secure_authentication">Allow unsafe/unsecure Authentication</string>
+    <string name="non_secure_summary">Authenticate over http: (testing support)</string>
 
     <string name="restrict_device_settings_summary">Limit non-Admin ability to change Device Settings</string>
     <string name="restrict_device">Manage ability to change Device Settings</string>

@@ -283,4 +283,8 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     AlertDialog dialog = builder.create();
     dialog.show();
   }
+
+  public String getAppName() {
+    return mAppName;
+  }
 }

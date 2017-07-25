@@ -183,6 +183,20 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     // we have resolved the metadata conflicts -- no need to try this again
     mHaveResolvedMetadataConflicts = true;
 
+    // this toast may be silently swallowed if there is only one remaining checkpoint in the table.
+    int silentlyResolvedCheckpoints =
+        ((OdkResolveCheckpointRowLoader) loader).getNumberRowsSilentlyReverted();
+
+    if ( silentlyResolvedCheckpoints != 0 ) {
+      if ( silentlyResolvedCheckpoints == 1 ) {
+        Toast.makeText(getActivity(), getActivity().getString(R.string
+                .silently_resolved_single_checkpoint), Toast.LENGTH_LONG).show();
+      } else {
+        Toast.makeText(getActivity(), getActivity().getString(R.string.silently_resolved_checkpoints,
+            silentlyResolvedCheckpoints), Toast.LENGTH_LONG).show();
+      }
+    }
+
     // Swap the new cursor in. (The framework will take care of closing the
     // old cursor once we return.)
     mAdapter.clear();
@@ -222,8 +236,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   private void resolveConflictList(boolean takeNewest) {
     if (mAdapter.getCount() > 0) {
       if (checkpointResolutionListTask == null) {
-        checkpointResolutionListTask = new CheckpointResolutionListTask(getActivity(), takeNewest);
-        checkpointResolutionListTask.setAppName(mAppName);
+        checkpointResolutionListTask = new CheckpointResolutionListTask(getActivity(), takeNewest, mAppName);
         checkpointResolutionListTask.setTableId(mTableId);
         checkpointResolutionListTask.setResolveRowEntryAdapter(mAdapter);
         checkpointResolutionListTask.setResolutionListener(this);

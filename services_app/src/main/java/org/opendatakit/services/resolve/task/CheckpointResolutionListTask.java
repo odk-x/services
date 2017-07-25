@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
 
+import org.opendatakit.database.RoleConsts;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -32,7 +33,10 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   String mProgress = "";
   String mResult = null;
 
-  public CheckpointResolutionListTask(Context context, boolean takeNewest) {
+  public CheckpointResolutionListTask(Context context, boolean takeNewest, String appName) {
+    // There are times when this constructor is called and mAppName has no value
+    // and getActiveUserAndLocale crashes so we need the appName in the constructor
+    mAppName = appName;
     aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
 
     formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
@@ -61,11 +65,13 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
         try {
 
           if ( mTakeNewest ) {
+            // this may fail if user does not have permissions for modifying row
             ODKDatabaseImplUtils.get()
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
+            // allow all users to automatically roll back
             ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
-                entry.rowId, aul.activeUser, aul.rolesList);
+                entry.rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
 
         } catch (Exception e) {
