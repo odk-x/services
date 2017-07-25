@@ -20,15 +20,11 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.provider.SyncStateContract;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,20 +33,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.consts.RequestCodeConsts;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.TableHealthInfo;
-import org.opendatakit.database.service.TableHealthStatus;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.services.application.Services;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -60,14 +44,14 @@ import org.opendatakit.services.sync.actions.LoginActions;
 import org.opendatakit.services.sync.actions.SyncActions;
 import org.opendatakit.services.sync.actions.activities.*;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
-import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -98,7 +82,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
    private TextView accountIdentity;
 
    private PropertiesSingleton props;
-   private TableHealthValidator healthValidator;
 
    private EditText usernameEditText;
    private EditText passwordEditText;
@@ -127,7 +110,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          return;
       }
 
-      if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
+      if (savedInstanceState != null && savedInstanceState
+          .containsKey(LOGIN_ACTION)) {
          String action = savedInstanceState.getString(LOGIN_ACTION);
          try {
             loginAction = LoginActions.valueOf(action);
@@ -136,8 +120,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          }
       }
       disableButtons();
-
-      healthValidator = new TableHealthValidator(mAppName, getActivity());
    }
 
    @Override
@@ -170,7 +152,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       togglePasswordText.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
-            if (togglePasswordText.isChecked()) {
+            if(togglePasswordText.isChecked()) {
                passwordEditText.setTransformationMethod(null);
             } else {
                passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
@@ -180,8 +162,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
 
       authenticateNewUser = (Button) view.findViewById(R.id.change_user_button);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
+         @Override public void onClick(View v) {
             setNewCredentials();
             refreshCredentialsDisplay();
             verifyServerSettings(v);
@@ -190,8 +171,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
 
       logout = (Button) view.findViewById(R.id.logout_button);
       logout.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
+         @Override public void onClick(View v) {
             logout();
          }
       });
@@ -247,28 +227,28 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
       String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
 
-      if (credentialToUse == null) {
+      if ( credentialToUse == null ) {
          credentialToUse = getString(R.string.credential_type_none);
       }
 
-      for (int i = 0; i < credentialValues.length; ++i) {
-         if (credentialToUse.equals(credentialValues[i])) {
+      for ( int i = 0 ; i < credentialValues.length ; ++i ) {
+         if ( credentialToUse.equals(credentialValues[i]) ) {
             if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
                accountAuthType.setText(credentialEntries[i]);
             }
          }
       }
 
-      if (credentialToUse.equals(getString(R.string.credential_type_none))) {
+      if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
          accountIdentity.setText(getResources().getString(R.string.anonymous));
-      } else if (credentialToUse.equals(getString(R.string.credential_type_username_password))) {
+      } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
          String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
          if (username == null || username.equals("")) {
             accountIdentity.setText(getResources().getString(R.string.no_account));
          } else {
             accountIdentity.setText(username);
          }
-      } else if (credentialToUse.equals(getString(R.string.credential_type_google_account))) {
+      } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
          String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
          if (googleAccount == null || googleAccount.equals("")) {
             accountIdentity.setText(getResources().getString(R.string.no_account));
@@ -298,7 +278,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          return;
       }
 
-      healthValidator.verifyTableHealth();
       updateCredentialsUI();
       perhapsEnableButtons();
       updateInterface();
@@ -312,12 +291,12 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
       String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
 
-      if (credentialToUse == null) {
+      if ( credentialToUse == null ) {
          credentialToUse = getString(R.string.credential_type_none);
       }
 
-      for (int i = 0; i < credentialValues.length; ++i) {
-         if (credentialToUse.equals(credentialValues[i])) {
+      for ( int i = 0 ; i < credentialValues.length ; ++i ) {
+         if ( credentialToUse.equals(credentialValues[i]) ) {
             if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
                accountAuthType.setText(credentialEntries[i]);
             }
@@ -329,11 +308,11 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       if (indexOfColon > 0) {
          account = account.substring(indexOfColon + 1);
       }
-      if (credentialToUse.equals(getString(R.string.credential_type_none))) {
+      if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
          accountIdentity.setText(getResources().getString(R.string.anonymous));
-      } else if (credentialToUse.equals(getString(R.string.credential_type_username_password))) {
+      } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
          accountIdentity.setText(account);
-      } else if (credentialToUse.equals(getString(R.string.credential_type_google_account))) {
+      } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
          accountIdentity.setText(account);
       } else {
          accountIdentity.setText(getResources().getString(R.string.no_account));
@@ -349,7 +328,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
    private void perhapsEnableButtons() {
       PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
       String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-      if (url == null || url.length() == 0) {
+      if ( url == null || url.length() == 0 ) {
          disableButtons();
       } else {
          authenticateNewUser.setEnabled(true);
@@ -413,9 +392,6 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             loginAction = LoginActions.IDLE;
          }
          tickleInterface();
-      } else if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
-          requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER) {
-         healthValidator.verifyTableHealth();
       }
    }
 
@@ -445,8 +421,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                    final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
-                   WebLogger.getLogger(getAppName()).e(TAG,
-                       "tickleInterface status " + status.name() + " login " + "action " + loginAction.name());
+                   WebLogger.getLogger(getAppName()).e(TAG,"tickleInterface status " + status.name() + " login "
+                       + "action " + loginAction.name());
                    if (status == SyncStatus.SYNCING) {
                       loginAction = LoginActions.MONITOR_VERIFYING;
 
@@ -523,8 +499,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                    final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
-                   WebLogger.getLogger(getAppName()).e(TAG,
-                       "updateInterface status " + status.name() + " login " + "action " + loginAction.name());
+                   WebLogger.getLogger(getAppName()).e(TAG,"updateInterface status " + status.name() + " login "
+                       + "action " + loginAction.name());
                    if (status == SyncStatus.SYNCING) {
                       loginAction = LoginActions.MONITOR_VERIFYING;
 
@@ -601,7 +577,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                    updateInterface();
                    return;
                 } else {
-                   WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");
+                   WebLogger.getLogger(getAppName())
+                       .i(TAG, "[" + getId() + "] [onSyncCompleted] and syncServiceInterface is null");
                    handler.postDelayed(new Runnable() {
                       @Override
                       public void run() {
@@ -625,7 +602,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          String password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
          if (username == null || username.length() == 0 || password == null
              || password.length() == 0) {
-            SyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_username_password));
+            SyncBaseActivity
+                .showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_username_password));
             return false;
          }
          return true;
@@ -633,7 +611,8 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       if (getString(R.string.credential_type_google_account).equals(authType)) {
          String accountName = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
          if (accountName == null || accountName.length() == 0) {
-            SyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_google_account));
+            SyncBaseActivity
+                .showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_google_account));
             return false;
          }
          return true;
@@ -850,9 +829,10 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             if (outcomeDialog != null) {
                dismissOutcomeDialog();
             }
-            outcomeDialog = DismissableOutcomeDialogFragment
-                .newInstance(getString(id_title), message, (status == SyncStatus.SYNC_COMPLETE
-                    || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS), LoginFragment.NAME);
+            outcomeDialog = DismissableOutcomeDialogFragment.newInstance(getString(id_title), message,
+                (status == SyncStatus.SYNC_COMPLETE
+                    || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS),
+                LoginFragment.NAME);
 
             // If fragment is not visible an exception could be thrown
             // TODO: Investigate a better way to handle this
@@ -916,4 +896,5 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       }
       return mAppName;
    }
+
 }
