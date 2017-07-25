@@ -2708,10 +2708,9 @@ public final class ODKDatabaseImplUtils {
 
     AccessContext accessContext = getAccessContext(db, tableId, activeUser, rolesList);
 
-    return query(db, tableId, QueryUtil.buildSqlStatement(tableId,
-        QueryUtil.WHERE_CLAUSE_ROWS_WITH_ID_EQUALS,
-        null, null,
-        QueryUtil.ORDER_BY_SAVEPOINT_TIMESTAMP, QueryUtil.ORDER_BY_DESCENDING),
+    return query(db, tableId, QueryUtil.buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
+        QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
+        QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS, QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR),
         new String[] { rowId }, null, accessContext);
   }
 
@@ -2733,9 +2732,9 @@ public final class ODKDatabaseImplUtils {
         RoleConsts.ADMIN_ROLES_LIST);
 
     return privilegedQuery(db, tableId, QueryUtil
-            .buildSqlStatement(tableId, QueryUtil.WHERE_CLAUSE_ROWS_WITH_ID_EQUALS,
-                null, null,
-                QueryUtil.ORDER_BY_SAVEPOINT_TIMESTAMP, QueryUtil.ORDER_BY_DESCENDING),
+            .buildSqlStatement(tableId, QueryUtil.GET_ROWS_WITH_ID_WHERE,
+                QueryUtil.GET_ROWS_WITH_ID_GROUP_BY, QueryUtil.GET_ROWS_WITH_ID_HAVING,
+                QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_KEYS, QueryUtil.GET_ROWS_WITH_ID_ORDER_BY_DIR),
         new String[] { rowId }, null, accessContext);
   }
 
