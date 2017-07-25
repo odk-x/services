@@ -263,6 +263,16 @@
     <string name="logout">Log Out</string>
     <string name="authenticate_credentials">Authenticate Credentials</string>
 
+<<<<<<< HEAD
+=======
+    <string name="sync_pending_changes">Sync Pending Changes</string>
+    <string name="resolve_pending_changes">You have changes that have not been synced to
+        the server. If you change users or logout before syncing these changes, you may
+        lose them.</string>
+    <string name="resolve_with_sync">Sync Changes</string>
+    <string name="ignore_changes">Ignore Unsynced Changes</string>
+
+>>>>>>> parent of fab8771... Add conflict and checkpoint verification before auth change
     <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
     <string name="authentication_error">Authentication Error</string>
