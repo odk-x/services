@@ -63,6 +63,73 @@ public class FormInfoTest {
     assertEquals(info.formDef, null);
   }
 
+  @Test
+  public void testCursorConstructorNotJson() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        OutputStream f = new FileOutputStream(a);
+        f.write("Not a valid json file".getBytes());
+        f.close();
+      }
+    });
+  }
+
+  public void testCursorConstructorBadFormdef(ArgRunnable r) throws Exception {
+    AndroidConnectFactory.configure();
+    DbHandle uniqueKey = new DbHandle(
+        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+    OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+        .getConnection("default", uniqueKey);
+    File a = new File(ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + '/'
+        + ODKFileUtils.FORMDEF_JSON_FILENAME);
+    File b = new File(ODKFileUtils.getAppFolder(getAppName()) + "/formDef-backup.json");
+    if (b.exists() && !b.delete()) {
+      throw new IOException("should have been able to delete temporary copy of formdef");
+    }
+    ODKFileUtils.copyFile(a, b);
+    r.run(a);
+    Cursor c = db.rawQuery(
+        "SELECT * FROM " + DatabaseConstants.FORMS_TABLE_NAME + " WHERE " + FormsColumns.FORM_ID
+            + " = ?;", new String[] { "Tea_houses" });
+    boolean failed = false;
+    boolean worked = false;
+    if (c == null) {
+      failed = true;
+    } else {
+      c.moveToFirst();
+      try {
+        //noinspection ResultOfObjectAllocationIgnored
+        new FormInfo("default", c, true);
+      } catch (IllegalArgumentException ignored) {
+        worked = true;
+      }
+      c.close();
+    }
+    if (!a.getParentFile().exists() && !a.getParentFile().mkdirs()) {
+      throw new IOException("should have been able to recreate tables/Tea_houses/forms/Tea_houses");
+    }
+    ODKFileUtils.copyFile(b, a);
+    if (!b.delete()) {
+      throw new IOException("should have been able to delete temporary copy of formdef");
+    }
+    if (failed)
+      throw new Exception("Null cursor");
+    assertTrue(worked);
+  }
+
+  @Test
+  public void testCursorConstructorFormdefDoesntExist() throws Exception {
+    testCursorConstructorBadFormdef(new ArgRunnable() {
+      @Override
+      public void run(File a) throws Exception {
+        if (!a.delete()) {
+          throw new IOException("Should have been able to delete real formdef");
+        }
+      }
+    });
+  }
+
   @Before
   public void setUp() {
     setUp("default", "Tea_houses_editable");
