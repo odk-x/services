@@ -259,7 +259,7 @@ public class FormsProvider extends ContentProvider {
     }
 
     // parse the formDef.json
-    FormInfo fiFound = new FormInfo(appName, formDefFile);
+    FormInfo fiFound = new FormInfo(getContext(), appName, formDefFile);
 
     values.put(FormsColumns.SETTINGS, fiFound.settings);
     values.put(FormsColumns.FORM_VERSION, fiFound.formVersion);
@@ -340,13 +340,12 @@ public class FormsProvider extends ContentProvider {
         }
       } catch (Exception e) {
         log.w(TAG, "FAILED Insert into " + uri + " -- query for existing row failed: " + e);
-        log.printStackTrace(e);
 
         if (e instanceof SQLException) {
           throw (SQLException) e;
         } else {
           throw new SQLException(
-              "FAILED Insert into " + uri + " -- query for existing row failed: " + e, e);
+              "FAILED Insert into " + uri + " -- query for existing row failed: " + e);
         }
       } finally {
         if (c != null) {
@@ -376,13 +375,13 @@ public class FormsProvider extends ContentProvider {
         if (e instanceof SQLException) {
           throw (SQLException) e;
         } else {
-          throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: " + e, e);
+          throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: " + e);
         }
       }
     } catch (SQLException e) {
       throw e;
     } catch (Exception e) {
-      throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: " + e, e);
+      throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: " + e);
     } finally {
       if (db != null) {
         try {
@@ -410,7 +409,7 @@ public class FormsProvider extends ContentProvider {
    * @param db the database handle to use
    * @param pf the PatchedFilter object to update
    */
-  private static void updatePatchedFilter(OdkConnectionInterface db, PatchedFilter pf) {
+  private void updatePatchedFilter(OdkConnectionInterface db, PatchedFilter pf) {
     if (pf.requiresBlankFormIdPatch) {
       TableMetaDataEntries values = ODKDatabaseImplUtils
           .getTableMetadata(db, pf.tableId, LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,

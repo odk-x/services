@@ -10,7 +10,6 @@ import org.junit.runner.RunWith;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.TableDefinitionsColumns;
-import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
@@ -83,25 +82,12 @@ public class TablesProviderTest {
 
   @Test(expected = CursorIndexOutOfBoundsException.class)
   public void testQueryNoTable() throws Exception {
-    insertTable("test");
     Cursor c = p.query(makeUri("Tea_houses"), null, null, null, null);
     if (c == null)
       throw new Exception("null cursor");
     c.moveToFirst();
     get(c, cId);
     c.close();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testQueryNoAppName() throws Exception {
-    p.query(new Uri.Builder().build(), null, null, null, null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testQueryTooManyPaths() throws Exception {
-    p.query(
-        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
-            .build(), null, null, null, null);
   }
 
   @Test
@@ -155,30 +141,6 @@ public class TablesProviderTest {
   public void testGetType() throws Exception {
     assertEquals(p.getType(uri), TableDefinitionsColumns.CONTENT_TYPE);
     assertEquals(p.getType(makeUri("Tea_houses")), TableDefinitionsColumns.CONTENT_ITEM_TYPE);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetTypeNoAppName() throws Exception {
-    p.getType(new Uri.Builder().build());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetTypeTooManyPaths() throws Exception {
-    p.getType(
-        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
-            .build());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testDeleteNoAppName() throws Exception {
-    p.delete(new Uri.Builder().build(), null, null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testDeleteTooManyPaths() throws Exception {
-    p.delete(
-        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
-            .build(), null, null);
   }
 
   @Test(expected = UnsupportedOperationException.class)
@@ -247,19 +209,6 @@ public class TablesProviderTest {
   @Test(expected = UnsupportedOperationException.class)
   public void testUpdate() throws Exception {
     p.update(uri, null, null, null);
-  }
-
-  /**
-   * Silliest test in the history of man
-   */
-  @Test
-  public void testGetTablesAuthority() {
-    assertEquals(TablesProvider.getTablesAuthority(), TablesProviderAPI.AUTHORITY);
-  }
-
-  @Test
-  public void testOnCreate() {
-    p.onCreate(); // shouldn't throw an exception
   }
 
 }

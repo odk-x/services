@@ -3,7 +3,6 @@ package org.opendatakit.services.forms.provider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,46 +95,10 @@ public class FormsProviderTest {
     p.insert(uri, getCvs("Tea_houses_editable"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testInsertBadUri() throws Exception {
-    p.insert(new Uri.Builder().build(), null);
-  }
-
   @Test
-  public void testDeleteExistingAndInsertNewFormUsingWhereClause() throws Exception {
-    deleteExistingAndInsertNewForm(new Runnable() {
-      @Override
-      public void run() {
-        p.delete(uri, FormsColumns.TABLE_ID + " =?", new String[] { "Tea_houses" });
-      }
-    });
-  }
-
-  @Test
-  public void testDeleteExistingAndInsertNewFormUsingUri() throws Exception {
-    deleteExistingAndInsertNewForm(new Runnable() {
-      @Override
-      public void run() {
-        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
-            .appendPath("Tea_houses").build(), null, null);
-      }
-    });
-  }
-
-  @Test
-  public void testDeleteExistingAndInsertNewFormNoFormId() throws Exception {
-    deleteExistingAndInsertNewForm(new Runnable() {
-      @Override
-      public void run() {
-        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
-            .build(), null, null);
-      }
-    });
-  }
-
-  private void deleteExistingAndInsertNewForm(Runnable r) throws Exception {
-    File a = new File(ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + '/'
-        + ODKFileUtils.FORMDEF_JSON_FILENAME);
+  public void testDeleteExistingAndInsertNewForm() throws Exception {
+    File a = new File(
+        ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + "/formDef.json");
     File b = new File(ODKFileUtils.getAppFolder(getAppName()) + "/formDef-backup.json");
     if (b.exists() && !b.delete()) {
       throw new IOException("should have been able to delete temporary copy of formdef");
@@ -165,14 +128,7 @@ public class FormsProviderTest {
       failed = true;
     }
     ODKFileUtils.copyFile(a, b);
-    r.run();
-    // make sure it was actually removed
-    Cursor c = p.query(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").build(),
-        FormsColumns.formsDataColumnNames, null, null, null);
-    if (c != null) {
-      assertEquals(c.getCount(), 0);
-      c.close();
-    }
+    p.delete(uri, FormsColumns.TABLE_ID + " =?", new String[] { "Tea_houses" });
     if (!a.getParentFile().exists() && !a.getParentFile().mkdirs()) {
       throw new IOException("should have been able to recreate tables/Tea_houses/forms/Tea_houses");
     }
@@ -186,25 +142,6 @@ public class FormsProviderTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInsertNonExistingForm() throws Exception {
     p.insert(uri, getCvs("form_id_with_no_formdef_json"));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetTypeShortUri() throws Exception {
-    p.getType(new Uri.Builder().build());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetTypeMixedUri() throws Exception {
-    Uri testUri = new Uri.Builder().appendPath(getAppName()).appendPath("1234")
-        .appendPath("too_long").build();
-    p.getType(testUri);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetTypeLongUri() throws Exception {
-    Uri testUri = new Uri.Builder().appendPath(getAppName()).appendPath("1234")
-        .appendPath("too_long").appendPath("way too long").build();
-    p.getType(testUri);
   }
 
   @Test
@@ -241,22 +178,15 @@ public class FormsProviderTest {
 //  }
   @Test
   public void testQueryExistingForm() throws Exception {
-    // just app name
     Cursor result = p.query(uri, FormsColumns.formsDataColumnNames, FormsColumns.TABLE_ID + " =?",
         new String[] { "Tea_houses" }, FormsColumns.TABLE_ID);
-    assertTeaHouses(result);
-    // app name + table id
-    result = p.query(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").build(),
-        FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
-        new String[] { "default" }, FormsColumns.TABLE_ID);
-    assertTeaHouses(result);
-    // app name + table id + form id
-    result = p.query(
-        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
-            .build(), FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
-        new String[] { "default" }, FormsColumns.TABLE_ID);
-    assertTeaHouses(result);
-    // TODO app name + table id + numeric form id
+    if (result == null)
+      throw new Exception("no results");
+    result.moveToFirst();
+    assertEquals(LocalizationUtils.getLocalizedDisplayName(getAppName(), "Tea_houses",
+        result.getString(result.getColumnIndexOrThrow(FormsColumns.DEFAULT_FORM_LOCALE)),
+        result.getString(result.getColumnIndexOrThrow(FormsColumns.DISPLAY_NAME))), "Tea Houses");
+    result.close();
   }
 
   @Test
@@ -273,12 +203,12 @@ public class FormsProviderTest {
   @Test
   public void testUpdate() throws Exception {
     Cursor c = p.query(uri, new String[0], null, null, FormsColumns.FORM_ID);
-    if (c == null)
-      throw new Exception("Null cursor");
+    if (c == null) throw new Exception("Null cursor");
     int expected = c.getCount();
     c.close();
     assertEquals(p.update(uri, null, null, null), expected);
   }
+<<<<<<< HEAD
 
   @Test
   public void testOnCreate() throws Exception {
@@ -286,3 +216,6 @@ public class FormsProviderTest {
     p.onCreate();
   }
 }
+=======
+}
+>>>>>>> parent of 97bb841... Beef up tests a bit
