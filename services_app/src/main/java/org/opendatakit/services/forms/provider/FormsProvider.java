@@ -436,7 +436,7 @@ public class FormsProvider extends ContentProvider {
    */
   private void updatePatchedFilter(OdkConnectionInterface db, PatchedFilter pf) {
     if ( pf.requiresBlankFormIdPatch ) {
-      TableMetaDataEntries values = ODKDatabaseImplUtils
+      TableMetaDataEntries values = ODKDatabaseImplUtils.get()
           .getTableMetadata(db, pf.tableId,
               LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
               LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,

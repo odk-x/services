@@ -61,10 +61,10 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
         try {
 
           if ( mTakeNewest ) {
-            ODKDatabaseImplUtils
+            ODKDatabaseImplUtils.get()
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 entry.rowId, aul.activeUser, aul.rolesList);
           }
 

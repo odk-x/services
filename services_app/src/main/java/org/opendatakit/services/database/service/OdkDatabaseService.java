@@ -17,6 +17,7 @@ package org.opendatakit.services.database.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -25,12 +26,9 @@ import org.opendatakit.logging.WebLogger;
 
 import java.util.*;
 
-/**
- * TODO what does this class do?
- */
 public class OdkDatabaseService extends Service {
 
-  private static final String TAG = OdkDatabaseService.class.getSimpleName();
+  private static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 
   // A place to store pieces of large tables or other return values that won't fit across the
   // AIDL call
@@ -40,10 +38,10 @@ public class OdkDatabaseService extends Service {
    * change to true expression if you want to debug the database service
    */
   public static void possiblyWaitForDatabaseServiceDebugger() {
-    /*
-    android.os.Debug.waitForDebugger();
-    int len = "for setting breakpoint".length();
-    */
+    if ( false ) {
+      android.os.Debug.waitForDebugger();
+      int len = "for setting breakpoint".length();
+    }
   }
 
   private OdkDatabaseServiceInterface servInterface;
@@ -59,7 +57,7 @@ public class OdkDatabaseService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     possiblyWaitForDatabaseServiceDebugger();
-    WebLogger.getLogger(null).i(TAG, "onBind -- returning interface.");
+    Log.i(LOGTAG, "onBind -- returning interface.");
 
     if (parceledChunks == null) {
       parceledChunks = new HashMap<>();
@@ -72,7 +70,7 @@ public class OdkDatabaseService extends Service {
   public boolean onUnbind(Intent intent) {
     // TODO Auto-generated method stub
     super.onUnbind(intent);
-    WebLogger.getLogger(null).i(TAG, "onUnbind -- releasing interface.");
+    Log.i(LOGTAG, "onUnbind -- releasing interface.");
     // release all non-group instances
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
     // this may be too aggressive, but ensures that WebLogger is released.
@@ -85,7 +83,7 @@ public class OdkDatabaseService extends Service {
   
   @Override
   public synchronized void onDestroy() {
-    WebLogger.getLogger(null).w(TAG, "onDestroy -- shutting down worker (zero interfaces)!");
+    Log.w(LOGTAG, "onDestroy -- shutting down worker (zero interfaces)!");
     super.onDestroy();
     // release all non-group instances
     OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeAllDatabaseServiceConnections();
@@ -102,7 +100,7 @@ public class OdkDatabaseService extends Service {
    */
   public void putParceledChunk(DbChunk parceledChunk) {
     if (parceledChunk == null) {
-      WebLogger.getLogger(null).w(TAG, "Attempted to store a null chunk");
+      Log.w(LOGTAG, "Attempted to store a null chunk");
       return;
     }
 
@@ -116,7 +114,7 @@ public class OdkDatabaseService extends Service {
    */
   public void putParceledChunks(List<DbChunk> chunkList) {
     if (chunkList == null) {
-      WebLogger.getLogger(null).e(TAG, "Attempted to store a null chunk list");
+      Log.e(LOGTAG, "Attempted to store a null chunk list");
       return;
     }
 

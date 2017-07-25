@@ -213,7 +213,7 @@ public class InstanceProvider extends ContentProvider {
 
       boolean success = false;
       try {
-        success = ODKDatabaseImplUtils.hasTableId(db, tableId);
+        success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
@@ -308,7 +308,7 @@ public class InstanceProvider extends ContentProvider {
 
     boolean success = false;
     try {
-      success = ODKDatabaseImplUtils.hasTableId(db, tableId);
+      success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
     } catch (Exception e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
@@ -320,7 +320,7 @@ public class InstanceProvider extends ContentProvider {
     // Can't get away with dataTable.* because of collision with _ID column
     // get map of (elementKey -> ColumnDefinition)
     try {
-      orderedDefns = ODKDatabaseImplUtils.getUserDefinedColumns(db, tableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, tableId);
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new SQLException("Unable to retrieve column definitions for tableId " + tableId);
@@ -443,9 +443,9 @@ public class InstanceProvider extends ContentProvider {
 
 
     ODKDatabaseImplUtils.AccessContext accessContext =
-        ODKDatabaseImplUtils.getAccessContext(db, tableId, aul.activeUser, aul.rolesList);
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, aul.activeUser, aul.rolesList);
 
-    c = ODKDatabaseImplUtils.rawQuery(db, fullQuery, filterArgs, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, null,
         accessContext);
     return c;
   }
@@ -518,7 +518,7 @@ public class InstanceProvider extends ContentProvider {
 
       boolean success = false;
       try {
-        success = ODKDatabaseImplUtils.hasTableId(db, tableId);
+        success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);
@@ -662,7 +662,7 @@ public class InstanceProvider extends ContentProvider {
 
       boolean success = false;
       try {
-        success = ODKDatabaseImplUtils.hasTableId(db, tableId);
+        success = ODKDatabaseImplUtils.get().hasTableId(db, tableId);
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         throw new SQLException("Unknown URI (exception testing for tableId) " + uri);

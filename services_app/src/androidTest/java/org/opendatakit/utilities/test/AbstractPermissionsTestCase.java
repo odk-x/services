@@ -1252,7 +1252,7 @@ public class AbstractPermissionsTestCase {
           if ( key.equals(DataTableColumns.CONFLICT_TYPE) ) {
             assertNull("column " + key + " should be null - was " + localValue, localValue);
           } else {
-            boolean cmp = ODKDatabaseImplUtils.identicalValue(localValue, serverValue, dt);
+            boolean cmp = ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt);
             if (!cmp) {
               assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue + " ): "
                   + characterizer, cmp);
@@ -1306,7 +1306,7 @@ public class AbstractPermissionsTestCase {
           }
           assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue
                   + " ): " + characterizer,
-              ODKDatabaseImplUtils.identicalValue(localValue, serverValue, dt) );
+              ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt) );
         }
       }
 
@@ -1331,11 +1331,11 @@ public class AbstractPermissionsTestCase {
             if ( !spo.ableToChangePrivileges ) {
               assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue + " ): "
                       + characterizer,
-                  ODKDatabaseImplUtils.identicalValue(localValue, serverValue, dt));
+                  ODKDatabaseImplUtils.get().identicalValue(localValue, serverValue, dt));
             } else {
               assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue + " ): "
                       + characterizer,
-                  ODKDatabaseImplUtils.identicalValue(localValue, originalValue, dt));
+                  ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt));
             }
 
 
@@ -1349,7 +1349,7 @@ public class AbstractPermissionsTestCase {
             }
             assertTrue("column " + key + " not identical (" + localValue + " != " + originalValue + " ): "
                     + characterizer,
-                ODKDatabaseImplUtils.identicalValue(localValue, originalValue, dt));
+                ODKDatabaseImplUtils.get().identicalValue(localValue, originalValue, dt));
           }
         }
       }

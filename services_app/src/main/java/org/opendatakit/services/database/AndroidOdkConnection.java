@@ -15,8 +15,9 @@
 package org.opendatakit.services.database;
 
 import android.database.Cursor;
-import org.opendatakit.logging.WebLogger;
+
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
@@ -25,59 +26,40 @@ import org.sqlite.database.sqlite.SQLiteException;
 import java.io.File;
 import java.util.Map;
 
-/**
- * TODO what does this class do?
- */
-public final class AndroidOdkConnection implements OdkConnectionInterface {
-  private final Object mutex;
+public class AndroidOdkConnection implements OdkConnectionInterface {
+  final Object mutex;
   /**
    * Reference count is pre-incremented to account for:
    * <p/>
    * One reference immediately held on stack after creation.
    * One reference will be added when we put this into the OdkConnectionFactoryInterface session map
    */
-  private final OperationLog operationLog;
-  private final String appName;
-  private final SQLiteConnection db;
-  private final String sessionQualifier;
-  private final Object initializationMutex = new Object();
-  private int referenceCount = 1;
-  private boolean initializationComplete = false;
-  private boolean initializationStatus = false;
-
-  private AndroidOdkConnection(Object mutex, String appName, OperationLog operationLog,
-      SQLiteConnection db, String sessionQualifier) {
-    this.mutex = mutex;
-    this.appName = appName;
-    this.operationLog = operationLog;
-    this.db = db;
-    this.sessionQualifier = sessionQualifier;
-  }
+  final OperationLog operationLog;
+  final String appName;
+  final SQLiteConnection db;
+  final String sessionQualifier;
+  int referenceCount = 1;
+  final Object initializationMutex = new Object();
+  boolean initializationComplete = false;
+  boolean initializationStatus = false;
 
   private static String getDbFilePath(String appName) {
     File dbFile = new File(ODKFileUtils.getWebDbFolder(appName),
         ODKFileUtils.getNameOfSQLiteDatabase());
-    return dbFile.getAbsolutePath();
+    String dbFilePath = dbFile.getAbsolutePath();
+    return dbFilePath;
   }
 
-  /**
-   * TODO
-   * @param appNameSharedStateContainer
-   * @param sessionQualifier
-   * @return
-   */
   public static AndroidOdkConnection openDatabase(
       AppNameSharedStateContainer appNameSharedStateContainer, String sessionQualifier) {
 
     String appName = appNameSharedStateContainer.getAppName();
     String dbFilePath = getDbFilePath(appName);
 
-    @SuppressWarnings("PointlessBitwiseExpression") // OPEN_READWRITE is zero because it is the
-        // default
-        SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName,
-        dbFilePath, SQLiteConnection.ENABLE_WRITE_AHEAD_LOGGING | SQLiteConnection.OPEN_READWRITE
-        | SQLiteConnection.CREATE_IF_NECESSARY | SQLiteConnection.NO_LOCALIZED_COLLATORS,
-        sessionQualifier);
+    SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
+        SQLiteConnection.ENABLE_WRITE_AHEAD_LOGGING |
+            SQLiteConnection.OPEN_READWRITE | SQLiteConnection.CREATE_IF_NECESSARY |
+            SQLiteConnection.NO_LOCALIZED_COLLATORS, sessionQualifier);
 
     boolean success = false;
     SQLiteConnection db = null;
@@ -96,11 +78,20 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
       return connection;
     } finally {
       if (!success) {
-        if (db != null) {
+        if ( db != null ) {
           db.releaseReference();
         }
       }
     }
+  }
+
+  private AndroidOdkConnection(Object mutex, String appName, OperationLog operationLog,
+      SQLiteConnection db, String sessionQualifier) {
+    this.mutex = mutex;
+    this.appName = appName;
+    this.operationLog = operationLog;
+    this.db = db;
+    this.sessionQualifier = sessionQualifier;
   }
 
   /**
@@ -130,7 +121,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
         // invoke method
         // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
         Boolean outcome = internalWaitForInitializationComplete();
-        if (outcome != null) {
+        if ( outcome != null ) {
           return outcome;
         }
       } catch (InterruptedException e) {
@@ -172,12 +163,12 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
   }
 
   public void releaseReference() {
-    boolean refCountIsZero;
-    boolean refCountIsNegative;
+    boolean refCountIsZero = false;
+    boolean refCountIsNegative = false;
     synchronized (mutex) {
       --referenceCount;
-      refCountIsZero = referenceCount == 0;
-      refCountIsNegative = referenceCount < 0;
+      refCountIsZero = (referenceCount == 0);
+      refCountIsNegative = (referenceCount < 0);
     }
     try {
       if (refCountIsZero) {
@@ -200,7 +191,6 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return true if database connection is open
    */
   private boolean internalIsOpen() {
@@ -250,6 +240,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private void internalCommonWrapUpConnection_Close() {
     synchronized (mutex) {
@@ -257,7 +248,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
-  private void commonWrapUpConnection(Object action) throws Throwable {
+  private void commonWrapUpConnection(String action) throws Throwable {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "commonWrapUpConnection(\"" + action + "\")", null, null);
 
@@ -301,8 +292,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
-   * @return db.getVersion();
+   * @return
    */
   private int internalGetVersion() {
     synchronized (mutex) {
@@ -329,6 +319,17 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     }
   }
 
+  /**
+   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   *
+   * @return
+   */
+  private void internalSetVersion(int version) {
+    synchronized (mutex) {
+      db.setVersion(version);
+    }
+  }
+
   public void setVersion(int version) throws SQLiteException {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "setVersion(" + version + ")", null, null);
@@ -351,15 +352,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   */
-  private void internalSetVersion(int version) {
-    synchronized (mutex) {
-      db.setVersion(version);
-    }
-  }
-
-  /**
-   * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private void internalBeginTransactionExclusive() {
     synchronized (mutex) {
@@ -372,11 +365,6 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     final int cookie = operationLog
         .beginOperation(sessionQualifier, "beginTransactionExclusive()", null, null);
 
-    /*
-     * TODO TODO TODO TODO STOPSHIP This looks very, very broken.
-     * internalBeginTransactionExclusive can't possibly throw an exception, so success will
-     * ALWAYS get set to true
-     */
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
@@ -401,6 +389,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private void internalBeginTransactionNonExclusive() {
     synchronized (mutex) {
@@ -417,8 +406,6 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
       internalBeginTransactionNonExclusive();
-      // internalBeginTransactionExclusive can't possibly throw an exception, so success will
-      // ALWAYS get set to true
       success = true;
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
@@ -439,6 +426,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private boolean internalInTransaction() {
     synchronized (mutex) {
@@ -467,6 +455,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private void internalSetTransactionSuccessful() {
     synchronized (mutex) {
@@ -496,6 +485,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
+   * @return
    */
   private void internalEndTransaction() {
     synchronized (mutex) {
@@ -609,11 +599,9 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
-  private long internalReplaceOrThrow(String table, String nullColumnHack,
-      Map<String, Object> initialValues) {
+  private long internalReplaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues) {
     synchronized (mutex) {
       return db.replaceOrThrow(table, nullColumnHack, initialValues);
     }
@@ -648,11 +636,9 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
-  private long internalInsertOrThrow(String table, String nullColumnHack,
-      Map<String, Object> values) {
+  private long internalInsertOrThrow(String table, String nullColumnHack, Map<String, Object> values) {
     synchronized (mutex) {
       return db.insertOrThrow(table, nullColumnHack, values);
     }
@@ -687,7 +673,6 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
   private void internalExecSQL(String sql, Object[] bindArgs) {
@@ -724,7 +709,6 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
   private Cursor internalRawQuery(String sql, Object[] selectionArgs) {
@@ -761,11 +745,10 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
-  private Cursor internalQuery(String table, String[] columns, String selection,
-      Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+  private Cursor internalQuery(String table, String[] columns, String selection, Object[] selectionArgs,
+      String groupBy, String having, String orderBy, String limit) {
     synchronized (mutex) {
       return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     }
@@ -831,14 +814,12 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
 
   /**
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-   *
    * @return
    */
   private Cursor internalQueryDistinct(String table, String[] columns, String selection,
       Object[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
     synchronized (mutex) {
-      return db
-          .query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit,
+      return db.query(true, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit,
               null);
     }
   }
