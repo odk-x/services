@@ -28,9 +28,6 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class FormInfoTest {
-  @Test public void noop() {
-
-  }
   /*
   private FormInfo info;
 
