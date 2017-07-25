@@ -61,19 +61,14 @@ public class FormsProviderTest {
 //  }
   @Test
   public void testQueryBlankFormId() throws Exception {
-    OdkDatabaseServiceImplTest test = new OdkDatabaseServiceImplTest();
-    test.setUp();
-    test.insertMetadata("Tea_houses", "SurveyUtil", "default", "SurveyUtil.formId",
-        "Tea_Houses"); // Set default form id
+    new OdkDatabaseServiceImplTest().insertMetadata("Tea_houses", "SurveyUtil", "default",
+        "SurveyUtil.formId", "Tea_Houses"); // Set default form id
     // Should pull default form id from the database/KVS
-    Uri uri = new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses")
-        .appendEncodedPath("").build();
-    Cursor result = p
-        .query(uri, new String[] { FormsColumns.DISPLAY_NAME, FormsColumns.DEFAULT_FORM_LOCALE },
-            null, null, null);
-    // This test is currently broken because "/default/Tea_houses/" and "/default/Tea_houses"
-    // both return two fragments instead of 3 and 2, for no good reason
-    //assertTeaHouses(result);
+    Cursor result = p.query(
+        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("").build(),
+        new String[] { FormsColumns.DISPLAY_NAME, FormsColumns.DEFAULT_FORM_LOCALE }, null, null,
+        null);
+    assertTeaHouses(result);
   }
 
   @Before
@@ -149,18 +144,23 @@ public class FormsProviderTest {
       throw new IOException("should have been able to delete temporary copy of formdef");
   @Test
   public void testDeleteExistingAndInsertNewFormNoFormId() throws Exception {
-      /*
-      deleteExistingAndInsertNewForm(new Runnable() {
-        @Override
-        public void run() {
-          p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
-              .build(), null, null);
-        }
-      });
-      */
+    deleteExistingAndInsertNewForm(new Runnable() {
+      @Override
+      public void run() {
+        p.delete(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("")
+            .build(), null, null);
+      }
+    });
   }
 
   private void deleteExistingAndInsertNewForm(Runnable r) throws Exception {
+    File a = new File(ODKFileUtils.getFormFolder(getAppName(), "Tea_houses", "Tea_houses") + '/'
+        + ODKFileUtils.FORMDEF_JSON_FILENAME);
+    File b = new File(ODKFileUtils.getAppFolder(getAppName()) + "/formDef-backup.json");
+    if (b.exists() && !b.delete()) {
+      throw new IOException("should have been able to delete temporary copy of formdef");
+    }
+    ODKFileUtils.copyFile(a, b);
     boolean failed = false;
     try {
       r.run();
@@ -184,6 +184,7 @@ public class FormsProviderTest {
     if (!b.delete()) {
       throw new IOException("should have been able to delete temporary copy of formdef");
     }
+    assertFalse(failed);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -242,6 +243,26 @@ public class FormsProviderTest {
 //    assertTeaHouses(result);
 //    // TODO app name + table id + numeric form id
 //  }
+  @Test
+  public void testQueryExistingForm() throws Exception {
+    // just app name
+    try { testInsertExistingForm(); } catch (Exception ignored) {} // is supposed to throw exception
+    Cursor result = p.query(uri, FormsColumns.formsDataColumnNames, FormsColumns.TABLE_ID + " =?",
+        new String[] { "Tea_houses" }, FormsColumns.TABLE_ID);
+    assertTeaHouses(result);
+    // app name + table id
+    result = p.query(new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").build(),
+        FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
+        new String[] { "default" }, FormsColumns.TABLE_ID);
+    assertTeaHouses(result);
+    // app name + table id + form id
+    result = p.query(
+        new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("Tea_houses")
+            .build(), FormsColumns.formsDataColumnNames, FormsColumns.DEFAULT_FORM_LOCALE + " =?",
+        new String[] { "default" }, FormsColumns.TABLE_ID);
+    assertTeaHouses(result);
+    // TODO app name + table id + numeric form id
+  }
 
   @Test
   public void testQueryNonExistingForm() throws Throwable {
