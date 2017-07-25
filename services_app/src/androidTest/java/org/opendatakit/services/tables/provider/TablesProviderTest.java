@@ -47,7 +47,7 @@ public class TablesProviderTest {
     return new Uri.Builder().appendPath(getAppName()).appendPath(id).build();
   }
 
-  public static String get(Cursor c, String col) {
+  private static String get(Cursor c, String col) {
     return c.getString(c.getColumnIndexOrThrow(col));
   }
 
