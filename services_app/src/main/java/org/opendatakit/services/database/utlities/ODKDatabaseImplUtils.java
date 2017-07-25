@@ -425,7 +425,7 @@ public class ODKDatabaseImplUtils {
   public List<String> getExportColumns() {
     return EXPORT_COLUMNS;
   }
-  
+
   private String applyQueryBounds(String sqlCommand, QueryBounds sqlQueryBounds) {
     if (sqlCommand == null || sqlQueryBounds == null) {
       return sqlCommand;
@@ -5192,8 +5192,7 @@ public class ODKDatabaseImplUtils {
 
         // not (super-user or administrator or groupPrivileged or (rowOwner in unlocked table))
         // NOTE: in a new row priorOwner will be defaultRowOwner
-        if (!isLocked && (priorOwner == DataTableColumns.DEFAULT_ROW_OWNER ||
-                priorOwner != null && activeUser.equals(priorOwner))) {
+        if (!isLocked && (helperEquals(DataTableColumns.DEFAULT_ROW_OWNER, priorOwner) || helperEquals(priorOwner, activeUser))) {
           return;
         }
 
@@ -5961,5 +5960,9 @@ public class ODKDatabaseImplUtils {
         .i("commonTableDefn", DatabaseConstants.CHOICE_LIST_TABLE_NAME);
     db.execSQL(ChoiceListColumns.getTableCreateSql(DatabaseConstants.CHOICE_LIST_TABLE_NAME), null);
     WebLogger.getLogger(db.getAppName()).i("commonTableDefn", "done");
+  }
+  private static boolean helperEquals(String a, String b) {
+    if (a == null) return b == null;
+    return a.equals(b);
   }
 }
