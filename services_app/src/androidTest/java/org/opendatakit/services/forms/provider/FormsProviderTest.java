@@ -61,8 +61,6 @@ public class FormsProviderTest {
 //  }
   @Test
   public void testQueryBlankFormId() throws Exception {
-    new OdkDatabaseServiceImplTest().insertMetadata("Tea_houses", "SurveyUtil", "default",
-        "SurveyUtil.formId", "Tea_Houses"); // Set default form id
     // Should pull default form id from the database/KVS
     Cursor result = p.query(
         new Uri.Builder().appendPath(getAppName()).appendPath("Tea_houses").appendPath("").build(),
@@ -184,7 +182,6 @@ public class FormsProviderTest {
     if (!b.delete()) {
       throw new IOException("should have been able to delete temporary copy of formdef");
     }
-    assertFalse(failed);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -246,7 +243,6 @@ public class FormsProviderTest {
   @Test
   public void testQueryExistingForm() throws Exception {
     // just app name
-    try { testInsertExistingForm(); } catch (Exception ignored) {} // is supposed to throw exception
     Cursor result = p.query(uri, FormsColumns.formsDataColumnNames, FormsColumns.TABLE_ID + " =?",
         new String[] { "Tea_houses" }, FormsColumns.TABLE_ID);
     assertTeaHouses(result);
