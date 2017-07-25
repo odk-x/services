@@ -85,6 +85,13 @@
         <provider
             android:exported="true"
 	        android:syncable="false"
+	        android:initOrder="3"
+            android:process=":providers"
+            android:authorities="org.opendatakit.provider.instances"
+            android:name=".instance.provider.InstanceProvider" />
+        <provider
+            android:exported="true"
+	        android:syncable="false"
 	        android:initOrder="4"
             android:process=":providers"
             android:authorities="org.opendatakit.provider.submission.xml;org.opendatakit.provider.submission.json"
