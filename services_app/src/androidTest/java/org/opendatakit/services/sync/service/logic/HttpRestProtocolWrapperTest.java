@@ -66,7 +66,6 @@ public class HttpRestProtocolWrapperTest {
         "default", new SyncNotification(Services._please_dont_use_getInstance(), "default"),
         new SyncOverallResult());
     h = new HttpRestProtocolWrapper(sc);
-    sc.setSynchronizer(new AggregateSynchronizer(sc));
   }
 
   @Test
