@@ -80,11 +80,11 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      orderedDefns = ODKDatabaseImplUtils.getUserDefinedColumns(db, mTableId);
+      orderedDefns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db, mTableId);
 
 
       List<KeyValueStoreEntry> columnDisplayNames =
-          ODKDatabaseImplUtils.getTableMetadata(db, mTableId,
+          ODKDatabaseImplUtils.get().getTableMetadata(db, mTableId,
               KeyValueStoreConstants.PARTITION_COLUMN, null,
               KeyValueStoreConstants.COLUMN_DISPLAY_NAME).getEntries();
 
@@ -98,10 +98,10 @@ class OdkResolveCheckpointFieldLoader extends AsyncTaskLoader<ResolveActionList>
         }
       }
 
-      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.privilegedGetRowsWithId(db, mTableId,
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedGetRowsWithId(db, mTableId,
           mRowId, aul.activeUser);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
     } catch (Exception e) {

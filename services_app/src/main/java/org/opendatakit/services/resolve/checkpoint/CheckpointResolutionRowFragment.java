@@ -120,7 +120,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
                 mRowId);
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -201,13 +201,13 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
                 .getConnection(mAppName, dbHandleName);
 
             // create a new checkpoint with the revisions
-            OrderedColumns orderedColumns = ODKDatabaseImplUtils.getUserDefinedColumns(db,
+            OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
                 mTableId);
-            ODKDatabaseImplUtils.insertCheckpointRowWithId(db, mTableId, orderedColumns,
+            ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
                 values, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             // and save that checkpoint as incomplete
-            ODKDatabaseImplUtils.saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,
                 mRowId);
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -280,7 +280,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 mRowId, aul.activeUser, aul.rolesList );
 
             getActivity().setResult(Activity.RESULT_OK);
@@ -355,7 +355,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
                 .getConnection(mAppName, dbHandleName);
 
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 mRowId, aul.activeUser, aul.rolesList );
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {
@@ -420,7 +420,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId, mRowId,
+      ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId, mRowId,
           aul.activeUser, aul.rolesList);
       getActivity().setResult(Activity.RESULT_OK);
     } catch (Exception e) {

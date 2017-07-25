@@ -263,7 +263,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
       // this will not interact with the database if the
       // query string is found in the PreparedStatement cache.
-      Cursor c = ODKDatabaseImplUtils.rawQuery(db, query, null, null,
+      Cursor c = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null,
           accessContext);
       // we must get the count of rows to actually interact
       // with the database.
@@ -293,7 +293,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
             RoleConsts.ADMIN_ROLES_LIST);
 
     // Check that the user defined rows are in the table
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, query, null, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, query, null, null,
         accessContext);
     Cursor refCursor = db.rawQuery(query, null);
 
@@ -406,7 +406,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     Object[] selArgs =  new Object[1];
     selArgs[0] = testVal;
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -442,7 +442,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     Object[] selArgs2 = new Object[0];
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
     assertEquals(cursor2.getCount(), 1);
 
@@ -1276,7 +1276,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertTrue(colLength);
     Arrays.sort(colNames);
 
-    List<String> defCols = ODKDatabaseImplUtils.getAdminColumns();
+    List<String> defCols = ODKDatabaseImplUtils.get().getAdminColumns();
 
     assertEquals(colNames.length, defCols.size());
     for (int i = 0; i < colNames.length; i++) {
@@ -1409,7 +1409,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -1456,7 +1456,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -1507,7 +1507,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String[] selArgs = { "" + testVal };
     Cursor cursor = null;
      try {
-        cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+        cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
             accessContext);
         assertEquals(cursor.getCount(), 1);
 
@@ -1551,7 +1551,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
     assertEquals(cursor2.getCount(), 1);
 
@@ -1600,7 +1600,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -1649,7 +1649,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -1674,7 +1674,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
        accessContext);
     assertEquals(cursor2.getCount(), 1);
 
@@ -1771,7 +1771,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs = { uuid };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -1965,7 +1965,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2010,7 +2010,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -2055,7 +2055,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2100,7 +2100,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2160,7 +2160,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColLat + " = ?";
     String[] selArgs = { "" + pos_lat };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     double valLat = 0;
@@ -2228,7 +2228,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -2284,7 +2284,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testColUriFragment + " = ?";
     String[] selArgs = { "" + testUriFragment };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String valUriFragment = null;
@@ -2336,7 +2336,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     double val = 0;
@@ -2383,7 +2383,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2439,7 +2439,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2485,7 +2485,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2507,7 +2507,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 2);
@@ -2516,7 +2516,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val2 = null;
@@ -2576,7 +2576,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2628,7 +2628,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2835,7 +2835,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2857,7 +2857,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 2);
@@ -2866,7 +2866,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val2 = null;
@@ -2900,7 +2900,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 1);
@@ -2960,7 +2960,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -2982,7 +2982,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 2);
@@ -2991,7 +2991,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val2 = null;
@@ -3026,7 +3026,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 1);
@@ -3086,7 +3086,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -3111,7 +3111,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 0);
@@ -3273,7 +3273,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         // stored type is a string -- the choiceListId
         entry.type = ElementDataType.string.name();
         if ((entry.value != null) && (entry.value.trim().length() != 0)) {
-          String choiceListId = ODKDatabaseImplUtils.setChoiceList(db, entry
+          String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, entry
               .value);
           entry.value = choiceListId;
         } else {
@@ -3324,7 +3324,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertTrue("found at least one matching entry in KVS", found);
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, null, null, null);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, null, null, null);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -3359,7 +3359,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -3384,7 +3384,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 0);
@@ -3421,7 +3421,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     String val = null;
@@ -3459,7 +3459,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 1);
@@ -3517,7 +3517,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(retKVSEntries, kvsEntries);
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Ensure that the expected properties is in the KVS table
     entries = ODKDatabaseImplUtils.get().getTableMetadata(db, null,
@@ -3566,7 +3566,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     int val = 0;
     try {
-      cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
           accessContext);
       assertEquals(cursor.getCount(), 1);
 
@@ -3615,7 +3615,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String[] selectionArgs = new String[] { rowId };
     String[] orderByKeys = new String[] { DataTableColumns.CONFLICT_TYPE };
     String[] orderByDirs = new String[] { "ASC" };
-    List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
+    List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
     String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
     BaseTable baseTable = ODKDatabaseImplUtils.get().query(db, tableId, QueryUtil
@@ -3893,7 +3893,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -3908,7 +3908,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(retKVSEntries.get(0).type, ElementDataType.object.name());
 
     // Now make sure that the table has the right value for displayName
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -3924,7 +3924,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(val, ElementDataType.object.name());
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -3952,10 +3952,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
 
     // Set the choice list id
-    String choiceListId = ODKDatabaseImplUtils.setChoiceList(db, jsonChoiceList);
+    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, jsonChoiceList);
 
     // Get the choice list
-    String retJsonChoiceList = ODKDatabaseImplUtils.getChoiceList(db,
+    String retJsonChoiceList = ODKDatabaseImplUtils.get().getChoiceList(db,
         choiceListId);
 
     assertEquals(jsonChoiceList, retJsonChoiceList);
@@ -3968,7 +3968,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4021,7 +4021,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4032,7 +4032,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
     // Now delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -4066,7 +4066,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4088,7 +4088,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
@@ -4148,7 +4148,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -4162,7 +4162,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(val, testVal);
 
     // Test that the health of the table is CLEAN
-    int health = ODKDatabaseImplUtils.getTableHealth(db, tableId);
+    int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
     assertFalse(CursorUtils.getTableHealthHasConflictsOrCheckpoints(health));
 
@@ -4201,7 +4201,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel;
 
     sel = "SELECT * FROM " + DatabaseConstants.COLUMN_DEFINITIONS_TABLE_NAME;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4219,7 +4219,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     accessContextAnonymousUser = ODKDatabaseImplUtils.get().getAccessContext(db, tableId, "anonymous",
         null );
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4229,7 +4229,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4241,7 +4241,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4251,7 +4251,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4261,7 +4261,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4275,7 +4275,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
         ", " + DataTableColumns.ROW_OWNER +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4285,7 +4285,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4295,7 +4295,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4309,7 +4309,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT testColumn, " + DataTableColumns.DEFAULT_ACCESS +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4319,7 +4319,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4329,7 +4329,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4344,7 +4344,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ", " + DataTableColumns.ROW_OWNER +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4360,7 +4360,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ", " + DataTableColumns.GROUP_MODIFY +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4376,7 +4376,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ", " + DataTableColumns.GROUP_MODIFY +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "did not expect effective privileges column",
@@ -4393,7 +4393,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ", " + DataTableColumns.GROUP_PRIVILEGED +
         ", " + DataTableColumns.SYNC_STATE +
         " from " + testTable;
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
@@ -4403,7 +4403,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
@@ -4413,7 +4413,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     c.close();
 
-    c = ODKDatabaseImplUtils.rawQuery(db, sel, null, null,
+    c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
       assertTrue( "expected effective privileges column",
@@ -4455,7 +4455,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -4478,7 +4478,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     sel = "SELECT * FROM " + tableId;
     selArgs = new String[0];
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     assertEquals(cursor.getCount(), 2);
@@ -4487,7 +4487,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     selArgs = new String[1];
     selArgs[0] =  "" + testVal2;
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val2 = 0;
@@ -4516,7 +4516,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertNotSame(saveptType, SavepointTypeManipulator.complete());
 
     // Test that the health of the table is CLEAN
-    int health = ODKDatabaseImplUtils.getTableHealth(db, tableId);
+    int health = ODKDatabaseImplUtils.get().getTableHealth(db, tableId);
 
     assertTrue(CursorUtils.getTableHealthHasChanges(health));
 
@@ -4782,7 +4782,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String[] selArgs = { "" + testVal };
     Cursor cursor = null;
     try {
-      cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
           accessContext);
       assertEquals(cursor.getCount(), 1);
 
@@ -4811,7 +4811,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = {};
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
     assertEquals(cursor2.getCount(), 2);
 
@@ -4831,7 +4831,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // The moment of truth! test the queryDistinct
     // Get all of the rows of the database but only return testCol
     String [] retCols = {testCol};
-    Cursor cursor3 = ODKDatabaseImplUtils.queryDistinctForTest(db, tableId, retCols, null,
+    Cursor cursor3 = ODKDatabaseImplUtils.get().queryDistinctForTest(db, tableId, retCols, null,
         null,
         null, null, null, null);
     assertEquals(cursor3.getCount(), 1);
@@ -4888,7 +4888,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4907,7 +4907,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     ODKDatabaseImplUtils.get().replaceTableMetadata(db, tableId, newKVSEntries, true);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4918,7 +4918,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(newRetKVSEntries.get(0), newKVSEntries.get(0));
 
     // Delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -4962,7 +4962,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4979,7 +4979,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     ODKDatabaseImplUtils.get().replaceTableMetadata(db, newKVSEntry);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -4990,7 +4990,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 
     // Delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -5034,7 +5034,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         " WHERE " + KeyValueStoreColumns.PARTITION + " = ? AND " + KeyValueStoreColumns.KEY +
         " = ? AND " + KeyValueStoreColumns.VALUE + " = ?";
     String[] selArgs = { partition, key, kvsValue };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -5054,7 +5054,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         newKVSEntries);
 
     String [] selArgs2 = { partition, key, newKVSValue };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs2, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -5065,7 +5065,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(newRetKVSEntries.get(0), newKVSEntry);
 
     // Delete the metadata
-    ODKDatabaseImplUtils.deleteTableMetadata(db, tableId, partition, aspect, key);
+    ODKDatabaseImplUtils.get().deleteTableMetadata(db, tableId, partition, aspect, key);
 
     // Drop the table now that the test is done
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
@@ -5174,7 +5174,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
    * Test set choice list
    */
   @Test
-  public void testSetChoiceList() throws Throwable {
+  public void testSetChoiceList() {
     ArrayList<Object> values = new ArrayList<Object>();
     Map<String,Object> myMap = new TreeMap<String,Object>();
     Map<String, Object> displayText = new TreeMap<String, Object>();
@@ -5194,13 +5194,13 @@ public abstract class AbstractODKDatabaseUtilsTest {
     } catch (JsonProcessingException e) {
       e.printStackTrace();
     }
-    String choiceListId = ODKDatabaseImplUtils.setChoiceList(db, jsonChoiceList);
+    String choiceListId = ODKDatabaseImplUtils.get().setChoiceList(db, jsonChoiceList);
 
     // Select the _choice_list_id from the _choice_lists table
     String sel = "SELECT * FROM " + DatabaseConstants.CHOICE_LIST_TABLE_NAME +
         " WHERE " + ChoiceListColumns.CHOICE_LIST_ID + " = ?";
     String[] selArgs = { "" + choiceListId };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -5243,7 +5243,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -5265,7 +5265,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
@@ -5284,7 +5284,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         newLastDataETag);
 
     // Select everything out of the table
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
@@ -5332,7 +5332,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
     assertEquals(cursor.getCount(), 1);
 
@@ -5354,7 +5354,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String sel2 = "SELECT * FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME +
         " WHERE " + TableDefinitionsColumns.TABLE_ID + " = ?";
     String [] selArgs2 = { "" + tableId };
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
@@ -5370,7 +5370,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     ODKDatabaseImplUtils.get().privilegedUpdateTableLastSyncTime(db, tableId);
 
     // Select everything out of the table
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContextNoTableId);
     assertEquals(cursor.getCount(), 1);
 
@@ -5417,7 +5417,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Select everything out of the table
     String sel = "SELECT * FROM " + tableId + " WHERE " + testCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     int val = 0;
@@ -5436,7 +5436,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         SyncState.synced, activeUser);
 
     // Run the query again and make sure that the place row in conflict worked as expected
-    cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -5583,7 +5583,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
 
@@ -5605,7 +5605,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId + " WHERE " + DataTableColumns.ID + " = ?";
     String[] selArgs2 = { "" + rowId };
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -5664,7 +5664,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -5704,7 +5704,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -5774,7 +5774,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(prevDb, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -5814,7 +5814,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(prevDb, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(prevDb, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -5878,7 +5878,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -5911,7 +5911,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         .getOdkConnectionFactoryInterface().getConnection
         (getAppName(), uniqueKey);
 
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(dbForQuery, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -5982,7 +5982,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -6010,7 +6010,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       db.beginTransactionExclusive();
       String sel2 = "SELECT * FROM " + tableId;
       String[] selArgs2 = null;
-      Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+      Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
           accessContext);
 
       assertEquals(cursor2.getCount(), 1);
@@ -6082,7 +6082,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -6119,7 +6119,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -6192,7 +6192,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId + " WHERE " + setupTestCol + " = ?";
     String[] selArgs = { "" + testVal };
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -6230,7 +6230,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    cursor2 = ODKDatabaseImplUtils.rawQuery(dbForQuery, sel2, selArgs2, null,
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(dbForQuery, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -6303,7 +6303,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Ensure that the row exists
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
-    Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+    Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
         accessContext);
 
     while (cursor.moveToNext()) {
@@ -6331,7 +6331,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     Cursor cursor2 = null;
     String sel2 = "SELECT * FROM " + tableId;
     String[] selArgs2 = null;
-    cursor2 = ODKDatabaseImplUtils.rawQuery(db, sel2, selArgs2, null,
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db, sel2, selArgs2, null,
         accessContext);
 
     assertEquals(cursor2.getCount(), 1);
@@ -6412,7 +6412,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     // Query with db1
     String sel = "SELECT * FROM " + tableId;
     String[] selArgs = null;
-    Cursor cursor1 = ODKDatabaseImplUtils.rawQuery(db1, sel, selArgs, null,
+    Cursor cursor1 = ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null,
         accessContext);
 
     while (cursor1.moveToNext()) {
@@ -6424,7 +6424,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
 
     // Query with db2
-    Cursor cursor2 = ODKDatabaseImplUtils.rawQuery(db2, sel, selArgs, null,
+    Cursor cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null,
         accessContext);
 
     while (cursor2.moveToNext()) {
@@ -6455,7 +6455,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Have both connections re-query the table
     // Query with db1
-    cursor1= ODKDatabaseImplUtils.rawQuery(db1, sel, selArgs, null,
+    cursor1= ODKDatabaseImplUtils.get().rawQuery(db1, sel, selArgs, null,
         accessContext);
 
     while (cursor1.moveToNext()) {
@@ -6467,7 +6467,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
 
     // Query with db2
-    cursor2 = ODKDatabaseImplUtils.rawQuery(db2, sel, selArgs, null,
+    cursor2 = ODKDatabaseImplUtils.get().rawQuery(db2, sel, selArgs, null,
         accessContext);
 
     while (cursor2.moveToNext()) {
@@ -6547,7 +6547,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String queryVal = "testVal_" + Integer.toString(j % maxCols);
       String sel = "SELECT * FROM " + tableId + " WHERE " + queryCol + " = ?";
       String[] selArgs = { queryVal };
-      Cursor cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+      Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
           accessContext);
 
       String val = null;
@@ -6574,7 +6574,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       // Select everything out of the table
       sel = "SELECT * FROM " + tableId;
       selArgs = new String[0];
-      cursor = ODKDatabaseImplUtils.rawQuery(db, sel, selArgs, null,
+      cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
           accessContext);
 
       assertEquals(cursor.getCount(), 0);

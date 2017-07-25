@@ -87,7 +87,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
           .getUserDefinedColumns(db, mTableId);
       String whereClause = DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)";
       Object[] selectionArgs = new Object[] {
@@ -95,14 +95,14 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
       String[] orderByDir = new String[] { "DESC" };
-      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           selectionArgs, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -122,7 +122,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
             // Use privileged user roles since we are taking the server's values
-            ODKDatabaseImplUtils.resolveServerConflictTakeServerRowWithId(db,
+            ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
                 mTableId, rowId, aul.activeUser, aul.locale);
           }
         }
@@ -131,7 +131,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
           selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
               ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
 
-          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               selectionArgs, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -139,14 +139,14 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       }
 
       // The display name is the table display name, not the form display name...
-      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.getTableMetadata(db,
+      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db,
           mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
           KeyValueStoreConstants.TABLE_DISPLAY_NAME).getEntries();
 
       tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(mTableId)) : entries.get(0).value;
 
-      forms = ODKDatabaseImplUtils.rawQuery(db,
+      forms = ODKDatabaseImplUtils.get().rawQuery(db,
           "SELECT " + FormsColumns.INSTANCE_NAME +
               " , " + FormsColumns.FORM_ID +
               " , " + FormsColumns.DISPLAY_NAME +

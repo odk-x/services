@@ -102,25 +102,25 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(mAppName, dbHandleName);
 
-      OrderedColumns orderedDefns = ODKDatabaseImplUtils
+      OrderedColumns orderedDefns = ODKDatabaseImplUtils.get()
           .getUserDefinedColumns(db, mTableId);
       String whereClause = DataTableColumns.SAVEPOINT_TYPE + " IS NULL";
       String[] groupBy = { DataTableColumns.ID };
       String[] orderByKeys = new String[] { DataTableColumns.SAVEPOINT_TIMESTAMP };
       String[] orderByDir = new String[] { "DESC" };
 
-      List<String> adminColumns = ODKDatabaseImplUtils.getAdminColumns();
+      List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
       ODKDatabaseImplUtils.AccessContext accessContextBase =
-          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               aul.rolesList);
 
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.getAccessContext(db, mTableId, aul.activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
-      BaseTable baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+      BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
           null, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -141,13 +141,13 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
           if (resolveActionList.noChangesInUserDefinedFieldValues()) {
             tableSetChanged = true;
             // act as a privileged user so that we always restore to original row
-            ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId,
+            ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
                 rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
         }
 
         if ( tableSetChanged ) {
-          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
               .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -162,7 +162,7 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       // have permission to modify them. And, finally, if that set is non-empty, re-fetch the
       // table, as it will now have fewer rows.
       {
-        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.query(db, mTableId, QueryUtil
+        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.get().query(db, mTableId, QueryUtil
                 .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir), null,
             null, accessContextBase);
         UserTable unprivilegedTable = new UserTable(unprivilegedBaseTable, orderedDefns, adminColArr);
@@ -186,13 +186,13 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
         // the ability to modify those rows. Resolve all of these by deleting the checkpoints.
         for (String rowId : ids) {
           // act as a privileged user so that we always restore to original row
-          ODKDatabaseImplUtils.deleteAllCheckpointRowsWithId(db, mTableId, rowId, aul.activeUser,
+          ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId, rowId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
         }
 
         if ( mNumberRowsSilentlyReverted != 0 ) {
           // update the privileged query table again
-          baseTable = ODKDatabaseImplUtils.privilegedQuery(db, mTableId, QueryUtil
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
                   .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
               null, null, accessContextPrivileged);
           table = new UserTable(baseTable, orderedDefns, adminColArr);
@@ -200,14 +200,14 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
       }
 
       // The display name is the table display name, not the form display name...
-      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.getTableMetadata(db,
+      ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db,
           mTableId, KeyValueStoreConstants.PARTITION_TABLE, KeyValueStoreConstants.ASPECT_DEFAULT,
           KeyValueStoreConstants.TABLE_DISPLAY_NAME).getEntries();
 
       tableDisplayName = entries.isEmpty() ?  NameUtil.normalizeDisplayName(NameUtil
           .constructSimpleDisplayName(mTableId)) : entries.get(0).value;
 
-      forms = ODKDatabaseImplUtils.rawQuery(db,
+      forms = ODKDatabaseImplUtils.get().rawQuery(db,
           "SELECT " + FormsColumns.INSTANCE_NAME +
               " , " + FormsColumns.FORM_ID +
               " , " + FormsColumns.DISPLAY_NAME +
