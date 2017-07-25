@@ -5707,12 +5707,8 @@ public final class ODKDatabaseImplUtils {
 
         // not (super-user or administrator or groupPrivileged or (rowOwner in unlocked table))
         // NOTE: in a new row priorOwner will be defaultRowOwner
-        if (DataTableColumns.DEFAULT_ROW_OWNER == null || priorOwner == null || activeUser ==
-            null) {
-          String f = "breakpoint";
-        }
-        if (!isLocked && (helperEquals(DataTableColumns.DEFAULT_ROW_OWNER, priorOwner)
-            || helperEquals(priorOwner, activeUser))) {
+        if (!isLocked && (DataTableColumns.DEFAULT_ROW_OWNER.equals(priorOwner)
+            || priorOwner != null && activeUser.equals(priorOwner))) {
           return;
         }
 
@@ -5722,12 +5718,6 @@ public final class ODKDatabaseImplUtils {
             + " or (row_owner in unlocked table)) to modify defaultAccess, rowOwner, or group"
             + " permission fields in table " + tableId);
       }
-    }
-    private static boolean helperEquals(String a, String b) {
-      if (a == null) {
-        return b == null;
-      }
-      return a.equals(b);
     }
 
     public void allowRowChange(String activeUser, Collection<String> rolesArray, String updatedSyncState,
