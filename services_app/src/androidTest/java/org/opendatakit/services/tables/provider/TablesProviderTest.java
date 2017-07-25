@@ -4,7 +4,8 @@ import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.support.test.runner.AndroidJUnit4;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
@@ -13,7 +14,6 @@ import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.forms.provider.FormsProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import static android.text.TextUtils.join;
@@ -34,10 +34,10 @@ public class TablesProviderTest {
   private static String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
   private static String cTime = TableDefinitionsColumns.LAST_SYNC_TIME;
   private static String cRev = TableDefinitionsColumns.REV_ID;
-  public static String[] all = { cId, cSchema, cData, cTime, cRev };
+  private static String[] all = { cId, cSchema, cData, cTime, cRev };
 
-  private static OdkConnectionInterface db;
-  private static TablesProvider p;
+  private OdkConnectionInterface db;
+  private TablesProvider p;
 
   public static String getAppName() {
     return "default";
@@ -59,20 +59,14 @@ public class TablesProviderTest {
       AndroidConnectFactory.configure();
     }
     DbHandle uniqueKey = new DbHandle(
-        FormsProviderTest.class.getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
+        getClass().getSimpleName() + AndroidConnectFactory.INTERNAL_TYPE_SUFFIX);
     db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
         .getConnection(getAppName(), uniqueKey);
     p = new TablesProvider();
     db.execSQL("DELETE FROM " + tTable + ";", new String[0]);
-    test = new FormsProviderTest();
-    test.setUp();
   }
-  FormsProviderTest test;
-  @After
-  public void after() throws Exception {
-    test.after();
-  }
-  private static void insertTable(String id) {
+
+  private void insertTable(String id) {
     db.execSQL("INSERT INTO " + tTable + " (" + join(", ", all) + ") VALUES (?, ?, ?, ?, ?);",
         new String[] { id, "schema etag here", "data etag here", "timestamp here", "revId here" });
   }

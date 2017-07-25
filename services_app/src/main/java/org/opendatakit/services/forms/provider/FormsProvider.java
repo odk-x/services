@@ -162,7 +162,7 @@ public class FormsProvider extends ContentProvider {
       }
     } else {
       // we have both a tableId and a formId.
-      pf.requiresBlankFormIdPatch = pf.formId == null || pf.formId.equals("_");
+      pf.requiresBlankFormIdPatch = pf.formId == null || pf.formId.isEmpty();
 
       // combine with the filter clause the user supplied.
       if (TextUtils.isEmpty(where)) {
