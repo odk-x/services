@@ -21,7 +21,6 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.SQLException;
 import android.net.Uri;
-import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -336,8 +335,8 @@ public class InstanceProvider extends ContentProvider {
     // @formatter:off
     b.append("SELECT ");
     b.append(DatabaseConstants.UPLOADS_TABLE_NAME)
-       .append(".").append(BaseColumns._ID)
-         .append(" as ").append(BaseColumns._ID).append(",")
+       .append(".").append(InstanceColumns._ID)
+         .append(" as ").append(InstanceColumns._ID).append(",")
      .append(DatabaseConstants.UPLOADS_TABLE_NAME)
        .append(".").append(InstanceColumns.DATA_INSTANCE_ID)
          .append(" as ").append(InstanceColumns.DATA_INSTANCE_ID).append(",")
@@ -417,7 +416,7 @@ public class InstanceProvider extends ContentProvider {
 
     if (instanceId != null) {
       b.append(" AND ").append(DatabaseConstants.UPLOADS_TABLE_NAME).append(".")
-          .append(BaseColumns._ID).append("=?");
+          .append(InstanceColumns._ID).append("=?");
       String tempArgs[] = { tableId, InstanceColumns.STATUS_COMPLETE, instanceId };
       filterArgs = tempArgs;
     } else {
@@ -550,7 +549,7 @@ public class InstanceProvider extends ContentProvider {
           del.moveToPosition(-1);
           while (del.moveToNext()) {
             String iId = CursorUtils.getIndexAsString(del,
-                del.getColumnIndex(BaseColumns._ID));
+                del.getColumnIndex(InstanceColumns._ID));
             String iIdDataTable = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
@@ -584,7 +583,7 @@ public class InstanceProvider extends ContentProvider {
           del.moveToPosition(-1);
           while (del.moveToNext()) {
             String iId = CursorUtils.getIndexAsString(del,
-                del.getColumnIndex(BaseColumns._ID));
+                del.getColumnIndex(InstanceColumns._ID));
             String iIdDataTable = CursorUtils.getIndexAsString(del,
                 del.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
@@ -688,7 +687,7 @@ public class InstanceProvider extends ContentProvider {
         if (ref.getCount() != 0) {
           do {
             String iId = CursorUtils.getIndexAsString(ref,
-                ref.getColumnIndex(BaseColumns._ID));
+                ref.getColumnIndex(InstanceColumns._ID));
             String iIdDataTable = CursorUtils.getIndexAsString(ref,
                 ref.getColumnIndex(InstanceColumns.DATA_INSTANCE_ID));
             idStructs.add(new IdStruct(iId, iIdDataTable));
@@ -721,7 +720,7 @@ public class InstanceProvider extends ContentProvider {
       for (IdStruct idStruct : idStructs) {
         args[0] = idStruct.idUploadsTable;
         count += db.update(DatabaseConstants.UPLOADS_TABLE_NAME, values,
-            BaseColumns._ID + "=?", args);
+            InstanceColumns._ID + "=?", args);
       }
       db.setTransactionSuccessful();
     } finally {
@@ -748,7 +747,7 @@ public class InstanceProvider extends ContentProvider {
   static {
 
     sInstancesProjectionMap = new HashMap<String, String>();
-    sInstancesProjectionMap.put(BaseColumns._ID, BaseColumns._ID);
+    sInstancesProjectionMap.put(InstanceColumns._ID, InstanceColumns._ID);
     sInstancesProjectionMap.put(InstanceColumns.DATA_INSTANCE_ID, InstanceColumns.DATA_INSTANCE_ID);
     sInstancesProjectionMap.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
         InstanceColumns.XML_PUBLISH_TIMESTAMP);
