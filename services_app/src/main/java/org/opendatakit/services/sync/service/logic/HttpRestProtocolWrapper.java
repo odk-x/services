@@ -282,6 +282,11 @@ public class HttpRestProtocolWrapper {
         asList.add(a);
         a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
         asList.add(a);
+        // this might be disabled in production builds...
+        if ( sc.getAllowUnsafeAuthentication() ) {
+          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
       }
 
       // add username
