@@ -69,10 +69,12 @@ public class ConflictResolutionListTask extends AsyncTask<Void, String, String> 
         try {
 
           if ( mTakeLocal ) {
+            // this might fail due to lowered user privileges
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeLocalRowWithId(db, mTableId, entry.rowId,
                     aul.activeUser, aul.rolesList, aul.locale);
           } else {
+            // all users can always take the server's changes
             ODKDatabaseImplUtils.get()
                 .resolveServerConflictTakeServerRowWithId(db, mTableId, entry.rowId,
                     aul.activeUser, aul.locale);

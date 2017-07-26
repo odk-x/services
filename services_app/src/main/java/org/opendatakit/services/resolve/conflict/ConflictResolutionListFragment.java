@@ -179,9 +179,23 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override
   public void onLoadFinished(Loader<ArrayList<ResolveRowEntry>> loader,
-    ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
+      ArrayList<ResolveRowEntry> resolveRowEntryArrayList) {
     // we have resolved the metadata conflicts -- no need to try this again
     mHaveResolvedMetadataConflicts = true;
+
+    // this toast may be silently swallowed if there is only one remaining checkpoint in the table.
+    int silentlyResolvedConflicts =
+        ((OdkResolveConflictRowLoader) loader).getNumberRowsSilentlyResolved();
+
+    if ( silentlyResolvedConflicts != 0 ) {
+      if ( silentlyResolvedConflicts == 1 ) {
+        Toast.makeText(getActivity(), getActivity().getString(R.string
+            .silently_resolved_single_conflict), Toast.LENGTH_LONG).show();
+      } else {
+        Toast.makeText(getActivity(), getActivity().getString(R.string.silently_resolved_conflicts,
+            silentlyResolvedConflicts), Toast.LENGTH_LONG).show();
+      }
+    }
 
     // Swap the new cursor in. (The framework will take care of closing the
     // old cursor once we return.)

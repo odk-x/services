@@ -3085,7 +3085,7 @@ public class ODKDatabaseImplUtils {
    * @param locale
    * @return  true if we are still in conflict
    */
-  private boolean enforcePermissionsAndOptimizeConflictProcessing(OdkConnectionInterface db,
+  public boolean enforcePermissionsAndOptimizeConflictProcessing(OdkConnectionInterface db,
                                           String tableId, OrderedColumns orderedColumns,
                                           String rowId, SyncState initialLocalRowState,
                                           AccessContext accessContext, String locale) {
