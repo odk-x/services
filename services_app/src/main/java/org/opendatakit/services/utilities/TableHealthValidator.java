@@ -12,6 +12,7 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
+import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -65,6 +66,7 @@ public class TableHealthValidator {
 
     try {
       // +1 referenceCount if db is returned (non-null)
+      AndroidConnectFactory.configure();
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(appName, dbHandleName);
       List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
