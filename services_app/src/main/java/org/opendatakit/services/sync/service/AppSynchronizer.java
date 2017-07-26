@@ -42,9 +42,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Responsible for synchronizing against the app server
- */
 public class AppSynchronizer {
 
   private static final String TAG = AppSynchronizer.class.getSimpleName();
@@ -54,19 +51,13 @@ public class AppSynchronizer {
   private final GlobalSyncNotificationManager globalNotifManager;
 
   private SyncStatus status;
+  private Long threadStartTime = null;
   private Long threadEndTime = null;
   private Thread curThread;
   private SyncTask curTask;
   private SyncNotification syncProgress;
   private SyncOverallResult syncResult;
 
-  /**
-   * Simple constructor that stores its arguments and sets up the sync status, current thread,
-   * sync progress and sync result
-   * @param srvc
-   * @param appName
-   * @param notificationManager
-   */
   AppSynchronizer(Service srvc, String appName, GlobalSyncNotificationManager notificationManager) {
     this.service = srvc;
     this.appName = appName;
@@ -77,16 +68,11 @@ public class AppSynchronizer {
     this.syncResult = new SyncOverallResult();
   }
 
-  /**
-   * Returns true if we were able to start synchronizing the given attachment
-   * @param push passed through to SyncTask, whether we are pushing or pulling the given attachment
-   * @param attachmentState the attachment to be synced
-   * @return true if we started synchronizing that attachment, false if we were busy
-   */
   public synchronized boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
     if (curThread == null) {
-      curTask = new SyncTask((ToolAwareApplication) service.getApplication(), push,
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()), push,
           attachmentState);
+      threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
       curThread.start();
@@ -97,7 +83,8 @@ public class AppSynchronizer {
 
   public synchronized boolean verifyServerSettings() {
     if (curThread == null) {
-      curTask = new SyncTask((ToolAwareApplication) service.getApplication());
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()));
+      threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
       curThread.start();
@@ -134,8 +121,8 @@ public class AppSynchronizer {
     }
 
     // there was a sync action and it ended less than a RETENTION_PERIOD ago.
-    if ( threadEndTime != null &&
-        System.currentTimeMillis() < threadEndTime + OdkSyncService.RETENTION_PERIOD) {
+    if ( (threadEndTime != null) &&
+         (System.currentTimeMillis() < threadEndTime + OdkSyncService.RETENTION_PERIOD) ) {
       return false;
     }
 
@@ -195,7 +182,7 @@ public class AppSynchronizer {
       } finally {
         try {
           globalNotifManager.stoppingSync(appName);
-        } catch (NoAppNameSpecifiedException ignored) {
+        } catch (NoAppNameSpecifiedException e) {
           // impossible to get here
         }
         threadEndTime = System.currentTimeMillis();

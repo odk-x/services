@@ -23,45 +23,55 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
-import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.logging.WebLoggerIf;
-import org.opendatakit.provider.TableDefinitionsColumns;
-import org.opendatakit.provider.TablesProviderAPI;
+
 import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.WebLoggerIf;
+import org.opendatakit.database.service.DbHandle;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-/**
- * TODO document
- */
 public class TablesProvider extends ContentProvider {
-  private static final String TAG = TablesProvider.class.getSimpleName();
+  private static final String t = "TablesProvider";
 
   /**
    * change to true expression if you want to debug this content provider
    */
   private static void possiblyWaitForContentProviderDebugger() {
-    if (false) {
+    if ( false ) {
       android.os.Debug.waitForDebugger();
       int len = "for setting breakpoint".length();
     }
   }
 
-  /**
-   * Returns the authority for this service provider. Unused
-   * @return the authority for this service provider
-   */
-  public static String getTablesAuthority() {
+  private class InvalidateMonitor extends DataSetObserver {
+    final String appName;
+    final DbHandle dbHandleName;
+
+    InvalidateMonitor(String appName, DbHandle dbHandleName) {
+      this.appName = appName;
+      this.dbHandleName = dbHandleName;
+    }
+
+    @Override
+    public void onInvalidated() {
+      super.onInvalidated();
+      // this releases the connection
+      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
+          dbHandleName);
+    }
+  }
+
+  public String getTablesAuthority() {
     return TablesProviderAPI.AUTHORITY;
   }
 
@@ -75,14 +85,13 @@ public class TablesProvider extends ContentProvider {
       ODKFileUtils.verifyExternalStorageAvailability();
       File f = new File(ODKFileUtils.getOdkFolder());
       if (!f.exists()) {
-        // TODO check result
         f.mkdir();
       } else if (!f.isDirectory()) {
-        Log.e(TAG, f.getAbsolutePath() + " is not a directory!");
+        Log.e(t, f.getAbsolutePath() + " is not a directory!");
         return false;
       }
-    } catch (Exception ignored) {
-      Log.e(TAG, "External storage not available");
+    } catch (Exception e) {
+      Log.e(t, "External storage not available");
       return false;
     }
 
@@ -105,7 +114,7 @@ public class TablesProvider extends ContentProvider {
     ODKFileUtils.assertDirectoryStructure(appName);
     WebLoggerIf logger = WebLogger.getLogger(appName);
 
-    String uriTableId = segments.size() == 2 ? segments.get(1) : null;
+    String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 
     // Modify the where clause to account for the presence of a tableId
     String whereId;
@@ -120,7 +129,8 @@ public class TablesProvider extends ContentProvider {
         whereIdArgs = new String[1];
         whereIdArgs[0] = uriTableId;
       } else {
-        whereId = TableDefinitionsColumns.TABLE_ID + "=? AND (" + where + ")";
+        whereId = TableDefinitionsColumns.TABLE_ID + "=? AND (" + where
+            + ")";
         whereIdArgs = new String[whereArgs.length + 1];
         whereIdArgs[0] = uriTableId;
         System.arraycopy(whereArgs, 0, whereIdArgs, 1, whereArgs.length);
@@ -128,43 +138,39 @@ public class TablesProvider extends ContentProvider {
     }
 
     // Get the database and run the query
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-        .generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     boolean success = false;
-    Cursor c;
+    Cursor c = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
-      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs, null,
-          null, sortOrder, null);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
+      c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME, projection, whereId, whereIdArgs,
+          null, null, sortOrder, null);
 
       if (c == null) {
-        logger.w(TAG, "Unable to query database for appName: " + appName);
+        logger.w(t, "Unable to query database for appName: " + appName);
         return null;
       }
       // Tell the cursor what uri to watch, so it knows when its source data changes
-      if (getContext() != null) {
-        c.setNotificationUri(getContext().getContentResolver(), uri);
-      }
+      c.setNotificationUri(getContext().getContentResolver(), uri);
       c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
       success = true;
       return c;
     } catch (Exception e) {
-      logger.w(TAG, "Exception while querying database for appName: " + appName);
+      logger.w(t, "Exception while querying database for appName: " + appName);
       logger.printStackTrace(e);
       return null;
     } finally {
-      if (db != null) {
+      if ( db != null ) {
         try {
           db.releaseReference();
         } finally {
-          if (!success) {
+          if ( !success ) {
             // this closes the connection
             // if it was successful, then the InvalidateMonitor will close the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .removeConnection(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -178,7 +184,7 @@ public class TablesProvider extends ContentProvider {
     if (segments.size() < 1 || segments.size() > 2) {
       throw new IllegalArgumentException("Unknown URI (incorrect number of segments!) " + uri);
     }
-    String uriTableId = segments.size() == 2 ? segments.get(1) : null;
+    String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 
     if (uriTableId == null) {
       return TableDefinitionsColumns.CONTENT_TYPE;
@@ -205,8 +211,9 @@ public class TablesProvider extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
+    WebLoggerIf log = WebLogger.getLogger(appName);
 
-    String uriTableId = segments.size() == 2 ? segments.get(1) : null;
+    String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
 
     // Modify the where clause to account for the presence of a tableId
     String whereId;
@@ -221,7 +228,8 @@ public class TablesProvider extends ContentProvider {
         whereIdArgs = new String[1];
         whereIdArgs[0] = uriTableId;
       } else {
-        whereId = TableDefinitionsColumns.TABLE_ID + "=? AND (" + selection + ")";
+        whereId = TableDefinitionsColumns.TABLE_ID + "=? AND (" + selection
+            + ")";
         whereIdArgs = new String[selectionArgs.length + 1];
         whereIdArgs[0] = uriTableId;
         System.arraycopy(selectionArgs, 0, whereIdArgs, 1, selectionArgs.length);
@@ -231,40 +239,38 @@ public class TablesProvider extends ContentProvider {
     int deleteCount = 0;
 
     // Get the database and run the query
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-        .generateInternalUseDbHandle();
+    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
     try {
       // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .getConnection(appName, dbHandleName);
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
       db.beginTransactionNonExclusive();
-      Collection<String> tableIds = new HashSet<>();
+      HashSet<String> tableIds = new HashSet<String>();
       Cursor c = null;
       try {
         c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME,
-            new String[] { TableDefinitionsColumns.TABLE_ID }, whereId, whereIdArgs, null, null,
-            null, null);
-        if (c != null && c.moveToFirst()) {
+            new String[] { TableDefinitionsColumns.TABLE_ID }, whereId, whereIdArgs,
+            null, null, null, null);
+        if ( c != null && c.moveToFirst() ) {
           int idxTableId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
           do {
             String tableId = c.getString(idxTableId);
             tableIds.add(tableId);
-          } while (c.moveToNext());
+          } while ( c.moveToNext());
         }
       } finally {
-        if (c != null && !c.isClosed()) {
+        if ( c != null && !c.isClosed() ) {
           c.close();
         }
       }
 
-      for (String tableId : tableIds) {
-        ODKDatabaseImplUtils.deleteTableAndAllData(db, tableId);
+      for ( String tableId : tableIds ) {
+        ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
         deleteCount++;
       }
       db.setTransactionSuccessful();
     } finally {
-      if (db != null) {
+      if ( db != null ) {
         try {
           if (db.inTransaction()) {
             db.endTransaction();
@@ -274,8 +280,8 @@ public class TablesProvider extends ContentProvider {
             db.releaseReference();
           } finally {
             // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-                .removeConnection(appName, dbHandleName);
+            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
+                appName, dbHandleName);
           }
         }
       }
@@ -285,28 +291,8 @@ public class TablesProvider extends ContentProvider {
   }
 
   @Override
-  public int update(@NonNull Uri uri, ContentValues values, String selection,
-      String[] selectionArgs) {
+  public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
     throw new UnsupportedOperationException("Not implemented");
-  }
-
-  private static class InvalidateMonitor extends DataSetObserver {
-    final String appName;
-    final DbHandle dbHandleName;
-
-    InvalidateMonitor(String appName, DbHandle dbHandleName) {
-      super();
-      this.appName = appName;
-      this.dbHandleName = dbHandleName;
-    }
-
-    @Override
-    public void onInvalidated() {
-      super.onInvalidated();
-      // this releases the connection
-      OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
-          .removeConnection(appName, dbHandleName);
-    }
   }
 
 }

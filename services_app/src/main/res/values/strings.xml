@@ -43,6 +43,10 @@
     <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
     <string name="checkpoint_take_all_oldest_or_remove">Discard All Checkpoints</string>
     <string name="checkpoint_take_all_newest">Update All Checkpoints to Incomplete State</string>
+    <string name="silently_resolved_single_checkpoint">A checkpoint on an unmodifiable row was
+        silently rolled back.</string>
+    <string name="silently_resolved_checkpoints">%1$d checkpoints on unmodifiable rows were
+        silently rolled back.</string>
 
     <string name="checkpoint_radio_local">Apply:</string>
     <string name="checkpoint_radio_server">Restore:</string>
@@ -65,6 +69,10 @@
     <string name="no_items_display_conflicts">Please Wait&#8230;\nSearching for conflicting rows to resolve.</string>
     <string name="conflict_take_all_local_updates">Take Local Version - Reject All Server Changes</string>
     <string name="conflict_take_all_server_updates">Take Server Version - Discard Local Changes</string>
+    <string name="silently_resolved_single_conflict">A conflict on an unmodifiable row was
+        silently resolved using the server\'s changes.</string>
+    <string name="silently_resolved_conflicts">%1$d conflicts on unmodifiable rows were silently
+        resolved using the server\'s changes.</string>
 
     <string name="conflict_resolving_all">Resolving All Conflicts</string>
     <string name="resolving_row_n_of_m">Resolving row %1$d of %2$d</string>
@@ -184,8 +192,6 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
-    <string name="sync_warn_sync_before_logout">WARNING: Be sure to sync before changing
-        users or logging out</string>
 
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have sync\'d now may no longer be able to be sync\'d.</string>
@@ -262,6 +268,16 @@
     <string name="new_user">Authenticate New User</string>
     <string name="logout">Log Out</string>
     <string name="authenticate_credentials">Authenticate Credentials</string>
+
+    <string name="sync_pending_changes">Sync Pending Changes</string>
+    <string name="resolve_pending_changes">You have changes that have not been synced to
+        the server. If you change users or logout before syncing these changes, you may
+        lose them.</string>
+    <string name="resolve_with_sync">Sync Changes</string>
+    <string name="ignore_changes">Ignore Unsynced Changes</string>
+
+    <string name="resolve_checkpoints_and_conflicts">Resolve Checkpoints and Conflicts</string>
+    <string name="resolve_pending_checkpoints_and_conflicts">You have checkpoint rows and/or conflicts with the server that must be resolved before you can change your authenticated user.</string>
 
     <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
