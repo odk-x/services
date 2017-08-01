@@ -53,8 +53,9 @@ public class TablesSettingsFragment extends PreferenceFragment {
     PreferenceCategory deviceCategory = (PreferenceCategory) findPreference
         (CommonToolProperties.GROUPING_TOOL_TABLES_CATEGORY);
 
-    boolean useHomeScreenAvailable = !adminConfigured ||
-        props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
+    Boolean useHomeScreen = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
+    useHomeScreen = (useHomeScreen == null) ? false : useHomeScreen;
+    boolean useHomeScreenAvailable = !adminConfigured || useHomeScreen;
 
     mUseHomeScreenPreference = (CheckBoxPreference) findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
     if (props.containsKey(CommonToolProperties.KEY_USE_HOME_SCREEN)) {
