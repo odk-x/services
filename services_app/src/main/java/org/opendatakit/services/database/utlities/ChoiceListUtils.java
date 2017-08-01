@@ -26,7 +26,6 @@ import java.util.ArrayList;
  * Manipulator class for setting and getting choiceList definitions.
  */
 public class ChoiceListUtils {
-  private static final String TAG = "ChoiceListUtils";
 
   /**
    * For ease of mocking...

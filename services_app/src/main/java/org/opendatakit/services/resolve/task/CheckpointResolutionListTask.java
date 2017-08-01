@@ -4,12 +4,13 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
 
+import org.opendatakit.database.RoleConsts;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.opendatakit.services.R;
@@ -21,7 +22,9 @@ import java.util.UUID;
  */
 public class CheckpointResolutionListTask extends AsyncTask<Void, String, String> {
 
-  Context mContext;
+  ActiveUserAndLocale aul;
+  String formatStrResolvingRowNofM;
+  String formatStrDone;
   boolean mTakeNewest;
   String mAppName;
   String mTableId;
@@ -30,8 +33,14 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   String mProgress = "";
   String mResult = null;
 
-  public CheckpointResolutionListTask(Context context, boolean takeNewest) {
-    mContext = context;
+  public CheckpointResolutionListTask(Context context, boolean takeNewest, String appName) {
+    // There are times when this constructor is called and mAppName has no value
+    // and getActiveUserAndLocale crashes so we need the appName in the constructor
+    mAppName = appName;
+    aul = ActiveUserAndLocale.getActiveUserAndLocale(context, mAppName);
+
+    formatStrResolvingRowNofM = context.getString(R.string.resolving_row_n_of_m);
+    formatStrDone = context.getString(R.string.done_resolving_rows);
     mTakeNewest = takeNewest;
   }
 
@@ -43,9 +52,6 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
     StringBuilder exceptions = null;
 
-    ActiveUserAndLocale aul =
-        ActiveUserAndLocale.getActiveUserAndLocale(mContext, mAppName);
-
     try {
       // +1 referenceCount if db is returned (non-null)
       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
@@ -53,17 +59,19 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
 
       for ( int i = 0 ; i < mAdapter.getCount() ; ++i ) {
         this.publishProgress(
-            mContext.getString(R.string.resolving_row_n_of_m, i+1, mAdapter.getCount()));
+            String.format(formatStrResolvingRowNofM, i+1, mAdapter.getCount()));
 
         ResolveRowEntry entry = mAdapter.getItem(i);
         try {
 
           if ( mTakeNewest ) {
+            // this may fail if user does not have permissions for modifying row
             ODKDatabaseImplUtils.get()
                 .saveAsCompleteMostRecentCheckpointRowWithId(db, mTableId, entry.rowId);
           } else {
+            // allow all users to automatically roll back
             ODKDatabaseImplUtils.get().deleteAllCheckpointRowsWithId(db, mTableId,
-                entry.rowId, aul.activeUser, aul.rolesList);
+                entry.rowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
           }
 
         } catch (Exception e) {
@@ -99,8 +107,7 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
               .getConnection(mAppName, dbHandleName);
         }
       }
-      this.publishProgress(
-          mContext.getString(R.string.done_resolving_rows));
+      this.publishProgress(formatStrDone);
 
 
     } finally {
@@ -190,7 +197,8 @@ public class CheckpointResolutionListTask extends AsyncTask<Void, String, String
   public void setResolveRowEntryAdapter(ArrayAdapter<ResolveRowEntry> adapter) {
     synchronized (this) {
       this.mAdapter = adapter;
-      this.mProgress = mContext.getString(R.string.resolving_row_n_of_m, 1, mAdapter.getCount());
+      this.mProgress =
+          String.format(formatStrResolvingRowNofM, 1, mAdapter.getCount());
     }
   }
 

@@ -20,15 +20,23 @@
 
 package org.sqlite.database.sqlite;
 
-import android.database.AbstractCursor;
-import android.database.Cursor;
-import android.database.CursorIndexOutOfBoundsException;
+import android.content.ContentResolver;
+
+import android.database.*;
+import android.net.Uri;
+import android.os.Bundle;
+
+import org.opendatakit.logging.WebLogger;
+
+import java.lang.ref.WeakReference;
 
 /**
  * An immutable cursor implementation backed by an array of {@code Object}s.
  */
-public class SQLiteMemoryCursor extends AbstractCursor {
+public class SQLiteMemoryCursor implements Cursor {
 
+  private static final String TAG = "SQLiteMemoryCursor";
+  
     private static final char NULL_TYPE = 'n';
     private static final char STRING_TYPE = 's';
     private static final char LONG_TYPE = 'l';
@@ -45,6 +53,359 @@ public class SQLiteMemoryCursor extends AbstractCursor {
     // data rows are remaining rows of sqliteContent
     private int rowCount;
 
+    //////////////////////////////////////////////////////
+
+    /**
+     * Use {@link #getPosition()} to access this value.
+     */
+    private int mPos;
+
+    /**
+     * Use {@link #isClosed()} to access this value.
+     */
+    private boolean mClosed;
+
+    /**
+     * Do not use outside of this class.
+     */
+    private ContentResolver mContentResolver;
+
+    private Uri mNotifyUri;
+
+    private final Object mSelfObserverLock = new Object();
+    private ContentObserver mSelfObserver;
+    private boolean mSelfObserverRegistered;
+
+    private final DataSetObservable mDataSetObservable = new DataSetObservable();
+    private final ContentObservable mContentObservable = new ContentObservable();
+
+    private Bundle mExtras = Bundle.EMPTY;
+
+    /* Methods that may optionally be implemented by subclasses */
+
+    @Override
+    public int getColumnCount() {
+        return getColumnNames().length;
+    }
+
+    @Override
+    public void deactivate() {
+        onDeactivateOrClose();
+    }
+
+    /** @hide */
+    protected void onDeactivateOrClose() {
+        if (mSelfObserver != null) {
+            mContentResolver.unregisterContentObserver(mSelfObserver);
+            mSelfObserverRegistered = false;
+        }
+        mDataSetObservable.notifyInvalidated();
+    }
+
+    @Override
+    public boolean requery() {
+        if (mSelfObserver != null && mSelfObserverRegistered == false) {
+            mContentResolver.registerContentObserver(mNotifyUri, true, mSelfObserver);
+            mSelfObserverRegistered = true;
+        }
+        mDataSetObservable.notifyChanged();
+        return true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return mClosed;
+    }
+
+    @Override
+    public void close() {
+      boolean notYetClosed = !isClosed();
+      
+      mClosed = true;
+      mContentObservable.unregisterAll();
+        // release the held memory now.
+        sqliteContent = null;
+        columnNames = NO_COLUMNS;
+        dataTypes = null;
+        rowCount = 0;
+        
+        if ( notYetClosed ) {
+          onDeactivateOrClose();
+        }
+    }
+
+    @Override
+    public void copyStringToBuffer(int columnIndex, CharArrayBuffer buffer) {
+        // Default implementation, uses getString
+        String result = getString(columnIndex);
+        if (result != null) {
+            char[] data = buffer.data;
+            if (data == null || data.length < result.length()) {
+                buffer.data = result.toCharArray();
+            } else {
+                result.getChars(0, result.length(), data, 0);
+            }
+            buffer.sizeCopied = result.length();
+        } else {
+            buffer.sizeCopied = 0;
+        }
+    }
+
+    /* -------------------------------------------------------- */
+    /* Implementation */
+
+    @Override
+    public final int getPosition() {
+        return mPos;
+    }
+
+    @Override
+    public final boolean moveToPosition(int position) {
+        // Make sure position isn't past the end of the cursor
+        final int count = getCount();
+        if (position >= count) {
+            mPos = count;
+            return false;
+        }
+
+        // Make sure position isn't before the beginning of the cursor
+        if (position < 0) {
+            mPos = -1;
+            return false;
+        }
+
+        // Check for no-op moves, and skip the rest of the work for them
+        if (position == mPos) {
+            return true;
+        }
+
+        mPos = position;
+        return true;
+    }
+
+    @Override
+    public final boolean move(int offset) {
+        return moveToPosition(mPos + offset);
+    }
+
+    @Override
+    public final boolean moveToFirst() {
+        return moveToPosition(0);
+    }
+
+    @Override
+    public final boolean moveToLast() {
+        return moveToPosition(getCount() - 1);
+    }
+
+    @Override
+    public final boolean moveToNext() {
+        return moveToPosition(mPos + 1);
+    }
+
+    @Override
+    public final boolean moveToPrevious() {
+        return moveToPosition(mPos - 1);
+    }
+
+    @Override
+    public final boolean isFirst() {
+        return mPos == 0 && getCount() != 0;
+    }
+
+    @Override
+    public final boolean isLast() {
+        int cnt = getCount();
+        return mPos == (cnt - 1) && cnt != 0;
+    }
+
+    @Override
+    public final boolean isBeforeFirst() {
+        if (getCount() == 0) {
+            return true;
+        }
+        return mPos == -1;
+    }
+
+    @Override
+    public final boolean isAfterLast() {
+        if (getCount() == 0) {
+            return true;
+        }
+        return mPos == getCount();
+    }
+
+    @Override
+    public int getColumnIndex(String columnName) {
+        // Hack according to bug 903852
+        final int periodIndex = columnName.lastIndexOf('.');
+        if (periodIndex != -1) {
+            Exception e = new Exception();
+            WebLogger.getContextLogger().e(TAG, 
+                "requesting column name with table name -- " + columnName);
+            WebLogger.getContextLogger().printStackTrace(e);
+            columnName = columnName.substring(periodIndex + 1);
+        }
+
+        String columnNames[] = getColumnNames();
+        int length = columnNames.length;
+        for (int i = 0; i < length; i++) {
+            if (columnNames[i].equalsIgnoreCase(columnName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public int getColumnIndexOrThrow(String columnName) {
+        final int index = getColumnIndex(columnName);
+        if (index < 0) {
+            throw new IllegalArgumentException("column '" + columnName + "' does not exist");
+        }
+        return index;
+    }
+
+    @Override
+    public String getColumnName(int columnIndex) {
+        return getColumnNames()[columnIndex];
+    }
+
+    @Override
+    public void registerContentObserver(ContentObserver observer) {
+        mContentObservable.registerObserver(observer);
+    }
+
+    @Override
+    public void unregisterContentObserver(ContentObserver observer) {
+        // cursor will unregister all observers when it close
+        if (!mClosed) {
+            mContentObservable.unregisterObserver(observer);
+        }
+    }
+
+    @Override
+    public void registerDataSetObserver(DataSetObserver observer) {
+        mDataSetObservable.registerObserver(observer);
+    }
+
+    @Override
+    public void unregisterDataSetObserver(DataSetObserver observer) {
+        mDataSetObservable.unregisterObserver(observer);
+    }
+
+    /**
+     * Subclasses must call this method when they finish committing updates to notify all
+     * observers.
+     *
+     * @param selfChange
+     */
+    protected void onChange(boolean selfChange) {
+        synchronized (mSelfObserverLock) {
+            mContentObservable.dispatchChange(selfChange, null);
+            if (mNotifyUri != null && selfChange) {
+                mContentResolver.notifyChange(mNotifyUri, mSelfObserver);
+            }
+        }
+    }
+
+    /**
+     * Specifies a content URI to watch for changes.
+     *
+     * @param cr The content resolver from the caller's context.
+     * @param notifyUri The URI to watch for changes. This can be a
+     * specific row URI, or a base URI for a whole class of content.
+     */
+    @Override
+    public void setNotificationUri(ContentResolver cr, Uri notifyUri) {
+        synchronized (mSelfObserverLock) {
+            mNotifyUri = notifyUri;
+            mContentResolver = cr;
+            if (mSelfObserver != null) {
+                mContentResolver.unregisterContentObserver(mSelfObserver);
+            }
+            mSelfObserver = new SelfContentObserver(this);
+            mContentResolver.registerContentObserver(mNotifyUri, true, mSelfObserver);
+            mSelfObserverRegistered = true;
+        }
+    }
+
+    @Override
+    public Uri getNotificationUri() {
+        synchronized (mSelfObserverLock) {
+            return mNotifyUri;
+        }
+    }
+
+    @Override
+    public boolean getWantsAllOnMoveCalls() {
+        return false;
+    }
+
+    @Override
+    public void setExtras(Bundle extras) {
+        mExtras = (extras == null) ? Bundle.EMPTY : extras;
+    }
+
+    @Override
+    public Bundle getExtras() {
+        return mExtras;
+    }
+
+    @Override
+    public Bundle respond(Bundle extras) {
+        return Bundle.EMPTY;
+    }
+
+    /**
+     * This function throws CursorIndexOutOfBoundsException if
+     * the cursor position is out of bounds. Subclass implementations of
+     * the get functions should call this before attempting
+     * to retrieve data.
+     *
+     * @throws CursorIndexOutOfBoundsException
+     */
+    protected void checkPosition() {
+        if (-1 == mPos || getCount() == mPos) {
+            throw new CursorIndexOutOfBoundsException(mPos, getCount());
+        }
+    }
+
+    @Override
+    protected void finalize() {
+        if (mSelfObserver != null && mSelfObserverRegistered == true) {
+            mContentResolver.unregisterContentObserver(mSelfObserver);
+        }
+        try {
+            if (!mClosed) close();
+        } catch(Exception e) { }
+    }
+
+    /**
+     * Cursors use this class to track changes others make to their URI.
+     */
+    protected static class SelfContentObserver extends ContentObserver {
+        WeakReference<SQLiteMemoryCursor> mCursor;
+
+        public SelfContentObserver(SQLiteMemoryCursor cursor) {
+            super(null);
+            mCursor = new WeakReference<SQLiteMemoryCursor>(cursor);
+        }
+
+        @Override
+        public boolean deliverSelfNotifications() {
+            return false;
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+          SQLiteMemoryCursor cursor = mCursor.get();
+            if (cursor != null) {
+                cursor.onChange(false);
+            }
+        }
+    }
+    //////////////////////////////////////////////////////
     /**
      * Constructs a new cursor with the given sqliteContent array
      *
@@ -54,6 +415,7 @@ public class SQLiteMemoryCursor extends AbstractCursor {
      *                      rows contain the data.
      */
     public SQLiteMemoryCursor(Object[] sqliteContent) {
+        this.mPos = -1;
         this.sqliteContent = sqliteContent;
         this.columnNames = (String[]) sqliteContent[0];
         this.dataTypes = (char[]) sqliteContent[1];
@@ -68,13 +430,13 @@ public class SQLiteMemoryCursor extends AbstractCursor {
             throw new CursorIndexOutOfBoundsException("Requested column: "
                     + column + ", # of columns: " +  columnNames.length);
         }
-        if (mPos < 0) {
+        if (getPosition() < 0) {
             throw new CursorIndexOutOfBoundsException("Before first row.");
         }
-        if (mPos >= rowCount) {
+        if (getPosition() >= rowCount) {
             throw new CursorIndexOutOfBoundsException("After last row.");
         }
-        Object[] row = (Object[]) sqliteContent[2+mPos];
+        Object[] row = (Object[]) sqliteContent[2+getPosition()];
         return row[column];
     }
 
@@ -180,7 +542,7 @@ public class SQLiteMemoryCursor extends AbstractCursor {
 
         char type = dataTypes[column];
         if ((rowCount == 0) || (type == NULL_TYPE) ||
-                (mPos >= 0 && mPos < rowCount && isNull(column)) ) {
+                (getPosition() >= 0 && getPosition() < rowCount && isNull(column)) ) {
             return Cursor.FIELD_TYPE_NULL;
         } else if ( type == STRING_TYPE ) {
             return Cursor.FIELD_TYPE_STRING;
@@ -198,17 +560,5 @@ public class SQLiteMemoryCursor extends AbstractCursor {
     @Override
     public boolean isNull(int column) {
         return get(column) == null;
-    }
-
-    @Override
-    public void close() {
-        if ( !isClosed() ) {
-            super.close();
-        }
-        // release the held memory now.
-        sqliteContent = null;
-        columnNames = NO_COLUMNS;
-        dataTypes = null;
-        rowCount = 0;
     }
 }

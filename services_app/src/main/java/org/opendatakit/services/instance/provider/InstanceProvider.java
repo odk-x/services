@@ -24,7 +24,6 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;
@@ -34,14 +33,13 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.InstanceColumns;
 import org.opendatakit.provider.InstanceProviderAPI;
 import org.opendatakit.provider.KeyValueStoreColumns;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
@@ -148,6 +146,7 @@ public class InstanceProvider extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
+
     String tableId = segments.get(1);
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
@@ -296,9 +295,8 @@ public class InstanceProvider extends ContentProvider {
       String[] projection, String selection, String[] selectionArgs,
       String sortOrder ) {
 
-    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
-    String activeUser = props.getActiveUser();
-    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
 
     String fullQuery;
     String filterArgs[];
@@ -352,10 +350,16 @@ public class InstanceProvider extends ContentProvider {
          .append(" as ").append(DataTableColumns.SYNC_STATE).append(",")
      .append(tableId).append(".").append(DataTableColumns.CONFLICT_TYPE)
          .append(" as ").append(DataTableColumns.CONFLICT_TYPE).append(",")
-     .append(tableId).append(".").append(DataTableColumns.FILTER_TYPE)
-         .append(" as ").append(DataTableColumns.FILTER_TYPE).append(",")
-     .append(tableId).append(".").append(DataTableColumns.FILTER_VALUE)
-         .append(" as ").append(DataTableColumns.FILTER_VALUE).append(",")
+     .append(tableId).append(".").append(DataTableColumns.DEFAULT_ACCESS)
+         .append(" as ").append(DataTableColumns.DEFAULT_ACCESS).append(",")
+     .append(tableId).append(".").append(DataTableColumns.ROW_OWNER)
+         .append(" as ").append(DataTableColumns.ROW_OWNER).append(",")
+     .append(tableId).append(".").append(DataTableColumns.GROUP_READ_ONLY)
+         .append(" as ").append(DataTableColumns.GROUP_READ_ONLY).append(",")
+     .append(tableId).append(".").append(DataTableColumns.GROUP_MODIFY)
+         .append(" as ").append(DataTableColumns.GROUP_MODIFY).append(",")
+     .append(tableId).append(".").append(DataTableColumns.GROUP_PRIVILEGED)
+         .append(" as ").append(DataTableColumns.GROUP_PRIVILEGED).append(",")
      .append(tableId).append(".").append(DataTableColumns.FORM_ID)
          .append(" as ").append(DataTableColumns.FORM_ID).append(",")
      .append(tableId).append(".").append(DataTableColumns.LOCALE)
@@ -439,7 +443,7 @@ public class InstanceProvider extends ContentProvider {
 
 
     ODKDatabaseImplUtils.AccessContext accessContext =
-        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser, rolesList);
+        ODKDatabaseImplUtils.get().getAccessContext(db, tableId, aul.activeUser, aul.rolesList);
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, fullQuery, filterArgs, null,
         accessContext);
@@ -499,6 +503,7 @@ public class InstanceProvider extends ContentProvider {
     String appName = segments.get(0);
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(appName);
+
     String tableId = segments.get(1);
     // _ID in UPLOADS_TABLE_NAME
     String instanceId = (segments.size() == 3 ? segments.get(2) : null);
@@ -552,7 +557,7 @@ public class InstanceProvider extends ContentProvider {
             File f = new File(path);
             if (f.exists()) {
               if (f.isDirectory()) {
-                FileUtils.deleteDirectory(f);
+                ODKFileUtils.deleteDirectory(f);
               } else {
                 f.delete();
               }
@@ -586,7 +591,7 @@ public class InstanceProvider extends ContentProvider {
             File f = new File(path);
             if (f.exists()) {
               if (f.isDirectory()) {
-                FileUtils.deleteDirectory(f);
+                ODKFileUtils.deleteDirectory(f);
               } else {
                 f.delete();
               }

@@ -18,9 +18,16 @@ package org.opendatakit.services.sync.service;
 import android.app.Service;
 
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.application.AppAwareApplication;
+import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.R;
+import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
+import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
+import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
+import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
 import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
+import org.opendatakit.services.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
@@ -30,14 +37,9 @@ import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.R;
-import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
-import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
-import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
-import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
-import org.opendatakit.services.sync.service.logic.Synchronizer;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class AppSynchronizer {
@@ -68,7 +70,7 @@ public class AppSynchronizer {
 
   public synchronized boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
     if (curThread == null) {
-      curTask = new SyncTask(((AppAwareApplication) service.getApplication()), push,
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()), push,
           attachmentState);
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
@@ -81,7 +83,7 @@ public class AppSynchronizer {
 
   public synchronized boolean verifyServerSettings() {
     if (curThread == null) {
-      curTask = new SyncTask(((AppAwareApplication) service.getApplication()));
+      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()));
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
@@ -142,19 +144,19 @@ public class AppSynchronizer {
 
   private class SyncTask implements Runnable {
 
-    private AppAwareApplication application;
+    private ToolAwareApplication application;
     private final boolean onlyVerifySettings;
     private final boolean push;
     private final SyncAttachmentState attachmentState;
 
-    public SyncTask(AppAwareApplication application) {
+    public SyncTask(ToolAwareApplication application) {
       this.application = application;
       this.onlyVerifySettings = true;
       this.push = false;
       this.attachmentState = SyncAttachmentState.NONE;
     }
 
-    public SyncTask(AppAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
+    public SyncTask(ToolAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
       this.application = application;
       this.onlyVerifySettings = false;
       this.push = push;
@@ -248,6 +250,7 @@ public class AppSynchronizer {
 
     private void sync(SyncNotification syncProgress) {
 
+      SyncExecutionContext sharedContext = null;
       try {
         WebLogger.getLogger(appName).i(TAG, "APPNAME IN SERVICE: " + appName);
         WebLogger.getLogger(appName).i(TAG, "[SyncThread] begin SYNCING timestamp: " + System.currentTimeMillis());
@@ -267,7 +270,7 @@ public class AppSynchronizer {
         //
         // NOTE: server limits this string to 10 characters
 
-        SyncExecutionContext sharedContext = new SyncExecutionContext(application,
+        sharedContext = new SyncExecutionContext(application,
             application.getVersionCodeString(), appName, syncProgress, syncResult);
 
         Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
@@ -366,6 +369,26 @@ public class AppSynchronizer {
         status = SyncStatus.SYNC_COMPLETE;
       } else {
         status = finalStatus;
+      }
+
+      // Only attempt to write a device status record if we are not the anonymous
+      // user, the server is an ODK server, its appName matches ours,
+      // accepts our authentication, and there isn't a network transport error
+      // (which might indicate a network login screen).
+      if ((!sharedContext.getAuthenticationType().equals(
+              sharedContext.getString(R.string.credential_type_none))) &&
+          !( status == SyncStatus.SERVER_IS_NOT_ODK_SERVER ||
+             status == SyncStatus.APPNAME_NOT_SUPPORTED_BY_SERVER ||
+            status == SyncStatus.AUTHENTICATION_ERROR ||
+            status == SyncStatus.NETWORK_TRANSPORT_ERROR )) {
+        HashMap<String, Object> deviceInfo = sharedContext.getDeviceInfo();
+        deviceInfo.put("status", status.name());
+        try {
+          sharedContext.getSynchronizer().publishDeviceInformation(deviceInfo);
+        } catch (Exception e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to publish device info to server");
+        }
       }
 
       // stop the in-progress notification and report an overall success/failure

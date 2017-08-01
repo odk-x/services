@@ -37,12 +37,11 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.KeyValueStoreColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.utilities.EncryptionUtils;
 import org.opendatakit.services.utilities.EncryptionUtils.EncryptedFormInformation;
 import org.opendatakit.utilities.FileSet;
@@ -249,13 +248,9 @@ public class SubmissionProvider extends ContentProvider {
     final String tableId = segments.get(1);
     final String instanceId = segments.get(2);
     final String submissionInstanceId = segments.get(3);
-    
-    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
-    String userEmail = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-    String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-    String activeUser = props.getActiveUser();
-    String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-    String currentLocale = props.getLocale();
+
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), appName);
 
     DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
     OdkConnectionInterface db = null;
@@ -349,8 +344,8 @@ public class SubmissionProvider extends ContentProvider {
         try {
 
           ODKDatabaseImplUtils.AccessContext accessContext =
-              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
-                  rolesList);
+              ODKDatabaseImplUtils.get().getAccessContext(db, tableId, aul.activeUser,
+                  aul.rolesList);
 
           c = ODKDatabaseImplUtils.get().rawQuery(db, b.toString(), selectionArgs, null,
               accessContext);
@@ -358,8 +353,11 @@ public class SubmissionProvider extends ContentProvider {
 
           if (c.moveToFirst() && c.getCount() == 1) {
             String rowETag = null;
-            String filterType = null;
-            String filterValue = null;
+            String defaultAccess = null;
+            String owner = null;
+            String groupReadOnly = null;
+            String groupModify = null;
+            String groupPrivileged = null;
             String formId = null;
             String locale = null;
             String savepointType = null;
@@ -426,10 +424,10 @@ public class SubmissionProvider extends ContentProvider {
                 savepointTimestamp = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.ROW_ETAG)) {
                 rowETag = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_TYPE)) {
-                filterType = CursorUtils.getIndexAsString(c, i);
-              } else if (columnName.equals(DataTableColumns.FILTER_VALUE)) {
-                filterValue = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.DEFAULT_ACCESS)) {
+                defaultAccess = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.ROW_OWNER)) {
+                owner = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.FORM_ID)) {
                 formId = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.LOCALE)) {
@@ -440,6 +438,12 @@ public class SubmissionProvider extends ContentProvider {
                 savepointType = CursorUtils.getIndexAsString(c, i);
               } else if (columnName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
                 savepointCreator = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_READ_ONLY)) {
+                groupReadOnly = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_MODIFY)) {
+                groupModify = CursorUtils.getIndexAsString(c, i);
+              } else if (columnName.equals(DataTableColumns.GROUP_PRIVILEGED)) {
+                groupPrivileged = CursorUtils.getIndexAsString(c, i);
               }
             }
 
@@ -531,7 +535,7 @@ public class SubmissionProvider extends ContentProvider {
               d.appendChild(e);
               e.setAttribute("id", tableId);
               DynamicPropertiesCallback cb = new DynamicPropertiesCallback(appName,
-                  tableId, instanceId, activeUser, currentLocale, username, userEmail);
+                  tableId, instanceId, aul.activeUser, aul.locale);
 
               int idx = 0;
               Element meta = d.createElementNS(XML_OPENROSA_NAMESPACE, "meta");
@@ -593,18 +597,42 @@ public class SubmissionProvider extends ContentProvider {
               }
               meta.appendChild(v);
 
-              // filterType
-              v = d.createElement("filterType");
-              if (filterType != null) {
-                txtNode = d.createTextNode(filterType);
+              // defaultAccess
+              v = d.createElement("defaultAccess");
+              if (defaultAccess != null) {
+                txtNode = d.createTextNode(defaultAccess);
                 v.appendChild(txtNode);
               }
               meta.appendChild(v);
 
-              // filterValue
-              v = d.createElement("filterValue");
-              if (filterValue != null) {
-                txtNode = d.createTextNode(filterValue);
+              // owner
+              v = d.createElement("owner");
+              if (owner != null) {
+                txtNode = d.createTextNode(owner);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupReadOnly
+              v = d.createElement("groupReadOnly");
+              if (groupReadOnly != null) {
+                txtNode = d.createTextNode(groupReadOnly);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupModify
+              v = d.createElement("groupModify");
+              if (groupModify != null) {
+                txtNode = d.createTextNode(groupModify);
+                v.appendChild(txtNode);
+              }
+              meta.appendChild(v);
+
+              // groupPrivileged
+              v = d.createElement("groupPrivileged");
+              if (groupPrivileged != null) {
+                txtNode = d.createTextNode(groupPrivileged);
                 v.appendChild(txtNode);
               }
               meta.appendChild(v);
@@ -771,7 +799,7 @@ public class SubmissionProvider extends ContentProvider {
               String doc = b.toString();
               exportFile(doc, submissionXml, logger);
             }
-            exportFile(freturn.serializeUriFragmentList(getContext()), manifest, logger);
+            exportFile(freturn.serializeUriFragmentList(), manifest, logger);
             return ParcelFileDescriptor.open(manifest, ParcelFileDescriptor.MODE_READ_ONLY);
 
           }
@@ -814,13 +842,12 @@ public class SubmissionProvider extends ContentProvider {
   /**
    * This method actually writes the JSON appName-relative manifest to disk.
    *
-   * @param payload
-   * @param outputFilePath
-   * @param  logger
-   * @return
+   * @param payload The json string to be written
+   * @param outputFilePath the path to the file to write
+   * @param  logger a logger to write to, typically gotten with WebLogger.getWebLogger(appName)
+   * @return whether successful or not
    */
   private static boolean exportFile(String payload, File outputFilePath, WebLoggerIf logger) {
-    // write xml file
     FileOutputStream os = null;
     OutputStreamWriter osw = null;
     try {

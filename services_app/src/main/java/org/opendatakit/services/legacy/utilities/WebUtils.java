@@ -14,22 +14,10 @@
 
 package org.opendatakit.services.legacy.utilities;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.*;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import android.text.format.DateFormat;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.utilities.StaticStateManipulator;
-import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
@@ -44,10 +32,27 @@ import org.opendatakit.httpclientandroidlib.config.SocketConfig;
 import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
 import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.StaticStateManipulator;
+import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import android.text.format.DateFormat;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Common utility methods for managing constructing requests with the proper
@@ -72,7 +77,7 @@ public final class WebUtils {
 
   static {
     // register a state-reset manipulator for 'webUtils' field.
-    StaticStateManipulator.get().register(50, new IStaticFieldManipulator() {
+    StaticStateManipulator.get().register(new IStaticFieldManipulator() {
 
       @Override
       public void reset() {
@@ -118,7 +123,6 @@ public final class WebUtils {
 
     // if possible, bias toward digest auth (may not be in 4.0 beta 2)
     List<String> targetPreferredAuthSchemes = new ArrayList<String>();
-    targetPreferredAuthSchemes.add(AuthSchemes.DIGEST);
     targetPreferredAuthSchemes.add(AuthSchemes.BASIC);
 
     RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)

@@ -20,8 +20,6 @@
 
 package org.sqlite.database.sqlite;
 
-import android.util.Log;
-
 /**
  * Provides debugging info about all SQLite databases running in the current process.
  *
@@ -30,37 +28,6 @@ import android.util.Log;
  * {@hide}
  */
 public final class SQLiteDebug {
-
-    /**
-     * Controls the printing of informational SQL log messages.
-     *
-     * Enable using "adb shell setprop log.tag.SQLiteLog VERBOSE".
-     */
-    public static final boolean DEBUG_SQL_LOG =
-            Log.isLoggable("SQLiteLog", Log.VERBOSE);
-
-    /**
-     * Controls the printing of SQL statements as they are executed.
-     *
-     * Enable using "adb shell setprop log.tag.SQLiteStatements VERBOSE".
-     */
-    public static final boolean DEBUG_SQL_STATEMENTS =
-            Log.isLoggable("SQLiteStatements", Log.VERBOSE);
-
-    /**
-     * Controls the printing of wall-clock time taken to execute SQL statements
-     * as they are executed.
-     *
-     * Enable using "adb shell setprop log.tag.SQLiteTime VERBOSE".
-     */
-    public static final boolean DEBUG_SQL_TIME =
-            Log.isLoggable("SQLiteTime", Log.VERBOSE);
-
-    /**
-     * True to enable database performance testing instrumentation.
-     * @hide
-     */
-    public static final boolean DEBUG_LOG_SLOW_QUERIES = false;
 
     private SQLiteDebug() {
     }
@@ -79,7 +46,7 @@ public final class SQLiteDebug {
      * @hide
      */
     public static boolean shouldLogSlowQuery(long elapsedTimeMillis) {
-        int slowQueryMillis = 10000;
+        int slowQueryMillis = 5000;
         return slowQueryMillis >= 0 && elapsedTimeMillis >= slowQueryMillis;
     }
 }

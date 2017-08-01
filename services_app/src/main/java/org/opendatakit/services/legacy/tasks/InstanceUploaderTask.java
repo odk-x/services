@@ -14,37 +14,18 @@
 
 package org.opendatakit.services.legacy.tasks;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import android.app.Application;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.AsyncTask;
 
-import android.content.*;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.opendatakit.provider.ProviderConsts;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.provider.InstanceColumns;
-import org.opendatakit.provider.InstanceProviderAPI;
-import org.opendatakit.utilities.FileSet;
-import org.opendatakit.utilities.FileSet.MimeFile;
 import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.auth.AuthScope;
@@ -66,18 +47,37 @@ import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
 import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
 import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.provider.InstanceColumns;
+import org.opendatakit.provider.InstanceProviderAPI;
+import org.opendatakit.provider.ProviderConsts;
+import org.opendatakit.services.R;
 import org.opendatakit.services.legacy.listeners.InstanceUploaderListener;
 import org.opendatakit.services.legacy.logic.InstanceUploadOutcome;
 import org.opendatakit.services.legacy.utilities.WebUtils;
+import org.opendatakit.utilities.FileSet;
+import org.opendatakit.utilities.FileSet.MimeFile;
+import org.opendatakit.utilities.LocalizationUtils;
 
-import android.app.Application;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import org.opendatakit.services.R;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Background task for uploading completed forms.
@@ -86,7 +86,7 @@ import org.opendatakit.services.R;
  */
 public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUploadOutcome> {
 
-  private static final String t = "InstanceUploaderTask";
+  private static final String TAG = InstanceUploaderTask.class.getSimpleName();
   private static final String fail = "Error: ";
 
   private Application appContext;
@@ -216,7 +216,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
           // may be a server that does not handle
           WebUtils.get().discardEntityBytes(response);
 
-          WebLogger.getLogger(appName).w(t, "Status code on Head request: " + statusCode);
+          WebLogger.getLogger(appName).w(TAG, "Status code on Head request: " + statusCode);
           if (statusCode >= 200 && statusCode <= 299) {
             mOutcome.mResults
                 .put(
@@ -230,14 +230,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         }
       } catch (ClientProtocolException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Client Protocol Exception");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (ConnectTimeoutException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Connection Timeout");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
@@ -245,20 +245,20 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       } catch (UnknownHostException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         mOutcome.mResults.put(id, fail + e.getMessage() + " :: Network Connection Failed");
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (SocketTimeoutException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         mOutcome.mResults.put(id, fail + "Connection Timeout");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
       } catch (HttpHostConnectException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(t, e.toString());
+        WebLogger.getLogger(appName).e(TAG, e.toString());
         mOutcome.mResults.put(id, fail + "Network Connection Refused");
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
@@ -266,7 +266,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         mOutcome.mResults.put(id, fail + "Generic Exception");
-        WebLogger.getLogger(appName).e(t, e.getMessage());
+        WebLogger.getLogger(appName).e(TAG, e.getMessage());
         cv.put(InstanceColumns.XML_PUBLISH_STATUS, InstanceColumns.STATUS_SUBMISSION_FAILED);
         appContext.getContentResolver().update(toUpdate, cv, null, null);
         return true;
@@ -310,7 +310,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       // add the submission file first...
       builder.addBinaryBody("xml_submission_file", instanceFile,
           ContentType.TEXT_XML.withCharset(Charset.forName(CharEncoding.UTF_8)), instanceFile.getName());
-      WebLogger.getLogger(appName).i(t, "added xml_submission_file: " + instanceFile.getName());
+      WebLogger.getLogger(appName).i(TAG, "added xml_submission_file: " + instanceFile.getName());
       byteCount += instanceFile.length();
 
       for (; j < files.size(); j++) {
@@ -320,14 +320,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
         builder.addBinaryBody(f.getName(), f, ContentType.create(contentType), f.getName());
         byteCount += f.length();
-        WebLogger.getLogger(appName).i(t, "added " + contentType + " file " + f.getName());
+        WebLogger.getLogger(appName).i(TAG, "added " + contentType + " file " + f.getName());
 
         // we've added at least one attachment to the request...
         if (j + 1 < files.size()) {
           long nextFileLength = (files.get(j + 1).file.length());
           if ((j - lastJ + 1 > 100) || (byteCount + nextFileLength > 10000000L)) {
             // the next file would exceed the 10MB threshold...
-            WebLogger.getLogger(appName).i(t, "Extremely long post is being split into multiple posts");
+            WebLogger.getLogger(appName).i(TAG, "Extremely long post is being split into multiple posts");
             try {
               builder.addTextBody("*isIncomplete*", "yes",
                   ContentType.TEXT_PLAIN.withCharset(Charset.forName((CharEncoding.UTF_8))));
@@ -349,7 +349,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
         int responseCode = response.getStatusLine().getStatusCode();
         WebUtils.get().discardEntityBytes(response);
 
-        WebLogger.getLogger(appName).i(t, "Response code:" + responseCode);
+        WebLogger.getLogger(appName).i(TAG, "Response code:" + responseCode);
         // verify that the response was a 201 or 202.
         // If it wasn't, the submission has failed.
         if (responseCode != 201 && responseCode != 202) {
@@ -402,7 +402,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
     InputStream is = appContext.getContentResolver().openInputStream(manifest);
 
-    FileSet f = FileSet.parse(appContext, appName, is);
+    FileSet f = FileSet.parse(appName, is);
     return f;
   }
 
@@ -416,7 +416,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
     AuthScope a;
     // allow digest auth on any port...
-    a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
+    a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
     asList.add(a);
     // and allow basic auth on the standard TLS/SSL ports...
     a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
@@ -444,14 +444,14 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
     List<AuthScope> asList = buildAuthScopes(host);
 
     // ensure that this is the only authentication available for this host...
-    WebLogger.getLogger(appName).i(t, "clearHostCredentials: " + host);
+    WebLogger.getLogger(appName).i(TAG, "clearHostCredentials: " + host);
     for (AuthScope a : asList) {
       credsProvider.setCredentials(a, null);
     }
 
     // add username
     if (username != null && username.trim().length() != 0) {
-      WebLogger.getLogger(appName).i(t, "adding credential for host: " + host + " username:" + username);
+      WebLogger.getLogger(appName).i(TAG, "adding credential for host: " + host + " username:" + username);
       Credentials c = new UsernamePasswordCredentials(username, password);
 
       for (AuthScope a : asList) {

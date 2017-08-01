@@ -18,14 +18,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.sync.service.OdkSyncService;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
@@ -41,12 +39,7 @@ import org.opendatakit.services.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.services.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Isolate the app-level and table-level synchronization steps
@@ -130,9 +123,9 @@ public class ProcessAppAndTableLevelChanges {
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_obtaining_user_permissions_from_server, null, 0.0, false);
 
-    ArrayList<String> roleList;
+    PrivilegesInfo rolesAndDefaultGroupMap;
     try {
-      roleList = sc.getSynchronizer().getUserRoles();
+      rolesAndDefaultGroupMap = sc.getSynchronizer().getUserRolesAndDefaultGroup();
     } catch (Exception e) {
       log.e(TAG,
               "[verifyServerConfiguration] exception obtaining user roles exception: "
@@ -141,11 +134,30 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
+    if ( rolesAndDefaultGroupMap == null ) {
+      log.w(TAG,
+          "[verifyServerConfiguration] no rolesAndGroupsMap returned or missing roles and/or "
+              + "defaultGroup keys -- perhaps an anonymousUser or older server?");
+      sc.setUserIdRolesListAndDefaultGroup(CommonToolProperties.ANONYMOUS_USER, "", "");
+      sc.setUsersList("");
+      return;
+    }
+
+    String defaultGroup = "";
+    {
+      String reportedDefaultGroup = rolesAndDefaultGroupMap.getDefaultGroup();
+      if ( reportedDefaultGroup != null ) {
+        defaultGroup = reportedDefaultGroup;
+      }
+    }
+
+    String roleListJSONString = "";
     try {
-      if ( roleList.isEmpty() ) {
-        sc.setRolesList("");
-      } else {
-        sc.setRolesList(ODKFileUtils.mapper.writeValueAsString(roleList));
+      List<String> reportedRoles = rolesAndDefaultGroupMap.getRoles();
+      if ( reportedRoles != null ) {
+        if ( !reportedRoles.isEmpty() ) {
+          roleListJSONString = ODKFileUtils.mapper.writeValueAsString(reportedRoles);
+        }
       }
     } catch (JsonProcessingException e) {
       log.e(TAG,
@@ -155,10 +167,14 @@ public class ProcessAppAndTableLevelChanges {
       return;
     }
 
-    if (roleList.isEmpty()) {
+    // update the authenticated user
+    sc.setUserIdRolesListAndDefaultGroup(rolesAndDefaultGroupMap.getUser_id(),
+        roleListJSONString, defaultGroup);
+
+    if (roleListJSONString.isEmpty()) {
       sc.setUsersList("");
     } else {
-      ArrayList<Map<String,Object>> usersList;
+      UserInfoList usersList;
       try {
         usersList = sc.getSynchronizer().getUsers();
       } catch (Exception e) {

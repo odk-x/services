@@ -25,6 +25,8 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.R;
 
+import java.util.Collections;
+
 public class AdminPasswordSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
 
   private static final String t = "AdminPasswordSettingsFragment";
@@ -90,19 +92,6 @@ public class AdminPasswordSettingsFragment extends PreferenceFragment implements
     }
   }
 
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-  }
-
-  @Override public void onPause() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-    super.onPause();
-  }
-
   /**
    * Generic listener that sets the summary to the newly selected/entered value
    */
@@ -110,13 +99,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragment implements
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     preference.setSummary((CharSequence) newValue);
-    if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-    } else if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-    } else {
-      throw new IllegalStateException("Unexpected case");
-    }
+    props.setProperties(Collections.singletonMap(preference.getKey(), newValue.toString()));
     return true;
   }
 }

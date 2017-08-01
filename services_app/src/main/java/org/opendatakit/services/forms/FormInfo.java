@@ -271,32 +271,35 @@ public class FormInfo {
           + formDefFile.getAbsolutePath());
     }
 
-    Map<String, Object> formDefStruct = null;
+
     setting = (Map<String, Object>) settings.get(FORMDEF_SURVEY_SETTINGS);
-    if ( setting != null ) {
-      setting = (Map<String, Object>) setting.get(FORMDEF_DISPLAY_ELEMENT);
-      if ( setting != null ) {
+    if ( setting != null) {
+      setting =(Map<String, Object>) setting.get(FORMDEF_DISPLAY_ELEMENT);
+      if ( setting != null && setting.containsKey(FORMDEF_TITLE_ELEMENT) ) {
         Object o = setting.get(FORMDEF_TITLE_ELEMENT);
-        if (o == null) {
-          throw new IllegalArgumentException(
-              "title is not specified in the display section of the survey settings of the formdef json file! "
-                  + formDefFile.getAbsolutePath());
-        }
-        try {
-          formTitle = ODKFileUtils.mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
-              + formDefFile.getAbsolutePath());
+        if ( o != null ) {
+          try {
+            formTitle = ODKFileUtils.mapper.writeValueAsString(o);
+          } catch (JsonProcessingException e) {
+            WebLogger.getLogger(appName).printStackTrace(e);
+            throw new IllegalArgumentException("formTitle is invalid in the formdef json file! "
+                + formDefFile.getAbsolutePath());
+          }
+        } else {
+          throw new IllegalArgumentException("display.title (form display name) is "
+              + "null for row 'survey' in the settings of formdef json file! "
+                + formDefFile.getAbsolutePath());
         }
       } else {
-	    throw new IllegalArgumentException("display entry is not specified in the survey section of the settings of formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	  }
-	} else {
-	    throw new IllegalArgumentException("survey entry is not specified in the settings of formdef json file! "
-	            + formDefFile.getAbsolutePath());
-	}
+        throw new IllegalArgumentException("survey row's display.title (form display name) is not "
+            + "found on the settings sheet of formdef json file! "
+            + formDefFile.getAbsolutePath());
+      }
+    } else {
+        throw new IllegalArgumentException("row for 'survey' is missing in "
+            + "the settings sheet of formdef json file! "
+                + formDefFile.getAbsolutePath());
+    }
 
     setting = (Map<String, Object>) settings.get(FORMDEF_INSTANCE_NAME);
     if (setting != null) {

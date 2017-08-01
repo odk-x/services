@@ -16,8 +16,13 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.ComponentName;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.*;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -25,15 +30,33 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.actions.LoginActions;
+import org.opendatakit.services.sync.actions.activities.LoginActivity;
+import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.utilities.TableHealthValidator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class ServerSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
 
@@ -43,12 +66,16 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   private ListPreference mSignOnCredentialPreference;
   private EditTextPreference mUsernamePreference;
   private ListPreference mSelectedGoogleAccountPreference;
+  private TableHealthValidator healthValidator;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+
+    String appName = ((AppPropertiesActivity) getActivity()).getAppName();
+    healthValidator = new TableHealthValidator(appName, getActivity());
 
     addPreferencesFromResource(R.xml.server_preferences);
 
@@ -109,9 +136,12 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
               PropertiesSingleton props =
                   ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
-              props.setProperty(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
-              props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-              props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+              Map<String,String> properties = new HashMap<String,String>();
+              properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
+              properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+              properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+              properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+              props.setProperties(properties);
               return true;
             } else {
               Toast.makeText(getActivity().getApplicationContext(),
@@ -153,9 +183,12 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
         PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
-        props.setProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
-        props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-        props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+        Map<String,String> properties = new HashMap<String,String>();
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+        properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+        properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+        properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+        props.setProperties(properties);
         return true;
       }
     });
@@ -229,10 +262,13 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
             preference.setSummary(value);
             PropertiesSingleton props = ((IOdkAppPropertiesActivity)
                 ServerSettingsFragment.this.getActivity()).getProps();
-            props.setProperty(CommonToolProperties.KEY_ACCOUNT, value);
-            props.setProperty(CommonToolProperties.KEY_AUTH, "");
-            props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-            props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+            Map<String,String> properties = new HashMap<String,String>();
+            properties.put(CommonToolProperties.KEY_ACCOUNT, value);
+            properties.put(CommonToolProperties.KEY_AUTH, "");
+            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+            props.setProperties(properties);
             return true;
           }
         });
@@ -250,8 +286,14 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
       }
     }
     if ( !found ) {
-      // clear the property (prevents clarice@ from being identified)
-      props.setProperty(CommonToolProperties.KEY_ACCOUNT, "");
+      // clear the account property and authentication status
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(CommonToolProperties.KEY_ACCOUNT, "");
+      properties.put(CommonToolProperties.KEY_AUTH, "");
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+      props.setProperties(properties);
       // set to "none"
       mSelectedGoogleAccountPreference.setValue(accountValues.get(accountValues.size()-1));
       mSelectedGoogleAccountPreference.setSummary(accountEntries.get(accountEntries.size()-1));
@@ -265,19 +307,8 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
          !googleAccountAvailable) ) {
       serverCategory.setTitle(R.string.server_restrictions_apply);
     }
-  }
 
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-  }
-
-  @Override public void onPause() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.writeProperties();
-    super.onPause();
+    healthValidator.verifyTableHealth();
   }
 
   /**
@@ -328,12 +359,25 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     preference.setSummary((CharSequence) newValue);
     if ( props.containsKey(preference.getKey())) {
-      props.setProperty(preference.getKey(), newValue.toString());
-      props.setProperty(CommonToolProperties.KEY_ROLES_LIST, "");
-      props.setProperty(CommonToolProperties.KEY_USERS_LIST, "");
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(preference.getKey(), newValue.toString());
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+      props.setProperties(properties);
     } else {
       throw new IllegalStateException("Unexpected case");
     }
     return true;
   }
+
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
+        requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER) {
+      healthValidator.verifyTableHealth();
+    }
+  }
+
 }

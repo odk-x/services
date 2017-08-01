@@ -18,6 +18,7 @@ package org.opendatakit.services.resolve.conflict;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -26,10 +27,9 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.provider.FormsColumns;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
@@ -42,9 +42,7 @@ import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -54,6 +52,7 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
   private final String mAppName;
   private final String mTableId;
   private final boolean mHaveResolvedMetadataConflicts;
+  private int mNumberRowsSilentlyResolved = 0;
 
   private static class FormDefinition {
     String instanceName;
@@ -69,14 +68,16 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
     this.mHaveResolvedMetadataConflicts = haveResolvedMetadataConflicts;
   }
 
+  public int getNumberRowsSilentlyResolved() {
+    return mNumberRowsSilentlyResolved;
+  }
+
   @Override public ArrayList<ResolveRowEntry> loadInBackground() {
 
     OdkConnectionInterface db = null;
 
-    PropertiesSingleton props =
-        CommonToolProperties.get(getContext(), mAppName);
-    String activeUser = props.getActiveUser();
-    String locale = props.getLocale();
+    ActiveUserAndLocale aul =
+        ActiveUserAndLocale.getActiveUserAndLocale(getContext(), mAppName);
 
     DbHandle dbHandleName = new DbHandle(UUID.randomUUID().toString());
 
@@ -101,8 +102,12 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
       List<String> adminColumns = ODKDatabaseImplUtils.get().getAdminColumns();
       String[] adminColArr = adminColumns.toArray(new String[adminColumns.size()]);
 
+      ODKDatabaseImplUtils.AccessContext accessContextBase =
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
+              aul.rolesList);
+
       ODKDatabaseImplUtils.AccessContext accessContextPrivileged =
-          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, activeUser,
+          ODKDatabaseImplUtils.get().getAccessContext(db, mTableId, aul.activeUser,
               RoleConsts.ADMIN_ROLES_LIST);
 
       BaseTable baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
@@ -110,6 +115,127 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
           selectionArgs, null, accessContextPrivileged);
       table = new UserTable(baseTable, orderedDefns, adminColArr);
 
+      // NOTE: Logic is slightly different from checkpoints, as the privilege-change logic below
+      // may alter the permissions fields of a row (force the server's permissions into the local
+      // change).  We therefore make the if-no-changes clean-up after this logic, rather than
+      // before it.
+
+      // Now run a similar query, but pulling the server conflict records as an unprivileged
+      // query (with the current user's permissions). This gets the effectiveAccess (**from the
+      // server change**) that the user would have when resolving a conflict. If the user does
+      // not have "w" access and is trying to do a local update, or if the user does not have
+      // "d" access and is trying to do a local delete, then the conflict should be resolved by
+      // taking the server's change.
+      //
+      // i.e., the server conflict row imposes its privilege restrictions prior to consideration
+      // of the user's row changes. So a change from the server can revoke privileges for a
+      // class of users, and, when resolving conflicts, any users whose privileges have been
+      // revoked should be forced to take the server's changes. This happens implicitly in the
+      // ODKDatabaseImplUtils.privilegedPerhapsPlaceRowIntoConflictWithId() method. We apply
+      // that same logic here to handle loss-of-privilege between the time of Sync and the time
+      // we hit this conflict-resolution screen.
+      //
+      // We also enforce permissions-change restrictions on all of the local conflicts. This
+      // makes it necessary to always re-fetch the table whether or not the number of conflicts
+      // has actually changed (unlike in the checkpoint resolution case).
+      //
+      // For bookkeeping, we first create a map of rowId -> local conflict type
+      // and then iterate over the result set from the server query.
+      {
+        // create a map of rowId -> local conflict type from the privileged query.
+        //
+        // then build up the set of ids missing from the unprivilegedTable vs. the (privilegedQuery)
+        // table and any ids that the user does not have the ability to modify ("w" access) or
+        // delete ("d" access) as appropriate for the conflict type.
+        HashMap<String, Integer> localConflictTypeMap = new HashMap<>();
+        Set<String> ids = new HashSet<String>();
+        for (int i = 0; i < table.getNumberOfRows(); ++i) {
+          // full set of ids in conflict
+          ids.add(table.getRowId(i));
+          Row theRow = table.getRowAtIndex(i);
+          String strLocalConflictValue = theRow.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+          // the strLocalConflictValue will always be an integer because of the where clause
+          int localConflictValue = Integer.valueOf(strLocalConflictValue);
+          localConflictTypeMap.put(table.getRowId(i), localConflictValue);
+        }
+
+        int removedRows = 0;
+
+        // do the unprivileged query to get the server rows
+        Object[] serverSelectionArgs = new Object[] {
+            ConflictType.SERVER_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES };
+        BaseTable unprivilegedBaseTable = ODKDatabaseImplUtils.get().query(db, mTableId, QueryUtil
+                .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+            serverSelectionArgs, null, accessContextBase);
+        UserTable unprivilegedTable = new UserTable(unprivilegedBaseTable, orderedDefns, adminColArr);
+
+        for (int i = 0; i < unprivilegedTable.getNumberOfRows(); ++i) {
+          String rowId = unprivilegedTable.getRowId(i);
+          // fetch the local conflict value from the map created above.
+          // there will always be a value because the localConflictTypeMap was built
+          // from results of a privileged query. The unprivileged query is always
+          // a subset of the privileged query result set.
+          int localConflictValue = localConflictTypeMap.get(rowId);
+
+          Row theRow = unprivilegedTable.getRowAtIndex(i);
+          String effectiveAccess = theRow.getDataByKey(DataTableColumns.EFFECTIVE_ACCESS);
+
+          if ( localConflictValue == ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+              effectiveAccess.contains("w") ) {
+            // local update and user can modify the row -- do not auto-resolve this
+            // HOWEVER: enforce permissions-update rules (whether the user has "p" privileges)
+            // this may resolve the conflict...
+            if ( !ODKDatabaseImplUtils.get().enforcePermissionsAndOptimizeConflictProcessing
+                (db, mTableId, orderedDefns, rowId, SyncState.in_conflict,
+                    accessContextBase, aul.locale) ) {
+              ++removedRows;
+            }
+            // and then present it to the user (remove it from this list).
+            ids.remove(rowId);
+          } else if ( localConflictValue == ConflictType.LOCAL_DELETED_OLD_VALUES &&
+              effectiveAccess.contains("d") ) {
+            // local delete and user can delete the row -- do not auto-resolve this
+            // HOWEVER: enforce permissions-update rules (whether the user has "p" privileges)
+            // this may resolve the conflict...
+            if ( !ODKDatabaseImplUtils.get().enforcePermissionsAndOptimizeConflictProcessing
+                (db, mTableId, orderedDefns, rowId, SyncState.in_conflict,
+                    accessContextBase, aul.locale) ) {
+              ++removedRows;
+            }
+            // and then present it to the user (remove it from this list).
+            ids.remove(rowId);
+          }
+        }
+        mNumberRowsSilentlyResolved = ids.size() + removedRows;
+
+        // the ids remaining in 'ids' are either hidden to the user or the user does not have
+        // the ability to perform the local change they want in those rows.
+        for (String rowId : ids) {
+          // act as a privileged user so that we always restore to original row
+          ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db, mTableId, rowId,
+              aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
+        }
+
+        {
+          // update the privileged query table again
+          // we always do this because we may have updated the permissions fields
+          selectionArgs = new Object[] { ConflictType.LOCAL_DELETED_OLD_VALUES,
+              ConflictType.LOCAL_UPDATED_UPDATED_VALUES };
+
+          baseTable = ODKDatabaseImplUtils.get().privilegedQuery(db, mTableId, QueryUtil
+                  .buildSqlStatement(mTableId, whereClause, groupBy, null, orderByKeys, orderByDir),
+              selectionArgs, null, accessContextPrivileged);
+          table = new UserTable(baseTable, orderedDefns, adminColArr);
+        }
+      }
+
+      // and now scan to see if we can resolve the conflicts because the rows are
+      // identical in all fields that the user should be able to select. This is after
+      // the above processing because the
+      // ODKDatabaseImplUtils.enforcePermissionsAndOptimizeConflictProcessing()
+      // function may have eliminated all of the differences in the row (if they were
+      // only impacting the permissions fields).
+      //
       if ( !mHaveResolvedMetadataConflicts ) {
 
         boolean tableSetChanged = false;
@@ -124,9 +250,10 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
 
           if ( resolveActionList.noChangesInUserDefinedFieldValues() ) {
             tableSetChanged = true;
+            // all users can resolve taking the server's changes
             // Use privileged user roles since we are taking the server's values
             ODKDatabaseImplUtils.get().resolveServerConflictTakeServerRowWithId(db,
-                mTableId, rowId, activeUser, locale);
+                mTableId, rowId, aul.activeUser, aul.locale);
           }
         }
 
@@ -140,6 +267,10 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
           table = new UserTable(baseTable, orderedDefns, adminColArr);
         }
       }
+
+      // at this point, the conflict rows that remain can be resolved either by taking the
+      // server changes or by taking the local changes -- the user has the ability to make
+      // that choice.
 
       // The display name is the table display name, not the form display name...
       ArrayList<KeyValueStoreEntry> entries = ODKDatabaseImplUtils.get().getTableMetadata(db,
@@ -231,7 +362,8 @@ class OdkResolveConflictRowLoader extends AsyncTaskLoader<ArrayList<ResolveRowEn
         nameToUse = formDefinitions.get(0);
       }
     }
-    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(nameToUse.formDisplayName);
+    String formDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName, mTableId,
+        aul.locale, nameToUse.formDisplayName);
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {

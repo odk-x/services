@@ -24,24 +24,22 @@
 
 package org.sqlite.database.sqlite;
 
-/* import dalvik.system.BlockGuard; */
-import android.text.TextUtils;
-import android.util.Log;
+import android.database.Cursor;
+import android.os.CancellationSignal;
+import android.os.OperationCanceledException;
+
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.services.database.AppNameSharedStateContainer;
 import org.opendatakit.services.database.OperationLog;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
 
-import android.database.Cursor;
-import org.opendatakit.logging.WebLoggerIf;
 import org.sqlite.database.DatabaseErrorHandler;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
-import android.os.CancellationSignal;
-import android.os.OperationCanceledException;
-import android.util.LruCache;
 import org.sqlite.database.SQLException;
 
 import java.io.File;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -94,6 +92,17 @@ import java.util.regex.Pattern;
 public final class SQLiteConnection extends SQLiteClosable implements CancellationSignal.OnCancelListener {
    private static final String TAG = "SQLiteConnection";
    private static final boolean DEBUG = false;
+
+   /**
+    * Controls the printing in the native layer of SQL statements as they are executed.
+    */
+   private static final boolean DEBUG_SQL_STATEMENTS = false;
+
+   /**
+    * Controls the printing in the native layer of wall-clock time taken to execute SQL statements
+    * as they are executed.
+    */
+   private static final boolean DEBUG_SQL_TIME = false;
 
    static {
       // load the shared stlport library
@@ -357,6 +366,19 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     * Class methods
     *******************************************************************************************/
 
+   /**
+    * Stolen from android.text.TextUtils
+    * Returns true if the string is null or 0-length.
+    * @param str the string to be examined
+    * @return true if str is null or zero length
+    */
+   public static boolean isEmpty(CharSequence str) {
+      if (str == null || str.length() == 0)
+         return true;
+      else
+         return false;
+   }
+
    private static String canonicalizeSyncMode(String value) {
       if (value.equals("0")) {
          return "OFF";
@@ -428,11 +450,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private static String buildQueryString(
        boolean distinct, String tables, String[] columns, String where,
        String groupBy, String having, String orderBy, String limit) {
-      if (TextUtils.isEmpty(groupBy) && !TextUtils.isEmpty(having)) {
+      if (isEmpty(groupBy) && !isEmpty(having)) {
          throw new IllegalArgumentException(
              "HAVING clauses are only permitted when using a groupBy clause");
       }
-      if (!TextUtils.isEmpty(limit) && !sLimitPattern.matcher(limit).matches()) {
+      if (!isEmpty(limit) && !sLimitPattern.matcher(limit).matches()) {
          throw new IllegalArgumentException("invalid LIMIT clauses:" + limit);
       }
 
@@ -459,7 +481,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    }
 
    private static void appendClause(StringBuilder s, String name, String clause) {
-      if (!TextUtils.isEmpty(clause)) {
+      if (!isEmpty(clause)) {
          s.append(name);
          s.append(clause);
       }
@@ -648,11 +670,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
          } else {
             if ( finalized ) {
                // AndroidUnitTest might clear up directory before resources are GC'd
-               Log.w(TAG, "Database directory for database '" + mConfiguration.appName
+               getLogger().w(TAG, "Database directory for database '" + mConfiguration.appName
                    + "' sessionQualifier '" + mSessionQualifier + "' does not exist");
             } else {
                // getting here is wrong!
-               Log.e(TAG, "Database directory for database '" + mConfiguration.appName
+               getLogger().e(TAG, "Database directory for database '" + mConfiguration.appName
                    + "' sessionQualifier '" + mSessionQualifier + "' does not exist");
             }
          }
@@ -1267,7 +1289,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
     */
    public int delete(String table, String whereClause, Object[] whereArgs) {
       return executeForChangedRowCountImpl("DELETE FROM " + table +
-          (!TextUtils.isEmpty(whereClause) ? " WHERE " + whereClause : ""), whereArgs, null);
+          (!isEmpty(whereClause) ? " WHERE " + whereClause : ""), whereArgs, null);
    }
 
    /**
@@ -1327,7 +1349,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
             bindArgs[i] = whereArgs[i - setValuesSize];
          }
       }
-      if (!TextUtils.isEmpty(whereClause)) {
+      if (!isEmpty(whereClause)) {
          sql.append(" WHERE ");
          sql.append(whereClause);
       }
@@ -1393,20 +1415,11 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
 
    private void closeImpl(boolean finalized) {
 
-      // during AndroidUnitTest testing, the directory might be
-      // torn down before the finalize has completed.
-      File f = new File(ODKFileUtils.getLoggingFolder(getAppName()));
-      boolean hasLoggingDirectory = ( f.exists() && f.isDirectory() );
-
       synchronized (mConnectionPtrMutex) {
          if (finalized && (mAllocationReference != null)) {
             String message = mAllocationReference + " was acquired but never released.";
             try {
-               if ( hasLoggingDirectory ) {
-                  getLogger().e(TAG, message);
-               } else {
-                  Log.e(TAG, message);
-               }
+               getLogger().e(TAG, message);
             } catch ( Throwable t) {
                // ignore...
             }
@@ -1424,20 +1437,12 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
                       (finalized ? " Program error! A transaction is open when finalized"
                           : " Program error! A transaction is open when calling close()");
 
-                  if ( hasLoggingDirectory ) {
-                     getLogger().e(TAG, errorMsg);
-                  } else {
-                     Log.e(TAG, errorMsg);
-                  }
+                  getLogger().e(TAG, errorMsg);
 
                   try {
                      endTransaction(null);
                   } catch ( Throwable t ) {
-                     if ( hasLoggingDirectory ) {
-                        getLogger().w(TAG, errorMsg + " Exception: " + t.toString());
-                     } else {
-                        Log.w(TAG, errorMsg + " Exception: " + t.toString());
-                     }
+                     getLogger().w(TAG, errorMsg + " Exception: " + t.toString());
                   }
                }
 
@@ -1476,7 +1481,7 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
       synchronized (mConnectionPtrMutex) {
          mRecentOperations.tickOpen();
          mConnectionPtr = nativeOpen(mConfiguration.path, mConfiguration.openFlags, mConfiguration.label,
-             SQLiteDebug.DEBUG_SQL_STATEMENTS, SQLiteDebug.DEBUG_SQL_TIME);
+             DEBUG_SQL_STATEMENTS, DEBUG_SQL_TIME);
 
          try {
             {
@@ -2100,15 +2105,207 @@ public final class SQLiteConnection extends SQLiteClosable implements Cancellati
    private final PreparedStatementCache mPreparedStatementCache;
 
 
+  @SuppressWarnings("serial")
+  private static class LinkedHashMapImpl extends LinkedHashMap<String, PreparedStatement> {
+     int maxCapacity;
+     String evictedKey = null;
+     PreparedStatement evictedStatement = null;
+
+     LinkedHashMapImpl(int initialCapacity, int maxCapacity, float loadFactor, boolean accessOrder) {
+       super(initialCapacity, loadFactor, accessOrder);
+       this.maxCapacity = maxCapacity;
+     }
+
+     protected boolean	removeEldestEntry(Map.Entry<String, PreparedStatement> eldest) {
+       if ( this.size() >= maxCapacity ) {
+         evictedKey = eldest.getKey();
+         evictedStatement = eldest.getValue();
+         return true;
+       }
+       return false;
+     }
+   }
+
    private final class PreparedStatementCache {
 
-      private final class PreparedStatementCacheImpl
-          extends LruCache<String, PreparedStatement> {
-         public PreparedStatementCacheImpl(int size) {
-            super(size);
+      private final class PreparedStatementCacheImpl {
+
+         private final LinkedHashMapImpl map;
+
+         /** Size of this cache in units. Not necessarily the number of elements. */
+         private int size;
+
+         private int hitCount;
+         private int missCount;
+
+         /**
+          * @param maxSize this is the maximum number of entries in the cache.
+          */
+         public PreparedStatementCacheImpl(int maxSize) {
+             if (maxSize <= 0) {
+                 throw new IllegalArgumentException("maxSize <= 0");
+             }
+             this.map = new LinkedHashMapImpl(0, maxSize, 0.75f, true);
          }
 
-         @Override protected void entryRemoved(boolean evicted, String key, PreparedStatement oldValue, PreparedStatement newValue) {
+         /**
+          * Returns the value for {@code key} if it exists in the cache or can be
+          * created by {@code #create}. If a value was returned, it is moved to the
+          * head of the queue. This returns null if a value is not cached and cannot
+          * be created.
+          */
+         public final PreparedStatement get(String key) {
+             if (key == null) {
+                 throw new NullPointerException("key == null");
+             }
+
+             PreparedStatement mapValue;
+             synchronized (map) {
+                 mapValue = map.get(key);
+                 if (mapValue != null) {
+                     hitCount++;
+                     return mapValue;
+                 }
+                 missCount++;
+             }
+             return null;
+         }
+
+         /**
+          * Caches {@code value} for {@code key}. The value is moved to the head of
+          * the queue. During this operation, up to two calls to entryRemoved(...) may be made.
+          * First call to entryRemoved(...) will be for any prior value mapped by {@code key}.
+          * Second call to entryRemoved(...) will be if {@code maxSize} is reached causing the
+          * least recently used entry to be evicted.
+          */
+         public final void put(String key, PreparedStatement value) {
+             if (key == null || value == null) {
+                 throw new NullPointerException("key == null || value == null");
+             }
+             
+             String evictedKey = null;
+             PreparedStatement evictedValue = null;
+
+             PreparedStatement previous;
+             synchronized (map) {
+                 ++size;
+                 previous = map.put(key, value);
+                 if (previous != null) {
+                     --size;
+                 }
+
+                 evictedKey = map.evictedKey;
+                 evictedValue = map.evictedStatement;
+                 if (evictedValue != null) {
+                     // hit maxSize -- no size correction
+                     --size;
+                 }
+                 map.evictedKey = null;
+                 map.evictedStatement = null;
+             }
+
+             if (previous != null) {
+                 entryRemoved(false, key, previous, value);
+             }
+
+             if ( evictedValue != null ) {
+               entryRemoved(true, evictedKey, evictedValue, null);
+             }
+         }
+
+         /**
+          * Removes the entry for {@code key} if it exists. During this operation,
+          * a call to entryRemoved(...) will be for any prior value mapped by {@code key}.
+          */
+         public final void remove(String key) {
+             if (key == null) {
+                 throw new NullPointerException("key == null");
+             }
+
+             PreparedStatement previous;
+             synchronized (map) {
+                 previous = map.remove(key);
+                 if (previous != null) {
+                     --size;
+                 }
+             }
+
+             if (previous != null) {
+                 entryRemoved(false, key, previous, null);
+             }
+         }
+
+         /**
+          * Clear the cache, calling {@link #entryRemoved} on each removed entry.
+          */
+         public final void evictAll() {
+           
+           Map<String, PreparedStatement> copied;
+           synchronized (map) {
+             copied = snapshot();
+             map.clear();
+             size = 0;
+           }
+           for ( Map.Entry<String, PreparedStatement> entry : copied.entrySet() ) {
+             entryRemoved(true, entry.getKey(), entry.getValue(), null);
+           }
+         }
+
+         /**
+          * Returns the number of entries in the cache.
+          */
+         public final int size() {
+           synchronized (map) {
+             return size;
+           }
+         }
+
+         /**
+          * Returns the number of times {@link #get} returned a value that was
+          * already present in the cache.
+          */
+         public final int hitCount() {
+           synchronized (map) {
+             return hitCount;
+           }
+         }
+
+         /**
+          * Returns the number of times {@link #get} returned null or required a new
+          * value to be created.
+          */
+         public final int missCount() {
+           synchronized (map) {
+             return missCount;
+           }
+         }
+
+         /**
+          * Returns a copy of the current contents of the cache, ordered from least
+          * recently accessed to most recently accessed.
+          */
+         public final Map<String, PreparedStatement> snapshot() {
+           synchronized (map) {
+             return new LinkedHashMap<String, PreparedStatement>(map);
+           }
+         }
+
+         /**
+          * Called for entries that have been evicted or removed. This method is
+          * invoked when a value is evicted to make space, removed by a call to
+          * {@link #remove}, or replaced by a call to {@link #put}. The default
+          * implementation does nothing.
+          *
+          * <p>The method is called without synchronization: other threads may
+          * access the cache while this method is executing.
+          *
+          * @param evicted true if the entry is being removed to make space, false
+          *     if the removal was caused by a {@link #put} or {@link #remove}.
+          * @param newValue the new value for {@code key}, if it exists. If non-null,
+          *     this removal was caused by a {@link #put}. Otherwise it was caused by
+          *     an eviction or a {@link #remove}.
+          */
+         protected void entryRemoved(boolean evicted, String key, PreparedStatement oldValue, PreparedStatement newValue) {
             if (!oldValue.mInUse) {
                releasePreparedStatement(oldValue);
             }

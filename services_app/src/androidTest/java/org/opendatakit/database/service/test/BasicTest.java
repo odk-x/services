@@ -1,9 +1,15 @@
 package org.opendatakit.database.service.test;
 
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class BasicTest extends AndroidTestCase {
+import static org.junit.Assert.assertTrue;
 
+@RunWith(AndroidJUnit4.class)
+public class BasicTest {
+
+    @Test
     public void testFailureUsedToVerifyBuildsCatchWhenSet() {
         //assertTrue(false);
         assertTrue(true);

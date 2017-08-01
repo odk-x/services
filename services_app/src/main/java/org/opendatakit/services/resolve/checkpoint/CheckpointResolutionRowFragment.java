@@ -35,12 +35,10 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.services.resolve.views.components.Resolution;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
@@ -194,18 +192,8 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             }
           }
 
-          String activeUser;
-          String rolesList;
-          String locale;
-
-          {
-            PropertiesSingleton props =
-              CommonToolProperties.get(getActivity(), mAppName);
-
-            activeUser = props.getActiveUser();
-            rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-            locale = props.getLocale();
-          }
+          ActiveUserAndLocale aul =
+              ActiveUserAndLocale.getActiveUserAndLocale(getActivity(), mAppName);
 
           try {
             // +1 referenceCount if db is returned (non-null)
@@ -216,7 +204,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
             OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().getUserDefinedColumns(db,
                 mTableId);
             ODKDatabaseImplUtils.get().insertCheckpointRowWithId(db, mTableId, orderedColumns,
-                values, mRowId, activeUser, rolesList, locale);
+                values, mRowId, aul.activeUser, aul.rolesList, aul.locale);
 
             // and save that checkpoint as incomplete
             ODKDatabaseImplUtils.get().saveAsIncompleteMostRecentCheckpointRowWithId(db, mTableId,

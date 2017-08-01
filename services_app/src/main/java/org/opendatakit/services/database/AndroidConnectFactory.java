@@ -19,12 +19,13 @@ import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.logging.WebLogger;
 
 public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
+  private static final String TAG = AndroidConnectFactory.class.getSimpleName();
 
   static {
     OdkConnectionFactorySingleton.set(new AndroidConnectFactory());
 
     // register a state-reset manipulator for 'connectionFactory' field.
-    StaticStateManipulator.get().register(50, new IStaticFieldManipulator() {
+    StaticStateManipulator.get().register(new IStaticFieldManipulator() {
 
       @Override
       public void reset() {
@@ -38,22 +39,29 @@ public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractCl
     // just to get the static initialization block (above) to run
   }
 
+  /**
+   * @return the database schema version that the application expects
+   */
+  public static int getDbVersion() {
+    return 1;
+  }
+
   private AndroidConnectFactory() {
   }
 
   @Override
   protected void logInfo(String appName, String message) {
-    WebLogger.getLogger(appName).i("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).i(TAG, message);
   }
 
   @Override
   protected void logWarn(String appName, String message) {
-    WebLogger.getLogger(appName).w("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).w(TAG, message);
   }
 
   @Override
   protected void logError(String appName, String message) {
-    WebLogger.getLogger(appName).e("AndroidConnectFactory", message);
+    WebLogger.getLogger(appName).e(TAG, message);
   }
 
   @Override

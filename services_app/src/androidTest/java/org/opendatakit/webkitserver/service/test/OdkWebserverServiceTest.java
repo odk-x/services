@@ -9,6 +9,14 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ServiceTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.WebkitServerConsts;
 import org.opendatakit.logging.WebLogger;
@@ -24,14 +32,16 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import android.test.ApplicationTestCase;
-import org.opendatakit.services.application.Services;
 import org.opendatakit.utilities.StaticStateManipulator;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author mitchellsundt@gmail.com
  */
-public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
+@RunWith(AndroidJUnit4.class)
+public class OdkWebserverServiceTest {
 
     private static final String TAG = "OdkWebserverServiceTest";
 
@@ -40,16 +50,11 @@ public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
     private static final String TEST_FILE_NAME = "Hello.html";
     private static final String TEST_DIR = "testfiles";
 
-    public OdkWebserverServiceTest(String name) {
-        super(Services.class);
-        setName(name);
-    }
+    @Rule
+    public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        createApplication();
+    @Before
+    public void setUp() throws Exception {
 
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(TestConsts.APPNAME);
@@ -57,10 +62,11 @@ public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
         StaticStateManipulator.get().reset();
     }
 
-    @Override
-    protected void tearDown() {
+    @After
+    public void tearDown() {
         WebkitServerInterface webkitServer = getWebkitServerInterface();
-        getContext().unbindService(odkWebkitServiceConnection);
+        Context context = InstrumentationRegistry.getContext();
+        context.unbindService(odkWebkitServiceConnection);
         // sleep to let this take effect
         try {
             Thread.sleep(200L);
@@ -118,7 +124,8 @@ public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
         synchronized (odkWebkitInterfaceBindComplete) {
             if ( !active ) {
                 active = true;
-                getApplication().bindService(bind_intent, odkWebkitServiceConnection,
+                Context context = InstrumentationRegistry.getContext();
+                context.bindService(bind_intent, odkWebkitServiceConnection,
                     Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
                         Context.BIND_ADJUST_WITH_ACTIVITY :
                         0));
@@ -159,16 +166,18 @@ public class OdkWebserverServiceTest extends ApplicationTestCase<Services> {
         }
     }
 
+    @Test
     public void testBindingNRestart() {
         WebkitServerInterface serviceInterface = getWebkitServerInterface();
         try {
             serviceInterface.restart();
         } catch (RemoteException e) {
             e.printStackTrace();
-            fail();
+            fail("Problem with service restart");
         }
     }
 
+    @Test
     public void testServingHelloWorldHtml() {
         ODKFileUtils.verifyExternalStorageAvailability();
         ODKFileUtils.assertDirectoryStructure(TestConsts.APPNAME);

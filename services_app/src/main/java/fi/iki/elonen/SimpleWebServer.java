@@ -319,7 +319,7 @@ public class SimpleWebServer extends NanoHTTPD {
   @Override
   public Response serve(IHTTPSession session) {
     Map<String, String> header = session.getHeaders();
-    Map<String, String> parms = session.getParms();
+    Map<String, List<String>> parms = session.getParameters();
     String uri = session.getUri();
 
     // Changed from original version to be able to use the
@@ -334,7 +334,7 @@ public class SimpleWebServer extends NanoHTTPD {
         // use the referer to retrieve the appname
         // adjust uri to be /appname/config/uri
         //
-        // i.e., yielding /default/config/favicon.ico
+        // i.e., yielding /default/config/assets/favicon.ico
         //
         String referer = header.get("referer");
         if (referer == null) {
@@ -345,7 +345,7 @@ public class SimpleWebServer extends NanoHTTPD {
         nextSlash = referer.indexOf('/', idx + 1);
         appName = referer.substring(idx + 1, nextSlash);
         // adjust the uri to be under the config directory of the referer
-        File file = new File(ODKFileUtils.getConfigFolder(appName), uri.substring(1));
+        File file = new File(ODKFileUtils.getAssetsFolder(appName), uri.substring(1));
         // we expect a leading slash...
         uri = "/" + appName + "/" + ODKFileUtils.asUriFragment(appName, file);
         nextSlash = uri.indexOf('/', 1);

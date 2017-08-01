@@ -121,6 +121,13 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
   }
 
   @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    menu.findItem(R.id.action_sync).setVisible(false);
+    menu.findItem(R.id.action_change_user).setVisible(false);
+    return super.onPrepareOptionsMenu(menu);
+  }
+
+  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
     // automatically handle clicks on the Home/Up button, so long

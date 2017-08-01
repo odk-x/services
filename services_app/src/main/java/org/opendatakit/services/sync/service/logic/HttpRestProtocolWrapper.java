@@ -187,7 +187,6 @@ public class HttpRestProtocolWrapper {
   // cookie manager
   private final CookieManager cm;
 
-
   private final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
     URI uriBase = URI.create(aggregateUri).normalize();
     String term = uriBase.getPath();
@@ -278,13 +277,21 @@ public class HttpRestProtocolWrapper {
     return uri;
   }
 
-  public URI constructListOfUserRolesUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/roles/granted");
+  public URI constructListOfUserRolesAndDefaultGroupUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/privilegesInfo");
     return uri;
   }
 
   public URI constructListOfUsersUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/users/list");
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/usersInfo");
+    return uri;
+  }
+
+  public URI constructDeviceInformationUri() {
+    URI uri = normalizeUri(sc.getAggregateUri(),
+        "/odktables/" + escapeSegment(sc.getAppName()) + "/installationInfo");
     return uri;
   }
 
@@ -358,6 +365,12 @@ public class HttpRestProtocolWrapper {
 
   public URI constructRealizedTableIdUri(String tableId, String schemaETag) {
     URI uri = normalizeUri(sc.getAggregateUri(), getTablesUriFragment() + tableId + "/ref/" + schemaETag);
+    return uri;
+  }
+
+  public URI constructRealizedTableIdSyncStatusUri(String tableId, String schemaETag) {
+    URI uri = normalizeUri(sc.getAggregateUri(), getTablesUriFragment() + tableId + "/ref/" +
+        schemaETag + "/installationStatus");
     return uri;
   }
 
@@ -506,9 +519,6 @@ public class HttpRestProtocolWrapper {
    */
   public void buildBasicRequest(URI uri, HttpRequestBase request) {
 
-    String agg_uri = uri.toString();
-    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
-
     if (uri == null) {
       throw new IllegalArgumentException("buildBasicRequest: URI cannot be null");
     }
@@ -517,11 +527,15 @@ public class HttpRestProtocolWrapper {
       throw new IllegalArgumentException("buildBasicRequest: HttpRequest cannot be null");
     }
 
+    String agg_uri = uri.toString();
+    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
+
     request.setURI(uri);
 
     // report our locale... (not currently used by server)
     request.addHeader("Accept-Language", Locale.getDefault().getLanguage());
     request.addHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER, ApiConstants.OPEN_DATA_KIT_VERSION);
+    request.addHeader(ApiConstants.OPEN_DATA_KIT_INSTALLATION_HEADER, sc.getInstallationId());
     request.addHeader(ApiConstants.ACCEPT_CONTENT_ENCODING_HEADER, ApiConstants.GZIP_CONTENT_ENCODING);
     request.addHeader(HttpHeaders.USER_AGENT, sc.getUserAgent());
 
@@ -657,7 +671,8 @@ public class HttpRestProtocolWrapper {
     cookieStore = new BasicCookieStore();
     credsProvider = new BasicCredentialsProvider();
 
-    String host = this.baseUri.getHost();
+    URI destination = normalizeUri(sc.getAggregateUri(), "/");
+    String host = destination.getHost();
     String authenticationType = sc.getAuthenticationType();
 
     if ( sc.getString(R.string.credential_type_google_account)
@@ -677,13 +692,21 @@ public class HttpRestProtocolWrapper {
       {
         AuthScope a;
         // allow digest auth on any port...
+        // TODO switch this to digest
         a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
         asList.add(a);
-        // and allow basic auth on the standard TLS/SSL ports...
-        a = new AuthScope(host, 443, null, AuthSchemes.BASIC);
-        asList.add(a);
-        a = new AuthScope(host, 8443, null, AuthSchemes.BASIC);
-        asList.add(a);
+        if ( destination.getScheme().equals("https")) {
+          // and allow basic auth on https connections...
+          a = new AuthScope(host, destination.getPort(), null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
+        // this might be disabled in production builds...
+        if ( sc.getAllowUnsafeAuthentication() ) {
+          log.e(LOGTAG, "Enabling Unsafe Authentication!");
+          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
+          asList.add(a);
+        }
+
       }
 
       // add username
@@ -868,31 +891,34 @@ public class HttpRestProtocolWrapper {
                 request, response);
       }
 
+      // TODO: For now we have to check for 401 Unauthorized before we check the headers because
+      // Spring will spit out a 401 with a bad username/password before it even touches our code
+      int statusCode = response.getStatusLine().getStatusCode();
+      String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
+      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+        log.e(LOGTAG, errorText);
+        // server rejected our request -- mismatched client and server implementations
+        throw new AccessDeniedException(errorText, request, response);
+      }
+
       // if we do not find our header in the response, then this is most likely a
       // wifi network login screen.
-      if (response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER) == null) {
+      Header[] odkHeaders = response.getHeaders(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER);
+      if (odkHeaders == null || odkHeaders.length == 0) {
         throw new NotOpenDataKitServerException(request, response);
       }
 
-      int statusCode = response.getStatusLine().getStatusCode();
       if (handledReturnCodes.contains(statusCode)) {
         success = true;
         return response;
       }
 
-      String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
       if (statusCode >= 200 && statusCode < 300) {
         log.e(LOGTAG, errorText);
         // server returned an unexpected success response --
         // mismatched client and server implementations
         throw new ClientDetectedVersionMismatchedServerResponseException(errorText,
                 request, response);
-      }
-
-      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-        log.e(LOGTAG, errorText);
-        // server rejected our request -- mismatched client and server implementations
-        throw new AccessDeniedException(errorText, request, response);
       }
 
       if (statusCode >= 400 && statusCode < 500) {
@@ -942,10 +968,11 @@ public class HttpRestProtocolWrapper {
 
   public String extractInstanceFileRelativeFilename(String header) {
     // Get the file name
-    int firstIndex = header.indexOf(multipartFileHeader) + multipartFileHeader.length();
+    int firstIndex = header.indexOf(multipartFileHeader);
     if ( firstIndex == -1 ) {
       return null;
     }
+    firstIndex += multipartFileHeader.length();
     int lastIndex = header.lastIndexOf("\"");
     String partialPath = header.substring(firstIndex, lastIndex);
     return partialPath;

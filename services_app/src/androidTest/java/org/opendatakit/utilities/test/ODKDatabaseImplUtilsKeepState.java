@@ -1,5 +1,9 @@
 package org.opendatakit.utilities.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
@@ -17,6 +21,7 @@ import java.util.List;
  * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
  * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest {
 
    private static boolean initialized = false;
@@ -27,32 +32,28 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
     protected String getAppName() {
         return APPNAME;
     }
-    /*
- * Set up the database for the tests(non-Javadoc)
- *
- * @see android.test.AndroidTestCase#setUp()
- */
-    @Override
-    protected synchronized void setUp() throws Exception {
-        super.setUp();
-        ODKFileUtils.verifyExternalStorageAvailability();
-        ODKFileUtils.assertDirectoryStructure(APPNAME);
+
+    @Before
+    public synchronized void setUp() throws Exception {
+       ODKFileUtils.verifyExternalStorageAvailability();
+       ODKFileUtils.assertDirectoryStructure(APPNAME);
 
        boolean beganUninitialized = !initialized;
-       if ( beganUninitialized ) {
+       if (beganUninitialized) {
           initialized = true;
           // Used to ensure that the singleton has been initialized properly
           AndroidConnectFactory.configure();
        }
 
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(getAppName(), uniqueKey);
-       if ( beganUninitialized ) {
+       // +1 referenceCount if db is returned (non-null)
+       db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+           .getConnection(getAppName(), uniqueKey);
+       if (beganUninitialized) {
           // start clean
           List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
 
           // Drop any leftover table now that the test is done
-          for(String id : tableIds) {
+          for (String id : tableIds) {
              ODKDatabaseImplUtils.get().deleteTableAndAllData(db, id);
           }
        } else {
@@ -60,20 +61,12 @@ public class ODKDatabaseImplUtilsKeepState extends AbstractODKDatabaseUtilsTest 
        }
     }
 
-
-    /*
- * Destroy all test data once tests are done(non-Javadoc)
- *
- * @see android.test.AndroidTestCase#tearDown()
- */
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
       verifyNoTablesExistNCleanAllTables();
 
       if (db != null) {
         db.releaseReference();
       }
-
-      super.tearDown();
     }
 }

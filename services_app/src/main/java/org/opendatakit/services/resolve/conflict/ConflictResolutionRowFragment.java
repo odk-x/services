@@ -39,7 +39,7 @@ import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.resolve.ActiveUserAndLocale;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.views.components.ConflictResolutionColumnListAdapter;
 import org.opendatakit.services.resolve.views.components.Resolution;
 import org.opendatakit.services.resolve.views.components.ResolveActionList;
@@ -125,7 +125,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
 
             // This is elevated privileges since we are applying the server's change locally
             ODKDatabaseImplUtils.get().resolveServerConflictWithDeleteRowWithId(db,
-                mTableId, mRowId, aul.activeUser, RoleConsts.ADMIN_ROLES_LIST);
+                mTableId, mRowId, aul.activeUser);
 
             getActivity().setResult(Activity.RESULT_OK);
           } catch (Exception e) {

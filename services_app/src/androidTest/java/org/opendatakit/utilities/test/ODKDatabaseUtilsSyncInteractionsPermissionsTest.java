@@ -14,6 +14,9 @@
 
 package org.opendatakit.utilities.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
  *
  * @author mitchellsundt@gmail.com
  */
+@RunWith(AndroidJUnit4.class)
 public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsSyncInteractionsPermissionsTest";
@@ -49,18 +53,18 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       ActionNotAuthorizedException {
 
     base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.DEFAULT,
+        RowFilterScope.Access.FULL,
         localRowSyncState,
         asPrivilegedUser);
 
     base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.READ_ONLY,
+        RowFilterScope.Access.READ_ONLY,
         localRowSyncState,
         asPrivilegedUser);
   }
 
   private void base_Type_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(boolean isLocked,
-      boolean canAnonCreate, RowFilterScope.Type type,
+      boolean canAnonCreate, RowFilterScope.Access serverRowDefaultAccessValue,
       SyncState localRowSyncState, boolean asPrivilegedUser) throws ActionNotAuthorizedException {
 
     String tableId;
@@ -100,25 +104,44 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       }
 
       // add local content
+      // this sets up the key-value-store fields for the table, using the
+      // serverRowDefaultAccessValue as the initial value for the default access
+      // on rows created in the table.
       OrderedColumns oc = assertEmptySyncStateTestTable(tableId,
-          isLocked, canAnonCreate, type.name());
+          isLocked, canAnonCreate, serverRowDefaultAccessValue.name());
 
-      // loop over rowId :
-      ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList
-          (asPrivilegedUser, localRowSyncState,
-              options[7], options[0], options[1], options[2], options[3], options[4], options[5],
-              options[6] );
+      // outcome depends upon the server row's DefaultAccess value.
+      // initially assume this will be the incoming value.
+      {
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList(isLocked, asPrivilegedUser,
+            localRowSyncState, true, serverRowDefaultAccessValue, options[7], options[0], options[1], options[2],
+            options[3], options[4], options[5], options[6]);
 
-      for ( SyncParamOutcome spo : spoList ) {
-        assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
-        verifySyncOutcome(tableId, oc, asPrivilegedUser, type, spo);
-        if ( spo.changeServerPrivilegedMetadata ) {
-          // if we are modifying the filter scopes, then supply read-only scope as a challenge
-          // or, if the incoming type is read-only, use hidden
+        for (SyncParamOutcome spo : spoList) {
           assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
-          verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Type.READ_ONLY) ? RowFilterScope.Type.HIDDEN :
-                  RowFilterScope.Type.READ_ONLY, spo);
+          verifySyncOutcome(tableId, oc, asPrivilegedUser, serverRowDefaultAccessValue, spo);
+        }
+      }
+
+      // outcome depends upon the server row's DefaultAccess value.
+      // now limit it to either hidden or read-only.
+      // TODO: It is unclear if this is actually testing new code paths, or just duplicated effort.
+      {
+        RowFilterScope.Access restrictedType = (serverRowDefaultAccessValue == RowFilterScope.Access.READ_ONLY) ?
+            RowFilterScope.Access.HIDDEN : RowFilterScope.Access.READ_ONLY;
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildSyncParamOutcomesList(isLocked, asPrivilegedUser,
+            localRowSyncState, true, restrictedType, options[7], options[0], options[1],
+            options[2], options[3], options[4], options[5], options[6]);
+
+        for (SyncParamOutcome spo : spoList) {
+          if (spo.changeServerPrivilegedMetadata) {
+            // if we are modifying the filter scopes, then supply read-only scope as a challenge
+            // or, if the incoming type is read-only, use hidden
+            assertRowInSyncStateTestTable(tableId, oc, spo.rowId, localRowSyncState);
+            verifySyncOutcome(tableId, oc, asPrivilegedUser, restrictedType, spo);
+          }
         }
       }
     }
@@ -143,18 +166,18 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       ActionNotAuthorizedException {
 
     base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.DEFAULT,
+        RowFilterScope.Access.FULL,
         localConflictType, serverConflictType,
         asPrivilegedUser);
 
     base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(isLocked, canAnonCreate,
-        RowFilterScope.Type.READ_ONLY,
+        RowFilterScope.Access.READ_ONLY,
         localConflictType, serverConflictType,
         asPrivilegedUser);
   }
 
   private void base_Type_Conflicting_PerhapsPlaceRowIntoConflict_Table_RowFilterScopeType(
-      boolean isLocked, boolean canAnonCreate, RowFilterScope.Type type,
+      boolean isLocked, boolean canAnonCreate, RowFilterScope.Access serverRowDefaultAccessValue,
       int localConflictType, int serverConflictType, boolean asPrivilegedUser) throws
       ActionNotAuthorizedException {
 
@@ -195,136 +218,177 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
       }
 
       // add local content
+      // this sets up the key-value-store fields for the table, using the
+      // serverRowDefaultAccessValue as the initial value for the default access
+      // on rows created in the table.
       OrderedColumns oc = assertEmptySyncStateTestTable(tableId,
-          isLocked, canAnonCreate, type.name());
+          isLocked, canAnonCreate, serverRowDefaultAccessValue.name());
 
-      // loop over rowId :
-      ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList
-          (asPrivilegedUser, localConflictType,
-              options[7], options[0], options[1], options[2], options[3], options[4], options[5],
-              options[6] );
+      // outcome depends upon the server row's DefaultAccess value.
+      // initially assume this will be the incoming value.
+      {
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList
+            (isLocked, asPrivilegedUser, localConflictType,
+            serverRowDefaultAccessValue, options[7], options[0], options[1], options[2], options[3], options[4], options[5],
+            options[6]);
 
-      for ( SyncParamOutcome spo : spoList ) {
-        assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType, serverConflictType);
-        verifySyncOutcome(tableId, oc, asPrivilegedUser, type, spo);
-        if ( spo.changeServerPrivilegedMetadata ) {
-          // if we are modifying the filter scopes, then supply read-only scope as a challenge
-          // or, if the incoming type is read-only, use hidden
-          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType, serverConflictType);
+        for (SyncParamOutcome spo : spoList) {
+          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType,
+              serverConflictType);
+          verifySyncOutcome(tableId, oc, asPrivilegedUser, serverRowDefaultAccessValue, spo);
+        }
+      }
+
+      // outcome depends upon the server row's DefaultAccess value.
+      // now limit it to either hidden or read-only.
+      // TODO: It is unclear if this is actually testing new code paths, or just duplicated effort.
+      {
+        RowFilterScope.Access unmodifiableType =  (serverRowDefaultAccessValue == RowFilterScope.Access.READ_ONLY) ?
+            RowFilterScope.Access.HIDDEN : RowFilterScope.Access.READ_ONLY;
+        // loop over rowId :
+        ArrayList<SyncParamOutcome> spoList = buildConflictingSyncParamOutcomesList(
+            isLocked, asPrivilegedUser,
+            localConflictType, unmodifiableType, options[7], options[0], options[1], options[2],
+            options[3], options[4], options[5],
+            options[6]);
+
+        for (SyncParamOutcome spo : spoList) {
+          assertInConflictRowInSyncStateTestTable(tableId, oc, spo.rowId, localConflictType,
+              serverConflictType);
           verifySyncOutcome(tableId, oc, asPrivilegedUser,
-              (type == RowFilterScope.Type.READ_ONLY) ? RowFilterScope.Type.HIDDEN :
-                  RowFilterScope.Type.READ_ONLY, spo);
+              unmodifiableType, spo);
         }
       }
     }
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_new_row() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_changed() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_deleted() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, false, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_new_row() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_changed() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_deleted() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(false, true, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_new_row() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_changed() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_deleted() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedNoAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, false, SyncState.synced_pending_files);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_new_row() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.new_row);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_changed() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.changed);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_deleted() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.deleted);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced() throws ActionNotAuthorizedException {
 
     base_Type_Users_PerhapsPlaceRowIntoConflict_Table(true, true, SyncState.synced);
   }
 
+  @Test
   public void testPerhapsPlaceRowIntoConflictLockedYesAnonCreate_synced_pending_files() throws
       ActionNotAuthorizedException {
 
@@ -333,6 +397,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
   //===============================
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -340,6 +405,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -347,6 +413,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -354,6 +421,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedNoAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -363,6 +431,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -370,6 +439,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -377,6 +447,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -384,6 +455,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictUnlockedYesAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -393,6 +465,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -400,6 +473,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -407,6 +481,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -414,6 +489,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedNoAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 
@@ -424,6 +500,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
 
 
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_U_U() throws
       ActionNotAuthorizedException {
 
@@ -431,6 +508,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_U_D() throws
       ActionNotAuthorizedException {
 
@@ -438,6 +516,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_UPDATED_UPDATED_VALUES, ConflictType.SERVER_DELETED_OLD_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_D_U() throws
       ActionNotAuthorizedException {
 
@@ -445,6 +524,7 @@ public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPer
         ConflictType.LOCAL_DELETED_OLD_VALUES, ConflictType.SERVER_UPDATED_UPDATED_VALUES);
   }
 
+  @Test
   public void testConflictingPerhapsPlaceRowIntoConflictLockedYesAnonCreate_D_D() throws
       ActionNotAuthorizedException {
 

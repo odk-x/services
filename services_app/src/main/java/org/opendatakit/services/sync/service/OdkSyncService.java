@@ -46,7 +46,8 @@ public class OdkSyncService extends Service {
     return false;
   }
 
-  private static final String LOGTAG = "OdkSyncService";
+  // Used for logging
+  private static final String TAG = OdkSyncService.class.getSimpleName();
 
   // Time Unit: milliseconds.
   // 5 minutes. Amount of time to hold onto the details of a sync outcome.
@@ -61,7 +62,7 @@ public class OdkSyncService extends Service {
 
   // NOTE: syncs is used for synchronized(syncs) {...} wraps when accessing
   // all of: syncs, lastStartId, shutdownActorNotYetStarted, isBound
-  private final Map<String, AppSynchronizer> syncs = new HashMap<String, AppSynchronizer>();
+  private final Map<String, AppSynchronizer> syncs = new HashMap<>();
   private Integer lastStartId = null;
   private boolean shutdownActorNotYetStarted = true;
   private boolean isBound = true;
@@ -88,11 +89,11 @@ public class OdkSyncService extends Service {
       }
 
       if ( canShutdown ) {
-        WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+        WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
             "Sync Service shutdownActor -- calling stopSelf");
         stopSelf(savedLastStartId);
       } else {
-        WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+        WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
             "Sync Service shutdownActor -- conditions not met to shut down service");
       }
 
@@ -120,7 +121,8 @@ public class OdkSyncService extends Service {
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
-    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+    //android.os.Debug.waitForDebugger();
+    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
         "Sync Service onStartCommand startId: " + startId);
 
     boolean wasShutdownActorNotYetStarted;
@@ -146,7 +148,7 @@ public class OdkSyncService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
         "Sync Service onBind new client");
 
     possiblyWaitForSyncServiceDebugger();
@@ -166,7 +168,7 @@ public class OdkSyncService extends Service {
   }
 
   @Override public boolean onUnbind(Intent intent) {
-    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
         "Sync Service onUnbind -- no more bound interfaces");
 
     synchronized (syncs) {
@@ -178,7 +180,7 @@ public class OdkSyncService extends Service {
 
   @Override
   public void onDestroy() {
-    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(LOGTAG,
+    WebLogger.getLogger(ODKFileUtils.getOdkDefaultAppName()).i(TAG,
         "Sync Service is shutting down");
     shutdownTester.shutdownNow();
     try {
