@@ -46,7 +46,7 @@ import java.util.List;
  * @author mitchellsundt@gmail.com
  */
 
-public class OdkDatabaseServiceImpl implements InternalUserDbInterface {
+public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
 
    private Context context;
 

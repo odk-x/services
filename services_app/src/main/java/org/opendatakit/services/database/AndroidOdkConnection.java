@@ -15,9 +15,8 @@
 package org.opendatakit.services.database;
 
 import android.database.Cursor;
-
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.sqlite.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteConnection;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
@@ -26,7 +25,7 @@ import org.sqlite.database.sqlite.SQLiteException;
 import java.io.File;
 import java.util.Map;
 
-public class AndroidOdkConnection implements OdkConnectionInterface {
+public final class AndroidOdkConnection implements OdkConnectionInterface {
   final Object mutex;
   /**
    * Reference count is pre-incremented to account for:
