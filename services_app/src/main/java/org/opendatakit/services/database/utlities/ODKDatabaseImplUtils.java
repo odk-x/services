@@ -17,11 +17,9 @@ package org.opendatakit.services.database.utlities;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
-
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -58,7 +56,6 @@ import org.opendatakit.provider.SyncETagColumns;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
@@ -76,7 +73,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-public class ODKDatabaseImplUtils {
+public final class ODKDatabaseImplUtils {
 
   private static final String t = "ODKDatabaseImplUtils";
 
@@ -159,7 +156,7 @@ public class ODKDatabaseImplUtils {
     LOCKED_EFFECTIVE_ACCESS_COLUMN,
     UNLOCKED_EFFECTIVE_ACCESS_COLUMN }
 
-  public static class AccessContext {
+  public final static class AccessContext {
     public final AccessColumnType accessColumnType;
     public final boolean canCreateRow;
     public final String activeUser;
@@ -609,12 +606,12 @@ public class ODKDatabaseImplUtils {
     Cursor c = db.rawQuery(sqlCommand + " LIMIT 1", selectionArgs);
     if (c.moveToFirst() ) {
       // see if we have the columns needed to apply row-level filtering
-      boolean hasDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS) != -1;
-      boolean hasOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER) != -1;
-      boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
-      boolean hasGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY) != -1;
-      boolean hasGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY) != -1;
-      boolean hasGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED) != -1;
+      final boolean hasDefaultAccess = c.getColumnIndex(DataTableColumns.DEFAULT_ACCESS) != -1;
+      final boolean hasOwner = c.getColumnIndex(DataTableColumns.ROW_OWNER) != -1;
+      final boolean hasSyncState = c.getColumnIndex(DataTableColumns.SYNC_STATE) != -1;
+      final boolean hasGroupReadOnly = c.getColumnIndex(DataTableColumns.GROUP_READ_ONLY) != -1;
+      final boolean hasGroupModify = c.getColumnIndex(DataTableColumns.GROUP_MODIFY) != -1;
+      final boolean hasGroupPrivileged = c.getColumnIndex(DataTableColumns.GROUP_PRIVILEGED) != -1;
 
       c.close();
 
@@ -5159,7 +5156,7 @@ public class ODKDatabaseImplUtils {
     DELETE_ROW
   }
 
-  private class TableSecuritySettings {
+  private final class TableSecuritySettings {
     final String tableId;
     final boolean isLocked;
     final boolean canUnverifiedUserCreateRow;

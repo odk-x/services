@@ -17,7 +17,7 @@ package org.opendatakit.services.application;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 
-public class Services extends ToolAwareApplication {
+public final class Services extends ToolAwareApplication {
 
   private static Services singleton = null;
 
