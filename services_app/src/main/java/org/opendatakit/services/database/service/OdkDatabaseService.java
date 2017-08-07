@@ -18,15 +18,17 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
-
-import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.database.service.DbChunk;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-public class OdkDatabaseService extends Service {
+public final class OdkDatabaseService extends Service {
 
   private static final String LOGTAG = OdkDatabaseService.class.getSimpleName();
 

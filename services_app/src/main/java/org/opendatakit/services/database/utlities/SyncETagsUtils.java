@@ -16,17 +16,16 @@
 package org.opendatakit.services.database.utlities;
 
 import android.database.Cursor;
-
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.provider.SyncETagColumns;
+import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.utilities.DataHelper;
 
 import java.net.URI;
 import java.util.ArrayList;
 
-public class SyncETagsUtils {
+public final class SyncETagsUtils {
 
   /**
    * For ease of mocking...
