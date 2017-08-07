@@ -500,8 +500,8 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedNoAnonCreate,
         false, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
-
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate();
+    
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
         // expect three row in new_row and two checkpoints in new_row state
@@ -545,7 +545,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedYesAnonCreate,
             false, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -591,7 +591,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedNoAnonCreate,
             true, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -637,7 +637,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedYesAnonCreate,
             true, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -683,7 +683,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedNoAnonCreate,
             false, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -728,7 +728,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedYesAnonCreate,
             false, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -774,7 +774,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedNoAnonCreate,
             true, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -820,7 +820,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedYesAnonCreate,
             true, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -866,7 +866,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedNoAnonCreate,
             false, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -911,7 +911,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableUnlockedYesAnonCreate,
             false, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -957,7 +957,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedNoAnonCreate,
             true, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -1003,7 +1003,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedYesAnonCreate,
             true, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( ap.rowId.contains("New") ) {
@@ -1048,7 +1048,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
             false, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteUnlockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( !ap.rowId.contains("New") ) {
@@ -1128,7 +1128,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedNoAnonCreate,
             true, false, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedNoAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedNoAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( !ap.rowId.contains("New") ) {
@@ -1168,7 +1168,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         (testTableLockedYesAnonCreate,
             true, true, RowFilterScope.Access.FULL.name());
 
-    ArrayList<AuthParamAndOutcome> cases = buildOutcomesListDeleteLockedYesAnonCreate();
+    ArrayList<AuthParamAndOutcome> cases = buildCheckpointOutcomesListDeleteLockedYesAnonCreate();
 
     for ( AuthParamAndOutcome ap : cases ) {
       if ( !ap.rowId.contains("New") ) {

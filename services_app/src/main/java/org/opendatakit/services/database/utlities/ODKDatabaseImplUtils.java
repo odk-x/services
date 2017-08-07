@@ -58,7 +58,6 @@ import org.opendatakit.provider.SyncETagColumns;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
@@ -3725,7 +3724,7 @@ public class ODKDatabaseImplUtils {
             String priorGroupPrivileged = c.isNull(idxGroupPrivileged) ? null : c.getString(idxGroupPrivileged);
 
             tss.allowRowChange(activeUser, rolesArray, priorSyncState, priorDefaultAccess,
-                priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.DELETE_ROW);
+                priorOwner, priorGroupReadOnly, priorGroupModify, priorGroupPrivileged, RowChange.CHANGE_ROW);
           } while (c.moveToNext());
         }
 
