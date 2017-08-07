@@ -2112,6 +2112,84 @@ public class AbstractPermissionsTestCase {
     return cases;
   }
 
+  protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate() {
+    String tableId = testTableUnlockedNoAnonCreate;
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    // anon user can't delete, modify, hidden or read-only entries
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    // If default access is modify - a checkpoint row can be
+    // deleted in an unlocked table
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    // matching filter value user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    // non-matching filter value user can't delete  modify, hidden or read-only entries
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    // If default access is modify - a checkpoint row can be
+    // deleted in an unlocked table
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    // super-user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    // admin user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+
+
+    return cases;
+  }
+
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateUnlockedYesAnonCreate() {
     String tableId = testTableUnlockedYesAnonCreate;
 
@@ -2277,6 +2355,83 @@ public class AbstractPermissionsTestCase {
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+
+    return cases;
+  }
+
+  protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteUnlockedYesAnonCreate() {
+    String tableId = testTableUnlockedYesAnonCreate;
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    // anon user can't delete modify, hidden or read-only entries
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    // If default access is modify - a checkpoint row can be
+    // deleted in an unlocked table
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    // matching filter value user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    // non-matching filter value user can't delete modify, hidden or read-only entries
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    // If default access is modify - a checkpoint row can be
+    // deleted in an unlocked table
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    // super-user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    // admin user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
 
     return cases;
   }
@@ -2450,6 +2605,80 @@ public class AbstractPermissionsTestCase {
     return cases;
   }
 
+  protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteLockedNoAnonCreate() {
+    String tableId = testTableLockedNoAnonCreate;
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    // anon user can only delete new row
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    // matching filter value user can delete a checkpoint row as this
+    // could have been created during modification
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            commonUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    // non-matching filter value user can only delete new row
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    // super-user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    // admin user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+
+    return cases;
+  }
+
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateLockedYesAnonCreate() {
     String tableId = testTableLockedYesAnonCreate;
 
@@ -2615,6 +2844,80 @@ public class AbstractPermissionsTestCase {
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
     cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
         adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+
+    return cases;
+  }
+
+  protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteLockedYesAnonCreate() {
+    String tableId = testTableLockedYesAnonCreate;
+
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    // anon user can't delete anything other than the new row
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
+    // matching filter value user can delete a checkpoint row
+    // that could have been created due to a modification
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            commonUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            commonUser, RoleConsts.USER_ROLES_LIST, false));
+    // non-matching filter value user can't delete anything other than the new row
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            otherUser, RoleConsts.USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            otherUser, RoleConsts.USER_ROLES_LIST, true));
+    // super-user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            superUser, RoleConsts.SUPER_USER_ROLES_LIST, false));
+    // admin user can do anything
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommonNew,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdFullCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdHiddenCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdReadOnlyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
+    cases.add(new AuthParamAndOutcome(tableId, rowIdModifyCommon,
+            adminUser, RoleConsts.ADMIN_ROLES_LIST, false));
 
     return cases;
   }
