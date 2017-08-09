@@ -16,7 +16,10 @@ package org.opendatakit.services.database;
 
 import org.opendatakit.database.service.DbHandle;
 
-import java.util.*;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -24,7 +27,7 @@ import java.util.regex.Pattern;
  *
  * @author mitchellsundt@gmail.com
  */
-public class AppNameSharedStateContainer {
+public final class AppNameSharedStateContainer {
 
    static final Pattern TRIM_SQL_PATTERN = Pattern.compile("[\\s]*\\n+[\\s]*");
 
