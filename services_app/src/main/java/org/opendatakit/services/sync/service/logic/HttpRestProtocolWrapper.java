@@ -793,7 +793,7 @@ public class HttpRestProtocolWrapper {
     }
   }
 
-  public String convertResponseToString(CloseableHttpResponse response) throws IOException {
+  public static String convertResponseToString(CloseableHttpResponse response) throws IOException {
 
     if (response == null) {
       throw new IllegalArgumentException("Can't convert null response to string!!");
@@ -953,7 +953,7 @@ public class HttpRestProtocolWrapper {
     }
   }
 
-  public String determineContentType(String fileName) {
+  public static String determineContentType(String fileName) {
     int ext = fileName.lastIndexOf('.');
     if (ext == -1) {
       return "application/octet-stream";
@@ -966,7 +966,7 @@ public class HttpRestProtocolWrapper {
     return mimeType;
   }
 
-  public String extractInstanceFileRelativeFilename(String header) {
+  public static String extractInstanceFileRelativeFilename(String header) {
     // Get the file name
     int firstIndex = header.indexOf(multipartFileHeader);
     if ( firstIndex == -1 ) {

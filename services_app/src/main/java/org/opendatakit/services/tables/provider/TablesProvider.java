@@ -71,7 +71,7 @@ public class TablesProvider extends ContentProvider {
     }
   }
 
-  public String getTablesAuthority() {
+  public static String getTablesAuthority() {
     return TablesProviderAPI.AUTHORITY;
   }
 

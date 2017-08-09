@@ -14,12 +14,16 @@
 
 package org.opendatakit.services.application;
 
+import android.content.Context;
+
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 
+import java.lang.ref.WeakReference;
+
 public final class Services extends ToolAwareApplication {
 
-  private static Services singleton = null;
+  private static WeakReference<Services> singleton = null;
 
   @Override public int getApkDisplayNameResourceId() {
     return R.string.app_name;
@@ -27,7 +31,11 @@ public final class Services extends ToolAwareApplication {
 
   @Override
   public void onCreate() {
-    singleton = this;
+    if (singleton == null) singleton = new WeakReference<>(this);
     super.onCreate();
+  }
+
+  @Deprecated public static Context _please_dont_use_getInstance() {
+    return singleton.get();
   }
 }

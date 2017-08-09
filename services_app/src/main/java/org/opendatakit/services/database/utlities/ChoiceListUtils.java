@@ -38,7 +38,7 @@ public final class ChoiceListUtils {
    * @param choiceListId
    * @return
    */
-  public String getChoiceList(OdkConnectionInterface db, String choiceListId) {
+  public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
 
     if ( choiceListId == null || choiceListId.trim().length() == 0 ) {
       return null;
