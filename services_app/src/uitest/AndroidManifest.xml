@@ -3,5 +3,5 @@
           package="${applicationId}">
 
     <uses-permission android:name="android.permission.SET_ANIMATION_SCALE"/>
-    <!--Use with adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE-->
+    <!--Use with adb shell pm grant org.opendatakit.services android.permission.SET_ANIMATION_SCALE-->
 </manifest>
