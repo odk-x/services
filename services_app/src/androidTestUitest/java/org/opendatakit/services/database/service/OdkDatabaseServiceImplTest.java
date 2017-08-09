@@ -361,8 +361,8 @@ public class OdkDatabaseServiceImplTest {
 
   @Test
   public void testPrivilegedServerTableSchemaETagChanged() throws Exception {
+    truncate(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
     createTeaHouses();
-    truncate(TableDefinitionsColumns.TABLE_ID);
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
         new String[] { TableDefinitionsColumns.TABLE_ID, TableDefinitionsColumns.LAST_DATA_ETAG,
             TableDefinitionsColumns.LAST_SYNC_TIME, TableDefinitionsColumns.SCHEMA_ETAG,
@@ -696,6 +696,7 @@ public class OdkDatabaseServiceImplTest {
 
   @Test
   public void testDeleteTableAndAllData() throws Exception {
+    db.rawQuery("CREATE TABLE IF NOT EXISTS _uploads (_tableId);", new String[0]).close();
     createTeaHouses();
     truncate(DatabaseConstants.TABLE_DEFS_TABLE_NAME);
     truncate(DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);

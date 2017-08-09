@@ -153,7 +153,7 @@ public class TablesProvider extends ContentProvider {
         return null;
       }
       // Tell the cursor what uri to watch, so it knows when its source data changes
-      c.setNotificationUri(getContext().getContentResolver(), uri);
+      if (getContext() != null) c.setNotificationUri(getContext().getContentResolver(), uri);
       c.registerDataSetObserver(new InvalidateMonitor(appName, dbHandleName));
       success = true;
       return c;
