@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ODK Services</string>
+
+    <string name="services_notice">ODK Services provide baso de datos, acceso a archivos, y sincronizacion de dato a todos los applicaciones de ODK 2.0.</string>
+    <string name="action_admin_settings">Opciones de Administrador</string>
+    <string name="action_settings">Opciones</string>
+    <string name="action_about">Sobre ODK</string>
+    <string name="action_sync">Sincronizacion</string>
+    <!--<string name="action_logout">Logout</string>-->
+    <string name="action_change_user">Cambar Usario/Desconectar Cuenta</string>
+    <string name="action_resolve_conflict">Resolver Conflictos</string>
+    <string name="action_verify_server_settings">Verificar Aceso de Usario</string>
+
+    <!-- Checkpoint and Conflict Resolution Stuff -->
+    <string name="all_conflicts_notice">Por favor esperar - Buscando conflictos&#8230;</string>
+    <string name="all_tables_scanned_for_conflicts">Todos los tabulas se han examinados para conflictos</string>
+    <string name="cancel">Cancelar</string>
+    <string name="yes">Sí</string>
+    <string name="take_local">Tomar cambios locales</string>
+    <string name="take_server">Tomar cambios del servidor</string>
+    <string name="mark_resolved">Marcar como resolvado</string>
+    <string name="resolve_cannot_complete_message">Hace falta un valor por cada columno en conflicto. La fila no se puede resolverse.</string>
+    <string name="conflict_local_was_deleted_explanation">Ha usted eliminado una fila que alguien otro ha cambiado.</string>
+    <string name="conflict_server_was_deleted_explanation">Alguien otro ha eliminado una fila que ha usted cambiado.</string>
+    <string name="conflict_resolve_or_choose">Alguien otro ha cambiado una fula que ha usted cambiado.</string>
+    <string name="radio_button_message_restore_local_deleted">Restorar y resolver.</string>
+    <string name="radio_button_message_delete_local_deleted">Ignorar cambios, eliminar en el servidor.</string>
+    <string name="radio_button_message_restore_server_deleted">Restorar y resolver.</string>
+    <string name="radio_button_message_delete_server_deleted">Eliminar y perder cambios locales.</string>
+
+    <string name="conflict_take_local_warning">¿Ignorar servidor y tomar locales para todos?</string>
+    <string name="conflict_take_server_warning">¿Ignorar todos los cambios locales y usar los del servidor?</string>
+    <string name="conflict_take_local_with_deltas_warning">¿Integrar cambios con los valores selecionados?</string>
+    <string name="conflict_delete_local_confirmation_warning">¿Eliminar fila y perder los cambios locales?</string>
+    <string name="conflict_delete_on_server_confirmation_warning">¿Eliminar fila en el servidor?</string>
+
+    <string name="checkpoint_restore_complete_or_take_newest">Restorar al estado finalizado o guardar como no completado</string>
+    <string name="checkpoint_restore_incomplete_or_take_newest">Restorar al estado no completado o guardar como no completado</string>
+    <string name="checkpoint_remove_or_take_newest">Eliminar o guardar como no completado</string>
+
+    <string name="select_checkpoint_to_resolve">Elige la fila con cambios para resolver</string>
+    <string name="no_items_display_checkpoints">Por favor espera&#8230;\nBuscando cambios.</string>
+    <string name="checkpoint_take_all_oldest_or_remove">Eliminar todos</string>
+    <string name="checkpoint_take_all_newest">Guardar todos como no completado</string>
+    <string name="silently_resolved_single_checkpoint">Un cambio en una fila que no tiene usted acceso para cambiar se ha restorado a un estado finalizado.</string>
+    <string name="silently_resolved_checkpoints">%1$d cambios en filas que no tiene usted acceso para cambiar se ha restorado a estados finalizados.</string>
+
+    <string name="checkpoint_radio_local">Integrar:</string>
+    <string name="checkpoint_radio_server">Restorar:</string>
+    <string name="checkpoint_take_oldest">Eliminar</string>
+    <string name="checkpoint_take_oldest_remove">Eliminar</string>
+    <string name="checkpoint_take_oldest_finalized">Restorar a un estado finalizado</string>
+    <string name="checkpoint_take_oldest_incomplete">Restorar a un estado no completado</string>
+    <string name="checkpoint_take_newest">Integrar todos los cambios y guardar como no completado</string>
+    <string name="checkpoint_take_newest_with_deltas">Integrar todos los cambios eligidos y guardar como no completado</string>
+
+    <string name="checkpoint_delete_warning">¿Eliminar entiramente?</string>
+    <string name="checkpoint_take_oldest_warning">¿Eliminar los cambios guardados y continuar?</string>
+    <string name="checkpoint_take_newest_warning">¿Guardar todos como no completados y continuar?</string>
+    <string name="checkpoint_take_newest_with_deltas_warning">¿Integrar cambios como indicado, guardar como no completado y continuar?</string>
+
+    <string name="checkpoint_auto_apply">No se puede encontrar cambios en columnos definidos del usuario &#8212; ignorando cambios.</string>
+    <string name="checkpoint_auto_apply_all">No se puede encontrar cambios en columnos definidos del usuario en qualquier fila. \nIgnorando todos los cambios no guardados.</string>
+
+    <string name="select_conflict_to_resolve">Eligir fila con conflictos para empezar resolverlos.</string>
+    <string name="no_items_display_conflicts">Por favor espera&#8230;\nBuscando conflictos.</string>
+    <string name="conflict_take_all_local_updates">Tomar cambios locales, ignorar el servidor</string>
+    <string name="conflict_take_all_server_updates">Tomar cambios del servidor, ignorar los cambios locales</string>
+    <string name="silently_resolved_single_conflict">Un conflicto en una fila que no tiene usted acceso a cambiar se ha resolvado de un modo discreto usando el data del servidor.</string>
+    <string name="silently_resolved_conflicts">%1$d conflictos en filas que no tiene usted acceso a cambiar se ha resolvado de un modo discreto usando el data del servidor.</string>
+
+    <string name="conflict_resolving_all">Resolvando todos los conflictos</string>
+    <string name="resolving_row_n_of_m">Resolvando fila %1$d de %2$d</string>
+    <string name="resolver_already_active">Acción ya esta en progreso</string>
+    <string name="done_resolving_rows">Completado</string>
+
+    <string name="conflict_radio_local">Local:</string>
+    <string name="conflict_radio_server">Del Servidor:</string>
+    <string name="conflict_take_local_updates">Tomar el versión local</string>
+    <string name="conflict_take_server_updates">Tomar el versión del servidor</string>
+    <string name="conflict_take_local_with_deltas">Integrar cambios como indicado</string>
+
+    <string name="conflict_restore_with_server_changes">Restorar la fila local con el data del servidor</string>
+    <string name="conflict_restore_with_local_changes">Restorar la fila en el servidor con el data local</string>
+    <string name="conflict_enforce_local_delete">Eliminar fila en el servidor</string>
+    <string name="conflict_apply_delete_from_server">Eliminar fila localmente</string>
+
+    <string name="conflict_auto_apply">No se puede encontrar cambios en columnos definidos del usuario &#8212; tomando cambios de metadata del servidor.</string>
+    <string name="conflict_auto_apply_all">No se puede encontrar cambios en columnos definidos del usuario &#8212; se ha tomado todos los cambios de metadata del servidor.</string>
+
+    <string name="conflict_database_consistency_error">Error en el baso de datos no arreglable, por favor contactar al grupo de ODK</string>
+
+    <string name="resolve_row_display_name">Impreso: %1$s Instancia: %2$s</string>
+    <!-- Sync Service and Notifications stuff -->
+
+    <!-- progress dialog titles -->
+    <string name="sync_in_progress">Sincronizando&#8230;</string>
+    <string name="sync_app_level_files">Sincronizando app y configuración&#8230;</string>
+    <string name="sync_table_level_files">Sincronizando configuración de tabulas y impresos&#8230;</string>
+    <string name="sync_row_data">Sincronzando filas&#8230;</string>
+
+    <!-- outcome dialog titles -->
+    <string name="sync_communications_error">Error de comunicación al conectar.</string>
+    <string name="sync_device_internal_error">Se ha ocurido un error internal.</string>
+    <string name="sync_resync_because_config_reset_error">La configuración del servidor ha sido cambiado durante el sincronización. Por favor intentarlo de nuevo.</string>
+    <string name="sync_user_authorization_failure">Error al autorizar.</string>
+    <string name="sync_server_configuration_failure">Error en la configuración del servidor</string>
+    <string name="sync_device_configuration_failure">Error en la configuración del dispotivo</string>
+    <string name="sync_conflicts_need_resolving">Se han detectados conflictos</string>
+    <string name="sync_conflicts_text">Usarios otros han modificados las mismas filas que usted.\r\nAhora tiene usted que integrar los cambios de usted con los de ellos.</string>
+    <string name="sync_successful">Éxito al sincronizar</string>
+    <string name="sync_successful_text">Éxito! El data y configuración está la mismo con el servidor.</string>
+    <string name="sync_complete_pending_attachments">Éxito al sincronizar sin archivos</string>
+    <string name="sync_complete_pending_attachments_text">Se han sincronizado data y configuración, pero haría archivos (imágenes, audio o video) que no estaba sincronizado con el servidor</string>
+
+    <!-- intermediate progress messages -->
+    <string name="sync_starting">Empezando sincronización&#8230;</string>
+    <string name="sync_getting_app_level_manifest">Leyendo la lista de archivos del servidor.</string>
+
+    <string name="sync_uploading_local_file">Copiando %1$s al servidor.</string>
+    <string name="sync_deleting_file_on_server">Eliminando %1$s del servidor.</string>
+    <string name="sync_verifying_local_file">Verificando que %1$s está la misma del servidor.</string>
+    <string name="sync_deleting_local_file">Eliminando %1$s del dispositivo.</string>
+
+    <string name="sync_getting_table_manifest">Leyendo la lista de archivos de %1$s del servidor.</string>
+
+    <string name="sync_table_data_sync_complete">Se ha sincronizado la data de %1$s con el servidor.</string>
+    <string name="sync_table_data_sync_skipped">No se ha sincronizado la data de %1$s (error al sincronizar configuración).</string>
+    <string name="sync_table_data_sync_pending_attachments">Se ha sincronizado la data de %1$s en parte. Al menos uno archivo no está sincronizado (imagen, audio o video).</string>
+    <string name="sync_table_data_sync_with_conflicts">Se ha sincronizado la data de %1$s en parte. Por favor resolve los conflictos y intentalo de nuevo.</string>
+    <string name="sync_table_contains_checkpoints">Hay cambios no guardados que necesitan resolverse. No se puede empezar sincronización ahora.</string>
+    <string name="sync_table_erroneous_filter">Error internal al acceder el baso de datos.</string>
+    <string name="sync_table_erroneous_conflict_type">Error internal al integrar cambios del servidor con los cambios locales.</string>
+
+    <string name="sync_verifying_app_name_on_server">Verificando que el servidor está configurado por este app.</string>
+    <string name="sync_obtaining_user_permissions_from_server">Leyendo permisos del servidor.</string>
+    <string name="sync_retrieving_tables_list_from_server">Leyendo la lista de tabulas del servidor.</string>
+    <string name="sync_verifying_table_schema_on_server">Verificando que la esqema de %1$s es lo mismo con la del servidor.</string>
+    <string name="sync_creating_local_table">Haciendo %1$s&#8230;</string>
+    <string name="sync_dropping_local_table">Eliminando %1$s del dispotivo&#8230;</string>
+    <string name="sync_table_level_file_sync_complete">Se ha completado sincronización de todos los archivos de la tábula %1$s.</string>
+    <string name="sync_table_level_sync_failed">Error al sincronizar los archivos de la tábula %1$s.</string>
+
+    <string name="sync_getting_changed_rows_on_server">Recibiendo %1$s cambios del servidor.</string>
+    <string name="sync_anaylzing_local_row_changes">Aggregando %1$s cambios locales para enviar al servidor.</string>
+    <string name="sync_applying_batch_server_row_changes">Integrando %1$s cambios del servidor.</string>
+    <string name="sync_fetching_local_rows_in_batch_server_row_changes">Leyendo %1$s filas del servidor.</string>
+    <string name="sync_succeeded_pulling_rows_from_server">Recibido %1$s cambios del servidor con éxito.</string>
+    <string name="sync_failed_pulling_rows_from_server">Error al recibir %1$s cambios del servidor.</string>
+
+    <string name="sync_calculating_rows_to_push_to_server">Contando cambios en %1$s filas para enviar al servidor.</string>
+    <string name="sync_pushing_local_row_changes_to_server">Enviando cambios en %1$s al servidor.</string>
+    <string name="sync_server_row_updated">Cambiado fila de %1$s número %2$d de %3$d en el servidor con éxito.</string>
+    <string name="sync_server_row_update_failed">Error al cambiar fila en %1$s número %2$d de %3$d en el servidor.</string>
+    <string name="sync_server_row_update_denied">No tiene usted acceso de cambiar fila en %1$s número %2$d de %3$d en el servidor.</string>
+    <string name="sync_updating_data_etag_after_push_to_server">Se ha completado un cambio en cantidad de %1$s en el servidor.</string>
+    <string name="sync_completed_push_to_server">Dado cambios de %1$s al servidor con éxito.</string>
+
+    <string name="sync_upserting_server_row">Enviando fila de %1$s número %2$d de %3$d al servidor.</string>
+    <string name="sync_altering_server_row">Enviando fila de %1$s número %2$d de %3$d al servidor.</string>
+    <string name="sync_deleting_server_row">Eliminando fila de %1$s número %2$d de %3$d al servidor.</string>
+    <string name="sync_skipping_attachments_server_row">No enviando %1$s archivos para la fila %2$d de %3$d al servidor.</string>
+    <string name="sync_uploading_attachments_server_row">Enviando %1$s archivos para la fila %2$d de %3$d al servidor.</string>
+    <string name="sync_downloading_attachments_server_row">Descargando %1$s archivos para la fila %2$d de %3$d del servidor.</string>
+    <string name="sync_syncing_attachments_server_row">Sincronizando %1$s archivos para la fila %2$d de %3$d con el servidor.</string>
+    <string name="sync_attachment_no_changes">No hay ningunos archivos que sincronizar para %1$s.</string>
+    <string name="sync_count_attachment_changes">Contando filas con archivos para sincronizar para %1$s</string>
+    <string name="sync_fetch_batch_attachment_changes">Leyendo filas con archivos en cantidad para sincronizar %1$s</string>
+    <string name="sync_attachment_completed">Se ha completado sincronizar archivos para %1$s.</string>
+
+    <string name="sync_deleting_local_row">Eliminando fila local de %1$s número %2$d de %3$d.</string>
+    <string name="sync_deferring_delete_local_row">Se ha programado un eliminación de fila local %2$d de %3$d en %1$s.</string>
+    <string name="sync_updating_local_row">Integrando cambios en %1$s del servidor, número %2$d de %3$d.</string>
+    <string name="sync_inserting_local_row">Recibiendo fila nueva en %1$s, número %2$d de %3$d.</string>
+    <string name="sync_marking_conflicting_local_row">Fila %2$d of %3$d en %1$s tiene conflictos.</string>
+
+    <!-- Sync User Interface stuff -->
+    <string name="sync_details">Opciones de sincronizar:</string>
+    <string name="sync_server_url">URL del servidor</string>
+    <string name="sync_default_server_url">https://opendatakit-2.appspot.com</string>
+    <string name="sync_account">Cuenta:</string>
+    <string name="sync_progress_state_label">Estatus de sincronizar</string>
+    <string name="sync_progress_message_label">Mensaje de sincronizar</string>
+    <string name="sync_save_settings">Guardar</string>
+    <string name="sync_auth_account">Autorizar</string>
+    <string name="sync_instance_files">Sincronizar archivos (imágenes, audio, video)</string>
+    <string name="sync_defer_instance_files">Sincronizar archivos más tarde</string>
+    <string name="sync_start">Sincronizar Ahora</string>
+    <string name="sync_reset_server">Reinicializar servidor</string>
+
+    <string name="sync_confirm_change_settings">Confirmar</string>
+    <string name="sync_change_settings_warning">Si guarde usted estes cambios, tabulas que ya se ha sincronizado podría no poder sincronizar en el futuro.</string>
+    <string name="sync_save">Guardar</string>
+
+    <string name="sync_choose_account">Por favor elige cuenta</string>
+    <string name="sync_waiting_auth">Esperando autorización</string>
+
+    <string name="sync_confirm_reset_app_server">Confirmar reinicializar servidor</string>
+    <string name="sync_reset_app_server_warning">Reinicializar el servidor eliminaría todo el data que está en el servidor.</string>
+    <string name="sync_reset">Reinicializar</string>
+
+    <string name="sync_other_auth_fail">Error al autorizar %1$s</string>
+    <string name="sync_auth_unsuccessful">Por favor resolver los problemas con autenticacion y intentarlo de nuevo.</string>
+
+    <string name="sync_configure_username_password">Autenticación de nombre de usuario está elegido, pero hace falta un nombre de usário o una llame de paso. Por favor actuilaze los opciones.</string>
+    <string name="sync_configure_google_account">Google account authentication was selected but a Google account has not been configured. Please update your settings.</string>
+    <string name="sync_configure_credentials">Hace falta un tipo de autorización. Por favor actualiza los opciones.</string>
+
+    <string name="verify_server_settings_start">Verificar permisos de usuario</string>
+    <string name="verify_server_settings_starting">Empezando leer los permisos del servidor&#8230;</string>
+    <string name="verifying_server_settings">Leyendo permisos del servidor&#8230;</string>
+    <string name="verify_server_setttings_successful">Leído permisos con éxito</string>
+    <string name="verify_server_setttings_successful_text">Leído permisos con éxito.</string>
+    <string name="verify_server_settings_header">Verificar permisos</string>
+    <string name="click_to_verify_server_settings">Haz clic para verificar permisos</string>
+    <string name="warning_no_user_roles">Permisos no se han verificado. Va usted a tener los permisos de un usuario anónimo.</string>
+    <!-- sync service layer messages -->
+    <string name="sync_notification_syncing">"Sincronizando %1$s</string>
+    <string name="sync_notification_failure">"Error al sincronizar %1$s</string>
+    <string name="sync_notification_conflicts">"Conflictos al sincronizar %1$s</string>
+    <string name="sync_notification_conflicts_text">"%1$d tabulas tienen conflictos o cambios no guardados y no se han sincronizados.</string>
+    <string name="sync_notification_success_verify_complete">"%1$s Opciones del servidor verificados</string>
+    <string name="sync_notification_success_verify_complete_text">Cuenta y permisos verificados</string>
+    <string name="sync_notification_success_complete">"Sincronización de %1$s completado con éxito</string>
+    <string name="sync_notification_success_complete_text">Sincronización completado con éxito</string>
+    <string name="sync_notification_success_pending_attachments">"Sincronización de %1$s completado, pero algunos archivos no se han sincronizado</string>
+    <string name="sync_notification_success_pending_attachments_text">"Sincronización completado, pero %1$d tabulas tienen filas con archivos que no se han sincronizaido completamente.</string>
+    <string name="sync_status_network_transport_error">Error de red.\r\nPor favor confirma usted que el dispotivo tiene acceso al servidor.</string>
+    <string name="sync_status_device_internal_error">Error internal.\r\nPor favor contacta usted el equipo de ODK con los registros.</string>
+    <string name="sync_status_authentication_error">Cuenta no encontrada o no tiene un rol que le da acceso de sincronizar.\r\nPor favor comproba usted el nombre de usuario y llama de paso.</string>
+    <string name="sync_status_internal_server_error">El servidor ha respondido con un error.\r\nPor favor contacte usted el gestor del servidor.</string>
+    <string name="sync_status_bad_gateway_or_client_config">Error de red (error de WiFi o puente).\r\nPor favor comproba usted el URL de servidor y que el navegador de este dispotivo puede contactar el servidor.</string>
+    <string name="sync_status_request_or_protocol_error">Error de protocolo.\r\nPor favor comproba usted que el servidor es compatible.</string>
+    <string name="sync_status_appname_not_supported_by_server">Servidor está configurado para un app differente (el que el servudor usa por defecto se llama default).\r\nPor favor comproba usted los opciones del servidor.</string>
+    <string name="sync_status_server_missing_config_files">Servidor no tiene todos los archivos que tiene este dispotivo. \r\n¿Quería usted reinicializar el servidor?</string>
+    <string name="sync_status_server_reset_failed_device_has_no_config_files">Dispotivo no tiene ningunos archivos ni tabulas.\r\n¿Querería usted sincronizar?</string>
+    <string name="sync_status_resync_because_config_has_been_reset_error">El servidor se ha reinicalizado, y la esquema ha cambiado. La sincronización se ha abortado.</string>
+    <!-- settings screen stuff -->
+    <string name="action_bar_admin_settings">%1$s &gt; Opciones de Administrador</string>
+    <string name="admin_settings">Opciones de Administrador</string>
+
+    <string name="admin_access_settings">Haz clic para acceder los opciones de administrador</string>
+    <string name="user_access_preferences">Usuario puede cambiar estes opciones:</string>
+
+    <string name="admin_password_settings_summary">Llame de paso de administrador en uso. Haz clic para cambiar llama de paso.</string>
+    <string name="admin_password_disabled_click_to_set">No hay llame de paso de administrador. Haz clic para activar.</string>
+    <string name="admin_password_settings">Llame de paso de administrador</string>
+    <string name="admin_password">Llame de paso de administrador</string>
+    <string name="change_admin_password">Cambiar llame de paso de administrador</string>
+    <string name="enable_admin_password">Activar llame de paso de administrador</string>
+
+    <string name="enter_admin_password">Llame de paso de administrador:</string>
+
+    <string name="click_to_change_password">Haz clic para cambiar llame de paso</string>
+
+    <string name="current_user">Usuario:</string>
+
+    <string name="change_user">Cambiar usuario</string>
+    <string name="new_user">Autenticar usuario nuevo</string>
+    <string name="logout">Desconectar usuario</string>
+    <string name="authenticate_credentials">Verificar permisos</string>
+
+    <string name="sync_pending_changes">Sincronizar</string>
+    <string name="resolve_pending_changes">Tiene usted cambios que no se han sincronizados. Si se cambia usuario o se desconecta antes de sincronizar estes cambios, podrían perderse</string>
+    <string name="resolve_with_sync">Sincronizar</string>
+    <string name="ignore_changes">Ignorar cambios no sincronizados</string>
+
+    <string name="resolve_checkpoints_and_conflicts">Resolver cambios no guardados y conflictos</string>
+    <string name="resolve_pending_checkpoints_and_conflicts">Tiene usted conflictos o cambios no guardados que tienen que resolverse antes de que puede usted cambiar usuario.</string>
+
+    <string name="anonymous_warning">¿Verificar permisos de usuario nuevo?\r\n\r\nSi no se verifican, va usted a perder acceso de usuario y va usted a tener el acceso de un usuario anónimo.</string>
+    <string name="authentication_error">Error al verificar permisos</string>
+
+    <string name="enter_new_user">Nombre de usuario nuevo:</string>
+    <string name="enter_new_password">Llame de paso:</string>
+    <string name="verify_new_password">Llame de paso de nuevo:</string>
+    <string name="password_changed">Llame de paso cambiado con éxito</string>
+    <string name="admin_password_disabled">Llame de paso de administrador desactivado</string>
+    <string name="admin_password_enabled">Llame de paso de administrador activado</string>
+    <string name="password_mismatch">Gomé, pero los llames de paso no son los mismos.</string>
+    <string name="show_password_text">Demostrar llame de paso como texto claro</string>
+
+    <string name="action_bar_general_settings">%1$s &gt; Opciones generales</string>
+    <string name="action_bar_general_settings_admin_mode">%1$s &gt; Opciones generales (Administrador)</string>
+    <string name="general_settings">Opciones generales</string>
+    <string name="admin_general_settings">Acceso a los opciones como un administrador</string>
+    <string name="opendatakit_website">Ayuda de ODK</string>
+    <string name="click_to_web">Has clic para visitar http://opendatakit.org</string>
+
+    <string name="server_settings_summary">Usuario, autenticación y opciones del servidor</string>
+    <string name="server">Opciones del servidor</string>
+    <string name="server_restrictions_apply">Opciones del servidor (limitado, no está usted el administrador)</string>
+    <string name="server_url">URL del servidor</string>
+    <string name="change_server_url">URL del servidor</string>
+    <string name="url_error">Gomé, pero el URL no es válido</string>
+    <string name="url_error_whitespace">No puede haber espacios en URLs</string>
+
+    <string name="restrict_server_settings_summary">Limitar habilidad de usuarios no administratadoras a cambiar opciones del servidor</string>
+    <string name="restrict_server">Manejar habilidad de cambiar opciones del servidor</string>
+    <string name="credential">Credencial de servidor</string>
+    <string name="change_credential">Cambiar credencial de servidor</string>
+
+    <string name="username_password">Nombre de usuario y/o llame de paso</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="change_username">Nombre de usuario</string>
+    <string name="password">Llame de paso</string>
+    <string name="change_server_password">Llame de paso</string>
+    <string name="google_account">Elige usuario de google</string>
+    <string name="selected_google_account_text">Usuario de google</string>
+    <string name="no_account">Sin cuenta</string>
+    <string name="anonymous">Ninguno (acceso anonimo)</string>
+    <string name="credential_type_prefix">Credenciales: </string>
+
+    <string name="testing_support">Opciones de prueba:</string>
+    <string name="non_secure_authentication">Habilitar autenticación inseguro</string>
+    <string name="non_secure_summary">Autenticar usando http, sin encriptación de llamas de paso: (para prueba)</string>
+
+    <string name="restrict_device_settings_summary">Limitar habilidad de cambiar opciones de dispotivo</string>
+    <string name="restrict_device">Limitar habilidad de cambiar opciones de dispotivo</string>
+
+    <string name="device_settings_summary">Opciones especifico a este dispotivo</string>
+    <string name="device">Opciones de dispotivo</string>
+    <string name="device_restrictions_apply">Opciones de este dispotivo (limitado, no está usted un administrador)</string>
+
+    <string name="default_locale">Idioma por defecto</string>
+    <string name="change_default_locale">Cambiar idioma usado por defecto</string>
+    <string name="system_locale">Idioma de este dispotivo (%1$s)</string>
+    <string name="font_size">Tamaño de texto</string>
+    <string name="change_font_size">Tamaño de texto</string>
+
+    <string name="show_splash">Demostrar mensaje de cargando (tarda empezar)</string>
+    <string name="show_splash_summary">Demostrar cuando empezando</string>
+    <string name="splash_path">Imagen de splash elegido</string>
+    <string name="default_splash_path">Por defecto de ODK</string>
+    <string name="select_another_image">Eligir una imagen diferente</string>
+    <string name="use_odk_default">Usar el imagen de ODK por defecto</string>
+    <string name="change_splash_path">Cambiar imagen</string>
+    <string name="admin_change_splash_settings">Cambiar opciones de mensaje de cargando</string>
+    <string name="splash_media_save_failed">Error al guardar</string>
+
+    <string name="tool_tables_settings">Opciones de ODK Tables</string>
+    <string name="tool_tables_restrictions_apply">Opciones de ODK Tables (limitado, no está usted un administrador)</string>
+    <string name="tool_tables_settings_summary">Opciones de ODK Tables</string>
+    <string name="custom_home_screen">Usar pantella de casa personalizada</string>
+    <string name="admin_tool_tables_settings">Manejar habilidad de cambiar opciones de ODK Tables</string>
+    <string name="admin_tool_tables_settings_summary">Limitar habilidad de cambiar opciones de ODK Tables</string>
+    <string name="change_custom_home_screen">Cambiar pantella de casa personalizada</string>
+
+    <string name="clear_configuration_settings">Reinicializar configuración</string>
+    <string name="click_to_clear_settings">Haz clic para eliminar configuración</string>
+
+    <string name="reset_settings">Reinicializar configuración</string>
+    <string name="confirm_reset_settings">Opciones especificos a este dispotivo y opciones de usuario estarían eliminados, y todos los heramientas harán sus lógicos de inicializar de nuevo. ¿Está usted seguro?</string>
+    <!-- legacy submission logic -->
+    <string name="success">Éxito</string>
+
+</resources>
