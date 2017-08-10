@@ -27,7 +27,6 @@ import org.opendatakit.services.application.Services;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.tables.provider.TablesProviderTest;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
@@ -36,7 +35,6 @@ import java.util.*;
 
 import static android.text.TextUtils.join;
 import static org.junit.Assert.*;
-import static org.opendatakit.services.tables.provider.TablesProviderTest.get;
 
 /**
  * Created by Niles on 7/6/17.
@@ -50,6 +48,10 @@ public class OdkDatabaseServiceImplTest {
   private PropertiesSingleton props;
   private DbHandle dbHandle;
   private OdkConnectionInterface db;
+
+  public static String get(Cursor c, String col) {
+    return c.getString(c.getColumnIndexOrThrow(col));
+  }
 
   private static String getAppName() {
     return "default";
@@ -905,9 +907,16 @@ public class OdkDatabaseServiceImplTest {
   }
 
   private void thSetRevid(String revId) throws Exception {
+    String cId = TableDefinitionsColumns.TABLE_ID;
+    String cSchema = TableDefinitionsColumns.SCHEMA_ETAG;
+    String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
+    String cTime = TableDefinitionsColumns.LAST_SYNC_TIME;
+    String cRev = TableDefinitionsColumns.REV_ID;
+    String[] all = { cId, cSchema, cData, cTime, cRev };
+
     db.rawQuery("DELETE FROM " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + ";", null);
     db.rawQuery("INSERT INTO " + DatabaseConstants.TABLE_DEFS_TABLE_NAME + " (" + join(", ",
-        TablesProviderTest.all) + ") VALUES (?, ?, ?, ?, ?);",
+        all) + ") VALUES (?, ?, ?, ?, ?);",
         new String[] { "Tea_houses", "schema etag", "data etag", "time", revId });
   }
 

@@ -34,7 +34,7 @@ public class TablesProviderTest {
   private static String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
   private static String cTime = TableDefinitionsColumns.LAST_SYNC_TIME;
   private static String cRev = TableDefinitionsColumns.REV_ID;
-  public static String[] all = { cId, cSchema, cData, cTime, cRev };
+  private static String[] all = { cId, cSchema, cData, cTime, cRev };
 
   private static OdkConnectionInterface db;
   private static TablesProvider p;

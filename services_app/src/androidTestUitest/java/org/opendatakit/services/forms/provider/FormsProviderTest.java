@@ -20,8 +20,6 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
@@ -39,7 +37,6 @@ public class FormsProviderTest {
   private static FormsProvider p;
   @GuardedBy("lock")
   private static File a, b;
-  private static Lock lock = new ReentrantLock();
 
   public static ContentValues getCvs(String id) {
     ContentValues c = new ContentValues();
