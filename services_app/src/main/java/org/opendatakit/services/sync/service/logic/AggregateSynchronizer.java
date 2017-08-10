@@ -892,7 +892,7 @@ public class AggregateSynchronizer implements Synchronizer {
         localFile);
     URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
     log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
-    String ct = wrapper.determineContentType(localFile.getName());
+    String ct = HttpRestProtocolWrapper.determineContentType(localFile.getName());
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
@@ -917,7 +917,7 @@ public class AggregateSynchronizer implements Synchronizer {
       IOException
   {
     log.i(LOGTAG, "[uploadInstanceFile] filePostUri: " + instanceFileUri.toString());
-    String ct = wrapper.determineContentType(file.getName());
+    String ct = HttpRestProtocolWrapper.determineContentType(file.getName());
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
@@ -978,7 +978,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     for (CommonFileAttachmentTerms cat : batch) {
       log.i(LOGTAG, "[uploadFile] filePostUri: " + cat.instanceFileDownloadUri.toString());
-      String ct = wrapper.determineContentType(cat.localFile.getName());
+      String ct = HttpRestProtocolWrapper.determineContentType(cat.localFile.getName());
 
       String filename = ODKFileUtils
           .asRowpathUri(sc.getAppName(), tableId, instanceId, cat.localFile);
