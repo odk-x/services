@@ -34,8 +34,8 @@ public final class ChoiceListUtils {
   }
 
   /**
-   * @param db
-   * @param choiceListId
+   * @param db           a database connection to use
+   * @param choiceListId which row of choices to get from the database
    * @return
    */
   public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
@@ -87,6 +87,13 @@ public final class ChoiceListUtils {
     }
   }
 
+  /**
+   * Updates the choice just row with the given id to have the new json
+   *
+   * @param db             a database connection to use
+   * @param choiceListId   the id of the row in the choice list table
+   * @param choiceListJSON json representing the new set of choices
+   */
   public void setChoiceList(OdkConnectionInterface db, String choiceListId,
       String choiceListJSON) {
 
