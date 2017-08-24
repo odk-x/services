@@ -14,7 +14,11 @@
 
 package org.opendatakit.services.application;
 
+import com.google.firebase.analytics.FirebaseAnalytics ;
+
 import android.content.Context;
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
 
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
@@ -23,6 +27,7 @@ import java.lang.ref.WeakReference;
 
 public final class Services extends ToolAwareApplication {
 
+  private FirebaseAnalytics analytics;
   private static WeakReference<Services> singleton = null;
 
   @Override public int getApkDisplayNameResourceId() {
@@ -33,6 +38,9 @@ public final class Services extends ToolAwareApplication {
   public void onCreate() {
     if (singleton == null) singleton = new WeakReference<>(this);
     super.onCreate();
+
+    Fabric.with(this, new Crashlytics());
+    analytics = FirebaseAnalytics.getInstance(this);
   }
 
   @Deprecated public static Context _please_dont_use_getInstance() {
