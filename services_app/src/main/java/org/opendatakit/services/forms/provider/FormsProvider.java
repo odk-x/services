@@ -241,18 +241,14 @@ public class FormsProvider extends ContentProvider {
       }
 
       try {
-        long rowId = db.insertOrThrow(DatabaseConstants.FORMS_TABLE_NAME, null, values);
+        db.insertOrThrow(DatabaseConstants.FORMS_TABLE_NAME, null, values);
         db.setTransactionSuccessful();
         // and notify listeners of the new row...
         Uri formUri = Uri.withAppendedPath(
             Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
             (String) values.get(FormsColumns.FORM_ID));
-        Uri idUri = Uri.withAppendedPath(
-            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
-            Long.toString(rowId));
         if (getContext() != null) {
           getContext().getContentResolver().notifyChange(formUri, null);
-          getContext().getContentResolver().notifyChange(idUri, null);
         }
         return formUri;
       } catch (Exception e) {
