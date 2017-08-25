@@ -131,7 +131,13 @@ public class SyncExecutionContext implements SynchronizerStatus {
   public String getString(int resId) {
     return application.getString(resId);
   }
-  
+
+  public void signalPropertiesChange() {
+
+    PropertiesSingleton props = CommonToolProperties.get(application, appName);
+    props.signalPropertiesChange();
+  }
+
   public void setAppLevelSyncOutcome(SyncOutcome syncOutcome) {
     mUserResult.setAppLevelSyncOutcome(syncOutcome);
   }
