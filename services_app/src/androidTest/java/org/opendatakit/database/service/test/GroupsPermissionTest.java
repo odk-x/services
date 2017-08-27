@@ -1,5 +1,6 @@
 package org.opendatakit.database.service.test;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
@@ -92,6 +94,12 @@ public class GroupsPermissionTest {
 
    @Rule
    public final ODKServiceTestRule mServiceRule = new ODKServiceTestRule();
+
+   @Rule
+   public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+   @Rule
+   public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
    @Before
    public void setUp() throws Exception {

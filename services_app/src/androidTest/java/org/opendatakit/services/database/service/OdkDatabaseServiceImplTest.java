@@ -1,10 +1,13 @@
 package org.opendatakit.services.database.service;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
@@ -113,6 +116,11 @@ public class OdkDatabaseServiceImplTest {
     f.close();
     return instanceFolder;
   }
+
+  @Rule
+  public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+  @Rule
+  public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
   @Before
   public void setUp() throws Exception {

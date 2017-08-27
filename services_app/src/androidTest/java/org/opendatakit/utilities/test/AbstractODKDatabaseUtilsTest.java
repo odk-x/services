@@ -14,13 +14,17 @@
 
 package org.opendatakit.utilities.test;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
 
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.apache.commons.lang3.CharEncoding;
+import org.junit.Rule;
 import org.junit.Test;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -166,6 +170,12 @@ public abstract class AbstractODKDatabaseUtilsTest {
     ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableName);
     verifyNoTablesExist();
   }
+
+  @Rule
+  public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+  @Rule
+  public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
   /*
    * Test query when there is no data
