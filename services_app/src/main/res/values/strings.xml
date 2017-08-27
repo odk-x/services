@@ -365,6 +365,9 @@
     <string name="confirm_reset_settings">Device-specific and
         user identity settings will be cleared and all tools will re-run their
         initialization logic.\n\nDo you wish to proceed?</string>
+
+    <string name="write_external_storage_rationale">ODK Services needs to access external storage to store resources and interact with other ODK apps</string>
+    <string name="write_external_perm_denied">ODK Services cannot function without write access to external storage</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
 </resources>
