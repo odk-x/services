@@ -377,6 +377,9 @@ public class ProcessAppAndTableLevelChanges {
           "[synchronizeConfigurationAndContent] exception while trying to synchronize app-level files.");
       sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
       return new ArrayList<TableResource>();
+    } finally {
+      // because the properties files may have changed, signal that they have
+      sc.signalPropertiesChange();
     }
 
     // done with app-level file synchronization

@@ -18,7 +18,7 @@ import android.database.Cursor;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.sqlite.database.SQLException;
-import org.sqlite.database.sqlite.SQLiteConnection;
+import org.sqlite.database.sqlite.SQLiteConnectionBase;
 import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
 import org.sqlite.database.sqlite.SQLiteException;
 
@@ -35,7 +35,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
    */
   final OperationLog operationLog;
   final String appName;
-  final SQLiteConnection db;
+  final SQLiteConnectionBase db;
   final String sessionQualifier;
   int referenceCount = 1;
   final Object initializationMutex = new Object();
@@ -56,14 +56,14 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     String dbFilePath = getDbFilePath(appName);
 
     SQLiteDatabaseConfiguration configuration = new SQLiteDatabaseConfiguration(appName, dbFilePath,
-        SQLiteConnection.ENABLE_WRITE_AHEAD_LOGGING |
-            SQLiteConnection.OPEN_READWRITE | SQLiteConnection.CREATE_IF_NECESSARY |
-            SQLiteConnection.NO_LOCALIZED_COLLATORS, sessionQualifier);
+        SQLiteConnectionBase.ENABLE_WRITE_AHEAD_LOGGING |
+            SQLiteConnectionBase.OPEN_READWRITE | SQLiteConnectionBase.CREATE_IF_NECESSARY |
+            SQLiteConnectionBase.NO_LOCALIZED_COLLATORS, sessionQualifier);
 
     boolean success = false;
-    SQLiteConnection db = null;
+    SQLiteConnectionBase db = null;
     try {
-      db = new SQLiteConnection(configuration, appNameSharedStateContainer.getOperationLog(), null,
+      db = SQLConnectionFactory.get(configuration, appNameSharedStateContainer.getOperationLog(), null,
           sessionQualifier);
 
       // this might throw an exception
@@ -85,7 +85,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
   }
 
   private AndroidOdkConnection(Object mutex, String appName, OperationLog operationLog,
-      SQLiteConnection db, String sessionQualifier) {
+                               SQLiteConnectionBase db, String sessionQualifier) {
     this.mutex = mutex;
     this.appName = appName;
     this.operationLog = operationLog;
@@ -355,7 +355,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
    */
   private void internalBeginTransactionExclusive() {
     synchronized (mutex) {
-      db.beginTransaction(SQLiteConnection.TRANSACTION_MODE_IMMEDIATE, null);
+      db.beginTransaction(SQLiteConnectionBase.TRANSACTION_MODE_IMMEDIATE, null);
     }
   }
 
@@ -392,7 +392,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
    */
   private void internalBeginTransactionNonExclusive() {
     synchronized (mutex) {
-      db.beginTransactionNonExclusive();
+      db.beginTransaction(SQLiteConnectionBase.TRANSACTION_MODE_DEFERRED, null);
     }
   }
 
@@ -600,13 +600,13 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
    * @return
    */
-  private long internalReplaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues) {
+  private void internalReplaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues) {
     synchronized (mutex) {
-      return db.replaceOrThrow(table, nullColumnHack, initialValues);
+      db.replaceOrThrow(table, nullColumnHack, initialValues);
     }
   }
 
-  public long replaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues)
+  public void replaceOrThrow(String table, String nullColumnHack, Map<String, Object> initialValues)
       throws SQLException {
     StringBuilder b = new StringBuilder();
     b.append("replaceOrThrow(\"").append(table).append("\",");
@@ -620,7 +620,7 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-      return internalReplaceOrThrow(table, nullColumnHack, initialValues);
+      internalReplaceOrThrow(table, nullColumnHack, initialValues);
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {
@@ -637,13 +637,13 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
    * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
    * @return
    */
-  private long internalInsertOrThrow(String table, String nullColumnHack, Map<String, Object> values) {
+  private void internalInsertOrThrow(String table, String nullColumnHack, Map<String, Object> values) {
     synchronized (mutex) {
-      return db.insertOrThrow(table, nullColumnHack, values);
+      db.insertOrThrow(table, nullColumnHack, values);
     }
   }
 
-  public long insertOrThrow(String table, String nullColumnHack, Map<String, Object> values)
+  public void insertOrThrow(String table, String nullColumnHack, Map<String, Object> values)
       throws SQLException {
     StringBuilder b = new StringBuilder();
     b.append("insertOrThrow(\"").append(table).append("\",");
@@ -657,7 +657,8 @@ public final class AndroidOdkConnection implements OdkConnectionInterface {
     try {
       // invoke method
       // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-      return internalInsertOrThrow(table, nullColumnHack, values);
+      internalInsertOrThrow(table, nullColumnHack, values);
+      return;
     } catch (Throwable t) {
       operationLog.failOperation(cookie, t);
       if (t instanceof SQLiteException) {

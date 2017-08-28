@@ -123,10 +123,10 @@ public interface OdkConnectionInterface {
 
     int delete(String table, String whereClause, Object[] whereArgs) throws SQLException;
 
-    long replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
+    void replaceOrThrow(String table, String nullColumnHack, Map<String,Object> initialValues)
             throws SQLException;
 
-    long insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
+    void insertOrThrow(String table, String nullColumnHack, Map<String,Object> values)
             throws SQLException;
 
     void execSQL(String sql, Object[] bindArgs) throws SQLException;

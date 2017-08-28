@@ -20,20 +20,15 @@
 
 package org.sqlite.database;
 
-import org.opendatakit.services.database.OperationLog;
-import org.sqlite.database.sqlite.SQLiteConnection;
-import org.sqlite.database.sqlite.SQLiteDatabaseConfiguration;
+import org.sqlite.database.sqlite.SQLiteConnectionBase;
 
 /**
  * Default class used to define the actions to take when the database corruption is reported
  * by sqlite.  This had destroyed the database. Changed to simply report the error.
  * <p>
  * An application can specify an implementation of {@link DatabaseErrorHandler} on the
- * following:
- * <ul>
- *   <li>{@link SQLiteConnection#SQLiteConnection(SQLiteDatabaseConfiguration,
- *         OperationLog, DatabaseErrorHandler, String)}</li>
- * </ul>
+ * constructor of the class derived from {@link }SQLiteConnectionBase}.
+ *
  * The specified {@link DatabaseErrorHandler} is used to handle database corruption errors, if they
  * occur.
  * <p>
@@ -46,10 +41,10 @@ public final class DefaultDatabaseErrorHandler implements DatabaseErrorHandler {
 
     /**
      * defines the default method to be invoked when database corruption is detected.
-     * @param dbConnection the {@link SQLiteConnection} object representing the database
+     * @param dbConnection the {@link SQLiteConnectionBase} object representing the database
      *                     connection on which corruption is detected.
      */
-    public void onCorruption(SQLiteConnection dbConnection) {
+    public void onCorruption(SQLiteConnectionBase dbConnection) {
        dbConnection.getLogger().e(TAG, "Corruption reported by sqlite on database: "
            + dbConnection.getAppName());
        throw new IllegalStateException("Corrupted database -- what do we do now?");
