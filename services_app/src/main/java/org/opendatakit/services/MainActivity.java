@@ -16,7 +16,6 @@ package org.opendatakit.services;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -49,7 +48,12 @@ public class MainActivity extends Activity implements IAppAwareActivity,
   // Used for logging
   @SuppressWarnings("unused") private static final String TAG = MainActivity.class.getSimpleName();
 
-  private static final int W_EXT_STORAGE_REQ_CODE = 0;
+  private static final int EXT_STORAGE_REQ_CODE = 0;
+
+  protected static final String[] REQUIRED_PERMISSIONS = new String[] {
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.WRITE_EXTERNAL_STORAGE
+  };
 
   private int SYNC_ACTIVITY_RESULT_CODE = 10;
   private int VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE = 20;
@@ -57,6 +61,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
   private int SETTINGS_ACTIVITY_RESULT_CODE = 100;
 
   private String mAppName;
+  private boolean permissionOnly;
 
   @Override
   protected void onDestroy() {
@@ -74,12 +79,13 @@ public class MainActivity extends Activity implements IAppAwareActivity,
     // Used to ensure that the singleton has been initialized properly
     AndroidConnectFactory.configure();
 
-    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        != PackageManager.PERMISSION_GRANTED) {
+    this.permissionOnly = getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_PERMISSION_ONLY, false);
+
+    if (!RuntimePermissionUtils.checkSelfAnyPermission(this, REQUIRED_PERMISSIONS)) {
       ActivityCompat.requestPermissions(
           this,
-          new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
-          W_EXT_STORAGE_REQ_CODE
+          REQUIRED_PERMISSIONS,
+          EXT_STORAGE_REQ_CODE
       );
     }
   }
@@ -176,24 +182,26 @@ public class MainActivity extends Activity implements IAppAwareActivity,
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-    if (requestCode != W_EXT_STORAGE_REQ_CODE) {
+    if (requestCode != EXT_STORAGE_REQ_CODE) {
       return;
     }
 
     if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+      if (permissionOnly) {
+        setResult(Activity.RESULT_OK);
+        finish();
+      }
       return;
     }
 
-    AlertDialog.Builder builder =
-        RuntimePermissionUtils.createPermissionRationaleDialog(this, requestCode, permissions);
-
     if (RuntimePermissionUtils.shouldShowAnyPermissionRationale(this, permissions)) {
-      builder
+      RuntimePermissionUtils.createPermissionRationaleDialog(this, requestCode, permissions)
           .setMessage(R.string.write_external_storage_rationale)
           .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
+              setResult(Activity.RESULT_CANCELED);
               finish();
             }
           })
@@ -202,6 +210,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       Toast
           .makeText(this, R.string.write_external_perm_denied, Toast.LENGTH_LONG)
           .show();
+      setResult(Activity.RESULT_CANCELED);
       finish();
     }
   }
