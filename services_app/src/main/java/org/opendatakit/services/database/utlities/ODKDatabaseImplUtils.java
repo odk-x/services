@@ -103,12 +103,9 @@ public final class ODKDatabaseImplUtils {
   private static final String K_DATATABLE_ID_EQUALS_PARAM = DataTableColumns.ID + S_EQUALS_PARAM;
 
   /**
-   * The rolesList expansion is very time consuming.
-   * Implement a simple 1-deep cache and a
-   * special expansion of the privileged user roles list.
+   * Also store an immutable cache of the roles for a tables administrator.
+   * These are used for privileged requests.
    */
-  private static String cachedRolesList;
-  private static List<String> cachedRolesArray;
   private static final List<String> cachedAdminRolesArray;
   private static final TypeReference<ArrayList<String>> arrayListTypeReference;
 
@@ -126,30 +123,6 @@ public final class ODKDatabaseImplUtils {
     }
     cachedAdminRolesArray = Collections.unmodifiableList(rolesArray);
   }
-
-  private static List<String> getRolesArray(String rolesList) {
-
-    if ( rolesList == null || rolesList.length() == 0 ) {
-      return null;
-    } else if ( RoleConsts.ADMIN_ROLES_LIST.equals(rolesList) ) {
-      return cachedAdminRolesArray;
-    } else if ( cachedRolesList != null && cachedRolesList.equals(rolesList) ) {
-      return cachedRolesArray;
-    }
-    // figure out whether we have a privileged user or not
-    ArrayList<String> rolesArray = null;
-    {
-      try {
-        rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
-      } catch (IOException e) {
-        throw new IllegalStateException("this should never happen");
-      }
-    }
-    cachedRolesArray = Collections.unmodifiableList(rolesArray);
-    cachedRolesList = rolesList;
-    return cachedRolesArray;
-  }
-
 
   public enum AccessColumnType {
     NO_EFFECTIVE_ACCESS_COLUMN,
@@ -200,7 +173,7 @@ public final class ODKDatabaseImplUtils {
 
 
       // figure out whether we have a privileged user or not
-      List<String> rolesArray = getRolesArray(RoleConsts.ADMIN_ROLES_LIST);
+      List<String> rolesArray = cachedAdminRolesArray;
 
       AccessContext that = new AccessContext(accessColumnType, true, activeUser, rolesArray);
       return that;
@@ -401,6 +374,44 @@ public final class ODKDatabaseImplUtils {
   }
 
   private ODKDatabaseImplUtils() {
+  }
+
+  /**
+   * The rolesList expansion is very time consuming.
+   * Implement a simple 1-deep cache and a
+   * special expansion of the privileged user roles list.
+   *
+   * Since this is static, we need to guard it with a synchronized block
+   */
+  private final Object cacheGuard = new Object();
+  private String cachedRolesList;
+  private List<String> cachedRolesArray;
+
+  private List<String> getRolesArray(String rolesList) {
+
+    if ( rolesList == null || rolesList.length() == 0 ) {
+      return null;
+    } else if ( RoleConsts.ADMIN_ROLES_LIST.equals(rolesList) ) {
+      return cachedAdminRolesArray;
+    } else {
+      synchronized ( cacheGuard ) {
+        if ( cachedRolesList != null && cachedRolesList.equals(rolesList) ) {
+          return cachedRolesArray;
+        }
+        // figure out whether we have a privileged user or not
+        ArrayList<String> rolesArray = null;
+        {
+          try {
+            rolesArray = ODKFileUtils.mapper.readValue(rolesList, arrayListTypeReference);
+          } catch (IOException e) {
+            throw new IllegalStateException("this should never happen");
+          }
+        }
+        cachedRolesArray = Collections.unmodifiableList(rolesArray);
+        cachedRolesList = rolesList;
+        return cachedRolesArray;
+      }
+    }
   }
 
   /**

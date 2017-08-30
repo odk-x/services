@@ -115,41 +115,44 @@ public final class OperationLog {
 
    public void failOperation(int cookie, Throwable t) {
       String logString = null;
-      synchronized (mOperations) {
-         final OperationLogEntry operation = getOperationLocked(cookie);
-         if (operation != null) {
-            operation.mThrowable = t;
-            logString = logOperationLocked(cookie, null);
-         }
+      final OperationLogEntry operation = getOperationLocked(cookie);
+      if (operation != null) {
+         operation.mThrowable = t;
+         logString = logOperationLocked(operation, null);
       }
       if (logString != null) {
          WebLogger.getLogger(appName).i("operationLog",
              "failOperation: " + logString);
       }
+      // silently ignore if not found -- we are processing requests too fast!
    }
 
    public void endOperation(int cookie) {
       String logString = null;
-      synchronized (mOperations) {
-         if (endOperationDeferLogLocked(cookie)) {
-            logString = logOperationLocked(cookie, null);
+      final OperationLogEntry operation = getOperationLocked(cookie);
+      if (operation != null) {
+         if (endOperationDeferLogLocked(operation)) {
+            logString = logOperationLocked(operation, null);
          }
       }
       if ( logString != null ) {
          WebLogger.getLogger(appName).i("operationLog",
              "endOperation (long runtime): " + logString);
       }
+      // silently ignore if not found -- we are processing requests too fast!
    }
 
    public void endOperationDeferLogAdditional(int cookie, String logString) {
+      final OperationLogEntry operation = getOperationLocked(cookie);
       boolean shouldLog = false;
-      synchronized (mOperations) {
-         shouldLog = endOperationDeferLogLocked(cookie);
+      if (operation != null) {
+         shouldLog = endOperationDeferLogLocked(operation);
       }
       if ( logString != null && shouldLog ) {
          WebLogger.getLogger(appName).i("operationLog",
              "endOperation (long runtime): " + logString);
       }
+      // silently ignore if not found -- we are processing requests too fast!
    }
 
   /**
@@ -187,13 +190,15 @@ public final class OperationLog {
   }
 
    public void logOperation(int cookie, String detail) {
+      final OperationLogEntry operation = getOperationLocked(cookie);
       String logString = null;
-      synchronized (mOperations) {
-         logString = logOperationLocked(cookie, detail);
+      if (operation != null) {
+         logString = logOperationLocked(operation, detail);
       }
       if (logString != null) {
          WebLogger.getLogger(appName).i("operationLog", logString);
       }
+      // silently ignore if not found -- we are processing requests too fast!
    }
 
    public String describeCurrentOperation() {
@@ -267,11 +272,10 @@ public final class OperationLog {
    /**
     * This is ONLY called within a synchronized(mOperations){} block.
     *
-    * @param cookie
+    * @param operation
     * @return
     */
-   private boolean endOperationDeferLogLocked(int cookie) {
-      final OperationLogEntry operation = getOperationLocked(cookie);
+   private boolean endOperationDeferLogLocked(OperationLogEntry operation) {
       if (operation != null) {
          if ( !operation.mFinished ) {
             operation.mEndTime = System.currentTimeMillis();
@@ -285,11 +289,10 @@ public final class OperationLog {
    /**
     * This is ONLY called within a synchronized(mOperations){} block.
     *
-    * @param cookie
+    * @param operation
     * @param detail
     */
-   private String logOperationLocked(int cookie, String detail) {
-      final OperationLogEntry operation = getOperationLocked(cookie);
+   private String logOperationLocked(OperationLogEntry operation, String detail) {
       StringBuilder msg = new StringBuilder();
       operation.describe(msg, false);
       if (detail != null) {
@@ -316,8 +319,16 @@ public final class OperationLog {
     * @return
     */
    private OperationLogEntry getOperationLocked(int cookie) {
-      final int index = cookie & COOKIE_INDEX_MASK;
-      final OperationLogEntry operation = mOperations[index];
-      return operation.mCookie == cookie ? operation : null;
+     final int index = cookie & COOKIE_INDEX_MASK;
+     synchronized (mOperations) {
+       if (index >= mOperations.length) {
+         return null;
+       }
+       final OperationLogEntry operation = mOperations[index];
+       if (operation == null) {
+         return null;
+       }
+       return operation.mCookie == cookie ? operation : null;
+     }
    }
 }
