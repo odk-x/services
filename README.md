@@ -1,10 +1,11 @@
-# core
+# services
 
 This project is __*actively maintained*__
 
-It is part of the ODK 2.0 Android tools suite.
+It is part of the ODK 2.0 Android tools suite.  
+Prior to rev 200, this repo was the __*core*__ repo.
 
-It is an APK that provides core services (database, content providers, local webserver) used by all the other ODK 2.0 tools.
+It is an APK that provides services (database, content providers, local webserver) used by all the other ODK 2.0 tools.
 
 The developer [wiki](https://github.com/opendatakit/opendatakit/wiki) (including release notes) and
 [issues tracker](https://github.com/opendatakit/opendatakit/issues) are located under
@@ -18,11 +19,11 @@ General instructions for setting up an ODK 2.0 environment can be found at our [
 
 Install [Android Studio](http://developer.android.com/tools/studio/index.html) and the [SDK](http://developer.android.com/sdk/index.html#Other).
 
-This project depends on the ODK [androidlibrary](https://github.com/opendatakit/androidlibrary) project; its binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify that project yourself, you must clone it into the same parent directory as core. You directory stucture should resemble the following:
+This project depends on the ODK [androidlibrary](https://github.com/opendatakit/androidlibrary) project; its binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify that project yourself, you must clone it into the same parent directory as services. You directory stucture should resemble the following:
 
         |-- odk
 
-            |-- androidcommon
+            |-- services
 
             |-- androidlibrary
 
@@ -33,7 +34,7 @@ Now you should be ready to build.
 
 ## Building the project
 
-Open the Core project in Android Studio. Select `Build->Make Project' to build the app.
+Open the Services project in Android Studio. Select `Build->Make Project' to build the app.
 
 ## Running
 
@@ -42,7 +43,7 @@ If the project builds properly, it should be able to run on an Android device wi
 ## Source tree information
 Quick description of the content in the root folder:
 
-    |-- core_app     -- Source tree for Java components
+    |-- services_app     -- Source tree for Java components
 
         |-- src
 
@@ -54,11 +55,7 @@ Quick description of the content in the root folder:
 
                     |-- org
 
-                        |-- opendatakit
-
-                            |-- core
-
-                                |-- android     -- The most relevant Java code lives here
+                        |-- opendatakit  -- The most relevant Java code lives here
 
             |-- androidTest     -- Source tree for Android implementation tests
             |-- test            -- Source tree for Java JUnit tests
