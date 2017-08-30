@@ -81,7 +81,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
 
     this.permissionOnly = getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_PERMISSION_ONLY, false);
 
-    if (!RuntimePermissionUtils.checkSelfAnyPermission(this, REQUIRED_PERMISSIONS)) {
+    if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
       ActivityCompat.requestPermissions(
           this,
           REQUIRED_PERMISSIONS,
