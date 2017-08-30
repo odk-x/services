@@ -1,9 +1,12 @@
 package org.opendatakit.logic.test;
 
+import android.Manifest;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.androidlibrary.R;
@@ -28,6 +31,12 @@ import static org.junit.Assert.assertNull;
 public class PropertiesTest {
 
     private static final String APPNAME = "unittestProp";
+
+    @Rule
+    public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+    @Rule
+    public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
     @Before
     public void setUp() throws Exception {

@@ -1,5 +1,6 @@
 package org.opendatakit.database.service.test;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -72,6 +74,12 @@ public class OdkDatabaseServiceTest {
        ("2016-09-28T21:26:22+00:00"));
 
    private static int bindToDbServiceCount = 0;
+
+   @Rule
+   public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+   @Rule
+   public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
    @Rule
    public final ServiceTestRule mServiceRule = new ServiceTestRule();

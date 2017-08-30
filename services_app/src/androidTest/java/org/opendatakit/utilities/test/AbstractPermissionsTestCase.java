@@ -14,12 +14,15 @@
 
 package org.opendatakit.utilities.test;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.support.test.rule.GrantPermissionRule;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.opendatakit.TestConsts;
 import org.opendatakit.database.RoleConsts;
@@ -169,6 +172,12 @@ public class AbstractPermissionsTestCase {
   protected String getAppName() {
     return APPNAME;
   }
+
+  @Rule
+  public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+  @Rule
+  public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
   @Before
   public synchronized void setUp() throws Exception {

@@ -1,5 +1,6 @@
 package org.opendatakit.webkitserver.service.test;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.os.RemoteException;
 import android.support.annotation.NonNull;
 
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
@@ -52,6 +54,12 @@ public class OdkWebserverServiceTest {
 
     @Rule
     public final ServiceTestRule mServiceRule = new ServiceTestRule();
+
+    @Rule
+    public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+    @Rule
+    public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
     @Before
     public void setUp() throws Exception {
