@@ -92,6 +92,7 @@ public final class ODKDatabaseImplUtils {
   private static final String K_OFFSET = " OFFSET ";
 
   private static final String K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM = TableDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
+  private static final String K_FORM_DEFS_TABLE_ID_EQUALS_PARAM = FormsColumns.TABLE_ID + S_EQUALS_PARAM;
 
   private static final String K_COLUMN_DEFS_TABLE_ID_EQUALS_PARAM = ColumnDefinitionsColumns.TABLE_ID + S_EQUALS_PARAM;
 
@@ -1444,6 +1445,13 @@ public final class ODKDatabaseImplUtils {
         String whereClause = K_TABLE_DEFS_TABLE_ID_EQUALS_PARAM;
 
         db.delete(DatabaseConstants.TABLE_DEFS_TABLE_NAME, whereClause, whereArgs);
+      }
+
+      // Delete the form definition(s) for the tableId
+      {
+        String whereClause = K_FORM_DEFS_TABLE_ID_EQUALS_PARAM;
+
+        db.delete(DatabaseConstants.FORMS_TABLE_NAME, whereClause, whereArgs);
       }
 
       // Delete the column definitions for this tableId

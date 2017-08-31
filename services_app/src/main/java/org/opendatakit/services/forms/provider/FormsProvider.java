@@ -549,10 +549,10 @@ public class FormsProvider extends ContentProvider {
             fs.tableId + "." + fs.formId + "." + System.currentTimeMillis());
 
         try {
-          ODKFileUtils.moveDirectory(srcDir, destDir);
           if (db.delete(DatabaseConstants.FORMS_TABLE_NAME, FormsColumns._ID + "=?", new String[]{ id }) > 0) {
             fs.success = true;
           }
+          ODKFileUtils.moveDirectory(srcDir, destDir);
         } catch (IOException e) {
           logger.e(t, "Unable to move directory prior to deleting it: " + e);
           logger.printStackTrace(e);
