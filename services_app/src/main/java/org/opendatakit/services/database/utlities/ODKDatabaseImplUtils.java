@@ -892,9 +892,6 @@ public final class ODKDatabaseImplUtils {
 
     table.setEffectiveAccessCreateRow(canCreateRow);
 
-    if (tableId != null) {
-      table.setMetaDataRev(getTableDefinitionRevId(db, tableId));
-    }
     return table;
   }
 
