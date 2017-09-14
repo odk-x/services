@@ -72,7 +72,7 @@ public class ChoiceListUtilsTest {
 
   @Test
   public void testSetChoiceList() throws Throwable {
-    new ChoiceListUtils().setChoiceList(db, key, "my json");
+    ChoiceListUtils.setChoiceList(db, key, "my json");
     assertEquals(ChoiceListUtils.getChoiceList(db, key), "my json");
   }
 
