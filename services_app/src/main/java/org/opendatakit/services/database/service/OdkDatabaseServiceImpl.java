@@ -1676,8 +1676,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.deleteAppAndTableLevelManifestSyncETags(db);
+         SyncETagsUtils.deleteAppAndTableLevelManifestSyncETags(db);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1697,8 +1696,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.deleteAllSyncETagsForTableId(db, tableId);
+         SyncETagsUtils.deleteAllSyncETagsForTableId(db, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1718,8 +1716,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.deleteAllSyncETagsExceptForServer(db, verifiedUri);
+         SyncETagsUtils.deleteAllSyncETagsExceptForServer(db, verifiedUri);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1739,8 +1736,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.deleteAllSyncETagsUnderServer(db, verifiedUri);
+         SyncETagsUtils.deleteAllSyncETagsUnderServer(db, verifiedUri);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1761,8 +1757,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         return seu.getFileSyncETag(db, verifiedUri, tableId, modificationTimestamp);
+         return SyncETagsUtils.getFileSyncETag(db, verifiedUri, tableId, modificationTimestamp);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1782,8 +1777,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         return seu.getManifestSyncETag(db, verifiedUri, tableId);
+         return SyncETagsUtils.getManifestSyncETag(db, verifiedUri, tableId);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1804,8 +1798,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.updateFileSyncETag(db, verifiedUri, tableId, modificationTimestamp, eTag);
+         SyncETagsUtils.updateFileSyncETag(db, verifiedUri, tableId, modificationTimestamp, eTag);
       } finally {
          if (db != null) {
             // release the reference...
@@ -1825,8 +1818,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          // +1 referenceCount if db is returned (non-null)
          db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
              .getConnection(appName, dbHandleName);
-         SyncETagsUtils seu = new SyncETagsUtils();
-         seu.updateManifestSyncETag(db, verifiedUri, tableId, eTag);
+         SyncETagsUtils.updateManifestSyncETag(db, verifiedUri, tableId, eTag);
       } finally {
          if (db != null) {
             // release the reference...

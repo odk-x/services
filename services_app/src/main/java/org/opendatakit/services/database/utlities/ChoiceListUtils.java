@@ -28,9 +28,9 @@ import java.util.ArrayList;
 public final class ChoiceListUtils {
 
   /**
-   * For ease of mocking...
+   * Methods are all static...
    */
-  public ChoiceListUtils() {
+  private ChoiceListUtils() {
   }
 
   /**
@@ -38,7 +38,7 @@ public final class ChoiceListUtils {
    * @param choiceListId which row of choices to get from the database
    * @return
    */
-  public static String getChoiceList(OdkConnectionInterface db, String choiceListId) {
+  public static final String getChoiceList(OdkConnectionInterface db, String choiceListId) {
 
     if ( choiceListId == null || choiceListId.trim().length() == 0 ) {
       return null;
@@ -94,7 +94,7 @@ public final class ChoiceListUtils {
    * @param choiceListId   the id of the row in the choice list table
    * @param choiceListJSON json representing the new set of choices
    */
-  public void setChoiceList(OdkConnectionInterface db, String choiceListId,
+  public static final void setChoiceList(OdkConnectionInterface db, String choiceListId,
       String choiceListJSON) {
 
     if ( choiceListId == null || choiceListId.trim().length() == 0 ) {

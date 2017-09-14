@@ -1419,7 +1419,6 @@ public final class ODKDatabaseImplUtils {
   public void deleteTableAndAllData(OdkConnectionInterface db,
       final String tableId) {
 
-    SyncETagsUtils seu = new SyncETagsUtils();
     boolean dbWithinTransaction = db.inTransaction();
 
     Object[] whereArgs = { tableId };
@@ -1435,7 +1434,7 @@ public final class ODKDatabaseImplUtils {
       db.execSQL(b.toString(), null);
 
       // Delete the server sync ETags associated with this table
-      seu.deleteAllSyncETagsForTableId(db, tableId);
+      SyncETagsUtils.deleteAllSyncETagsForTableId(db, tableId);
 
       // Delete the table definition for the tableId
       {
@@ -2337,7 +2336,6 @@ public final class ODKDatabaseImplUtils {
    * @return choiceListId -- the unique code mapping to the choiceListJSON
    */
   public String setChoiceList(OdkConnectionInterface db, String choiceListJSON) {
-    ChoiceListUtils utils = new ChoiceListUtils();
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
     try {
@@ -2350,7 +2348,7 @@ public final class ODKDatabaseImplUtils {
 
       String choiceListId = ODKFileUtils.getNakedMd5Hash(db.getAppName(), choiceListJSON);
 
-      utils.setChoiceList(db, choiceListId, choiceListJSON);
+      ChoiceListUtils.setChoiceList(db, choiceListId, choiceListJSON);
 
       if (!dbWithinTransaction) {
         db.setTransactionSuccessful();
@@ -2377,12 +2375,11 @@ public final class ODKDatabaseImplUtils {
    * @return choiceListJSON -- the actual JSON choice list text.
    */
   public String getChoiceList(OdkConnectionInterface db, String choiceListId) {
-    ChoiceListUtils utils = new ChoiceListUtils();
 
     if (choiceListId == null || choiceListId.trim().length() == 0) {
       return null;
     }
-    return utils.getChoiceList(db, choiceListId);
+    return ChoiceListUtils.getChoiceList(db, choiceListId);
   }
 
   /**
@@ -2689,8 +2686,7 @@ public final class ODKDatabaseImplUtils {
       privilegedUpdateTableETags(db, tableId, schemaETag, null);
 
       if (tableInstanceFilesUri != null) {
-        SyncETagsUtils seu = new SyncETagsUtils();
-        seu.deleteAllSyncETagsUnderServer(db, tableInstanceFilesUri);
+        SyncETagsUtils.deleteAllSyncETagsUnderServer(db, tableInstanceFilesUri);
       }
 
       if (!dbWithinTransaction) {

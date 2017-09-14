@@ -28,9 +28,9 @@ import java.util.ArrayList;
 public final class SyncETagsUtils {
 
   /**
-   * For ease of mocking...
+   * Methods are all static...
    */
-  public SyncETagsUtils() {
+  private SyncETagsUtils() {
   }
 
   /**
@@ -39,7 +39,7 @@ public final class SyncETagsUtils {
    * @param db
    * @param tableId
    */
-  public void deleteAllSyncETagsForTableId(OdkConnectionInterface db, String tableId) {
+  public static final void deleteAllSyncETagsForTableId(OdkConnectionInterface db, String tableId) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -64,7 +64,7 @@ public final class SyncETagsUtils {
    *
    * @param db
    */
-  public void deleteAppAndTableLevelManifestSyncETags(OdkConnectionInterface db) {
+  public static final void deleteAppAndTableLevelManifestSyncETags(OdkConnectionInterface db) {
 
     // TODO: Change this to only delete app and table level manifest sync etags
     // for now we will delete all rows that have _is_manifest = 1
@@ -92,7 +92,7 @@ public final class SyncETagsUtils {
    * @param db
    * @param serverUriPrefix
    */
-  public void deleteAllSyncETagsExceptForServer(OdkConnectionInterface db, String serverUriPrefix) {
+  public static final void deleteAllSyncETagsExceptForServer(OdkConnectionInterface db, String serverUriPrefix) {
 
     String uriPrefix = null;
     if ( serverUriPrefix != null ) {
@@ -158,7 +158,7 @@ public final class SyncETagsUtils {
    * @param db
    * @param serverUriPrefix
    */
-  public void deleteAllSyncETagsUnderServer(OdkConnectionInterface db, String serverUriPrefix) {
+  public static final void deleteAllSyncETagsUnderServer(OdkConnectionInterface db, String serverUriPrefix) {
 
     if ( serverUriPrefix == null ) {
       throw new IllegalArgumentException("must specify a serverUriPrefix");
@@ -209,7 +209,7 @@ public final class SyncETagsUtils {
     }
   }
   
-  public String getManifestSyncETag(OdkConnectionInterface db, String url, String tableId) {
+  public static final String getManifestSyncETag(OdkConnectionInterface db, String url, String tableId) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -258,7 +258,7 @@ public final class SyncETagsUtils {
     }
   }
 
-  public void updateManifestSyncETag(OdkConnectionInterface db, String url, String tableId, String etag) {
+  public static final void updateManifestSyncETag(OdkConnectionInterface db, String url, String tableId, String etag) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -328,7 +328,7 @@ public final class SyncETagsUtils {
    * @param modified
    * @return
    */
-  public String getFileSyncETag(OdkConnectionInterface db, String url, String tableId, long modified) {
+  public static final String getFileSyncETag(OdkConnectionInterface db, String url, String tableId, long modified) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
@@ -383,7 +383,7 @@ public final class SyncETagsUtils {
     return null;
   }
 
-  public void updateFileSyncETag(OdkConnectionInterface db, String url, String tableId, long modified, String etag) {
+  public static final void updateFileSyncETag(OdkConnectionInterface db, String url, String tableId, long modified, String etag) {
 
     ArrayList<String> bindArgs = new ArrayList<String>();
     StringBuilder b = new StringBuilder();
