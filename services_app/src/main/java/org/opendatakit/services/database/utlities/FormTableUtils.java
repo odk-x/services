@@ -1,7 +1,6 @@
 package org.opendatakit.services.database.utlities;
 
 import android.database.Cursor;
-import android.database.SQLException;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
@@ -12,6 +11,7 @@ import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.forms.FormInfo;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.sqlite.database.SQLException;
 
 import java.io.File;
 import java.io.FileFilter;
