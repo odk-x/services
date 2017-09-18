@@ -60,6 +60,9 @@ import java.util.Map.Entry;
  * <p>
  * The former uses the internal PK that Android generates for tables.
  * The later uses the user-specified tableId and formId.
+ * /**
+ * This class provides a read-only view onto the set of
+ * forms within the ODK toolsuite.
  */
 public class FormsProvider extends ContentProvider {
   static final String t = "FormsProvider";
@@ -67,16 +70,11 @@ public class FormsProvider extends ContentProvider {
   /**
    * change to true expression if you want to debug this content provider
    */
-  public static void possiblyWaitForContentProviderDebugger() {
+  private static void possiblyWaitForContentProviderDebugger() {
     if (false) {
       android.os.Debug.waitForDebugger();
       int len = "for setting breakpoint".length();
     }
-  }
-
-
-  public String getFormsAuthority() {
-    return FormsProviderAPI.AUTHORITY;
   }
 
   @Override
@@ -102,187 +100,6 @@ public class FormsProvider extends ContentProvider {
     }
 
     return true;
-  }
-
-  private FormSpec patchUpValues(String appName, HashMap<String, Object> values) {
-
-    // require a tableId and formId...
-    if (!values.containsKey(FormsColumns.TABLE_ID)) {
-      throw new IllegalArgumentException(FormsColumns.TABLE_ID + " is not specified");
-    }
-    String tableId = (String) values.get(FormsColumns.TABLE_ID);
-
-    if (!values.containsKey(FormsColumns.FORM_ID)) {
-      throw new IllegalArgumentException(FormsColumns.FORM_ID + " is not specified");
-    }
-    String formId = (String) values.get(FormsColumns.FORM_ID);
-
-    FormSpec formSpec = new FormSpec();
-    formSpec.tableId = tableId;
-    formSpec.formId = formId;
-
-    String formFolder = ODKFileUtils.getFormFolder(appName, tableId, formId);
-
-    File formDefFolder = new File(formFolder);
-
-    if (!values.containsKey(FormsColumns.DISPLAY_NAME)) {
-      values.put(FormsColumns.DISPLAY_NAME,
-          NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName(formId)));
-    }
-
-    // require that it contain a formDef file
-    File formDefFile = new File(formFolder, ODKFileUtils.FORMDEF_JSON_FILENAME);
-    if (!formDefFile.exists()) {
-      throw new IllegalArgumentException(ODKFileUtils.FORMDEF_JSON_FILENAME
-          + " does not exist in: " + formFolder);
-    }
-
-    // get the supplied date and hash
-    // if these match, skip parsing for other fields.
-
-    if (values.containsKey(FormsColumns.DATE) &&
-        values.containsKey(FormsColumns.FILE_LENGTH)) {
-      // we can avoid file I/O if these values match those of the formDefFile.
-      Long existingModificationDate = (Long) values.get(FormsColumns.DATE);
-      Long existingFileLength = (Long) values.get(FormsColumns.FILE_LENGTH);
-
-      // date is the last modification date of the formDef file
-      Long now = formDefFile.lastModified();
-      Long length = formDefFile.length();
-
-      if (now.equals(existingModificationDate) && length.equals(existingFileLength)) {
-        // assume everything is unchanged...
-        return formSpec;
-      }
-    }
-
-    // parse the formDef.json
-    FormInfo fiFound = new FormInfo(getContext(), appName, formDefFile);
-
-    values.put(FormsColumns.SETTINGS, fiFound.settings);
-    values.put(FormsColumns.FORM_VERSION, fiFound.formVersion);
-    values.put(FormsColumns.DISPLAY_NAME, fiFound.formTitle);
-    values.put(FormsColumns.DEFAULT_FORM_LOCALE, fiFound.defaultLocale);
-    values.put(FormsColumns.INSTANCE_NAME, fiFound.instanceName);
-
-    String md5 = ODKFileUtils.getMd5Hash(appName, formDefFile);
-    values.put(FormsColumns.JSON_MD5_HASH, md5);
-    values.put(FormsColumns.DATE, fiFound.lastModificationDate);
-    values.put(FormsColumns.FILE_LENGTH, fiFound.fileLength);
-
-    return formSpec;
-  }
-
-  @Override
-  public synchronized Uri insert(@NonNull Uri uri, ContentValues initialValues) {
-    possiblyWaitForContentProviderDebugger();
-
-    List<String> segments = uri.getPathSegments();
-
-    if (segments.size() != 1) {
-      throw new IllegalArgumentException("Unknown URI (too many segments!) " + uri);
-    }
-
-    String appName = segments.get(0);
-    ODKFileUtils.verifyExternalStorageAvailability();
-    ODKFileUtils.assertDirectoryStructure(appName);
-    WebLoggerIf log = WebLogger.getLogger(appName);
-
-    HashMap<String, Object> values = new HashMap<String, Object>();
-    if (initialValues != null) {
-      for (String key : initialValues.keySet()) {
-        values.put(key, initialValues.get(key));
-      }
-    }
-
-    // force a scan from disk
-    values.remove(FormsColumns.DATE);
-    values.remove(FormsColumns.JSON_MD5_HASH);
-    FormSpec formSpec = patchUpValues(appName, values);
-
-    // first try to see if a record with this filename already exists...
-    String[] projection = { FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
-    String selection = FormsColumns.TABLE_ID + "=? AND " + FormsColumns.FORM_ID + "=?";
-    String[] selectionArgs = { formSpec.tableId, formSpec.formId };
-    Cursor c = null;
-
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
-    OdkConnectionInterface db = null;
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
-      db.beginTransactionNonExclusive();
-      try {
-        c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, selection, selectionArgs,
-            null, null, null, null);
-        if (c == null) {
-          throw new SQLException("FAILED Insert into " + uri
-              + " -- unable to query for existing records. tableId=" + formSpec.tableId + " formId=" + formSpec.formId);
-        }
-        c.moveToFirst();
-        if (c.getCount() > 0) {
-          // already exists
-          throw new SQLException("FAILED Insert into " + uri
-              + " -- row already exists for  tableId=" + formSpec.tableId + " formId=" + formSpec.formId);
-        }
-      } catch (Exception e) {
-        log.w(t, "FAILED Insert into " + uri + " -- query for existing row failed: " + e);
-
-        if (e instanceof SQLException) {
-          throw (SQLException) e;
-        } else {
-          throw new SQLException("FAILED Insert into " + uri + " -- query for existing row failed: "
-              + e);
-        }
-      } finally {
-        if (c != null) {
-          c.close();
-        }
-      }
-
-      try {
-        db.insertOrThrow(DatabaseConstants.FORMS_TABLE_NAME, null, values);
-        db.setTransactionSuccessful();
-        // and notify listeners of the new row...
-        Uri formUri = Uri.withAppendedPath(
-            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), appName),
-            (String) values.get(FormsColumns.FORM_ID));
-        if (getContext() != null) {
-          getContext().getContentResolver().notifyChange(formUri, null);
-        }
-        return formUri;
-      } catch (Exception e) {
-        log.w(t, "FAILED Insert into " + uri + " -- insert of row failed: " + e);
-
-        if (e instanceof SQLException) {
-          throw (SQLException) e;
-        } else {
-          throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: "
-              + e);
-        }
-      }
-    } catch (SQLException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new SQLException("FAILED Insert into " + uri + " -- insert of row failed: "
-          + e);
-    } finally {
-      if (db != null) {
-        try {
-          if (db.inTransaction()) {
-            db.endTransaction();
-          }
-        } finally {
-          try {
-            db.releaseReference();
-          } finally {
-            // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
-                appName, dbHandleName);
-          }
-        }
-      }
-    }
   }
 
   /**
@@ -479,347 +296,22 @@ public class FormsProvider extends ContentProvider {
     }
   }
 
-  /**
-   * This method removes the entry from the content provider, and also removes
-   * any associated files. files: form.xml, [formmd5].formdef, formname
-   * {directory}
-   */
   @Override
   public synchronized int delete(@NonNull Uri uri, String where, String[] whereArgs) {
-    possiblyWaitForContentProviderDebugger();
-
-    List<String> segments = uri.getPathSegments();
-
-    PatchedFilter pf = extractUriFeatures(uri, segments, where, whereArgs);
-    WebLoggerIf logger = WebLogger.getLogger(pf.appName);
-
-    String[] projection = { FormsColumns._ID, FormsColumns.TABLE_ID, FormsColumns.FORM_ID };
-
-    HashMap<String, FormSpec> directories = new HashMap<String, FormSpec>();
-
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
-    OdkConnectionInterface db = null;
-    Cursor c = null;
-
-    Integer idValue = null;
-    String tableIdValue = null;
-    String formIdValue = null;
-    try {
-      // Get the database and run the query
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
-      db.beginTransactionNonExclusive();
-      updatePatchedFilter(db, pf);
-
-      c = db.query(DatabaseConstants.FORMS_TABLE_NAME, projection, pf.whereId, pf.whereIdArgs,
-          null, null, null, null);
-
-      if (c == null) {
-        throw new SQLException("FAILED Delete into " + uri
-            + " -- unable to query for existing records");
-      }
-
-      int idxId = c.getColumnIndex(FormsColumns._ID);
-      int idxTableId = c.getColumnIndex(FormsColumns.TABLE_ID);
-      int idxFormId = c.getColumnIndex(FormsColumns.FORM_ID);
-
-      if (c.moveToFirst()) {
-        do {
-          idValue = CursorUtils.getIndexAsType(c, Integer.class, idxId);
-          tableIdValue = CursorUtils.getIndexAsString(c, idxTableId);
-          formIdValue = CursorUtils.getIndexAsString(c, idxFormId);
-          FormSpec formSpec = new FormSpec();
-          formSpec.tableId = tableIdValue;
-          formSpec.formId = formIdValue;
-          formSpec.success = false;
-          directories.put(idValue.toString(), formSpec);
-        } while (c.moveToNext());
-      }
-      c.close();
-      c = null;
-
-      // and now go through this list moving the directories
-      // into the pending-deletion location and deleting them.
-      for (Entry<String, FormSpec> de : directories.entrySet()) {
-        String id = de.getKey();
-        FormSpec fs = de.getValue();
-
-        File srcDir = new File(ODKFileUtils.getFormFolder(pf.appName, fs.tableId, fs.formId));
-        File destDir = new File(ODKFileUtils.getPendingDeletionTablesFolder(pf.appName),
-            fs.tableId + "." + fs.formId + "." + System.currentTimeMillis());
-
-        try {
-          if (db.delete(DatabaseConstants.FORMS_TABLE_NAME, FormsColumns._ID + "=?", new String[]{ id }) > 0) {
-            fs.success = true;
-          }
-          ODKFileUtils.moveDirectory(srcDir, destDir);
-        } catch (IOException e) {
-          logger.e(t, "Unable to move directory prior to deleting it: " + e);
-          logger.printStackTrace(e);
-        }
-      }
-
-      // commit the transaction...
-      db.setTransactionSuccessful();
-
-    } catch (Exception e) {
-      logger.w(t, "FAILED Delete from " + uri + " -- query for existing row failed: " + e);
-
-      if (e instanceof SQLException) {
-        throw (SQLException) e;
-      } else {
-        throw new SQLException("FAILED Delete from " + uri + " -- query for existing row failed: "
-            + e);
-      }
-    } finally {
-      if (db != null) {
-        try {
-          try {
-            if (c != null && !c.isClosed()) {
-              c.close();
-            }
-          } finally {
-            if (db.inTransaction()) {
-              db.endTransaction();
-            }
-          }
-        } finally {
-          try {
-            db.releaseReference();
-          } finally {
-            // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
-                pf.appName, dbHandleName);
-          }
-        }
-      }
-    }
-
-    // and now, go through all the files in the pending-deletion
-    // directory and try to release them.
-
-    File destFolder = new File(ODKFileUtils.getPendingDeletionTablesFolder(pf.appName));
-
-    File[] delDirs = destFolder.listFiles();
-    for (File formIdDir : delDirs) {
-      try {
-        ODKFileUtils.deleteDirectory(formIdDir);
-      } catch (IOException e) {
-        logger.e(t, "Unable to remove directory " + e);
-        logger.printStackTrace(e);
-      }
-    }
-
-    int failureCount = 0;
-    for (Entry<String, FormSpec> e : directories.entrySet()) {
-      String id = e.getKey();
-      FormSpec fs = e.getValue();
-      if (fs.success) {
-        Uri formUri =
-            Uri.withAppendedPath(
-                Uri.withAppendedPath(
-                    Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), pf.appName),
-                    fs.tableId), fs.formId);
-        Uri idUri = Uri.withAppendedPath(
-            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), pf.appName),
-            id);
-        if (getContext() != null) {
-          getContext().getContentResolver().notifyChange(formUri, null);
-          getContext().getContentResolver().notifyChange(idUri, null);
-        }
-      } else {
-        ++failureCount;
-      }
-    }
-    if (getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
-
-    int count = directories.size();
-    if (failureCount != 0) {
-      throw new SQLiteException("Unable to delete all forms (" + (count - failureCount) + " of " + count + " deleted)");
-    }
-    return count;
+    throw new UnsupportedOperationException("delete is not supported");
   }
 
   @Override
   public synchronized int update(@NonNull Uri uri, ContentValues values, String where, String[] whereArgs) {
-    possiblyWaitForContentProviderDebugger();
-
-    List<String> segments = uri.getPathSegments();
-
-    PatchedFilter pf = extractUriFeatures(uri, segments, where, whereArgs);
-    WebLoggerIf logger = WebLogger.getLogger(pf.appName);
-
-    /*
-     * First, find out what records match this query. Replicate the
-     * ContentValues if there are multiple tableIds/formIds involved
-     * and the contentValues do not have formId and tableId specified.
-     *
-     * Otherwise, it is an error to specify the tableId or formId in
-     * the ContentValues and have those not match the where results.
-     *
-     */
-    String contentTableId = values != null && values.containsKey(FormsColumns.TABLE_ID) ?
-        values.getAsString(FormsColumns.TABLE_ID) : null;
-    String contentFormId = values != null && values.containsKey(FormsColumns.FORM_ID) ?
-        values.getAsString(FormsColumns.FORM_ID) : null;
-
-    HashMap<FormSpec, HashMap<String, Object>> matchedValues = new HashMap<FormSpec, HashMap<String, Object>>();
-
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
-    OdkConnectionInterface db = null;
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(pf.appName, dbHandleName);
-      db.beginTransactionNonExclusive();
-      updatePatchedFilter(db, pf);
-
-      Cursor c = null;
-      try {
-        c = db.query(DatabaseConstants.FORMS_TABLE_NAME, null, pf.whereId, pf.whereIdArgs,
-            null, null, null, null);
-
-        if (c == null) {
-          throw new SQLException("FAILED Update of " + uri
-              + " -- query for existing row did not return a cursor");
-        }
-        if (c.moveToFirst()) {
-          int idxId = c.getColumnIndex(FormsColumns._ID);
-          int idxTableId = c.getColumnIndex(FormsColumns.TABLE_ID);
-          int idxFormId = c.getColumnIndex(FormsColumns.FORM_ID);
-
-          Integer idValue = null;
-          String tableIdValue = null;
-          String formIdValue = null;
-
-          do {
-            idValue = CursorUtils.getIndexAsType(c, Integer.class, idxId);
-            tableIdValue = CursorUtils.getIndexAsString(c, idxTableId);
-            formIdValue = CursorUtils.getIndexAsString(c, idxFormId);
-
-            if (contentTableId != null && !contentTableId.equals(tableIdValue)) {
-              throw new SQLException("Modification of tableId for an existing form is prohibited");
-            }
-            if (contentFormId != null && !contentFormId.equals(formIdValue)) {
-              throw new SQLException("Modification of formId for an existing form is prohibited");
-            }
-
-            HashMap<String, Object> cv = new HashMap<String, Object>();
-            if (values != null) {
-              for (String key : values.keySet()) {
-                cv.put(key, values.get(key));
-              }
-            }
-            cv.put(FormsColumns.TABLE_ID, tableIdValue);
-            cv.put(FormsColumns.FORM_ID, formIdValue);
-            for (int idx = 0; idx < c.getColumnCount(); ++idx) {
-              String colName = c.getColumnName(idx);
-              if (colName.equals(FormsColumns._ID)) {
-                // don't insert the PK
-                continue;
-              }
-
-              if (c.isNull(idx)) {
-                cv.put(colName, null);
-              } else {
-                // everything else, we control...
-                Class<?> dataType = CursorUtils.getIndexDataType(c, idx);
-                if (dataType == String.class) {
-                  cv.put(colName, CursorUtils.getIndexAsString(c, idx));
-                } else if (dataType == Long.class) {
-                  cv.put(colName, CursorUtils.getIndexAsType(c, Long.class, idx));
-                } else if (dataType == Double.class) {
-                  cv.put(colName, CursorUtils.getIndexAsType(c, Double.class, idx));
-                }
-              }
-            }
-
-            FormSpec formSpec = patchUpValues(pf.appName, cv);
-            formSpec._id = idValue.toString();
-            formSpec.success = false;
-            matchedValues.put(formSpec, cv);
-
-          } while (c.moveToNext());
-        } else {
-          // no match on where clause...
-          return 0;
-        }
-      } finally {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      }
-
-      // go through the entries and update the database with these patched-up values...
-
-      for (Entry<FormSpec, HashMap<String, Object>> e : matchedValues.entrySet()) {
-        FormSpec fs = e.getKey();
-        HashMap<String, Object> cv = e.getValue();
-
-        if (db.update(DatabaseConstants.FORMS_TABLE_NAME, cv,
-            FormsColumns._ID + "=?", new String[]{ fs._id }) > 0) {
-          fs.success = true;
-        }
-      }
-      db.setTransactionSuccessful();
-
-    } catch (Exception e) {
-      logger.w(t, "FAILED Update of " + uri + " -- query for existing row failed: " + e);
-
-      if (e instanceof SQLException) {
-        throw (SQLException) e;
-      } else {
-        throw new SQLException("FAILED Update of " + uri + " -- query for existing row failed: "
-            + e);
-      }
-    } finally {
-      if (db != null) {
-        try {
-          if (db.inTransaction()) {
-            db.endTransaction();
-          }
-        } finally {
-          try {
-            db.releaseReference();
-          } finally {
-            // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
-                pf.appName, dbHandleName);
-          }
-        }
-      }
-    }
-
-    int failureCount = 0;
-    for (FormSpec fs : matchedValues.keySet()) {
-      if (fs.success) {
-        Uri formUri =
-            Uri.withAppendedPath(
-                Uri.withAppendedPath(
-                    Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), pf.appName),
-                    fs.tableId), fs.formId);
-        Uri idUri = Uri.withAppendedPath(
-            Uri.withAppendedPath(Uri.parse("content://" + getFormsAuthority()), pf.appName),
-            fs._id);
-        if (getContext() != null) {
-          getContext().getContentResolver().notifyChange(formUri, null);
-          getContext().getContentResolver().notifyChange(idUri, null);
-        }
-      } else {
-        ++failureCount;
-      }
-    }
-    if (getContext() != null) {
-      getContext().getContentResolver().notifyChange(uri, null);
-    }
-
-    int count = matchedValues.size();
-    if (failureCount != 0) {
-      throw new SQLiteException("Unable to update all forms (" + (count - failureCount) + " of " + count + " updated)");
-    }
-    return count;
+    throw new UnsupportedOperationException("update is not supported");
   }
 
-  private class InvalidateMonitor extends DataSetObserver {
+  @Override
+  public synchronized Uri insert(@NonNull Uri uri, ContentValues initialValues) {
+    throw new UnsupportedOperationException("insert is not supported");
+  }
+
+  private static class InvalidateMonitor extends DataSetObserver {
     String appName;
     DbHandle dbHandleName;
 
@@ -837,14 +329,7 @@ public class FormsProvider extends ContentProvider {
     }
   }
 
-  class FormSpec {
-    String tableId;
-    String formId;
-    boolean success = true;
-    String _id = null;
-  }
-
-  class PatchedFilter {
+  private static class PatchedFilter {
     String appName;
     String tableId;
     String formId;

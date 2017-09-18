@@ -390,6 +390,16 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
     }
   }
 
+  @Override public boolean rescanTableFormDefs(String appName, DbHandle dbHandleName,
+                                              String tableId) throws RemoteException {
+
+    try {
+      return odkDatabaseServiceImpl.rescanTableFormDefs(appName, dbHandleName, tableId);
+    } catch (Exception e) {
+      throw createWrappingRemoteException(appName, dbHandleName, "rescanTableFormDefs", e);
+    }
+  }
+
   @Override public void deleteTableMetadata(String appName, DbHandle dbHandleName,
       String tableId, String partition, String aspect, String key) throws RemoteException {
 
