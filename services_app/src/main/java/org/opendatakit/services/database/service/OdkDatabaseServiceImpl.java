@@ -16,7 +16,6 @@ package org.opendatakit.services.database.service;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.net.Uri;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.data.*;
@@ -31,11 +30,10 @@ import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.provider.FormsProviderAPI;
-import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utlities.ProviderUtils;
 import org.opendatakit.services.database.utlities.SyncETagsUtils;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
@@ -597,15 +595,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
          }
       }
 
-      // and notify any listener of the TablesProvider that their result set is invalid
-      try {
-        Uri tablesUri = Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName);
-        context.getContentResolver().notifyChange(tablesUri, null);
-      } catch (Exception e) {
-        // swallow error if we can't notify of change...
-        WebLogger.getLogger(appName).e("deleteTableAndAllData", "notifyChange failed");
-        WebLogger.getLogger(appName).printStackTrace(e);
-      }
+      ProviderUtils.notifyTablesProviderListener(context, appName, tableId);
    }
 
   @Override public boolean rescanTableFormDefs(String appName, DbHandle dbHandleName,
@@ -628,17 +618,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
       }
     }
 
-    // and notify any listener of the TablesProvider that their result set is invalid
-    try {
-      Uri formsUri =
-          Uri.withAppendedPath(Uri.withAppendedPath(FormsProviderAPI.CONTENT_URI, appName),
-              tableId);
-      context.getContentResolver().notifyChange(formsUri, null);
-    } catch (Exception e) {
-      // swallow error if we can't notify of change...
-      WebLogger.getLogger(appName).e("deleteTableAndAllData", "notifyChange failed");
-      WebLogger.getLogger(appName).printStackTrace(e);
-    }
+    ProviderUtils.notifyFormsProviderListener(context, appName, tableId);
     return outcome;
   }
 
