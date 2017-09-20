@@ -46,14 +46,7 @@ import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.provider.ChoiceListColumns;
-import org.opendatakit.provider.ColumnDefinitionsColumns;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.provider.FormsColumns;
-import org.opendatakit.provider.InstanceColumns;
-import org.opendatakit.provider.KeyValueStoreColumns;
-import org.opendatakit.provider.SyncETagColumns;
-import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.provider.*;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.utilities.LocalizationUtils;
@@ -1530,6 +1523,20 @@ public final class ODKDatabaseImplUtils {
       e1.printStackTrace();
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
     }
+  }
+
+  /**
+   * Rescan the config directory tree of the given tableId and update the forms table
+   * with revised information from the formDef.json files that it contains.
+   *
+   * @param db
+   * @param tableId
+   * @return true if there were no problems
+   */
+  public boolean rescanTableFormDefs(OdkConnectionInterface db,
+                                    final String tableId) {
+
+    return FormTableUtils.updateFormDir(db.getAppName(), tableId);
   }
 
   /**

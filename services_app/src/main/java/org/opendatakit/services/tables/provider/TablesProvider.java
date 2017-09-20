@@ -40,6 +40,15 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * This class provides a read-only view onto the set of
+ * sync'd tables within the ODK toolsuite. The returned
+ * information includes the:
+ *  _rev_id == current revision of the properties file
+ *  _schema_etag == version of the server schema
+ *  _last_data_etag == version of server rows after last completed sync
+ *  _last_sync_time == time of the last completed sync
+ */
 public class TablesProvider extends ContentProvider {
   private static final String t = "TablesProvider";
 
@@ -69,10 +78,6 @@ public class TablesProvider extends ContentProvider {
       OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(appName,
           dbHandleName);
     }
-  }
-
-  public static String getTablesAuthority() {
-    return TablesProviderAPI.AUTHORITY;
   }
 
   @Override
@@ -110,8 +115,9 @@ public class TablesProvider extends ContentProvider {
     }
 
     String appName = segments.get(0);
-    ODKFileUtils.verifyExternalStorageAvailability();
-    ODKFileUtils.assertDirectoryStructure(appName);
+    // WebLogger does these actions -- no need to do them here...
+    // ODKFileUtils.verifyExternalStorageAvailability();
+    // ODKFileUtils.assertDirectoryStructure(appName);
     WebLoggerIf logger = WebLogger.getLogger(appName);
 
     String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
@@ -200,94 +206,7 @@ public class TablesProvider extends ContentProvider {
 
   @Override
   public synchronized int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
-    possiblyWaitForContentProviderDebugger();
-
-    List<String> segments = uri.getPathSegments();
-
-    if (segments.size() < 1 || segments.size() > 2) {
-      throw new IllegalArgumentException("Unknown URI (incorrect number of segments!) " + uri);
-    }
-
-    String appName = segments.get(0);
-    ODKFileUtils.verifyExternalStorageAvailability();
-    ODKFileUtils.assertDirectoryStructure(appName);
-    WebLoggerIf log = WebLogger.getLogger(appName);
-
-    String uriTableId = ((segments.size() == 2) ? segments.get(1) : null);
-
-    // Modify the where clause to account for the presence of a tableId
-    String whereId;
-    String[] whereIdArgs;
-
-    if (uriTableId == null) {
-      whereId = selection;
-      whereIdArgs = selectionArgs;
-    } else {
-      if (TextUtils.isEmpty(selection)) {
-        whereId = TableDefinitionsColumns.TABLE_ID + "=?";
-        whereIdArgs = new String[1];
-        whereIdArgs[0] = uriTableId;
-      } else {
-        whereId = TableDefinitionsColumns.TABLE_ID + "=? AND (" + selection
-            + ")";
-        whereIdArgs = new String[selectionArgs.length + 1];
-        whereIdArgs[0] = uriTableId;
-        System.arraycopy(selectionArgs, 0, whereIdArgs, 1, selectionArgs.length);
-      }
-    }
-
-    int deleteCount = 0;
-
-    // Get the database and run the query
-    DbHandle dbHandleName = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().generateInternalUseDbHandle();
-    OdkConnectionInterface db = null;
-    try {
-      // +1 referenceCount if db is returned (non-null)
-      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().getConnection(appName, dbHandleName);
-      db.beginTransactionNonExclusive();
-      HashSet<String> tableIds = new HashSet<String>();
-      Cursor c = null;
-      try {
-        c = db.query(DatabaseConstants.TABLE_DEFS_TABLE_NAME,
-            new String[] { TableDefinitionsColumns.TABLE_ID }, whereId, whereIdArgs,
-            null, null, null, null);
-        if ( c != null && c.moveToFirst() ) {
-          int idxTableId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
-          do {
-            String tableId = c.getString(idxTableId);
-            tableIds.add(tableId);
-          } while ( c.moveToNext());
-        }
-      } finally {
-        if ( c != null && !c.isClosed() ) {
-          c.close();
-        }
-      }
-
-      for ( String tableId : tableIds ) {
-        ODKDatabaseImplUtils.get().deleteTableAndAllData(db, tableId);
-        deleteCount++;
-      }
-      db.setTransactionSuccessful();
-    } finally {
-      if ( db != null ) {
-        try {
-          if (db.inTransaction()) {
-            db.endTransaction();
-          }
-        } finally {
-          try {
-            db.releaseReference();
-          } finally {
-            // this closes the connection
-            OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface().removeConnection(
-                appName, dbHandleName);
-          }
-        }
-      }
-    }
-
-    return deleteCount;
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override

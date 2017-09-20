@@ -177,12 +177,11 @@ public class FormInfo {
 
   /**
    *
-   * @param c
    * @param appName
    * @param formDefFile
    */
   @SuppressWarnings("unchecked")
-  public FormInfo(Context c, String appName, File formDefFile) {
+  public FormInfo(String appName, File formDefFile) {
 
     // save the appName
     this.appName = appName;

@@ -33,6 +33,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utlities.ProviderUtils;
 import org.opendatakit.services.database.utlities.SyncETagsUtils;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
@@ -593,7 +594,33 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
             db.releaseReference();
          }
       }
+
+      ProviderUtils.notifyTablesProviderListener(context, appName, tableId);
    }
+
+  @Override public boolean rescanTableFormDefs(String appName, DbHandle dbHandleName,
+                                              String tableId) {
+
+    OdkConnectionInterface db = null;
+
+    boolean outcome = false;
+    try {
+      // +1 referenceCount if db is returned (non-null)
+      db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
+          .getConnection(appName, dbHandleName);
+      outcome = ODKDatabaseImplUtils.get().rescanTableFormDefs(db, tableId);
+    } finally {
+      if (db != null) {
+        // release the reference...
+        // this does not necessarily close the db handle
+        // or terminate any pending transaction
+        db.releaseReference();
+      }
+    }
+
+    ProviderUtils.notifyFormsProviderListener(context, appName, tableId);
+    return outcome;
+  }
 
    @Override public void deleteTableMetadata(String appName, DbHandle dbHandleName, String tableId,
        String partition, String aspect, String key) {
