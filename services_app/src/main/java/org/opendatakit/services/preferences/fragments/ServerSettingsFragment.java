@@ -16,12 +16,8 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
-import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.*;
@@ -31,32 +27,19 @@ import android.text.Spanned;
 import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.R;
-import org.opendatakit.services.sync.actions.LoginActions;
-import org.opendatakit.services.sync.actions.activities.LoginActivity;
-import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.utilities.TableHealthValidator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class ServerSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
 

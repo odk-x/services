@@ -15,7 +15,7 @@
 package org.opendatakit.services.database;
 
 import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteCantOpenDatabaseException;

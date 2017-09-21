@@ -21,7 +21,6 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.database.SQLException;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
@@ -32,25 +31,17 @@ import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.TableMetaDataEntries;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.provider.FormsColumns;
-import org.opendatakit.provider.FormsProviderAPI;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
-import org.opendatakit.services.forms.FormInfo;
-import org.opendatakit.utilities.NameUtil;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
 /**
  * This provider supports two types of path references to identify a given row:

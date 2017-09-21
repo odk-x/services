@@ -38,7 +38,7 @@ import org.opendatakit.provider.InstanceColumns;
 import org.opendatakit.provider.InstanceProviderAPI;
 import org.opendatakit.provider.KeyValueStoreColumns;
 import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.logging.WebLogger;
