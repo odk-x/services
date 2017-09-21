@@ -23,7 +23,6 @@ import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import android.content.Context;
 import android.database.Cursor;
 
 import com.fasterxml.jackson.core.JsonParseException;

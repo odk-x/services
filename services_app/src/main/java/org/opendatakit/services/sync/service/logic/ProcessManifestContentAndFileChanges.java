@@ -17,7 +17,6 @@ package org.opendatakit.services.sync.service.logic;
 
 import org.opendatakit.aggregate.odktables.rest.entity.*;
 import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.Row;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;

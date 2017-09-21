@@ -33,7 +33,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
-import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressState;
@@ -84,7 +83,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private final String deviceId;
 
-  private final SyncNotification syncProgress;
+  private final SyncProgressTracker syncProgressTracker;
 
   // set this later
   private Synchronizer synchronizer;
@@ -92,14 +91,14 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private DbHandle odkDbHandle = null;
 
   public SyncExecutionContext(Context context, String versionCode, String appName,
-      SyncNotification syncProgress,
+      SyncProgressTracker syncProgressTracker,
       SyncOverallResult syncResult) {
     this.application = context;
     this.appName = appName;
     this.versionCode = versionCode;
     this.odkClientApiVersion = versionCode.substring(0, versionCode.length() - 2);
     this.userAgent = "Sync " + versionCode + " (gzip)";
-    this.syncProgress = syncProgress;
+    this.syncProgressTracker = syncProgressTracker;
     this.synchronizer = null;
     this.mUserResult = syncResult;
 
@@ -218,14 +217,24 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return synchronizer;
   }
 
-  public AccountManager getAccountManager() {
-    AccountManager accountManager = AccountManager.get(application);
-    return accountManager;
-  }
+  private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
 
-  public Account getAccount() {
-    Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
-    return account;
+  /**
+   * Attempt to update the Google access token for this
+   * @return
+   */
+  public String updateAccessToken() {
+    try {
+      AccountManager accountManager = AccountManager.get(application);
+      Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
+      String accessToken = accountManager.blockingGetAuthToken(account, authString, true);
+      PropertiesSingleton props = CommonToolProperties.get(application, appName);
+      props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_AUTH, accessToken));
+      return accessToken;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 
   public String getAccessToken() {
@@ -475,7 +484,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
         text = String.format(fmt, formatArgVals);
       }
     }
-    syncProgress.updateNotification(state, text, OVERALL_PROGRESS_BAR_LENGTH, (int) (iMajorSyncStep
+    syncProgressTracker.updateNotification(state, text, OVERALL_PROGRESS_BAR_LENGTH, (int) (iMajorSyncStep
         * GRAINS_PER_MAJOR_SYNC_STEP + ((progressPercentage != null) ? (progressPercentage
         * GRAINS_PER_MAJOR_SYNC_STEP / 100.0) : 0.0)), indeterminateProgress);
   }

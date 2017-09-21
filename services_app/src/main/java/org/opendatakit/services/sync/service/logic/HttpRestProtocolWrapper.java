@@ -15,8 +15,6 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.logging.WebLogger;
@@ -678,10 +676,12 @@ public class HttpRestProtocolWrapper {
     if ( sc.getString(R.string.credential_type_google_account)
         .equals(authenticationType)) {
 
-      String accessToken = sc.getAccessToken();
-      checkAccessToken(accessToken);
-      this.accessToken = accessToken;
-
+      accessToken = sc.getAccessToken();
+      try {
+        checkAccessToken(accessToken);
+      } catch ( InvalidAuthTokenException e ) {
+        updateAccessToken();
+      }
 
     } else if ( sc.getString(R.string.credential_type_username_password)
         .equals(authenticationType)) {
@@ -749,18 +749,13 @@ public class HttpRestProtocolWrapper {
 
   }
 
-  private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
-
   private String updateAccessToken() throws InvalidAuthTokenException {
-    try {
-      AccountManager accountManager = sc.getAccountManager();
-      Account account = sc.getAccount();
-      this.accessToken = accountManager.blockingGetAuthToken(account, authString, true);
-      return accessToken;
-    } catch (Exception e) {
-      e.printStackTrace();
+    String accessToken = sc.updateAccessToken();
+    if ( accessToken == null ) {
       throw new InvalidAuthTokenException("unable to update access token -- please re-authorize");
     }
+    this.accessToken = accessToken;
+    return accessToken;
   }
   
   private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {

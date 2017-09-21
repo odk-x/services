@@ -132,7 +132,16 @@ public class CommonTranslationsLocaleScreen extends ListPreference {
       if (commonLocales != null) {
         for (Map<String, Object> localeEntry : commonLocales) {
           String localeName = (String) localeEntry.get("name");
-          Object displayLocale = ((Map<String, Object>) localeEntry.get("display")).get("locale");
+          if ( localeName == null ) {
+            throw new IllegalStateException("expected name field in locale entry");
+          }
+          Object obj = localeEntry.get("display");
+          if ( obj == null || !(obj instanceof Map)) {
+            throw new IllegalStateException("expected display object");
+          }
+          @SuppressWarnings("unchecked")
+          Map<String, Object> displayObject = (Map<String, Object>) obj;
+          Object displayLocale = displayObject.get("locale");
           String localization = LocalizationUtils
               .getLocalizationFromMap(props.getAppName(), null, currentLocale, displayLocale);
           if (localization == null) {
