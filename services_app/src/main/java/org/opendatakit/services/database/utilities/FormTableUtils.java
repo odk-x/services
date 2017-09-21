@@ -1,4 +1,4 @@
-package org.opendatakit.services.database.utlities;
+package org.opendatakit.services.database.utilities;
 
 import android.database.Cursor;
 import org.opendatakit.database.DatabaseConstants;

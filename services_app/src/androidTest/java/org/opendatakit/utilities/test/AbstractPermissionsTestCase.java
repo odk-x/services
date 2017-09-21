@@ -45,7 +45,7 @@ import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.utilities.DataHelper;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.data.KeyValueStoreEntry;

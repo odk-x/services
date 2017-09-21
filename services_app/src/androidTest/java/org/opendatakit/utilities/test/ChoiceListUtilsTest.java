@@ -14,7 +14,7 @@ import org.opendatakit.provider.ChoiceListColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.database.utlities.ChoiceListUtils;
+import org.opendatakit.services.database.utilities.ChoiceListUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.ArrayList;

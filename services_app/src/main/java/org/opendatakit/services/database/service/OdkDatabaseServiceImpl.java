@@ -32,9 +32,9 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
-import org.opendatakit.services.database.utlities.ProviderUtils;
-import org.opendatakit.services.database.utlities.SyncETagsUtils;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utilities.ProviderUtils;
+import org.opendatakit.services.database.utilities.SyncETagsUtils;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 
 import java.util.ArrayList;

@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.services.database.utlities;
+package org.opendatakit.services.database.utilities;
 
 import android.content.Context;
 import android.net.Uri;

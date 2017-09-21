@@ -21,7 +21,7 @@ import android.content.Context;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.services.database.utlities.ODKDatabaseImplUtils;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
 
