@@ -16,8 +16,8 @@ package org.opendatakit.services.legacy.utilities;
 
 import android.text.format.DateFormat;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.consts.CharsetConsts;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
@@ -272,7 +272,7 @@ public final class WebUtils {
         InputSource iss = null;
         try {
           is = entity.getContent();
-          isr = new InputStreamReader(is, Charsets.UTF_8);
+          isr = new InputStreamReader(is, CharsetConsts.UTF_8);
           iss = new InputSource(isr);
           DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
           dbf.setNamespaceAware(true);

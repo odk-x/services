@@ -14,32 +14,42 @@
 
 package org.opendatakit.services.sync.service.logic;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.PrivilegesInfo;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
+import org.opendatakit.builder.PropertiesFileUtils;
 import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.provider.FormsColumns;
-import org.opendatakit.services.sync.service.OdkSyncService;
-import org.opendatakit.services.sync.service.SyncExecutionContext;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.builder.PropertiesFileUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.provider.FormsColumns;
 import org.opendatakit.services.R;
-import org.opendatakit.sync.service.*;
+import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.exceptions.SchemaMismatchException;
 import org.opendatakit.services.sync.service.logic.Synchronizer.OnTablePropertiesChanged;
+import org.opendatakit.sync.service.SyncOutcome;
+import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.TableLevelResult;
+import org.opendatakit.utilities.ODKFileUtils;
 
-import java.io.File;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  * Isolate the app-level and table-level synchronization steps
@@ -98,10 +108,6 @@ public class ProcessAppAndTableLevelChanges {
 
   public void verifyServerConfiguration() throws ServicesAvailabilityException {
     log.i(TAG, "entered verifyServerConfiguration()");
-
-    if (OdkSyncService.possiblyWaitForSyncServiceDebugger()) {
-      log.i(TAG, "running under debugger: verifyServerConfiguration()");
-    }
 
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_verifying_app_name_on_server, null, 0.0, false);
@@ -225,9 +231,6 @@ public class ProcessAppAndTableLevelChanges {
     log.i(TAG, "entered synchronizeConfigurationAndContent()");
 
     boolean issueDeletes = false;
-    if (OdkSyncService.possiblyWaitForSyncServiceDebugger()) {
-      issueDeletes = true;
-    }
 
     /**
      * Verify that the server configuration is good and

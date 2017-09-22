@@ -15,10 +15,8 @@
  */
 package org.opendatakit.services.sync.service;
 
-import android.app.Service;
-
+import android.content.Context;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
@@ -29,7 +27,6 @@ import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChange
 import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
 import org.opendatakit.services.sync.service.logic.Synchronizer;
 import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncNotification;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
@@ -38,7 +35,6 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -46,32 +42,48 @@ public class AppSynchronizer {
 
   private static final String TAG = AppSynchronizer.class.getSimpleName();
 
-  private final Service service;
+  private final Context context;
+  private final String versionCodeString;
   private final String appName;
-  private final GlobalSyncNotificationManager globalNotifManager;
+  private final GlobalSyncNotificationManager globalNotificationManager;
 
   private SyncStatus status;
   private Long threadStartTime = null;
   private Long threadEndTime = null;
   private Thread curThread;
   private SyncTask curTask;
-  private SyncNotification syncProgress;
+  private SyncProgressTracker syncProgressTracker;
   private SyncOverallResult syncResult;
 
-  AppSynchronizer(Service srvc, String appName, GlobalSyncNotificationManager notificationManager) {
-    this.service = srvc;
+  public AppSynchronizer(Context context, String versionCodeString, String appName,
+                  GlobalSyncNotificationManager globalNotificationManager) {
+    this.context = context;
+    this.versionCodeString = versionCodeString;
     this.appName = appName;
     this.status = SyncStatus.NONE;
     this.curThread = null;
-    this.globalNotifManager = notificationManager;
-    this.syncProgress = new SyncNotification(srvc, appName);
+    this.globalNotificationManager = globalNotificationManager;
+    this.syncProgressTracker = new SyncProgressTracker(this.context, this.globalNotificationManager, appName);
     this.syncResult = new SyncOverallResult();
+  }
+
+  /**
+   * This API is ONLY used in the website codebase.
+   *
+   * @param push
+   * @param attachmentState
+   */
+  public synchronized void directSynchronize(boolean push, SyncAttachmentState attachmentState) {
+    curThread = Thread.currentThread();
+    curTask = new SyncTask(context, versionCodeString, push, attachmentState);
+    threadStartTime = System.currentTimeMillis();
+    status = SyncStatus.SYNCING;
+    curTask.run();
   }
 
   public synchronized boolean synchronize(boolean push, SyncAttachmentState attachmentState) {
     if (curThread == null) {
-      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()), push,
-          attachmentState);
+      curTask = new SyncTask(context, versionCodeString, push, attachmentState);
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
@@ -83,7 +95,7 @@ public class AppSynchronizer {
 
   public synchronized boolean verifyServerSettings() {
     if (curThread == null) {
-      curTask = new SyncTask(((ToolAwareApplication) service.getApplication()));
+      curTask = new SyncTask(context, versionCodeString);
       threadStartTime = System.currentTimeMillis();
       curThread = new Thread(curTask);
       status = SyncStatus.SYNCING;
@@ -122,7 +134,7 @@ public class AppSynchronizer {
 
     // there was a sync action and it ended less than a RETENTION_PERIOD ago.
     if ( (threadEndTime != null) &&
-         (System.currentTimeMillis() < threadEndTime + OdkSyncService.RETENTION_PERIOD) ) {
+         (System.currentTimeMillis() < threadEndTime + GlobalSyncNotificationManager.RETENTION_PERIOD) ) {
       return false;
     }
 
@@ -135,7 +147,7 @@ public class AppSynchronizer {
   }
 
   public SyncProgressEvent getSyncProgressEvent() {
-    return syncProgress.getProgressStatus();
+    return syncProgressTracker.getProgressStatus();
   }
 
   public SyncOverallResult getSyncResult() {
@@ -144,20 +156,23 @@ public class AppSynchronizer {
 
   private class SyncTask implements Runnable {
 
-    private ToolAwareApplication application;
+    private final Context context;
+    private final String versionCodeString;
     private final boolean onlyVerifySettings;
     private final boolean push;
     private final SyncAttachmentState attachmentState;
 
-    public SyncTask(ToolAwareApplication application) {
-      this.application = application;
+    public SyncTask(Context context, String versionCodeString) {
+      this.context = context;
+      this.versionCodeString = versionCodeString;
       this.onlyVerifySettings = true;
       this.push = false;
       this.attachmentState = SyncAttachmentState.NONE;
     }
 
-    public SyncTask(ToolAwareApplication application, boolean push, SyncAttachmentState attachmentState) {
-      this.application = application;
+    public SyncTask(Context context, String versionCodeString, boolean push, SyncAttachmentState attachmentState) {
+      this.context = context;
+      this.versionCodeString = versionCodeString;
       this.onlyVerifySettings = false;
       this.push = push;
       this.attachmentState = attachmentState;
@@ -167,21 +182,21 @@ public class AppSynchronizer {
     public void run() {
 
       try {
-        globalNotifManager.startingSync(appName);
-        syncProgress.updateNotification(SyncProgressState.STARTING,
-            application.getString(R.string.sync_starting), 100, 0, false);
+        globalNotificationManager.startingSync(appName);
+        syncProgressTracker.updateNotification(SyncProgressState.STARTING,
+            context.getString(R.string.sync_starting), 100, 0, false);
         if ( onlyVerifySettings ) {
-          verifySettings(syncProgress);
+          verifySettings();
         } else {
-          sync(syncProgress);
+          sync();
         }
       } catch (Exception e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         status = SyncStatus.DEVICE_ERROR;
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_device_internal_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_device_internal_error));
       } finally {
         try {
-          globalNotifManager.stoppingSync(appName);
+          globalNotificationManager.stoppingSync(appName);
         } catch (NoAppNameSpecifiedException e) {
           // impossible to get here
         }
@@ -248,7 +263,7 @@ public class AppSynchronizer {
       return status;
     }
 
-    private void sync(SyncNotification syncProgress) {
+    private void sync() {
 
       SyncExecutionContext sharedContext = null;
       try {
@@ -270,8 +285,8 @@ public class AppSynchronizer {
         //
         // NOTE: server limits this string to 10 characters
 
-        sharedContext = new SyncExecutionContext(application,
-            application.getVersionCodeString(), appName, syncProgress, syncResult);
+        sharedContext = new SyncExecutionContext(context, versionCodeString,
+                                                  appName, syncProgressTracker, syncResult);
 
         Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
@@ -395,7 +410,7 @@ public class AppSynchronizer {
       setFinalNotification(status, false, tablesWithProblems, attachmentsFailed);
     }
 
-  private void verifySettings(SyncNotification syncProgress) {
+  private void verifySettings() {
 
     try {
       WebLogger.getLogger(appName).i(TAG, "APPNAME IN SERVICE: " + appName);
@@ -416,8 +431,8 @@ public class AppSynchronizer {
       //
       // NOTE: server limits this string to 10 characters
 
-      SyncExecutionContext sharedContext = new SyncExecutionContext(application,
-          application.getVersionCodeString(), appName, syncProgress, syncResult);
+      SyncExecutionContext sharedContext = new SyncExecutionContext(context,
+          versionCodeString, appName, syncProgressTracker, syncResult);
 
       Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
@@ -472,62 +487,62 @@ public class AppSynchronizer {
       switch (status) {
       case
           /** earlier sync ended with socket or lower level transport or protocol error (e.g., 300's) */ NETWORK_TRANSPORT_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_network_transport_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_network_transport_error));
         break;
       case
           /** earlier sync ended with Authorization denied (authentication and/or access) error */ AUTHENTICATION_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_authentication_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_authentication_error));
         break;
       case
           /** earlier sync ended with a 500 error from server */ SERVER_INTERNAL_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_internal_server_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_internal_server_error));
         break;
       case
           /** the server is not an ODK Server - bad client config */ SERVER_IS_NOT_ODK_SERVER:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_bad_gateway_or_client_config));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_bad_gateway_or_client_config));
         break;
       case
           /** earlier sync ended with a 400 error that wasn't Authorization denied */ REQUEST_OR_PROTOCOL_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_request_or_protocol_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_request_or_protocol_error));
         break;
       case /** no earlier sync and no active sync */ NONE:
       case /** active sync -- get SyncProgressEvent to see current status */ SYNCING:
       case
           /** error accessing or updating database */ DEVICE_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_device_internal_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_device_internal_error));
         break;
       case
           /** the server is not configured for this appName -- Site Admin / Preferences */ APPNAME_NOT_SUPPORTED_BY_SERVER:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_appname_not_supported_by_server));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_appname_not_supported_by_server));
         break;
       case
           /** the server does not have any configuration, or no configuration for this client version */ SERVER_MISSING_CONFIG_FILES:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_server_missing_config_files));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_server_missing_config_files));
         break;
       case
           /** the device does not have any configuration to push to server */ SERVER_RESET_FAILED_DEVICE_HAS_NO_CONFIG_FILES:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_server_reset_failed_device_has_no_config_files));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_server_reset_failed_device_has_no_config_files));
         break;
       case
           /** while a sync was in progress, another device reset the app config, requiring a restart of
            * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
-        syncProgress.finalErrorNotification(service.getString(R.string.sync_status_resync_because_config_has_been_reset_error));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_resync_because_config_has_been_reset_error));
         break;
       case
           /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
-        syncProgress.finalConflictNotification(tablesWithProblems);
+        syncProgressTracker.finalConflictNotification(tablesWithProblems);
         break;
       case
           /** earlier sync ended successfully without conflicts and all row-level attachments sync'd */ SYNC_COMPLETE:
         if ( onlyVerify ) {
-          syncProgress.clearVerificationNotification();
+          syncProgressTracker.clearVerificationNotification();
         } else {
-          syncProgress.clearNotification(attachmentsFailed);
+          syncProgressTracker.clearNotification(attachmentsFailed);
         }
         break;
       case
           /** earlier sync ended successfully without conflicts but needs row-level attachments sync'd */ SYNC_COMPLETE_PENDING_ATTACHMENTS:
-        syncProgress.clearNotification(attachmentsFailed);
+        syncProgressTracker.clearNotification(attachmentsFailed);
         break;
       }
     }

@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
-import org.opendatakit.sync.service.TableLevelResult;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
