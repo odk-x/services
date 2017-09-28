@@ -5001,7 +5001,11 @@ public final class ODKDatabaseImplUtils {
   public void insertRowWithId(OdkConnectionInterface db, String tableId,
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
-    
+
+    if (cvValues == null) {
+      throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
+    }
+
     HashMap<String,Object> cvDataTableVal = new HashMap<String,Object>();
     cvDataTableVal.put(DataTableColumns.ID, rowId);
     for ( String key : cvValues.keySet() ) {
