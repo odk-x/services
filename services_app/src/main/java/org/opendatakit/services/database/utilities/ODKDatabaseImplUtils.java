@@ -5002,7 +5002,7 @@ public final class ODKDatabaseImplUtils {
       OrderedColumns orderedColumns, ContentValues cvValues, String rowId, String activeUser,
       String rolesList, String locale) throws ActionNotAuthorizedException {
 
-    if (cvValues == null || cvValues.size() <= 0) {
+    if (cvValues == null) {
       throw new IllegalArgumentException(t + ": No values to add into table " + tableId);
     }
 
