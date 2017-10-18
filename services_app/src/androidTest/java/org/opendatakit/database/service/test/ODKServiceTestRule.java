@@ -217,13 +217,6 @@ public class ODKServiceTestRule implements TestRule {
    }
 
    /**
-    * Helper method to block on a given latch for the duration of the set timeout
-    */
-   // Visible for testing
-   void waitOnLatch(CountDownLatch latch, String actionName) throws TimeoutException {
-
-   }
-   /**
     * Makes the necessary calls to stop (or unbind) the service under test. This method is called
     * automatically called after test execution. This is not a blocking call since there is no
     * reliable way to guarantee successful disconnect without access to service lifecycle.
