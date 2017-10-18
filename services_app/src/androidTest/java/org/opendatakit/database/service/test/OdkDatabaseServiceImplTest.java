@@ -16,6 +16,8 @@ import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.TableHealthInfo;
+import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -59,6 +61,12 @@ import static org.junit.Assert.fail;
    public static final String TEST_DEFAULT_GROUP = "default group here";
    public static final String PARTITION = "partition";
    public static final String ASPECT = "aspect";
+   public static final String COLUMN_ID1 = "columnId";
+   public static final String COLUMN_ID3 = "columnId3";
+   public static final String COLUMN_ID2 = "columnId2";
+   public static final String SYNC_STATE_COLNAME = "_sync_state";
+   public static final String CONFLICT_TYPE_COLNAME = "_conflict_type";
+   public static final String SAVEPOINT_TYPE_COLNAME = "_savepoint_type";
 
    private UserDbInterface serviceInterface;
    private PropertiesSingleton props;
@@ -157,8 +165,8 @@ import static org.junit.Assert.fail;
              getLocalTableColumnList());
 
          ContentValues cv = new ContentValues();
-         cv.put("columnId", "ayy lmao");
-         cv.put("columnId2", 3);
+         cv.put(COLUMN_ID1, "ayy lmao");
+         cv.put(COLUMN_ID2, 3);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, cv);
 
@@ -169,12 +177,12 @@ import static org.junit.Assert.fail;
          List<Row> rows = baseTable.getRows();
          assertEquals(rows.size(), 1);
          for (Row row : rows) {
-            assertEquals(row.getDataByKey("columnId"), "ayy lmao");
-            Integer value = row.getDataType("columnId2", Integer.class);
+            assertEquals(row.getDataByKey(COLUMN_ID1), "ayy lmao");
+            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
             assertTrue(value.intValue() == 3);
          }
-         assertColType("L_" + TABLE_LOCAL, "columnId2", "INTEGER");
-         assertColType("L_" + TABLE_LOCAL, "columnId3", "REAL");
+         assertColType("L_" + TABLE_LOCAL, COLUMN_ID2, "INTEGER");
+         assertColType("L_" + TABLE_LOCAL, COLUMN_ID3, "REAL");
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -252,11 +260,11 @@ import static org.junit.Assert.fail;
       List<Row> rows = baseTable.getRows();
       assertEquals(expectedNumRows, rows.size());
       for (Row row : rows) {
-         if (row.getDataByKey("columnId").equals(id)) {
-            assertEquals(row.getDataByKey("columnId"), id);
-            Integer value = row.getDataType("columnId2", Integer.class);
+         if (row.getDataByKey(COLUMN_ID1).equals(id)) {
+            assertEquals(row.getDataByKey(COLUMN_ID1), id);
+            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
             assertTrue(value.intValue() == intValue);
-            Double val3 = row.getDataType("columnId3", Double.class);
+            Double val3 = row.getDataType(COLUMN_ID3, Double.class);
             assertEquals(val3, doubleValue, delta);
          }
       }
@@ -283,7 +291,7 @@ import static org.junit.Assert.fail;
          verifyRowExists(2, baseTable, "test2", 15, 3.1415);
 
          ContentValues cv = new ContentValues();
-         cv.put("columnId3", 9.5);
+         cv.put(COLUMN_ID3, 9.5);
          serviceInterface.updateLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, cv, "columnId2 = ?",
              new BindArgs(new Object[] { 16 }));
 
@@ -329,63 +337,64 @@ import static org.junit.Assert.fail;
       }
    }
 
-      @Test public void testDeleteLocalOnlyRow() {
+   @Test public void testDeleteLocalOnlyRow() {
+      try {
+         serviceInterface.createLocalOnlyTableWithColumns(APPNAME, dbHandle, TABLE_LOCAL,
+             getLocalTableColumnList());
+
+         serviceInterface
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
+         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+             new BindArgs(new String[] { "test" }));
+
+         BaseTable baseTable = serviceInterface
+             .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
+                 null, null, null, null);
+
+         List<Row> rows = baseTable.getRows();
+         assertEquals(0, rows.size());
+
+         serviceInterface
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
+         serviceInterface
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test2", 18, 9.813793));
+         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+             new BindArgs(new String[] { "test" }));
+
+         baseTable = serviceInterface
+             .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
+                 null, null, null, null);
+
+         verifyRowExists(1, baseTable, "test2", 18, 9.813793);
+
+         baseTable = serviceInterface
+             .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
+                 null, null, null, null);
+         verifyRowExists(1, baseTable, "test2", 18, 9.813793);
+
+         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+             new BindArgs(new String[] { "test2" }));
+
+         baseTable = serviceInterface
+             .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
+                 null, null, null, null);
+
+         rows = baseTable.getRows();
+         assertEquals(0, rows.size());
+
+      } catch (Exception e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } finally {
          try {
-            serviceInterface.createLocalOnlyTableWithColumns(APPNAME, dbHandle, TABLE_LOCAL,
-                getLocalTableColumnList());
-
-            serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test",
-                15, 3.1415));
-            serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
-             new BindArgs(new String[] { "test" }));
-
-            BaseTable baseTable = serviceInterface
-                .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
-                    null, null, null, null);
-
-            List<Row> rows = baseTable.getRows();
-            assertEquals(0, rows.size());
-
-            serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
-            serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test2", 18, 9.813793));
-            serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
-             new BindArgs(new String[] { "test" }));
-
-            baseTable = serviceInterface
-                .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
-                    null, null, null, null);
-
-            verifyRowExists(1, baseTable, "test2", 18, 9.813793);
-
-            baseTable = serviceInterface
-                .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
-                    null, null, null, null);
-            verifyRowExists(1, baseTable, "test2", 18, 9.813793);
-
-            serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
-                new BindArgs(new String[] { "test2" }));
-
-            baseTable = serviceInterface
-                .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
-                    null, null, null, null);
-
-            rows = baseTable.getRows();
-            assertEquals(0, rows.size());
-
-         } catch (Exception e) {
+            serviceInterface.deleteLocalOnlyTable(APPNAME, dbHandle, TABLE_LOCAL);
+         } catch (ServicesAvailabilityException e) {
             e.printStackTrace();
             fail(e.getMessage());
-         } finally {
-            try {
-               serviceInterface.deleteLocalOnlyTable(APPNAME, dbHandle, TABLE_LOCAL);
-            } catch (ServicesAvailabilityException e) {
-               e.printStackTrace();
-               fail(e.getMessage());
-            }
          }
-
       }
 
+   }
 
    @Test public void testSetChoiceList() {
 
@@ -509,7 +518,7 @@ import static org.junit.Assert.fail;
 
          cols = makeCols();
          cols.set(1,
-             new Column("columnId3", "new Column Name", ElementDataType.number.name(), "[]"));
+             new Column(COLUMN_ID3, "new Column Name", ElementDataType.number.name(), "[]"));
          serviceInterface
              .createOrOpenTableWithColumns(APPNAME, dbHandle, TABLE_NAME1, new ColumnList(cols));
 
@@ -624,7 +633,7 @@ import static org.junit.Assert.fail;
          }
 
          cols = makeCols();
-         cols.set(1, new Column("columnId3", "Column Name", ElementDataType.integer.name(), "[]"));
+         cols.set(1, new Column(COLUMN_ID3, "Column Name", ElementDataType.integer.name(), "[]"));
          serviceInterface
              .createOrOpenTableWithColumns(APPNAME, dbHandle, TABLE_NAME1, new ColumnList(cols));
          fail(SHOULD_THROW_EXCEPTION);
@@ -735,7 +744,7 @@ import static org.junit.Assert.fail;
          cols = makeCols();
          md = makeMetadata();
          cols.set(1,
-             new Column("columnId3", "new Column Name", ElementDataType.number.name(), "[]"));
+             new Column(COLUMN_ID3, "new Column Name", ElementDataType.number.name(), "[]"));
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, dbHandle, TABLE_NAME1,
              new ColumnList(cols), md, true);
          fail(SHOULD_THROW_EXCEPTION);
@@ -913,7 +922,7 @@ import static org.junit.Assert.fail;
              new ColumnList(cols), md, true);
 
          cols = makeCols();
-         cols.set(1, new Column("columnId3", "Column Name", ElementDataType.integer.name(), "[]"));
+         cols.set(1, new Column(COLUMN_ID3, "Column Name", ElementDataType.integer.name(), "[]"));
          md = makeMetadata();
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, dbHandle, TABLE_NAME1,
              new ColumnList(cols), md, true);
@@ -1003,7 +1012,7 @@ import static org.junit.Assert.fail;
              .deleteLastCheckpointRowWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t3");
          thAssertPresent("t3", null, false);
          assertTrue(instanceFolder.exists());
-         thSet("t3", "_savepoint_type", null);
+         thSet("t3", SAVEPOINT_TYPE_COLNAME, null);
          serviceInterface
              .deleteLastCheckpointRowWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t3");
          thAssertGone("t3");
@@ -1025,8 +1034,7 @@ import static org.junit.Assert.fail;
          insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, "key", "value");
          insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, "some_other_key", "value");
          serviceInterface
-             .deleteTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT,
-                 "key");
+             .deleteTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, "key");
          Cursor c = db.rawQuery(
              "SELECT * FROM " + DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME + " WHERE "
                  + KeyValueStoreColumns.KEY + " = ?;", new String[] { "key" });
@@ -1115,17 +1123,17 @@ import static org.junit.Assert.fail;
       } catch (Exception e) {
          e.printStackTrace();
          fail(e.getMessage());
-      }       finally {
-      try {
-         if (dbHandle != null) {
-            deleteTeaHouses();
+      } finally {
+         try {
+            if (dbHandle != null) {
+               deleteTeaHouses();
+            }
+         } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
          }
-      } catch (Exception e) {
-         e.printStackTrace();
-         fail(e.getMessage());
-      }
 
-   }
+      }
    }
 
    @Test public void testGetAdminColumns() {
@@ -1191,7 +1199,6 @@ import static org.junit.Assert.fail;
          assertEquals(tables.get(0), "breathcounter");
          assertEquals(tables.get(1), "fields");
 
-
       } catch (Exception e) {
          e.printStackTrace();
          fail(e.getMessage());
@@ -1245,8 +1252,8 @@ import static org.junit.Assert.fail;
          UserTable t = serviceInterface
              .getRowsWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(t.getNumberOfRows(), 2);
-         String a = t.getRowAtIndex(0).getDataByKey("_savepoint_type");
-         String b = t.getRowAtIndex(1).getDataByKey("_savepoint_type");
+         String a = t.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME);
+         String b = t.getRowAtIndex(1).getDataByKey(SAVEPOINT_TYPE_COLNAME);
          if (a == null) {
             assertEquals(b, SavepointTypeManipulator.complete());
          } else {
@@ -1279,8 +1286,8 @@ import static org.junit.Assert.fail;
          UserTable t = serviceInterface
              .privilegedGetRowsWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(t.getNumberOfRows(), 2);
-         String a = t.getRowAtIndex(0).getDataByKey("_savepoint_type");
-         String b = t.getRowAtIndex(1).getDataByKey("_savepoint_type");
+         String a = t.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME);
+         String b = t.getRowAtIndex(1).getDataByKey(SAVEPOINT_TYPE_COLNAME);
          if (a == null) {
             assertEquals(b, SavepointTypeManipulator.complete());
          } else {
@@ -1317,7 +1324,7 @@ import static org.junit.Assert.fail;
          UserTable result = serviceInterface
              .getMostRecentRowWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(result.getNumberOfRows(), 1);
-         assertEquals(result.getRowAtIndex(0).getDataByKey("_savepoint_type"),
+         assertEquals(result.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME),
              SavepointTypeManipulator.incomplete());
 
       } catch (Exception e) {
@@ -1336,115 +1343,130 @@ import static org.junit.Assert.fail;
       }
    }
 
-      @Test public void testGetTableMetadata() {
-         try {
-            String key = "key";
-            String key2 = "key2";
+   @Test public void testGetTableMetadata() {
+      try {
+         String key = "key";
+         String key2 = "key2";
 
-            insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, key, "val");
-            insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, key2, "other val");
-            TableMetaDataEntries result = serviceInterface
-                .getTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT,
-                    key, null);
-            assertEquals(result.getEntries().size(), 1);
-            assertEquals(result.getEntries().get(0).value, "val");
-            result = serviceInterface.getTableMetadata(APPNAME, dbHandle, null, null, null, null,
-                null);
-            assertEquals(result.getEntries().size(), 2);
-            String a = result.getEntries().get(0).value;
-            String b = result.getEntries().get(1).value;
-            if (a.equals("val")) {
-               assertEquals(b, "other val");
-            } else {
-               assertEquals(a, "other val");
-               assertEquals(b, "val");
+         createTeaHouses();
+         insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, key, "val");
+         insertMetadata(TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, key2, "other val");
+         TableMetaDataEntries result = serviceInterface
+             .getTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, key,
+                 null);
+
+         assertEquals(result.getEntries().size(), 1);
+         assertEquals(result.getEntries().get(0).value, "val");
+         result = serviceInterface
+             .getTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, null, null, null);
+
+         assertEquals(result.getEntries().size(), 2);
+         String a = result.getEntries().get(0).value;
+         String b = result.getEntries().get(1).value;
+         if (a.equals("val")) {
+            assertEquals(b, "other val");
+         } else {
+            assertEquals(a, "other val");
+            assertEquals(b, "val");
+         }
+         result = serviceInterface
+             .getTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT, "k3",
+                 null);
+         assertEquals(result.getEntries().size(), 0);
+      } catch (Exception e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } finally {
+         try {
+            if (dbHandle != null) {
+               deleteTeaHouses();
+               //serviceInterface
+               //    .deleteTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, null, null);
             }
-            result = serviceInterface
-                .getTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, PARTITION, ASPECT,
-                    "k3", null);
-            assertEquals(result.getEntries().size(), 0);
          } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
-         } finally {
-            try {
-               if (dbHandle != null) {
-                  serviceInterface.deleteTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, null, null);
-               }
-            } catch (Exception e) {
-               e.printStackTrace();
-               fail(e.getMessage());
-            }
-
          }
+
       }
+   }
 
-   //   @Test public void testGetTableMetadataIfChangedChanged() throws Exception {
-   //      UserDbInterface serviceInterface = bindToDbService();
-   //      DbHandle dbHandle = serviceInterface.openDatabase(APPNAME);
-   //
-   //      createTeaHouses();
-   //      insertMetadata("Tea_houses", "partition", "aspect", "key", "val");
-   //      insertMetadata("Tea_houses", "partition", "aspect", "key2", "other val");
-   //      TableMetaDataEntries result = serviceInterface
-   //          .getTableMetadataIfChanged(APPNAME, dbHandle, "Tea_houses", "old and invalid revId");
-   //      assertEquals(result.getEntries().size(), 2);
-   //      String a = result.getEntries().get(0).value;
-   //      String b = result.getEntries().get(1).value;
-   //      if (a.equals("val")) {
-   //         assertEquals(b, "other val");
-   //      } else {
-   //         assertEquals(a, "other val");
-   //         assertEquals(b, "val");
-   //      }
-   //      thSetRevid("new revid");
-   //      result = d.getTableMetadataIfChanged(APPNAME, dbHandle, "Tea_houses", "new revid");
-   //      assertEquals(result.getEntries().size(), 0);
-   //      result = d.getTableMetadataIfChanged(APPNAME, dbHandle, "Tea_houses", "old revid again");
-   //      assertEquals(result.getEntries().size(), 2);
-   //      result = d.getTableMetadataIfChanged(APPNAME, dbHandle, "table_dne", "revid");
-   //      assertEquals(result.getEntries().size(), 0);
-   //      deleteTeaHouses();
-   //
-   //      serviceInterface.closeDatabase(APPNAME, dbHandle);
-   //   }
+   @Test public void testGetTableHealthStatus() throws Exception {
+      try {
+         //_savepoint_type is null -> + 1 checkpoint
+         //_conflict_type not is null -> + 1 conflict
+         //_sync_state not in [synced, pending_files] -> + 1 changes
+         createTeaHouses();
+         List<TableHealthInfo> healthInfo = serviceInterface
+             .getTableHealthStatuses(APPNAME, dbHandle);
+         assertEquals(1, healthInfo.size());
+         TableHealthInfo res = healthInfo.get(0);
 
-   //   @Test public void testGetTableHealthStatus() throws Exception {
-   //      //_savepoint_type is null -> + 1 checkpoint
-   //      //_conflict_type not is null -> + 1 conflict
-   //      //_sync_state not in [synced, pending_files] -> + 1 changes
-   //      createTeaHouses();
-   //      TableHealthInfo res = d.getTableHealthStatus(APPNAME, dbHandle, "Tea_houses");
-   //      assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
-   //      thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
-   //      thSet("t1", "_conflict_type", null);
-   //      thSet("t1", "_savepoint_type", SavepointTypeManipulator.complete());
-   //      res = d.getTableHealthStatus(APPNAME, dbHandle, "Tea_houses");
-   //      assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
-   //      assertTrue(res.hasChanges());
-   //
-   //      truncate("Tea_houses");
-   //      thInsert("t1", SyncState.synced, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
-   //      thSet("t1", "_conflict_type", ConflictType.LOCAL_DELETED_OLD_VALUES);
-   //      thSet("t1", "_savepoint_type", SavepointTypeManipulator.complete());
-   //      res = d.getTableHealthStatus(APPNAME, dbHandle, "Tea_houses");
-   //      assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS);
-   //      assertFalse(res.hasChanges());
-   //
-   //      thSet("t1", "_savepoint_type", null);
-   //      thSet("t1", "_sync_state", SyncState.changed);
-   //      res = d.getTableHealthStatus(APPNAME, dbHandle, "Tea_houses");
-   //      assertEquals(res.getHealthStatus(),
-   //          TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
-   //      assertTrue(res.hasChanges());
-   //
-   //      thSet("t1", "_sync_state", SyncState.synced_pending_files);
-   //      res = d.getTableHealthStatus(APPNAME, dbHandle, "Tea_houses");
-   //      assertEquals(res.getHealthStatus(),
-   //          TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
-   //      assertFalse(res.hasChanges());
-   //      deleteTeaHouses();
-   //   }
+         assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
+         thInsert("t1", SyncState.new_row, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+         thSet("t1", CONFLICT_TYPE_COLNAME, null);
+         thSet("t1", SAVEPOINT_TYPE_COLNAME, SavepointTypeManipulator.complete());
+
+         healthInfo = serviceInterface
+             .getTableHealthStatuses(APPNAME, dbHandle);
+         assertEquals(1, healthInfo.size());
+         res = healthInfo.get(0);
+
+         assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
+         assertTrue(res.hasChanges());
+
+         deleteTeaHouses();
+         createTeaHouses();
+
+         thInsert("t1", SyncState.synced, ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+         thSet("t1", CONFLICT_TYPE_COLNAME, ConflictType.LOCAL_DELETED_OLD_VALUES);
+         thSet("t1", SAVEPOINT_TYPE_COLNAME, SavepointTypeManipulator.complete());
+
+         healthInfo = serviceInterface
+             .getTableHealthStatuses(APPNAME, dbHandle);
+         assertEquals(1, healthInfo.size());
+         res = healthInfo.get(0);
+
+         assertEquals(res.getHealthStatus(), TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS);
+         assertFalse(res.hasChanges());
+
+         thSet("t1", SAVEPOINT_TYPE_COLNAME, null);
+         thSet("t1", SYNC_STATE_COLNAME, SyncState.changed);
+
+         healthInfo = serviceInterface
+             .getTableHealthStatuses(APPNAME, dbHandle);
+         assertEquals(1, healthInfo.size());
+         res = healthInfo.get(0);
+
+         assertEquals(res.getHealthStatus(),
+             TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+         assertTrue(res.hasChanges());
+
+         thSet("t1", SYNC_STATE_COLNAME, SyncState.synced_pending_files);
+
+         healthInfo = serviceInterface
+             .getTableHealthStatuses(APPNAME, dbHandle);
+         assertEquals(1, healthInfo.size());
+         res = healthInfo.get(0);
+
+         assertEquals(res.getHealthStatus(),
+             TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS);
+         assertFalse(res.hasChanges());
+      } catch (Exception e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } finally {
+         try {
+            if (dbHandle != null) {
+               deleteTeaHouses();
+            }
+         } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+         }
+
+      }
+   }
 
    /////////////////////////////////////////////////////////
    /////////////      HELPER FUNCTIONS        //////////////
@@ -1479,17 +1501,17 @@ import static org.junit.Assert.fail;
 
    private static ContentValues makeTblCvs(String a, Integer b, Double c) {
       ContentValues v = new ContentValues();
-      v.put("columnId", a);
-      v.put("columnId2", b);
-      v.put("columnId3", c);
+      v.put(COLUMN_ID1, a);
+      v.put(COLUMN_ID2, b);
+      v.put(COLUMN_ID3, c);
       return v;
    }
 
    private static List<Column> makeCols() {
       List<Column> cols = new ArrayList<>();
-      cols.add(new Column("columnId", "Column Name", ElementDataType.string.name(), "[]"));
-      cols.add(new Column("columnId2", "Second Column Name", ElementDataType.integer.name(), "[]"));
-      cols.add(new Column("columnId3", "Column Name", ElementDataType.number.name(), "[]"));
+      cols.add(new Column(COLUMN_ID1, "Column Name", ElementDataType.string.name(), "[]"));
+      cols.add(new Column(COLUMN_ID2, "Second Column Name", ElementDataType.integer.name(), "[]"));
+      cols.add(new Column(COLUMN_ID3, "Column Name", ElementDataType.number.name(), "[]"));
       return cols;
    }
 
@@ -1673,19 +1695,19 @@ import static org.junit.Assert.fail;
       Row row = table.getRowAtIndex(0);
 
       if (state != null) {
-         assertEquals(row.getDataByKey("_sync_state"), state.name());
+         assertEquals(row.getDataByKey(SYNC_STATE_COLNAME), state.name());
       }
       if (conflictTypeShouldBeNull) {
-         String val = row.getDataByKey("_conflict_type");
+         String val = row.getDataByKey(CONFLICT_TYPE_COLNAME);
          assertTrue(val == null || val.isEmpty() || val.equalsIgnoreCase("null"));
       }
    }
 
    private ColumnList getLocalTableColumnList() {
       return new ColumnList(Arrays.asList(
-          new Column[] { new Column("columnId", "Column Name", ElementDataType.string.name(), "[]"),
-              new Column("columnId3", "Column Name", ElementDataType.number.name(), "[]"),
-              new Column("columnId2", "Second Column Name", ElementDataType.integer.name(),
+          new Column[] { new Column(COLUMN_ID1, "Column Name", ElementDataType.string.name(), "[]"),
+              new Column(COLUMN_ID3, "Column Name", ElementDataType.number.name(), "[]"),
+              new Column(COLUMN_ID2, "Second Column Name", ElementDataType.integer.name(),
                   "[]") }));
    }
 }
