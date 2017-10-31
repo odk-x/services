@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
@@ -13,7 +14,13 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.RoleConsts;
-import org.opendatakit.database.data.*;
+import org.opendatakit.database.data.BaseTable;
+import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TableMetaDataEntries;
+import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
@@ -33,12 +40,15 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -280,7 +290,7 @@ import static org.junit.Assert.fail;
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
 
          serviceInterface
-             .updateLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 16, 3.1415),
+             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 16, 3.1415),
                  "columnId = ?", new BindArgs(new String[] { "test" }));
 
          BaseTable baseTable = serviceInterface
@@ -292,7 +302,7 @@ import static org.junit.Assert.fail;
 
          ContentValues cv = new ContentValues();
          cv.put(COLUMN_ID3, 9.5);
-         serviceInterface.updateLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, cv, "columnId2 = ?",
+         serviceInterface.updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, cv, "columnId2 = ?",
              new BindArgs(new Object[] { 16 }));
 
          baseTable = serviceInterface
@@ -313,7 +323,7 @@ import static org.junit.Assert.fail;
          verifyRowExists(3, baseTable, "a", 2, 3.1415);
 
          serviceInterface
-             .updateLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 16, 3.1415),
+             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 16, 3.1415),
                  "columnId = ?", new BindArgs(new String[] { "test" }));
 
          baseTable = serviceInterface
@@ -344,7 +354,7 @@ import static org.junit.Assert.fail;
 
          serviceInterface
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
-         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
              new BindArgs(new String[] { "test" }));
 
          BaseTable baseTable = serviceInterface
@@ -358,7 +368,7 @@ import static org.junit.Assert.fail;
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 15, 3.1415));
          serviceInterface
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test2", 18, 9.813793));
-         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
              new BindArgs(new String[] { "test" }));
 
          baseTable = serviceInterface
@@ -372,7 +382,7 @@ import static org.junit.Assert.fail;
                  null, null, null, null);
          verifyRowExists(1, baseTable, "test2", 18, 9.813793);
 
-         serviceInterface.deleteLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
              new BindArgs(new String[] { "test2" }));
 
          baseTable = serviceInterface

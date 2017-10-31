@@ -904,6 +904,10 @@ public final class ODKDatabaseImplUtils {
     boolean dbWithinTransaction = db.inTransaction();
     boolean success = false;
 
+    if (!tableId.startsWith("L_")) {
+      tableId = "L_" + tableId;
+    }
+
     OrderedColumns orderedDefs = new OrderedColumns(db.getAppName(), tableId, columns);
     try {
       if (!dbWithinTransaction) {
@@ -960,6 +964,10 @@ public final class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
+      if (!tableId.startsWith("L_")) {
+        tableId = "L_" + tableId;
+      }
+
       // Drop the table used for the formId
       StringBuilder b = new StringBuilder();
       b.append("DROP TABLE IF EXISTS ").append(tableId).append(";");
@@ -1000,6 +1008,10 @@ public final class ODKDatabaseImplUtils {
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
+      }
+
+      if (!tableId.startsWith("L_")) {
+        tableId = "L_" + tableId;
       }
 
       db.insertOrThrow(tableId, null, cvDataTableVal);
@@ -1043,6 +1055,10 @@ public final class ODKDatabaseImplUtils {
         db.beginTransactionNonExclusive();
       }
 
+      if (!tableId.startsWith("L_")) {
+        tableId = "L_" + tableId;
+      }
+
       db.update(tableId, cvDataTableVal, whereClause, bindArgs);
 
       if (!dbWithinTransaction) {
@@ -1071,6 +1087,10 @@ public final class ODKDatabaseImplUtils {
     try {
       if (!dbWithinTransaction) {
         db.beginTransactionNonExclusive();
+      }
+
+      if (!tableId.startsWith("L_")) {
+        tableId = "L_" + tableId;
       }
 
       db.delete(tableId, whereClause, bindArgs);
