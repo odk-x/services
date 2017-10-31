@@ -318,7 +318,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * @param bindArgs
    * @throws ActionNotAuthorizedException
    */
-   @Override public void updateLocalOnlyRow(String appName, DbHandle dbHandleName, String tableId,
+   @Override public void updateLocalOnlyRows(String appName, DbHandle dbHandleName, String tableId,
        ContentValues rowValues, String whereClause, BindArgs bindArgs)
        {
 
@@ -352,7 +352,7 @@ public final class OdkDatabaseServiceImpl implements InternalUserDbInterface {
    * @param bindArgs
    * @throws ActionNotAuthorizedException
    */
-   @Override public void deleteLocalOnlyRow(String appName, DbHandle dbHandleName, String tableId,
+   @Override public void deleteLocalOnlyRows(String appName, DbHandle dbHandleName, String tableId,
        String whereClause, BindArgs bindArgs) {
 
       OdkConnectionInterface db = null;

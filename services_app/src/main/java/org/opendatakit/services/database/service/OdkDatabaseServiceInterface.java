@@ -242,7 +242,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       throws RemoteException {
 
     try {
-      odkDatabaseServiceImpl.updateLocalOnlyRow(appName, dbHandleName, tableId, rowValues,
+      odkDatabaseServiceImpl.updateLocalOnlyRows(appName, dbHandleName, tableId, rowValues,
           whereClause, sqlBindArgs);
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "updateLocalOnlyRow", e);
@@ -263,7 +263,7 @@ class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
       String whereClause, BindArgs sqlBindArgs) throws RemoteException {
 
     try {
-      odkDatabaseServiceImpl.deleteLocalOnlyRow(appName, dbHandleName, tableId, whereClause,
+      odkDatabaseServiceImpl.deleteLocalOnlyRows(appName, dbHandleName, tableId, whereClause,
           sqlBindArgs);
     } catch (Exception e) {
       throw createWrappingRemoteException(appName, dbHandleName, "deleteLocalOnlyRow", e);

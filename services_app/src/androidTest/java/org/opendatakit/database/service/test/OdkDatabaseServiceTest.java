@@ -1679,7 +1679,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
 
          // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRow(APPNAME, db, DB_TABLE_ID, null, null);
+         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface
              .insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
@@ -1721,7 +1721,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
 
          // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRow(APPNAME, db, DB_TABLE_ID, null, null);
+         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2());
@@ -1764,7 +1764,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
 
          // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRow(APPNAME, db, DB_TABLE_ID, null, null);
+         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
@@ -1779,7 +1779,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          String whereClause = COL_STRING_ID + "=?";
          BindArgs bindArgs = new BindArgs(new Object[] { TEST_STR_1 });
          serviceInterface
-             .updateLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2(), whereClause,
+             .updateLocalOnlyRows(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2(), whereClause,
                  bindArgs);
 
          results = serviceInterface
@@ -1818,7 +1818,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
 
          // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRow(APPNAME, db, DB_TABLE_ID, null, null);
+         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
 
@@ -1839,7 +1839,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          String whereClause = COL_STRING_ID + "=?";
          BindArgs bindArgs = new BindArgs(new Object[] { TEST_STR_1 });
          serviceInterface
-             .updateLocalOnlyRow(APPNAME, db, DB_TABLE_ID, singleValue, whereClause, bindArgs);
+             .updateLocalOnlyRows(APPNAME, db, DB_TABLE_ID, singleValue, whereClause, bindArgs);
 
          results = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, db, DB_TABLE_ID, null, null, null, null, null,
@@ -1892,7 +1892,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          String whereClause = COL_STRING_ID + "=?";
          BindArgs bindArgs = new BindArgs(new Object[] { TEST_STR_1 });
-         serviceInterface.deleteLocalOnlyRow(APPNAME, db, DB_TABLE_ID, whereClause, bindArgs);
+         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, whereClause, bindArgs);
 
          results = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, db, DB_TABLE_ID, null, null, null, null, null,
