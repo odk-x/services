@@ -53,7 +53,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private static final String MANY_COL_NUMBER_ID = "columnNumber";
    private static final String MANY_COL_BOOL_ID = "columnBool";
    private static final String MANY_COL_DATE_ID = "columnDate";
-   private static final DateUtils date = new DateUtils(Locale.US, TimeZone.getDefault());
+   private static final DateUtils date = new DateUtils(Locale.US, null);
    private static final String dateString = date.formatDateTimeForDb(DateTime.parse
        ("2016-09-28T21:26:22+00:00"));
 
