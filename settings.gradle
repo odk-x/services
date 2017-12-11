@@ -1,4 +1,4 @@
-gradle.ext.gradleConfigVersion = 87
+gradle.ext.gradleConfigVersion = 88
 
 
 if (!gradle.ext.has('workspacePath')) {
@@ -74,10 +74,10 @@ include(servicesProjectChild)
 if (libraryProjectPath.exists() && gradle.ext.useLocal) {
 
     // check if local library project is present
-
+    if (!ext.librarySubProjectDictory.exists()) {
+        ext.librarySubProjectDictory.mkdirs()
+    }
     include libraryProjectName
-
     project(libraryProjectName).setProjectDir(libraryProjectPath) // set local location
-
 }
 
