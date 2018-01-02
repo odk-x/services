@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -46,8 +46,6 @@ import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.utilities.DataHelper;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteException;

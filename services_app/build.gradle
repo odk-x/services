@@ -49,6 +49,7 @@ android {
         }
 
         uitest {
+            minSdkVersion(uitestMinSDK)
             dimension 'testing'
         }
     }

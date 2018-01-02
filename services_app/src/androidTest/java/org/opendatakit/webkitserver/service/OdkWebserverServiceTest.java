@@ -1,4 +1,4 @@
-package org.opendatakit.webkitserver.service.test;
+package org.opendatakit.webkitserver.service;
 
 import android.Manifest;
 import android.content.ComponentName;

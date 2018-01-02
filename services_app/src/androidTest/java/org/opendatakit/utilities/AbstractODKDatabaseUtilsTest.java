@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -60,8 +60,6 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
