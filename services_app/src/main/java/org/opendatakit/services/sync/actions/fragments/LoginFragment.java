@@ -36,6 +36,7 @@ import android.widget.TextView;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
+import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -67,14 +68,13 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
 
    private static final String LOGIN_ACTION = "loginAction";
 
-   private static final String PROGRESS_DIALOG_TAG = "progressDialog";
-
-   private static final String OUTCOME_DIALOG_TAG = "outcomeDialog";
+   private static final String PROGRESS_DIALOG_TAG = "progressDialogLogin";
+   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogLogin";
 
    private String mAppName;
 
    private final Handler handler = new Handler();
-   private DismissableProgressDialogFragment progressDialog = null;
+   private ProgressDialogFragment progressDialog = null;
    private DismissableOutcomeDialogFragment outcomeDialog = null;
 
    private TextView uriField;
@@ -677,18 +677,15 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
          // try to retrieve the active dialog
          Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
 
-         if (dialog != null && ((DismissableProgressDialogFragment) dialog).getDialog() != null) {
-            ((DismissableProgressDialogFragment) dialog).getDialog().setTitle(id_title);
-            ((DismissableProgressDialogFragment) dialog).setMessage(message, progressStep, maxStep);
-         } else if (progressDialog != null && progressDialog.getDialog() != null) {
+         if (dialog != null && (dialog instanceof ProgressDialogFragment)) {
+            progressDialog = (ProgressDialogFragment) dialog;
             progressDialog.getDialog().setTitle(id_title);
             progressDialog.setMessage(message, progressStep, maxStep);
          } else {
             if (progressDialog != null) {
                dismissProgressDialog();
             }
-            progressDialog = DismissableProgressDialogFragment
-                .newInstance(getString(id_title), message);
+            progressDialog = ProgressDialogFragment.newInstance(getString(id_title), message, true);
 
             // If fragment is not visible an exception could be thrown
             // TODO: Investigate a better way to handle this
@@ -698,10 +695,10 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
                ise.printStackTrace();
             }
          }
+
          if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
             handler.postDelayed(new Runnable() {
-               @Override
-               public void run() {
+               @Override public void run() {
                   updateInterface();
                }
             }, 150);
@@ -718,14 +715,18 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
       // try to retrieve the active dialog
       final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
 
-      if (dialog != null && dialog != progressDialog) {
+
+      // seems like the case where progressDialog is not pointing at the retreived dialog so
+      // be extra careful and clear dialog since it won't be cleared by the progressDialog !=
+      // null clear
+      if (dialog != null && dialog != progressDialog && (dialog instanceof ProgressDialogFragment)) {
          // the UI may not yet have resolved the showing of the dialog.
          // use a handler to add the dismiss to the end of the queue.
          handler.post(new Runnable() {
             @Override
             public void run() {
                try {
-                  ((DismissableProgressDialogFragment) dialog).dismiss();
+                  ((ProgressDialogFragment) dialog).dismiss();
                } catch (Exception e) {
                   // ignore... we tried!
                }
@@ -733,8 +734,9 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             }
          });
       }
+
       if (progressDialog != null) {
-         final DismissableProgressDialogFragment scopedReference = progressDialog;
+         final ProgressDialogFragment scopedReference = progressDialog;
          progressDialog = null;
          // the UI may not yet have resolved the showing of the dialog.
          // use a handler to add the dismiss to the end of the queue.
@@ -742,9 +744,7 @@ public class LoginFragment extends Fragment implements ISyncOutcomeHandler {
             @Override
             public void run() {
                try {
-                  if (scopedReference != null) {
-                     scopedReference.dismiss();
-                  }
+                  scopedReference.dismiss();
                } catch (Exception e) {
                   e.printStackTrace();
                }

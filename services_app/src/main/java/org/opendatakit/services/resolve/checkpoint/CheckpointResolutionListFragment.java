@@ -53,7 +53,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   public static final String NAME = "CheckpointResolutionListFragment";
   public static final int ID = R.layout.checkpoint_resolver_chooser_list;
 
-  private static final String PROGRESS_DIALOG_TAG = "progressDialog";
+  private static final String PROGRESS_DIALOG_TAG = "progressCheckpoint";
 
   private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
 
@@ -270,19 +270,25 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
       // try to retrieve the active dialog
       Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+      String title = getString(R.string.conflict_resolving_all);
 
-      if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
-        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.conflict_resolving_all);
-        ((ProgressDialogFragment) dialog).setMessage(progress);
-      } else if (progressDialog != null && progressDialog.getDialog() != null) {
-        progressDialog.getDialog().setTitle(R.string.conflict_resolving_all);
+      if (dialog != null && (dialog instanceof ProgressDialogFragment)) {
+        progressDialog = (ProgressDialogFragment) dialog;
+        progressDialog.getDialog().setTitle(title);
         progressDialog.setMessage(progress);
       } else {
         if (progressDialog != null) {
           dismissProgressDialog();
         }
-        progressDialog = ProgressDialogFragment.newInstance(getString(R.string.conflict_resolving_all), progress);
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+        progressDialog = ProgressDialogFragment.newInstance(title, progress, true);
+
+        // If fragment is not visible an exception could be thrown
+        // TODO: Investigate a better way to handle this
+        try {
+          progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
+        } catch (IllegalStateException ise) {
+          ise.printStackTrace();
+        }
       }
     }
   }
