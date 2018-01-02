@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;

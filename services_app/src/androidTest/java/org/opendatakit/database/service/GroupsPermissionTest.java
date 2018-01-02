@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -29,7 +29,6 @@ import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
-import org.opendatakit.database.service.*;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;

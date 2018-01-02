@@ -1,4 +1,4 @@
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
@@ -8,7 +8,6 @@ import org.opendatakit.TestConsts;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.service.DbHandle;
 
 import java.util.List;

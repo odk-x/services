@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.Manifest;
 import android.content.Context;
@@ -14,21 +14,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.service.AidlDbInterface;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertTrue;

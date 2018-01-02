@@ -1,4 +1,4 @@
-package org.opendatakit.logic.test;
+package org.opendatakit.logic;
 
 import android.Manifest;
 import android.content.Context;
