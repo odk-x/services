@@ -693,25 +693,12 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
       }
 
       // try to retrieve the active dialog
-      Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+      progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
+          PROGRESS_DIALOG_TAG, getFragmentManager(), getString(id_title), message, true);
+      progressDialog.setMessage(message, progressStep, maxStep);
 
-      if (dialog != null && (dialog instanceof ProgressDialogFragment)) {
-        progressDialog = (ProgressDialogFragment) dialog;
-        progressDialog.getDialog().setTitle(id_title);
-        progressDialog.setMessage(message, progressStep, maxStep);
-      } else {
-        if (progressDialog != null) {
-          dismissProgressDialog();
-        }
-        progressDialog = ProgressDialogFragment.newInstance(getString(id_title), message, true);
-
-        // If fragment is not visible an exception could be thrown
-        // TODO: Investigate a better way to handle this
-        try {
-          progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-        } catch (IllegalStateException ise) {
-          ise.printStackTrace();
-        }
+      if(!progressDialog.isAdded()) {
+        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
       }
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
@@ -725,49 +712,11 @@ public class SyncFragment extends Fragment implements ISyncOutcomeHandler {
   }
 
   private void dismissProgressDialog() {
-    if ( getActivity() == null ) {
-      // we are tearing down or still initializing
-      return;
+    final ProgressDialogFragment tmp = progressDialog;
+    if (tmp != null && !tmp.dismissWasCalled()) {
+      tmp.dismiss();
     }
-
-    // try to retrieve the active dialog
-    final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
-
-    // seems like the case where progressDialog is not pointing at the retreived dialog so
-    // be extra careful and clear dialog since it won't be cleared by the progressDialog !=
-    // null clear
-
-    if (dialog != null && dialog != progressDialog && (dialog instanceof ProgressDialogFragment)) {
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            ((ProgressDialogFragment) dialog).dismiss();
-          } catch (Exception e) {
-            // ignore... we tried!
-          }
-          perhapsEnableButtons();
-        }
-      });
-    }
-    if (progressDialog != null) {
-      final ProgressDialogFragment scopedReference = progressDialog;
-      progressDialog = null;
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override public void run() {
-          try {
-            scopedReference.dismiss();
-          } catch (Exception e) {
-            // ignore... we tried!
-          }
-          perhapsEnableButtons();
-        }
-      });
-    }
+    progressDialog = null;
   }
 
   private void showOutcomeDialog( SyncStatus status, SyncOverallResult result ) {

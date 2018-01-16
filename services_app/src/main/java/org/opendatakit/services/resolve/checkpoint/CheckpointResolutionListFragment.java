@@ -57,10 +57,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
 
-  private enum DialogState {
-    Progress, Alert, None
-  }
-
   private static CheckpointResolutionListTask checkpointResolutionListTask = null;
 
   private String mAppName;
@@ -268,60 +264,25 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       buttonTakeAllOldest.setEnabled(false);
       buttonTakeAllNewest.setEnabled(false);
 
-      // try to retrieve the active dialog
-      Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
       String title = getString(R.string.conflict_resolving_all);
 
-      if (dialog != null && (dialog instanceof ProgressDialogFragment)) {
-        progressDialog = (ProgressDialogFragment) dialog;
-        progressDialog.getDialog().setTitle(title);
-        progressDialog.setMessage(progress);
-      } else {
-        if (progressDialog != null) {
-          dismissProgressDialog();
-        }
-        progressDialog = ProgressDialogFragment.newInstance(title, progress, true);
+      // try to retrieve the active dialog
+      progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
+          PROGRESS_DIALOG_TAG, getFragmentManager(), title, progress, false);
 
-        // If fragment is not visible an exception could be thrown
-        // TODO: Investigate a better way to handle this
-        try {
-          progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-        } catch (IllegalStateException ise) {
-          ise.printStackTrace();
-        }
+      if(!progressDialog.isAdded()) {
+        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
       }
     }
   }
 
   private void dismissProgressDialog() {
-    final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
-    if (dialog != null && dialog != progressDialog) {
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          ((ProgressDialogFragment) dialog).dismiss();
-        }
-      });
+    final ProgressDialogFragment tmp = progressDialog;
+    if (tmp != null && !tmp.dismissWasCalled()) {
+      tmp.dismiss();
     }
-    if (progressDialog != null) {
-      final ProgressDialogFragment scopedReference = progressDialog;
-      progressDialog = null;
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override public void run() {
-          try {
-            scopedReference.dismiss();
-          } catch (Exception e) {
-            // ignore... we tried!
-          }
-        }
-      });
-    }
+    progressDialog = null;
   }
-
 
   @Override public void resolutionProgress(String progress) {
     if ( progressDialog != null ) {
