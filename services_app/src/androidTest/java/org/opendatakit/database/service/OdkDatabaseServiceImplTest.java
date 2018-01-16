@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -22,10 +22,6 @@ import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableMetaDataEntries;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.TableHealthInfo;
-import org.opendatakit.database.service.TableHealthStatus;
-import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;

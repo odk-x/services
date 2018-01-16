@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
@@ -12,10 +12,6 @@ import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.BindArgs;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.utilities.DateUtils;

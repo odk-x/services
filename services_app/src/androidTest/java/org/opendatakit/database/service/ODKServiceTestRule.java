@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import org.junit.rules.TestRule;
 
