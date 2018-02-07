@@ -15,36 +15,12 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
-import android.util.Log;
-
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.fragment.AboutMenuFragment;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.services.sync.actions.fragments.SyncFragment;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
-import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.services.sync.actions.fragments.SyncFragment;
 
 /**
  * An activity for syncing the local content with the server.

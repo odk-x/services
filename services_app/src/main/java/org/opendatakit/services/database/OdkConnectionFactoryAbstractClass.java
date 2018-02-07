@@ -14,10 +14,10 @@
 
 package org.opendatakit.services.database;
 
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.sqlite.database.sqlite.SQLiteCantOpenDatabaseException;
 import org.sqlite.database.sqlite.SQLiteDatabaseLockedException;
 import org.sqlite.database.sqlite.SQLiteException;
@@ -26,10 +26,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileLock;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.*;
-import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Factory interface that provides database connections and manages them.

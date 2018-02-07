@@ -21,11 +21,15 @@
 package org.sqlite.database.sqlite;
 
 import android.content.ContentResolver;
-
-import android.database.*;
+import android.database.CharArrayBuffer;
+import android.database.ContentObservable;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
+import android.database.DataSetObservable;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
-
 import org.opendatakit.logging.WebLogger;
 
 import java.lang.ref.WeakReference;

@@ -15,13 +15,16 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.os.Bundle;
-import android.preference.*;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceFragment;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 
 import java.util.Collections;
 

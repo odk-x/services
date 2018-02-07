@@ -23,26 +23,28 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.service.*;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.AidlDbInterface;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.services.sync.service.logic.Synchronizer;
+import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStatus;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.TableLevelResult;
-import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.services.sync.service.logic.Synchronizer;
-import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStatus;
+import org.opendatakit.utilities.NameUtil;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.IOException;

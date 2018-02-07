@@ -123,12 +123,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".sync.actions.activities.AccountInfoActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
         <activity android:name=".sync.actions.activities.SyncActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />

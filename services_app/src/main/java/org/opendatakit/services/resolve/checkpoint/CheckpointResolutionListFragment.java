@@ -16,7 +16,6 @@
 package org.opendatakit.services.resolve.checkpoint;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Intent;
@@ -30,14 +29,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.R;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.task.CheckpointResolutionListTask;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
-import org.opendatakit.services.R;
 
 import java.util.ArrayList;
 
@@ -268,20 +266,12 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
       // try to retrieve the active dialog
       progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
-          PROGRESS_DIALOG_TAG, getFragmentManager(), title, progress, false);
+          PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
 
       if(!progressDialog.isAdded()) {
         progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
       }
     }
-  }
-
-  private void dismissProgressDialog() {
-    final ProgressDialogFragment tmp = progressDialog;
-    if (tmp != null && !tmp.dismissWasCalled()) {
-      tmp.dismiss();
-    }
-    progressDialog = null;
   }
 
   @Override public void resolutionProgress(String progress) {
@@ -297,7 +287,9 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     buttonTakeAllOldest.setEnabled(true);
     buttonTakeAllNewest.setEnabled(true);
 
-    dismissProgressDialog();
+    ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
+        getFragmentManager());
+    progressDialog = null;
     getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
 
     if ( result != null && result.length() != 0 ) {

@@ -28,7 +28,6 @@ import android.support.v13.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;

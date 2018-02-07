@@ -15,7 +15,12 @@ import org.sqlite.database.SQLException;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Update the form definitions table based upon the content of the sdcard.

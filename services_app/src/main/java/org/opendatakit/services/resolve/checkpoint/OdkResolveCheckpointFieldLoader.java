@@ -20,24 +20,31 @@ import android.content.Context;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.services.utilities.ActiveUserAndLocale;
-import org.opendatakit.utilities.NameUtil;
-import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.BaseTable;
-import org.opendatakit.services.resolve.views.components.*;
+import org.opendatakit.services.resolve.views.components.ConcordantColumn;
+import org.opendatakit.services.resolve.views.components.ConflictColumn;
+import org.opendatakit.services.resolve.views.components.ResolveActionList;
+import org.opendatakit.services.resolve.views.components.ResolveActionType;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.NameUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author mitchellsundt@gmail.com
