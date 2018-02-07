@@ -53,7 +53,7 @@ import org.opendatakit.sync.service.OdkSyncServiceInterface;
  * Created by jbeorse on 5/31/17.
  */
 
-public class SyncBaseActivity extends Activity
+public abstract class SyncBaseActivity extends Activity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 
