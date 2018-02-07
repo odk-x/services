@@ -209,8 +209,6 @@
 
     <string name="sync_configure_username_password">Username authentication was selected but
         a username and password are not configured. Please update your settings.</string>
-    <string name="sync_configure_google_account">Google account authentication was selected but
-        a Google account has not been configured. Please update your settings.</string>
     <string name="sync_configure_credentials">No authentication type has been selected.
         Please update your settings.</string>
 
@@ -317,8 +315,6 @@
     <string name="change_username">ODK Username</string>
     <string name="password">Server Password</string>
     <string name="change_server_password">Server Password</string>
-    <string name="google_account">Select Google Account</string>
-    <string name="selected_google_account_text">Google Account</string>
     <string name="no_account">No account</string>
     <string name="anonymous">None (anonymous access)</string>
     <string name="credential_type_prefix">Credentials: </string>

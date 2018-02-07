@@ -38,7 +38,7 @@ import org.opendatakit.services.sync.actions.fragments.LoginFragment;
  * Created by jbeorse on 5/30/17.
  */
 
-public class LoginActivity extends SyncBaseActivity {
+public class LoginActivity extends AbsSyncBaseActivity {
 
    private static final String TAG = LoginActivity.class.getSimpleName();
 

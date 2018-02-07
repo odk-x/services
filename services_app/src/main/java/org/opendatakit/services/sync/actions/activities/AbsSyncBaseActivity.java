@@ -53,11 +53,11 @@ import org.opendatakit.sync.service.OdkSyncServiceInterface;
  * Created by jbeorse on 5/31/17.
  */
 
-public abstract class SyncBaseActivity extends Activity
+public abstract class AbsSyncBaseActivity extends Activity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 
-   private static final String TAG = SyncBaseActivity.class.getSimpleName();
+   private static final String TAG = AbsSyncBaseActivity.class.getSimpleName();
 
    public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
    protected static final int RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE = 30;

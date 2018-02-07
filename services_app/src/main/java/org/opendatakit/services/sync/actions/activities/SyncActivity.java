@@ -28,7 +28,7 @@ import org.opendatakit.services.sync.actions.fragments.SyncFragment;
  * @author mitchellsundt@gmail.com
  *
  */
-public class SyncActivity extends SyncBaseActivity {
+public class SyncActivity extends AbsSyncBaseActivity {
 
   private static final String TAG = SyncActivity.class.getSimpleName();
 

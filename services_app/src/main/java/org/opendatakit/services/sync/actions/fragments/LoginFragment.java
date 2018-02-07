@@ -16,7 +16,7 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -28,8 +28,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import org.opendatakit.consts.RequestCodeConsts;
-import org.opendatakit.fragment.DismissableOutcomeDialogFragment;
-import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -65,9 +63,6 @@ public class LoginFragment extends AbsSyncUIFragment {
    private static final String PROGRESS_DIALOG_TAG = "progressDialogLogin";
    private static final String OUTCOME_DIALOG_TAG = "outcomeDialogLogin";
 
-   private ProgressDialogFragment progressDialog = null;
-   private DismissableOutcomeDialogFragment outcomeDialog = null;
-
    private PropertiesSingleton props;
    private TableHealthValidator healthValidator;
 
@@ -79,6 +74,10 @@ public class LoginFragment extends AbsSyncUIFragment {
    private Button cancel;
 
    private LoginActions loginAction = LoginActions.IDLE;
+
+   public LoginFragment() {
+      super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
+   }
 
    @Override
    public void onSaveInstanceState(Bundle outState) {
@@ -107,6 +106,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    @Override
    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
       super.onCreateView(inflater, container, savedInstanceState);
+
 
       View view = inflater.inflate(ID, container, false);
 
@@ -400,12 +400,10 @@ public class LoginFragment extends AbsSyncUIFragment {
                       // request completed
                       loginAction = LoginActions.IDLE;
                       final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
+                      // TODO: figure out if there is a syncStatus that is not covered
                       handler.post(new Runnable() {
                          @Override
                          public void run() {
-                            ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
-                                getFragmentManager());
-                            progressDialog = null;
                             if (event.progressState == SyncProgressState.FINISHED) {
                                showOutcomeDialog(status, result);
                             }
@@ -466,15 +464,10 @@ public class LoginFragment extends AbsSyncUIFragment {
 
          int id_title = R.string.verifying_server_settings;
 
-         // try to retrieve the active dialog
-         progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
-             PROGRESS_DIALOG_TAG, progressDialog,
-             getFragmentManager(), getString(id_title), message, true);
-         progressDialog.setMessage(message, progressStep, maxStep);
+         FragmentManager fm =  getFragmentManager();
 
-         if(!progressDialog.isAdded()) {
-            progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-         }
+         msgManager.createProgressDialog(getString(id_title), message, fm);
+         msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
          if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
             handler.postDelayed(new Runnable() {
@@ -554,13 +547,7 @@ public class LoginFragment extends AbsSyncUIFragment {
             break;
          }
 
-         outcomeDialog = DismissableOutcomeDialogFragment.eitherReuseOrCreateNew
-             (OUTCOME_DIALOG_TAG, outcomeDialog, getFragmentManager(), getString(id_title), message, (status == SyncStatus.SYNC_COMPLETE
-                 || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS), LoginFragment.NAME);
-
-         if(!outcomeDialog.isAdded()) {
-            outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
-         }
+         msgManager.createAlertDialog(getString(id_title), message, getFragmentManager(), getId());
       }
    }
 }

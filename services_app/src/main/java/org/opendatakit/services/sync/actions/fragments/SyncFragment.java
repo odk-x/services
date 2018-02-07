@@ -17,6 +17,7 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,8 +33,6 @@ import android.widget.Spinner;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.RoleConsts;
-import org.opendatakit.fragment.DismissableOutcomeDialogFragment;
-import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -72,9 +71,6 @@ public class SyncFragment extends AbsSyncUIFragment {
   private static final String PROGRESS_DIALOG_TAG = "progressDialogSync";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogSync";
 
-  private ProgressDialogFragment progressDialog = null;
-  private DismissableOutcomeDialogFragment outcomeDialog = null;
-
   private boolean loggingIn = false;
 
   private LinearLayout infoPane;
@@ -89,6 +85,10 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
   private SyncActions syncAction = SyncActions.IDLE;
+
+  public SyncFragment() {
+    super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
+  }
 
   @Override public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -382,9 +382,6 @@ public class SyncFragment extends AbsSyncUIFragment {
                 final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                 handler.post(new Runnable() {
                   @Override public void run() {
-                    ProgressDialogFragment
-                        .dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager());
-                    progressDialog = null;
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
                     }
@@ -488,15 +485,10 @@ public class SyncFragment extends AbsSyncUIFragment {
         id_title = R.string.sync_in_progress;
       }
 
-      // try to retrieve the active dialog
-      progressDialog = ProgressDialogFragment
-          .eitherReuseOrCreateNew(PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(),
-              getString(id_title), message, true);
-      progressDialog.setMessage(message, progressStep, maxStep);
+      FragmentManager fm =  getFragmentManager();
 
-      if (!progressDialog.isAdded()) {
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-      }
+      msgManager.createProgressDialog(getString(id_title), message, fm);
+      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
@@ -589,13 +581,7 @@ public class SyncFragment extends AbsSyncUIFragment {
         id_title = R.string.sync_complete_pending_attachments;
         message = getString(R.string.sync_complete_pending_attachments_text);
       }
-      outcomeDialog = DismissableOutcomeDialogFragment
-          .eitherReuseOrCreateNew(OUTCOME_DIALOG_TAG, outcomeDialog, getFragmentManager(), getString(id_title), message, (status == SyncStatus.SYNC_COMPLETE
-              || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS), SyncFragment.NAME);
-
-      if (!outcomeDialog.isAdded()) {
-        outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
-      }
+      msgManager.createAlertDialog(getString(id_title), message, getFragmentManager(), getId());
     }
   }
 }

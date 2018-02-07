@@ -16,7 +16,7 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -24,8 +24,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import org.opendatakit.fragment.DismissableOutcomeDialogFragment;
-import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -56,12 +54,14 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   private static final String PROGRESS_DIALOG_TAG = "progressDialogVerifySvr";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogVerifySvr";
 
-  private ProgressDialogFragment progressDialog = null;
-  private DismissableOutcomeDialogFragment outcomeDialog = null;
-
   private Button startVerifyServerSettings;
 
   private VerifyServerSettingsActions verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
+
+  public VerifyServerSettingsFragment() {
+    super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
+  }
+
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
@@ -267,9 +267,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
                 handler.post(new Runnable() {
                   @Override
                   public void run() {
-                    ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
-                        getFragmentManager());
-                    progressDialog = null;
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
                     }
@@ -330,14 +327,9 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
       int id_title = R.string.verifying_server_settings;
 
-      // try to retrieve the active dialog
-      progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(PROGRESS_DIALOG_TAG, progressDialog,
-          getFragmentManager(), getString(id_title), message, true);
-          progressDialog.setMessage(message, progressStep, maxStep);
-
-      if(!progressDialog.isAdded()) {
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-      }
+      FragmentManager fm =  getFragmentManager();
+      msgManager.createProgressDialog(getString(id_title), message, fm);
+      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
@@ -417,15 +409,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
         message = getString(R.string.verify_server_setttings_successful_text);
         break;
       }
-      // try to retrieve the active dialog
-      outcomeDialog = DismissableOutcomeDialogFragment.eitherReuseOrCreateNew
-          (OUTCOME_DIALOG_TAG, outcomeDialog, getFragmentManager(), getString(id_title), message, (status == SyncStatus.SYNC_COMPLETE
-              || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS),
-              VerifyServerSettingsFragment.NAME);
-
-      if(!outcomeDialog.isAdded()) {
-        outcomeDialog.show(getFragmentManager(), OUTCOME_DIALOG_TAG);
-      }
+      msgManager.createAlertDialog(getString(id_title), message, getFragmentManager(), getId());
     }
   }
 }

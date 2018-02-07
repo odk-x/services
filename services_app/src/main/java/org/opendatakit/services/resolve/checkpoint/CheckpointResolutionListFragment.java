@@ -65,6 +65,9 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
 
+  private Button buttonTakeAllOldest;
+  private Button buttonTakeAllNewest;
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -109,8 +112,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
-    Button buttonTakeAllOldest = (Button) view.findViewById(R.id.take_all_oldest);
-    Button buttonTakeAllNewest = (Button) view.findViewById(R.id.take_all_newest);
     buttonTakeAllNewest.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         takeAllNewest();
@@ -256,9 +257,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
         return;
       }
 
-      Button buttonTakeAllOldest = (Button) getView().findViewById(R.id.take_all_oldest);
-      Button buttonTakeAllNewest = (Button) getView().findViewById(R.id.take_all_newest);
-
       buttonTakeAllOldest.setEnabled(false);
       buttonTakeAllNewest.setEnabled(false);
 
@@ -282,8 +280,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
   @Override public void resolutionComplete(String result) {
     checkpointResolutionListTask = null;
-    Button buttonTakeAllOldest = (Button) getView().findViewById(R.id.take_all_oldest);
-    Button buttonTakeAllNewest = (Button) getView().findViewById(R.id.take_all_newest);
+
     buttonTakeAllOldest.setEnabled(true);
     buttonTakeAllNewest.setEnabled(true);
 

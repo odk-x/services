@@ -11,18 +11,21 @@ import android.os.RemoteException;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.fragment.DismissableOutcomeDialogFragment.ISyncOutcomeHandler;
+import org.opendatakit.fragment.AlertDialogFragment;
+import org.opendatakit.fragment.AlertNProgessMsgFragmentMger;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
+import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
-import org.opendatakit.services.sync.actions.activities.SyncBaseActivity;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.SyncStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,18 +34,24 @@ import java.util.Map;
  * Created by wrb on 2/5/2018.
  */
 
-abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler {
+abstract class AbsSyncUIFragment extends Fragment implements
+    AlertDialogFragment.ConfirmAlertDialog {
 
    private static final String TAG = AbsSyncUIFragment.class.getSimpleName();
 
    private static final String ACCOUNT_TYPE_G = "com.google";
 
    private String mAppName;
+   private String alertDialogTag;
+   private String progressDialogTag;
+
 
    final Handler handler = new Handler();
    TextView uriField;
    TextView accountAuthType;
    TextView accountIdentity;
+
+   AlertNProgessMsgFragmentMger msgManager;
 
 
    abstract void postTaskToAccessSyncService();
@@ -51,6 +60,49 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
    abstract void syncCompletedAction(OdkSyncServiceInterface syncServiceInterface) throws
        RemoteException;
 
+
+   AbsSyncUIFragment(String alertDialogTag, String progressDialogTag) {
+      this.alertDialogTag = alertDialogTag;
+      this.progressDialogTag = progressDialogTag;
+   }
+
+   /**
+    * Override the Fragment.onAttach() method to get appName, initailize variables,
+    * and instantiate the NoticeDialogListener
+    *
+    * @param context
+    */
+   @Override public void onAttach(Context context) {
+      super.onAttach(context);
+
+      Activity activity = getActivity();
+
+      // get the appName from the ODK app aware infrastructure
+      if (activity instanceof IAppAwareActivity) {
+         mAppName = ((IAppAwareActivity) activity).getAppName();
+      } else {
+         throw new RuntimeException("The activity that ProgressDialogListener is attaching to is "
+             + "NOT an IAppAwareActivity");
+      }
+   }
+
+   @Override
+   public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+
+      if (savedInstanceState != null) {
+         msgManager = AlertNProgessMsgFragmentMger
+             .restoreInitMessaging(getAppName(), alertDialogTag, progressDialogTag,
+                 savedInstanceState);
+      }
+
+      // if message manager was not created from saved state, create fresh
+      if (msgManager == null) {
+         msgManager = new AlertNProgessMsgFragmentMger(getAppName(), alertDialogTag,
+             progressDialogTag, true, true);
+      }
+
+   }
 
    /**
     * Obtains the references to the account info and populates the member variables with the
@@ -71,9 +123,11 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
       WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
 
       Intent incomingIntent = getActivity().getIntent();
-      mAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-      if ( mAppName == null || mAppName.length() == 0 ) {
-         WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] mAppName is null so calling finish");
+      String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+      if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
+         WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
+             + "either null or does not match the current appName of the activity so calling "
+             + "finish");
          getActivity().setResult(Activity.RESULT_CANCELED);
          getActivity().finish();
          return;
@@ -84,19 +138,14 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
       updateInterface();
    }
 
-
    @Override
-   public void onActivityCreated(Bundle savedInstanceState) {
-      super.onActivityCreated(savedInstanceState);
-
-      Intent incomingIntent = getActivity().getIntent();
-      mAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-      if (mAppName == null || mAppName.length() == 0) {
-         getActivity().setResult(Activity.RESULT_CANCELED);
-         getActivity().finish();
-         return;
+   public void onSaveInstanceState(Bundle outState) {
+      super.onSaveInstanceState(outState);
+      if (msgManager != null) {
+         msgManager.addStateToSaveStateBundle(outState);
       }
    }
+
 
    @Override
    public void onDestroy() {
@@ -167,7 +216,7 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
          if (username == null || username.length() == 0 || password == null
              || password.length() == 0) {
             if(createError) {
-               SyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_username_password));
+               AbsSyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_username_password));
             } else {
                Toast.makeText(getActivity(), getString(R.string.sync_configure_username_password),
                    Toast.LENGTH_LONG).show();
@@ -177,7 +226,7 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
          return true;
       }
       if(createError) {
-         SyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_credentials));
+         AbsSyncBaseActivity.showAuthenticationErrorDialog(getActivity(), getString(R.string.sync_configure_credentials));
       } else {
          Toast.makeText(getActivity(), getString(R.string.sync_configure_credentials),
              Toast.LENGTH_LONG).show();
@@ -221,7 +270,6 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
       }
    }
 
-   @Override
    public void onSyncCompleted() {
       Activity activity = getActivity();
       WebLogger.getLogger(getAppName())
@@ -259,6 +307,40 @@ abstract class AbsSyncUIFragment extends Fragment implements ISyncOutcomeHandler
                       }
                    }, 100);
                 }
+             }
+          });
+   }
+
+   @Override public void okAlertDialog() {
+      Activity activity = getActivity();
+      if (activity == null) {
+         // we are in transition -- do nothing
+         WebLogger.getLogger(getAppName())
+             .w(TAG, "[" + getId() + "] [okAlertDialog has been oked] activity == null = return");
+         handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+               okAlertDialog();
+            }
+         }, 100);
+         return;
+      }
+
+      ((ISyncServiceInterfaceActivity) activity)
+          .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+             @Override
+             public void doAction(OdkSyncServiceInterface syncServiceInterface) throws
+                 RemoteException {
+
+                final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
+
+                if (status == SyncStatus.SYNC_COMPLETE
+                    || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS)  {
+                   getActivity().setResult(Activity.RESULT_OK);
+                } else {
+                   getActivity().setResult(Activity.RESULT_CANCELED);
+                }
+                onSyncCompleted();
              }
           });
    }
