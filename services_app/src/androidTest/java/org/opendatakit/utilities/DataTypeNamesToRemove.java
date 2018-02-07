@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 public class DataTypeNamesToRemove {
 

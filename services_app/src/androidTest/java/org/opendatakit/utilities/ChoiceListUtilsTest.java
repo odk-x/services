@@ -1,4 +1,4 @@
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.Manifest;
 import android.support.test.rule.GrantPermissionRule;

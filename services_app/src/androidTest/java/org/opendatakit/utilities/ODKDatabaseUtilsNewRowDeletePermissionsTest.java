@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
