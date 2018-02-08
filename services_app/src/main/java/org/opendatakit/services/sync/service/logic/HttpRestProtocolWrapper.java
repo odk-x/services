@@ -776,45 +776,6 @@ public class HttpRestProtocolWrapper {
 
   }
 
-  private String updateAccessToken() throws InvalidAuthTokenException {
-    String accessToken = sc.updateAccessToken();
-    if ( accessToken == null ) {
-      throw new InvalidAuthTokenException("unable to update access token -- please re-authorize");
-    }
-    this.accessToken = accessToken;
-    return accessToken;
-  }
-  
-  private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
-
-    CloseableHttpResponse response = null;
-    try {
-      HttpGet request = new HttpGet();
-      String tokenStr =  TOKEN_INFO + URLEncoder.encode(accessToken, ApiConstants.UTF8_ENCODE);
-      URI tokenUri = new URI(tokenStr);
-      request.setURI(tokenUri);
-
-      if (localAuthContext != null) {
-        response = httpAuthClient.execute(request, localAuthContext);
-      } else {
-        response = httpAuthClient.execute(request);
-      }
-    } catch (Exception e) {
-      log.e(LOGTAG, "HttpClientErrorException in checkAccessToken");
-      log.printStackTrace(e);
-      throw new InvalidAuthTokenException("Invalid auth token (): " + accessToken, e);
-    } finally {
-      try {
-        if (response != null) {
-          response.close();
-        }
-      } catch (Exception e) {
-        log.e(LOGTAG, "checkAccessToken: error when trying to close response");
-        log.printStackTrace(e);
-      }
-    }
-  }
-
   public static String convertResponseToString(CloseableHttpResponse response) throws IOException {
 
     if (response == null) {

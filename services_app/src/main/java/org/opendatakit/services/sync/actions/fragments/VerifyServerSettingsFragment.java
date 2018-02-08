@@ -139,7 +139,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
     if (requestCode == VerifyServerSettingsActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
       if (resultCode == Activity.RESULT_CANCELED) {
-        invalidateAuthToken(getActivity(), getAppName());
         verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
       }
       postTaskToAccessSyncService();

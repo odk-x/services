@@ -258,7 +258,6 @@ public class SyncFragment extends AbsSyncUIFragment {
 
     if (requestCode == SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
       if (resultCode == Activity.RESULT_CANCELED) {
-        invalidateAuthToken(getActivity(), getAppName());
         syncAction = SyncActions.IDLE;
       }
       postTaskToAccessSyncService();

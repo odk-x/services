@@ -15,6 +15,7 @@ package org.opendatakit.services.utilities;
 
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.R;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,9 @@ public class ODKServicesPropertyUtils {
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+
+      properties.put(CommonToolProperties.KEY_USERNAME, "");
+      properties.put(CommonToolProperties.KEY_PASSWORD, "");
 
       props.setProperties(properties);
    }

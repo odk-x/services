@@ -39,8 +39,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
 
    private static final String TAG = AbsSyncUIFragment.class.getSimpleName();
 
-   private static final String ACCOUNT_TYPE_G = "com.google";
-
    private String mAppName;
    private String alertDialogTag;
    private String progressDialogTag;
@@ -176,18 +174,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
          throw new IllegalStateException("appName not yet initialized");
       }
       return mAppName;
-   }
-
-   public static void invalidateAuthToken(Context context, String appName) {
-      PropertiesSingleton props = CommonToolProperties.get(context, appName);
-      AccountManager.get(context)
-          .invalidateAuthToken(ACCOUNT_TYPE_G, props.getProperty(CommonToolProperties.KEY_AUTH));
-      Map<String, String> properties = new HashMap<String, String>();
-      properties.put(CommonToolProperties.KEY_AUTH, null);
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
    }
 
    /**

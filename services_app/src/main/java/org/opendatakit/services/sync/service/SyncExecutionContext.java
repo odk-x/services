@@ -77,7 +77,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private final String aggregateUri;
   private final String authenticationType;
-  private final String googleAccount;
   private final String username;
   private final String password;
   private final String installationId;
@@ -108,7 +107,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
     this.aggregateUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     this.authenticationType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-    this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
 
@@ -219,32 +217,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return synchronizer;
   }
 
-  private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
-
-  /**
-   * Attempt to update the Google access token for this
-   * @return
-   */
-  public String updateAccessToken() {
-    try {
-      AccountManager accountManager = AccountManager.get(application);
-      Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
-      String accessToken = accountManager.blockingGetAuthToken(account, authString, true);
-      PropertiesSingleton props = CommonToolProperties.get(application, appName);
-      props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_AUTH, accessToken));
-      return accessToken;
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
-    }
-  }
-
-  public String getAccessToken() {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-    return props.getProperty(CommonToolProperties.KEY_AUTH);
-  }
-
   public String getAuthenticationType() {
     return authenticationType;
   }
@@ -275,7 +247,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
     deviceInfo.put("androidDevice", Build.DEVICE);
     deviceInfo.put("androidDeviceDisplayString", Build.DISPLAY);
     deviceInfo.put("androidBuildFingerprint", Build.FINGERPRINT);
-    deviceInfo.put("androidHardware", Build.HARDWARE);
     deviceInfo.put("androidId", Build.ID);
     deviceInfo.put("androidBrand", Build.BRAND);
     deviceInfo.put("androidManufacturer", Build.MANUFACTURER);

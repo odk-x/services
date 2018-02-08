@@ -190,14 +190,6 @@ public class LoginFragment extends AbsSyncUIFragment {
 
    private void logout() {
       ODKServicesPropertyUtils.clearActiveUser(props);
-
-      Map<String, String> properties = new HashMap<String, String>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
-          getString(R.string.credential_type_username_password));
-      properties.put(CommonToolProperties.KEY_USERNAME, "");
-      properties.put(CommonToolProperties.KEY_AUTH, "");
-      properties.put(CommonToolProperties.KEY_PASSWORD, "");
-
       getActivity().finish();
    }
 
@@ -262,7 +254,6 @@ public class LoginFragment extends AbsSyncUIFragment {
 
       if (requestCode == LoginActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
          if (resultCode == Activity.RESULT_CANCELED) {
-            invalidateAuthToken(getActivity(), getAppName());
             loginAction = LoginActions.IDLE;
          }
          postTaskToAccessSyncService();

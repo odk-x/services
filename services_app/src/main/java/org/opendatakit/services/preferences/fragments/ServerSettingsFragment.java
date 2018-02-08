@@ -220,78 +220,8 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
     passwordScreen.setEnabled((usernamePasswordAvailable || adminMode));
 
-    mSelectedGoogleAccountPreference = (ListPreference) findPreference(CommonToolProperties.KEY_ACCOUNT);
-
-    // get list of google accounts
-    final Account[] accounts = AccountManager.get(getActivity().getApplicationContext()).getAccountsByType(
-        "com.google");
-    ArrayList<String> accountEntries = new ArrayList<String>();
-    ArrayList<String> accountValues = new ArrayList<String>();
-
-    for (int i = 0; i < accounts.length; i++) {
-      accountEntries.add(accounts[i].name);
-      accountValues.add(accounts[i].name);
-    }
-    accountEntries.add(getString(R.string.no_account));
-    accountValues.add("");
-
-    mSelectedGoogleAccountPreference.setEntries(accountEntries.toArray(new String[accountEntries
-        .size()]));
-    mSelectedGoogleAccountPreference.setEntryValues(accountValues.toArray(new String[accountValues
-        .size()]));
-    mSelectedGoogleAccountPreference
-        .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-
-          @Override
-          public boolean onPreferenceChange(Preference preference, Object newValue) {
-            int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-            String value = (String) ((ListPreference) preference).getEntryValues()[index];
-            preference.setSummary(value);
-            PropertiesSingleton props = ((IOdkAppPropertiesActivity)
-                ServerSettingsFragment.this.getActivity()).getProps();
-            Map<String,String> properties = new HashMap<String,String>();
-            properties.put(CommonToolProperties.KEY_ACCOUNT, value);
-            properties.put(CommonToolProperties.KEY_AUTH, "");
-            properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-            properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-            properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-            props.setProperties(properties);
-            return true;
-          }
-        });
-
-    String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-    if ( googleAccount == null ) {
-      googleAccount = "";
-    }
-    boolean found = false;
-    for ( int i = 0 ; i < accountValues.size() ; ++i ) {
-      if ( googleAccount.equals(accountValues.get(i)) ) {
-        mSelectedGoogleAccountPreference.setValue(googleAccount);
-        mSelectedGoogleAccountPreference.setSummary(accountEntries.get(i));
-        found = true;
-      }
-    }
-    if ( !found ) {
-      // clear the account property and authentication status
-      Map<String,String> properties = new HashMap<String,String>();
-      properties.put(CommonToolProperties.KEY_ACCOUNT, "");
-      properties.put(CommonToolProperties.KEY_AUTH, "");
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
-      // set to "none"
-      mSelectedGoogleAccountPreference.setValue(accountValues.get(accountValues.size()-1));
-      mSelectedGoogleAccountPreference.setSummary(accountEntries.get(accountEntries.size()-1));
-    }
-
-    Boolean googleAccountAvailable = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_GOOGLE_ACCOUNT);
-    mSelectedGoogleAccountPreference.setEnabled(googleAccountAvailable || adminMode);
-
     if ( !adminMode &&
-        (!serverAvailable || !credentialAvailable || !usernamePasswordAvailable ||
-         !googleAccountAvailable) ) {
+        (!serverAvailable || !credentialAvailable || !usernamePasswordAvailable) ) {
       serverCategory.setTitle(R.string.server_restrictions_apply);
     }
 
