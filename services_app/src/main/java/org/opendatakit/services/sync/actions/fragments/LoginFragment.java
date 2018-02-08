@@ -230,13 +230,6 @@ public class LoginFragment extends AbsSyncUIFragment {
          } else {
             accountIdentity.setText(username);
          }
-      } else if (credentialToUse.equals(getString(R.string.credential_type_google_account))) {
-         String googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-         if (googleAccount == null || googleAccount.equals("")) {
-            accountIdentity.setText(getResources().getString(R.string.no_account));
-         } else {
-            accountIdentity.setText(googleAccount);
-         }
       } else {
          accountIdentity.setText(getResources().getString(R.string.no_account));
       }

@@ -54,17 +54,6 @@ public class ODKServicesPropertyUtils {
          } else {
             activeUserName = CommonToolProperties.ANONYMOUS_USER;
          }
-      } else if (authType.equals(props.CREDENTIAL_TYPE_GOOGLE_ACCOUNT)) {
-         String name = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
-         String user_id = props.getProperty(CommonToolProperties.KEY_AUTHENTICATED_USER_ID);
-         String roles = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
-         if (name != null && name.length() != 0 &&
-             user_id != null && user_id.length() != 0 &&
-             roles != null && roles.length() != 0) {
-            activeUserName = user_id;
-         } else {
-            activeUserName = CommonToolProperties.ANONYMOUS_USER;
-         }
       } else {
          throw new IllegalStateException("unexpected authentication type!");
       }

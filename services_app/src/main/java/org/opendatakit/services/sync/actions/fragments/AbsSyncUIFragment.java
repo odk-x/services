@@ -168,11 +168,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
          authType = getString(R.string.credential_type_none);
       }
 
-      if (getString(R.string.credential_type_google_account).equals(authType)) {
-         //    authenticateGoogleAccount();
-      } else {
-         postTaskToAccessSyncService();
-      }
+      postTaskToAccessSyncService();
    }
 
    String getAppName() {
@@ -262,8 +258,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
       if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
          accountIdentity.setText(getResources().getString(R.string.anonymous));
       } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-         accountIdentity.setText(account);
-      } else if ( credentialToUse.equals(getString(R.string.credential_type_google_account))) {
          accountIdentity.setText(account);
       } else {
          accountIdentity.setText(getResources().getString(R.string.no_account));

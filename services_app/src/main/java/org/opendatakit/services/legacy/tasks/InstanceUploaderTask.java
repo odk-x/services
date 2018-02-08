@@ -500,8 +500,6 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
       String password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
       registerUsernamePassword(credsProvider, username, password, u.getHost());
-    } else if (authType.equals(appContext.getString(R.string.credential_type_google_account))) {
-      throw new IllegalStateException("legacy doesn't support Google Authentication");
     }
 
     // context holds authentication state machine, so it cannot be

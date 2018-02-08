@@ -710,17 +710,7 @@ public class HttpRestProtocolWrapper {
     String host = destination.getHost();
     String authenticationType = sc.getAuthenticationType();
 
-    if ( sc.getString(R.string.credential_type_google_account)
-        .equals(authenticationType)) {
-
-      accessToken = sc.getAccessToken();
-      try {
-        checkAccessToken(accessToken);
-      } catch ( InvalidAuthTokenException e ) {
-        updateAccessToken();
-      }
-
-    } else if ( sc.getString(R.string.credential_type_username_password)
+     if ( sc.getString(R.string.credential_type_username_password)
         .equals(authenticationType)) {
       String username = sc.getUsername();
       String password = sc.getPassword();
@@ -854,14 +844,6 @@ public class HttpRestProtocolWrapper {
     CloseableHttpResponse response = null;
     String authenticationType = sc.getAuthenticationType();
 
-    boolean isGoogleAccount = false;
-    if ( sc.getString(R.string.credential_type_google_account)
-        .equals(authenticationType)) {
-
-      isGoogleAccount = true;
-      request.addHeader("Authorization", "Bearer " + accessToken);
-    }
-
     // we set success to true when we return the response.
     // When we exit the outer try, if success is false,
     // consume any response entity and close the response.
@@ -874,18 +856,6 @@ public class HttpRestProtocolWrapper {
           response = httpClient.execute(request);
         }
 
-        if (isGoogleAccount && response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-          request.removeHeaders("Authorization");
-          updateAccessToken();
-          request.addHeader("Authorization", "Bearer " + accessToken);
-
-          // re-issue the request with new access token
-          if (localContext != null) {
-            response = httpClient.execute(request, localContext);
-          } else {
-            response = httpClient.execute(request);
-          }
-        }
       } catch (MalformedURLException e) {
         log.e(LOGTAG, "Bad client config -- malformed URL");
         log.printStackTrace(e);
@@ -907,13 +877,6 @@ public class HttpRestProtocolWrapper {
         log.printStackTrace(e);
         // bad request construction
         throw new ServerDetectedVersionMismatchedClientRequestException("Bad request construction - " + e.toString(), e,
-                request, response);
-      } catch (InvalidAuthTokenException e) {
-        log.e(LOGTAG, "updating of Google access token failed");
-        log.printStackTrace(e);
-        // problem interacting with Google to update Auth token.
-        // this should be treated as an authentication failure
-        throw new AccessDeniedReauthException("updating of Google access token failed", e,
                 request, response);
       } catch (Exception e) {
         log.e(LOGTAG, "Network failure - " + e.toString());
