@@ -14,8 +14,6 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -41,7 +39,6 @@ import org.opendatakit.services.utilities.TableHealthValidator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 

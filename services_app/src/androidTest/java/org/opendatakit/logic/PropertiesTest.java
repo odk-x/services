@@ -9,13 +9,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.androidlibrary.R;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 
 import java.util.Collections;
 import java.util.HashMap;

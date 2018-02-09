@@ -15,7 +15,6 @@ package org.opendatakit.services.utilities;
 
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.services.R;
 
 import java.util.HashMap;
 import java.util.Map;

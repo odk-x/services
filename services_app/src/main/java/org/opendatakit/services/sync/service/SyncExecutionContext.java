@@ -14,8 +14,6 @@
 
 package org.opendatakit.services.sync.service;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

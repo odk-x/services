@@ -25,7 +25,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.opendatakit.TestConsts;
-import org.opendatakit.database.RoleConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -34,20 +33,21 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.exception.ActionNotAuthorizedException;
+import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.exception.ActionNotAuthorizedException;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.database.utilities.KeyValueStoreUtils;
-import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.DbHandle;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.File;
@@ -58,7 +58,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Permissions tests in the database.

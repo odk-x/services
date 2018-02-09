@@ -150,8 +150,6 @@ public abstract class AbsSyncBaseActivity extends Activity
    @Override protected void onResume() {
       super.onResume();
 
-      WebLogger.getLogger(getAppName()).i(TAG, " [onResume]");
-
       // Do this in on resume so that if we resolve a row it will be refreshed
       // when we come back.
       if (getAppName() == null) {
@@ -162,7 +160,7 @@ public abstract class AbsSyncBaseActivity extends Activity
       }
 
       try {
-         WebLogger.getLogger(getAppName()).i(TAG, "[onCreate] Attempting bind to sync service");
+         WebLogger.getLogger(getAppName()).i(TAG, "[onResume] Attempting bind to sync service");
          Intent bind_intent = new Intent();
          bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
              IntentConsts.Sync.SYNC_SERVICE_CLASS);
@@ -200,7 +198,7 @@ public abstract class AbsSyncBaseActivity extends Activity
 
       if (callUnbind) {
          unbindService(this);
-         WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service");
+         WebLogger.getLogger(getAppName()).i(TAG, " [onPause] Unbound to sync service");
       }
 
       WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
@@ -305,14 +303,7 @@ public abstract class AbsSyncBaseActivity extends Activity
       return super.onOptionsItemSelected(item);
    }
 
-   private boolean getBound() {
-      synchronized (interfaceGuard) {
-         return mBoundGuarded;
-      }
-   }
-
    @Override public PropertiesSingleton getProps() {
-
       if (mProps == null) {
          mProps = CommonToolProperties.get(this, getAppName());
       }

@@ -1,6 +1,5 @@
 package org.opendatakit.services.sync.actions.fragments;
 
-import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
@@ -26,9 +25,7 @@ import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceAct
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.opendatakit.utilities.AppNameUtil;
 
 /**
  * Created by wrb on 2/5/2018.
@@ -65,28 +62,22 @@ abstract class AbsSyncUIFragment extends Fragment implements
    }
 
    /**
-    * Override the Fragment.onAttach() method to get appName, initailize variables,
-    * and instantiate the NoticeDialogListener
+    * Override the Fragment.onAttach() method to get appName
     *
     * @param context
     */
    @Override public void onAttach(Context context) {
       super.onAttach(context);
-
-      Activity activity = getActivity();
-
-      // get the appName from the ODK app aware infrastructure
-      if (activity instanceof IAppAwareActivity) {
-         mAppName = ((IAppAwareActivity) activity).getAppName();
-      } else {
-         throw new RuntimeException("The activity that ProgressDialogListener is attaching to is "
-             + "NOT an IAppAwareActivity");
-      }
+      mAppName = AppNameUtil.getAppNameFromActivity(getActivity());
    }
 
    @Override
    public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
+
+      if(mAppName == null) {
+         mAppName = AppNameUtil.getAppNameFromActivity(getActivity());
+      }
 
       if (savedInstanceState != null) {
          msgManager = AlertNProgessMsgFragmentMger
@@ -97,7 +88,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
       // if message manager was not created from saved state, create fresh
       if (msgManager == null) {
          msgManager = new AlertNProgessMsgFragmentMger(getAppName(), alertDialogTag,
-             progressDialogTag, true, true);
+             progressDialogTag, false, false);
       }
 
    }
