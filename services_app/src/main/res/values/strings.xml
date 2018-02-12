@@ -222,6 +222,7 @@
     <string name="warning_no_user_roles">Warning: User permissions have not been verified!\r\nRunning with reduced privileges.</string>
     <!-- sync service layer messages -->
     <string name="sync_notification_syncing">"ODK Sync In Progress %1$s</string>
+    <string name="sync_notification_launch_sync_progress_intent">ODK Sync Progress</string>
     <string name="sync_notification_failure">"ODK Sync %1$s Error</string>
     <string name="sync_notification_conflicts">"ODK Sync %1$s Conflicts Exist</string>
     <string name="sync_notification_conflicts_text">"%1$d tables have data conflicts or checkpoints and were not completely synced.</string>

@@ -375,6 +375,21 @@ public class SyncFragment extends AbsSyncUIFragment {
                   }
                 });
                 return;
+              } else if (status == SyncStatus.NONE) {
+                // request completed
+                syncAction = SyncActions.IDLE;
+                final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
+                handler.post(new Runnable() {
+                  @Override public void run() {
+                    if(event.progressState == SyncProgressState.INACTIVE) {
+                      FragmentManager fm = getFragmentManager();
+                      msgManager.dismissProgressDialog(fm);
+                      msgManager.dismissAlertDialog(fm);
+                    } else if (event.progressState == SyncProgressState.FINISHED) {
+                      showOutcomeDialog(status, result);
+                    }
+                  }
+                });
               } else {
                 // request completed
                 syncAction = SyncActions.IDLE;
@@ -401,6 +416,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   void syncCompletedAction(OdkSyncServiceInterface syncServiceInterface) throws RemoteException {
+    removeAnySyncNotification();
     boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
     if (!completed) {
       throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
@@ -494,7 +510,7 @@ public class SyncFragment extends AbsSyncUIFragment {
           @Override public void run() {
             updateInterface();
           }
-        }, 150);
+        }, 300);
       }
     }
   }

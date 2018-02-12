@@ -26,6 +26,8 @@ public interface GlobalSyncNotificationManager {
   // down.
   long RETENTION_PERIOD = 300000L;
 
+  int SYNC_NOTIFICATION_ID = 0;
+
   void startingSync(String appName) throws NoAppNameSpecifiedException;
 
   void stoppingSync(String appName) throws NoAppNameSpecifiedException;

@@ -68,6 +68,9 @@
              android:process=":sync"
              android:permission="org.opendatakit.sync.RUN_SYNC" >
         </service>
+        <service android:name=".sync.service.ClearSuccessfulSyncService"
+                 android:exported="false">
+        </service>
         <provider
             android:exported="true"
 	        android:syncable="false"

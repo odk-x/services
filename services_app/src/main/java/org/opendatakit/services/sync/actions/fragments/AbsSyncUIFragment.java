@@ -2,6 +2,7 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,7 +11,6 @@ import android.os.RemoteException;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AlertDialogFragment;
 import org.opendatakit.fragment.AlertNProgessMsgFragmentMger;
@@ -22,6 +22,7 @@ import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity
 import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
+import org.opendatakit.services.sync.service.GlobalSyncNotificationManager;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
@@ -314,5 +315,11 @@ abstract class AbsSyncUIFragment extends Fragment implements
                 onSyncCompleted();
              }
           });
+   }
+
+   void removeAnySyncNotification() {
+      NotificationManager nm = (NotificationManager) getActivity().getSystemService(Context
+          .NOTIFICATION_SERVICE);
+      nm.cancel(getAppName(), GlobalSyncNotificationManager.SYNC_NOTIFICATION_ID);
    }
 }

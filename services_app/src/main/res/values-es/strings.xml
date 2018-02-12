@@ -215,8 +215,10 @@
     <string name="verify_server_settings_header">Verificar permisos</string>
     <string name="click_to_verify_server_settings">Haz clic para verificar permisos</string>
     <string name="warning_no_user_roles">Permisos no se han verificado. Va usted a tener los permisos de un usuario anónimo.</string>
+
     <!-- sync service layer messages -->
     <string name="sync_notification_syncing">"Sincronizando %1$s</string>
+    <string name="sync_notification_launch_sync_progress_intent">ODK Sync Progress</string>
     <string name="sync_notification_failure">"Error al sincronizar %1$s</string>
     <string name="sync_notification_conflicts">"Conflictos al sincronizar %1$s</string>
     <string name="sync_notification_conflicts_text">"%1$d tabulas tienen conflictos o cambios no guardados y no se han sincronizados.</string>

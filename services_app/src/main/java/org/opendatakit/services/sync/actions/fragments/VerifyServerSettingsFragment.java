@@ -288,6 +288,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   void syncCompletedAction(OdkSyncServiceInterface syncServiceInterface) throws
       RemoteException {
+    removeAnySyncNotification();
     boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
     if (!completed) {
       throw new IllegalStateException(
