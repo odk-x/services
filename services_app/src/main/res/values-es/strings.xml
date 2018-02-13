@@ -108,7 +108,7 @@
     <string name="sync_server_configuration_failure">Error en la configuración del servidor</string>
     <string name="sync_device_configuration_failure">Error en la configuración del dispotivo</string>
     <string name="sync_conflicts_need_resolving">Se han detectados conflictos</string>
-    <string name="sync_conflicts_text">Usarios otros han modificados las mismas filas que usted.\r\nAhora tiene usted que integrar los cambios de usted con los de ellos.</string>
+    <string name="sync_conflicts_text">Usarios otros han modificados las mismas filas que usted.\nAhora tiene usted que integrar los cambios de usted con los de ellos.</string>
     <string name="sync_successful">Éxito al sincronizar</string>
     <string name="sync_successful_text">Éxito! El data y configuración está la mismo con el servidor.</string>
     <string name="sync_complete_pending_attachments">Éxito al sincronizar sin archivos</string>
@@ -227,15 +227,15 @@
     <string name="sync_notification_success_complete_text">Sincronización completado con éxito</string>
     <string name="sync_notification_success_pending_attachments">"Sincronización de %1$s completado, pero algunos archivos no se han sincronizado</string>
     <string name="sync_notification_success_pending_attachments_text">"Sincronización completado, pero %1$d tabulas tienen filas con archivos que no se han sincronizaido completamente.</string>
-    <string name="sync_status_network_transport_error">Error de red.\r\nPor favor confirma usted que el dispotivo tiene acceso al servidor.</string>
-    <string name="sync_status_device_internal_error">Error internal.\r\nPor favor contacta usted el equipo de ODK con los registros.</string>
-    <string name="sync_status_authentication_error">Cuenta no encontrada o no tiene un rol que le da acceso de sincronizar.\r\nPor favor comproba usted el nombre de usuario y llama de paso.</string>
-    <string name="sync_status_internal_server_error">El servidor ha respondido con un error.\r\nPor favor contacte usted el gestor del servidor.</string>
-    <string name="sync_status_bad_gateway_or_client_config">Error de red (error de WiFi o puente).\r\nPor favor comproba usted el URL de servidor y que el navegador de este dispotivo puede contactar el servidor.</string>
-    <string name="sync_status_request_or_protocol_error">Error de protocolo.\r\nPor favor comproba usted que el servidor es compatible.</string>
-    <string name="sync_status_appname_not_supported_by_server">Servidor está configurado para un app differente (el que el servudor usa por defecto se llama default).\r\nPor favor comproba usted los opciones del servidor.</string>
-    <string name="sync_status_server_missing_config_files">Servidor no tiene todos los archivos que tiene este dispotivo. \r\n¿Quería usted reinicializar el servidor?</string>
-    <string name="sync_status_server_reset_failed_device_has_no_config_files">Dispotivo no tiene ningunos archivos ni tabulas.\r\n¿Querería usted sincronizar?</string>
+    <string name="sync_status_network_transport_error">Error de red.\nPor favor confirma usted que el dispotivo tiene acceso al servidor.</string>
+    <string name="sync_status_device_internal_error">Error internal.\nPor favor contacta usted el equipo de ODK con los registros.</string>
+    <string name="sync_status_authentication_error">Cuenta no encontrada o no tiene un rol que le da acceso de sincronizar.\nPor favor comproba usted el nombre de usuario y llama de paso.</string>
+    <string name="sync_status_internal_server_error">El servidor ha respondido con un error.\nPor favor contacte usted el gestor del servidor.</string>
+    <string name="sync_status_bad_gateway_or_client_config">Error de red (error de WiFi o puente).\nPor favor comproba usted el URL de servidor y que el navegador de este dispotivo puede contactar el servidor.</string>
+    <string name="sync_status_request_or_protocol_error">Error de protocolo.\nPor favor comproba usted que el servidor es compatible.</string>
+    <string name="sync_status_appname_not_supported_by_server">Servidor está configurado para un app differente (el que el servudor usa por defecto se llama default).\nPor favor comproba usted los opciones del servidor.</string>
+    <string name="sync_status_server_missing_config_files">Servidor no tiene todos los archivos que tiene este dispotivo. \n¿Quería usted reinicializar el servidor?</string>
+    <string name="sync_status_server_reset_failed_device_has_no_config_files">Dispotivo no tiene ningunos archivos ni tabulas.\n¿Querería usted sincronizar?</string>
     <string name="sync_status_resync_because_config_has_been_reset_error">El servidor se ha reinicalizado, y la esquema ha cambiado. La sincronización se ha abortado.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Opciones de Administrador</string>
@@ -270,7 +270,7 @@
     <string name="resolve_checkpoints_and_conflicts">Resolver cambios no guardados y conflictos</string>
     <string name="resolve_pending_checkpoints_and_conflicts">Tiene usted conflictos o cambios no guardados que tienen que resolverse antes de que puede usted cambiar usuario.</string>
 
-    <string name="anonymous_warning">¿Verificar permisos de usuario nuevo?\r\n\r\nSi no se verifican, va usted a perder acceso de usuario y va usted a tener el acceso de un usuario anónimo.</string>
+    <string name="anonymous_warning">¿Verificar permisos de usuario nuevo?\n\nSi no se verifican, va usted a perder acceso de usuario y va usted a tener el acceso de un usuario anónimo.</string>
     <string name="authentication_error">Error al verificar permisos</string>
 
     <string name="enter_new_user">Nombre de usuario nuevo:</string>
