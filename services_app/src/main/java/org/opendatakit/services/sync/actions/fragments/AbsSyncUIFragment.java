@@ -136,6 +136,11 @@ abstract class AbsSyncUIFragment extends Fragment implements
       }
    }
 
+   @Override
+   public void onPause() {
+      msgManager.clearDialogsAndRetainCurrentState(getFragmentManager());
+      super.onPause();
+   }
 
    @Override
    public void onDestroy() {
