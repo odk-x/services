@@ -427,6 +427,8 @@ public class SyncFragment extends AbsSyncUIFragment {
     if (!completed) {
       throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
     }
+    perhapsEnableButtons();
+    updateInterface();
   }
 
   /**
