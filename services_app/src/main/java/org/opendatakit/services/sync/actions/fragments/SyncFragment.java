@@ -398,6 +398,12 @@ public class SyncFragment extends AbsSyncUIFragment {
                   @Override public void run() {
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
+                    } else {
+                      handler.postDelayed(new Runnable() {
+                        @Override public void run() {
+                          updateInterface();
+                        }
+                      }, 100);
                     }
                   }
                 });
