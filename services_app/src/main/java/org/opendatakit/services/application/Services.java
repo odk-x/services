@@ -14,12 +14,10 @@
 
 package org.opendatakit.services.application;
 
-import com.google.firebase.analytics.FirebaseAnalytics ;
-
 import android.content.Context;
 import com.crashlytics.android.Crashlytics;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import io.fabric.sdk.android.Fabric;
-
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 

@@ -29,7 +29,11 @@ import org.opendatakit.services.R;
 import org.opendatakit.utilities.LocalizationUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Holds the list of commonTranslations.js locales and a "default to system locale" option.

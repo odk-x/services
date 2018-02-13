@@ -21,12 +21,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * Challenge user with admin password; if successful, display admin-enabled

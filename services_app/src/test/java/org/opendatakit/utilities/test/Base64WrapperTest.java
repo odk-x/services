@@ -1,7 +1,6 @@
 package org.opendatakit.utilities.test;
 
 import junit.framework.TestCase;
-
 import org.junit.Test;
 import org.opendatakit.services.utilities.Base64Wrapper;
 

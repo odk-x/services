@@ -17,7 +17,23 @@ package org.opendatakit.services.sync.service.logic;
 
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.aggregate.odktables.rest.entity.*;
+import org.opendatakit.aggregate.odktables.rest.entity.AppNameList;
+import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.DataKeyValue;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.PrivilegesInfo;
+import org.opendatakit.aggregate.odktables.rest.entity.Row;
+import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
+import org.opendatakit.aggregate.odktables.rest.entity.RowList;
+import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
+import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.httpclientandroidlib.Header;
@@ -65,9 +81,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.

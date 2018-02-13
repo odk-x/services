@@ -22,16 +22,13 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.LoginFragment;
 
@@ -41,7 +38,7 @@ import org.opendatakit.services.sync.actions.fragments.LoginFragment;
  * Created by jbeorse on 5/30/17.
  */
 
-public class LoginActivity extends SyncBaseActivity {
+public class LoginActivity extends AbsSyncBaseActivity {
 
    private static final String TAG = LoginActivity.class.getSimpleName();
 

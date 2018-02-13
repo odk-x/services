@@ -15,14 +15,13 @@
  */
 package org.opendatakit.services.sync.service;
 
+import android.os.RemoteException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncStatus;
-
-import android.os.RemoteException;
 
 class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
 

@@ -112,7 +112,7 @@
     <string name="sync_server_configuration_failure">Server configuration failure</string>
     <string name="sync_device_configuration_failure">Device configuration failure</string>
     <string name="sync_conflicts_need_resolving">Conflicts detected</string>
-    <string name="sync_conflicts_text">Other users have modified the same entries that you have.\r\nYou now will be directed to merge your changes with theirs.</string>
+    <string name="sync_conflicts_text">Other users have modified the same entries that you have.\nYou now will be directed to merge your changes with theirs.</string>
     <string name="sync_successful">Sync successful</string>
     <string name="sync_successful_text">Success! Your application content (data and configuration) matches that on the server.</string>
     <string name="sync_complete_pending_attachments">Sync (without attachments) successful</string>
@@ -209,8 +209,6 @@
 
     <string name="sync_configure_username_password">Username authentication was selected but
         a username and password are not configured. Please update your settings.</string>
-    <string name="sync_configure_google_account">Google account authentication was selected but
-        a Google account has not been configured. Please update your settings.</string>
     <string name="sync_configure_credentials">No authentication type has been selected.
         Please update your settings.</string>
 
@@ -221,9 +219,10 @@
     <string name="verify_server_setttings_successful_text">Success! User permissions have been updated.</string>
     <string name="verify_server_settings_header">Verify User Permissions</string>
     <string name="click_to_verify_server_settings">Click to Verify User Permissions</string>
-    <string name="warning_no_user_roles">Warning: User permissions have not been verified!\r\nRunning with reduced privileges.</string>
+    <string name="warning_no_user_roles">Warning: User permissions have not been verified!\nRunning with reduced privileges.</string>
     <!-- sync service layer messages -->
     <string name="sync_notification_syncing">"ODK Sync In Progress %1$s</string>
+    <string name="sync_notification_launch_sync_progress_intent">ODK Sync Progress</string>
     <string name="sync_notification_failure">"ODK Sync %1$s Error</string>
     <string name="sync_notification_conflicts">"ODK Sync %1$s Conflicts Exist</string>
     <string name="sync_notification_conflicts_text">"%1$d tables have data conflicts or checkpoints and were not completely synced.</string>
@@ -233,16 +232,16 @@
     <string name="sync_notification_success_complete_text">Sync Completed Successfully</string>
     <string name="sync_notification_success_pending_attachments">"ODK Sync %1$s Completed Pending Attachments</string>
     <string name="sync_notification_success_pending_attachments_text">"Sync Completed with %1$d tables having out-of-date row attachments.</string>
-    <string name="sync_status_network_transport_error">Network Error.\r\nPlease verify your device browser can access your server.</string>
-    <string name="sync_status_device_internal_error">Internal Error.\r\nPlease submit a bug report</string>
-    <string name="sync_status_authentication_error">Authentication Error.\r\nPlease verify your
+    <string name="sync_status_network_transport_error">Network Error.\nPlease verify your device browser can access your server.</string>
+    <string name="sync_status_device_internal_error">Internal Error.\nPlease submit a bug report</string>
+    <string name="sync_status_authentication_error">Authentication Error.\nPlease verify your
         username/password or your account access.</string>
-    <string name="sync_status_internal_server_error">Internal Server Error (out of quota?).\r\nPlease notify your server administrator.</string>
-    <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway or Configuration Error.\r\nPlease verify the server URL and that your device browser can access your server.</string>
-    <string name="sync_status_request_or_protocol_error">Protocol Error.\r\nPlease verify that the server and device are compatible.</string>
-    <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\r\nPlease verify server configuration.</string>
-    <string name="sync_status_server_missing_config_files">Server does not have all app-level or table-level configuration for this APK version.\r\nDid you intend to reset the server?</string>
-    <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration.\r\nDid you intend to sync to server?</string>
+    <string name="sync_status_internal_server_error">Internal Server Error (out of quota?).\nPlease notify your server administrator.</string>
+    <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway or Configuration Error.\nPlease verify the server URL and that your device browser can access your server.</string>
+    <string name="sync_status_request_or_protocol_error">Protocol Error.\nPlease verify that the server and device are compatible.</string>
+    <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\nPlease verify server configuration.</string>
+    <string name="sync_status_server_missing_config_files">Server does not have all app-level or table-level configuration for this APK version.\nDid you intend to reset the server?</string>
+    <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration.\nDid you intend to sync to server?</string>
     <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
@@ -279,7 +278,7 @@
     <string name="resolve_checkpoints_and_conflicts">Resolve Checkpoints and Conflicts</string>
     <string name="resolve_pending_checkpoints_and_conflicts">You have checkpoint rows and/or conflicts with the server that must be resolved before you can change your authenticated user.</string>
 
-    <string name="anonymous_warning">Authenticate new credentials?\r\n\r\nWarning: If
+    <string name="anonymous_warning">Authenticate new credentials?\n\nWarning: If
         you choose not verify your credentials you will be logged out.</string>
     <string name="authentication_error">Authentication Error</string>
 
@@ -317,8 +316,6 @@
     <string name="change_username">ODK Username</string>
     <string name="password">Server Password</string>
     <string name="change_server_password">Server Password</string>
-    <string name="google_account">Select Google Account</string>
-    <string name="selected_google_account_text">Google Account</string>
     <string name="no_account">No account</string>
     <string name="anonymous">None (anonymous access)</string>
     <string name="credential_type_prefix">Credentials: </string>

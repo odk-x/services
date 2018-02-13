@@ -21,14 +21,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.StringRes;
-
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.ArrayList;
 import java.util.List;

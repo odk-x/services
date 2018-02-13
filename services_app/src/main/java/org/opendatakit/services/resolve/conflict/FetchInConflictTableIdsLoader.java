@@ -17,13 +17,12 @@ package org.opendatakit.services.resolve.conflict;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
-
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 
 import java.util.ArrayList;
 import java.util.UUID;
