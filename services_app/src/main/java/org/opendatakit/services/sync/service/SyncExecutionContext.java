@@ -14,8 +14,6 @@
 
 package org.opendatakit.services.sync.service;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -23,26 +21,28 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.service.*;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.AidlDbInterface;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.services.sync.service.logic.Synchronizer;
+import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStatus;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.TableLevelResult;
-import org.opendatakit.utilities.NameUtil;
 import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.services.sync.service.logic.Synchronizer;
-import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStatus;
+import org.opendatakit.utilities.NameUtil;
 import org.sqlite.database.sqlite.SQLiteException;
 
 import java.io.IOException;
@@ -75,7 +75,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
   private final String aggregateUri;
   private final String authenticationType;
-  private final String googleAccount;
   private final String username;
   private final String password;
   private final String installationId;
@@ -106,7 +105,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
 
     this.aggregateUri = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     this.authenticationType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-    this.googleAccount = props.getProperty(CommonToolProperties.KEY_ACCOUNT);
     this.username = props.getProperty(CommonToolProperties.KEY_USERNAME);
     this.password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
 
@@ -217,32 +215,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
     return synchronizer;
   }
 
-  private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
-
-  /**
-   * Attempt to update the Google access token for this
-   * @return
-   */
-  public String updateAccessToken() {
-    try {
-      AccountManager accountManager = AccountManager.get(application);
-      Account account = new Account(googleAccount, ACCOUNT_TYPE_G);
-      String accessToken = accountManager.blockingGetAuthToken(account, authString, true);
-      PropertiesSingleton props = CommonToolProperties.get(application, appName);
-      props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_AUTH, accessToken));
-      return accessToken;
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
-    }
-  }
-
-  public String getAccessToken() {
-    PropertiesSingleton props = CommonToolProperties.get(application, appName);
-
-    return props.getProperty(CommonToolProperties.KEY_AUTH);
-  }
-
   public String getAuthenticationType() {
     return authenticationType;
   }
@@ -273,7 +245,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
     deviceInfo.put("androidDevice", Build.DEVICE);
     deviceInfo.put("androidDeviceDisplayString", Build.DISPLAY);
     deviceInfo.put("androidBuildFingerprint", Build.FINGERPRINT);
-    deviceInfo.put("androidHardware", Build.HARDWARE);
     deviceInfo.put("androidId", Build.ID);
     deviceInfo.put("androidBrand", Build.BRAND);
     deviceInfo.put("androidManufacturer", Build.MANUFACTURER);

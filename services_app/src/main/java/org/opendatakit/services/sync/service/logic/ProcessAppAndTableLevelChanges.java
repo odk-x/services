@@ -14,13 +14,7 @@
 
 package org.opendatakit.services.sync.service.logic;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -49,7 +43,12 @@ import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Isolate the app-level and table-level synchronization steps

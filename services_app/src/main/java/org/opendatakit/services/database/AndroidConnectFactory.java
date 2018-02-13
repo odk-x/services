@@ -14,9 +14,9 @@
 
 package org.opendatakit.services.database;
 
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.StaticStateManipulator;
 import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
-import org.opendatakit.logging.WebLogger;
 
 public final class AndroidConnectFactory  extends OdkConnectionFactoryAbstractClass {
   private static final String TAG = AndroidConnectFactory.class.getSimpleName();

@@ -21,9 +21,9 @@ import android.os.Bundle;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.R;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.services.R;
 
 import java.io.File;
 

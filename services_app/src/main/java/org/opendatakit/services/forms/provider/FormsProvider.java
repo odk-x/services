@@ -25,7 +25,6 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
-
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.LocalKeyValueStoreConstants;

@@ -18,10 +18,9 @@ package org.opendatakit.services.sync.actions.activities;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
 
@@ -35,7 +34,7 @@ import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragm
  * @author mitchellsundt@gmail.com
  *
  */
-public class VerifyServerSettingsActivity extends SyncBaseActivity {
+public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
 
   private static final String TAG = VerifyServerSettingsActivity.class.getSimpleName();
 
@@ -71,7 +70,7 @@ public class VerifyServerSettingsActivity extends SyncBaseActivity {
     if ( props.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
         !isAnonymous ) {
 
-      SyncBaseActivity.showAuthenticationErrorDialog(this, getString(R.string.warning_no_user_roles));
+      AbsSyncBaseActivity.showAuthenticationErrorDialog(this, getString(R.string.warning_no_user_roles));
       return;
     }
     super.onBackPressed();

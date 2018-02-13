@@ -19,10 +19,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.opendatakit.database.utilities.CursorUtils;
@@ -502,8 +500,6 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
       String password = props.getProperty(CommonToolProperties.KEY_PASSWORD);
       registerUsernamePassword(credsProvider, username, password, u.getHost());
-    } else if (authType.equals(appContext.getString(R.string.credential_type_google_account))) {
-      throw new IllegalStateException("legacy doesn't support Google Authentication");
     }
 
     // context holds authentication state machine, so it cannot be

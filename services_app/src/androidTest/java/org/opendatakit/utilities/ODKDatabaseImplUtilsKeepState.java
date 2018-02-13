@@ -5,10 +5,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.database.service.DbHandle;
 
 import java.util.List;
 

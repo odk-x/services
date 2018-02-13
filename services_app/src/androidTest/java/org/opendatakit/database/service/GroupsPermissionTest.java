@@ -11,7 +11,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -289,8 +288,8 @@ public class GroupsPermissionTest {
       Map<String,String> properties = new HashMap<String,String>();
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           InstrumentationRegistry.getTargetContext()
-          .getString(org.opendatakit.androidlibrary.R.string.credential_type_google_account));
-      properties.put(CommonToolProperties.KEY_ACCOUNT, activeUser);
+          .getString(org.opendatakit.androidlibrary.R.string.credential_type_username_password));
+      properties.put(CommonToolProperties.KEY_USERNAME, activeUser);
       properties.put(CommonToolProperties.KEY_AUTHENTICATED_USER_ID, "mailto:" + activeUser);
       // this is stored in SharedPreferences
       properties.put(CommonToolProperties.KEY_PASSWORD, password);

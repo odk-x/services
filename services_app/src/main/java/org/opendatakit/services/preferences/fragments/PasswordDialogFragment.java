@@ -22,14 +22,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.CheckBox;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -19,12 +19,6 @@
             android:key="common.change_username_password"
             android:title="@string/username_password"
             android:persistent="false" />
-        <CheckBoxPreference
-            android:id="@+id/change_google_account"
-            android:defaultValue="true"
-            android:key="common.change_google_account"
-            android:title="@string/selected_google_account_text" 
-            android:persistent="false" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/testing_support">
         <CheckBoxPreference

@@ -14,7 +14,9 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.SyncETagColumns;
 import org.opendatakit.utilities.DataHelper;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**

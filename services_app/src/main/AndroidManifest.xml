@@ -68,6 +68,9 @@
              android:process=":sync"
              android:permission="org.opendatakit.sync.RUN_SYNC" >
         </service>
+        <service android:name=".sync.service.ClearSuccessfulSyncService"
+                 android:exported="false">
+        </service>
         <provider
             android:exported="true"
 	        android:syncable="false"
@@ -118,12 +121,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".resolve.conflict.AllConflictsResolutionActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".sync.actions.activities.AccountInfoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />
