@@ -69,6 +69,9 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
 
+  private Button buttonTakeAllServer;
+  private Button buttonTakeAllLocal;
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -76,6 +79,21 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
     outState.putBoolean(HAVE_RESOLVED_METADATA_CONFLICTS, mHaveResolvedMetadataConflicts);
   }
 
+
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+
+    View view = inflater.inflate(ID, container);
+    buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
+    buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
+
+    if(buttonTakeAllServer == null || buttonTakeAllLocal == null) {
+      throw new RuntimeException("Android failed to locate references to buttons");
+    }
+
+    return view;
+  }
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -98,8 +116,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
     mHaveResolvedMetadataConflicts = savedInstanceState != null &&
         (savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
-         savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) :
-         false);
+            savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) :
+            false);
 
     // render total instance view
     mAdapter = new ArrayAdapter<ResolveRowEntry>(getActivity(), android.R.layout.simple_list_item_1);
@@ -109,12 +127,9 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
+  public void onResume() {
+    super.onResume();
 
-    View view = inflater.inflate(ID, container, false);
-    Button buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
-    Button buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
     buttonTakeAllLocal.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         takeAllLocal();
@@ -125,12 +140,6 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
         takeAllServer();
       }
     });
-    return view;
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
 
     showProgressDialog();
   }
@@ -262,8 +271,6 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
         return;
       }
 
-      Button buttonTakeAllServer = (Button) getView().findViewById(R.id.take_all_server);
-      Button buttonTakeAllLocal = (Button) getView().findViewById(R.id.take_all_local);
       buttonTakeAllLocal.setEnabled(false);
       buttonTakeAllServer.setEnabled(false);
 
@@ -287,8 +294,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override public void resolutionComplete(String result) {
     conflictResolutionListTask = null;
-    Button buttonTakeAllServer = (Button) getView().findViewById(R.id.take_all_server);
-    Button buttonTakeAllLocal = (Button) getView().findViewById(R.id.take_all_local);
+
     buttonTakeAllLocal.setEnabled(true);
     buttonTakeAllServer.setEnabled(true);
 
