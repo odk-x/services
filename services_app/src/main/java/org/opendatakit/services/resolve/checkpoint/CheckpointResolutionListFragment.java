@@ -21,7 +21,6 @@ import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +28,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
@@ -62,7 +62,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
   private boolean mHaveResolvedMetadataConflicts = false;
   private ArrayAdapter<ResolveRowEntry> mAdapter;
 
-  private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
 
   private Button buttonTakeAllOldest;
@@ -112,6 +111,21 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
+
+    buttonTakeAllNewest = view.findViewById(R.id.take_all_newest);
+    buttonTakeAllOldest = view.findViewById(R.id.take_all_oldest);
+
+    if(buttonTakeAllNewest == null || buttonTakeAllOldest == null) {
+      throw new RuntimeException("Android failed to locate references to buttons");
+    }
+
+    return view;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+
     buttonTakeAllNewest.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         takeAllNewest();
@@ -122,12 +136,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
         takeAllOldest();
       }
     });
-    return view;
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
 
     showProgressDialog();
   }
