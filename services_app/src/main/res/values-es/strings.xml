@@ -204,7 +204,6 @@
     <string name="sync_auth_unsuccessful">Por favor resolver los problemas con autenticacion y intentarlo de nuevo.</string>
 
     <string name="sync_configure_username_password">Autenticación de nombre de usuario está elegido, pero hace falta un nombre de usário o una llame de paso. Por favor actuilaze los opciones.</string>
-    <string name="sync_configure_google_account">Google account authentication was selected but a Google account has not been configured. Please update your settings.</string>
     <string name="sync_configure_credentials">Hace falta un tipo de autorización. Por favor actualiza los opciones.</string>
 
     <string name="verify_server_settings_start">Verificar permisos de usuario</string>
@@ -308,8 +307,6 @@
     <string name="change_username">Nombre de usuario</string>
     <string name="password">Llame de paso</string>
     <string name="change_server_password">Llame de paso</string>
-    <string name="google_account">Elige usuario de google</string>
-    <string name="selected_google_account_text">Usuario de google</string>
     <string name="no_account">Sin cuenta</string>
     <string name="anonymous">Ninguno (acceso anonimo)</string>
     <string name="credential_type_prefix">Credenciales: </string>
