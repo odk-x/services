@@ -51,9 +51,9 @@ public class ODKServicesPropertyUtils {
          String user_id = props.getProperty(CommonToolProperties.KEY_AUTHENTICATED_USER_ID);
          String roles = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
          if (name != null && name.length() != 0 &&
-             user_id != null && user_id.length() != 0 &&
-             roles != null && roles.length() != 0) {
-            activeUserName = user_id;
+             user_id != null &&
+             roles != null ) {
+            activeUserName = name;
          } else {
             activeUserName = CommonToolProperties.ANONYMOUS_USER;
          }
