@@ -667,7 +667,7 @@ class ProcessManifestContentAndFileChanges {
           boolean success = false;
           try {
             sc.getSynchronizer().downloadFile(localFile, uri);
-            updateFileSyncETag(uri, tableId, localFile.lastModified(), md5hash);
+            updateFileSyncETag(uri, tableId, localFile.lastModified(), entry.md5hash);
             success = true;
           } finally {
             if ( !success ) {
