@@ -45,6 +45,7 @@ import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * An activity that lays the foundations of sync funcationality but can be extended to implement
@@ -228,7 +229,10 @@ public abstract class AbsSyncBaseActivity extends Activity
    @Override public String getAppName() {
       if (mAppName == null) {
          mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-        Log.e(TAG, mAppName);
+         if(mAppName == null) {
+            mAppName = ODKFileUtils.getOdkDefaultAppName();
+         }
+         Log.e(TAG, mAppName);
       }
       return mAppName;
    }
