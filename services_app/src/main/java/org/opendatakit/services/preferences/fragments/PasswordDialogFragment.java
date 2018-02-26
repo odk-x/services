@@ -80,7 +80,6 @@ public class PasswordDialogFragment extends DialogFragment {
     View view = inflater.inflate(R.layout.password_dialog_layout, container);
 
     props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    int fontSize = props.getIntegerProperty(CommonToolProperties.KEY_FONT_SIZE);
 
     TextView heading = (TextView) view.findViewById(R.id.change_password_heading);
     heading.setText((isAdminPassword ?
