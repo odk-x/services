@@ -15,18 +15,26 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
+import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.PrivilegesInfo;
+import org.opendatakit.aggregate.odktables.rest.entity.RowOutcomeList;
+import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
+import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
+import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.sync.service.SyncProgressState;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.opendatakit.aggregate.odktables.rest.entity.*;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncProgressState;
-import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.

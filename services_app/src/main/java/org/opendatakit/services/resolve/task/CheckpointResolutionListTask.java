@@ -3,17 +3,16 @@ package org.opendatakit.services.resolve.task;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
-
 import org.opendatakit.database.RoleConsts;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.R;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utilities.ODKDatabaseImplUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.services.utilities.ActiveUserAndLocale;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
-import org.opendatakit.services.R;
+import org.opendatakit.services.utilities.ActiveUserAndLocale;
 
 import java.util.UUID;
 

@@ -1,23 +1,18 @@
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.exception.ActionNotAuthorizedException;
-import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.services.database.OdkConnectionFactorySingleton;
-import org.opendatakit.services.database.OdkConnectionInterface;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.ColumnDefinitionsColumns;
 import org.opendatakit.provider.KeyValueStoreColumns;
 import org.opendatakit.provider.TableDefinitionsColumns;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.utilities.StaticStateManipulator;
+import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
+import org.opendatakit.services.database.OdkConnectionInterface;
 
 import java.io.File;
 

@@ -16,7 +16,6 @@
 package org.opendatakit.services.resolve.conflict;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Intent;
@@ -30,14 +29,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.services.R;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
-import org.opendatakit.services.R;
 
 import java.util.ArrayList;
 
@@ -53,7 +51,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   public static final String NAME = "ConflictResolutionListFragment";
   public static final int ID = R.layout.conflict_resolver_chooser_list;
 
-  private static final String PROGRESS_DIALOG_TAG = "progressDialog";
+  private static final String PROGRESS_DIALOG_TAG = "progressConflict";
 
   private static final String HAVE_RESOLVED_METADATA_CONFLICTS = "haveResolvedMetadataConflicts";
 
@@ -71,6 +69,9 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   private Handler handler = new Handler();
   private ProgressDialogFragment progressDialog = null;
 
+  private Button buttonTakeAllServer;
+  private Button buttonTakeAllLocal;
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -78,6 +79,21 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
     outState.putBoolean(HAVE_RESOLVED_METADATA_CONFLICTS, mHaveResolvedMetadataConflicts);
   }
 
+
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+
+    View view = inflater.inflate(ID, container, false);
+    buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
+    buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
+
+    if(buttonTakeAllServer == null || buttonTakeAllLocal == null) {
+      throw new RuntimeException("Android failed to locate references to buttons");
+    }
+
+    return view;
+  }
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -100,8 +116,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
     mHaveResolvedMetadataConflicts = savedInstanceState != null &&
         (savedInstanceState.containsKey(HAVE_RESOLVED_METADATA_CONFLICTS) ?
-         savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) :
-         false);
+            savedInstanceState.getBoolean(HAVE_RESOLVED_METADATA_CONFLICTS) :
+            false);
 
     // render total instance view
     mAdapter = new ArrayAdapter<ResolveRowEntry>(getActivity(), android.R.layout.simple_list_item_1);
@@ -111,12 +127,9 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
+  public void onResume() {
+    super.onResume();
 
-    View view = inflater.inflate(ID, container, false);
-    Button buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
-    Button buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
     buttonTakeAllLocal.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         takeAllLocal();
@@ -127,12 +140,6 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
         takeAllServer();
       }
     });
-    return view;
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
 
     showProgressDialog();
   }
@@ -264,60 +271,20 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
         return;
       }
 
-      Button buttonTakeAllServer = (Button) getView().findViewById(R.id.take_all_server);
-      Button buttonTakeAllLocal = (Button) getView().findViewById(R.id.take_all_local);
       buttonTakeAllLocal.setEnabled(false);
       buttonTakeAllServer.setEnabled(false);
 
-      // try to retrieve the active dialog
-      Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+      String title = getString(R.string.conflict_resolving_all);
 
-      if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
-        ((ProgressDialogFragment) dialog).getDialog().setTitle(R.string.conflict_resolving_all);
-        ((ProgressDialogFragment) dialog).setMessage(progress);
-      } else if (progressDialog != null && progressDialog.getDialog() != null) {
-        progressDialog.getDialog().setTitle(R.string.conflict_resolving_all);
-        progressDialog.setMessage(progress);
-      } else {
-        if (progressDialog != null) {
-          dismissProgressDialog();
-        }
-        progressDialog = ProgressDialogFragment.newInstance(getString(R.string.conflict_resolving_all), progress);
+      // try to retrieve the active dialog
+      progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
+          PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
+
+      if(!progressDialog.isAdded()) {
         progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
       }
     }
   }
-
-  private void dismissProgressDialog() {
-    final Fragment dialog = getFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
-    if (dialog != null && dialog != progressDialog) {
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          ((ProgressDialogFragment) dialog).dismiss();
-        }
-      });
-    }
-    if (progressDialog != null) {
-      final ProgressDialogFragment scopedReference = progressDialog;
-      progressDialog = null;
-      // the UI may not yet have resolved the showing of the dialog.
-      // use a handler to add the dismiss to the end of the queue.
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            scopedReference.dismiss();
-          } catch (Exception e) {
-            // ignore... we tried!
-          }
-        }
-      });
-    }
-  }
-
 
   @Override public void resolutionProgress(String progress) {
     if ( progressDialog != null ) {
@@ -327,12 +294,13 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
   @Override public void resolutionComplete(String result) {
     conflictResolutionListTask = null;
-    Button buttonTakeAllServer = (Button) getView().findViewById(R.id.take_all_server);
-    Button buttonTakeAllLocal = (Button) getView().findViewById(R.id.take_all_local);
+
     buttonTakeAllLocal.setEnabled(true);
     buttonTakeAllServer.setEnabled(true);
 
-    dismissProgressDialog();
+    ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
+        getFragmentManager());
+    progressDialog = null;
     getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
 
     if ( result != null && result.length() != 0 ) {

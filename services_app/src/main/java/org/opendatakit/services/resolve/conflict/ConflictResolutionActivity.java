@@ -24,13 +24,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
+import org.opendatakit.services.database.AndroidConnectFactory;
 
 /**
  * An activity for handling server conflicts.

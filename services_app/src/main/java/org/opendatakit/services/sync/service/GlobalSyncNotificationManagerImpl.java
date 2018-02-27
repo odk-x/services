@@ -21,7 +21,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.services.R;
+import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 
 import java.util.ArrayList;
@@ -30,7 +35,6 @@ import java.util.List;
 public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotificationManager {
 
   private static final int UNIQUE_ID = 1337;
-  private static final int UPDATE_NOTIFICATION_ID = 0;
 
   private final Service service;
   private final NotificationManager manager;
@@ -155,10 +159,14 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
         .setContentText(text).setAutoCancel(false).setOngoing(true);
     builder.setSmallIcon(android.R.drawable.ic_popup_sync);
     builder.setProgress(maxProgress, progress, indeterminateProgress);
+    PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
 
-    Notification syncNotif = builder.build();
-    notify(appName, UPDATE_NOTIFICATION_ID, syncNotif);
+    builder.addAction(android.R.drawable.ic_popup_sync, service.getString(R.string
+        .sync_notification_launch_sync_progress_intent), pendingIntent);
+
+    notify(appName, SYNC_NOTIFICATION_ID, builder.build());
   }
+
 
   public synchronized void finalErrorNotification(String appName, String text) {
     Notification.Builder finalBuilder = new Notification.Builder(service);
@@ -166,8 +174,11 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
         .setContentText(text).setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(R.drawable.ic_error_white_24dp);
 
-    Notification syncNotif = finalBuilder.build();
-    notify(appName, UPDATE_NOTIFICATION_ID, syncNotif);
+    // setup the launch sync activity pending intent
+    PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
+    finalBuilder.addAction(R.drawable.ic_error_white_24dp, text, pendingIntent);
+
+    notify(appName, SYNC_NOTIFICATION_ID, finalBuilder.build());
   }
 
   public synchronized void finalConflictNotification(String appName, String text) {
@@ -176,20 +187,29 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
         .setContentText(text).setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(R.drawable.ic_warning_white_24dp);
 
-    Notification syncNotif = finalBuilder.build();
+    // setup the launch resolve conflicts activity pending intent
+    PendingIntent pendingIntent = createPendingIntentForAllConflictsActivity(appName);
+    finalBuilder.addAction(R.drawable.ic_warning_white_24dp, text, pendingIntent);
 
-    notify(appName, UPDATE_NOTIFICATION_ID, syncNotif);
+    notify(appName, SYNC_NOTIFICATION_ID, finalBuilder.build());
   }
 
   public synchronized void clearNotification(String appName, String title, String text) {
     Notification.Builder finalBuilder = new Notification.Builder(service);
-      finalBuilder.setContentTitle(title)
+    finalBuilder.setContentTitle(title)
           .setContentText(text).setAutoCancel(true).setOngoing(false);
-      finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
+    finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
 
-    Notification syncNotif = finalBuilder.build();
+    // setup the launch sync activity pending intent
+    PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
+    finalBuilder.addAction(R.drawable.ic_done_white_24dp, text, pendingIntent);
 
-    notify(appName, UPDATE_NOTIFICATION_ID, syncNotif);
+    // setup clearing sync state when user dismisses the notification
+    pendingIntent = createSyncClearIntent(appName);
+    finalBuilder.setDeleteIntent(pendingIntent);
+
+
+    notify(appName, SYNC_NOTIFICATION_ID, finalBuilder.build());
   }
 
   public synchronized void clearVerificationNotification(String appName, String title, String text) {
@@ -198,9 +218,51 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
         .setContentText(text).setAutoCancel(true).setOngoing(false);
     finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
 
-    Notification syncNotif = finalBuilder.build();
+    // setup the launch sync activity pending intent
+    PendingIntent pendingIntent = createPendingIntentForVerifyActivity(appName);
+    finalBuilder.addAction(R.drawable.ic_done_white_24dp, text, pendingIntent);
 
-    notify(appName, UPDATE_NOTIFICATION_ID, syncNotif);
+    // setup clearing sync state when user dismisses the notification
+    pendingIntent = createSyncClearIntent(appName);
+    finalBuilder.setDeleteIntent(pendingIntent);
+
+    notify(appName, SYNC_NOTIFICATION_ID, finalBuilder.build());
+  }
+
+  @NonNull private PendingIntent createPendingIntentForVerifyActivity(String appName) {
+    // setup the launch of VerifyServerSettings activity pending intent
+    Intent i = new Intent(service, VerifyServerSettingsActivity.class);
+    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+        Intent.FLAG_FROM_BACKGROUND);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+    return PendingIntent.getActivity(service, 0, i, 0);
+  }
+
+  @NonNull private PendingIntent createPendingIntentForSyncActivity(String appName) {
+    // setup the launch sync activity pending intent
+    Intent i = new Intent(service, SyncActivity.class);
+    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+        Intent.FLAG_FROM_BACKGROUND);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+    return PendingIntent.getActivity(service, 0, i, 0);
+  }
+
+
+  @NonNull private PendingIntent createPendingIntentForAllConflictsActivity(String appName) {
+    // setup the launch conflict resolution activity pending intent
+    Intent i = new Intent(service, AllConflictsResolutionActivity.class);
+    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+        Intent.FLAG_FROM_BACKGROUND);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+    return PendingIntent.getActivity(service, 0, i, 0);
+  }
+
+  @NonNull private PendingIntent createSyncClearIntent(String appName) {
+    Intent i = new Intent(service, ClearSuccessfulSyncService.class);
+    i.setFlags(Intent.FLAG_FROM_BACKGROUND);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
+    return PendingIntent.getService(service, 0, i,0);
+
   }
 
   private final class AppSyncStatus {

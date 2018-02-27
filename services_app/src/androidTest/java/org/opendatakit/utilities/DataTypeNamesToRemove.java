@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 University of Washington
+ * Copyright (C) 2015 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,14 +12,9 @@
  * the License.
  */
 
-package org.opendatakit.services.sync.actions.activities;
+package org.opendatakit.utilities;
 
-/**
- * Common callback from the outcome dialog when the sync is completed.
- * The enclosing fragment should release resources and return.
- *
- * @author mitchellsundt@gmail.com
- */
-public interface ISyncOutcomeHandler {
-    void onSyncCompleted();
+public class DataTypeNamesToRemove {
+
+  public static final String MIMEURI = "mimeUri";
 }

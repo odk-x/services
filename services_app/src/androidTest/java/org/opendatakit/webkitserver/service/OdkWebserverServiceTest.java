@@ -1,4 +1,4 @@
-package org.opendatakit.webkitserver.service.test;
+package org.opendatakit.webkitserver.service;
 
 import android.Manifest;
 import android.content.ComponentName;
@@ -9,7 +9,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
-
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.rule.ServiceTestRule;
@@ -21,10 +20,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.WebkitServerConsts;
+import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.httpclientandroidlib.HttpStatus;
-import org.opendatakit.webkitserver.service.WebkitServerInterface;
+import org.opendatakit.utilities.StaticStateManipulator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,8 +32,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import org.opendatakit.utilities.StaticStateManipulator;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

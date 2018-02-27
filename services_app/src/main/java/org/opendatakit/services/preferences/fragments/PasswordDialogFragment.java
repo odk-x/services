@@ -22,14 +22,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.CheckBox;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,7 +80,6 @@ public class PasswordDialogFragment extends DialogFragment {
     View view = inflater.inflate(R.layout.password_dialog_layout, container);
 
     props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    int fontSize = props.getIntegerProperty(CommonToolProperties.KEY_FONT_SIZE);
 
     TextView heading = (TextView) view.findViewById(R.id.change_password_heading);
     heading.setText((isAdminPassword ?

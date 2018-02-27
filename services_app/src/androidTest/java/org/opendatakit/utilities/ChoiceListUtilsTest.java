@@ -1,4 +1,4 @@
-package org.opendatakit.utilities.test;
+package org.opendatakit.utilities;
 
 import android.Manifest;
 import android.support.test.rule.GrantPermissionRule;
@@ -15,7 +15,6 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.database.OdkConnectionInterface;
 import org.opendatakit.services.database.utilities.ChoiceListUtils;
-import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;

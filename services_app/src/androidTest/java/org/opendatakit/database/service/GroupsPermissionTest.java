@@ -1,4 +1,4 @@
-package org.opendatakit.database.service.test;
+package org.opendatakit.database.service;
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -11,7 +11,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -29,7 +28,6 @@ import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
-import org.opendatakit.database.service.*;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
@@ -290,8 +288,8 @@ public class GroupsPermissionTest {
       Map<String,String> properties = new HashMap<String,String>();
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           InstrumentationRegistry.getTargetContext()
-          .getString(org.opendatakit.androidlibrary.R.string.credential_type_google_account));
-      properties.put(CommonToolProperties.KEY_ACCOUNT, activeUser);
+          .getString(org.opendatakit.androidlibrary.R.string.credential_type_username_password));
+      properties.put(CommonToolProperties.KEY_USERNAME, activeUser);
       properties.put(CommonToolProperties.KEY_AUTHENTICATED_USER_ID, "mailto:" + activeUser);
       // this is stored in SharedPreferences
       properties.put(CommonToolProperties.KEY_PASSWORD, password);

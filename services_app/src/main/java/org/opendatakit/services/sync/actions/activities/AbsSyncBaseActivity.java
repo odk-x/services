@@ -16,8 +16,16 @@
 
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.*;
-import android.content.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -36,8 +44,8 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * An activity that lays the foundations of sync funcationality but can be extended to implement
@@ -46,11 +54,11 @@ import org.opendatakit.sync.service.OdkSyncServiceInterface;
  * Created by jbeorse on 5/31/17.
  */
 
-public class SyncBaseActivity extends Activity
+public abstract class AbsSyncBaseActivity extends Activity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 
-   private static final String TAG = SyncBaseActivity.class.getSimpleName();
+   private static final String TAG = AbsSyncBaseActivity.class.getSimpleName();
 
    public static final int AUTHORIZE_ACCOUNT_RESULT_CODE = 1;
    protected static final int RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE = 30;
@@ -143,8 +151,6 @@ public class SyncBaseActivity extends Activity
    @Override protected void onResume() {
       super.onResume();
 
-      WebLogger.getLogger(getAppName()).i(TAG, " [onResume]");
-
       // Do this in on resume so that if we resolve a row it will be refreshed
       // when we come back.
       if (getAppName() == null) {
@@ -155,7 +161,7 @@ public class SyncBaseActivity extends Activity
       }
 
       try {
-         WebLogger.getLogger(getAppName()).i(TAG, "[onCreate] Attempting bind to sync service");
+         WebLogger.getLogger(getAppName()).i(TAG, "[onResume] Attempting bind to sync service");
          Intent bind_intent = new Intent();
          bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
              IntentConsts.Sync.SYNC_SERVICE_CLASS);
@@ -193,7 +199,7 @@ public class SyncBaseActivity extends Activity
 
       if (callUnbind) {
          unbindService(this);
-         WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy] Unbound to sync service");
+         WebLogger.getLogger(getAppName()).i(TAG, " [onPause] Unbound to sync service");
       }
 
       WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
@@ -223,7 +229,10 @@ public class SyncBaseActivity extends Activity
    @Override public String getAppName() {
       if (mAppName == null) {
          mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-        Log.e(TAG, mAppName);
+         if(mAppName == null) {
+            mAppName = ODKFileUtils.getOdkDefaultAppName();
+         }
+         Log.e(TAG, mAppName);
       }
       return mAppName;
    }
@@ -298,14 +307,7 @@ public class SyncBaseActivity extends Activity
       return super.onOptionsItemSelected(item);
    }
 
-   private boolean getBound() {
-      synchronized (interfaceGuard) {
-         return mBoundGuarded;
-      }
-   }
-
    @Override public PropertiesSingleton getProps() {
-
       if (mProps == null) {
          mProps = CommonToolProperties.get(this, getAppName());
       }

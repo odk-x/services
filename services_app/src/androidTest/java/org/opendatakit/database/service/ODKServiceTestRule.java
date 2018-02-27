@@ -20,9 +20,7 @@
  * limitations under the License.
  */
 
-package org.opendatakit.database.service.test;
-
-import org.junit.rules.TestRule;
+package org.opendatakit.database.service;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -33,10 +31,15 @@ import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.internal.util.Checks;
 import android.util.Log;
+import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ODKServiceTestRule implements TestRule {
    private static final String TAG = "ODKServiceTestRule";

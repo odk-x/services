@@ -15,23 +15,23 @@
  */
 package org.opendatakit.services.sync.service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class OdkSyncService extends Service {
 
