@@ -84,7 +84,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
 
-    View view = inflater.inflate(ID, container);
+    View view = inflater.inflate(ID, container, false);
     buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
     buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
 
