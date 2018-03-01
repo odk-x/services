@@ -7,19 +7,15 @@ import android.webkit.WebView;
 
 import org.opendatakit.services.R;
 
-/**
- * Created by m45 on 3/1/18.
- */
-
 public class WebViewActivity extends Activity {
-    private WebView webView;
+  private WebView webView;
 
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.webview);
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.webview);
 
-        webView = (WebView) findViewById(R.id.webView1);
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://opendatakit.org");
-    }
+    webView = (WebView) findViewById(R.id.webView1);
+    webView.getSettings().setJavaScriptEnabled(true);
+    webView.loadUrl("http://opendatakit.org");
+  }
 }
