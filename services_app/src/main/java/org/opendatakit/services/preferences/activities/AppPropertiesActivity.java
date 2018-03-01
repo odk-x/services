@@ -16,15 +16,21 @@ package org.opendatakit.services.preferences.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.StringRes;
+import android.util.Log;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.MainActivity;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -183,6 +189,8 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
             mAppName));
 
     super.onCreate(savedInstanceState);
+
+//    Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
   }
 
   @Override protected void onResume() {
@@ -284,5 +292,37 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
 
   public String getAppName() {
     return mAppName;
+  }
+
+//  private class ExceptionHandler implements Thread.UncaughtExceptionHandler {
+//    private final Activity context;
+//    public ExceptionHandler(Activity context) {
+//      this.context = context;
+//    }
+//
+//    @Override
+//    public void uncaughtException(Thread t, Throwable e) {
+//      Log.i("AAAAA", e.getClass().toString());
+//      Intent intent = new Intent(context, MainActivity.class);
+//      context.startActivity(intent);
+//
+//      android.os.Process.killProcess(android.os.Process.myPid());
+//      System.exit(10);
+//
+//    }
+//  }
+
+  @Override
+  public void onHeaderClick(Header header, int position) {
+    super.onHeaderClick(header, position);
+    if (header.id == R.id.open_documentation) {
+      try {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://opendatakit.org"));
+        startActivity(browserIntent);
+      } catch (ActivityNotFoundException exp) {
+        Intent i = new Intent(this, WebViewActivity.class);
+        startActivity(i);
+      }
+    }
   }
 }

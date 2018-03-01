@@ -11,9 +11,8 @@
 
     <header android:icon="@drawable/ic_launch_black_24dp"
             android:title="@string/opendatakit_website"
-            android:summary="@string/click_to_web">
-        <intent android:action="android.intent.action.VIEW"
-                android:data="http://opendatakit.org" />
+            android:summary="@string/click_to_web"
+            android:id="@+id/open_documentation">
     </header>
 
     <header
