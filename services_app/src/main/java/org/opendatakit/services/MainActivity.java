@@ -23,6 +23,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.PreferenceActivity;
 import android.support.annotation.NonNull;
 import android.support.v13.app.ActivityCompat;
 import android.view.Menu;
@@ -32,14 +33,19 @@ import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
+import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
+
+import java.util.Collections;
 
 public class MainActivity extends Activity implements IAppAwareActivity,
     ActivityCompat.OnRequestPermissionsResultCallback {
@@ -61,6 +67,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
 
   private String mAppName;
   private boolean permissionOnly;
+  private PropertiesSingleton mProps;
 
   @Override
   protected void onDestroy() {
@@ -101,6 +108,18 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       //      setResult(Activity.RESULT_CANCELED);
       //      finish();
       //      return;
+    }
+
+    mProps = CommonToolProperties.get(this, mAppName);
+    boolean isFirstLaunch = mProps.getBooleanProperty(CommonToolProperties.KEY_FIRST_LAUNCH);
+    if (isFirstLaunch) {
+      // set first launch to false
+      mProps.setProperties(Collections.singletonMap(CommonToolProperties
+              .KEY_FIRST_LAUNCH, "false"));
+      Intent intent = new Intent( this, AppPropertiesActivity.class );
+      intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
+      intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+      startActivity(intent);
     }
   }
 
