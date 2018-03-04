@@ -7,14 +7,13 @@ import android.webkit.WebView;
 
 import org.opendatakit.services.R;
 
-public class WebViewActivity extends Activity {
+public class DocumentationWebViewActivity extends Activity {
   private WebView webView;
 
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.webview);
-
-    webView = (WebView) findViewById(R.id.webView1);
+    webView = (WebView) findViewById(R.id.documentationWebView);
     webView.getSettings().setJavaScriptEnabled(true);
     webView.loadUrl("http://opendatakit.org");
   }

@@ -16,7 +16,6 @@ package org.opendatakit.services.preferences.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -293,11 +292,11 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
   public void onHeaderClick(Header header, int position) {
     super.onHeaderClick(header, position);
     if (header.id == R.id.open_documentation) {
-      try {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://opendatakit.org"));
+      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://opendatakit.org"));
+      if (browserIntent.resolveActivity(getPackageManager()) != null) {
         startActivity(browserIntent);
-      } catch (ActivityNotFoundException exp) {
-        Intent i = new Intent(this, WebViewActivity.class);
+      } else {
+        Intent i = new Intent(this, DocumentationWebViewActivity.class);
         startActivity(i);
       }
     }
