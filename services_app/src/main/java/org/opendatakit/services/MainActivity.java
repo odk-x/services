@@ -86,14 +86,6 @@ public class MainActivity extends Activity implements IAppAwareActivity,
     AndroidConnectFactory.configure();
 
     this.permissionOnly = getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_PERMISSION_ONLY, false);
-
-    if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
-      ActivityCompat.requestPermissions(
-          this,
-          REQUIRED_PERMISSIONS,
-          EXT_STORAGE_REQ_CODE
-      );
-    }
   }
 
   @Override
@@ -110,6 +102,18 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       //      return;
     }
 
+    if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
+      ActivityCompat.requestPermissions(
+              this,
+              REQUIRED_PERMISSIONS,
+              EXT_STORAGE_REQ_CODE
+      );
+    } else {
+      firstLaunch();
+    }
+  }
+
+  private void firstLaunch() {
     mProps = CommonToolProperties.get(this, mAppName);
     boolean isFirstLaunch = mProps.getBooleanProperty(CommonToolProperties.KEY_FIRST_LAUNCH);
     if (isFirstLaunch) {
@@ -122,7 +126,6 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       startActivity(intent);
     }
   }
-
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu; this adds items to the action bar if it is present.
@@ -209,6 +212,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
         setResult(Activity.RESULT_OK);
         finish();
       }
+      firstLaunch();
       return;
     }
 
