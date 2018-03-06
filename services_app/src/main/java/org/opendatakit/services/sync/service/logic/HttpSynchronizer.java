@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2012 University of Washington
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package org.opendatakit.services.sync.service.logic;
 
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
@@ -27,7 +12,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.SyncAttachmentState;
-import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
 import org.opendatakit.sync.service.logic.FileManifestDocument;
 
@@ -38,44 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Synchronizer abstracts synchronization of tables to an external cloud/server.
- *
- * This is a lower-level interface with somewhat atomic interactions with the
- * remote server and the database. Higher level interactions are managed in the
- * various Process... classes.
- *
- * @author the.dylan.price@gmail.com
- * @author sudar.sam@gmail.com
- * @author mitchellsundt@gmail.com
- *
- */
-public interface Synchronizer {
-
-  interface SynchronizerStatus {
-    /**
-     * Status of this action.
-     *
-     * @param state
-     * @param textResource
-     * @param formatArgVals
-     * @param progressPercentage    0..100
-     * @param indeterminateProgress true if progressGrains is N/A
-     */
-    void updateNotification(SyncProgressState state, int textResource, Object[] formatArgVals,
-                            Double progressPercentage, boolean indeterminateProgress);
-  }
-
-  interface OnTablePropertiesChanged {
-    void onTablePropertiesChanged(String tableId);
-  }
-
+public interface HttpSynchronizer extends Synchronizer {
   /**
    * Verifies that the device's application name is supported by the server.
    *
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void verifyServerSupportsAppName() throws HttpClientWebException, IOException;
 
   /**
@@ -99,6 +53,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException, IOException;
 
   /**
@@ -113,6 +68,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   UserInfoList getUsers() throws HttpClientWebException, IOException;
 
   /**
@@ -120,6 +76,7 @@ public interface Synchronizer {
    *
    * @return
    */
+  @Override
   URI constructAppLevelFileManifestUri();
 
   /**
@@ -128,6 +85,7 @@ public interface Synchronizer {
    * @param tableId
    * @return
    */
+  @Override
   URI constructTableLevelFileManifestUri(String tableId);
 
   /**
@@ -137,6 +95,7 @@ public interface Synchronizer {
    * @param schemaETag
    * @return
    */
+  @Override
   URI constructRealizedTableIdUri(String tableId, String schemaETag);
 
   /**
@@ -146,6 +105,7 @@ public interface Synchronizer {
    * @param rowId
    * @return
    */
+  @Override
   URI constructInstanceFileManifestUri(String serverInstanceFileUri, String rowId);
 
   /**
@@ -156,6 +116,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   TableResourceList getTables(String webSafeResumeCursor) throws HttpClientWebException, IOException;
 
   /**
@@ -166,6 +127,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   TableResource getTable(String tableId) throws HttpClientWebException, IOException;
 
   /**
@@ -176,6 +138,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   TableDefinitionResource getTableDefinition(String tableDefinitionUri)
       throws HttpClientWebException, IOException;
 
@@ -190,6 +153,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   TableResource createTable(String tableId, String schemaETag, ArrayList<Column> columns)
       throws HttpClientWebException, IOException;
 
@@ -200,6 +164,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void deleteTable(TableResource table) throws HttpClientWebException, IOException;
 
   /**
@@ -211,6 +176,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   ChangeSetList getChangeSets(TableResource tableResource, String dataETag)
       throws HttpClientWebException, IOException;
 
@@ -225,6 +191,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   RowResourceList getChangeSet(TableResource tableResource, String dataETag, boolean activeOnly,
                                String websafeResumeCursor)
       throws HttpClientWebException, IOException;
@@ -243,6 +210,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   RowResourceList getUpdates(TableResource tableResource, String dataETag,
                              String websafeResumeCursor, int fetchLimit)
       throws HttpClientWebException, IOException;
@@ -261,6 +229,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete)
       throws HttpClientWebException, IOException;
 
@@ -277,6 +246,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   FileManifestDocument getAppLevelFileManifest(String lastKnownLocalAppLevelManifestETag, String serverReportedAppLevelETag,
                                                boolean pushLocalFiles)
       throws HttpClientWebException, IOException;
@@ -296,6 +266,7 @@ public interface Synchronizer {
    * @throws IOException
    * @throws HttpClientWebException
    */
+  @Override
   FileManifestDocument getTableLevelFileManifest(String tableId, String lastKnownLocalTableLevelManifestETag,
                                                  String serverReportedTableLevelETag, boolean pushLocalFiles)
       throws IOException, HttpClientWebException;
@@ -318,6 +289,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   FileManifestDocument getRowLevelFileManifest(String serverInstanceFileUri, String tableId, String instanceId,
                                                SyncAttachmentState attachmentState, String lastKnownLocalRowLevelManifestETag)
       throws HttpClientWebException, IOException;
@@ -330,6 +302,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void downloadFile(File destFile, URI downloadUrl) throws HttpClientWebException, IOException;
 
   /**
@@ -339,6 +312,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void deleteConfigFile(File localFile) throws HttpClientWebException, IOException;
 
   /**
@@ -347,6 +321,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void uploadConfigFile(File localFile) throws HttpClientWebException, IOException;
 
   /**
@@ -355,6 +330,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void uploadInstanceFile(File file, URI instanceFileUri) throws HttpClientWebException, IOException;
 
   /**
@@ -364,6 +340,7 @@ public interface Synchronizer {
    * @param rowpathUri
    * @return
    */
+  @Override
   CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri, String tableId, String instanceId,
                                                             String rowpathUri);
 
@@ -375,6 +352,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void uploadInstanceFileBatch(List<CommonFileAttachmentTerms> batch, String serverInstanceFileUri,
                                String instanceId, String tableId)
       throws HttpClientWebException, IOException;
@@ -387,6 +365,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
                                  String serverInstanceFileUri, String instanceId, String tableId)
       throws HttpClientWebException, IOException;
@@ -398,6 +377,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void publishTableSyncStatus(TableResource tableResource, Map<String, Object> statusJSON)
       throws HttpClientWebException, IOException;
 
@@ -408,6 +388,7 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
+  @Override
   void publishDeviceInformation(Map<String, Object> infoJSON)
       throws HttpClientWebException, IOException;
 }

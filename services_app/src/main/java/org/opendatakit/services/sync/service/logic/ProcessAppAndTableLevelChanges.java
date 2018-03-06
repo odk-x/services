@@ -271,6 +271,7 @@ public class ProcessAppAndTableLevelChanges {
           tables.addAll(tableList.getTables());
         }
       } catch (Exception e) {
+        e.printStackTrace();
         log.e(TAG,
             "[synchronizeConfigurationAndContent] exception getting server table list exception: "
                 + e.toString());

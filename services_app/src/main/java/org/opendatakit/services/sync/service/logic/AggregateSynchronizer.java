@@ -66,10 +66,11 @@ import org.opendatakit.services.sync.service.exceptions.BadClientConfigException
 import org.opendatakit.services.sync.service.exceptions.ClientDetectedMissingConfigForClientVersionException;
 import org.opendatakit.services.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
-import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.services.sync.service.exceptions.NetworkTransmissionException;
 import org.opendatakit.services.sync.service.exceptions.ServerDoesNotRecognizeAppNameException;
 import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
+import org.opendatakit.sync.service.logic.FileManifestDocument;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.BufferedInputStream;
@@ -96,7 +97,7 @@ import java.util.UUID;
  * @author sudar.sam@gmail.com
  *
  */
-public class AggregateSynchronizer implements Synchronizer {
+public class AggregateSynchronizer implements HttpSynchronizer {
 
   private static final String LOGTAG = AggregateSynchronizer.class.getSimpleName();
   public static final int DEFAULT_BOUNDARY_BUFSIZE = 4096;
@@ -112,7 +113,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private HttpRestProtocolWrapper wrapper;
   private final WebLoggerIf log;
 
-  public AggregateSynchronizer(SyncExecutionContext sc) throws InvalidAuthTokenException {
+  public AggregateSynchronizer(SyncExecutionContext sc) {
     this.sc = sc;
     this.wrapper = new HttpRestProtocolWrapper(sc);
     this.log = WebLogger.getLogger(sc.getAppName());
@@ -959,7 +960,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public CommonFileAttachmentTerms createCommonFileAttachmentTerms(String serverInstanceFileUri,
-      String tableId, String instanceId, String rowpathUri) {
+                                                                   String tableId, String instanceId, String rowpathUri) {
 
     File localFile =
         ODKFileUtils.getRowpathFile(sc.getAppName(), tableId, instanceId, rowpathUri);

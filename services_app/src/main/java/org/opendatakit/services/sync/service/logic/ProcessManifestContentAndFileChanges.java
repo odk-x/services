@@ -29,6 +29,8 @@ import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.services.sync.service.exceptions.IncompleteServerConfigFileBodyMissingException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncProgressState;
+import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
+import org.opendatakit.sync.service.logic.FileManifestDocument;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;

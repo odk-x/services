@@ -194,7 +194,11 @@ public class SyncExecutionContext implements SynchronizerStatus {
   public TableLevelResult getTableLevelResult(String tableId) {
     return mUserResult.fetchTableLevelResult(tableId);
   }
-  
+
+  public Context getApplication() {
+    return application;
+  }
+
   public String getAppName() {
     return this.appName;
   }
