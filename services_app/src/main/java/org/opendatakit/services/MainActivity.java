@@ -16,6 +16,7 @@ package org.opendatakit.services;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.NonNull;
 import android.support.v13.app.ActivityCompat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -68,6 +70,8 @@ public class MainActivity extends Activity implements IAppAwareActivity,
   private String mAppName;
   private boolean permissionOnly;
   private PropertiesSingleton mProps;
+  private boolean isPermissionDenied;
+  private AlertDialog mDialog;
 
   @Override
   protected void onDestroy() {
@@ -80,6 +84,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
+    isPermissionDenied = false;
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
@@ -101,7 +106,9 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       //      finish();
       //      return;
     }
-
+    if (isPermissionDenied) {
+      return;
+    }
     if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
       ActivityCompat.requestPermissions(
               this,
@@ -120,12 +127,28 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       // set first launch to false
       mProps.setProperties(Collections.singletonMap(CommonToolProperties
               .KEY_FIRST_LAUNCH, "false"));
-      Intent intent = new Intent( this, AppPropertiesActivity.class );
-      intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
-      intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-      startActivity(intent);
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      mDialog = builder.setMessage(R.string.configure_server_settings)
+              .setCancelable(false)
+              .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {
+                  mDialog.dismiss();
+                  Intent intent = new Intent( MainActivity.this, AppPropertiesActivity.class );
+                  intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
+                  intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+                  startActivity(intent);
+                }
+              })
+              .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {
+                  dialog.dismiss();
+                }
+              }).create();
+      mDialog.setCanceledOnTouchOutside(false);
+      mDialog.show();
     }
   }
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu; this adds items to the action bar if it is present.
@@ -215,6 +238,8 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       firstLaunch();
       return;
     }
+
+    isPermissionDenied = true;
 
     if (RuntimePermissionUtils.shouldShowAnyPermissionRationale(this, permissions)) {
       RuntimePermissionUtils.createPermissionRationaleDialog(this, requestCode, permissions)
