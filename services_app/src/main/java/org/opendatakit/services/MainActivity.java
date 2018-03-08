@@ -16,7 +16,6 @@ package org.opendatakit.services;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -24,10 +23,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 import android.support.annotation.NonNull;
 import android.support.v13.app.ActivityCompat;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -35,19 +32,14 @@ import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
-import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
-
-import java.util.Collections;
 
 public class MainActivity extends Activity implements IAppAwareActivity,
     ActivityCompat.OnRequestPermissionsResultCallback {
@@ -69,9 +61,6 @@ public class MainActivity extends Activity implements IAppAwareActivity,
 
   private String mAppName;
   private boolean permissionOnly;
-  private PropertiesSingleton mProps;
-  private boolean isPermissionDenied;
-  private AlertDialog mDialog;
 
   @Override
   protected void onDestroy() {
@@ -84,13 +73,20 @@ public class MainActivity extends Activity implements IAppAwareActivity,
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    isPermissionDenied = false;
     // IMPORTANT NOTE: the Application object is not yet created!
 
     // Used to ensure that the singleton has been initialized properly
     AndroidConnectFactory.configure();
 
     this.permissionOnly = getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_PERMISSION_ONLY, false);
+
+    if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
+      ActivityCompat.requestPermissions(
+              this,
+              REQUIRED_PERMISSIONS,
+              EXT_STORAGE_REQ_CODE
+      );
+    }
   }
 
   @Override
@@ -105,47 +101,6 @@ public class MainActivity extends Activity implements IAppAwareActivity,
       //      setResult(Activity.RESULT_CANCELED);
       //      finish();
       //      return;
-    }
-    if (isPermissionDenied) {
-      return;
-    }
-    if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
-      ActivityCompat.requestPermissions(
-              this,
-              REQUIRED_PERMISSIONS,
-              EXT_STORAGE_REQ_CODE
-      );
-    } else {
-      firstLaunch();
-    }
-  }
-
-  private void firstLaunch() {
-    mProps = CommonToolProperties.get(this, mAppName);
-    boolean isFirstLaunch = mProps.getBooleanProperty(CommonToolProperties.KEY_FIRST_LAUNCH);
-    if (isFirstLaunch) {
-      // set first launch to false
-      mProps.setProperties(Collections.singletonMap(CommonToolProperties
-              .KEY_FIRST_LAUNCH, "false"));
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      mDialog = builder.setMessage(R.string.configure_server_settings)
-              .setCancelable(false)
-              .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                  mDialog.dismiss();
-                  Intent intent = new Intent( MainActivity.this, AppPropertiesActivity.class );
-                  intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
-                  intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-                  startActivity(intent);
-                }
-              })
-              .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                  dialog.dismiss();
-                }
-              }).create();
-      mDialog.setCanceledOnTouchOutside(false);
-      mDialog.show();
     }
   }
 
@@ -235,11 +190,8 @@ public class MainActivity extends Activity implements IAppAwareActivity,
         setResult(Activity.RESULT_OK);
         finish();
       }
-      firstLaunch();
       return;
     }
-
-    isPermissionDenied = true;
 
     if (RuntimePermissionUtils.shouldShowAnyPermissionRationale(this, permissions)) {
       RuntimePermissionUtils.createPermissionRationaleDialog(this, requestCode, permissions)
