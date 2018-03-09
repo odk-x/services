@@ -82,9 +82,9 @@ public class MainActivity extends Activity implements IAppAwareActivity,
 
     if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
       ActivityCompat.requestPermissions(
-              this,
-              REQUIRED_PERMISSIONS,
-              EXT_STORAGE_REQ_CODE
+          this,
+          REQUIRED_PERMISSIONS,
+          EXT_STORAGE_REQ_CODE
       );
     }
   }
