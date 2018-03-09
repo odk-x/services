@@ -292,7 +292,7 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
   public void onHeaderClick(Header header, int position) {
     super.onHeaderClick(header, position);
     if (header.id == R.id.open_documentation) {
-      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://opendatakit.org"));
+      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.opendatakit_url)));
       if (browserIntent.resolveActivity(getPackageManager()) != null) {
         startActivity(browserIntent);
       } else {
