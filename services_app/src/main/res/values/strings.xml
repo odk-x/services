@@ -368,4 +368,6 @@
     <string name="write_external_perm_denied">ODK Services cannot function without write access to external storage</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
+    <string name="no">No</string>
+    <string name="configure_server_settings">Do you want to configure the server settings now?</string>
 </resources>
