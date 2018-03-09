@@ -18,9 +18,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.StringRes;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -284,5 +286,19 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
 
   public String getAppName() {
     return mAppName;
+  }
+
+  @Override
+  public void onHeaderClick(Header header, int position) {
+    super.onHeaderClick(header, position);
+    if (header.id == R.id.open_documentation) {
+      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.opendatakit_url)));
+      if (browserIntent.resolveActivity(getPackageManager()) != null) {
+        startActivity(browserIntent);
+      } else {
+        Intent i = new Intent(this, DocumentationWebViewActivity.class);
+        startActivity(i);
+      }
+    }
   }
 }
