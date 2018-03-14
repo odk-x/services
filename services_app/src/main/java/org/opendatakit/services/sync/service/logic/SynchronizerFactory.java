@@ -8,7 +8,7 @@ public class SynchronizerFactory {
 
     if (syncContext.getAggregateUri().startsWith("submit://")) {
       // TODO: make constant
-      synchronizer = new AidlSynchronizer(syncContext.getApplication(), "org.opendatakit.submit", "org.opendatakit.submit.service.LocalSyncService");
+      synchronizer = new AidlSynchronizer(syncContext, "org.opendatakit.submit", "org.opendatakit.submit.service.LocalSyncService");
     } else {
       synchronizer = new AggregateSynchronizer(syncContext);
     }

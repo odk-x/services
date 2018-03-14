@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -18,8 +19,10 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.entity.ParcelableColumn;
 import org.opendatakit.sync.service.entity.ParcelableTableResource;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
@@ -37,6 +40,7 @@ import java.util.Map;
 
 class AidlSynchronizer implements Synchronizer {
   private static final int SERVICE_CHECK_INTERVAL = 100;
+  private static final String TAG = AidlSynchronizer.class.getSimpleName();
 
   private IAidlSynchronizer remoteInterface;
 
@@ -53,9 +57,13 @@ class AidlSynchronizer implements Synchronizer {
     return remoteInterface;
   }
 
-  public AidlSynchronizer(final Context ctx, String pkgName, String className) {
-    Intent intent = new Intent().setClassName(pkgName, className);
-    ctx.bindService(intent, new ServiceConnection() {
+  public AidlSynchronizer(final SyncExecutionContext ctx, String pkgName, String className) {
+    Intent intent = new Intent()
+        .setClassName(pkgName, className)
+        // TODO: make a new class that holds sync parameters? SyncExecutionContext is too big
+        .putExtra(IntentConsts.INTENT_KEY_APP_NAME, ctx.getAppName());
+
+    ctx.getApplication().bindService(intent, new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
         remoteInterface = IAidlSynchronizer.Stub.asInterface(service);
@@ -64,9 +72,9 @@ class AidlSynchronizer implements Synchronizer {
       @Override
       public void onServiceDisconnected(ComponentName name) {
         remoteInterface = null;
-        ctx.unbindService(this);
+        ctx.getApplication().unbindService(this);
       }
-    }, Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
+    }, Context.BIND_AUTO_CREATE);
   }
 
   @Override
