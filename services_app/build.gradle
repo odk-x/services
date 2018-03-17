@@ -147,10 +147,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-    task grantPermissionForODKApp () {
-        doLast {
-            grantServicesReadExternalStoragePermission.execute()
-            grantServicesWriteExternalStoragePermission.execute()
-        }
+task grantPermissionForODKApp () {
+    doLast {
+        grantServicesReadExternalStoragePermission.execute()
+        grantServicesWriteExternalStoragePermission.execute()
     }
+}
 
