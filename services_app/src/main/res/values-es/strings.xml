@@ -288,6 +288,7 @@
     <string name="admin_general_settings">Acceso a los opciones como un administrador</string>
     <string name="opendatakit_website">Ayuda de ODK</string>
     <string name="click_to_web">Has clic para visitar http://opendatakit.org</string>
+    <string name="opendatakit_url">http://opendatakit.org</string>
 
     <string name="server_settings_summary">Usuario, autenticación y opciones del servidor</string>
     <string name="server">Opciones del servidor</string>
