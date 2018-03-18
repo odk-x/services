@@ -13,7 +13,7 @@ public class DocumentationWebViewActivity extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.webview);
-    webView = (WebView) findViewById(R.id.documentationWebView);
+    webView = findViewById(R.id.documentationWebView);
     webView.getSettings().setJavaScriptEnabled(true);
     webView.loadUrl(getString(R.string.opendatakit_url));
   }

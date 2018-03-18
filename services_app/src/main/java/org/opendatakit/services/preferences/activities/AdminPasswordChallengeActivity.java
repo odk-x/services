@@ -63,11 +63,11 @@ public class AdminPasswordChallengeActivity extends Activity {
 
       setContentView(R.layout.password_challenge_dialog_layout);
 
-      Button positiveButton = (Button) findViewById(R.id.positive_button);
+      Button positiveButton = findViewById(R.id.positive_button);
       positiveButton.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
-            EditText passwordEditText = (EditText) findViewById(R.id.pwd_field);
+            EditText passwordEditText = findViewById(R.id.pwd_field);
             String pw = passwordEditText.getText().toString();
 
             if (adminPwd.equals(pw)) {
@@ -84,7 +84,7 @@ public class AdminPasswordChallengeActivity extends Activity {
          }
       });
 
-      Button negativeButton = (Button) findViewById(R.id.negative_button);
+      Button negativeButton = findViewById(R.id.negative_button);
       negativeButton.setOnClickListener(new View.OnClickListener() {
 
          @Override

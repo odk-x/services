@@ -210,21 +210,21 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       if (convertView == null || (convertView.getId() != R.id.list_view_conflict_row) ) {
         view = (LinearLayout) mLayoutInflater.inflate(layoutId, parent, false);
       }
-      TextView columnNameView = (TextView) view.findViewById(R.id.list_item_column_display_name);
+      TextView columnNameView = view.findViewById(R.id.list_item_column_display_name);
       columnNameView.setText(conflictColumn.getTitle());
       // the text view displaying the local value
-      TextView localTextView = (TextView) view.findViewById(R.id.list_item_local_text);
+      TextView localTextView = view.findViewById(R.id.list_item_local_text);
       localTextView.setText(conflictColumn.getLocalDisplayValue());
-      TextView serverTextView = (TextView) view.findViewById(R.id.list_item_server_text);
+      TextView serverTextView = view.findViewById(R.id.list_item_server_text);
       serverTextView.setText(conflictColumn.getServerDisplayValue());
       // The decision the user has made. May be null if it hasn't been set.
       Resolution userDecision = mCallbacks.getConflictResolutionDecision(
           conflictColumn.getElementKey());
 
-      RadioButton localButton = (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
+      RadioButton localButton = view.findViewById(R.id.list_item_local_radio_button);
       localButton.setText(mLocalButtonTextId);
 
-      RadioButton serverButton = (RadioButton) view.findViewById(R.id.list_item_server_radio_button);
+      RadioButton serverButton = view.findViewById(R.id.list_item_server_radio_button);
       serverButton.setText(mServerButtonTextId);
 
       if (userDecision != null) {
@@ -246,9 +246,9 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       // appropriate. In order to do this, we're going to add the entire view
       // object, including itself, as the view's tag. That way we can get at
       // them to update appropriately.
-      RelativeLayout localRow = (RelativeLayout) view
+      RelativeLayout localRow = view
           .findViewById(R.id.list_item_conflict_resolution_local_row);
-      RelativeLayout serverRow = (RelativeLayout) view
+      RelativeLayout serverRow = view
           .findViewById(R.id.list_item_conflict_resolution_server_row);
       localRow.setTag(view);
       serverRow.setTag(view);
@@ -273,10 +273,10 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
         view = (LinearLayout) mLayoutInflater.inflate(layoutId, parent, false);
       }
       // set the column name
-      TextView columnNameView = (TextView) view.findViewById(R.id.list_item_column_display_name);
+      TextView columnNameView = view.findViewById(R.id.list_item_column_display_name);
       columnNameView.setText(concordantColumn.getTitle());
       // the text view displaying the local value
-      TextView concordantTextView = (TextView) view.findViewById(R.id.list_item_concordant_text);
+      TextView concordantTextView = view.findViewById(R.id.list_item_concordant_text);
       concordantTextView.setText(concordantColumn.getDisplayValue());
       return view;
     } else {
@@ -303,9 +303,9 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       View conflictRowView = (View) v.getTag();
       int position = (Integer) v.getTag(R.id.list_view_conflict_row);
       ConflictColumn conflictColumn = mConflictColumns.get(position);
-      RadioButton localButton = (RadioButton) conflictRowView
+      RadioButton localButton = conflictRowView
           .findViewById(R.id.list_item_local_radio_button);
-      RadioButton serverButton = (RadioButton) conflictRowView
+      RadioButton serverButton = conflictRowView
           .findViewById(R.id.list_item_server_radio_button);
       // Now we need to figure out if this is a server or a local click, which
       // we'll know by which view the click came in on.
@@ -346,9 +346,9 @@ public class ConflictResolutionColumnListAdapter extends BaseAdapter {
       View conflictRowView = (View) v.getTag();
       int position = (Integer) v.getTag(R.id.list_view_conflict_row);
       ConflictColumn conflictColumn = mConflictColumns.get(position);
-      RadioButton localButton = (RadioButton) conflictRowView
+      RadioButton localButton = conflictRowView
           .findViewById(R.id.list_item_local_radio_button);
-      RadioButton serverButton = (RadioButton) conflictRowView
+      RadioButton serverButton = conflictRowView
           .findViewById(R.id.list_item_server_radio_button);
 
       localButton.setChecked(false);

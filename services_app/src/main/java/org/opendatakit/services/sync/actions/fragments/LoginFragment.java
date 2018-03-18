@@ -123,12 +123,12 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       }
 
-      usernameEditText = (EditText) view.findViewById(R.id.username);
+      usernameEditText = view.findViewById(R.id.username);
       usernameEditText.setText(props.getProperty(CommonToolProperties.KEY_USERNAME));
 
-      passwordEditText = (EditText) view.findViewById(R.id.pwd_field);
+      passwordEditText = view.findViewById(R.id.pwd_field);
 
-      togglePasswordText = (CheckBox) view.findViewById(R.id.show_pwd);
+      togglePasswordText = view.findViewById(R.id.show_pwd);
       togglePasswordText.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -140,7 +140,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      authenticateNewUser = (Button) view.findViewById(R.id.change_user_button);
+      authenticateNewUser = view.findViewById(R.id.change_user_button);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -150,7 +150,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      logout = (Button) view.findViewById(R.id.logout_button);
+      logout = view.findViewById(R.id.logout_button);
       logout.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -158,7 +158,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      cancel = (Button) view.findViewById(R.id.cancel_button);
+      cancel = view.findViewById(R.id.cancel_button);
       cancel.setOnClickListener(new View.OnClickListener() {
 
          @Override

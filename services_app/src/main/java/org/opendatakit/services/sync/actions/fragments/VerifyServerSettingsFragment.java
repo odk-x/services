@@ -104,7 +104,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
     }
 
-    startVerifyServerSettings = (Button) view
+    startVerifyServerSettings = view
         .findViewById(R.id.verify_server_settings_start_button);
     startVerifyServerSettings.setOnClickListener(new View.OnClickListener() {
       @Override
