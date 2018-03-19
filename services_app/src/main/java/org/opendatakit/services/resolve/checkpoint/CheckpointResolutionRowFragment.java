@@ -568,10 +568,10 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
     View view = inflater.inflate(ID, container, false);
 
     this.mTextViewCheckpointOverviewMessage =
-        (TextView) view.findViewById(R.id.checkpoint_overview_message);
-    this.mButtonTakeOldest = (Button) view.findViewById(R.id.take_oldest);
-    this.mButtonTakeNewest = (Button) view.findViewById(R.id.take_newest);
-    this.mButtonTakeNewestWithDeltas = (Button) view.findViewById(R.id.take_newest_with_deltas);
+        view.findViewById(R.id.checkpoint_overview_message);
+    this.mButtonTakeOldest = view.findViewById(R.id.take_oldest);
+    this.mButtonTakeNewest = view.findViewById(R.id.take_newest);
+    this.mButtonTakeNewestWithDeltas = view.findViewById(R.id.take_newest_with_deltas);
 
     return view;
   }

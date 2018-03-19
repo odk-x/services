@@ -85,8 +85,8 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
-    buttonTakeAllServer = (Button) view.findViewById(R.id.take_all_server);
-    buttonTakeAllLocal = (Button) view.findViewById(R.id.take_all_local);
+    buttonTakeAllServer = view.findViewById(R.id.take_all_server);
+    buttonTakeAllLocal = view.findViewById(R.id.take_all_local);
 
     if(buttonTakeAllServer == null || buttonTakeAllLocal == null) {
       throw new RuntimeException("Android failed to locate references to buttons");
