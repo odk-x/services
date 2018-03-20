@@ -233,7 +233,8 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
               R.string.url_error, Toast.LENGTH_SHORT)
               .show();
       return false;
-    }  }
+    } 
+  }
 
   public boolean signOnPreferenceChanged(Preference preference, Object newValue){
     int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
@@ -315,6 +316,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   /**
    * Receives result after QrCode scanning.
    */
+  @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
     if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
@@ -331,7 +333,6 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
         }
       }
     super.onActivityResult(requestCode, resultCode, data);
-
 }
 
   private void parseQrCodeResult(String contents) {
