@@ -52,7 +52,6 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
-import org.opendatakit.services.utilities.FragmentIntentIntegrator;
 import org.opendatakit.services.utilities.TableHealthValidator;
 
 import java.net.MalformedURLException;
@@ -233,7 +232,8 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
               R.string.url_error, Toast.LENGTH_SHORT)
               .show();
       return false;
-    }  }
+    }
+  }
 
   public boolean signOnPreferenceChanged(Preference preference, Object newValue){
     int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
@@ -315,6 +315,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   /**
    * Receives result after QrCode scanning.
    */
+  @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
     if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
@@ -412,13 +413,13 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   }
 
   private void openBarcodeScanner() {
-    FragmentIntentIntegrator integrator = new FragmentIntentIntegrator(this);
-    integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-    integrator.setPrompt("Place QR Code inside the rectangle");
-    integrator.setCameraId(0);
-    integrator.setBeepEnabled(true);
-    integrator.setBarcodeImageEnabled(false);
-    integrator.initiateScan();
+    IntentIntegrator.forFragment(this)
+        .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES)
+        .setPrompt("Place QR Code inside the rectangle")
+        .setCameraId(0)
+        .setBeepEnabled(true)
+        .setBarcodeImageEnabled(false)
+        .initiateScan();
   }
 
   @Override
