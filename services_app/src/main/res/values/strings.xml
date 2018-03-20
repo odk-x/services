@@ -297,6 +297,7 @@
     <string name="admin_general_settings">Admin Access to Settings</string>
     <string name="opendatakit_website">Open Data Kit user documentation</string>
     <string name="click_to_web">Tap to visit http://opendatakit.org</string>
+    <string name="opendatakit_url">http://opendatakit.org</string>
 
     <string name="server_settings_summary">User Identity, Authentication and Server Configuration</string>
     <string name="server">Server Settings</string>
@@ -367,4 +368,6 @@
     <string name="write_external_perm_denied">ODK Services cannot function without write access to external storage</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
+    <string name="no">No</string>
+    <string name="configure_server_settings">Do you want to configure the server settings now?</string>
 </resources>
