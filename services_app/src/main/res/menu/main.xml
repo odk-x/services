@@ -26,14 +26,14 @@
     <item
             android:id="@+id/action_settings"
             android:orderInCategory="50"
-            android:showAsAction="never"
+            android:showAsAction="ifRoom"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/action_settings"/>
 
     <item
             android:id="@+id/action_change_user"
             android:orderInCategory="50"
-            android:showAsAction="never"
+            android:showAsAction="ifRoom"
             android:icon="@drawable/ic_sync_disabled_black_24dp"
             android:title="@string/action_change_user"/>
 
