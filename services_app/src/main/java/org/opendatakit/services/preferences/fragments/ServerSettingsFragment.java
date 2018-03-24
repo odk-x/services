@@ -30,7 +30,6 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.util.Log;
@@ -59,6 +58,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.support.v4.content.ContextCompat.checkSelfPermission;
+
 public class ServerSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
 
   private static final String t = "ServerSettingsFragment";
@@ -67,14 +68,15 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   private ListPreference mSignOnCredentialPreference;
   private EditTextPreference mUsernamePreference;
   private ListPreference mSelectedGoogleAccountPreference;
-  PasswordPreferenceScreen passwordScreen;
   private TableHealthValidator healthValidator;
-  private final int PERMISSION_REQUEST_CAMERA = 1;
+  private final int PERMISSION_REQUEST_CAMERA_CODE = 1;
   private boolean adminMode;
   private boolean serverAvailable;
   private boolean usernamePasswordAvailable;
   private boolean credentialAvailable;
-
+  protected static final String[] CAMERA_PERMISSION = new String[] {
+          Manifest.permission.CAMERA
+  };
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -89,7 +91,6 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     // not super safe, but we're just putting in this mode to help
     // administrate
     // would require code to access it
-
     adminMode = (this.getArguments() == null) ? false :
         (this.getArguments().containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) ?
            this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
@@ -125,7 +126,6 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
         new InputFilter[] { getReturnFilter() });
 
     mServerUrlPreference.setEnabled(serverAvailable || adminMode);
-
 
     credentialAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_AUTHENTICATION_TYPE);
@@ -225,21 +225,21 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
 
     if (isValid) {
       preference.setSummary(newValue.toString());
-      updatePreferenceSummary(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
+      updatePropertiesSingleton(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
       return true;
     } else {
       Toast.makeText(getActivity().getApplicationContext(),
               R.string.url_error, Toast.LENGTH_SHORT)
               .show();
       return false;
-    } 
+    }
   }
 
   public boolean signOnPreferenceChanged(Preference preference, Object newValue){
     int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
     String entry = (String) ((ListPreference) preference).getEntries()[index];
     ((ListPreference) preference).setSummary(entry);
-    updatePreferenceSummary(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+    updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
 
     return true;
   }
@@ -247,7 +247,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.server_settings_action_menu, menu);
   }
-  private void updatePreferenceSummary(String key, String value){
+  private void updatePropertiesSingleton(String key, String value){
     PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
     Map<String,String> properties = new HashMap<String,String>();
@@ -305,7 +305,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     preference.setSummary((CharSequence) newValue);
     if ( props.containsKey(preference.getKey())) {
-      updatePreferenceSummary(preference.getKey(), newValue.toString());
+      updatePropertiesSingleton(preference.getKey(), newValue.toString());
     } else {
       throw new IllegalStateException("Unexpected case");
     }
@@ -321,18 +321,19 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
         requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER) {
       healthValidator.verifyTableHealth();
+      return;
     }
        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
       if (result != null) {
         if (result.getContents() == null) {
-          Toast.makeText(getActivity(), "You cancelled Scanning", Toast.LENGTH_SHORT).show();
+          Toast.makeText(getActivity(), R.string.scanning_cancelled, Toast.LENGTH_SHORT).show();
         } else {
           parseQrCodeResult(result.getContents());
           Log.i("QR code:",result.getContents());
         }
       }
     super.onActivityResult(requestCode, resultCode, data);
-}
+  }
 
   private void parseQrCodeResult(String contents) {
     String TAG =  "pasreQrCodeResult";
@@ -380,14 +381,14 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
      Toast.makeText(getActivity(), toastString, Toast.LENGTH_SHORT).show();
 
     } catch (JSONException e) {
-      Toast.makeText(getActivity(), "Invalid Qr code.", Toast.LENGTH_SHORT).show();
-      Log.i(TAG,"Invalid QR code");
+      Toast.makeText(getActivity(), R.string.invalid_qr_code, Toast.LENGTH_SHORT).show();
+      Log.i(TAG,"Invalid Qr code");
     }
 
   }
 
   public void updatePassword(String pw) {
-    updatePreferenceSummary(CommonToolProperties.KEY_PASSWORD, pw);
+    updatePropertiesSingleton(CommonToolProperties.KEY_PASSWORD, pw);
  }
 
   @Override
@@ -395,7 +396,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
     switch (item.getItemId()) {
       case R.id.action_barcode:
         // When Scan QR icon is clicked.
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+        if (checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
           // Permission is already available, start camera preview
            openBarcodeScanner();
@@ -414,7 +415,7 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   private void openBarcodeScanner() {
     IntentIntegrator.forFragment(this)
         .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES)
-        .setPrompt("Place QR Code inside the rectangle")
+        .setPrompt(getString(R.string.qr_code_scanner_instruction))
         .setCameraId(0)
         .setBeepEnabled(true)
         .setBarcodeImageEnabled(false)
@@ -424,53 +425,54 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                          @NonNull int[] grantResults) {
-      super.onRequestPermissionsResult(requestCode,permissions,grantResults);
-     if (requestCode == PERMISSION_REQUEST_CAMERA) {
-      // Request for camera permission.
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    if (requestCode == PERMISSION_REQUEST_CAMERA_CODE) {
+
       if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
         // Permission has been granted. Starting Barcode Scanner.
-         openBarcodeScanner();
-      } else {
-        // Permission request was denied.
-        Toast.makeText(getActivity(), "Permission denied", Toast.LENGTH_SHORT).show();
+        openBarcodeScanner();
       }
-    }else{
-       Log.e("here", String.valueOf(requestCode));
-     }
-   }
+      else{
 
-  private void requestCameraPermission() {
-    Log.i(t, "CAMERA permission has NOT been granted. Requesting permission.");
-    if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-            Manifest.permission.CAMERA)) {
-      Log.i(t,"Displaying camera permission rationale to provide additional context.");
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage("ODK Service requires Camera permission to scan QR code")
-              .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
-                    requestPermissions(
-                            new String[]{Manifest.permission.CAMERA},
-                            PERMISSION_REQUEST_CAMERA);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage(R.string.camera_permission_rationale)
+                .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int which) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                      //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
+                      requestPermissions(
+                              new String[]{Manifest.permission.CAMERA},
+                              PERMISSION_REQUEST_CAMERA_CODE);
+                    }
                   }
-                }
-              })
-              .setNegativeButton("Not now", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
+                })
+                .setNegativeButton(R.string.not_now, new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int which) {
+                    Toast.makeText(getActivity(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
-                }
-              });
-      builder.create().show();
-    } else {
-      // Camera permission has not been granted yet. Requesting it directly.
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        requestPermissions(new String[]{Manifest.permission.CAMERA},
-                PERMISSION_REQUEST_CAMERA);
+                  }
+                });
+        builder.create().show();
       }
     }
-  }
+   }
+  private void requestCameraPermission() {
 
+        if (checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED){
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
+            requestPermissions(
+                    CAMERA_PERMISSION,
+                    PERMISSION_REQUEST_CAMERA_CODE
+        );
+      }
+    }
+    else{
+      // Permission has been granted. Starting Barcode Scanner.
+      openBarcodeScanner();
+    }
+  }
 }
