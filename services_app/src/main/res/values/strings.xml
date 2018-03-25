@@ -368,6 +368,13 @@
     <string name="write_external_perm_denied">ODK Services cannot function without write access to external storage</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
+    <string name="scanning_cancelled">You cancelled Scanning</string>
+    <string name="invalid_qr_code">Invalid Qr code</string>
+    <string name="qr_code_scanner_instruction">Place QR Code inside the rectangle</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="camera_permission_rationale">ODK Service requires Camera permission to scan QR code</string>
+    <string name="allow">Allow</string>
+    <string name="not_now">Not now</string>
     <string name="no">No</string>
     <string name="configure_server_settings">Do you want to configure the server settings now?</string>
 </resources>
