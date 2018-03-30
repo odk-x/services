@@ -148,7 +148,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   void postTaskToAccessSyncService() {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated()) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
@@ -227,7 +227,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   void updateInterface() {
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated()) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");

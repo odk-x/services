@@ -280,9 +280,6 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
       progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
           PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
 
-      if(!progressDialog.isAdded()) {
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-      }
     }
   }
 
