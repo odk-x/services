@@ -125,7 +125,12 @@ abstract class AbsSyncUIFragment extends Fragment implements
 
       updateCredentialsUI();
       perhapsEnableButtons();
-      updateInterface();
+      handler.postDelayed(new Runnable() {
+         @Override
+         public void run() {
+            updateInterface();
+         }
+      }, 100);
    }
 
    @Override

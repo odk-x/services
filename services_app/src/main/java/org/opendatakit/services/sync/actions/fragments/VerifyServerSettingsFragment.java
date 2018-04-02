@@ -326,10 +326,13 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
 
       int id_title = R.string.verifying_server_settings;
-
       FragmentManager fm =  getFragmentManager();
-      msgManager.createProgressDialog(getString(id_title), message, fm);
-      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
+      if (!msgManager.displayingProgressDialog()) {
+        msgManager.createProgressDialog(getString(id_title), message, fm);
+        fm.executePendingTransactions();
+      } else {
+        msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
+      }
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
