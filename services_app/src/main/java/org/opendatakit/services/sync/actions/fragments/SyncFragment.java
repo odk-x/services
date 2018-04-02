@@ -509,12 +509,9 @@ public class SyncFragment extends AbsSyncUIFragment {
       }
 
       FragmentManager fm =  getFragmentManager();
-      if (!msgManager.displayingProgressDialog()) {
-        msgManager.createProgressDialog(getString(id_title), message, fm);
-        fm.executePendingTransactions();
-      } else {
-        msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
-      }
+      msgManager.createProgressDialog(getString(id_title), message, fm);
+      fm.executePendingTransactions();
+      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
