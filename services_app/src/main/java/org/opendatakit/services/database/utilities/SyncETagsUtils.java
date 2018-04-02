@@ -305,7 +305,8 @@ public final class SyncETagsUtils {
         b.append("?,?,?,?)");
         bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
         bindArgs.add(url);
-        bindArgs.add(TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+        bindArgs.add(TableConstants.nanoSecondsFromMillis(
+            System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE));
         bindArgs.add(etag);
   
         db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
@@ -371,7 +372,8 @@ public final class SyncETagsUtils {
       }
       String value = c.getString(idx);
       String lmtValue = c.getString(idxLMT);
-      Long modifiedTime = TableConstants.milliSecondsFromNanos(lmtValue);
+      Long modifiedTime = TableConstants.milliSecondsFromNanos(
+          lmtValue, TableConstants.TIMESTAMP_LOCALE);
       if (modifiedTime.equals(modified)) {
         return value;
       }
@@ -430,7 +432,7 @@ public final class SyncETagsUtils {
         b.append("?,?,?,?)");
         bindArgs.add(Integer.toString(DataHelper.boolToInt(false)));
         bindArgs.add(url);
-        bindArgs.add(TableConstants.nanoSecondsFromMillis(modified));
+        bindArgs.add(TableConstants.nanoSecondsFromMillis(modified, TableConstants.TIMESTAMP_LOCALE));
         bindArgs.add(etag);
   
         db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
