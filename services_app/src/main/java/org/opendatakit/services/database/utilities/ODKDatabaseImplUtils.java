@@ -1616,8 +1616,11 @@ public final class ODKDatabaseImplUtils {
     }
 
     TreeMap<String,Object> cvTableDef = new TreeMap<String,Object>();
-    cvTableDef.put(TableDefinitionsColumns.LAST_SYNC_TIME,
-        TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+    cvTableDef.put(
+        TableDefinitionsColumns.LAST_SYNC_TIME,
+        TableConstants.nanoSecondsFromMillis(
+            System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE)
+    );
 
     boolean dbWithinTransaction = db.inTransaction();
     try {
@@ -3677,8 +3680,11 @@ public final class ODKDatabaseImplUtils {
 
         TreeMap<String,Object> values = new TreeMap<String,Object>();
         values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
-        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
-            TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+        values.put(
+            DataTableColumns.SAVEPOINT_TIMESTAMP,
+            TableConstants.nanoSecondsFromMillis(
+                System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE)
+        );
 
         db.update(tableId, values, K_DATATABLE_ID_EQUALS_PARAM, whereArgs);
       }
@@ -5108,7 +5114,8 @@ public final class ODKDatabaseImplUtils {
 
     if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
         || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
-      String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String timeStamp = TableConstants.nanoSecondsFromMillis(
+          System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE);
       cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
     }
 
@@ -5708,7 +5715,8 @@ public final class ODKDatabaseImplUtils {
 
         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
             || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
-          String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+          String timeStamp = TableConstants.nanoSecondsFromMillis(
+              System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE);
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
         }
 
@@ -5767,7 +5775,8 @@ public final class ODKDatabaseImplUtils {
 
         if (!cvDataTableVal.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)
             || cvDataTableVal.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
-          String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+          String timeStamp = TableConstants.nanoSecondsFromMillis(
+              System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE);
           cvDataTableVal.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timeStamp);
         }
 
