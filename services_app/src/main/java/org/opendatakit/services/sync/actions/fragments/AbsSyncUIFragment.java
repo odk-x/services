@@ -101,9 +101,9 @@ abstract class AbsSyncUIFragment extends Fragment implements
     * @param view
     */
    void populateTextViewMemberVariablesReferences(View view) {
-      uriField = (TextView) view.findViewById(R.id.sync_uri_field);
-      accountAuthType = (TextView) view.findViewById(R.id.sync_account_auth_label);
-      accountIdentity = (TextView) view.findViewById(R.id.sync_account);
+      uriField = view.findViewById(R.id.sync_uri_field);
+      accountAuthType = view.findViewById(R.id.sync_account_auth_label);
+      accountIdentity = view.findViewById(R.id.sync_account);
    }
 
    @Override
@@ -125,7 +125,12 @@ abstract class AbsSyncUIFragment extends Fragment implements
 
       updateCredentialsUI();
       perhapsEnableButtons();
-      updateInterface();
+      handler.postDelayed(new Runnable() {
+         @Override
+         public void run() {
+            updateInterface();
+         }
+      }, 100);
    }
 
    @Override

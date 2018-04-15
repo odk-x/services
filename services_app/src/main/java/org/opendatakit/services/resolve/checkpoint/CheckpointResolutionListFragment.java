@@ -273,10 +273,6 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
       // try to retrieve the active dialog
       progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
           PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
-
-      if(!progressDialog.isAdded()) {
-        progressDialog.show(getFragmentManager(), PROGRESS_DIALOG_TAG);
-      }
     }
   }
 

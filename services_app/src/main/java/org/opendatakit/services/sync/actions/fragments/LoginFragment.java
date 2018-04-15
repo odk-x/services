@@ -123,12 +123,12 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       }
 
-      usernameEditText = (EditText) view.findViewById(R.id.username);
+      usernameEditText = view.findViewById(R.id.username);
       usernameEditText.setText(props.getProperty(CommonToolProperties.KEY_USERNAME));
 
-      passwordEditText = (EditText) view.findViewById(R.id.pwd_field);
+      passwordEditText = view.findViewById(R.id.pwd_field);
 
-      togglePasswordText = (CheckBox) view.findViewById(R.id.show_pwd);
+      togglePasswordText = view.findViewById(R.id.show_pwd);
       togglePasswordText.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -140,7 +140,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      authenticateNewUser = (Button) view.findViewById(R.id.change_user_button);
+      authenticateNewUser = view.findViewById(R.id.change_user_button);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -150,7 +150,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      logout = (Button) view.findViewById(R.id.logout_button);
+      logout = view.findViewById(R.id.logout_button);
       logout.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
@@ -158,7 +158,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       });
 
-      cancel = (Button) view.findViewById(R.id.cancel_button);
+      cancel = view.findViewById(R.id.cancel_button);
       cancel.setOnClickListener(new View.OnClickListener() {
 
          @Override
@@ -266,7 +266,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    void postTaskToAccessSyncService() {
       WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
       Activity activity = getActivity();
-      if (activity == null) {
+      if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
          // we are in transition -- do nothing
          WebLogger.getLogger(getAppName())
              .d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
@@ -346,10 +346,15 @@ public class LoginFragment extends AbsSyncUIFragment {
 
    void updateInterface() {
       Activity activity = getActivity();
-      if (activity == null) {
+      if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
          // we are in transition -- do nothing
-         WebLogger.getLogger(getAppName())
-             .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+         if(activity == null) {
+            WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+         } else if(!msgManager.hasDialogBeenCreated() ) {
+            WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] !msgManager.hasDialogBeenCreated()");
+         } else if(!msgManager.hasDialogBeenCreated() ) {
+            WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] !this.isResumed()");
+         }
          handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -448,10 +453,9 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
 
          int id_title = R.string.verifying_server_settings;
-
          FragmentManager fm =  getFragmentManager();
-
          msgManager.createProgressDialog(getString(id_title), message, fm);
+         fm.executePendingTransactions();
          msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
          if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {

@@ -125,10 +125,10 @@ public class SyncFragment extends AbsSyncUIFragment {
 
     View view = inflater.inflate(ID, container, false);
 
-    infoPane = (LinearLayout) view.findViewById(R.id.sync_info_pane);
+    infoPane = view.findViewById(R.id.sync_info_pane);
     populateTextViewMemberVariablesReferences(view);
 
-    syncInstanceAttachmentsSpinner = (Spinner) view.findViewById(R.id.sync_instance_attachments);
+    syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
 
     if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
       String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
@@ -170,26 +170,26 @@ public class SyncFragment extends AbsSyncUIFragment {
       }
     });
 
-    startSync = (Button) view.findViewById(R.id.sync_start_button);
+    startSync = view.findViewById(R.id.sync_start_button);
     startSync.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         onClickSyncNow(v);
       }
     });
-    resetServer = (Button) view.findViewById(R.id.sync_reset_server_button);
+    resetServer = view.findViewById(R.id.sync_reset_server_button);
     resetServer.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         onClickResetServer(v);
       }
     });
-    changeUser = (Button) view.findViewById(R.id.change_user_button);
+    changeUser = view.findViewById(R.id.change_user_button);
     changeUser.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         onClickChangeUser(v);
       }
     });
 
-    resetButtonPane = (LinearLayout) view.findViewById(R.id.sync_reset_button_pane);
+    resetButtonPane = view.findViewById(R.id.sync_reset_button_pane);
 
     return view;
   }
@@ -267,7 +267,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   void postTaskToAccessSyncService() {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
     Activity activity = getActivity();
-    if (activity == null) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
       handler.postDelayed(new Runnable() {
@@ -347,7 +347,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   void updateInterface() {
     Activity activity = getActivity();
-    if (activity == null) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
@@ -509,8 +509,8 @@ public class SyncFragment extends AbsSyncUIFragment {
       }
 
       FragmentManager fm =  getFragmentManager();
-
       msgManager.createProgressDialog(getString(id_title), message, fm);
+      fm.executePendingTransactions();
       msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {

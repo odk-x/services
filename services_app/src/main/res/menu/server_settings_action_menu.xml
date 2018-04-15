@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="org.opendatakit.services.MainActivity">
+
+    <item
+        android:id="@+id/action_barcode"
+        android:orderInCategory="10"
+        android:showAsAction="always"
+        android:icon="@drawable/ic_qrcode_black_24dp"
+        android:title="@string/action_sync"/>
+
+</menu>

@@ -650,10 +650,10 @@ public class ConflictResolutionRowFragment extends ListFragment implements
     View view = inflater.inflate(ID, container, false);
 
     this.mTextViewConflictOverviewMessage =
-        (TextView) view.findViewById(R.id.conflict_overview_message);
-    this.mButtonTakeServer = (Button) view.findViewById(R.id.take_server);
-    this.mButtonTakeLocal = (Button) view.findViewById(R.id.take_local);
-    this.mButtonTakeLocalWithDeltas = (Button) view.findViewById(R.id.take_local_with_deltas);
+            view.findViewById(R.id.conflict_overview_message);
+    this.mButtonTakeServer = view.findViewById(R.id.take_server);
+    this.mButtonTakeLocal = view.findViewById(R.id.take_local);
+    this.mButtonTakeLocalWithDeltas = view.findViewById(R.id.take_local_with_deltas);
 
     return view;
   }

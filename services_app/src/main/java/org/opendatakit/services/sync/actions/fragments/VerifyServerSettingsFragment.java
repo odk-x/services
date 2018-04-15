@@ -104,7 +104,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
     }
 
-    startVerifyServerSettings = (Button) view
+    startVerifyServerSettings = view
         .findViewById(R.id.verify_server_settings_start_button);
     startVerifyServerSettings.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -148,7 +148,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   void postTaskToAccessSyncService() {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
     Activity activity = getActivity();
-    if (activity == null) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
@@ -227,7 +227,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   void updateInterface() {
     Activity activity = getActivity();
-    if (activity == null) {
+    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
@@ -326,11 +326,11 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
 
       int id_title = R.string.verifying_server_settings;
-
       FragmentManager fm =  getFragmentManager();
       msgManager.createProgressDialog(getString(id_title), message, fm);
+      fm.executePendingTransactions();
       msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
-
+      
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
           @Override
