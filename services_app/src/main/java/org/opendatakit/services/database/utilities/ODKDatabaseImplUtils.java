@@ -5913,7 +5913,8 @@ public final class ODKDatabaseImplUtils {
       values.remove(key);
     }
 
-    while (!toBeResolved.isEmpty()) {
+    int numTransversal = 0;
+    while (!toBeResolved.isEmpty() && numTransversal < 100) {
 
       TreeMap<String, String> moreToResolve = new TreeMap<String, String>();
 
@@ -5963,7 +5964,7 @@ public final class ODKDatabaseImplUtils {
           throw new IllegalStateException("should not be happening");
         }
       }
-
+      numTransversal++;
       toBeResolved = moreToResolve;
     }
   }

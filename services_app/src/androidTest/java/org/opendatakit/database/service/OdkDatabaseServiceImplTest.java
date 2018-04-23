@@ -184,7 +184,7 @@ import static org.junit.Assert.fail;
          assertEquals(rows.size(), 1);
          for (Row row : rows) {
             assertEquals(row.getRawStringByKey(COLUMN_ID1), "ayy lmao");
-            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
+            Long value = row.getDataType(COLUMN_ID2, Long.class);
             assertTrue(value.intValue() == 3);
          }
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID2, "INTEGER");
@@ -268,7 +268,7 @@ import static org.junit.Assert.fail;
       for (Row row : rows) {
          if (row.getRawStringByKey(COLUMN_ID1).equals(id)) {
             assertEquals(row.getRawStringByKey(COLUMN_ID1), id);
-            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
+            Long value = row.getDataType(COLUMN_ID2, Long.class);
             assertTrue(value.intValue() == intValue);
             Double val3 = row.getDataType(COLUMN_ID3, Double.class);
             assertEquals(val3, doubleValue, delta);

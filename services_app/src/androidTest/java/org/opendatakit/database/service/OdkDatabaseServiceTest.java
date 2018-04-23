@@ -154,7 +154,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private void verifyRowTestSet1(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.valueOf(TEST_INT_1));
+          Long.valueOf(TEST_INT_1));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.valueOf(TEST_NUM_1));
    }
@@ -162,7 +162,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private void verifyRowTestSet2(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.valueOf(TEST_INT_2));
+          Long.valueOf(TEST_INT_2));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.valueOf(TEST_NUM_2));
    }
@@ -170,7 +170,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private void verifyRowTestSeti(TypedRow row, int i) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.valueOf(TEST_INT_i + i));
+          Long.valueOf(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
           Double.valueOf(TEST_NUM_i + i));
    }
@@ -178,7 +178,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private void veriftyRowTestSetManyColumns(TypedRow row, int i) {
       for (int j = 0; j < MANY_COL_NUM_COLUMNS; j++) {
          assertEquals(row.getDataByKey(MANY_COL_STRING_ID + j), "STR_" + j + "_" + i);
-         assertEquals(row.getDataByKey(MANY_COL_INTEGER_ID + j), Integer.valueOf(i + j));
+         assertEquals(row.getDataByKey(MANY_COL_INTEGER_ID + j), Long.valueOf(i + j));
          assertEquals(row.getDataByKey(MANY_COL_NUMBER_ID + j), Double.valueOf(i * j));
          assertEquals(row.getDataByKey(MANY_COL_BOOL_ID + j), Boolean.valueOf(((i+j)%2)==1));
          assertEquals(row.getDataByKey(MANY_COL_DATE_ID + j), dateString);
@@ -781,7 +781,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
          assertEquals(row.getDataByKey(COL_INTEGER_ID),
-             Integer.valueOf(changeValue));
+             Long.valueOf(changeValue));
          assertEquals(row.getDataByKey(COL_NUMBER_ID),
              Double.valueOf(TEST_NUM_1));
 
@@ -1871,7 +1871,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          TypedRow row = new TypedRow(results.getRowAtIndex(0),columns);
          assertEquals(row.getRawStringByKey(COL_STRING_ID), TEST_STR_1);
-         assertEquals(row.getRawStringByKey(COL_INTEGER_ID), Integer.toString(changeValue));
+         assertEquals(row.getRawStringByKey(COL_INTEGER_ID), Long.toString(changeValue));
          assertEquals(row.getRawStringByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
 
          // clean up
