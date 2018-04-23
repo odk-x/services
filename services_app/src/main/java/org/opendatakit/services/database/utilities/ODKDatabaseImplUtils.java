@@ -1355,9 +1355,9 @@ public final class ODKDatabaseImplUtils {
           int idxCheckpoints = c.getColumnIndex("checkpoints");
           int idxConflicts = c.getColumnIndex("conflicts");
           int idxChanges = c.getColumnIndex("changes");
-          checkpoints = CursorUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
-          conflicts = CursorUtils.getIndexAsType(c, Integer.class, idxConflicts);
-          changes = CursorUtils.getIndexAsType(c, Integer.class, idxChanges);
+          checkpoints = CursorUtils.getIndexAsType(c, Long.class, idxCheckpoints).intValue();
+          conflicts = CursorUtils.getIndexAsType(c, Long.class, idxConflicts).intValue();
+          changes = CursorUtils.getIndexAsType(c, Long.class, idxChanges).intValue();
         }
         c.close();
       }

@@ -329,7 +329,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
           tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
           return false;
         }
-        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Integer.class);
+        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Long.class).intValue();
 
       } finally {
         sc.releaseDatabase(db);

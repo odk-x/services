@@ -170,7 +170,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
           tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
           return;
         }
-        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Integer.class);
+        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Long.class).intValue();
 
       } finally {
         sc.releaseDatabase(db);
