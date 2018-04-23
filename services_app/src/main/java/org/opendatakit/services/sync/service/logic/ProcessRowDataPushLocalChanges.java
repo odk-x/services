@@ -128,7 +128,6 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
             boolean hasNonEmptyAttachmentColumns = false;
             for ( ColumnDefinition cd : fileAttachmentColumns ) {
-              // WRB: no idea
               String uriFragment = localRow.getRawStringByKey(cd.getElementKey());
               if ( uriFragment != null ) {
                 hasNonEmptyAttachmentColumns = true;

@@ -724,8 +724,6 @@ class ProcessManifestContentAndFileChanges {
     b.append(localRow.getRawStringByKey(DataTableColumns.ROW_ETAG));
     // extract the non-null uriFragments here...
     for ( ColumnDefinition cd : fileAttachmentColumns) {
-      // WRB: no idea
-      // NOT SURE IF WE SHOULD USE TYPED OR NOT
       String uriFragment = localRow.getRawStringByKey(cd.getElementKey());
       if ( uriFragment != null) {
         uriFragments.add(uriFragment);

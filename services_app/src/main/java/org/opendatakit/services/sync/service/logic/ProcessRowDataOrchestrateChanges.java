@@ -187,7 +187,6 @@ public class ProcessRowDataOrchestrateChanges {
                   + " count(*) as n_rows"
                   + " FROM " + tableId, null, null, null );
           if ( t.getNumberOfRows() == 1 ) {
-            /// WRB: no idea
             Row row = t.getRowAtIndex(0);
             String checkpointStr = row.getRawStringByKey("n_checkpoints");
             String dblconflictsStr = row.getRawStringByKey("n_dblconflicts");
