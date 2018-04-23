@@ -187,10 +187,11 @@ public class ProcessRowDataOrchestrateChanges {
                   + " count(*) as n_rows"
                   + " FROM " + tableId, null, null, null );
           if ( t.getNumberOfRows() == 1 ) {
+            /// WRB: no idea
             Row row = t.getRowAtIndex(0);
-            String checkpointStr = row.getDataByKey("n_checkpoints");
-            String dblconflictsStr = row.getDataByKey("n_dblconflicts");
-            String rowsStr = row.getDataByKey("n_rows");
+            String checkpointStr = row.getRawStringByKey("n_checkpoints");
+            String dblconflictsStr = row.getRawStringByKey("n_dblconflicts");
+            String rowsStr = row.getRawStringByKey("n_rows");
             checkpoints = (checkpointStr == null) ? 0 : Integer.valueOf(checkpointStr);
             conflicts = (dblconflictsStr == null) ? 0 : Integer.valueOf(dblconflictsStr) / 2;
             rows = (rowsStr == null) ? 0 : Integer.valueOf(rowsStr);

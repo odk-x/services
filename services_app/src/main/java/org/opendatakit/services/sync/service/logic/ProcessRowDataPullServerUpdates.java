@@ -29,6 +29,7 @@ import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -193,8 +194,8 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
         // loop through the localRow table
         for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-          Row localRow = localDataTable.getRowAtIndex(i);
-          String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
+          TypedRow localRow = localDataTable.getRowAtIndex(i);
+          String stateStr = localRow.getRawStringByKey(DataTableColumns.SYNC_STATE);
           SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
           String rowId = localDataTable.getRowId(i);

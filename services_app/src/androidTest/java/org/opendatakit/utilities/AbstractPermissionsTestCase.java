@@ -39,7 +39,7 @@ import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -1238,7 +1238,7 @@ public class AbstractPermissionsTestCase {
       // content should match server cvValues
       for ( String key : cvValues.keySet() ) {
         if ( key.equals(DataTableColumns.SYNC_STATE) ) {
-          String localValue = baseTable.getRowAtIndex(0).getDataByKey(key);
+          String localValue = baseTable.getRowAtIndex(0).getRawStringByKey(key);
           if ( spo.outcome == ServerChangeOutcome.LOCALLY_SYNCED ) {
             assertEquals("syncState not synced: " + characterizer,
                 SyncState.synced.name(), localValue);
@@ -1247,7 +1247,8 @@ public class AbstractPermissionsTestCase {
                 SyncState.synced_pending_files.name(), localValue );
           }
         } else {
-          String localValue = baseTable.getRowAtIndex(0).getDataByKey(key);
+          TypedRow row = new TypedRow(baseTable.getRowAtIndex(0), oc);
+          String localValue = row.getStringValueByKey(key);
           String serverValue = cvValues.getAsString(key);
 
           ElementDataType dt = ElementDataType.string;
@@ -1258,7 +1259,7 @@ public class AbstractPermissionsTestCase {
             // ignore
           }
           if ( dt == ElementDataType.bool ) {
-            serverValue = Integer.toString(DataHelper.boolToInt(cvValues.getAsBoolean(key)));
+            serverValue = Boolean.toString(cvValues.getAsBoolean(key));
           }
           if ( key.equals(DataTableColumns.CONFLICT_TYPE) ) {
             assertNull("column " + key + " should be null - was " + localValue, localValue);
@@ -1276,13 +1277,13 @@ public class AbstractPermissionsTestCase {
       if ( baseTable.getNumberOfRows() != 2 ) {
         assertTrue("expected 2 conflict rows -- found one", false);
       }
-      Row localRow = null;
-      Row serverRow = null;
+      TypedRow localRow = null;
+      TypedRow serverRow = null;
       for ( int i = 0 ; i < 2 ; ++i ) {
-        Row r = baseTable.getRowAtIndex(i);
+        TypedRow r = new TypedRow(baseTable.getRowAtIndex(i), oc);
         assertEquals("syncState not in_conflict: " + characterizer, SyncState.in_conflict.name(),
-            r.getDataByKey(DataTableColumns.SYNC_STATE));
-        String conflictType = r.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+            r.getRawStringByKey(DataTableColumns.SYNC_STATE));
+        String conflictType = r.getRawStringByKey(DataTableColumns.CONFLICT_TYPE);
         Integer ct = Integer.valueOf(conflictType);
         if ( ct == ConflictType.LOCAL_DELETED_OLD_VALUES || ct == ConflictType
             .LOCAL_UPDATED_UPDATED_VALUES ) {
@@ -1302,7 +1303,7 @@ public class AbstractPermissionsTestCase {
         if ( key.equals(DataTableColumns.SYNC_STATE) ||
             key.equals(DataTableColumns.CONFLICT_TYPE)) {
         } else {
-          String localValue = serverRow.getDataByKey(key);
+          String localValue = serverRow.getStringValueByKey(key);
           String serverValue = cvValues.getAsString(key);
 
           ElementDataType dt = ElementDataType.string;
@@ -1313,7 +1314,7 @@ public class AbstractPermissionsTestCase {
             // ignore
           }
           if ( dt == ElementDataType.bool ) {
-            serverValue = Integer.toString(DataHelper.boolToInt(cvValues.getAsBoolean(key)));
+            serverValue = Boolean.toString(cvValues.getAsBoolean(key));
           }
           assertTrue("column " + key + " not identical (" + localValue + " != " + serverValue
                   + " ): " + characterizer,
@@ -1327,8 +1328,9 @@ public class AbstractPermissionsTestCase {
         if ( key.equals(DataTableColumns.SYNC_STATE) ||
             key.equals(DataTableColumns.CONFLICT_TYPE)) {
         } else {
-          String localValue = localRow.getDataByKey(key);
-          String originalValue = original.getRowAtIndex(0).getDataByKey(key);
+          String localValue = localRow.getStringValueByKey(key);
+          TypedRow orginalRow = new TypedRow(original.getRowAtIndex(0), oc);
+          String originalValue = orginalRow.getStringValueByKey(key);
           String serverValue = cvValues.getAsString(key);
 
           if ((DataTableColumns.DEFAULT_ACCESS.equals(key) ||
