@@ -1347,17 +1347,17 @@ public final class ODKDatabaseImplUtils {
     Cursor c = null;
     try {
       c = db.rawQuery(b.toString(), null);
-      Integer checkpoints = null;
-      Integer conflicts = null;
-      Integer changes = null;
+      Long checkpoints = null;
+      Long conflicts = null;
+      Long changes = null;
       if (c != null) {
         if (c.moveToFirst()) {
           int idxCheckpoints = c.getColumnIndex("checkpoints");
           int idxConflicts = c.getColumnIndex("conflicts");
           int idxChanges = c.getColumnIndex("changes");
-          checkpoints = CursorUtils.getIndexAsType(c, Long.class, idxCheckpoints).intValue();
-          conflicts = CursorUtils.getIndexAsType(c, Long.class, idxConflicts).intValue();
-          changes = CursorUtils.getIndexAsType(c, Long.class, idxChanges).intValue();
+          checkpoints = CursorUtils.getIndexAsType(c, Long.class, idxCheckpoints);
+          conflicts = CursorUtils.getIndexAsType(c, Long.class, idxConflicts);
+          changes = CursorUtils.getIndexAsType(c, Long.class, idxChanges);
         }
         c.close();
       }
