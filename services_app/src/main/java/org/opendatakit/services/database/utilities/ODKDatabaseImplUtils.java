@@ -4934,22 +4934,13 @@ public final class ODKDatabaseImplUtils {
     // Couldn't use the CursorUtils.getIndexAsType
     // because assigning the result to Object v
     // would not work for the currValues.put function
-    if (theClass == Long.class) {
+    if (theClass == String.class) {
+      cv.put(name, (String) obj);
+    } else if (theClass == Long.class) {
       cv.put(name, (Long) obj);
-    } else if (theClass == Integer.class) {
-      cv.put(name, (Integer) obj);
     } else if (theClass == Double.class) {
       cv.put(name, (Double) obj);
     } else if (theClass == String.class) {
-      cv.put(name, (String) obj);
-    } else if (theClass == Boolean.class) {
-      // stored as integers
-      Integer v = (Integer) obj;
-      cv.put(name, Boolean.valueOf(v != 0));
-    } else if (theClass == ArrayList.class) {
-      cv.put(name, (String) obj);
-    } else if (theClass == HashMap.class) {
-      // json deserialization of an object
       cv.put(name, (String) obj);
     } else {
       throw new IllegalStateException(

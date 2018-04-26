@@ -48,9 +48,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private static final String TEST_STR_2 = "TestStr2";
    private static final int TEST_INT_2 = 2;
    private static final double TEST_NUM_2 = 2.1;
-   private static final String TEST_STR_3 = "TestStr3";
-   private static final int TEST_INT_3 = TEST_INT_2;
-   private static final double TEST_NUM_3 = 3.1;
    private static final String TEST_STR_i = "TestStri";
    private static final int TEST_INT_i = 0;
    private static final double TEST_NUM_i = 0.1;
@@ -1735,15 +1732,11 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
-
-         // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2());
@@ -1778,8 +1771,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1832,8 +1824,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1880,8 +1871,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-         Log.i("closeDatabase",
-             "testDbInsertSingleRowIntoLocalOnlyTable: " + db.getDatabaseHandle());
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
@@ -1895,8 +1884,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1928,8 +1915,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-         Log.i("closeDatabase",
-             "testDbInsertSingleRowIntoLocalOnlyTable: " + db.getDatabaseHandle());
+
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
