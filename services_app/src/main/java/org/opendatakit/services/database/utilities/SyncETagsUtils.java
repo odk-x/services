@@ -20,7 +20,6 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.provider.SyncETagColumns;
 import org.opendatakit.services.database.OdkConnectionInterface;
-import org.opendatakit.utilities.DataHelper;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public final class SyncETagsUtils {
             .append(SyncETagColumns.IS_MANIFEST);
 
     b.append("=?");
-    bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
+    bindArgs.add(DatabaseConstants.INT_TRUE_STRING);
 
     db.execSQL(b.toString(), bindArgs.toArray(new String[bindArgs.size()]));
   }
@@ -225,7 +224,7 @@ public final class SyncETagsUtils {
       bindArgs.add(tableId);
     }
     b.append(" AND ").append(SyncETagColumns.IS_MANIFEST).append("=?");
-    bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
+    bindArgs.add(DatabaseConstants.INT_TRUE_STRING);
     b.append(" AND ").append(SyncETagColumns.URL).append("=?");
     bindArgs.add(url);
     b.append(" ORDER BY ").append(SyncETagColumns.LAST_MODIFIED_TIMESTAMP).append(" DESC");
@@ -274,7 +273,7 @@ public final class SyncETagsUtils {
       bindArgs.add(tableId);
     }
     b.append(" AND ").append(SyncETagColumns.IS_MANIFEST).append("=?");
-    bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
+    bindArgs.add(DatabaseConstants.INT_TRUE_STRING);
     b.append(" AND ").append(SyncETagColumns.URL).append("=?");
     bindArgs.add(url);
 
@@ -303,7 +302,7 @@ public final class SyncETagsUtils {
           bindArgs.add(tableId);
         }
         b.append("?,?,?,?)");
-        bindArgs.add(Integer.toString(DataHelper.boolToInt(true)));
+        bindArgs.add(DatabaseConstants.INT_TRUE_STRING);
         bindArgs.add(url);
         bindArgs.add(TableConstants.nanoSecondsFromMillis(
             System.currentTimeMillis(), TableConstants.TIMESTAMP_LOCALE));
@@ -345,7 +344,7 @@ public final class SyncETagsUtils {
       bindArgs.add(tableId);
     }
     b.append(" AND ").append(SyncETagColumns.IS_MANIFEST).append("=?");
-    bindArgs.add(Integer.toString(DataHelper.boolToInt(false)));
+    bindArgs.add(DatabaseConstants.INT_FALSE_STRING);
     b.append(" AND ").append(SyncETagColumns.URL).append("=?");
     bindArgs.add(url);
     b.append(" ORDER BY ").append(SyncETagColumns.LAST_MODIFIED_TIMESTAMP).append(" DESC");
@@ -401,7 +400,7 @@ public final class SyncETagsUtils {
       bindArgs.add(tableId);
     }
     b.append(" AND ").append(SyncETagColumns.IS_MANIFEST).append("=?");
-    bindArgs.add(Integer.toString(DataHelper.boolToInt(false)));
+    bindArgs.add(DatabaseConstants.INT_FALSE_STRING);
     b.append(" AND ").append(SyncETagColumns.URL).append("=?");
     bindArgs.add(url);
 
@@ -430,7 +429,7 @@ public final class SyncETagsUtils {
           bindArgs.add(tableId);
         }
         b.append("?,?,?,?)");
-        bindArgs.add(Integer.toString(DataHelper.boolToInt(false)));
+        bindArgs.add(DatabaseConstants.INT_FALSE_STRING);
         bindArgs.add(url);
         bindArgs.add(TableConstants.nanoSecondsFromMillis(modified, TableConstants.TIMESTAMP_LOCALE));
         bindArgs.add(etag);

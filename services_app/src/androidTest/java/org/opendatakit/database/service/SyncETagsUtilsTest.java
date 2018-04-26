@@ -12,7 +12,6 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.SyncETagColumns;
-import org.opendatakit.utilities.DataHelper;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;

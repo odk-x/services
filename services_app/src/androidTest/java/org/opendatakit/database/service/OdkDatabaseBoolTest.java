@@ -84,7 +84,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
       cv.put(COL_STRING_ID, TEST_STR_i + i);
       cv.put(COL_INTEGER_ID, TEST_INT_i + i);
-      cv.put(COL_BOOL_ID, (i%2 == 0));
+      cv.put(COL_BOOL_ID, (i%2 != 0));
 
       return cv;
    }
@@ -108,7 +108,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
           Long.valueOf(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_BOOL_ID),
-          Boolean.valueOf((i%2 == 0)));
+          Boolean.valueOf((i%2 != 0)));
    }
 
    @Test
@@ -159,13 +159,60 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
    }
 
    @Test
+   public void testDbInsertNullRowIntoTable() throws ActionNotAuthorizedException {
+      UserDbInterface serviceInterface = bindToDbService();
+      try {
+
+         List<Column> columnList = createColumnList();
+         ColumnList colList = new ColumnList(columnList);
+
+         DbHandle db = serviceInterface.openDatabase(APPNAME);
+         Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
+         serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+         UUID rowId = UUID.randomUUID();
+
+         ContentValues cv = new ContentValues();
+
+         cv.put(COL_STRING_ID, TEST_STR_1);
+         cv.put(COL_INTEGER_ID, TEST_INT_1);
+
+         serviceInterface
+             .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, cv, rowId.toString());
+
+         UserTable table = serviceInterface
+             .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
+
+         assertEquals(DB_TABLE_ID, table.getTableId());
+         assertEquals(1, table.getNumberOfRows());
+         TypedRow row = table.getRowAtIndex(0);
+
+         assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
+         assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
+         Boolean value = (Boolean) row.getDataByKey(COL_BOOL_ID);
+         assertEquals(value, null);
+
+         // clean up
+         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+         // verify no tables left
+         assertTrue(hasNoTablesInDb(serviceInterface, db));
+         serviceInterface.closeDatabase(APPNAME, db);
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      }
+   }
+
+   @Test
    public void testDbInsertTwoRowsIntoLocalOnlyTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
+         Log.i("openDatabase", "testDbInsertTwoRowsIntoLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
@@ -204,7 +251,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          try {
             ColumnList columnListObj = new ColumnList(createColumnList());
             db = serviceInterface.openDatabase(APPNAME);
-            Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
+            Log.i("openDatabase", "testDbUpdateSingleValue: " + db.getDatabaseHandle());
             OrderedColumns columns = serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
             UUID rowId = UUID.randomUUID();
 
