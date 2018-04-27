@@ -41,6 +41,7 @@ import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
@@ -3630,18 +3631,18 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     assertEquals(table.getNumberOfRows(), 2);
 
-    Row first = table.getRowAtIndex(0);
-    Row second = table.getRowAtIndex(1);
+    TypedRow first = table.getRowAtIndex(0);
+    TypedRow second = table.getRowAtIndex(1);
 
     String v;
     int conflictTypeVal;
 
-    v = first.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+    v = first.getRawStringByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
     conflictTypeVal = Integer.valueOf(v);
     assertEquals(conflictType, conflictTypeVal);
 
-    v = second.getDataByKey(DataTableColumns.CONFLICT_TYPE);
+    v = second.getRawStringByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
     conflictTypeVal = Integer.valueOf(v);
     assertEquals(ConflictType.SERVER_UPDATED_UPDATED_VALUES, conflictTypeVal);

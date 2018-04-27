@@ -507,30 +507,31 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public RowOutcomeList pushLocalRows(TableResource resource, OrderedColumns orderedColumns,
-      List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete) throws IOException, HttpClientWebException {
+      List<org.opendatakit.database.data.TypedRow> rowsToInsertUpdateOrDelete) throws IOException,
+      HttpClientWebException {
 
     ArrayList<Row> rows = new ArrayList<Row>();
-    for (org.opendatakit.database.data.Row rowToAlter : rowsToInsertUpdateOrDelete) {
+    for (org.opendatakit.database.data.TypedRow rowToAlter : rowsToInsertUpdateOrDelete) {
 
       ArrayList<DataKeyValue> values = new ArrayList<DataKeyValue>();
       for (ColumnDefinition column : orderedColumns.getColumnDefinitions()) {
         if (column.isUnitOfRetention()) {
           String elementKey = column.getElementKey();
-          values.add(new DataKeyValue(elementKey, rowToAlter.getDataByKey(elementKey)));
+          values.add(new DataKeyValue(elementKey, rowToAlter.getStringValueByKey(elementKey)));
         }
       }
 
-      Row row = Row.forUpdate(rowToAlter.getDataByKey(DataTableColumns.ID),
-          rowToAlter.getDataByKey(DataTableColumns.ROW_ETAG),
-          rowToAlter.getDataByKey(DataTableColumns.FORM_ID),
-          rowToAlter.getDataByKey(DataTableColumns.LOCALE),
-          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TYPE),
-          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
-          rowToAlter.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR),
-          RowFilterScope.asRowFilter(rowToAlter.getDataByKey(DataTableColumns.DEFAULT_ACCESS),
-              rowToAlter.getDataByKey(DataTableColumns.ROW_OWNER), rowToAlter.getDataByKey
-                  (DataTableColumns.GROUP_READ_ONLY), rowToAlter.getDataByKey(DataTableColumns
-                  .GROUP_MODIFY), rowToAlter.getDataByKey(DataTableColumns.GROUP_PRIVILEGED)),
+      Row row = Row.forUpdate(rowToAlter.getRawStringByKey(DataTableColumns.ID),
+          rowToAlter.getRawStringByKey(DataTableColumns.ROW_ETAG),
+          rowToAlter.getRawStringByKey(DataTableColumns.FORM_ID),
+          rowToAlter.getRawStringByKey(DataTableColumns.LOCALE),
+          rowToAlter.getRawStringByKey(DataTableColumns.SAVEPOINT_TYPE),
+          rowToAlter.getRawStringByKey(DataTableColumns.SAVEPOINT_TIMESTAMP),
+          rowToAlter.getRawStringByKey(DataTableColumns.SAVEPOINT_CREATOR),
+          RowFilterScope.asRowFilter(rowToAlter.getRawStringByKey(DataTableColumns.DEFAULT_ACCESS),
+              rowToAlter.getRawStringByKey(DataTableColumns.ROW_OWNER), rowToAlter.getRawStringByKey
+                  (DataTableColumns.GROUP_READ_ONLY), rowToAlter.getRawStringByKey(DataTableColumns
+                  .GROUP_MODIFY), rowToAlter.getRawStringByKey(DataTableColumns.GROUP_PRIVILEGED)),
           values);
 
       boolean isDeleted = SyncState.deleted.name().equals(

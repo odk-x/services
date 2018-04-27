@@ -25,6 +25,7 @@ import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.QueryUtil;
@@ -135,8 +136,8 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
         // resolve the automatically-resolvable ones
         // (the ones that differ only in their metadata).
         for (int i = 0; i < table.getNumberOfRows(); ++i) {
-          Row row = table.getRowAtIndex(i);
-          String rowId = row.getDataByKey(DataTableColumns.ID);
+          TypedRow row = table.getRowAtIndex(i);
+          String rowId = row.getRawStringByKey(DataTableColumns.ID);
 
           OdkResolveCheckpointFieldLoader loader = new OdkResolveCheckpointFieldLoader(getContext(),
               mAppName, mTableId, rowId);
@@ -178,9 +179,9 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
           ids.add(table.getRowId(i));
         }
         for (int i = 0; i < unprivilegedTable.getNumberOfRows(); ++i) {
-          Row theRow = unprivilegedTable.getRowAtIndex(i);
+          TypedRow theRow = unprivilegedTable.getRowAtIndex(i);
           // only display a checkpoint if the user is able to modify the row
-          if (theRow.getDataByKey(DataTableColumns.EFFECTIVE_ACCESS).contains("w")) {
+          if (theRow.getRawStringByKey(DataTableColumns.EFFECTIVE_ACCESS).contains("w")) {
             ids.remove(unprivilegedTable.getRowId(i));
           }
         }
@@ -297,9 +298,9 @@ class OdkResolveCheckpointRowLoader extends AsyncTaskLoader<ArrayList<ResolveRow
 
     ArrayList<ResolveRowEntry> results = new ArrayList<ResolveRowEntry>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      Row row = table.getRowAtIndex(i);
-      String rowId = row.getDataByKey(DataTableColumns.ID);
-      String instanceName = row.getDataByKey(nameToUse.instanceName);
+      TypedRow row = table.getRowAtIndex(i);
+      String rowId = row.getRawStringByKey(DataTableColumns.ID);
+      String instanceName = row.getRawStringByKey(nameToUse.instanceName);
       ResolveRowEntry re = new ResolveRowEntry(rowId,
           getContext().getString(R.string.resolve_row_display_name, formDisplayName, instanceName));
       results.add(re);

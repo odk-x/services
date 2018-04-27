@@ -30,6 +30,7 @@ import org.opendatakit.consts.CharsetConsts;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.service.ODKServiceTestRule;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -727,10 +728,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList outcomes = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -804,10 +806,11 @@ public class AggregateSynchronizerTest {
         appendRowContent(refTable, orderedColumns, rowId, val, ts);
       }
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList outcomes = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -893,10 +896,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, utf_val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -1012,10 +1016,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -1081,10 +1086,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -1154,10 +1160,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -1238,10 +1245,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, RowId, utf_val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);
@@ -1329,10 +1337,11 @@ public class AggregateSynchronizerTest {
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
-      ArrayList<org.opendatakit.database.data.Row> listOfRowsToCreate =
-          new ArrayList<org.opendatakit.database.data.Row>();
+      ArrayList<TypedRow> listOfRowsToCreate = new ArrayList<TypedRow>();
 
-      listOfRowsToCreate.addAll(refTable.getRows());
+      for(org.opendatakit.database.data.Row row : refTable.getRows()) {
+        listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
+      }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
           listOfRowsToCreate);

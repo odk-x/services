@@ -7,12 +7,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.SyncETagColumns;
-import org.opendatakit.utilities.DataHelper;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
@@ -59,13 +58,13 @@ import static org.junit.Assert.fail;
 
          if(result.getNumberOfRows() > 0) {
             for (int i = 0; i < result.getNumberOfRows(); i++) {
-               Row row = result.getRowAtIndex(i);
+               TypedRow row = result.getRowAtIndex(i);
                Log.e(LOGTAG, "Found Leftover Sync ETAG:");
-               Log.e(LOGTAG, "-TABLE_ID: " + row.getDataByKey(SyncETagColumns.TABLE_ID));
-               Log.e(LOGTAG, "-IS_MANIFEST: " + row.getDataByKey(SyncETagColumns.IS_MANIFEST));
-               Log.e(LOGTAG, "-ETAG_MD5_HASH: " + row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH));
-               Log.e(LOGTAG, "-URL: " + row.getDataByKey(SyncETagColumns.URL));
-               serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, row.getDataByKey(SyncETagColumns.TABLE_ID));
+               Log.e(LOGTAG, "-TABLE_ID: " + row.getRawStringByKey(SyncETagColumns.TABLE_ID));
+               Log.e(LOGTAG, "-IS_MANIFEST: " + row.getRawStringByKey(SyncETagColumns.IS_MANIFEST));
+               Log.e(LOGTAG, "-ETAG_MD5_HASH: " + row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH));
+               Log.e(LOGTAG, "-URL: " + row.getRawStringByKey(SyncETagColumns.URL));
+               serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, row.getRawStringByKey(SyncETagColumns.TABLE_ID));
             }
             fail("DID NOT CLEAN SYNC_ETAGS!");
          }
@@ -220,8 +219,8 @@ import static org.junit.Assert.fail;
          serviceInterface
              .updateManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, newEtag);
          UserTable result = get(TEA_HOUSES_TID, true);
-         Row row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), newEtag);
+         TypedRow row = result.getRowAtIndex(0);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), newEtag);
 
          // does not update when manifest = false (file instead of manifest)
          insertManifestSyncETag(TEST_ID);
@@ -229,7 +228,7 @@ import static org.junit.Assert.fail;
 
          result = get(TEST_ID, true);
          row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
       } finally {
@@ -282,8 +281,8 @@ import static org.junit.Assert.fail;
              .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, revisedETag);
 
          UserTable result = get(TEA_HOUSES_TID, true);
-         Row row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
+         TypedRow row = result.getRowAtIndex(0);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
 
          serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
 
@@ -296,7 +295,7 @@ import static org.junit.Assert.fail;
 
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
 
          serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
 
@@ -309,7 +308,7 @@ import static org.junit.Assert.fail;
                  revisedETag);
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
 
          serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
 
@@ -322,8 +321,8 @@ import static org.junit.Assert.fail;
 
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
-         assertEquals(row.getDataByKey(SyncETagColumns.LAST_MODIFIED_TIMESTAMP),
+         assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
+         assertEquals(row.getRawStringByKey(SyncETagColumns.LAST_MODIFIED_TIMESTAMP),
              TableConstants.nanoSecondsFromMillis(7L));
 
       } catch (ServicesAvailabilityException e) {
@@ -362,7 +361,7 @@ import static org.junit.Assert.fail;
           SyncETagColumns.TABLE_ID + " =? AND " + SyncETagColumns.IS_MANIFEST + " =?;";
       Object[] bindArgs = new Object[2];
       bindArgs[0] = id;
-      bindArgs[1] = Integer.toString(DataHelper.boolToInt(isManifest));
+      bindArgs[1] = isManifest;
       BindArgs args = new BindArgs(bindArgs);
       UserTable result = serviceInterface
           .simpleQuery(APPNAME, dbHandle, DatabaseConstants.SYNC_ETAGS_TABLE_NAME, null,

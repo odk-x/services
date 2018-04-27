@@ -381,13 +381,13 @@ public class SubmissionProvider extends ContentProvider {
 
                 logger.i(t, "element type: " + defn.getElementType());
                 if (dataType == ElementDataType.integer) {
-                  Integer value = CursorUtils.getIndexAsType(c, Integer.class, i);
+                  Long value = CursorUtils.getIndexAsType(c, Long.class, i);
                   putElementValue(values, defn, value);
                 } else if (dataType == ElementDataType.number) {
                   Double value = CursorUtils.getIndexAsType(c, Double.class, i);
                   putElementValue(values, defn, value);
                 } else if (dataType == ElementDataType.bool) {
-                  Integer tmp = CursorUtils.getIndexAsType(c, Integer.class, i);
+                  Long tmp = CursorUtils.getIndexAsType(c, Long.class, i);
                   Boolean value = tmp == null ? null : (tmp != 0);
                   putElementValue(values, defn, value);
                 } else if (type.getElementType().equals("date")) {

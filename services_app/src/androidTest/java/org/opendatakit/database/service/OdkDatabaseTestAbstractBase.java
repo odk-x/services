@@ -127,4 +127,9 @@ abstract class OdkDatabaseTestAbstractBase {
       assertTrue(tablesGone);
    }
 
+   protected boolean hasNoTablesInDb(UserDbInterface serviceInterface, DbHandle db)
+       throws ServicesAvailabilityException {
+      List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
+      return (tableIds.size() == 0);
+   }
 }

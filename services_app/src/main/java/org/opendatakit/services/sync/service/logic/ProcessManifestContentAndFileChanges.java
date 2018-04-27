@@ -711,7 +711,7 @@ class ProcessManifestContentAndFileChanges {
    * @throws ServicesAvailabilityException
    */
   public boolean syncRowLevelFileAttachments(String serverInstanceFileUri, String tableId,
-      org.opendatakit.database.data.Row localRow,
+      org.opendatakit.database.data.TypedRow localRow,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws HttpClientWebException,
       IOException, ServicesAvailabilityException  {
@@ -721,10 +721,10 @@ class ProcessManifestContentAndFileChanges {
     ArrayList<String> uriFragments = new ArrayList<String>();
 
     StringBuilder b = new StringBuilder();
-    b.append(localRow.getDataByKey(DataTableColumns.ROW_ETAG));
+    b.append(localRow.getRawStringByKey(DataTableColumns.ROW_ETAG));
     // extract the non-null uriFragments here...
     for ( ColumnDefinition cd : fileAttachmentColumns) {
-      String uriFragment = localRow.getDataByKey(cd.getElementKey());
+      String uriFragment = localRow.getRawStringByKey(cd.getElementKey());
       if ( uriFragment != null) {
         uriFragments.add(uriFragment);
         b.append("<").append(cd.getElementKey()).append("|").append(uriFragment).append(">");
@@ -754,7 +754,7 @@ class ProcessManifestContentAndFileChanges {
     }
 
     // 1) Get this row's instanceId (rowId)
-    String instanceId = localRow.getDataByKey(DataTableColumns.ID);
+    String instanceId = localRow.getRawStringByKey(DataTableColumns.ID);
     log.i(LOGTAG, "syncRowLevelFileAttachments requesting a row-level manifest for " + instanceId);
 
 
