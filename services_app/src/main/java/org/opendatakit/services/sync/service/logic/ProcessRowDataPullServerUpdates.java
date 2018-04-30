@@ -29,6 +29,7 @@ import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -193,8 +194,8 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
         // loop through the localRow table
         for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-          Row localRow = localDataTable.getRowAtIndex(i);
-          String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
+          TypedRow localRow = localDataTable.getRowAtIndex(i);
+          String stateStr = localRow.getRawStringByKey(DataTableColumns.SYNC_STATE);
           SyncState state = stateStr == null ? null : SyncState.valueOf(stateStr);
 
           String rowId = localDataTable.getRowId(i);
@@ -218,13 +219,11 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
 
           }
 
-          ContentValues values = new ContentValues();
-
           // set up to insert the in_conflict row from the server
-          for (DataKeyValue entry : serverRow.getValues()) {
-            String colName = entry.column;
-            values.put(colName, entry.value);
-          }
+          ContentValues values = dataKeyValueListToContentValues(
+              serverRow.getValues(),
+              orderedColumns
+          );
 
           // insert in_conflict server row
           values.put(DataTableColumns.ID, serverRow.getRowId());
@@ -276,12 +275,10 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
               }
             }
 
-            ContentValues values = new ContentValues();
-
-            for (DataKeyValue entry : serverRow.getValues()) {
-              String colName = entry.column;
-              values.put(colName, entry.value);
-            }
+            ContentValues values = dataKeyValueListToContentValues(
+                serverRow.getValues(),
+                orderedColumns
+            );
 
             // set all the metadata fields
             values.put(DataTableColumns.ID, serverRow.getRowId());
@@ -465,5 +462,43 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
             tableId, maxPercentage);
       }
     }
+  }
+
+  /**
+   * Populates a ContentValue instance with data from an ArrayList of DataKeyValue
+   * and using type information from OrderedColumns
+   *
+   * @param dkvl Sorted ArrayList of DataKeyValue
+   * @param columns OrderedColumns
+   * @return ContentValues with data contained in dkvl
+   */
+  ContentValues dataKeyValueListToContentValues(ArrayList<DataKeyValue> dkvl, OrderedColumns columns) {
+    ContentValues cv = new ContentValues();
+
+    for (int i = 0; i < dkvl.size(); i++) {
+      DataKeyValue dkv = dkvl.get(i);
+
+      if (dkv.value == null) {
+        cv.putNull(dkv.column);
+        continue;
+      }
+
+      ElementDataType type = columns.find(dkv.column).getType().getDataType();
+
+      if (ElementDataType.string.equals(type)) {
+        cv.put(dkv.column, dkv.value);
+      } else if (ElementDataType.integer.equals(type)) {
+        cv.put(dkv.column, Long.parseLong(dkv.value));
+      } else if (ElementDataType.number.equals(type)) {
+        cv.put(dkv.column, Double.parseDouble(dkv.value));
+      } else if (ElementDataType.bool.equals(type)) {
+        cv.put(dkv.column, Boolean.parseBoolean(dkv.value));
+      } else {
+        // for all other data types, String would be sufficient
+        cv.put(dkv.column, dkv.value);
+      }
+    }
+
+    return cv;
   }
 }

@@ -31,6 +31,7 @@ import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
@@ -85,7 +86,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
   private void processRowOutcomes(TableResource resource,
       TableLevelResult tableLevelResult, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
-      List<Row> segmentAlter, ArrayList<RowOutcome> outcomes)
+      List<TypedRow> segmentAlter, ArrayList<RowOutcome> outcomes)
       throws ServicesAvailabilityException, IOException {
 
     // For speed, do this all within a transaction. Processing is
@@ -106,8 +107,8 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
       boolean badState = false;
       for (int i = 0; i < segmentAlter.size(); ++i) {
         RowOutcome serverRow = outcomes.get(i);
-        Row localRow = segmentAlter.get(i);
-        String localRowId = localRow.getDataByKey(DataTableColumns.ID);
+        TypedRow localRow = segmentAlter.get(i);
+        String localRowId = localRow.getRawStringByKey(DataTableColumns.ID);
         if (!serverRow.getRowId().equals(localRowId)) {
           throw new ClientDetectedVersionMismatchedServerResponseException("Unexpected reordering of return");
         }
@@ -118,7 +119,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
             // we should delete the LOCAL row because we have successfully deleted the server row.
             sc.getDatabaseService().privilegedDeleteRowWithId(
                 sc.getAppName(), db, resource.getTableId(), orderedColumns,
-                localRow.getDataByKey(DataTableColumns.ID));
+                localRow.getRawStringByKey(DataTableColumns.ID));
             tableLevelResult.incLocalDeletes();
             publishUpdateNotification(R.string.sync_deleting_local_row, resource.getTableId());
             tableLevelResult.incServerDeletes();
@@ -127,7 +128,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
 
             boolean hasNonEmptyAttachmentColumns = false;
             for ( ColumnDefinition cd : fileAttachmentColumns ) {
-              String uriFragment = localRow.getDataByKey(cd.getElementKey());
+              String uriFragment = localRow.getRawStringByKey(cd.getElementKey());
               if ( uriFragment != null ) {
                 hasNonEmptyAttachmentColumns = true;
                 break;
@@ -328,7 +329,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
           tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
           return false;
         }
-        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Integer.class);
+        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Long.class).intValue();
 
       } finally {
         sc.releaseDatabase(db);
@@ -406,7 +407,7 @@ class ProcessRowDataPushLocalChanges extends ProcessRowDataSharedBase {
                 max = localDataTable.getNumberOfRows();
               }
 
-              List<Row> segmentAlter = new ArrayList<Row>();
+              List<TypedRow> segmentAlter = new ArrayList<TypedRow>();
               for (int i = sendOffset; i < max; ++i) {
                 segmentAlter.add(localDataTable.getRowAtIndex(i));
               }

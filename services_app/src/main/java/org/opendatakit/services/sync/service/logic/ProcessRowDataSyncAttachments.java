@@ -25,6 +25,7 @@ import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
@@ -169,7 +170,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
           tableLevelResult.setSyncOutcome(SyncOutcome.LOCAL_DATABASE_EXCEPTION);
           return;
         }
-        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Integer.class);
+        rowsToSyncCount = bt.getRowAtIndex(0).getDataType(0, Long.class).intValue();
 
       } finally {
         sc.releaseDatabase(db);
@@ -228,11 +229,12 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
           // loop through the localRow table
           for (int i = 0; i < localDataTable.getNumberOfRows(); i++) {
-            Row localRow = localDataTable.getRowAtIndex(i);
-            String stateStr = localRow.getDataByKey(DataTableColumns.SYNC_STATE);
+            TypedRow localRow = localDataTable.getRowAtIndex(i);
+            String stateStr = localRow.getRawStringByKey(DataTableColumns.SYNC_STATE);
             SyncState state = (stateStr == null) ? null : SyncState.valueOf(stateStr);
 
-            getLogger().i(TAG, "syncAttachments examining row " + localRow.getDataByKey(DataTableColumns.ID));
+            getLogger().i(TAG, "syncAttachments examining row " + localRow.getRawStringByKey
+                (DataTableColumns.ID));
 
             boolean syncAttachments = false;
             // the local row wasn't impacted by a server change
@@ -271,7 +273,9 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                       db = sc.getDatabase();
                       sc.getDatabaseService()
                           .privilegedUpdateRowETagAndSyncState(sc.getAppName(), db, tableId,
-                              localRow.getDataByKey(DataTableColumns.ID), localRow.getDataByKey(DataTableColumns.ROW_ETAG),
+                              localRow.getRawStringByKey(DataTableColumns.ID), localRow
+                                  .getRawStringByKey
+                                  (DataTableColumns.ROW_ETAG),
                               SyncState.synced.name());
                     } finally {
                       sc.releaseDatabase(db);

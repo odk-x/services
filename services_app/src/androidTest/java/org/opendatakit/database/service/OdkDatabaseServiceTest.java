@@ -13,7 +13,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -48,9 +48,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private static final String TEST_STR_2 = "TestStr2";
    private static final int TEST_INT_2 = 2;
    private static final double TEST_NUM_2 = 2.1;
-   private static final String TEST_STR_3 = "TestStr3";
-   private static final int TEST_INT_3 = TEST_INT_2;
-   private static final double TEST_NUM_3 = 3.1;
    private static final String TEST_STR_i = "TestStri";
    private static final int TEST_INT_i = 0;
    private static final double TEST_NUM_i = 0.1;
@@ -151,50 +148,45 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
       return cv;
    }
 
-   private void verifyRowTestSet1(Row row) {
+   private void verifyRowTestSet1(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.toString(TEST_INT_1));
+          Long.valueOf(TEST_INT_1));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
-          Double.toString(TEST_NUM_1));
+          Double.valueOf(TEST_NUM_1));
    }
 
-   private void verifyRowTestSet2(Row row) {
+   private void verifyRowTestSet2(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.toString(TEST_INT_2));
+          Long.valueOf(TEST_INT_2));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
-          Double.toString(TEST_NUM_2));
+          Double.valueOf(TEST_NUM_2));
    }
 
-   private void verifyRowTestSeti(Row row, int i) {
+   private void verifyRowTestSeti(TypedRow row, int i) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Integer.toString(TEST_INT_i + i));
+          Long.valueOf(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_NUMBER_ID),
-          Double.toString(TEST_NUM_i + i));
+          Double.valueOf(TEST_NUM_i + i));
    }
 
-   private void veriftyRowTestSetManyColumns(Row row, int i) {
+   private void veriftyRowTestSetManyColumns(TypedRow row, int i) {
       for (int j = 0; j < MANY_COL_NUM_COLUMNS; j++) {
          assertEquals(row.getDataByKey(MANY_COL_STRING_ID + j), "STR_" + j + "_" + i);
-         assertEquals(row.getDataByKey(MANY_COL_INTEGER_ID + j), Integer.toString(i + j));
-         assertEquals(row.getDataByKey(MANY_COL_NUMBER_ID + j), Double.toString(i * j));
-         assertEquals(row.getDataByKey(MANY_COL_BOOL_ID + j), Integer.toString((i+j)%2));
+         assertEquals(row.getDataByKey(MANY_COL_INTEGER_ID + j), Long.valueOf(i + j));
+         assertEquals(row.getDataByKey(MANY_COL_NUMBER_ID + j), Double.valueOf(i * j));
+         assertEquals(row.getDataByKey(MANY_COL_BOOL_ID + j), Boolean.valueOf(((i+j)%2)==1));
          assertEquals(row.getDataByKey(MANY_COL_DATE_ID + j), dateString);
       }
    }
 
-   private void verifyTableTestSet(BaseTable table, int offset) {
+   private void verifyTableTestSet(BaseTable table, OrderedColumns columns, int offset) {
       for (int i = 0; i < table.getNumberOfRows(); i++) {
-         verifyRowTestSeti(table.getRowAtIndex(i), i + offset);
+         TypedRow typedRow = new TypedRow(table.getRowAtIndex(i), columns);
+         verifyRowTestSeti(typedRow, i + offset);
       }
-   }
-
-   private boolean hasNoTablesInDb(UserDbInterface serviceInterface, DbHandle db)
-       throws ServicesAvailabilityException {
-      List<String> tableIds = serviceInterface.getAllTableIds(APPNAME, db);
-      return (tableIds.size() == 0);
    }
 
    @Test
@@ -286,7 +278,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -362,7 +354,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -404,7 +396,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -581,7 +573,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -620,7 +612,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
                assertEquals(DB_TABLE_ID, table.getTableId());
                assertEquals(1, table.getNumberOfRows());
-               Row row = table.getRowAtIndex(0);
+               TypedRow row = table.getRowAtIndex(0);
 
                verifyRowTestSet1(row);
 
@@ -739,11 +731,12 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    @Test
    public void testDbUpdateSingleValue() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
+      DbHandle db = null;
       try {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
+         db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbUpdateSingleValue: " + db.getDatabaseHandle());
 
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -761,7 +754,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
 
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
          verifyRowTestSet1(table.getRowAtIndex(0));
 
          List<Column> singleColumnArray = new ArrayList<Column>();
@@ -785,9 +778,9 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
          assertEquals(row.getDataByKey(COL_INTEGER_ID),
-             Integer.toString(changeValue));
+             Long.valueOf(changeValue));
          assertEquals(row.getDataByKey(COL_NUMBER_ID),
-             Double.toString(TEST_NUM_1));
+             Double.valueOf(TEST_NUM_1));
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -798,7 +791,19 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
+      } finally {
+      if(db != null) {
+         try {
+            // clean up
+            serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+         } catch (ServicesAvailabilityException e) {
+            // do nothing
+         }
       }
+   }
    }
 
    @Test
@@ -827,7 +832,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSet1(row);
 
@@ -888,7 +893,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(NUM_ROWS, table.getNumberOfRows());
-         Row row = table.getRowAtIndex(0);
+         TypedRow row = table.getRowAtIndex(0);
 
          verifyRowTestSeti(row, 0);
 
@@ -935,15 +940,13 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
    private void internalTestDbCreateNVerifyNDeleteLargeTableManyColumns(final int NUM_ROWS)
        throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
-      if (false) {
-         return;
-      }
+      DbHandle db = null;
       try {
 
          List<Column> columnList = createManyColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
+         db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbCreateNVerifyNDeleteLargeTableManyColumns: " + db.getDatabaseHandle());
 
@@ -977,10 +980,10 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(NUM_ROWS, table2.getNumberOfRows());
 
          for (int i = 0; i < NUM_ROWS; i++) {
-            Row row1 = table1.getRowAtIndex(i);
+            TypedRow row1 = table1.getRowAtIndex(i);
             veriftyRowTestSetManyColumns(row1, i);
 
-            Row row2 = table2.getRowAtIndex(i);
+            TypedRow row2 = table2.getRowAtIndex(i);
             veriftyRowTestSetManyColumns(row2, i);
          }
 
@@ -1000,15 +1003,22 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table1.getTableId());
          assertEquals(0, table1.getNumberOfRows());
 
-         // clean up
-         serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
 
-         // verify no tables left
-         assertTrue(hasNoTablesInDb(serviceInterface, db));
-         serviceInterface.closeDatabase(APPNAME, db);
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
+      } finally {
+         if(db != null) {
+            try {
+            // clean up
+            serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+            serviceInterface.closeDatabase(APPNAME, db);
+            } catch (ServicesAvailabilityException e) {
+               // do nothing
+            }
+         }
       }
    }
 
@@ -1132,7 +1142,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 0);
+         verifyTableTestSet(table.getBaseTable(), columns,0);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1173,7 +1183,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
              "SELECT * FROM " + DB_TABLE_ID, null, 10, null);
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table, 0);
+         verifyTableTestSet(table, columns,0);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1217,7 +1227,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(50, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 0);
+         verifyTableTestSet(table.getBaseTable(), columns,0);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1258,7 +1268,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(50, table.getNumberOfRows());
 
-         verifyTableTestSet(table, 0);
+         verifyTableTestSet(table, columns,0);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1303,7 +1313,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(40, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 10);
+         verifyTableTestSet(table.getBaseTable(), columns,10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1344,7 +1354,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(40, table.getNumberOfRows());
 
-         verifyTableTestSet(table, 10);
+         verifyTableTestSet(table, columns, 10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1388,7 +1398,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 10);
+         verifyTableTestSet(table.getBaseTable(), columns,10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1429,7 +1439,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table, 10);
+         verifyTableTestSet(table, columns,10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1473,7 +1483,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 0);
+         verifyTableTestSet(table.getBaseTable(), columns,0);
 
          table = serviceInterface
              .resumeSimpleQuery(APPNAME, db, columns, table.resumeQueryForward(10));
@@ -1481,7 +1491,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 10);
+         verifyTableTestSet(table.getBaseTable(), columns,10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1525,7 +1535,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(50, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 0);
+         verifyTableTestSet(table.getBaseTable(), columns,0);
 
          assertNull(table.resumeQueryForward(1));
 
@@ -1571,7 +1581,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 20);
+         verifyTableTestSet(table.getBaseTable(), columns,20);
 
          table = serviceInterface
              .resumeSimpleQuery(APPNAME, db, columns, table.resumeQueryBackward(10));
@@ -1579,7 +1589,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 10);
+         verifyTableTestSet(table.getBaseTable(), columns,10);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -1623,7 +1633,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 10);
+         verifyTableTestSet(table.getBaseTable(), columns,10);
 
          table = serviceInterface
              .resumeSimpleQuery(APPNAME, db, columns, table.resumeQueryBackward(10));
@@ -1631,7 +1641,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(10, table.getNumberOfRows());
 
-         verifyTableTestSet(table.getBaseTable(), 0);
+         verifyTableTestSet(table.getBaseTable(), columns, 0);
 
          assertNull(table.resumeQueryBackward(1));
 
@@ -1698,9 +1708,8 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
              DB_TABLE_ID, null, null, null, null, null, null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         Row row = results.getRowAtIndex(0);
 
-         verifyRowTestSet1(row);
+         verifyRowTestSet1(new TypedRow(results.getRowAtIndex(0), columns));
 
          // clean up
          serviceInterface.deleteLocalOnlyTable(APPNAME, db, columns.getTableId());
@@ -1723,15 +1732,11 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
          assertEquals(LOCAL_ONLY_DB_TABLE_ID, columns.getTableId());
-
-         // ensure the table is empty
-         serviceInterface.deleteLocalOnlyRows(APPNAME, db, DB_TABLE_ID, null, null);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet1());
          serviceInterface.insertLocalOnlyRow(APPNAME, db, DB_TABLE_ID, contentValuesTestSet2());
@@ -1742,8 +1747,8 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(2, results.getNumberOfRows());
 
-         verifyRowTestSet1(results.getRowAtIndex(0));
-         verifyRowTestSet2(results.getRowAtIndex(1));
+         verifyRowTestSet1(new TypedRow(results.getRowAtIndex(0), columns));
+         verifyRowTestSet2(new TypedRow(results.getRowAtIndex(1), columns));
 
          // clean up
          serviceInterface.deleteLocalOnlyTable(APPNAME, db, columns.getTableId());
@@ -1766,8 +1771,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1784,7 +1788,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
                  null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         verifyRowTestSet1(results.getRowAtIndex(0));
+         verifyRowTestSet1(new TypedRow(results.getRowAtIndex(0), columns));
 
          String whereClause = COL_STRING_ID + "=?";
          BindArgs bindArgs = new BindArgs(new Object[] { TEST_STR_1 });
@@ -1797,7 +1801,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
                  null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         verifyRowTestSet2(results.getRowAtIndex(0));
+         verifyRowTestSet2(new TypedRow(results.getRowAtIndex(0), columns));
 
          // clean up
          serviceInterface.deleteLocalOnlyTable(APPNAME, db, columns.getTableId());
@@ -1820,8 +1824,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
+
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1838,7 +1841,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
                  null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         verifyRowTestSet1(results.getRowAtIndex(0));
+         verifyRowTestSet1(new TypedRow(results.getRowAtIndex(0), columns));
 
          List<Column> singleColumnArray = new ArrayList<>();
          singleColumnArray.add(new Column(COL_INTEGER_ID, "column Integer", "integer", null));
@@ -1857,10 +1860,10 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
 
          assertEquals(1, results.getNumberOfRows());
 
-         Row row = results.getRowAtIndex(0);
-         assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-         assertEquals(row.getDataByKey(COL_INTEGER_ID), Integer.toString(changeValue));
-         assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
+         TypedRow row = new TypedRow(results.getRowAtIndex(0),columns);
+         assertEquals(row.getRawStringByKey(COL_STRING_ID), TEST_STR_1);
+         assertEquals(row.getRawStringByKey(COL_INTEGER_ID), Long.toString(changeValue));
+         assertEquals(row.getRawStringByKey(COL_NUMBER_ID), Double.toString(TEST_NUM_1));
 
          // clean up
          serviceInterface.deleteLocalOnlyTable(APPNAME, db, columns.getTableId());
@@ -1868,8 +1871,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-         Log.i("closeDatabase",
-             "testDbInsertSingleRowIntoLocalOnlyTable: " + db.getDatabaseHandle());
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
@@ -1883,8 +1884,6 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbCreateNDeleteLocalOnlyTable: " + db.getDatabaseHandle());
-         // TODO: why do we have a dbHandle and APPNAME?
          OrderedColumns columns = serviceInterface
              .createLocalOnlyTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
 
@@ -1898,7 +1897,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
                  null, null, null);
 
          assertEquals(1, results.getNumberOfRows());
-         verifyRowTestSet1(results.getRowAtIndex(0));
+         verifyRowTestSet1(new TypedRow(results.getRowAtIndex(0), columns));
 
          String whereClause = COL_STRING_ID + "=?";
          BindArgs bindArgs = new BindArgs(new Object[] { TEST_STR_1 });
@@ -1916,8 +1915,7 @@ public class OdkDatabaseServiceTest extends OdkDatabaseTestAbstractBase {
          // verify no tables left
          assertTrue(hasNoTablesInDb(serviceInterface, db));
          serviceInterface.closeDatabase(APPNAME, db);
-         Log.i("closeDatabase",
-             "testDbInsertSingleRowIntoLocalOnlyTable: " + db.getDatabaseHandle());
+
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());

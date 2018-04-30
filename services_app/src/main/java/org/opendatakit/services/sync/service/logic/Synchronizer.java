@@ -261,7 +261,8 @@ public interface Synchronizer {
    * @throws HttpClientWebException
    * @throws IOException
    */
-  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete)
+  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns,
+      List<org.opendatakit.database.data.TypedRow> rowsToInsertUpdateOrDelete)
       throws HttpClientWebException, IOException;
 
   /**

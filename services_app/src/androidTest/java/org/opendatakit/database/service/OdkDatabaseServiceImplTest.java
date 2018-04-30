@@ -19,6 +19,7 @@ import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableMetaDataEntries;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -182,8 +183,8 @@ import static org.junit.Assert.fail;
          List<Row> rows = baseTable.getRows();
          assertEquals(rows.size(), 1);
          for (Row row : rows) {
-            assertEquals(row.getDataByKey(COLUMN_ID1), "ayy lmao");
-            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
+            assertEquals(row.getRawStringByKey(COLUMN_ID1), "ayy lmao");
+            Long value = row.getDataType(COLUMN_ID2, Long.class);
             assertTrue(value.intValue() == 3);
          }
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID2, "INTEGER");
@@ -244,7 +245,7 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(1, baseTable, "test", 15, 3.1415);
+         verifyRowExistsInLocalTable(1, baseTable, "test", 15, 3.1415);
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -260,14 +261,14 @@ import static org.junit.Assert.fail;
 
    }
 
-   private void verifyRowExists(int expectedNumRows, BaseTable baseTable, String id, int intValue,
+   private void verifyRowExistsInLocalTable(int expectedNumRows, BaseTable baseTable, String id, int intValue,
        double doubleValue) {
       List<Row> rows = baseTable.getRows();
       assertEquals(expectedNumRows, rows.size());
       for (Row row : rows) {
-         if (row.getDataByKey(COLUMN_ID1).equals(id)) {
-            assertEquals(row.getDataByKey(COLUMN_ID1), id);
-            Integer value = row.getDataType(COLUMN_ID2, Integer.class);
+         if (row.getRawStringByKey(COLUMN_ID1).equals(id)) {
+            assertEquals(row.getRawStringByKey(COLUMN_ID1), id);
+            Long value = row.getDataType(COLUMN_ID2, Long.class);
             assertTrue(value.intValue() == intValue);
             Double val3 = row.getDataType(COLUMN_ID3, Double.class);
             assertEquals(val3, doubleValue, delta);
@@ -292,8 +293,8 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(2, baseTable, "test", 16, 3.1415);
-         verifyRowExists(2, baseTable, "test2", 15, 3.1415);
+         verifyRowExistsInLocalTable(2, baseTable, "test", 16, 3.1415);
+         verifyRowExistsInLocalTable(2, baseTable, "test2", 15, 3.1415);
 
          ContentValues cv = new ContentValues();
          cv.put(COLUMN_ID3, 9.5);
@@ -304,8 +305,8 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(2, baseTable, "test", 16, 9.5);
-         verifyRowExists(2, baseTable, "test2", 15, 3.1415);
+         verifyRowExistsInLocalTable(2, baseTable, "test", 16, 9.5);
+         verifyRowExistsInLocalTable(2, baseTable, "test2", 15, 3.1415);
 
          serviceInterface
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("a", 2, 3.1415));
@@ -313,9 +314,9 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(3, baseTable, "test", 16, 9.5);
-         verifyRowExists(3, baseTable, "test2", 15, 3.1415);
-         verifyRowExists(3, baseTable, "a", 2, 3.1415);
+         verifyRowExistsInLocalTable(3, baseTable, "test", 16, 9.5);
+         verifyRowExistsInLocalTable(3, baseTable, "test2", 15, 3.1415);
+         verifyRowExistsInLocalTable(3, baseTable, "a", 2, 3.1415);
 
          serviceInterface
              .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs("test", 16, 3.1415),
@@ -325,9 +326,9 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(3, baseTable, "test", 16, 3.1415);
-         verifyRowExists(3, baseTable, "test2", 15, 3.1415);
-         verifyRowExists(3, baseTable, "a", 2, 3.1415);
+         verifyRowExistsInLocalTable(3, baseTable, "test", 16, 3.1415);
+         verifyRowExistsInLocalTable(3, baseTable, "test2", 15, 3.1415);
+         verifyRowExistsInLocalTable(3, baseTable, "a", 2, 3.1415);
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -370,12 +371,12 @@ import static org.junit.Assert.fail;
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExists(1, baseTable, "test2", 18, 9.813793);
+         verifyRowExistsInLocalTable(1, baseTable, "test2", 18, 9.813793);
 
          baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
-         verifyRowExists(1, baseTable, "test2", 18, 9.813793);
+         verifyRowExistsInLocalTable(1, baseTable, "test2", 18, 9.813793);
 
          serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, "columnId = ?",
              new BindArgs(new String[] { "test2" }));
@@ -1257,8 +1258,8 @@ import static org.junit.Assert.fail;
          UserTable t = serviceInterface
              .getRowsWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(t.getNumberOfRows(), 2);
-         String a = t.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME);
-         String b = t.getRowAtIndex(1).getDataByKey(SAVEPOINT_TYPE_COLNAME);
+         String a = t.getRowAtIndex(0).getRawStringByKey(SAVEPOINT_TYPE_COLNAME);
+         String b = t.getRowAtIndex(1).getRawStringByKey(SAVEPOINT_TYPE_COLNAME);
          if (a == null) {
             assertEquals(b, SavepointTypeManipulator.complete());
          } else {
@@ -1291,8 +1292,8 @@ import static org.junit.Assert.fail;
          UserTable t = serviceInterface
              .privilegedGetRowsWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(t.getNumberOfRows(), 2);
-         String a = t.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME);
-         String b = t.getRowAtIndex(1).getDataByKey(SAVEPOINT_TYPE_COLNAME);
+         String a = t.getRowAtIndex(0).getRawStringByKey(SAVEPOINT_TYPE_COLNAME);
+         String b = t.getRowAtIndex(1).getRawStringByKey(SAVEPOINT_TYPE_COLNAME);
          if (a == null) {
             assertEquals(b, SavepointTypeManipulator.complete());
          } else {
@@ -1329,8 +1330,9 @@ import static org.junit.Assert.fail;
          UserTable result = serviceInterface
              .getMostRecentRowWithId(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, "t1");
          assertEquals(result.getNumberOfRows(), 1);
-         assertEquals(result.getRowAtIndex(0).getDataByKey(SAVEPOINT_TYPE_COLNAME),
-             SavepointTypeManipulator.incomplete());
+         TypedRow row = result.getRowAtIndex(0);
+         assertEquals(row.getRawStringByKey(SAVEPOINT_TYPE_COLNAME), SavepointTypeManipulator
+             .incomplete());
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -1697,13 +1699,13 @@ import static org.junit.Assert.fail;
 
       assertEquals(table.getNumberOfRows(), 1);
 
-      Row row = table.getRowAtIndex(0);
+      TypedRow row = table.getRowAtIndex(0);
 
       if (state != null) {
-         assertEquals(row.getDataByKey(SYNC_STATE_COLNAME), state.name());
+         assertEquals(row.getRawStringByKey(SYNC_STATE_COLNAME), state.name());
       }
       if (conflictTypeShouldBeNull) {
-         String val = row.getDataByKey(CONFLICT_TYPE_COLNAME);
+         String val = row.getRawStringByKey(CONFLICT_TYPE_COLNAME);
          assertTrue(val == null || val.isEmpty() || val.equalsIgnoreCase("null"));
       }
    }

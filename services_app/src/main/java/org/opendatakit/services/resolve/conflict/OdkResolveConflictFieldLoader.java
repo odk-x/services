@@ -26,6 +26,7 @@ import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.QueryUtil;
@@ -162,12 +163,13 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
     // the first row is the localRow, the second is the serverRow.
     int localRowIndex = 0;
     int serverRowIndex = 1;
-    Row localRow = table.getRowAtIndex(localRowIndex);
-    Row serverRow = table.getRowAtIndex(serverRowIndex);
+    TypedRow localRow = table.getRowAtIndex(localRowIndex);
+    TypedRow serverRow = table.getRowAtIndex(serverRowIndex);
 
-    int localConflictType = Integer.parseInt(localRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
+    int localConflictType = Integer.parseInt(localRow.getRawStringByKey(DataTableColumns
+        .CONFLICT_TYPE));
     int serverConflictType = Integer
-        .parseInt(serverRow.getDataByKey(DataTableColumns.CONFLICT_TYPE));
+        .parseInt(serverRow.getRawStringByKey(DataTableColumns.CONFLICT_TYPE));
     //
     // And now we need to construct up the adapter.
 
@@ -196,9 +198,9 @@ class OdkResolveConflictFieldLoader extends AsyncTaskLoader<ResolveActionList> {
         columnDisplayName = LocalizationUtils.getLocalizedDisplayName(mAppName,
             mTableId, aul.locale, NameUtil.constructSimpleDisplayName(elementKey));
       }
-      String localRawValue = localRow.getDataByKey(elementKey);
+      String localRawValue = localRow.getRawStringByKey(elementKey);
       String localDisplayValue = table.getDisplayTextOfData(localRowIndex, elementType, elementKey);
-      String serverRawValue = serverRow.getDataByKey(elementKey);
+      String serverRawValue = serverRow.getRawStringByKey(elementKey);
       String serverDisplayValue = table
           .getDisplayTextOfData(serverRowIndex, elementType, elementKey);
       if ((localConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES) ||
