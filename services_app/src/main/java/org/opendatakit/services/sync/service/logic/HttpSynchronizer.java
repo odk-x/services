@@ -10,6 +10,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
@@ -230,7 +231,7 @@ public interface HttpSynchronizer extends Synchronizer {
    * @throws IOException
    */
   @Override
-  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<org.opendatakit.database.data.Row> rowsToInsertUpdateOrDelete)
+  RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<TypedRow> rowsToInsertUpdateOrDelete)
       throws HttpClientWebException, IOException;
 
   /**

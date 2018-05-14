@@ -1,14 +1,18 @@
 package org.opendatakit.services.sync.service.logic;
 
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 
 public class SynchronizerFactory {
   public static Synchronizer create(SyncExecutionContext syncContext) {
     Synchronizer synchronizer;
 
-    if (syncContext.getAggregateUri().startsWith("submit://")) {
-      // TODO: make constant
-      synchronizer = new AidlSynchronizer(syncContext, "org.opendatakit.submit", "org.opendatakit.submit.service.LocalSyncService");
+    if (syncContext.getAggregateUri().startsWith(IntentConsts.SubmitLocalSync.URI_SCHEME)) {
+      synchronizer = new AidlSynchronizer(
+          syncContext,
+          IntentConsts.SubmitLocalSync.PACKAGE_NAME,
+          IntentConsts.SubmitLocalSync.SERVICE_CLASS_NAME
+      );
     } else {
       synchronizer = new AggregateSynchronizer(syncContext);
     }

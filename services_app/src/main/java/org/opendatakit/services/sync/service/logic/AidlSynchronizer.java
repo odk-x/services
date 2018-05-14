@@ -22,6 +22,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.sync.service.entity.ParcelableColumn;
 import org.opendatakit.sync.service.entity.ParcelableTableResource;
@@ -47,7 +48,7 @@ class AidlSynchronizer implements Synchronizer {
   public IAidlSynchronizer getRemoteInterface() {
     while (remoteInterface == null) {
       try {
-        // TODO: FIX THIS
+        // TODO: Use Handler
         Thread.sleep(SERVICE_CHECK_INTERVAL);
       } catch (InterruptedException e) {
         // ignore
@@ -225,6 +226,7 @@ class AidlSynchronizer implements Synchronizer {
   @Override
   public RowResourceList getUpdates(TableResource tableResource, String dataETag, String websafeResumeCursor, int fetchLimit) throws HttpClientWebException {
     try {
+      // TODO: handle TransactionTooLargeException
       return getRemoteInterface().getUpdates(((ParcelableTableResource) tableResource), dataETag, websafeResumeCursor, fetchLimit);
     } catch (RemoteException e) {
       rethrowException(e);
@@ -233,7 +235,7 @@ class AidlSynchronizer implements Synchronizer {
   }
 
   @Override
-  public RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<Row> rowsToInsertUpdateOrDelete) throws HttpClientWebException {
+  public RowOutcomeList pushLocalRows(TableResource tableResource, OrderedColumns orderedColumns, List<TypedRow> rowsToInsertUpdateOrDelete) throws HttpClientWebException {
     try {
       return getRemoteInterface().pushLocalRows(((ParcelableTableResource) tableResource), orderedColumns, rowsToInsertUpdateOrDelete);
     } catch (RemoteException e) {
