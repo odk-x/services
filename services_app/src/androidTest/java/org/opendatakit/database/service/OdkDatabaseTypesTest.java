@@ -6,6 +6,7 @@ import android.util.Log;
 import org.junit.Test;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TypedRow;
@@ -54,10 +55,10 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    private static final String TEST_ARRAY_i = "[\"Test1\",\"Test2\"]";
 
    private static final ArrayList<String> TEST_ARRAY_i_CHECK = new ArrayList<String>();
+
    static {
       TEST_ARRAY_i_CHECK.addAll(Arrays.asList("Test1", "Test2"));
    }
-
 
    @Override protected void setUpBefore() {
       return;
@@ -70,34 +71,28 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    @NonNull private List<Column> createColumnList() {
       List<Column> columns = new ArrayList<Column>();
 
-      columns.add(new Column(COL_INTEGER_ID, "column Integer", ElementDataType.integer.name(),
-          null));
-      columns.add(new Column(COL_NUMBER_ID, "column Number", ElementDataType.number.name(),
-          null));
+      columns
+          .add(new Column(COL_INTEGER_ID, "column Integer", ElementDataType.integer.name(), null));
+      columns.add(new Column(COL_NUMBER_ID, "column Number", ElementDataType.number.name(), null));
       columns.add(new Column(COL_BOOL_ID, "column Bool", ElementDataType.bool.name(), null));
-      columns.add(new Column(COL_ROWPATH_ID, "column Rowpath", ElementDataType.rowpath.name(),
-          null));
-      columns.add(new Column(COL_CONFIGPATH_ID, "column Configpath", ElementDataType.configpath
-          .name(), null));
-      columns.add(new Column(COL_STRING_ID, "columnString", ElementDataType.string.name(),
-          null));
+      columns
+          .add(new Column(COL_ROWPATH_ID, "column Rowpath", ElementDataType.rowpath.name(), null));
+      columns.add(
+          new Column(COL_CONFIGPATH_ID, "column Configpath", ElementDataType.configpath.name(),
+              null));
+      columns.add(new Column(COL_STRING_ID, "columnString", ElementDataType.string.name(), null));
 
-      columns.add(new Column(COL_ITEM_STRING_ID, "items", ElementDataType.string
-          .name(), null));
+      columns.add(new Column(COL_ITEM_STRING_ID, "items", ElementDataType.string.name(), null));
       columns.add(new Column(COL_ARRAY_ID, "columnArrayPath", ElementDataType.array.name(),
           "[\"" + COL_ITEM_STRING_ID + "\"]"));
 
-      columns.add(new Column(COL_GEO_OBJ_ID_ACC, "acc", ElementDataType.number.name(),
-          null));
-      columns.add(new Column(COL_GEO_OBJ_ID_ALT, "alt", ElementDataType.number.name(),
-          null));
-      columns.add(new Column(COL_GEO_OBJ_ID_LAT, "lat", ElementDataType.number.name(),
-          null));
-      columns.add(new Column(COL_GEO_OBJ_ID_LONG, "long", ElementDataType.number.name(),
-          null));
+      columns.add(new Column(COL_GEO_OBJ_ID_ACC, "acc", ElementDataType.number.name(), null));
+      columns.add(new Column(COL_GEO_OBJ_ID_ALT, "alt", ElementDataType.number.name(), null));
+      columns.add(new Column(COL_GEO_OBJ_ID_LAT, "lat", ElementDataType.number.name(), null));
+      columns.add(new Column(COL_GEO_OBJ_ID_LONG, "long", ElementDataType.number.name(), null));
       columns.add(new Column(COL_GEO_OBJ_ID, COL_GEO_OBJ_ID, ElementDataType.object.name(),
-          "[\"" + COL_GEO_OBJ_ID_ACC + "\",\"" + COL_GEO_OBJ_ID_ALT + "\",\"" + COL_GEO_OBJ_ID_LAT + "\",\"" + COL_GEO_OBJ_ID_LONG
-              + "\"]"));
+          "[\"" + COL_GEO_OBJ_ID_ACC + "\",\"" + COL_GEO_OBJ_ID_ALT + "\",\"" + COL_GEO_OBJ_ID_LAT
+              + "\",\"" + COL_GEO_OBJ_ID_LONG + "\"]"));
 
       return columns;
    }
@@ -122,7 +117,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
 
       cv.put(COL_INTEGER_ID, TEST_INT_i + i);
       cv.put(COL_NUMBER_ID, TEST_NUM_i + i);
-      cv.put(COL_BOOL_ID, (i%2 != 0));
+      cv.put(COL_BOOL_ID, (i % 2 != 0));
       cv.put(COL_ROWPATH_ID, TEST_ROWPATH_i + i);
       cv.put(COL_CONFIGPATH_ID, TEST_CONFIGPATH_i + i);
       cv.put(COL_ARRAY_ID, TEST_ARRAY_i);
@@ -154,7 +149,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    private void verifyRowTestSeti(TypedRow row, int i) {
       assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf((i%2 != 0)));
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf((i % 2 != 0)));
       assertEquals(row.getDataByKey(COL_ROWPATH_ID), TEST_ROWPATH_i + i);
       assertEquals(row.getDataByKey(COL_CONFIGPATH_ID), TEST_CONFIGPATH_i + i);
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
@@ -163,10 +158,10 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
       assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), Double.valueOf(TEST_NUM_i + i));
       assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), Double.valueOf(TEST_NUM_i + i));
       assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_i + i));   }
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_i + i));
+   }
 
-   @Test
-   public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
+   @Test public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
       try {
@@ -204,7 +199,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          e.printStackTrace();
          fail(e.getMessage());
       } finally {
-         if(db != null) {
+         if (db != null) {
             try {
                // clean up
                serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -219,8 +214,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test
-   public void testDbInsertTwoRowsIntoTable() throws ActionNotAuthorizedException {
+   @Test public void testDbInsertTwoRowsIntoTable() throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       DbHandle db = null;
       try {
@@ -251,15 +245,14 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSeti(2),
                  rowId2.toString());
 
-         table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns,
-             rowId2.toString());
+         table = serviceInterface
+             .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId2.toString());
 
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
          verifyRowTestSeti(row, 2);
-
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -271,7 +264,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          e.printStackTrace();
          fail(e.getMessage());
       } finally {
-         if(db != null) {
+         if (db != null) {
             try {
                // clean up
                serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -286,8 +279,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test
-   public void testDbInsertCheckpointRowWithBooleanIntoTable() throws ActionNotAuthorizedException {
+   @Test public void testDbInsertCheckpointRowWithBooleanIntoTable()
+       throws ActionNotAuthorizedException {
       UserDbInterface serviceInterface = bindToDbService();
       try {
 
@@ -295,14 +288,16 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          ColumnList colList = new ColumnList(columnList);
 
          DbHandle db = serviceInterface.openDatabase(APPNAME);
-         Log.i("openDatabase", "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
+         Log.i("openDatabase",
+             "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
          UUID rowId = UUID.randomUUID();
 
-         serviceInterface.insertCheckpointRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
-             rowId.toString());
+         serviceInterface
+             .insertCheckpointRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
+                 rowId.toString());
 
          UserTable table = serviceInterface
              .getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
@@ -323,6 +318,77 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
       } catch (ServicesAvailabilityException e) {
          e.printStackTrace();
          fail(e.getMessage());
+      }
+   }
+
+   @Test public void testArbitraryQueryUsingAliasColumnName() throws ActionNotAuthorizedException {
+      UserDbInterface serviceInterface = bindToDbService();
+      DbHandle db = null;
+      try {
+
+         List<Column> columnList = createColumnList();
+         ColumnList colList = new ColumnList(columnList);
+         OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
+         db = serviceInterface.openDatabase(APPNAME);
+         Log.i("openDatabase",
+             "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
+
+         for(int numRows = 10; numRows < 300; numRows = numRows + 25) {
+            serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
+
+            for (int i = 0; i < numRows; ++i) {
+               serviceInterface.insertCheckpointRowWithId(APPNAME, db, DB_TABLE_ID, columns,
+                   contentValuesTestSeti(i), UUID.randomUUID().toString());
+            }
+
+            BaseTable table = serviceInterface
+                .arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID, "SELECT " + "* FROM " + DB_TABLE_ID
+                        + " ORDER BY " + COL_INTEGER_ID + " ASC",
+                    null, null, null);
+
+            assertEquals(numRows, table.getNumberOfRows());
+
+            for (int i = 0; i < numRows; ++i) {
+               TypedRow row = new TypedRow(table.getRowAtIndex(i), columns);
+               verifyRowTestSeti(row, i);
+            }
+
+            table = serviceInterface.arbitrarySqlQuery(APPNAME, db, DB_TABLE_ID,
+                "SELECT " + "count(*) AS Total FROM " + DB_TABLE_ID, null, null, null);
+
+            TypedRow row = new TypedRow(table.getRowAtIndex(0), columns);
+            Object value = row.getDataByKey("Total");
+            if (value instanceof String) {
+               int count = Integer.valueOf((String) value);
+               assertEquals(numRows, count);
+            } else {
+               fail("Should have returned a string because type of column was unknown");
+            }
+
+            // clean up
+            serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+            // verify no tables left
+            assertTrue(hasNoTablesInDb(serviceInterface, db));
+         }
+         serviceInterface.closeDatabase(APPNAME, db);
+         Log.i("closeDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+         fail(e.getMessage());
+      } finally {
+         if (db != null) {
+            try {
+               // clean up
+               serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
+
+               // verify no tables left
+               assertTrue(hasNoTablesInDb(serviceInterface, db));
+               serviceInterface.closeDatabase(APPNAME, db);
+            } catch (ServicesAvailabilityException e) {
+               // let exception proceed
+            }
+         }
       }
    }
 }
