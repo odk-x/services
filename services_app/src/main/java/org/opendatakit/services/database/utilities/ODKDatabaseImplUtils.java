@@ -4940,8 +4940,6 @@ public final class ODKDatabaseImplUtils {
       cv.put(name, (Long) obj);
     } else if (theClass == Double.class) {
       cv.put(name, (Double) obj);
-    } else if (theClass == String.class) {
-      cv.put(name, (String) obj);
     } else {
       throw new IllegalStateException(
           "Unexpected data type in SQLite table " + theClass.toString());
