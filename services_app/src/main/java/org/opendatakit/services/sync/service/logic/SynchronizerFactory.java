@@ -13,6 +13,12 @@ public class SynchronizerFactory {
           IntentConsts.SubmitLocalSync.PACKAGE_NAME,
           IntentConsts.SubmitLocalSync.SERVICE_CLASS_NAME
       );
+    } else if (syncContext.getAggregateUri().startsWith(IntentConsts.SubmitPeerSync.URI_SCHEME)) {
+      synchronizer = new AidlSynchronizer(
+          syncContext,
+          IntentConsts.SubmitPeerSync.PACKAGE_NAME,
+          IntentConsts.SubmitPeerSync.SERVICE_CLASS_NAME
+      );
     } else {
       synchronizer = new AggregateSynchronizer(syncContext);
     }
