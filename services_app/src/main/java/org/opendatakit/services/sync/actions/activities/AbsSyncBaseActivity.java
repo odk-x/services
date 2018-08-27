@@ -44,7 +44,7 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.utilities.ODKFileUtils;
 
 /**
@@ -70,7 +70,7 @@ public abstract class AbsSyncBaseActivity extends Activity
 
    private final Object interfaceGuard = new Object();
    // interfaceGuard guards access to all of the following...
-   private OdkSyncServiceInterface odkSyncInterfaceGuarded;
+   private IOdkSyncServiceInterface odkSyncInterfaceGuarded;
    private boolean mBoundGuarded = false;
    // end guarded access.
 
@@ -83,7 +83,7 @@ public abstract class AbsSyncBaseActivity extends Activity
       synchronized (interfaceGuard) {
          odkSyncInterfaceGuarded = (service == null) ?
              null :
-             OdkSyncServiceInterface.Stub.asInterface(service);
+             IOdkSyncServiceInterface.Stub.asInterface(service);
          mBoundGuarded = (odkSyncInterfaceGuarded != null);
       }
       WebLogger.getLogger(getAppName()).i(TAG, "[onServiceConnected] Bound to sync service");
@@ -105,7 +105,7 @@ public abstract class AbsSyncBaseActivity extends Activity
    public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
       try {
          boolean bound;
-         OdkSyncServiceInterface theInterface;
+         IOdkSyncServiceInterface theInterface;
          synchronized (interfaceGuard) {
             theInterface = odkSyncInterfaceGuarded;
             bound = mBoundGuarded;

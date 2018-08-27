@@ -39,7 +39,7 @@ import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceAct
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.TableHealthValidator;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
@@ -282,7 +282,7 @@ public class LoginFragment extends AbsSyncUIFragment {
       ((ISyncServiceInterfaceActivity) activity)
           .invokeSyncInterfaceAction(new DoSyncActionCallback() {
              @Override
-             public void doAction(OdkSyncServiceInterface syncServiceInterface)
+             public void doAction(IOdkSyncServiceInterface syncServiceInterface)
                  throws RemoteException {
                 if (syncServiceInterface != null) {
                    //          WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] syncServiceInterface != null");
@@ -366,7 +366,7 @@ public class LoginFragment extends AbsSyncUIFragment {
       ((ISyncServiceInterfaceActivity) activity)
           .invokeSyncInterfaceAction(new DoSyncActionCallback() {
              @Override
-             public void doAction(OdkSyncServiceInterface syncServiceInterface)
+             public void doAction(IOdkSyncServiceInterface syncServiceInterface)
                  throws RemoteException {
                 if (syncServiceInterface != null) {
                    final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
@@ -413,7 +413,7 @@ public class LoginFragment extends AbsSyncUIFragment {
           });
    }
 
-   void syncCompletedAction(OdkSyncServiceInterface syncServiceInterface) throws RemoteException {
+   void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException {
       removeAnySyncNotification();
       boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
       if (!completed) {

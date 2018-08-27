@@ -28,7 +28,7 @@ import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.TableMetaDataEntries;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.queries.QueryBounds;
-import org.opendatakit.database.service.AidlDbInterface;
+import org.opendatakit.database.service.IDbInterface;
 import org.opendatakit.database.service.DbChunk;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
@@ -42,7 +42,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-class OdkDatabaseServiceInterface extends AidlDbInterface.Stub {
+class OdkDatabaseServiceInterface extends IDbInterface.Stub {
 
   private static final String TAG = OdkDatabaseServiceInterface.class.getSimpleName();
 
