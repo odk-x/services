@@ -2,21 +2,15 @@ package org.opendatakit.utilities.test;
 
 import junit.framework.TestCase;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.opendatakit.services.utilities.Base64Wrapper;
 
-public class Base64WrapperTest extends TestCase {
+@RunWith(JUnit4.class)
+public class Base64WrapperTest {
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Test(expected=ClassNotFoundException.class)
-    public void testWrapperCreation() {
-        try {
-            Base64Wrapper wrapper = new Base64Wrapper("unittestTMP");
-        } catch (ClassNotFoundException e) {
-
-        }
+    @Test
+    public void testWrapperCreation() throws ClassNotFoundException {
+        Base64Wrapper wrapper = new Base64Wrapper("unittestTMP");
     }
 }
