@@ -69,7 +69,7 @@ public class OdkWebserverServiceTest {
 
     @After
     public void tearDown() {
-        WebkitServerInterface webkitServer = getWebkitServerInterface();
+        IWebkitServerInterface webkitServer = getIWebkitServerInterface();
         Context context = InstrumentationRegistry.getContext();
         context.unbindService(odkWebkitServiceConnection);
         // sleep to let this take effect
@@ -91,7 +91,7 @@ public class OdkWebserverServiceTest {
             }
             synchronized (odkWebkitInterfaceBindComplete) {
                 try {
-                    webkitServerInterface = (service == null) ? null : WebkitServerInterface.Stub.asInterface(service);
+                    webkitServerInterface = (service == null) ? null : IWebkitServerInterface.Stub.asInterface(service);
                 } catch (IllegalArgumentException e) {
                     webkitServerInterface = null;
                 }
@@ -112,13 +112,13 @@ public class OdkWebserverServiceTest {
 
     private final ServiceConnectionWrapper odkWebkitServiceConnection = new ServiceConnectionWrapper();
     private final Object odkWebkitInterfaceBindComplete = new Object();
-    private WebkitServerInterface webkitServerInterface;
+    private IWebkitServerInterface webkitServerInterface;
     private boolean active = false;
 
     /**
      * Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
      */
-    private WebkitServerInterface invokeBindService() throws InterruptedException {
+    private IWebkitServerInterface invokeBindService() throws InterruptedException {
 
         WebLogger.getLogger(TestConsts.APPNAME).i(TAG, "Attempting or polling on bind to Webkit Server "
             + "service");
@@ -146,7 +146,7 @@ public class OdkWebserverServiceTest {
     }
 
     @NonNull
-    private WebkitServerInterface getWebkitServerInterface() {
+    private IWebkitServerInterface getIWebkitServerInterface() {
 
         // block waiting for it to be bound...
         for (;;) {
@@ -160,7 +160,7 @@ public class OdkWebserverServiceTest {
 
                 // call method that waits on odkDbInterfaceBindComplete
                 // Work-around for jacoco ART issue https://code.google.com/p/android/issues/detail?id=80961
-                WebkitServerInterface webkitServerInterface = invokeBindService();
+                IWebkitServerInterface webkitServerInterface = invokeBindService();
                 if ( webkitServerInterface != null ) {
                     return webkitServerInterface;
                 }
@@ -173,7 +173,7 @@ public class OdkWebserverServiceTest {
 
     @Test
     public void testBindingNRestart() {
-        WebkitServerInterface serviceInterface = getWebkitServerInterface();
+        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
         try {
             serviceInterface.restart();
         } catch (RemoteException e) {
@@ -190,7 +190,7 @@ public class OdkWebserverServiceTest {
         File directoryLocation = new File(ODKFileUtils.getConfigFolder(TestConsts.APPNAME), TEST_DIR);
         File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
 
-        WebkitServerInterface serviceInterface = getWebkitServerInterface();
+        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
 
         PrintWriter writer = null;
         try {

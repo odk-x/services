@@ -50,7 +50,7 @@ public class OdkSyncService extends Service {
   // Used for logging
   private static final String TAG = OdkSyncService.class.getSimpleName();
 
-  private OdkSyncServiceInterfaceImpl serviceInterface;
+  private IOdkSyncServiceInterfaceImpl serviceInterface;
   private GlobalSyncNotificationManager notificationManager;
   private ScheduledExecutorService shutdownTester;
 
@@ -136,7 +136,7 @@ public class OdkSyncService extends Service {
 
   @Override
   public void onCreate() {
-    serviceInterface = new OdkSyncServiceInterfaceImpl(this);
+    serviceInterface = new IOdkSyncServiceInterfaceImpl(this);
     notificationManager = new GlobalSyncNotificationManagerImpl(this);
     shutdownTester = Executors.newSingleThreadScheduledExecutor();
   }

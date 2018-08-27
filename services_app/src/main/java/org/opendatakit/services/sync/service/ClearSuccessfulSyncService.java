@@ -11,7 +11,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
 
 /**
@@ -26,7 +26,7 @@ public class ClearSuccessfulSyncService extends IntentService implements Service
    private final Object interfaceGuard;
 
    // interfaceGuard guards access to all of the following...
-   private OdkSyncServiceInterface odkSyncInterfaceGuarded;
+   private IOdkSyncServiceInterface odkSyncInterfaceGuarded;
    private boolean mBoundGuarded;
    // end guarded access.
 
@@ -68,7 +68,7 @@ public class ClearSuccessfulSyncService extends IntentService implements Service
       synchronized (interfaceGuard) {
          odkSyncInterfaceGuarded = (service == null) ?
              null :
-             OdkSyncServiceInterface.Stub.asInterface(service);
+             IOdkSyncServiceInterface.Stub.asInterface(service);
          mBoundGuarded = (odkSyncInterfaceGuarded != null);
       }
       WebLogger.getLogger(appName).i(TAG, "[onServiceConnected] Bound to sync service");

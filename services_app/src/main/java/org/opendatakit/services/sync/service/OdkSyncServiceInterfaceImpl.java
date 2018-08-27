@@ -17,18 +17,18 @@ package org.opendatakit.services.sync.service;
 
 import android.os.RemoteException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncStatus;
 
-class OdkSyncServiceInterfaceImpl extends OdkSyncServiceInterface.Stub {
+class IOdkSyncServiceInterfaceImpl extends IOdkSyncServiceInterface.Stub {
 
-  private static final String LOGTAG = OdkSyncServiceInterfaceImpl.class.getSimpleName();
+  private static final String LOGTAG = IOdkSyncServiceInterfaceImpl.class.getSimpleName();
   private final OdkSyncService syncService;
 
-  public OdkSyncServiceInterfaceImpl(OdkSyncService syncService) {
+  public IOdkSyncServiceInterfaceImpl(OdkSyncService syncService) {
     this.syncService = syncService;
   }
 

@@ -1,7 +1,7 @@
 package org.opendatakit.services.sync.actions.activities;
 
 import android.os.RemoteException;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -15,5 +15,5 @@ public interface DoSyncActionCallback {
    * @param syncServiceInterface
    * @throws RemoteException
     */
-  void doAction(OdkSyncServiceInterface syncServiceInterface) throws RemoteException;
+  void doAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException;
 }

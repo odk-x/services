@@ -104,7 +104,7 @@ abstract class OdkDatabaseTestAbstractBase {
             }
          }
          dbInterface = new UserDbInterfaceImpl(
-             new InternalUserDbInterfaceAidlWrapperImpl(AidlDbInterface.Stub.asInterface(service)));
+             new InternalUserDbInterfaceAidlWrapperImpl(IDbInterface.Stub.asInterface(service)));
       } catch (IllegalArgumentException e) {
          dbInterface = null;
       }

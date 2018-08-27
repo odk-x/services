@@ -24,7 +24,7 @@ import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.service.GlobalSyncNotificationManager;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
-import org.opendatakit.sync.service.OdkSyncServiceInterface;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.AppNameUtil;
 
@@ -53,7 +53,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
    abstract void postTaskToAccessSyncService();
    abstract void perhapsEnableButtons();
    abstract void updateInterface();
-   abstract void syncCompletedAction(OdkSyncServiceInterface syncServiceInterface) throws
+   abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws
        RemoteException;
 
 
@@ -272,7 +272,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
       ((ISyncServiceInterfaceActivity) activity)
           .invokeSyncInterfaceAction(new DoSyncActionCallback() {
              @Override
-             public void doAction(OdkSyncServiceInterface syncServiceInterface)
+             public void doAction(IOdkSyncServiceInterface syncServiceInterface)
                  throws RemoteException {
                 WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onSyncCompleted] called");
                 if (syncServiceInterface != null) {
@@ -311,7 +311,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
       ((ISyncServiceInterfaceActivity) activity)
           .invokeSyncInterfaceAction(new DoSyncActionCallback() {
              @Override
-             public void doAction(OdkSyncServiceInterface syncServiceInterface) throws
+             public void doAction(IOdkSyncServiceInterface syncServiceInterface) throws
                  RemoteException {
 
                 final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
