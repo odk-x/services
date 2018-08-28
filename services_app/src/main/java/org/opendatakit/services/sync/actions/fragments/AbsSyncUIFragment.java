@@ -1,7 +1,7 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;

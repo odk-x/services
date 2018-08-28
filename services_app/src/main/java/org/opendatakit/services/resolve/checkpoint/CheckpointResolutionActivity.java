@@ -16,9 +16,10 @@
 package org.opendatakit.services.resolve.checkpoint;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,7 +41,7 @@ import org.opendatakit.services.database.AndroidConnectFactory;
  * @author mitchellsundt@gmail.com
  *
  */
-public class CheckpointResolutionActivity extends Activity implements IAppAwareActivity {
+public class CheckpointResolutionActivity extends FragmentActivity implements IAppAwareActivity {
 
   private static final String TAG = CheckpointResolutionActivity.class.getSimpleName();
 
@@ -82,7 +83,7 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
       return;
     }
 
-    FragmentManager mgr = getFragmentManager();
+    FragmentManager mgr = getSupportFragmentManager();
     String newFragmentName = null;
     Fragment newFragment = null;
     mRowId = getIntent().getStringExtra(IntentConsts.INTENT_KEY_INSTANCE_ID);
@@ -137,7 +138,7 @@ public class CheckpointResolutionActivity extends Activity implements IAppAwareA
     }
     if (id == R.id.action_about) {
 
-      FragmentManager mgr = getFragmentManager();
+      FragmentManager mgr = getSupportFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
       if ( newFragment == null ) {
         newFragment = new AboutMenuFragment();

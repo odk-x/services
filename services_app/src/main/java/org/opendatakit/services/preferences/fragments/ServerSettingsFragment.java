@@ -16,19 +16,20 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.PreferenceCategory;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.annotation.NonNull;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -60,7 +61,8 @@ import java.util.Map;
 
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
 
-public class ServerSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
+public class ServerSettingsFragment extends PreferenceFragmentCompat implements
+    OnPreferenceChangeListener {
 
   private static final String t = "ServerSettingsFragment";
 
@@ -78,12 +80,21 @@ public class ServerSettingsFragment extends PreferenceFragment implements OnPref
           Manifest.permission.CAMERA
   };
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey){
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
 
-    String appName = ((AppPropertiesActivity) getActivity()).getAppName();
+    String appName = null;
+    FragmentActivity activity = getActivity();
+    if(activity instanceof AppPropertiesActivity) {
+      AppPropertiesActivity appPropAct = (AppPropertiesActivity) activity;
+      appName = appPropAct.getAppName();
+    }
+
+    if(appName == null) {
+      throw new IllegalStateException("NEED an AppName");
+    }
+
     healthValidator = new TableHealthValidator(appName, getActivity());
 
     addPreferencesFromResource(R.xml.server_preferences);

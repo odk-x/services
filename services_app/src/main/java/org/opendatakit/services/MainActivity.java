@@ -16,9 +16,10 @@ package org.opendatakit.services;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -41,7 +42,7 @@ import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActi
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 
-public class MainActivity extends Activity implements IAppAwareActivity,
+public class MainActivity extends FragmentActivity implements IAppAwareActivity,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
   // Used for logging
@@ -140,7 +141,7 @@ public class MainActivity extends Activity implements IAppAwareActivity,
 
     if (id == R.id.action_about) {
 
-      FragmentManager mgr = getFragmentManager();
+      FragmentManager mgr = getSupportFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
       if (newFragment == null) {
         newFragment = new AboutMenuFragment();

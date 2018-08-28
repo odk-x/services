@@ -14,13 +14,13 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceFragment;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
@@ -29,15 +29,15 @@ import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity
 
 import java.util.Collections;
 
-public class AdminPasswordSettingsFragment extends PreferenceFragment implements OnPreferenceChangeListener {
+public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat implements
+    OnPreferenceChangeListener {
 
   private static final String t = "AdminPasswordSettingsFragment";
 
   private EditTextPreference mAdminPasswordPreference;
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey)  {
 
     addPreferencesFromResource(R.xml.admin_password_preferences);
 

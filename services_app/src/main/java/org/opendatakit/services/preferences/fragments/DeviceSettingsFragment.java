@@ -20,13 +20,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceScreen;
+import android.support.v7.preference.CheckBoxPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.PreferenceCategory;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.PreferenceScreen;
 import android.provider.MediaStore;
 import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
@@ -43,7 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-public class DeviceSettingsFragment extends PreferenceFragment implements
+public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
     OnPreferenceChangeListener {
 
   private static final String t = "DeviceSettingsFragment";
@@ -58,8 +58,7 @@ public class DeviceSettingsFragment extends PreferenceFragment implements
   private PreferenceScreen mSplashPathPreference;
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey)  {
 
     mAppName = this.getActivity().getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null || mAppName.length() == 0) {

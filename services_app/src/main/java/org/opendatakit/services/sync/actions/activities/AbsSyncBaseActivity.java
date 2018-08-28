@@ -18,9 +18,10 @@ package org.opendatakit.services.sync.actions.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentActivity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -54,7 +55,7 @@ import org.opendatakit.utilities.ODKFileUtils;
  * Created by jbeorse on 5/31/17.
  */
 
-public abstract class AbsSyncBaseActivity extends Activity
+public abstract class AbsSyncBaseActivity extends FragmentActivity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 
@@ -276,7 +277,7 @@ public abstract class AbsSyncBaseActivity extends Activity
 
       if (id == R.id.action_about) {
 
-         FragmentManager mgr = getFragmentManager();
+         FragmentManager mgr = getSupportFragmentManager();
          Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
          if ( newFragment == null ) {
             newFragment = new AboutMenuFragment();

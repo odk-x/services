@@ -17,9 +17,9 @@
 package org.opendatakit.services.sync.actions.activities;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Rect;
@@ -48,7 +48,7 @@ public class LoginActivity extends AbsSyncBaseActivity {
 
       WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting LoginFragment");
 
-      FragmentManager mgr = getFragmentManager();
+      FragmentManager mgr = getSupportFragmentManager();
       String newFragmentName;
       Fragment newFragment;
 

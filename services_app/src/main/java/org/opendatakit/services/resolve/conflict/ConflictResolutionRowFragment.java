@@ -17,12 +17,12 @@ package org.opendatakit.services.resolve.conflict;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ListFragment;
-import android.app.LoaderManager;
+import android.support.v4.app.ListFragment;
+import android.support.v4.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.Loader;
+import android.support.v4.content.Loader;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
