@@ -724,7 +724,7 @@ public class AggregateSynchronizerTest {
       String val = "test value for table " + testTableId;
 
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
@@ -801,7 +801,7 @@ public class AggregateSynchronizerTest {
         val = "test value for table " + i + " for table " + testTableId;
 
         rowId = "uuid:" + UUID.randomUUID().toString();
-        ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+        ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
         appendRowContent(refTable, orderedColumns, rowId, val, ts);
       }
@@ -892,7 +892,7 @@ public class AggregateSynchronizerTest {
 
       // Insert a row
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, utf_val, ts);
 
@@ -1012,7 +1012,7 @@ public class AggregateSynchronizerTest {
       String val = "test value for table " + testTableId;
 
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
@@ -1082,7 +1082,7 @@ public class AggregateSynchronizerTest {
       // Insert a row
       String val = "test value for table " + testTableId;
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
@@ -1156,7 +1156,7 @@ public class AggregateSynchronizerTest {
       // Insert a row
       String val = "test value for table " + testTableId;
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
@@ -1241,7 +1241,7 @@ public class AggregateSynchronizerTest {
       BaseTable refTable = buildBaseTable(orderedColumns, 1);
 
       // Create a row of data to attach the batch of files
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, RowId, utf_val, ts);
 
@@ -1333,7 +1333,7 @@ public class AggregateSynchronizerTest {
       // Insert a row
       String val = "test value for table " + testTableId;
       String rowId = "uuid:" + UUID.randomUUID().toString();
-      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+      String ts = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
       appendRowContent(refTable, orderedColumns, rowId, val, ts);
 
