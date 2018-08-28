@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -1753,7 +1754,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
             RoleConsts.ADMIN_ROLES_LIST);
 
     String uuid = UUID.randomUUID().toString();
-    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(DataTableColumns.ID, uuid);
@@ -1807,7 +1808,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
 
-    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
     ContentValues cvValues = new ContentValues();
     cvValues.putNull(DataTableColumns.ID);
@@ -1857,7 +1858,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         .createOrOpenTableWithColumns(db, tableId, columns);
 
     String uuid = UUID.randomUUID().toString();
-    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String timeStamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(DataTableColumns.ID, uuid);
@@ -2050,7 +2051,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
             RoleConsts.ADMIN_ROLES_LIST);
 
-    String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2095,7 +2096,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
             RoleConsts.ADMIN_ROLES_LIST);
 
-    String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String testVal = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
 
     ContentValues cvValues = new ContentValues();
     cvValues.put(testCol, testVal);
@@ -2423,7 +2424,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
         ODKDatabaseImplUtils.get().getAccessContext(db, tableId, activeUser,
             RoleConsts.ADMIN_ROLES_LIST);
 
-    String interMed = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+    String interMed = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT);
     int pos = interMed.indexOf('T');
     String testVal = null;
 
@@ -3601,7 +3602,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     updates.put(DataTableColumns.FORM_ID, "serverForm");
     updates.put(DataTableColumns.LOCALE, currentLocale);
     updates.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
-        TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+        TableConstants.nanoSecondsFromMillis(System.currentTimeMillis(), Locale.ROOT));
     updates.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     updates.put(DataTableColumns.SAVEPOINT_CREATOR, "mailto:server@gmail.com");
     updates.put(DataTableColumns.DEFAULT_ACCESS, RowFilterScope.Access.FULL.name());
