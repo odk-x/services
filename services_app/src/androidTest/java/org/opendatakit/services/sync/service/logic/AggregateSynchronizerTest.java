@@ -42,6 +42,8 @@ import org.opendatakit.services.sync.service.SyncProgressTracker;
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
+import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
+import org.opendatakit.sync.service.logic.FileManifestDocument;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
