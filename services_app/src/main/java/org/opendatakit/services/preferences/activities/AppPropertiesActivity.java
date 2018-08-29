@@ -22,6 +22,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.StringRes;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -42,7 +43,7 @@ import java.util.List;
  *
  * @author mitchellsundt@gmail.com
  */
-public class AppPropertiesActivity extends AppCompatActivity implements
+public class AppPropertiesActivity extends FragmentActivity implements
     IOdkAppPropertiesActivity,
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
@@ -179,11 +180,11 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     mAdminMode =
         this.getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, false);
 
-//    this.getActionBar().setTitle(
-//        getString((mAdminMode ?
-//            R.string.action_bar_general_settings_admin_mode :
-//            R.string.action_bar_general_settings),
-//            mAppName));
+    this.getActionBar().setTitle(
+        getString((mAdminMode ?
+            R.string.action_bar_general_settings_admin_mode :
+            R.string.action_bar_general_settings),
+            mAppName));
 
     super.onCreate(savedInstanceState);
   }
