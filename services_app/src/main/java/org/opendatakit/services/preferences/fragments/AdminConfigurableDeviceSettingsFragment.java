@@ -32,14 +32,17 @@ public class AdminConfigurableDeviceSettingsFragment extends PreferenceFragmentC
     OnPreferenceChangeListener {
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
     addPreferencesFromResource(R.xml.admin_configurable_device_preferences);
 
     PreferenceScreen prefScreen = this.getPreferenceScreen();
 
     initializeCheckBoxPreference(prefScreen);
+  }
+
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
   }
 
   protected void initializeCheckBoxPreference(PreferenceGroup prefGroup) {

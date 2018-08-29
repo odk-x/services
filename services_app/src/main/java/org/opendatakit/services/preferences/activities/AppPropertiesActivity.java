@@ -22,6 +22,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.annotation.StringRes;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceScreen;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
@@ -38,7 +42,9 @@ import java.util.List;
  *
  * @author mitchellsundt@gmail.com
  */
-public class AppPropertiesActivity extends PreferenceActivity implements IOdkAppPropertiesActivity {
+public class AppPropertiesActivity extends AppCompatActivity implements
+    IOdkAppPropertiesActivity,
+    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
   private static final String t = "AppPropertiesActivity";
 
@@ -55,104 +61,99 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
   /**
    * Populate the activity with the top-level headers.
    */
-  @Override
-  public void onBuildHeaders(List<Header> target) {
-    List<Header> rawHeaders = new ArrayList<Header>();
-    loadHeadersFromResource(R.xml.preferences_headers, rawHeaders);
-
-    for ( Header header : rawHeaders ) {
-      // if the properties are only shown in adminMode,
-      // then omit them if we are not in admin mode.
-      if ( header.fragmentArguments != null ) {
-        boolean hasAdminModeRestriction =
-          header.fragmentArguments.containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
-        boolean hasAdminEnabledRestriction =
-          header.fragmentArguments.containsKey(IntentConsts.INTENT_KEY_SETTINGS_ADMIN_ENABLED);
-
-        boolean pass = !(hasAdminEnabledRestriction || hasAdminModeRestriction);
-        if ( hasAdminEnabledRestriction ) {
-          boolean enabledRequirement = header.fragmentArguments.getBoolean(IntentConsts
-              .INTENT_KEY_SETTINGS_ADMIN_ENABLED);
-          pass = pass || ( enabledRequirement == mAdminConfigured);
-        }
-
-        if ( hasAdminModeRestriction ) {
-          boolean modeRestriction = header.fragmentArguments.getBoolean(IntentConsts
-              .INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
-          pass = pass || ( modeRestriction == mAdminMode );
-        }
-
-        if ( !pass ) {
-          continue;
-        }
-      }
-
-      if ( header.id == R.id.general_settings_in_admin_mode ) {
-        if ( !mAdminConfigured || mAdminMode ) {
-          continue;
-        }
-      }
-
-      if ( header.id == R.id.clear_configuration_settingss ) {
-        // omit this if we have admin mode configured but are not in admin mode
-        if ( mAdminConfigured && !mAdminMode ) {
-          continue;
-        }
-      }
-
-      target.add(header);
-    }
-
-    for ( Header header : target ) {
-      if ( header.id == R.id.general_settings_in_admin_mode ) {
-        // TODO: change to challenge for admin password and then
-        // TODO: launch the general settings in admin mode.
-        Intent intent = new Intent(this, AdminPasswordChallengeActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
-            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
-        header.intent = intent;
-      }
-
-      if ( header.id == R.id.clear_configuration_settingss ) {
-        Intent intent = new Intent(this, ClearAppPropertiesActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
-            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
-        header.intent = intent;
-      }
-
-      if ( header.id == R.id.verify_server_settingss ) {
-        Intent intent = new Intent(this, VerifyServerSettingsActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
-                this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
-        header.intent = intent;
-      }
-
-      if ( header.id == R.id.admin_password_status ) {
-        if ( mAdminConfigured ) {
-          header.titleRes = R.string.change_admin_password;
-          header.summaryRes = R.string.admin_password_enabled;
-        } else {
-          header.titleRes = R.string.enable_admin_password;
-          header.summaryRes = R.string.admin_password_disabled;
-        }
-      }
-      if ( header.fragmentArguments != null ) {
-        header.fragmentArguments.putString(IntentConsts.INTENT_KEY_APP_NAME,
-            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
-        if ( mAdminMode ) {
-          header.fragmentArguments.putBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE,
-              true);
-        } else {
-          header.fragmentArguments.remove(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
-        }
-      }
-    }
-  }
-
-  @Override
-  protected boolean isValidFragment(String fragmentName) {
-    return true;
-  }
+//  @Override
+//  public void onBuildHeaders(List<Header> target) {
+//    List<Header> rawHeaders = new ArrayList<Header>();
+//    loadHeadersFromResource(R.xml.preferences_headers, rawHeaders);
+//
+//    for ( Header header : rawHeaders ) {
+//      // if the properties are only shown in adminMode,
+//      // then omit them if we are not in admin mode.
+//      if ( header.fragmentArguments != null ) {
+//        boolean hasAdminModeRestriction =
+//          header.fragmentArguments.containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
+//        boolean hasAdminEnabledRestriction =
+//          header.fragmentArguments.containsKey(IntentConsts.INTENT_KEY_SETTINGS_ADMIN_ENABLED);
+//
+//        boolean pass = !(hasAdminEnabledRestriction || hasAdminModeRestriction);
+//        if ( hasAdminEnabledRestriction ) {
+//          boolean enabledRequirement = header.fragmentArguments.getBoolean(IntentConsts
+//              .INTENT_KEY_SETTINGS_ADMIN_ENABLED);
+//          pass = pass || ( enabledRequirement == mAdminConfigured);
+//        }
+//
+//        if ( hasAdminModeRestriction ) {
+//          boolean modeRestriction = header.fragmentArguments.getBoolean(IntentConsts
+//              .INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
+//          pass = pass || ( modeRestriction == mAdminMode );
+//        }
+//
+//        if ( !pass ) {
+//          continue;
+//        }
+//      }
+//
+//      if ( header.id == R.id.general_settings_in_admin_mode ) {
+//        if ( !mAdminConfigured || mAdminMode ) {
+//          continue;
+//        }
+//      }
+//
+//      if ( header.id == R.id.clear_configuration_settingss ) {
+//        // omit this if we have admin mode configured but are not in admin mode
+//        if ( mAdminConfigured && !mAdminMode ) {
+//          continue;
+//        }
+//      }
+//
+//      target.add(header);
+//    }
+//
+//    for ( Header header : target ) {
+//      if ( header.id == R.id.general_settings_in_admin_mode ) {
+//        // TODO: change to challenge for admin password and then
+//        // TODO: launch the general settings in admin mode.
+//        Intent intent = new Intent(this, AdminPasswordChallengeActivity.class);
+//        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+//            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+//        header.intent = intent;
+//      }
+//
+//      if ( header.id == R.id.clear_configuration_settingss ) {
+//        Intent intent = new Intent(this, ClearAppPropertiesActivity.class);
+//        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+//            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+//        header.intent = intent;
+//      }
+//
+//      if ( header.id == R.id.verify_server_settingss ) {
+//        Intent intent = new Intent(this, VerifyServerSettingsActivity.class);
+//        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
+//                this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+//        header.intent = intent;
+//      }
+//
+//      if ( header.id == R.id.admin_password_status ) {
+//        if ( mAdminConfigured ) {
+//          header.titleRes = R.string.change_admin_password;
+//          header.summaryRes = R.string.admin_password_enabled;
+//        } else {
+//          header.titleRes = R.string.enable_admin_password;
+//          header.summaryRes = R.string.admin_password_disabled;
+//        }
+//      }
+//      if ( header.fragmentArguments != null ) {
+//        header.fragmentArguments.putString(IntentConsts.INTENT_KEY_APP_NAME,
+//            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
+//        if ( mAdminMode ) {
+//          header.fragmentArguments.putBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE,
+//              true);
+//        } else {
+//          header.fragmentArguments.remove(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE);
+//        }
+//      }
+//    }
+//  }
 
   public PropertiesSingleton getProps() {
     return mProps;
@@ -178,11 +179,11 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     mAdminMode =
         this.getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, false);
 
-    this.getActionBar().setTitle(
-        getString((mAdminMode ?
-            R.string.action_bar_general_settings_admin_mode :
-            R.string.action_bar_general_settings),
-            mAppName));
+//    this.getActionBar().setTitle(
+//        getString((mAdminMode ?
+//            R.string.action_bar_general_settings_admin_mode :
+//            R.string.action_bar_general_settings),
+//            mAppName));
 
     super.onCreate(savedInstanceState);
   }
@@ -218,19 +219,32 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     }
 
     if ( shouldInvalidateHeaders ) {
-      invalidateHeaders();
+//      invalidateHeaders();
     }
   }
 
+//  @Override
+//  public Intent onBuildStartFragmentIntent(String fragmentName, Bundle args,
+//      @StringRes int titleRes, int shortTitleRes) {
+//    Intent toLaunch = super.onBuildStartFragmentIntent(fragmentName, args, titleRes, shortTitleRes);
+//    toLaunch.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+//    if ( mAdminMode ) {
+//      toLaunch.putExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, mAdminMode);
+//    }
+//    return toLaunch;
+//  }
+
   @Override
-  public Intent onBuildStartFragmentIntent(String fragmentName, Bundle args,
-      @StringRes int titleRes, int shortTitleRes) {
-    Intent toLaunch = super.onBuildStartFragmentIntent(fragmentName, args, titleRes, shortTitleRes);
-    toLaunch.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-    if ( mAdminMode ) {
-      toLaunch.putExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, mAdminMode);
-    }
-    return toLaunch;
+  public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+//    Intent toLaunch = pref.getIntent().putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+//
+//    if (mAdminMode) {
+//      toLaunch.putExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, mAdminMode);
+//    }
+//
+//    pref.setIntent();
+
+    return false;
   }
 
   @Override
@@ -288,17 +302,17 @@ public class AppPropertiesActivity extends PreferenceActivity implements IOdkApp
     return mAppName;
   }
 
-  @Override
-  public void onHeaderClick(Header header, int position) {
-    super.onHeaderClick(header, position);
-    if (header.id == R.id.open_documentation) {
-      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.opendatakit_url)));
-      if (browserIntent.resolveActivity(getPackageManager()) != null) {
-        startActivity(browserIntent);
-      } else {
-        Intent i = new Intent(this, DocumentationWebViewActivity.class);
-        startActivity(i);
-      }
-    }
-  }
+//  @Override
+//  public void onHeaderClick(Header header, int position) {
+//    super.onHeaderClick(header, position);
+//    if (header.id == R.id.open_documentation) {
+//      Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.opendatakit_url)));
+//      if (browserIntent.resolveActivity(getPackageManager()) != null) {
+//        startActivity(browserIntent);
+//      } else {
+//        Intent i = new Intent(this, DocumentationWebViewActivity.class);
+//        startActivity(i);
+//      }
+//    }
+//  }
 }

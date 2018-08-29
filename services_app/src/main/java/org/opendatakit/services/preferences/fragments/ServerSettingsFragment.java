@@ -81,8 +81,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   };
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey){
-
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
 
     String appName = null;
     FragmentActivity activity = getActivity();
@@ -98,6 +97,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     healthValidator = new TableHealthValidator(appName, getActivity());
 
     addPreferencesFromResource(R.xml.server_preferences);
+//    addPreferencesFromResource();
 
     // not super safe, but we're just putting in this mode to help
     // administrate
@@ -133,8 +133,8 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
 
     mServerUrlPreference.setSummary(mServerUrlPreference.getText());
-    mServerUrlPreference.getEditText().setFilters(
-        new InputFilter[] { getReturnFilter() });
+//    mServerUrlPreference.getEditText().setFilters(
+//        new InputFilter[] { getReturnFilter() });
 
     mServerUrlPreference.setEnabled(serverAvailable || adminMode);
 
@@ -173,7 +173,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     mUsernamePreference.setOnPreferenceChangeListener(this);
 
-    mUsernamePreference.getEditText().setFilters(new InputFilter[] { getReturnFilter() });
+//    mUsernamePreference.getEditText().setFilters(new InputFilter[] { getReturnFilter() });
 
     usernamePasswordAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USERNAME_PASSWORD);
@@ -424,7 +424,8 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   }
 
   private void openBarcodeScanner() {
-    IntentIntegrator.forFragment(this)
+    IntentIntegrator
+        .forSupportFragment(this)
         .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES)
         .setPrompt(getString(R.string.qr_code_scanner_instruction))
         .setCameraId(0)
