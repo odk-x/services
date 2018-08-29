@@ -394,13 +394,13 @@ public class SubmissionProvider extends ContentProvider {
                   String value = CursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
                       ISO8601_DATE_ONLY_FORMAT, Locale.US)).format(new Date(TableConstants
-                      .milliSecondsFromNanos(value)));
+                      .milliSecondsFromNanos(value, Locale.ROOT)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("dateTime")) {
                   String value = CursorUtils.getIndexAsString(c, i);
                   String jrDatestamp = (value == null) ? null : (new SimpleDateFormat(
                       ISO8601_DATE_FORMAT, Locale.US)).format(new Date(TableConstants
-                      .milliSecondsFromNanos(value)));
+                      .milliSecondsFromNanos(value, Locale.ROOT)));
                   putElementValue(values, defn, jrDatestamp);
                 } else if (type.getElementType().equals("time")) {
                   String value = CursorUtils.getIndexAsString(c, i);
@@ -517,7 +517,7 @@ public class SubmissionProvider extends ContentProvider {
               }
 
               datestamp = (new SimpleDateFormat(ISO8601_DATE_FORMAT, Locale.US))
-                  .format(new Date(TableConstants.milliSecondsFromNanos(savepointTimestamp)));
+                  .format(new Date(TableConstants.milliSecondsFromNanos(savepointTimestamp, Locale.ROOT)));
 
               // For XML, we traverse the map to serialize it
               DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

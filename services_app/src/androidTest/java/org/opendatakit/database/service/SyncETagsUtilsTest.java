@@ -13,6 +13,8 @@ import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.SyncETagColumns;
 
+import java.util.Locale;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
@@ -323,7 +325,7 @@ import static org.junit.Assert.fail;
          row = result.getRowAtIndex(0);
          assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
          assertEquals(row.getRawStringByKey(SyncETagColumns.LAST_MODIFIED_TIMESTAMP),
-             TableConstants.nanoSecondsFromMillis(7L));
+             TableConstants.nanoSecondsFromMillis(7L, Locale.ROOT));
 
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());

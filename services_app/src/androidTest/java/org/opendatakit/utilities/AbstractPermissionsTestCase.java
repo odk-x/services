@@ -459,7 +459,7 @@ public class AbstractPermissionsTestCase {
     ContentValues cvValues = buildUnprivilegedInsertableRowContent(tableId);
 
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis
-        (System.currentTimeMillis()));
+        (System.currentTimeMillis(), Locale.ROOT));
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
 
@@ -525,7 +525,7 @@ public class AbstractPermissionsTestCase {
     cvValues.putNull(DataTableColumns.CONFLICT_TYPE);
 
     cvValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis
-        (System.currentTimeMillis()));
+        (System.currentTimeMillis(), Locale.ROOT));
     cvValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     cvValues.put(DataTableColumns.SAVEPOINT_CREATOR, adminUser);
 
@@ -985,7 +985,7 @@ public class AbstractPermissionsTestCase {
     // have different status for form and savepoint info
     serverValues.put(DataTableColumns.FORM_ID, "a_different_server_form");
     serverValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis
-        (System.currentTimeMillis() - 864000000L));
+        (System.currentTimeMillis() - 864000000L, Locale.ROOT));
     serverValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
     serverValues.put(DataTableColumns.SAVEPOINT_CREATOR, "server@gmail.com");
 

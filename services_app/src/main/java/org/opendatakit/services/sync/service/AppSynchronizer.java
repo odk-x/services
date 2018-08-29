@@ -20,12 +20,14 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.service.exceptions.AccessDeniedException;
 import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
 import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;
 import org.opendatakit.services.sync.service.logic.ProcessRowDataOrchestrateChanges;
 import org.opendatakit.services.sync.service.logic.Synchronizer;
+import org.opendatakit.services.sync.service.logic.SynchronizerFactory;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -288,9 +290,7 @@ public class AppSynchronizer {
         sharedContext = new SyncExecutionContext(context, versionCodeString,
                                                   appName, syncProgressTracker, syncResult);
 
-        Synchronizer synchronizer = new AggregateSynchronizer(sharedContext);
-
-        sharedContext.setSynchronizer(synchronizer);
+        sharedContext.setSynchronizer(SynchronizerFactory.create(sharedContext));
 
         ProcessAppAndTableLevelChanges appAndTableLevelProcessor = new ProcessAppAndTableLevelChanges(
                 sharedContext);
@@ -330,7 +330,7 @@ public class AppSynchronizer {
             }
           }
         }
-      } catch (InvalidAuthTokenException e) {
+      } catch (AccessDeniedException e) {
         syncResult.setAppLevelSyncOutcome(SyncOutcome.ACCESS_DENIED_REAUTH_EXCEPTION);
         WebLogger.getLogger(appName)
                 .e(TAG, "Abandoning data row update -- app-level sync was not successful!");
@@ -451,7 +451,7 @@ public class AppSynchronizer {
         }
       }
 
-    } catch (InvalidAuthTokenException e) {
+    } catch (AccessDeniedException e) {
       syncResult.setAppLevelSyncOutcome(SyncOutcome.ACCESS_DENIED_REAUTH_EXCEPTION);
       WebLogger.getLogger(appName)
               .e(TAG, "Abandoning data row update -- app-level sync was not successful!");

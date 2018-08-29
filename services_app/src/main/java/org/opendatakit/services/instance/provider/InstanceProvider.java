@@ -702,7 +702,7 @@ public class InstanceProvider extends ContentProvider {
       if (cv.containsKey(InstanceColumns.XML_PUBLISH_STATUS)) {
         Date xmlPublishDate = new Date();
         cv.put(InstanceColumns.XML_PUBLISH_TIMESTAMP,
-            TableConstants.nanoSecondsFromMillis(xmlPublishDate.getTime()));
+            TableConstants.nanoSecondsFromMillis(xmlPublishDate.getTime(), Locale.ROOT));
         String xmlPublishStatus = cv.getAsString(InstanceColumns.XML_PUBLISH_STATUS);
         if (!cv.containsKey(InstanceColumns.DISPLAY_SUBTEXT)) {
           String text = getDisplaySubtext(xmlPublishStatus, xmlPublishDate);

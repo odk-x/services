@@ -58,7 +58,6 @@ import org.opendatakit.services.sync.service.exceptions.BadClientConfigException
 import org.opendatakit.services.sync.service.exceptions.ClientDetectedVersionMismatchedServerResponseException;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.services.sync.service.exceptions.InternalServerFailureException;
-import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.services.sync.service.exceptions.NetworkTransmissionException;
 import org.opendatakit.services.sync.service.exceptions.NotOpenDataKitServerException;
 import org.opendatakit.services.sync.service.exceptions.ServerDetectedVersionMismatchedClientRequestException;
@@ -656,8 +655,7 @@ public class HttpRestProtocolWrapper {
   }
 
 
-  public HttpRestProtocolWrapper(SyncExecutionContext sc) throws
-      InvalidAuthTokenException {
+  public HttpRestProtocolWrapper(SyncExecutionContext sc) {
     this.sc = sc;
     this.log = WebLogger.getLogger(sc.getAppName());
     log.e(LOGTAG, "AggregateUri:" + sc.getAggregateUri());
