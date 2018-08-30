@@ -16,36 +16,47 @@ package org.opendatakit.services.preferences.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
-import android.support.annotation.StringRes;
-import android.support.v4.app.FragmentActivity;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceScreen;
+import android.util.Log;
 
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.services.preferences.PreferenceViewModel;
+import org.opendatakit.services.preferences.fragments.AdminConfigurableDeviceSettingsFragment;
+import org.opendatakit.services.preferences.fragments.AdminConfigurableServerSettingsFragment;
+import org.opendatakit.services.preferences.fragments.AdminConfigurableTablesSettingsFragment;
+import org.opendatakit.services.preferences.fragments.AdminPasswordChallengeFragment;
+import org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment;
+import org.opendatakit.services.preferences.fragments.DeviceSettingsFragment;
+import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
+import org.opendatakit.services.preferences.fragments.SettingsFragment;
+import org.opendatakit.services.preferences.fragments.TablesSettingsFragment;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.utilities.ODKFileUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * App-level settings activity.  Used across all tools.
  *
  * @author mitchellsundt@gmail.com
  */
-public class AppPropertiesActivity extends FragmentActivity implements
+public class AppPropertiesActivity extends AppCompatActivity implements
     IOdkAppPropertiesActivity,
-    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+    IAppAwareActivity,
+    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
+    PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
 
   private static final String t = "AppPropertiesActivity";
 
@@ -114,7 +125,7 @@ public class AppPropertiesActivity extends FragmentActivity implements
 //      if ( header.id == R.id.general_settings_in_admin_mode ) {
 //        // TODO: change to challenge for admin password and then
 //        // TODO: launch the general settings in admin mode.
-//        Intent intent = new Intent(this, AdminPasswordChallengeActivity.class);
+//        Intent intent = new Intent(this, AdminPasswordChallengeFragment.class);
 //        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME,
 //            this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME));
 //        header.intent = intent;
@@ -162,6 +173,9 @@ public class AppPropertiesActivity extends FragmentActivity implements
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.activity_app_properties);
 
     mAppName = this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null || mAppName.length() == 0) {
@@ -180,13 +194,31 @@ public class AppPropertiesActivity extends FragmentActivity implements
     mAdminMode =
         this.getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, false);
 
-    this.getActionBar().setTitle(
-        getString((mAdminMode ?
-            R.string.action_bar_general_settings_admin_mode :
-            R.string.action_bar_general_settings),
-            mAppName));
+    PreferenceViewModel preferenceViewModel = ViewModelProviders
+        .of(this)
+        .get(PreferenceViewModel.class);
 
-    super.onCreate(savedInstanceState);
+    preferenceViewModel.setAdminConfigured(mAdminConfigured);
+    preferenceViewModel.setAdminMode(mAdminMode);
+    preferenceViewModel.setAdminRestrictions(false); // TODO: check this
+
+    preferenceViewModel.getAdminMode().observe(this, new Observer<Boolean>() {
+      @Override
+      public void onChanged(@Nullable Boolean aBoolean) {
+        int titleResId = mAdminMode ?
+            R.string.action_bar_general_settings_admin_mode :
+            R.string.action_bar_general_settings;
+
+        getSupportActionBar().setTitle(getString(titleResId, mAppName));
+      }
+    });
+
+    if (savedInstanceState == null) {
+      getSupportFragmentManager()
+          .beginTransaction()
+          .replace(R.id.app_properties_content, new SettingsFragment())
+          .commit();
+    }
   }
 
   @Override protected void onResume() {
@@ -244,6 +276,46 @@ public class AppPropertiesActivity extends FragmentActivity implements
 //    }
 //
 //    pref.setIntent();
+
+    Log.e(t, "onPreferenceStartFragment: " + pref.getFragment());
+
+    Fragment prefFragment;
+
+    if (pref.getFragment().equals(ServerSettingsFragment.class.getName())) {
+      prefFragment = new ServerSettingsFragment();
+    } else if (pref.getFragment().equals(DeviceSettingsFragment.class.getName())) {
+      prefFragment = new DeviceSettingsFragment();
+    } else if (pref.getFragment().equals(TablesSettingsFragment.class.getName())) {
+      prefFragment = new TablesSettingsFragment();
+    } else if (pref.getFragment().equals(AdminPasswordSettingsFragment.class.getName())) {
+      prefFragment = new AdminPasswordSettingsFragment();
+    } else if (pref.getFragment().equals(AdminConfigurableServerSettingsFragment.class.getName())) {
+      prefFragment = new AdminConfigurableServerSettingsFragment();
+    } else if (pref.getFragment().equals(AdminConfigurableDeviceSettingsFragment.class.getName())) {
+      prefFragment = new AdminConfigurableDeviceSettingsFragment();
+    } else if (pref.getFragment().equals(AdminConfigurableTablesSettingsFragment.class.getName())) {
+      prefFragment = new AdminConfigurableTablesSettingsFragment();
+    } else if (pref.getFragment().equals(AdminPasswordChallengeFragment.class.getName())) {
+      prefFragment = new AdminPasswordChallengeFragment();
+    } else {
+      // unrecognized fragment
+      return false;
+    }
+
+    getSupportFragmentManager()
+        .beginTransaction()
+        .replace(R.id.app_properties_content, prefFragment)
+        .addToBackStack(null)
+        .commit();
+
+    return true;
+  }
+
+  @Override
+  public boolean onPreferenceStartScreen(PreferenceFragmentCompat caller, PreferenceScreen pref) {
+    if (pref.getIntent() != null) {
+      pref.getIntent().putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+    }
 
     return false;
   }

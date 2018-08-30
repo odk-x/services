@@ -16,21 +16,21 @@ package org.opendatakit.services.preferences.fragments;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.FragmentActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
 import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.annotation.NonNull;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.util.Log;
@@ -84,7 +84,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
 
     String appName = null;
-    FragmentActivity activity = getActivity();
+    FragmentActivity activity = requireActivity();
     if(activity instanceof AppPropertiesActivity) {
       AppPropertiesActivity appPropAct = (AppPropertiesActivity) activity;
       appName = appPropAct.getAppName();
@@ -96,8 +96,8 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     healthValidator = new TableHealthValidator(appName, getActivity());
 
-    addPreferencesFromResource(R.xml.server_preferences);
-//    addPreferencesFromResource();
+//    setPreferencesFromResource(R.xml.server_preferences, rootKey);
+    setPreferencesFromResource(R.xml.server_preferences, rootKey);
 
     // not super safe, but we're just putting in this mode to help
     // administrate
@@ -209,7 +209,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     healthValidator.verifyTableHealth();
     setHasOptionsMenu(true);
   }
-
 
   public boolean urlPreferenceChanged(Preference preference, Object newValue){
     String url = newValue.toString();

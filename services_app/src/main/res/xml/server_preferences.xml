@@ -1,7 +1,7 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 	<PreferenceCategory android:key="group.common.server" android:title="@string/server">
-		<EditTextPreference
+		<android.support.v7.preference.EditTextPreference
 			android:id="@+id/server_url"
 			android:key="common.sync_server_url"
 			android:defaultValue="@string/default_sync_server_url"
