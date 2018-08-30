@@ -14,7 +14,7 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PreferenceViewModel;
 import org.opendatakit.services.preferences.activities.DocumentationWebViewActivity;
 
-public class SettingsFragment extends PreferenceFragmentCompat {
+public class SettingsMenuFragment extends PreferenceFragmentCompat {
   private static final int[] PREF_TO_SET_INTENT_APP_NAME = {
       R.string.key_reset_config,
       R.string.key_verify_settings
@@ -24,7 +24,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-    setPreferencesFromResource(R.xml.general_preferences, rootKey);
+    setPreferencesFromResource(R.xml.preferences_menu, rootKey);
 
     findPreference(getString(R.string.key_documentation))
         .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

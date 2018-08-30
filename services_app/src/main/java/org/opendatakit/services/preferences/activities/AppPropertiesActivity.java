@@ -39,7 +39,7 @@ import org.opendatakit.services.preferences.fragments.AdminPasswordChallengeFrag
 import org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment;
 import org.opendatakit.services.preferences.fragments.DeviceSettingsFragment;
 import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
-import org.opendatakit.services.preferences.fragments.SettingsFragment;
+import org.opendatakit.services.preferences.fragments.SettingsMenuFragment;
 import org.opendatakit.services.preferences.fragments.TablesSettingsFragment;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -110,7 +110,7 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     if (savedInstanceState == null) {
       getSupportFragmentManager()
           .beginTransaction()
-          .replace(R.id.app_properties_content, new SettingsFragment())
+          .replace(R.id.app_properties_content, new SettingsMenuFragment())
           .commit();
     }
   }
