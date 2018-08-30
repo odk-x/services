@@ -22,6 +22,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,7 +42,7 @@ import org.opendatakit.services.database.AndroidConnectFactory;
  * @author mitchellsundt@gmail.com
  *
  */
-public class CheckpointResolutionActivity extends FragmentActivity implements IAppAwareActivity {
+public class CheckpointResolutionActivity extends AppCompatActivity implements IAppAwareActivity {
 
   private static final String TAG = CheckpointResolutionActivity.class.getSimpleName();
 

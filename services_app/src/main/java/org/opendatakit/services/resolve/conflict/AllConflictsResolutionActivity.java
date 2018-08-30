@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.support.v4.content.Loader;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,7 +51,7 @@ import java.util.ArrayList;
  *
  * @author mitchellsundt@gmail.com
  */
-public class AllConflictsResolutionActivity extends FragmentActivity implements IAppAwareActivity,
+public class AllConflictsResolutionActivity extends AppCompatActivity implements IAppAwareActivity,
         LoaderManager.LoaderCallbacks<ArrayList<String>> {
 
     private static final String TAG = AllConflictsResolutionActivity.class.getSimpleName();
