@@ -82,10 +82,12 @@ public class SyncActivity extends AbsSyncBaseActivity {
               .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {
                   mDialog.dismiss();
-                  Intent intent = new Intent( SyncActivity.this, AppPropertiesActivity.class );
-                  intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
-                  intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-                  startActivity(intent);
+
+                  getSupportFragmentManager()
+                      .beginTransaction()
+                      .replace(R.id.sync_activity_view, new ServerSettingsFragment())
+                      .addToBackStack(null)
+                      .commit();
                 }
               })
               .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {

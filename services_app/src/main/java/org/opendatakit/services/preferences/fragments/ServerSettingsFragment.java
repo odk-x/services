@@ -31,8 +31,6 @@ import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
 import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.text.InputFilter;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -44,13 +42,13 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
-import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.utilities.TableHealthValidator;
 
@@ -69,7 +67,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   private EditTextPreference mServerUrlPreference;
   private ListPreference mSignOnCredentialPreference;
   private EditTextPreference mUsernamePreference;
-  private ListPreference mSelectedGoogleAccountPreference;
   private TableHealthValidator healthValidator;
   private final int PERMISSION_REQUEST_CAMERA_CODE = 1;
   private boolean adminMode;
@@ -79,6 +76,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   protected static final String[] CAMERA_PERMISSION = new String[] {
           Manifest.permission.CAMERA
   };
+
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey){
     setPreferencesFromResource(R.xml.server_preferences, rootKey);
@@ -88,12 +86,19 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    setHasOptionsMenu(true);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
 
     String appName = null;
     FragmentActivity activity = requireActivity();
-    if(activity instanceof AppPropertiesActivity) {
-      AppPropertiesActivity appPropAct = (AppPropertiesActivity) activity;
+    if(activity instanceof IAppAwareActivity) {
+      IAppAwareActivity appPropAct = (IAppAwareActivity) activity;
       appName = appPropAct.getAppName();
     }
 
@@ -102,8 +107,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     }
 
     healthValidator = new TableHealthValidator(appName, getActivity());
-
-//    setPreferencesFromResource(R.xml.server_preferences, rootKey);
 
     // not super safe, but we're just putting in this mode to help
     // administrate
@@ -139,8 +142,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
 
     mServerUrlPreference.setSummary(mServerUrlPreference.getText());
-//    mServerUrlPreference.getEditText().setFilters(
-//        new InputFilter[] { getReturnFilter() });
 
     mServerUrlPreference.setEnabled(serverAvailable || adminMode);
 
@@ -179,8 +180,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     mUsernamePreference.setOnPreferenceChangeListener(this);
 
-//    mUsernamePreference.getEditText().setFilters(new InputFilter[] { getReturnFilter() });
-
     usernamePasswordAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USERNAME_PASSWORD);
 
@@ -198,6 +197,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
         if (prev != null) {
           ft.remove(prev);
         }
+        ft.commit();
 
         // Create and show the dialog.
         PasswordDialogFragment newFragment = PasswordDialogFragment.newPasswordDialog(CommonToolProperties.KEY_PASSWORD);
@@ -213,7 +213,6 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     }
 
     healthValidator.verifyTableHealth();
-    setHasOptionsMenu(true);
   }
 
   public boolean urlPreferenceChanged(Preference preference, Object newValue){
@@ -259,10 +258,12 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     return true;
   }
+
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.server_settings_action_menu, menu);
   }
+
   private void updatePropertiesSingleton(String key, String value){
     PropertiesSingleton props =
             ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
@@ -273,55 +274,20 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     properties.put(CommonToolProperties.KEY_USERS_LIST, "");
     props.setProperties(properties);
   }
-  /**
-   * Disallows whitespace from user entry
-   *
-   * @return
-   */
-  private InputFilter getWhitespaceFilter() {
-    InputFilter whitespaceFilter = new InputFilter() {
-      public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart,
-          int dend) {
-        for (int i = start; i < end; i++) {
-          if (Character.isWhitespace(source.charAt(i))) {
-            return "";
-          }
-        }
-        return null;
-      }
-    };
-    return whitespaceFilter;
-  }
-
-  /**
-   * Disallows carriage returns from user entry
-   *
-   * @return
-   */
-  private InputFilter getReturnFilter() {
-    InputFilter returnFilter = new InputFilter() {
-      public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart,
-          int dend) {
-        for (int i = start; i < end; i++) {
-          if (Character.getType((source.charAt(i))) == Character.CONTROL) {
-            return "";
-          }
-        }
-        return null;
-      }
-    };
-    return returnFilter;
-  }
 
   /**
    * Generic listener that sets the summary to the newly selected/entered value
    */
   @Override
   public boolean onPreferenceChange(Preference preference, Object newValue) {
+    // remove whitespace
+    String newStr = newValue.toString();
+    newStr = newStr.replaceAll("\\r\\n|\\n|\\r", newStr);
+
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
     preference.setSummary((CharSequence) newValue);
     if ( props.containsKey(preference.getKey())) {
-      updatePropertiesSingleton(preference.getKey(), newValue.toString());
+      updatePropertiesSingleton(preference.getKey(), newStr);
     } else {
       throw new IllegalStateException("Unexpected case");
     }

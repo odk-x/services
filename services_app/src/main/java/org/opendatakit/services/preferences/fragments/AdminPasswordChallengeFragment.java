@@ -14,9 +14,7 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.app.Activity;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,9 +28,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PreferenceViewModel;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -58,14 +54,6 @@ public class AdminPasswordChallengeFragment extends Fragment {
       } else {
          mAppName = appName;
       }
-//      boolean mAdminConfigured = (adminPwd != null && adminPwd.length() != 0);
-
-//      if ( !mAdminConfigured ) {
-//         Intent intent = new Intent(this, AppPropertiesActivity.class );
-//         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-//         startActivityForResult(intent, APP_PROPERTIES_RESULT_CODE);
-//         return;
-//      }
 
       preferenceViewModel = ViewModelProviders
           .of(requireActivity())

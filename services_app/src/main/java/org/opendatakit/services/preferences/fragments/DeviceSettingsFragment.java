@@ -29,6 +29,8 @@ import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceScreen;
 import android.provider.MediaStore;
 import android.widget.Toast;
+
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
@@ -59,15 +61,19 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
 
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey)  {
+    setPreferencesFromResource(R.xml.device_preferences, rootKey);
+  }
 
-    mAppName = this.getActivity().getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    mAppName = ((IAppAwareActivity) requireActivity()).getAppName();
     if (mAppName == null || mAppName.length() == 0) {
       mAppName = ODKFileUtils.getOdkDefaultAppName();
     }
 
     PropertiesSingleton props = CommonToolProperties.get(this.getActivity(), mAppName);
-
-    addPreferencesFromResource(R.xml.device_preferences);
 
     // not super safe, but we're just putting in this mode to help
     // administrate

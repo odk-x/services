@@ -30,6 +30,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -55,7 +56,7 @@ import org.opendatakit.utilities.ODKFileUtils;
  * Created by jbeorse on 5/31/17.
  */
 
-public abstract class AbsSyncBaseActivity extends FragmentActivity
+public abstract class AbsSyncBaseActivity extends AppCompatActivity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 

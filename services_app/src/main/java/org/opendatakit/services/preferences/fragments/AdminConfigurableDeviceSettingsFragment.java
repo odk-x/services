@@ -14,70 +14,11 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.os.Bundle;
-import android.support.v7.preference.CheckBoxPreference;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.Preference.OnPreferenceChangeListener;
-import android.support.v7.preference.PreferenceCategory;
-import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.preference.PreferenceGroup;
-import android.support.v7.preference.PreferenceScreen;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 
-import java.util.Collections;
-
-public class AdminConfigurableDeviceSettingsFragment extends PreferenceFragmentCompat implements
-    OnPreferenceChangeListener {
-
+public class AdminConfigurableDeviceSettingsFragment extends AbsAdminConfigurableSettingsFragment {
   @Override
-  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-    addPreferencesFromResource(R.xml.admin_configurable_device_preferences);
-
-    PreferenceScreen prefScreen = this.getPreferenceScreen();
-
-    initializeCheckBoxPreference(prefScreen);
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
-
-  protected void initializeCheckBoxPreference(PreferenceGroup prefGroup) {
-
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    for ( int i = 0; i < prefGroup.getPreferenceCount(); i++ ) {
-      Preference pref = prefGroup.getPreference(i);
-      Class c = pref.getClass();
-      if (c == CheckBoxPreference.class) {
-        CheckBoxPreference checkBoxPref = (CheckBoxPreference)pref;
-        if (props.containsKey(checkBoxPref.getKey())) {
-          String checked = props.getProperty(checkBoxPref.getKey());
-          if (checked.equals("true")) {
-            checkBoxPref.setChecked(true);
-          } else {
-            checkBoxPref.setChecked(false);
-          }
-        }
-        // Set the listener
-        checkBoxPref.setOnPreferenceChangeListener(this);
-      } else if (c == PreferenceCategory.class) {
-        // Find CheckBoxPreferences in this category
-        PreferenceCategory prefCat = (PreferenceCategory)pref;
-        initializeCheckBoxPreference(prefCat);
-      }
-    }
-  }
-
-  /**
-   * Generic listener that sets the summary to the newly selected/entered value
-   */
-  @Override
-  public boolean onPreferenceChange(Preference preference, Object newValue) {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    props.setProperties(Collections.singletonMap(preference.getKey(), newValue.toString()));
-    return true;
+  protected int getPreferencesResId() {
+    return R.xml.admin_configurable_device_preferences;
   }
 }

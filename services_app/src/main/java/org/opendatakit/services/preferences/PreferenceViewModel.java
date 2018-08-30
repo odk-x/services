@@ -6,7 +6,6 @@ import android.arch.lifecycle.ViewModel;
 public class PreferenceViewModel extends ViewModel {
   private MutableLiveData<Boolean> adminConfigured;
   private MutableLiveData<Boolean> adminMode;
-  private MutableLiveData<Boolean> adminRestrictions;
 
   public MutableLiveData<Boolean> getAdminConfigured() {
     if (adminConfigured == null) {
@@ -30,17 +29,5 @@ public class PreferenceViewModel extends ViewModel {
 
   public void setAdminMode(boolean adminMode) {
     getAdminMode().postValue(adminMode);
-  }
-
-  public MutableLiveData<Boolean> getAdminRestrictions() {
-    if (adminRestrictions == null) {
-      adminRestrictions = new MutableLiveData<>();
-    }
-
-    return adminRestrictions;
-  }
-
-  public void setAdminRestrictions(boolean adminRestrictions) {
-    getAdminRestrictions().postValue(adminRestrictions);
   }
 }

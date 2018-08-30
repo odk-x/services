@@ -17,12 +17,11 @@ package org.opendatakit.services.preferences.fragments;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
 import android.support.v7.preference.PreferenceFragmentCompat;
-import android.util.Log;
 
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -39,7 +38,6 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
 
   private static final String t = "AdminPasswordSettingsFragment";
 
-  private EditTextPreference mAdminPasswordPreference;
   private PreferenceViewModel preferenceViewModel;
 
   @Override
@@ -50,11 +48,14 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
         .GROUPING_PASSWORD_SCREEN);
     passwordScreen.setCallback(new PasswordPreferenceScreen.PasswordActionCallback() {
       @Override public void showPasswordDialog() {
+        FragmentManager fragmentManager = requireFragmentManager();
+
         // DialogFragment.show() will take care of adding the fragment
         // in a transaction.  We also want to remove any currently showing
         // dialog, so make our own transaction and take care of that here.
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+        FragmentTransaction ft = fragmentManager.beginTransaction();
+        Fragment prev = fragmentManager
+            .findFragmentByTag(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
         if (prev != null) {
           ft.remove(prev);
         }
@@ -65,7 +66,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
             .newPasswordDialog(CommonToolProperties.KEY_ADMIN_PW);
 
         newFragment.setOnChangePasswordCallback(AdminPasswordSettingsFragment.this);
-        newFragment.show(requireFragmentManager(), CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+        newFragment.show(fragmentManager, CommonToolProperties.GROUPING_PASSWORD_SCREEN);
       }
     });
   }
