@@ -81,6 +81,13 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   };
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey){
+    setPreferencesFromResource(R.xml.server_preferences, rootKey);
+  }
+
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
 
     String appName = null;
@@ -97,14 +104,13 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     healthValidator = new TableHealthValidator(appName, getActivity());
 
 //    setPreferencesFromResource(R.xml.server_preferences, rootKey);
-    setPreferencesFromResource(R.xml.server_preferences, rootKey);
 
     // not super safe, but we're just putting in this mode to help
     // administrate
     // would require code to access it
     adminMode = (this.getArguments() == null) ? false :
         (this.getArguments().containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) ?
-           this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
+            this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
 
     String adminPwd = props.getProperty(CommonToolProperties.KEY_ADMIN_PW);
     boolean adminConfigured = (adminPwd != null && adminPwd.length() != 0);
@@ -123,13 +129,13 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     }
 
     mServerUrlPreference
-            .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-              @Override
-              public boolean onPreferenceChange(Preference preference,
-                                                Object newValue) {
-                return urlPreferenceChanged(preference,newValue);
-              }
-            });
+        .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+          @Override
+          public boolean onPreferenceChange(Preference preference,
+                                            Object newValue) {
+            return urlPreferenceChanged(preference,newValue);
+          }
+        });
 
 
     mServerUrlPreference.setSummary(mServerUrlPreference.getText());
@@ -157,7 +163,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-       return signOnPreferenceChanged(preference,newValue);
+        return signOnPreferenceChanged(preference,newValue);
       }
     });
 

@@ -14,7 +14,10 @@
 
 package org.opendatakit.services.preferences.fragments;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
@@ -24,6 +27,7 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
+import org.opendatakit.services.preferences.PreferenceViewModel;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 
 import java.util.Collections;
@@ -31,42 +35,29 @@ import java.util.Collections;
 public class TablesSettingsFragment extends PreferenceFragmentCompat {
 
   private static final String t = "DeviceSettingsFragment";
-
-  private CheckBoxPreference mUseHomeScreenPreference;
+  private PreferenceViewModel preferenceViewModel;
 
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    setPreferencesFromResource(R.xml.tool_tables_preferences, rootKey);
+  }
 
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-    addPreferencesFromResource(R.xml.tool_tables_preferences);
+    CheckBoxPreference useHomeScreenPreference =
+        (CheckBoxPreference) findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
 
-    // not super safe, but we're just putting in this mode to help
-    // administrate
-    // would require code to access it
-    boolean adminMode;
-    adminMode = (this.getArguments() == null) ? false :
-        (this.getArguments().containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) ?
-            this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
 
-    String adminPwd = props.getProperty(CommonToolProperties.KEY_ADMIN_PW);
-    boolean adminConfigured = (adminPwd != null && adminPwd.length() != 0);
-
-    PreferenceCategory deviceCategory = (PreferenceCategory) findPreference
-        (CommonToolProperties.GROUPING_TOOL_TABLES_CATEGORY);
-
-    Boolean useHomeScreen = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
-    useHomeScreen = (useHomeScreen == null) ? false : useHomeScreen;
-    boolean useHomeScreenAvailable = !adminConfigured || useHomeScreen;
-
-    mUseHomeScreenPreference = (CheckBoxPreference) findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
     if (props.containsKey(CommonToolProperties.KEY_USE_HOME_SCREEN)) {
-      boolean selection = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
-      mUseHomeScreenPreference.setChecked(selection);
+      useHomeScreenPreference
+          .setChecked(props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN));
     }
 
-    mUseHomeScreenPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
+    useHomeScreenPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         PropertiesSingleton props = ((IOdkAppPropertiesActivity)
@@ -76,10 +67,68 @@ public class TablesSettingsFragment extends PreferenceFragmentCompat {
       }
     });
 
-    mUseHomeScreenPreference.setEnabled(useHomeScreenAvailable || adminMode);
+    preferenceViewModel = ViewModelProviders
+        .of(requireActivity())
+        .get(PreferenceViewModel.class);
 
-    if ( !adminMode && (!useHomeScreenAvailable) ) {
-      deviceCategory.setTitle(R.string.tool_tables_restrictions_apply);
-    }
+    preferenceViewModel.getAdminMode().observe(this, new Observer<Boolean>() {
+      @Override
+      public void onChanged(Boolean adminMode) {
+        PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
+
+        Boolean useHomeScreen = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
+        useHomeScreen = useHomeScreen != null && useHomeScreen;
+
+        setPrefEnabled(adminMode || useHomeScreen);
+      }
+    });
+
+    preferenceViewModel.getAdminConfigured().observe(this, new Observer<Boolean>() {
+      @Override
+      public void onChanged(Boolean adminConfigured) {
+        PropertiesSingleton props = ((IOdkAppPropertiesActivity) requireActivity()).getProps();
+
+        Boolean useHomeScreen = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
+        useHomeScreen = useHomeScreen != null && useHomeScreen;
+
+//        if (adminConfigured) {
+//          if (adminMode) {
+//            setEnable
+//          } else {
+//            if (useHomeScreen) {
+//              setEnable
+//            } else {
+//              disable
+//            }
+//          }
+//        } else {
+//          setEnable
+//        }
+
+        setPrefEnabled(!adminConfigured || useHomeScreen);
+      }
+    });
+  }
+
+  private void setPrefEnabled(boolean enabled) {
+    CheckBoxPreference useHomeScreenPreference =
+        (CheckBoxPreference) findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
+    PreferenceCategory deviceCategory =
+        (PreferenceCategory) findPreference(CommonToolProperties.GROUPING_TOOL_TABLES_CATEGORY);
+
+    useHomeScreenPreference.setEnabled(enabled);
+
+    deviceCategory.setTitle(enabled ?
+        R.string.tool_tables_settings_summary :
+        R.string.tool_tables_restrictions_apply
+    );
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+
+    preferenceViewModel.getAdminMode().removeObservers(this);
+    preferenceViewModel.getAdminConfigured().removeObservers(this);
   }
 }
