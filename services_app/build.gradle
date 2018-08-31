@@ -27,6 +27,7 @@ android {
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
         testInstrumentationRunner(instrumentationRunner)
+        multiDexEnabled true
     }
 
     flavorDimensions "stage", "testing"
@@ -68,7 +69,7 @@ android {
     buildTypes {
         release {
             minifyEnabled(minify)
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
             if (shouldSign) {
                 signingConfig signingConfigs.release
@@ -115,8 +116,6 @@ allprojects {
 
 dependencies {
     implementation fileTree(include: '*.jar', dir: 'libs')
-    implementation 'com.android.support:support-annotations:27.1.1'
-    implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:preference-v7:27.1.1'
     implementation 'com.google.firebase:firebase-core:16.0.3'
@@ -124,6 +123,7 @@ dependencies {
         transitive = true;
     }
 
+    implementation 'com.android.support:multidex:1.0.3'
     implementation 'android.arch.lifecycle:extensions:1.1.1'
 
     implementation group: 'com.google.zxing', name: 'core', version: '3.3.0'
