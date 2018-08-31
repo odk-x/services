@@ -18,12 +18,14 @@ import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.test.rule.GrantPermissionRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.TestConsts;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -67,6 +69,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Permissions tests in the database.
  */
+@RunWith(AndroidJUnit4.class)
 public class AbstractPermissionsTestCase {
 
   public static final String SAVEPOINT_TIMESTAMP_LOCAL = "2016-10-07T00:11:59.893000000";

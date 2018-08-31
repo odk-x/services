@@ -70,7 +70,6 @@ import static org.junit.Assert.fail;
  * (be sure to update the server and login info in the setUp() method)
  */
 @RunWith(AndroidJUnit4.class)
-@Suppress
 public class AggregateSynchronizerTest {
 
   String agg_url;
