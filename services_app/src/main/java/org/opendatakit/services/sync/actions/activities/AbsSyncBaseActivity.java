@@ -176,6 +176,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
    }
 
    @Override public void onSaveInstanceState(Bundle outState) {
+      super.onSaveInstanceState(outState);
       outState.putBoolean("started", started);
    }
 
