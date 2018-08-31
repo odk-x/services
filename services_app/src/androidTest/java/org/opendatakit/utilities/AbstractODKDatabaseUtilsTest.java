@@ -19,10 +19,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.GrantPermissionRule;
+import android.support.test.runner.AndroidJUnit4;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
@@ -94,6 +96,7 @@ import static org.junit.Assert.fail;
  * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
  * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
  */
+
 public abstract class AbstractODKDatabaseUtilsTest {
 
   private static final String TAG = "AbstractODKDatabaseUtilsTest";

@@ -141,6 +141,7 @@ dependencies {
     }
 
     // Testing-only dependencies
+    androidTestImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation fileTree(include: '*.jar', dir: 'libs')

@@ -2,8 +2,10 @@ package org.opendatakit.database.service;
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.data.BaseTable;
@@ -24,6 +26,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@RunWith(AndroidJUnit4.class)
 public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
 
    private static final String LOCAL_ONLY_DB_TABLE_ID = "L_" + DB_TABLE_ID;

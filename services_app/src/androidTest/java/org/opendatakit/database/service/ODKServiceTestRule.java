@@ -30,9 +30,11 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.internal.util.Checks;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
 
 import java.util.concurrent.BlockingQueue;
@@ -41,6 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@RunWith(AndroidJUnit4.class)
 public class ODKServiceTestRule implements TestRule {
    private static final String TAG = "ODKServiceTestRule";
    private static final long DEFAULT_TIMEOUT = 5L; //seconds
