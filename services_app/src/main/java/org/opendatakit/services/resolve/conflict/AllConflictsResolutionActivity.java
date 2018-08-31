@@ -16,14 +16,16 @@
 package org.opendatakit.services.resolve.conflict;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.app.LoaderManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.LoaderManager;
 import android.content.Intent;
-import android.content.Loader;
+import android.support.v4.content.Loader;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,7 +51,7 @@ import java.util.ArrayList;
  *
  * @author mitchellsundt@gmail.com
  */
-public class AllConflictsResolutionActivity extends Activity implements IAppAwareActivity,
+public class AllConflictsResolutionActivity extends AppCompatActivity implements IAppAwareActivity,
         LoaderManager.LoaderCallbacks<ArrayList<String>> {
 
     private static final String TAG = AllConflictsResolutionActivity.class.getSimpleName();
@@ -103,7 +105,7 @@ public class AllConflictsResolutionActivity extends Activity implements IAppAwar
         }
         if ( mTableIdList == null ) {
             // TODO: do database call to get this
-            getLoaderManager().initLoader(FETCH_IN_CONFLICT_TABLE_IDS_LOADER, null, this);
+            getSupportLoaderManager().initLoader(FETCH_IN_CONFLICT_TABLE_IDS_LOADER, null, this);
         }
 
         launchResolveConflictsOnFirstTable();
@@ -147,7 +149,7 @@ public class AllConflictsResolutionActivity extends Activity implements IAppAwar
         }
         if (id == R.id.action_about) {
 
-            FragmentManager mgr = getFragmentManager();
+            FragmentManager mgr = getSupportFragmentManager();
             Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
             if ( newFragment == null ) {
                 newFragment = new AboutMenuFragment();

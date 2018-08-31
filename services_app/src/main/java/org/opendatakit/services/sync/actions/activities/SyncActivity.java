@@ -16,9 +16,9 @@
 package org.opendatakit.services.sync.actions.activities;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.preference.PreferenceActivity;
@@ -51,7 +51,7 @@ public class SyncActivity extends AbsSyncBaseActivity {
     firstLaunch();
     WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting SyncFragment");
 
-    FragmentManager mgr = getFragmentManager();
+    FragmentManager mgr = getSupportFragmentManager();
     String newFragmentName;
     Fragment newFragment;
 
@@ -82,10 +82,12 @@ public class SyncActivity extends AbsSyncBaseActivity {
               .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {
                   mDialog.dismiss();
-                  Intent intent = new Intent( SyncActivity.this, AppPropertiesActivity.class );
-                  intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, ServerSettingsFragment.class.getName() );
-                  intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-                  startActivity(intent);
+
+                  getSupportFragmentManager()
+                      .beginTransaction()
+                      .replace(R.id.sync_activity_view, new ServerSettingsFragment())
+                      .addToBackStack(null)
+                      .commit();
                 }
               })
               .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {

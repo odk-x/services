@@ -14,7 +14,7 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.app.DialogFragment;
+import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;

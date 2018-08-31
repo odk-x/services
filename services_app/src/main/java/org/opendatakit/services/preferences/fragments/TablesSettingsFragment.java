@@ -15,11 +15,11 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
+import android.support.v7.preference.CheckBoxPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceCategory;
+import android.support.v7.preference.PreferenceFragmentCompat;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -28,19 +28,23 @@ import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity
 
 import java.util.Collections;
 
-public class TablesSettingsFragment extends PreferenceFragment {
+public class TablesSettingsFragment extends PreferenceFragmentCompat {
 
   private static final String t = "DeviceSettingsFragment";
 
   private CheckBoxPreference mUseHomeScreenPreference;
+
+
+  @Override
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    setPreferencesFromResource(R.xml.tool_tables_preferences, rootKey);
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-
-    addPreferencesFromResource(R.xml.tool_tables_preferences);
 
     // not super safe, but we're just putting in this mode to help
     // administrate
@@ -66,7 +70,7 @@ public class TablesSettingsFragment extends PreferenceFragment {
       mUseHomeScreenPreference.setChecked(selection);
     }
 
-    mUseHomeScreenPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+    mUseHomeScreenPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {

@@ -18,9 +18,10 @@ package org.opendatakit.services.sync.actions.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentActivity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,6 +30,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,7 +56,7 @@ import org.opendatakit.utilities.ODKFileUtils;
  * Created by jbeorse on 5/31/17.
  */
 
-public abstract class AbsSyncBaseActivity extends Activity
+public abstract class AbsSyncBaseActivity extends AppCompatActivity
     implements IAppAwareActivity, IOdkAppPropertiesActivity, ISyncServiceInterfaceActivity,
     ServiceConnection {
 
@@ -174,6 +176,7 @@ public abstract class AbsSyncBaseActivity extends Activity
    }
 
    @Override public void onSaveInstanceState(Bundle outState) {
+      super.onSaveInstanceState(outState);
       outState.putBoolean("started", started);
    }
 
@@ -276,7 +279,7 @@ public abstract class AbsSyncBaseActivity extends Activity
 
       if (id == R.id.action_about) {
 
-         FragmentManager mgr = getFragmentManager();
+         FragmentManager mgr = getSupportFragmentManager();
          Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
          if ( newFragment == null ) {
             newFragment = new AboutMenuFragment();

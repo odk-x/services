@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+
+    <string name="key_admin_password">key_admin_password</string>
+    <string name="key_admin_server_settings">key_admin_server_settings</string>
+    <string name="key_admin_device_settings">key_admin_device_settings</string>
+    <string name="key_admin_tables_settings">key_admin_tables_settings</string>
+    <string name="key_admin_general_settings">key_admin_general_settings</string>
+    <string name="key_reset_config">key_reset_config</string>
+    <string name="key_verify_settings">key_verify_settings</string>
+    <string name="key_documentation">key_documentation</string>
+</resources>
