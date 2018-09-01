@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.Suppress;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.apache.commons.io.FileUtils;
@@ -72,6 +73,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Suppress
 public class AggregateSynchronizerTest {
 
   String agg_url;
