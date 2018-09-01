@@ -10,9 +10,11 @@ import android.support.test.runner.AndroidJUnit4;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
@@ -25,7 +27,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
-import org.opendatakit.application.ToolAwareApplication;
+import org.opendatakit.application.IToolAware;
 import org.opendatakit.consts.CharsetConsts;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
@@ -70,6 +72,7 @@ import static org.junit.Assert.fail;
  * (be sure to update the server and login info in the setUp() method)
  */
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Suppress
 public class AggregateSynchronizerTest {
 
@@ -188,8 +191,9 @@ public class AggregateSynchronizerTest {
     }
     props.setProperties(properties);
 
-    SyncExecutionContext syncExecutionContext = new SyncExecutionContext(context,
-        ((ToolAwareApplication) application).getVersionCodeString(), appName, syncProg, syncRes);
+    String verCodeStr = ((IToolAware) application).getVersionCodeString();
+
+    SyncExecutionContext syncExecutionContext = new SyncExecutionContext(context, verCodeStr, appName, syncProg, syncRes);
 
     return syncExecutionContext;
   }

@@ -23,14 +23,14 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import io.fabric.sdk.android.Fabric;
-import org.opendatakit.application.IToolAwareApplication;
+import org.opendatakit.application.IToolAware;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.utilities.PRNGFixes;
 
 import java.lang.ref.WeakReference;
 
-public final class Services extends MultiDexApplication implements IToolAwareApplication {
+public final class Services extends MultiDexApplication implements IToolAware {
 
   private static final String t = Services.class.getSimpleName();
 

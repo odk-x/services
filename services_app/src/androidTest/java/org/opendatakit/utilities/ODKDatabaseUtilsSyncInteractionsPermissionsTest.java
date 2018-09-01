@@ -15,8 +15,10 @@
 package org.opendatakit.utilities;
 
 import android.support.test.runner.AndroidJUnit4;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
  * @author mitchellsundt@gmail.com
  */
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODKDatabaseUtilsSyncInteractionsPermissionsTest extends AbstractPermissionsTestCase {
 
   private static final String TAG = "ODKDatabaseUtilsSyncInteractionsPermissionsTest";

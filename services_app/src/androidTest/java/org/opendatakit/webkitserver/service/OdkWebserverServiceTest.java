@@ -15,9 +15,11 @@ import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.WebkitServerConsts;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
@@ -40,6 +42,7 @@ import static org.junit.Assert.fail;
  * @author mitchellsundt@gmail.com
  */
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class OdkWebserverServiceTest {
 
     private static final String TAG = "OdkWebserverServiceTest";
