@@ -6,9 +6,11 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 import org.opendatakit.properties.CommonToolProperties;
@@ -27,6 +29,7 @@ import static org.junit.Assert.assertNull;
  * @author mitchellsundt@gmail.com
  */
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PropertiesTest {
 
     private static final String APPNAME = "unittestProp";

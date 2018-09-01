@@ -19,7 +19,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
-import org.opendatakit.application.IToolAwareApplication;
+import org.opendatakit.application.IToolAware;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -191,7 +191,7 @@ public class OdkSyncService extends Service {
       AppSynchronizer sync = syncs.get(appName);
       if (sync == null) {
         sync = new AppSynchronizer(this.getApplicationContext(),
-            ((IToolAwareApplication) this.getApplication()).getVersionCodeString(),
+            ((IToolAware) this.getApplication()).getVersionCodeString(),
             appName,
             notificationManager);
         syncs.put(appName, sync);

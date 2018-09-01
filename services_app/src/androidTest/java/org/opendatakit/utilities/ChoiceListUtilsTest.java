@@ -5,9 +5,11 @@ import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.ChoiceListColumns;
@@ -26,6 +28,7 @@ import static org.junit.Assert.assertEquals;
  */
 
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ChoiceListUtilsTest {
 
   private static final String key = "key that's unlikely to be in use";
