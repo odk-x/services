@@ -201,7 +201,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
         // Create and show the dialog.
         PasswordDialogFragment newFragment = PasswordDialogFragment.newPasswordDialog(CommonToolProperties.KEY_PASSWORD);
-        newFragment.show(ft, CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+        newFragment.show(getFragmentManager(), CommonToolProperties.GROUPING_PASSWORD_SCREEN);
       }
     });
 
