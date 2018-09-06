@@ -16,12 +16,16 @@
 package org.opendatakit.services.sync.service;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.services.R;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
@@ -35,6 +39,7 @@ import java.util.List;
 public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotificationManager {
 
   private static final int UNIQUE_ID = 1337;
+  private static final String SYNC_NOTIFICATION_CHANNEL_ID_PREFIX = "global_sync_";
 
   private final Service service;
   private final NotificationManager manager;
@@ -61,13 +66,13 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
   public synchronized void startingSync(String appName) throws NoAppNameSpecifiedException {
     AppSyncStatus appStatus = getAppStatus(appName);
     appStatus.setSyncing(true);
-    update();
+    update(appName);
   }
 
   public synchronized void stoppingSync(String appName) throws NoAppNameSpecifiedException {
     AppSyncStatus appStatus = getAppStatus(appName);
     appStatus.setSyncing(false);
-    update();
+    update(appName);
   }
 
   private synchronized boolean isDisplayingNotification() {
@@ -96,7 +101,7 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
     return appStatus;
   }
 
-  private void update() {
+  private void update(String appName) {
     // check if NotificationManager should be displaying notification
     boolean shouldDisplay = false;
     for (AppSyncStatus status : statusList) {
@@ -107,7 +112,7 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
 
     // if should and actual do not match fix
     if (shouldDisplay && !displayNotification) {
-      createNotification();
+      createNotification(appName);
     } else if (!shouldDisplay && displayNotification) {
       removeNotification();
     }
@@ -117,7 +122,7 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
     }
   }
 
-  private void createNotification() {
+  private void createNotification(String appName) {
     // The intent to launch when the user clicks the expanded notification
     // Intent tmpIntent = new Intent(service, SyncActivity.class);
     Intent tmpIntent = new Intent(Intent.ACTION_VIEW);
@@ -126,13 +131,19 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
     PendingIntent pendIntent = PendingIntent.getActivity(service.getApplicationContext(), 0,
         tmpIntent, 0);
 
-    Notification.Builder builder = new Notification.Builder(service);
-    builder.setTicker("ODK Syncing").setContentTitle("ODK Sync")
-        .setContentText("ODK is syncing an Application").setWhen(System.currentTimeMillis())
-        .setAutoCancel(false).setOngoing(true).setContentIntent(pendIntent)
-            .setSmallIcon(R.drawable.odk_services);
+    createSyncNotificationChannel(appName);
+    Notification runningNotification = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setTicker(service.getString(R.string.sync_ticker))
+        .setContentTitle(service.getString(R.string.app_name))
+        .setContentText(service.getString(R.string.sync_foreground_text))
+        .setWhen(System.currentTimeMillis())
+        .setAutoCancel(false)
+        .setOngoing(true)
+        .setContentIntent(pendIntent)
+        .setSmallIcon(R.drawable.odk_services)
+        .build();
 
-    Notification runningNotification = builder.build();
     runningNotification.flags |= Notification.FLAG_NO_CLEAR;
 
     if (!test) {
@@ -154,25 +165,38 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
 
   public synchronized void updateNotification( String appName, String text,
                                               int maxProgress, int progress, boolean indeterminateProgress) {
-    Notification.Builder builder = new Notification.Builder(service);
-    builder.setContentTitle(service.getString(R.string.sync_notification_syncing, appName))
-        .setContentText(text).setAutoCancel(false).setOngoing(true);
-    builder.setSmallIcon(android.R.drawable.ic_popup_sync);
-    builder.setProgress(maxProgress, progress, indeterminateProgress);
-    PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
+    createSyncNotificationChannel(appName);
 
-    builder.addAction(android.R.drawable.ic_popup_sync, service.getString(R.string
-        .sync_notification_launch_sync_progress_intent), pendingIntent);
+    NotificationCompat.Builder builder = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setContentTitle(service.getString(R.string.sync_notification_syncing, appName))
+        .setContentText(text)
+        .setAutoCancel(false)
+        .setOngoing(true)
+        .setSmallIcon(android.R.drawable.ic_popup_sync)
+        .setProgress(maxProgress, progress, indeterminateProgress)
+        .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+        .addAction(
+            android.R.drawable.ic_popup_sync,
+            service.getString(R.string.sync_notification_launch_sync_progress_intent),
+            createPendingIntentForSyncActivity(appName)
+        );
 
     notify(appName, SYNC_NOTIFICATION_ID, builder.build());
   }
 
 
   public synchronized void finalErrorNotification(String appName, String text) {
-    Notification.Builder finalBuilder = new Notification.Builder(service);
-    finalBuilder.setContentTitle(service.getString(R.string.sync_notification_failure, appName))
-        .setContentText(text).setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_error_white_24dp);
+    createSyncNotificationChannel(appName);
+
+    NotificationCompat.Builder finalBuilder = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setContentTitle(service.getString(R.string.sync_notification_failure, appName))
+        .setContentText(text)
+        .setAutoCancel(true)
+        .setOngoing(false)
+        .setSmallIcon(R.drawable.ic_error_white_24dp)
+        .setCategory(NotificationCompat.CATEGORY_ERROR);
 
     // setup the launch sync activity pending intent
     PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
@@ -182,10 +206,16 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
   }
 
   public synchronized void finalConflictNotification(String appName, String text) {
-    Notification.Builder finalBuilder = new Notification.Builder(service);
-    finalBuilder.setContentTitle(service.getString(R.string.sync_notification_conflicts, appName))
-        .setContentText(text).setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_warning_white_24dp);
+    createSyncNotificationChannel(appName);
+
+    NotificationCompat.Builder finalBuilder = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setContentTitle(service.getString(R.string.sync_notification_conflicts, appName))
+        .setContentText(text)
+        .setAutoCancel(true)
+        .setOngoing(false)
+        .setSmallIcon(R.drawable.ic_warning_white_24dp)
+        .setCategory(NotificationCompat.CATEGORY_ERROR);
 
     // setup the launch resolve conflicts activity pending intent
     PendingIntent pendingIntent = createPendingIntentForAllConflictsActivity(appName);
@@ -195,10 +225,16 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
   }
 
   public synchronized void clearNotification(String appName, String title, String text) {
-    Notification.Builder finalBuilder = new Notification.Builder(service);
-    finalBuilder.setContentTitle(title)
-          .setContentText(text).setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
+    createSyncNotificationChannel(appName);
+
+    NotificationCompat.Builder finalBuilder = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setContentTitle(title)
+        .setContentText(text)
+        .setAutoCancel(true)
+        .setOngoing(false)
+        .setSmallIcon(R.drawable.ic_done_white_24dp)
+        .setCategory(NotificationCompat.CATEGORY_PROGRESS);
 
     // setup the launch sync activity pending intent
     PendingIntent pendingIntent = createPendingIntentForSyncActivity(appName);
@@ -213,10 +249,16 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
   }
 
   public synchronized void clearVerificationNotification(String appName, String title, String text) {
-    Notification.Builder finalBuilder = new Notification.Builder(service);
-    finalBuilder.setContentTitle(title)
-        .setContentText(text).setAutoCancel(true).setOngoing(false);
-    finalBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
+    createSyncNotificationChannel(appName);
+
+    NotificationCompat.Builder finalBuilder = new NotificationCompat
+        .Builder(service, getNotificationChannelId(appName))
+        .setContentTitle(title)
+        .setContentText(text)
+        .setAutoCancel(true)
+        .setOngoing(false)
+        .setSmallIcon(R.drawable.ic_done_white_24dp)
+        .setCategory(NotificationCompat.CATEGORY_PROGRESS);
 
     // setup the launch sync activity pending intent
     PendingIntent pendingIntent = createPendingIntentForVerifyActivity(appName);
@@ -263,6 +305,26 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, appName);
     return PendingIntent.getService(service, 0, i,0);
 
+  }
+
+  private void createSyncNotificationChannel(@NonNull String appName) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel channel = new NotificationChannel(
+          getNotificationChannelId(appName),
+          service.getString(R.string.sync_notification_channel_name, appName),
+          NotificationManager.IMPORTANCE_LOW
+      );
+
+      channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+      channel.enableVibration(false);
+
+      manager.createNotificationChannel(channel);
+    }
+  }
+
+  @NonNull
+  private String getNotificationChannelId(@NonNull String appName) {
+    return SYNC_NOTIFICATION_CHANNEL_ID_PREFIX + appName;
   }
 
   private final class AppSyncStatus {

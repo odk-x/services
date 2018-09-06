@@ -97,6 +97,9 @@
 
     <string name="resolve_row_display_name">Form: %1$s Instance: %2$s</string>
     <!-- Sync Service and Notifications stuff -->
+    <string name="sync_notification_channel_name">Sync Notification (%1$s)</string>
+    <string name="sync_ticker">ODK Syncing</string>
+    <string name="sync_foreground_text">ODK is syncing an Application</string>
 
     <!-- progress dialog titles -->
     <string name="sync_in_progress">Syncing in progress&#8230;</string>
