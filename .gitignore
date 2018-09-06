@@ -5,6 +5,5 @@ local.properties
 *.iml
 *.o
 *.d
-services_app/google-services.json
 services_app/fabric.properties
 odkanalytics/

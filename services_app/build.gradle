@@ -157,3 +157,5 @@ task grantPermissionForODKApp () {
     }
 }
 
+apply plugin: 'com.google.gms.google-services'
+
