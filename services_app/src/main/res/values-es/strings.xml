@@ -79,9 +79,9 @@
   <string name="conflict_database_consistency_error">Problemas de consistencia de la base de datos al resolver conflictos &#8212; contactar con el equipo de ODK</string>
   <string name="resolve_row_display_name">Formulario: instancia %1$s: %2$s</string>
   <!-- Sync Service and Notifications stuff -->
-  <string name="sync_notification_channel_name">Sync Notification (%1$s)</string>
-  <string name="sync_ticker">ODK Syncing</string>
-  <string name="sync_foreground_text">ODK is syncing an Application</string>
+  <string name="sync_notification_channel_name">Notificación de sincronización (%1$s)</string>
+  <string name="sync_ticker">Sincronización de ODK</string>
+  <string name="sync_foreground_text">ODK está sincronizando una aplicación</string>
   <!-- progress dialog titles -->
   <string name="sync_in_progress">Sincronización en progreso&#8230;</string>
   <string name="sync_app_level_files">Sincronización de configuración de aplicación&#8230;</string>
