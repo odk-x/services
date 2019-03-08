@@ -526,7 +526,7 @@ public class AppSynchronizer {
       case
           /** while a sync was in progress, another device reset the app config, requiring a restart of
            * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
-        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_resync_because_config_has_been_reset_error, appName));
+        syncProgressTracker.finalErrorNotification(context.getString(R.string.sync_status_resync_because_config_has_been_reset_error));
         break;
       case
           /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
