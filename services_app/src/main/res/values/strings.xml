@@ -245,7 +245,7 @@
     <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\nPlease verify server configuration.</string>
     <string name="sync_status_server_missing_config_files">Server does not have all app-level or table-level configuration for this APK version.\nDid you intend to reset the server?</string>
     <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration.\nDid you intend to sync to server?</string>
-    <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.</string>
+    <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.\n To sunc with server, delete folder opendatakit/%1$s. Notice that doing so will wipe out all data and such data is not recoverable.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>
