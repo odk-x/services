@@ -201,7 +201,7 @@
   <string name="sync_status_device_internal_error">Error interno. \n Por favor, enviar un informe de error</string>
   <string name="sync_status_authentication_error">Error de autenticación. \nPlease verificar su 
         nombre de usuario/contraseña o su cuenta de acceso.</string>
-  <string name="sync_status_internal_server_error">Error interno del servidor (sin capacidad). \nPor favor notificar al administrador del servidor.</string>
+  <string name="sync_status_internal_server_error">Error interno del servidor (500). \nPor favor notificar al administrador del servidor.</string>
   <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway o Error de configuración. \nPor favor verificar la URL del servidor y que el navegador del dispositivo puede acceder a su servidor.</string>
   <string name="sync_status_request_or_protocol_error">Error de protocolo.\nPor favor comproba que el dispositivo y el servidor son compatible.</string>
   <string name="sync_status_appname_not_supported_by_server">Servidor no está configurado para este nombre de aplicación.\nPlease verificar la configuración del servidor.</string>

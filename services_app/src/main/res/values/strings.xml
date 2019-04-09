@@ -239,7 +239,7 @@
     <string name="sync_status_device_internal_error">Internal Error.\nPlease submit a bug report</string>
     <string name="sync_status_authentication_error">Authentication Error.\nPlease verify your
         username/password or your account access.</string>
-    <string name="sync_status_internal_server_error">Internal Server Error (out of quota?).\nPlease notify your server administrator.</string>
+    <string name="sync_status_internal_server_error">Internal Server Error (500).\nPlease notify your server administrator.</string>
     <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway or Configuration Error.\nPlease verify the server URL and that your device browser can access your server.</string>
     <string name="sync_status_request_or_protocol_error">Protocol Error.\nPlease verify that the server and device are compatible.</string>
     <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\nPlease verify server configuration.</string>
