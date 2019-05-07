@@ -201,13 +201,12 @@
   <string name="sync_status_device_internal_error">Error interno. \n Por favor, enviar un informe de error</string>
   <string name="sync_status_authentication_error">Error de autenticación. \nPlease verificar su 
         nombre de usuario/contraseña o su cuenta de acceso.</string>
-  <string name="sync_status_internal_server_error">Error interno del servidor (sin capacidad). \nPor favor notificar al administrador del servidor.</string>
+  <string name="sync_status_internal_server_error">Error interno del servidor (500). \nPor favor notificar al administrador del servidor.</string>
   <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway o Error de configuración. \nPor favor verificar la URL del servidor y que el navegador del dispositivo puede acceder a su servidor.</string>
   <string name="sync_status_request_or_protocol_error">Error de protocolo.\nPor favor comproba que el dispositivo y el servidor son compatible.</string>
   <string name="sync_status_appname_not_supported_by_server">Servidor no está configurado para este nombre de aplicación.\nPlease verificar la configuración del servidor.</string>
   <string name="sync_status_server_missing_config_files">¿Servidor no tiene toda la configuración para la aplicacion y tablas de esta versión APK. \nDesea intentar restablecer el servidor?</string>
   <string name="sync_status_server_reset_failed_device_has_no_config_files">¿Dispositivo no tiene ninguna configuración. \nDesea sincronizar con el servidor?</string>
-  <string name="sync_status_resync_because_config_has_been_reset_error">El servidor se ha restablecido con la última vez que se sincronizó y el esquema ha cambiado. La sincronización ha sido abortada.</string>
   <!-- settings screen stuff -->
   <string name="action_bar_admin_settings">%1$s &gt; Opciones de Administrador</string>
   <string name="admin_settings">Opciones de Administrador</string>

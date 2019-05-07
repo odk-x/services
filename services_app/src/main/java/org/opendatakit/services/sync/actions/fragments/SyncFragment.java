@@ -587,7 +587,7 @@ public class SyncFragment extends AbsSyncUIFragment {
           /** while a sync was in progress, another device reset the app config, requiring a restart of
            * our sync */ RESYNC_BECAUSE_CONFIG_HAS_BEEN_RESET_ERROR:
         id_title = R.string.sync_resync_because_config_reset_error;
-        message = getString(R.string.sync_status_resync_because_config_has_been_reset_error);
+        message = getString(R.string.sync_status_resync_because_config_has_been_reset_error, getAppName());
         break;
       case
           /** earlier sync ended with one or more tables containing row conflicts or checkpoint rows */ CONFLICT_RESOLUTION:
