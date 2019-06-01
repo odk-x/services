@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name">ODK Services</string>
+    <string name="app_name">ODK-X Services</string>
 
-    <string name="services_notice">ODK Services provides database, file access, and data synchronization services to all ODK 2.0 applications.</string>
+    <string name="services_notice">ODK-X Services provides database, file access, and data synchronization services to all ODK 2.0 applications.</string>
     <string name="action_admin_settings">Admin Settings</string>
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
@@ -98,8 +98,8 @@
     <string name="resolve_row_display_name">Form: %1$s Instance: %2$s</string>
     <!-- Sync Service and Notifications stuff -->
     <string name="sync_notification_channel_name">Sync Notification (%1$s)</string>
-    <string name="sync_ticker">ODK Syncing</string>
-    <string name="sync_foreground_text">ODK is syncing an Application</string>
+    <string name="sync_ticker">ODK-X Syncing</string>
+    <string name="sync_foreground_text">ODK-X is syncing an Application</string>
 
     <!-- progress dialog titles -->
     <string name="sync_in_progress">Syncing in progress&#8230;</string>
@@ -224,28 +224,28 @@
     <string name="click_to_verify_server_settings">Click to Verify User Permissions</string>
     <string name="warning_no_user_roles">Warning: User permissions have not been verified!\nRunning with reduced privileges.</string>
     <!-- sync service layer messages -->
-    <string name="sync_notification_syncing">"ODK Sync In Progress %1$s</string>
-    <string name="sync_notification_launch_sync_progress_intent">ODK Sync Progress</string>
-    <string name="sync_notification_failure">"ODK Sync %1$s Error</string>
-    <string name="sync_notification_conflicts">"ODK Sync %1$s Conflicts Exist</string>
+    <string name="sync_notification_syncing">"ODK-X Sync In Progress %1$s</string>
+    <string name="sync_notification_launch_sync_progress_intent">ODK-X Sync Progress</string>
+    <string name="sync_notification_failure">"ODK-X Sync %1$s Error</string>
+    <string name="sync_notification_conflicts">"ODK-X Sync %1$s Conflicts Exist</string>
     <string name="sync_notification_conflicts_text">"%1$d tables have data conflicts or checkpoints and were not completely synced.</string>
-    <string name="sync_notification_success_verify_complete">"ODK Sync %1$s Server Settings Verified</string>
-    <string name="sync_notification_success_verify_complete_text">ODK User Credentials and Permissions Updated</string>
-    <string name="sync_notification_success_complete">"ODK Sync %1$s Completed Successfully</string>
+    <string name="sync_notification_success_verify_complete">"ODK-X Sync %1$s Server Settings Verified</string>
+    <string name="sync_notification_success_verify_complete_text">ODK-X User Credentials and Permissions Updated</string>
+    <string name="sync_notification_success_complete">"ODK-X Sync %1$s Completed Successfully</string>
     <string name="sync_notification_success_complete_text">Sync Completed Successfully</string>
-    <string name="sync_notification_success_pending_attachments">"ODK Sync %1$s Completed Pending Attachments</string>
+    <string name="sync_notification_success_pending_attachments">"ODK-X Sync %1$s Completed Pending Attachments</string>
     <string name="sync_notification_success_pending_attachments_text">"Sync Completed with %1$d tables having out-of-date row attachments.</string>
     <string name="sync_status_network_transport_error">Network Error.\nPlease verify your device browser can access your server.</string>
     <string name="sync_status_device_internal_error">Internal Error.\nPlease submit a bug report</string>
     <string name="sync_status_authentication_error">Authentication Error.\nPlease verify your
         username/password or your account access.</string>
-    <string name="sync_status_internal_server_error">Internal Server Error (out of quota?).\nPlease notify your server administrator.</string>
+    <string name="sync_status_internal_server_error">Internal Server Error (500).\nPlease notify your server administrator.</string>
     <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway or Configuration Error.\nPlease verify the server URL and that your device browser can access your server.</string>
     <string name="sync_status_request_or_protocol_error">Protocol Error.\nPlease verify that the server and device are compatible.</string>
     <string name="sync_status_appname_not_supported_by_server">Server is not configured for this appName.\nPlease verify server configuration.</string>
     <string name="sync_status_server_missing_config_files">Server does not have all app-level or table-level configuration for this APK version.\nDid you intend to reset the server?</string>
     <string name="sync_status_server_reset_failed_device_has_no_config_files">Device does not have any configuration.\nDid you intend to sync to server?</string>
-    <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.</string>
+    <string name="sync_status_resync_because_config_has_been_reset_error">The app server has been reset since the last time you synced, and the schema has changed. The sync has been aborted.\n To sync with server, delete folder opendatakit/%1$s. Notice that doing so will wipe out all data and such data is not recoverable.</string>
     <!-- settings screen stuff -->
     <string name="action_bar_admin_settings">%1$s &gt; Admin Settings</string>
     <string name="admin_settings">Admin Settings</string>
@@ -317,7 +317,7 @@
 
     <string name="username_password">Username and/or Password</string>
     <string name="username">Username</string>
-    <string name="change_username">ODK Username</string>
+    <string name="change_username">ODK-X Username</string>
     <string name="password">Server Password</string>
     <string name="change_server_password">Server Password</string>
     <string name="no_account">No account</string>
@@ -344,7 +344,7 @@
     <string name="show_splash">Show Splash Screen</string>
     <string name="show_splash_summary">Shows when application starts</string>
     <string name="splash_path">Selected Splash Image</string>
-    <string name="default_splash_path">ODK Default</string>
+    <string name="default_splash_path">ODK-X Default</string>
     <string name="select_another_image">Select Another Image</string>
     <string name="use_odk_default">Use Default Image</string>
     <string name="change_splash_path">Change Image</string>
@@ -353,7 +353,7 @@
 
     <string name="tool_tables_settings">Tables-specific Settings</string>
     <string name="tool_tables_restrictions_apply">Tables-specific settings (non-Admin restrictions apply)</string>
-    <string name="tool_tables_settings_summary">ODK Tables-specific settings</string>
+    <string name="tool_tables_settings_summary">ODK-X Tables-specific settings</string>
     <string name="custom_home_screen">Use custom home screen</string>
     <string name="admin_tool_tables_settings">Manage ability to change Tables-specific Settings</string>
     <string name="admin_tool_tables_settings_summary">Limit non-Admin ability to change Tables-specific Settings</string>
@@ -367,15 +367,15 @@
         user identity settings will be cleared and all tools will re-run their
         initialization logic.\n\nDo you wish to proceed?</string>
 
-    <string name="write_external_storage_rationale">ODK Services needs to access external storage to store resources and interact with other ODK apps</string>
-    <string name="write_external_perm_denied">ODK Services cannot function without write access to external storage</string>
+    <string name="write_external_storage_rationale">ODK-X Services needs to access external storage to store resources and interact with other ODK apps</string>
+    <string name="write_external_perm_denied">ODK-X Services cannot function without write access to external storage</string>
     <!-- legacy submission logic -->
     <string name="success">Success</string>
     <string name="scanning_cancelled">You cancelled Scanning</string>
     <string name="invalid_qr_code">Invalid Qr code</string>
     <string name="qr_code_scanner_instruction">Place QR Code inside the rectangle</string>
     <string name="permission_denied">Permission denied</string>
-    <string name="camera_permission_rationale">ODK Service requires Camera permission to scan QR code</string>
+    <string name="camera_permission_rationale">ODK-X Services requires Camera permission to scan QR code</string>
     <string name="allow">Allow</string>
     <string name="not_now">Not now</string>
     <string name="no">No</string>
