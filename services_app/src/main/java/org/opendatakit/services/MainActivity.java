@@ -140,6 +140,14 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
       return true;
     }
 
+    if (id == R.id.action_redownload) {
+      Intent i = new Intent(this, SyncActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      i.putExtra(IntentConsts.INTENT_KEY_REDOWNLOAD_ATTACHMENT, "true");
+      startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
+      return true;
+    }
+
     if (id == R.id.action_about) {
 
       FragmentManager mgr = getSupportFragmentManager();

@@ -39,6 +39,13 @@
             app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_redownload"
+        android:orderInCategory="50"
+        android:icon="@drawable/ic_cached_black_24dp"
+        android:title="@string/action_redownload"
+        app:showAsAction="ifRoom" />
+
+    <item
             android:id="@+id/action_about"
             android:orderInCategory="100"
             android:icon="@drawable/ic_info_outline_black_24dp"

@@ -9,6 +9,7 @@
   <string name="action_sync">Sincronización</string>
   <!--<string name="action_logout">Logout</string>-->
   <string name="action_change_user">Cambiar usuario/Cerrar sesión</string>
+  <string name="action_redownload"></string>
   <string name="action_resolve_conflict">Resolver Conflictos</string>
   <string name="action_verify_server_settings">Actualizar permisos de usuario</string>
   <!-- Checkpoint and Conflict Resolution Stuff -->
@@ -165,6 +166,7 @@
   <string name="sync_defer_instance_files">Sincronizar archivos adjuntos de la instancia más tarde</string>
   <string name="sync_start">Sincronizar Ahora</string>
   <string name="sync_reset_server">Reinicializar servidor</string>
+  <string name="sync_redownload"> </string>
   <string name="sync_confirm_change_settings">Confirmar cambios de configuración</string>
   <string name="sync_change_settings_warning">Si cambia su configuración, tablas que han sincronizado ahora pueden ya no ser capaces de sincronizar en el futuro.</string>
   <string name="sync_save">Guardar</string>
