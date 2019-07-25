@@ -1,10 +1,7 @@
 package org.opendatakit.services.sync.service.logic;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
@@ -41,7 +38,6 @@ import static org.junit.Assert.assertNull;
 /**
  * Created by Niles on 7/3/17.
  */
-@RunWith(AndroidJUnit4.class)
 public class HttpRestProtocolWrapperTest {
   private static final Pattern PATTERN = Pattern.compile("%3F", Pattern.LITERAL);
   private SyncExecutionContext sc;

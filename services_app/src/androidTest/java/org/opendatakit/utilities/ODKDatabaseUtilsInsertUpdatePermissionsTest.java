@@ -15,10 +15,9 @@
 package org.opendatakit.utilities;
 
 import android.content.ContentValues;
-import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.entity.RowFilterScope;
 import org.opendatakit.database.data.OrderedColumns;
@@ -33,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Permissions tests in the database.
  */
-@RunWith(AndroidJUnit4.class)
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermissionsTestCase {
 

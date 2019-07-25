@@ -1,21 +1,19 @@
 package org.opendatakit.database.service;
 
 import android.content.ContentValues;
-import android.support.annotation.NonNull;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;
-import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 
@@ -28,7 +26,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
