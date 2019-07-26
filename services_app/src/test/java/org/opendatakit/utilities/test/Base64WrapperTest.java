@@ -1,6 +1,5 @@
 package org.opendatakit.utilities.test;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

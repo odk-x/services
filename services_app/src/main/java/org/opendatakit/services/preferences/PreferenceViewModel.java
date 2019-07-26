@@ -1,7 +1,7 @@
 package org.opendatakit.services.preferences;
 
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 public class PreferenceViewModel extends ViewModel {
   private MutableLiveData<Boolean> adminConfigured;

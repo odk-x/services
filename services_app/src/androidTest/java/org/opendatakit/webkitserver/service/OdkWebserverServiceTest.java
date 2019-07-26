@@ -8,17 +8,17 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.rule.ServiceTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.rule.ServiceTestRule;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.WebkitServerConsts;
@@ -41,7 +41,7 @@ import static org.junit.Assert.fail;
 /**
  * @author mitchellsundt@gmail.com
  */
-@RunWith(AndroidJUnit4.class)
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class OdkWebserverServiceTest {
 

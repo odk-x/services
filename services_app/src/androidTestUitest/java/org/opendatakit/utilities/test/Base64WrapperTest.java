@@ -1,15 +1,12 @@
 package org.opendatakit.utilities.test;
 
-import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opendatakit.services.utilities.Base64Wrapper;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-@RunWith(AndroidJUnit4.class)
 public class Base64WrapperTest {
 
   private static Base64Wrapper wrapper;

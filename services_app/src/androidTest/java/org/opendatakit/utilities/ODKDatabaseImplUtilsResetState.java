@@ -1,11 +1,10 @@
 package org.opendatakit.utilities;
 
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
@@ -26,7 +25,6 @@ import java.io.File;
  * In ODKDatabaseImplUtilsKeepState it keeps the database initalized between tests whereas
  * in ODKDatabaseImplUtilsResetState, it wipes the database from the file system between each test
  */
-@RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODKDatabaseImplUtilsResetState extends AbstractODKDatabaseUtilsTest {
 

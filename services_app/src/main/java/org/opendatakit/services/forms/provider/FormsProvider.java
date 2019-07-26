@@ -22,7 +22,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import org.apache.commons.lang3.StringUtils;
