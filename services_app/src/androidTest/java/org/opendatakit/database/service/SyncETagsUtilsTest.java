@@ -1,11 +1,10 @@
 package org.opendatakit.database.service;
 
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.database.DatabaseConstants;
@@ -25,7 +24,7 @@ import static org.junit.Assert.fail;
 /**
  * Created by Niles on 6/30/17.
  */
-@RunWith(AndroidJUnit4.class)
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 

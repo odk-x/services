@@ -16,7 +16,7 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.support.v4.app.FragmentManager;
+import androidx.fragment.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;

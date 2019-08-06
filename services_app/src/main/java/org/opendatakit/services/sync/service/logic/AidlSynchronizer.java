@@ -7,8 +7,7 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.annotation.VisibleForTesting;
-import android.util.Log;
+import androidx.annotation.VisibleForTesting;
 
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -21,7 +20,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.sync.service.SyncExecutionContext;

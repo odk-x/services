@@ -46,6 +46,7 @@
 
     <application
         android:name="org.opendatakit.services.application.Services"
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:largeHeap="true"
         android:supportsRtl="true"

@@ -3,11 +3,9 @@ package org.opendatakit.services.forms;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.FormsColumns;
@@ -27,13 +25,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 import static org.opendatakit.services.forms.provider.FormsProviderTest.getCvs;
-//import static org.opendatakit.services.forms.provider.FormsProviderTest.getAppName;
 
 /**
  * Created by Niles on 6/29/17.
  */
 
-@RunWith(AndroidJUnit4.class)
 public class FormInfoTest {
   private FormInfo info;
   private boolean initialized = false;

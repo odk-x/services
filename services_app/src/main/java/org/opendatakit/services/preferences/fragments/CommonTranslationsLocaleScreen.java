@@ -14,12 +14,12 @@
 
 package org.opendatakit.services.preferences.fragments;
 
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
 import android.content.Context;
-import android.support.v4.content.Loader;
+import androidx.loader.content.Loader;
 import android.os.Bundle;
-import android.support.v7.preference.ListPreference;
+import androidx.preference.ListPreference;
 import android.util.AttributeSet;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;

@@ -1,12 +1,12 @@
 package org.opendatakit.database.service;
 
 import android.content.ContentValues;
-import android.support.annotation.NonNull;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -28,7 +28,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
 
