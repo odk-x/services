@@ -3,17 +3,17 @@ package org.opendatakit.services.sync.service.logic;
 import android.Manifest;
 import android.app.Application;
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.Suppress;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.Suppress;
+import androidx.test.rule.GrantPermissionRule;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
@@ -71,7 +71,7 @@ import static org.junit.Assert.fail;
  * Verified to still work by mitchellsundt@gmail.com on 9/21/2017
  * (be sure to update the server and login info in the setUp() method)
  */
-@RunWith(AndroidJUnit4.class)
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Suppress
 public class AggregateSynchronizerTest {

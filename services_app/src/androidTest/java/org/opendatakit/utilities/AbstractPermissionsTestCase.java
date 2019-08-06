@@ -17,7 +17,7 @@ package org.opendatakit.utilities;
 import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.support.test.rule.GrantPermissionRule;
+import androidx.test.rule.GrantPermissionRule;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.After;

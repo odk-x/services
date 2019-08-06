@@ -3,9 +3,10 @@ package org.opendatakit.services.tables.provider;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
-import android.support.test.runner.AndroidJUnit4;
-import org.junit.*;
-import org.junit.runner.RunWith;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.provider.TableDefinitionsColumns;
@@ -23,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by Niles on 7/6/17.
  */
-@RunWith(AndroidJUnit4.class)
 public class TablesProviderTest {
 
   private static boolean initialized = false;

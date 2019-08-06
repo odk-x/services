@@ -17,12 +17,12 @@ package org.opendatakit.services.resolve.checkpoint;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
+import androidx.fragment.app.ListFragment;
+import androidx.loader.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.support.v4.content.Loader;
+import androidx.loader.content.Loader;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;

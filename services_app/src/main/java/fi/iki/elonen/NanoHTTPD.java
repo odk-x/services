@@ -33,7 +33,7 @@ package fi.iki.elonen;
  * #L%
  */
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.logging.WebLogger;
