@@ -26,7 +26,6 @@ import io.fabric.sdk.android.Fabric;
 import org.opendatakit.application.IToolAware;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
-import org.opendatakit.utilities.PRNGFixes;
 
 import java.lang.ref.WeakReference;
 
@@ -45,7 +44,6 @@ public final class Services extends MultiDexApplication implements IToolAware {
   public void onCreate() {
     if (singleton == null) singleton = new WeakReference<>(this);
     super.onCreate();
-    PRNGFixes.apply();
 
     Fabric.with(this, new Crashlytics());
     analytics = FirebaseAnalytics.getInstance(this);
