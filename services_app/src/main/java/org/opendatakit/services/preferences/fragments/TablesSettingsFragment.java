@@ -15,6 +15,7 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.os.Bundle;
+
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;

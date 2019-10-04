@@ -16,6 +16,7 @@
 package org.opendatakit.services.sync.service;
 
 import android.os.RemoteException;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;

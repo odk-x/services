@@ -3,6 +3,7 @@ package org.opendatakit.services.resolve.task;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.ArrayAdapter;
+
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.logging.WebLogger;

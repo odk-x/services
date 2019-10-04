@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
+
 import androidx.annotation.VisibleForTesting;
 
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
@@ -23,10 +24,10 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
-import org.opendatakit.sync.service.entity.ParcelableColumn;
-import org.opendatakit.sync.service.entity.ParcelableTableResource;
 import org.opendatakit.services.sync.service.exceptions.HttpClientWebException;
 import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.sync.service.entity.ParcelableColumn;
+import org.opendatakit.sync.service.entity.ParcelableTableResource;
 import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
 import org.opendatakit.sync.service.logic.FileManifestDocument;
 import org.opendatakit.sync.service.logic.IAidlSynchronizer;

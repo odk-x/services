@@ -27,6 +27,7 @@ package org.sqlite.database.sqlite;
 import android.database.Cursor;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.services.database.AppNameSharedStateContainer;

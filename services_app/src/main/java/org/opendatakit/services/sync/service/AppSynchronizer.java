@@ -16,12 +16,12 @@
 package org.opendatakit.services.sync.service;
 
 import android.content.Context;
+
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.exceptions.AccessDeniedException;
-import org.opendatakit.services.sync.service.exceptions.InvalidAuthTokenException;
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.services.sync.service.logic.AggregateSynchronizer;
 import org.opendatakit.services.sync.service.logic.ProcessAppAndTableLevelChanges;

@@ -15,8 +15,10 @@
  */
 package org.opendatakit.services.resolve.conflict;
 
-import androidx.loader.content.AsyncTaskLoader;
 import android.content.Context;
+
+import androidx.loader.content.AsyncTaskLoader;
+
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;

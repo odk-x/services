@@ -23,7 +23,6 @@ import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;

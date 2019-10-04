@@ -16,6 +16,7 @@
 package org.opendatakit.services.sync.service.logic;
 
 import android.content.ContentValues;
+
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -29,7 +30,6 @@ import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.database.data.UserTable;

@@ -16,6 +16,7 @@ package org.opendatakit.services.database.service;
 
 import android.content.ContentValues;
 import android.content.Context;
+
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.database.data.BaseTable;

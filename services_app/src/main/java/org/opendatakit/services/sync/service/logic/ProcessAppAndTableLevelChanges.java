@@ -15,6 +15,7 @@
 package org.opendatakit.services.sync.service.logic;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;

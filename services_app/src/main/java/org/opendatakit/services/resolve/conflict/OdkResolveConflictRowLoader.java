@@ -15,9 +15,11 @@
  */
 package org.opendatakit.services.resolve.conflict;
 
-import androidx.loader.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+
+import androidx.loader.content.AsyncTaskLoader;
+
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.SyncState;

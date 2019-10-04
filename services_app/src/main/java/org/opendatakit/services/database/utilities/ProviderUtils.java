@@ -16,6 +16,7 @@ package org.opendatakit.services.database.utilities;
 
 import android.content.Context;
 import android.net.Uri;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.FormsProviderAPI;
 import org.opendatakit.provider.TablesProviderAPI;

@@ -16,10 +16,7 @@
 package org.opendatakit.services.resolve.conflict;
 
 import android.app.Activity;
-import androidx.fragment.app.ListFragment;
-import androidx.loader.app.LoaderManager;
 import android.content.Intent;
-import androidx.loader.content.Loader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -29,6 +26,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.fragment.app.ListFragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.ProgressDialogFragment;
 import org.opendatakit.logging.WebLogger;

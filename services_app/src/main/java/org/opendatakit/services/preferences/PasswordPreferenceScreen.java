@@ -15,8 +15,9 @@
 package org.opendatakit.services.preferences;
 
 import android.content.Context;
-import androidx.preference.EditTextPreference;
 import android.util.AttributeSet;
+
+import androidx.preference.EditTextPreference;
 
 /**
  * @author mitchellsundt@gmail.com
