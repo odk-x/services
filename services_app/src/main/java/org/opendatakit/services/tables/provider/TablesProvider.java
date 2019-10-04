@@ -20,9 +20,11 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.net.Uri;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.logging.WebLogger;

@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 

@@ -16,6 +16,7 @@
 package org.opendatakit.services.sync.service;
 
 import android.content.Context;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.sync.service.SyncProgressEvent;

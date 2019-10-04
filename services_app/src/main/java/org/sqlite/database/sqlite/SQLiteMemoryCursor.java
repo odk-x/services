@@ -30,6 +30,7 @@ import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
+
 import org.opendatakit.logging.WebLogger;
 
 import java.lang.ref.WeakReference;
