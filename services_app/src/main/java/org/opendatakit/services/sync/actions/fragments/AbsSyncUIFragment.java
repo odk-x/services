@@ -130,7 +130,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                msgManager.restoreDialog(getFragmentManager(), getId());
+                msgManager.restoreDialog(getParentFragmentManager(), getId());
                 updateInterface();
             }
         }, 100);
@@ -146,7 +146,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
 
     @Override
     public void onPause() {
-        msgManager.clearDialogsAndRetainCurrentState(getFragmentManager());
+        msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
         super.onPause();
     }
 
@@ -339,13 +339,13 @@ abstract class AbsSyncUIFragment extends Fragment implements
 
     void createAlertDialog(String title, String message) {
         if(!msgManager.shutdownCalled()) {
-            msgManager.createAlertDialog(title, message, getFragmentManager(), getId());
+            msgManager.createAlertDialog(title, message, getParentFragmentManager(), getId());
         }
     }
 
     void showProgressDialog(String title, String message, int progressStep, int maxStep) {
         if(!msgManager.shutdownCalled()) {
-            FragmentManager fm = getFragmentManager();
+            FragmentManager fm = getParentFragmentManager();
             msgManager.createProgressDialog(title, message, fm);
             fm.executePendingTransactions();
             msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
@@ -357,7 +357,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
     }
 
     void dismissDialogs() {
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getParentFragmentManager();
         msgManager.dismissProgressDialog(fm);
         msgManager.dismissAlertDialog(fm);
     }
