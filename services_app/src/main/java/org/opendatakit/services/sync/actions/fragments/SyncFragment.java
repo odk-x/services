@@ -17,7 +17,6 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import androidx.fragment.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -30,7 +29,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.RoleConsts;
 import org.opendatakit.logging.WebLogger;
@@ -265,11 +266,17 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   void postTaskToAccessSyncService() {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
+    WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
+    if (activity == null || !hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
-      WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
+      if(activity == null) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null = return");
+      } else if(!hasDialogBeenCreated() ) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [postTaskToAccessSyncService] !msgManager.hasDialogBeenCreated()");
+      } else if(!this.isResumed() ) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [postTaskToAccessSyncService] !this.isResumed()");
+      }
       handler.postDelayed(new Runnable() {
         @Override public void run() {
           postTaskToAccessSyncService();
@@ -333,7 +340,7 @@ public class SyncFragment extends AbsSyncUIFragment {
                 break;
               }
             } else {
-              WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] syncServiceInterface == null");
+              WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [postTaskToAccessSyncService] syncServiceInterface == null");
               // The service is not bound yet so now we need to try again
               handler.postDelayed(new Runnable() {
                 @Override public void run() {
@@ -347,10 +354,15 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   void updateInterface() {
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
+    if (activity == null || !hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
-      WebLogger.getLogger(getAppName())
-          .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+      if(activity == null) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
+      } else if(!hasDialogBeenCreated() ) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] !msgManager.hasDialogBeenCreated()");
+      } else if(!this.isResumed() ) {
+        WebLogger.getLogger(getAppName()).w(TAG, "[" + getId() + "] [updateInterface] !this.isResumed()");
+      }
       handler.postDelayed(new Runnable() {
         @Override public void run() {
           updateInterface();
@@ -382,9 +394,7 @@ public class SyncFragment extends AbsSyncUIFragment {
                 handler.post(new Runnable() {
                   @Override public void run() {
                     if(event.progressState == SyncProgressState.INACTIVE) {
-                      FragmentManager fm = getFragmentManager();
-                      msgManager.dismissProgressDialog(fm);
-                      msgManager.dismissAlertDialog(fm);
+                      dismissDialogs();
                     } else if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
                     }
@@ -508,10 +518,7 @@ public class SyncFragment extends AbsSyncUIFragment {
         id_title = R.string.sync_in_progress;
       }
 
-      FragmentManager fm =  getFragmentManager();
-      msgManager.createProgressDialog(getString(id_title), message, fm);
-      fm.executePendingTransactions();
-      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
+      showProgressDialog(getString(id_title), message, progressStep, maxStep);
 
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
@@ -604,7 +611,8 @@ public class SyncFragment extends AbsSyncUIFragment {
         id_title = R.string.sync_complete_pending_attachments;
         message = getString(R.string.sync_complete_pending_attachments_text);
       }
-      msgManager.createAlertDialog(getString(id_title), message, getFragmentManager(), getId());
+
+      createAlertDialog(getString(id_title), message);
     }
   }
 }
