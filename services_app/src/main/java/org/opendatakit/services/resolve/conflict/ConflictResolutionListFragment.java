@@ -280,7 +280,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
 
       // try to retrieve the active dialog
       progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
-          PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
+          PROGRESS_DIALOG_TAG, progressDialog,getParentFragmentManager(), title, progress, false);
 
     }
   }
@@ -298,7 +298,7 @@ public class ConflictResolutionListFragment extends ListFragment implements Load
     buttonTakeAllServer.setEnabled(true);
 
     ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
-        getFragmentManager());
+            getParentFragmentManager());
     progressDialog = null;
     getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
 

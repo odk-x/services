@@ -273,7 +273,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
 
       // try to retrieve the active dialog
       progressDialog = ProgressDialogFragment.eitherReuseOrCreateNew(
-          PROGRESS_DIALOG_TAG, progressDialog, getFragmentManager(), title, progress, false);
+          PROGRESS_DIALOG_TAG, progressDialog, getParentFragmentManager(), title, progress, false);
     }
   }
 
@@ -290,7 +290,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     buttonTakeAllNewest.setEnabled(true);
 
     ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
-        getFragmentManager());
+            getParentFragmentManager());
     progressDialog = null;
     getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
 
