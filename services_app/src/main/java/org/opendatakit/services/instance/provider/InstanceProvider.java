@@ -21,8 +21,10 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.SQLException;
 import android.net.Uri;
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.androidlibrary.R;

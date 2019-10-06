@@ -15,9 +15,11 @@
  */
 package org.opendatakit.services.resolve.checkpoint;
 
-import androidx.loader.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
+
+import androidx.loader.content.AsyncTaskLoader;
+
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.RoleConsts;

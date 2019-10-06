@@ -1,6 +1,7 @@
 package org.opendatakit.services.database.utilities;
 
 import android.database.Cursor;
+
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.utilities.CursorUtils;

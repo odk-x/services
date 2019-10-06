@@ -21,6 +21,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -31,11 +37,6 @@ import androidx.preference.Preference;
 import androidx.preference.Preference.OnPreferenceChangeListener;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -192,8 +193,8 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
         // DialogFragment.show() will take care of adding the fragment
         // in a transaction.  We also want to remove any currently showing
         // dialog, so make our own transaction and take care of that here.
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
         if (prev != null) {
           ft.remove(prev);
         }
@@ -201,7 +202,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
         // Create and show the dialog.
         PasswordDialogFragment newFragment = PasswordDialogFragment.newPasswordDialog(CommonToolProperties.KEY_PASSWORD);
-        newFragment.show(getFragmentManager(), CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+        newFragment.show(getParentFragmentManager(), CommonToolProperties.GROUPING_PASSWORD_SCREEN);
       }
     });
 

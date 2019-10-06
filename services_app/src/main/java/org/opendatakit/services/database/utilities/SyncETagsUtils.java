@@ -16,6 +16,7 @@
 package org.opendatakit.services.database.utilities;
 
 import android.database.Cursor;
+
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.provider.SyncETagColumns;

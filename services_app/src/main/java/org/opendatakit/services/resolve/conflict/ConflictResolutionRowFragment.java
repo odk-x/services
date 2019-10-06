@@ -17,12 +17,9 @@ package org.opendatakit.services.resolve.conflict;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import androidx.fragment.app.ListFragment;
-import androidx.loader.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import androidx.loader.content.Loader;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +27,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.fragment.app.ListFragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.service.DbHandle;

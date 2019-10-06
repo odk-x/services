@@ -2,6 +2,7 @@ package org.sqlite.database.sqlite;
 
 import android.database.Cursor;
 import android.os.CancellationSignal;
+
 import org.opendatakit.logging.WebLoggerIf;
 import org.sqlite.database.SQLException;
 

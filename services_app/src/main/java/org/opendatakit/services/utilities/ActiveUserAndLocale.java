@@ -15,6 +15,7 @@
 package org.opendatakit.services.utilities;
 
 import android.content.Context;
+
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 

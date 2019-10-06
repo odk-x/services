@@ -19,6 +19,7 @@ import android.os.ParcelUuid;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
+
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.data.BaseTable;
 import org.opendatakit.database.data.ColumnList;
@@ -28,9 +29,9 @@ import org.opendatakit.database.data.TableDefinitionEntry;
 import org.opendatakit.database.data.TableMetaDataEntries;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.queries.QueryBounds;
-import org.opendatakit.database.service.IDbInterface;
 import org.opendatakit.database.service.DbChunk;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.IDbInterface;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.utilities.DbChunkUtil;
 import org.opendatakit.exception.ActionNotAuthorizedException;

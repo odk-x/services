@@ -1,10 +1,11 @@
 package org.opendatakit.services.preferences.fragments;
 
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 

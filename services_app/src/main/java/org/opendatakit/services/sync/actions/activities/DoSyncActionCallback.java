@@ -1,6 +1,7 @@
 package org.opendatakit.services.sync.actions.activities;
 
 import android.os.RemoteException;
+
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 
 /**

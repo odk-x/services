@@ -1,6 +1,7 @@
 package org.opendatakit.services.database;
 
 import android.database.Cursor;
+
 import org.sqlite.database.SQLException;
 
 import java.util.Map;
