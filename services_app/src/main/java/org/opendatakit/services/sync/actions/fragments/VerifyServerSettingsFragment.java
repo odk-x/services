@@ -16,7 +16,6 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import androidx.fragment.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -24,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -148,7 +148,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   void postTaskToAccessSyncService() {
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] started");
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
+    if (activity == null || !hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .d(TAG, "[" + getId() + "] [postTaskToAccessSyncService] activity == null");
@@ -227,7 +227,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   void updateInterface() {
     Activity activity = getActivity();
-    if (activity == null || !msgManager.hasDialogBeenCreated() || !this.isResumed()) {
+    if (activity == null || !hasDialogBeenCreated() || !this.isResumed()) {
       // we are in transition -- do nothing
       WebLogger.getLogger(getAppName())
           .w(TAG, "[" + getId() + "] [updateInterface] activity == null = return");
@@ -326,11 +326,8 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
 
       int id_title = R.string.verifying_server_settings;
-      FragmentManager fm =  getFragmentManager();
-      msgManager.createProgressDialog(getString(id_title), message, fm);
-      fm.executePendingTransactions();
-      msgManager.updateProgressDialogMessage(message, progressStep, maxStep, fm);
-      
+      showProgressDialog(getString(id_title), message, progressStep, maxStep);
+
       if (status == SyncStatus.SYNCING || status == SyncStatus.NONE) {
         handler.postDelayed(new Runnable() {
           @Override
@@ -409,7 +406,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
         message = getString(R.string.verify_server_setttings_successful_text);
         break;
       }
-      msgManager.createAlertDialog(getString(id_title), message, getFragmentManager(), getId());
+      createAlertDialog(getString(id_title), message);
     }
   }
 }

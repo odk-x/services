@@ -20,13 +20,15 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import fi.iki.elonen.SimpleWebServer;
+
 import org.opendatakit.consts.WebkitServerConsts;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.webkitserver.service.IWebkitServerInterface;
 
 import java.io.File;
 import java.io.IOException;
+
+import fi.iki.elonen.SimpleWebServer;
 
 public class OdkWebkitServerService extends Service {
 

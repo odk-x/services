@@ -21,12 +21,14 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.IDbInterface;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.IDbInterface;
 import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.database.service.UserDbInterfaceImpl;

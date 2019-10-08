@@ -15,9 +15,11 @@
 package org.opendatakit.services.forms;
 
 import android.database.Cursor;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.FormsColumns;

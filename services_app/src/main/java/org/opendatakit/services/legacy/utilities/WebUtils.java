@@ -15,6 +15,7 @@
 package org.opendatakit.services.legacy.utilities;
 
 import android.text.format.DateFormat;
+
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.consts.CharsetConsts;
 import org.opendatakit.httpclientandroidlib.Header;
@@ -37,8 +38,6 @@ import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -51,6 +50,9 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Common utility methods for managing constructing requests with the proper
