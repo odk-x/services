@@ -57,7 +57,7 @@
     <string name="checkpoint_auto_apply_all">No se puede encontrar cambios en ninguna fila definidos por el usuario. \nIgnorando todos los cambios no guardados.</string>
     <string name="select_conflict_to_resolve">Eligir fila con conflictos para empezar resolverlos.</string>
     <string name="no_items_display_conflicts">Por favor, espere&#8230;\nSearching para filas conflictivas a resolver.</string>
-    <string name="conflict_take_all_local_updates">Tomar cambios locales, ignorar el servidor</string>
+    <string name="conflict_take_all_local_updates">Tomar cambios locales, ignorar todos los cambios en el servidor</string>
     <string name="conflict_take_all_server_updates">Tomar cambios del servidor, ignorar los cambios locales</string>
     <string name="silently_resolved_single_conflict">Un conflicto en una fila a la que usted no tiene acceso para cambiar se ha resuelto de un modo discreto usando los datos del servidor.</string>
     <string name="silently_resolved_conflicts">%1$d conflictos en filas a las que usted no tiene acceso para cambiar se ha resolvado de un modo discreto usando los datos del servidor.</string>
