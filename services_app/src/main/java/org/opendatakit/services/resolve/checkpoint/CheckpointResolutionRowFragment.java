@@ -562,7 +562,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
     setListAdapter(mAdapter);
 
-    getLoaderManager().initLoader(RESOLVE_FIELD_LOADER, null, this);
+    LoaderManager.getInstance(this).initLoader(RESOLVE_FIELD_LOADER, null, this);
   }
 
   @Override

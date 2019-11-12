@@ -104,7 +104,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     mAdapter = new ArrayAdapter<ResolveRowEntry>(getActivity(), android.R.layout.simple_list_item_1);
     setListAdapter(mAdapter);
 
-    getLoaderManager().initLoader(RESOLVE_ROW_LOADER, null, this);
+    LoaderManager.getInstance(this).initLoader(RESOLVE_ROW_LOADER, null, this);
   }
 
   @Override
@@ -292,7 +292,7 @@ public class CheckpointResolutionListFragment extends ListFragment implements Lo
     ProgressDialogFragment.dismissDialogs(PROGRESS_DIALOG_TAG, progressDialog,
             getParentFragmentManager());
     progressDialog = null;
-    getLoaderManager().restartLoader(RESOLVE_ROW_LOADER, null, this);
+    LoaderManager.getInstance(this).restartLoader(RESOLVE_ROW_LOADER, null, this);
 
     if ( result != null && result.length() != 0 ) {
       Toast.makeText(getActivity(), result, Toast.LENGTH_LONG).show();
