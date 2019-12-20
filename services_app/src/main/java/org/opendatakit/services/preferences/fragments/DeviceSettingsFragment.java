@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import androidx.loader.app.LoaderManager;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -93,7 +94,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
     mDefaultTranslationPreference = (CommonTranslationsLocaleScreen) findPreference(CommonToolProperties.KEY_COMMON_TRANSLATIONS_LOCALE);
     final Bundle b = new Bundle();
     b.putString(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-    this.getLoaderManager().initLoader(LOADER_ID, b, mDefaultTranslationPreference.getLoaderCallback());
+    LoaderManager.getInstance(this).initLoader(LOADER_ID, b, mDefaultTranslationPreference.getLoaderCallback());
 
     mDefaultTranslationPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
@@ -114,7 +115,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
               .KEY_COMMON_TRANSLATIONS_LOCALE, stringValue));
         }
         // since the selection changed, we need to change the languages on the tags
-        DeviceSettingsFragment.this.getLoaderManager().restartLoader(LOADER_ID, b,
+        LoaderManager.getInstance(DeviceSettingsFragment.this).restartLoader(LOADER_ID, b,
             mDefaultTranslationPreference.getLoaderCallback());
         return true;
       }

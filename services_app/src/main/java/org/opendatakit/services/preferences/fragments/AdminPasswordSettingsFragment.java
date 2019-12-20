@@ -49,7 +49,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
         .GROUPING_PASSWORD_SCREEN);
     passwordScreen.setCallback(new PasswordPreferenceScreen.PasswordActionCallback() {
       @Override public void showPasswordDialog() {
-        FragmentManager fragmentManager = requireFragmentManager();
+        FragmentManager fragmentManager = getParentFragmentManager();
 
         // DialogFragment.show() will take care of adding the fragment
         // in a transaction.  We also want to remove any currently showing
