@@ -237,7 +237,7 @@
     <string name="enter_new_user">Ingrese nuevo nombre de usuario:</string>
     <string name="enter_new_password">Ingrese la nueva contraseña:</string>
     <string name="verify_new_password">Re-Ingrese la nueva contraseña</string>
-    <string name="password_changed">La Contraseñam ha sido cambiada con éxito</string>
+    <string name="password_changed">La Contraseña ha sido cambiada con éxito</string>
     <string name="admin_password_disabled">Contraseña de administrador deshabilitada</string>
     <string name="admin_password_enabled">Contraseña de administrador habilitada</string>
     <string name="password_mismatch">Lo sentimos, ¡las contraseñas no coinciden!</string>
@@ -264,7 +264,7 @@
     <string name="username">Nombre de usuario</string>
     <string name="change_username">ODK-X Nombre de usuario</string>
     <string name="password">Contraseña del servidor</string>
-    <string name="change_server_password">Llame de paso</string>
+    <string name="change_server_password">Contraseña del servidor</string>
     <string name="no_account">Sin cuenta</string>
     <string name="anonymous">Ninguno (acceso anonimo)</string>
     <string name="credential_type_prefix">Credenciales: </string>
@@ -274,7 +274,7 @@
     <string name="restrict_device_settings_summary">Limitar la capacidad de usuarios no administradores para cambiar la configuración del dispositivo</string>
     <string name="restrict_device">Administrar la capacidad de cambiar la configuración del dispositivo</string>
     <string name="device_settings_summary">Opciones especificas para este dispotivo</string>
-    <string name="device">Configuración del dispotivo</string>
+    <string name="device">Configuración del dispositivo</string>
     <string name="device_restrictions_apply">Configuración del dispositivo (Aplicación de restricciones para no administradores)</string>
     <string name="default_locale">Configuración regional predeterminada</string>
     <string name="change_default_locale">Cambiar configuración regional predeterminada</string>
@@ -290,9 +290,9 @@
     <string name="change_splash_path">Cambiar la Imagen</string>
     <string name="admin_change_splash_settings">Cambiar la configuración de la pantalla inicio</string>
     <string name="splash_media_save_failed">No se puede copiar la imagen de pantalla de inicio seleccionada</string>
-    <string name="tool_tables_settings">Opciones de Odk Tables</string>
+    <string name="tool_tables_settings">Opciones de tablas ODK</string>
     <string name="tool_tables_restrictions_apply">Configuraciones específicas de tablas (restricciones aplicadas para usuarios no administradores)</string>
-    <string name="tool_tables_settings_summary">ODK-X Configuración de Tables Especificas</string>
+    <string name="tool_tables_settings_summary">Configuración de Tablas Específicas de ODK-X</string>
     <string name="custom_home_screen">Usar pantella de inicio personalizada</string>
     <string name="admin_tool_tables_settings">Maneje la capacidad para cambiar la configuración de tablas específicas</string>
     <string name="admin_tool_tables_settings_summary">Limitar la capacidad de usuarios no administradores para cambiar la configuración de tablas especificas</string>

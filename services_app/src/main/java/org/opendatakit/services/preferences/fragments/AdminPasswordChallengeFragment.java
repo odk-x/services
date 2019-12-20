@@ -87,7 +87,7 @@ public class AdminPasswordChallengeFragment extends Fragment {
 
             if (adminPwd.equals(pw)) {
                preferenceViewModel.setAdminMode(true);
-               requireFragmentManager().popBackStack();
+               getParentFragmentManager().popBackStack();
             } else {
                Toast.makeText(requireContext(),
                    R.string.password_mismatch, Toast.LENGTH_SHORT).show();
@@ -100,7 +100,7 @@ public class AdminPasswordChallengeFragment extends Fragment {
           .setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
-                requireFragmentManager().popBackStack();
+                getParentFragmentManager().popBackStack();
              }
           });
    }
