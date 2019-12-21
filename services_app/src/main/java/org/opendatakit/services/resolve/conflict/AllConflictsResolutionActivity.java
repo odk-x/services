@@ -106,7 +106,7 @@ public class AllConflictsResolutionActivity extends AppCompatActivity implements
         }
         if ( mTableIdList == null ) {
             // TODO: do database call to get this
-            getSupportLoaderManager().initLoader(FETCH_IN_CONFLICT_TABLE_IDS_LOADER, null, this);
+            LoaderManager.getInstance(this).initLoader(FETCH_IN_CONFLICT_TABLE_IDS_LOADER, null, this);
         }
 
         launchResolveConflictsOnFirstTable();
