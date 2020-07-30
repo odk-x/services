@@ -31,6 +31,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.work.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -45,8 +46,11 @@ import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.service.OdkSyncJob;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
+
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements IAppAwareActivity,
     ActivityCompat.OnRequestPermissionsResultCallback {
@@ -68,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
   private String mAppName;
   private boolean permissionOnly;
+  private WorkManager mWorkManager;
 
   @Override
   protected void onDestroy() {
@@ -94,6 +99,10 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
           EXT_STORAGE_REQ_CODE
       );
     }
+
+    //background service
+    mWorkManager = WorkManager.getInstance();
+    startBackgroundJob();
 
     //firebase
     FirebaseInstanceId.getInstance().getInstanceId()
@@ -238,5 +247,28 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
       setResult(Activity.RESULT_CANCELED);
       finish();
     }
+  }
+
+  private void startBackgroundJob() {
+
+    // Create Network constraint
+    Constraints constraints = new Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build();
+
+
+    PeriodicWorkRequest periodicSyncDataWork =
+            new PeriodicWorkRequest.Builder(OdkSyncJob.class, 15, TimeUnit.MINUTES)
+                    .addTag("AppointmentsSync")
+                    .setConstraints(constraints)
+                    // setting a backoff on case the work needs to retry
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, PeriodicWorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+                    .build();
+    mWorkManager.enqueueUniquePeriodicWork(
+            "SYNC_APPOINTMENTS_WORK_NAME",
+            ExistingPeriodicWorkPolicy.KEEP, //Existing Periodic Work policy
+            periodicSyncDataWork //work request
+    );
+
   }
 }
