@@ -236,7 +236,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          if(mAppName == null) {
             mAppName = ODKFileUtils.getOdkDefaultAppName();
          }
-         Log.e(TAG, mAppName);
+         Log.i(TAG, mAppName);
       }
       return mAppName;
    }

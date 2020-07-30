@@ -142,7 +142,7 @@ public final class GlobalSyncNotificationManagerImpl implements GlobalSyncNotifi
         .setAutoCancel(false)
         .setOngoing(true)
         .setContentIntent(pendIntent)
-        .setSmallIcon(R.drawable.odk_services)
+        .setSmallIcon(R.drawable.ic_launcher)
         .build();
 
     runningNotification.flags |= Notification.FLAG_NO_CLEAR;
