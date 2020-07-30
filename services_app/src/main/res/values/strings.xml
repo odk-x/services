@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name">ODK-X Services</string>
+    <string name="app_name">Kenga Services</string>
 
     <string name="services_notice">ODK-X Services provides database, file access, and data synchronization services to all ODK 2.0 applications.</string>
     <string name="action_admin_settings">Admin Settings</string>
@@ -295,7 +295,7 @@
     <string name="show_password_text">Show password</string>
 
     <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
-    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>
+    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admin)</string>
     <string name="general_settings">General Settings</string>
     <string name="admin_general_settings">Admin Access to Settings</string>
     <string name="opendatakit_website">Open Data Kit user documentation</string>
