@@ -20,11 +20,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -43,10 +43,10 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.sync.actions.activities.LoginActivity;
-import org.opendatakit.services.sync.actions.activities.SyncActivity;
-import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.actions.activities.*;
 import org.opendatakit.services.sync.service.OdkSyncJob;
+import org.opendatakit.sync.service.IOdkSyncServiceInterface;
+import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 
@@ -250,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   }
 
   private void startBackgroundJob() {
+    Log.i("SYNC: ","Background sync triggered!");
 
     // Create Network constraint
     Constraints constraints = new Constraints.Builder()
@@ -259,16 +260,36 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
     PeriodicWorkRequest periodicSyncDataWork =
             new PeriodicWorkRequest.Builder(OdkSyncJob.class, 15, TimeUnit.MINUTES)
-                    .addTag("AppointmentsSync")
+                    .addTag("SyncData")
                     .setConstraints(constraints)
                     // setting a backoff on case the work needs to retry
                     .setBackoffCriteria(BackoffPolicy.LINEAR, PeriodicWorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                     .build();
     mWorkManager.enqueueUniquePeriodicWork(
-            "SYNC_APPOINTMENTS_WORK_NAME",
+            "SYNC_DATA",
             ExistingPeriodicWorkPolicy.KEEP, //Existing Periodic Work policy
             periodicSyncDataWork //work request
     );
 
+  }
+
+  public void performSync(SyncAttachmentState syncAttachmentState) {
+
+    Activity activity = MainActivity.this;
+    if (activity == null) {
+      // we are in transition -- do nothing
+      return;
+    }
+    ((ISyncServiceInterfaceActivity) activity)
+          .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+            @Override public void doAction(IOdkSyncServiceInterface syncServiceInterface)
+                    throws RemoteException {
+              if (syncServiceInterface != null) {
+                    Log.i("SYNC: ","Background sync started...");
+                    syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
+
+              }
+            }
+          });
   }
 }
