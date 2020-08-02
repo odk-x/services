@@ -54,4 +54,36 @@
         android:layout_marginEnd="20dp"
         android:layout_marginTop="10dp"
         android:text="@string/verify_server_settings_start"/>
+    <Button
+            android:id="@+id/install_IO_button"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/install_IO_label"/>
+
+    <Button
+            android:id="@+id/install_tables_button"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/install_tables_label"/>
+
+    <Button
+            android:id="@+id/install_forms_button"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/install_forms_label"/>
 </LinearLayout>
