@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -26,7 +27,6 @@ public class OdkSyncJob extends Worker {
     @Override
     public Result doWork() {
         try {
-            Log.i("SYNC: ","processing...");
             handler = new Handler(Looper.getMainLooper());
 
             new Thread(new Runnable() {
@@ -41,6 +41,7 @@ public class OdkSyncJob extends Worker {
 
                         handler.postDelayed(new Runnable() {
                             @Override public void run() {
+                                Log.i("SYNC: ","processing...");
                                 new MainActivity().performSync(syncAttachmentState);
                             }
                         }, 100);
@@ -48,7 +49,6 @@ public class OdkSyncJob extends Worker {
             }).start();
 
             Log.i("SYNC: ","Background sync SUCCESS !");
-            new NotificationService().sendNotification("Your data is upto date.", getApplicationContext());
             return Result.success();
         }catch (Exception e){
             e.printStackTrace();

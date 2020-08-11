@@ -43,16 +43,17 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.sync.actions.SyncActions;
 import org.opendatakit.services.sync.actions.activities.*;
+import org.opendatakit.services.sync.actions.fragments.SyncFragment;
 import org.opendatakit.services.sync.service.OdkSyncJob;
-import org.opendatakit.sync.service.IOdkSyncServiceInterface;
-import org.opendatakit.sync.service.SyncAttachmentState;
+import org.opendatakit.sync.service.*;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements IAppAwareActivity,
+public class MainActivity extends AppCompatActivity implements ISyncServiceInterfaceActivity, IAppAwareActivity,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
   // Used for logging
@@ -73,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   private String mAppName;
   private boolean permissionOnly;
   private WorkManager mWorkManager;
+
+  private IOdkSyncServiceInterface iOdkSyncServiceInterface;
 
   @Override
   protected void onDestroy() {
@@ -102,7 +105,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
     //background service
     mWorkManager = WorkManager.getInstance();
-    startBackgroundJob();
+    //startBackgroundJob();
+    performSync(SyncAttachmentState.SYNC);
 
     //firebase
     FirebaseInstanceId.getInstance().getInstanceId()
@@ -110,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
               @Override
               public void onComplete(@NonNull Task<InstanceIdResult> task) {
                 if (!task.isSuccessful()) {
-                  Log.w(TAG, "getInstanceId failed", task.getException());
+                  Log.w(TAG, "getInstanceId failed", task.getException( ));
                   return;
                 }
 
@@ -274,22 +278,29 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   }
 
   public void performSync(SyncAttachmentState syncAttachmentState) {
+    ((ISyncServiceInterfaceActivity) MainActivity.this)
+            .invokeSyncInterfaceAction(new DoSyncActionCallback() {
+              @Override public void doAction(IOdkSyncServiceInterface syncServiceInterface)
+                      throws RemoteException {
+                if (syncServiceInterface != null) {
+                      iOdkSyncServiceInterface = syncServiceInterface;
+                      iOdkSyncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
 
-    Activity activity = MainActivity.this;
-    if (activity == null) {
-      // we are in transition -- do nothing
-      return;
-    }
-    ((ISyncServiceInterfaceActivity) activity)
-          .invokeSyncInterfaceAction(new DoSyncActionCallback() {
-            @Override public void doAction(IOdkSyncServiceInterface syncServiceInterface)
-                    throws RemoteException {
-              if (syncServiceInterface != null) {
-                    Log.i("SYNC: ","Background sync started...");
-                    syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
-
+                }
               }
-            }
-          });
+            });
+  }
+
+  @Override
+  public void invokeSyncInterfaceAction(DoSyncActionCallback callback) {
+
+    if (callback != null) {
+      try {
+        callback.doAction(iOdkSyncServiceInterface);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+    }
+
   }
 }
