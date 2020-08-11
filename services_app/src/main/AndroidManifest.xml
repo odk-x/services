@@ -119,6 +119,17 @@
             android:authorities="org.opendatakit.provider.submission.xml;org.opendatakit.provider.submission.json"
             android:name=".submissions.provider.SubmissionProvider"
             />
+        <provider
+            android:exported="false"
+            android:initOrder="4"
+            android:process=":providers"
+            android:authorities="org.opendatakit.services.GenericFileProvider"
+            android:name=".GenericFileProvider"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >

@@ -216,6 +216,9 @@
         Please update your settings.</string>
 
     <string name="verify_server_settings_start">Verify User Permissions</string>
+    <string name="install_tables_label">Install Tables</string>
+    <string name="install_forms_label">Install Survey</string>
+    <string name="install_IO_label">Install IO</string>
     <string name="verify_server_settings_starting">Starting fetch of user permissions&#8230;</string>
     <string name="verifying_server_settings">Verifying User Permissions&#8230;</string>
     <string name="verify_server_setttings_successful">Verification successful</string>
