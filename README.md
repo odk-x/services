@@ -1,27 +1,26 @@
-# services
+# Services
 
 This project is __*actively maintained*__
 
-It is part of the ODK 2.0 Android tools suite.  
+It is part of the ODK-X Android tools suite.  
+
 Prior to rev 200, this repo was the __*core*__ repo.
 
-It is an APK that provides services (database, content providers, local webserver) used by all the other ODK 2.0 tools.
+It is an APK that provides services (database, content providers, local webserver) used by all the other ODK-X tools.
 
-The developer [wiki](https://github.com/opendatakit/opendatakit/wiki) (including release notes) and
-[issues tracker](https://github.com/opendatakit/opendatakit/issues) are located under
-the [**opendatakit**](https://github.com/opendatakit/opendatakit) project.
+The developer [wiki](https://github.com/odk-x/tool-suite-X/wiki) (including release notes) and [issues tracker](https://github.com/odk-x/tool-suite-X/issues) are located under the [**ODK-X Tool Suite**](https://github.com/odk-x) project.
 
-The Google group for software engineering questions is: [opendatakit-developers@](https://groups.google.com/forum/#!forum/opendatakit-developers)
+Engage with the community and get technical support on [the ODK-X forum](https://forum.odk-x.org)
 
 ## Setting up your environment
 
-General instructions for setting up an ODK 2.0 environment can be found at our [DevEnv Setup wiki page](https://github.com/opendatakit/opendatakit/wiki/DevEnv-Setup)
+General instructions for setting up an ODK-X environment can be found at our [Developer Environment Setup wiki page](https://github.com/odk-x/tool-suite-X/wiki/Developer-Environment-Setup)
 
 Install [Android Studio](http://developer.android.com/tools/studio/index.html) and the [SDK](http://developer.android.com/sdk/index.html#Other).
 
-This project depends on the ODK [androidlibrary](https://github.com/opendatakit/androidlibrary) project; its binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify that project yourself, you must clone it into the same parent directory as services. You directory stucture should resemble the following:
+This project depends on ODK-X's [androidlibrary](https://github.com/odk-x/androidlibrary) and [androidcommon](https://github.com/odk-x/androidcommon) projects; their binaries will be downloaded automatically fom our maven repository during the build phase. If you wish to modify them yourself, you must clone them into the same parent directory as survey. You directory stucture should resemble the following:
 
-        |-- odk
+        |-- odk-x
 
             |-- services
 
