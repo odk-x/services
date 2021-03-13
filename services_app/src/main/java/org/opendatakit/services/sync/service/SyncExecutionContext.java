@@ -39,6 +39,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.services.sync.service.logic.Synchronizer;
 import org.opendatakit.services.sync.service.logic.Synchronizer.SynchronizerStatus;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.sync.service.SyncOutcome;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressState;
@@ -68,13 +69,9 @@ public class SyncExecutionContext implements SynchronizerStatus {
   private int nMajorSyncSteps;
   private int iMajorSyncStep;
   private int GRAINS_PER_MAJOR_SYNC_STEP;
-
   private final Context application;
-  private final String versionCode;
   private final String appName;
-  private final String odkClientApiVersion;
   private final String userAgent;
-
   private final String aggregateUri;
   private final String authenticationType;
   private final String username;
@@ -96,8 +93,6 @@ public class SyncExecutionContext implements SynchronizerStatus {
       SyncOverallResult syncResult) {
     this.application = context;
     this.appName = appName;
-    this.versionCode = versionCode;
-    this.odkClientApiVersion = versionCode.substring(0, versionCode.length() - 2);
     this.userAgent = "Sync " + versionCode + " (gzip)";
     this.syncProgressTracker = syncProgressTracker;
     this.synchronizer = null;
@@ -206,7 +201,7 @@ public class SyncExecutionContext implements SynchronizerStatus {
   }
 
   public String getOdkClientApiVersion() {
-    return this.odkClientApiVersion;
+    return Constants.ODK_CLIENT_API_VERSION;
   }
 
   public String getUserAgent() {
