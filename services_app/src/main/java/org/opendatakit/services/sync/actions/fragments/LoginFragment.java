@@ -27,6 +27,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import com.google.android.material.textfield.TextInputEditText;
+
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
@@ -67,8 +69,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    private TableHealthValidator healthValidator;
 
    private EditText usernameEditText;
-   private EditText passwordEditText;
-   private CheckBox togglePasswordText;
+   private TextInputEditText passwordEditText;
    private Button authenticateNewUser;
    private Button logout;
    private Button cancel;
@@ -127,18 +128,6 @@ public class LoginFragment extends AbsSyncUIFragment {
       usernameEditText.setText(props.getProperty(CommonToolProperties.KEY_USERNAME));
 
       passwordEditText = view.findViewById(R.id.pwd_field);
-
-      togglePasswordText = view.findViewById(R.id.show_pwd);
-      togglePasswordText.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
-            if (togglePasswordText.isChecked()) {
-               passwordEditText.setTransformationMethod(null);
-            } else {
-               passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-            }
-         }
-      });
 
       authenticateNewUser = view.findViewById(R.id.change_user_button);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {

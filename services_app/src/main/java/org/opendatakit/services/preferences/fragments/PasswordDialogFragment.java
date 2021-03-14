@@ -28,6 +28,8 @@ import android.widget.Toast;
 
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.material.textfield.TextInputEditText;
+
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
@@ -43,8 +45,7 @@ public class PasswordDialogFragment extends DialogFragment {
   }
 
   private String passwordPropertyName;
-  private EditText passwordEditText;
-  private CheckBox togglePasswordText;
+  private TextInputEditText passwordEditText;
   private PropertiesSingleton props;
   private OnChangePassword callback;
 
@@ -87,18 +88,6 @@ public class PasswordDialogFragment extends DialogFragment {
     heading.setText((isAdminPassword ?
         R.string.change_admin_password : R.string.change_server_password));
     passwordEditText = view.findViewById(R.id.pwd_field);
-
-    togglePasswordText = view.findViewById(R.id.show_pwd);
-    togglePasswordText.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if(togglePasswordText.isChecked()) {
-          passwordEditText.setTransformationMethod(null);
-        } else {
-          passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-        }
-      }
-    });
 
     Button positiveButton = view.findViewById(R.id.positive_button);
     positiveButton.setOnClickListener(new View.OnClickListener() {
