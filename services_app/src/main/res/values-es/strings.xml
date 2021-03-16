@@ -247,8 +247,8 @@
     <string name="general_settings">Confirguraciones generales</string>
     <string name="admin_general_settings">Acceso de administrador a la configuración</string>
     <string name="opendatakit_website">Odk Documentación para usuario</string>
-    <string name="click_to_web">Has clic para visitar http://opendatakit.org</string>
-    <string name="opendatakit_url">http://opendatakit.org</string>
+    <string name="click_to_web">Has clic para visitar https://docs.odk-x.org</string>
+    <string name="opendatakit_url">https://docs.odk-x.org</string>
     <string name="server_settings_summary">Usuario, autenticación y configuración del servidor</string>
     <string name="server">Configuración del servidor</string>
     <string name="server_restrictions_apply">Configuración del servidor (Aplicación de restricciones para no administradores)</string>
