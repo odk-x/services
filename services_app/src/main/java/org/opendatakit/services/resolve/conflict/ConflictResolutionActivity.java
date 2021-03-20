@@ -157,7 +157,7 @@ public class ConflictResolutionActivity extends AppCompatActivity implements IAp
       trans.replace(R.id.conflict_resolver_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
-
+      item.setVisible(false);
       return true;
     }
     return super.onOptionsItemSelected(item);

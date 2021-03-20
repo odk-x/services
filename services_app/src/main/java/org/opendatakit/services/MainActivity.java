@@ -93,6 +93,17 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   }
 
   @Override
+  public void onBackPressed() {
+    int count = getSupportFragmentManager().getBackStackEntryCount();
+    if (count == 1) {
+      startActivity(new Intent(MainActivity.this,MainActivity.class));
+      startActivity(getIntent());
+      overridePendingTransition(0, 0);
+    }
+    else
+      super.onBackPressed();
+  }
+  @Override
   protected void onResume() {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
@@ -153,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
 
+      item.setVisible(false);
       return true;
     }
 

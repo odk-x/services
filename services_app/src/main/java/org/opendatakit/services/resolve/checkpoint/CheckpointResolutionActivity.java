@@ -149,7 +149,7 @@ public class CheckpointResolutionActivity extends AppCompatActivity implements I
       trans.replace(R.id.checkpoint_resolver_activity_view, newFragment, AboutMenuFragment.NAME);
       trans.addToBackStack(AboutMenuFragment.NAME);
       trans.commit();
-
+      item.setVisible(false);
       return true;
     }
     return super.onOptionsItemSelected(item);

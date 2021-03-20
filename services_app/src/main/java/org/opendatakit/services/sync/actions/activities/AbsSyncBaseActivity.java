@@ -289,7 +289,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          trans.replace(R.id.sync_activity_view, newFragment, AboutMenuFragment.NAME);
          trans.addToBackStack(AboutMenuFragment.NAME);
          trans.commit();
-
+         item.setVisible(false);
          return true;
       }
 

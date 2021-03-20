@@ -159,7 +159,7 @@ public class AllConflictsResolutionActivity extends AppCompatActivity implements
             trans.replace(R.id.all_conflicts_activity_view, newFragment, AboutMenuFragment.NAME);
             trans.addToBackStack(AboutMenuFragment.NAME);
             trans.commit();
-
+            item.setVisible(false);
             return true;
         }
         return super.onOptionsItemSelected(item);
