@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name">ODK-X Services</string>
 
-    <string name="services_notice">ODK-X Services provides database, file access, and data synchronization services to all ODK 2.0 applications.</string>
+    <string name="services_notice">ODK-X Services provides database, file access, and data synchronization services to all ODK-X applications.</string>
     <string name="action_admin_settings">Admin Settings</string>
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
