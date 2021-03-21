@@ -371,6 +371,20 @@ public interface HttpSynchronizer extends Synchronizer {
                                  String serverInstanceFileUri, String instanceId, String tableId)
       throws HttpClientWebException, IOException;
 
+
+  /**
+   * @param filesToDownload
+   * @param serverInstanceFileUri
+   * @param instanceId
+   * @param tableId
+   * @param reduce
+   * @throws HttpClientWebException
+   * @throws IOException
+   */
+  void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
+                                 String serverInstanceFileUri, String instanceId, String tableId, boolean reduce)
+          throws HttpClientWebException, IOException;
+
   /**
    * Report the sync status for this device to the server
    * @param tableResource

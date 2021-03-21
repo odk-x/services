@@ -149,6 +149,14 @@ public class SyncFragment extends AbsSyncUIFragment {
       }
     }
 
+    String re_download = getActivity().getIntent().getStringExtra(IntentConsts.INTENT_KEY_REDOWNLOAD_ATTACHMENT);
+    WebLogger.getLogger(getAppName())
+            .w(TAG, "re_download is :" + re_download);
+
+    if (re_download != null) {
+      reDownload();
+    }
+
     ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter
         .createFromResource(getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
     syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
@@ -314,6 +322,17 @@ public class SyncFragment extends AbsSyncUIFragment {
                     showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1,
                         0);
                   }
+                });
+                break;
+              case RE_DOWNLOAD:
+                syncServiceInterface.synchronizeWithServer(getAppName(), SyncAttachmentState.RE_DOWNLOAD);
+                syncAction = SyncActions.MONITOR_SYNCING;
+
+                handler.post(new Runnable() {
+                    @Override public void run() {
+                        showProgressDialog(SyncStatus.NONE, null, getString(R.string.sync_starting), -1,
+                                0);
+                    }
                 });
                 break;
               case RESET_SERVER:
@@ -487,6 +506,29 @@ public class SyncFragment extends AbsSyncUIFragment {
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     startActivity(i);
     return;
+  }
+
+  private void reDownload() {
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickReDownload] timestamp: " + System.currentTimeMillis());
+    if (areCredentialsConfigured(false)) {
+      // show warning message
+      //TODO: make some error message here
+      AlertDialog.Builder msg = buildOkMessage("confirm re-download attachments",
+              "re-download will result in high data usage");
+
+      msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
+        @Override public void onClick(DialogInterface dialog, int which) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+                  "[" + getId() + "] [onClickReDownload] timestamp: " + System.currentTimeMillis());
+          disableButtons();
+          syncAction = SyncActions.RE_DOWNLOAD;
+          prepareForSyncAction();
+        }
+      });
+
+      msg.setNegativeButton(getString(R.string.cancel), null);
+      msg.show();
+    }
   }
 
   private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message,

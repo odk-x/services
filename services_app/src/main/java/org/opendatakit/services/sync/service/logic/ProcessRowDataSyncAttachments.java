@@ -137,8 +137,14 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
 
         String sqlCommand;
-        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
-            SyncState.synced_pending_files.name() });
+        BindArgs bindArgs;
+        if (attachmentState.equals(SyncAttachmentState.RE_DOWNLOAD)) {
+          bindArgs = new BindArgs(new Object[]{SyncState.synced.name(),
+              SyncState.synced_pending_files.name()});
+        } else {
+          bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+              SyncState.synced_pending_files.name() });
+        }
 
         {
           StringBuilder sqlCommandBuilder = new StringBuilder();
@@ -238,7 +244,8 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
             boolean syncAttachments = false;
             // the local row wasn't impacted by a server change
             // see if this local row should be pushed to the server.
-            if (state == SyncState.in_conflict) {
+            if (state == SyncState.in_conflict ||
+                (state == SyncState.synced && attachmentState.equals(SyncAttachmentState.RE_DOWNLOAD))) {
               if (!fileAttachmentColumns.isEmpty()) {
                 // fetch the file attachments for an in_conflict row but don't delete
                 // anything and never update the state to synced (it must stay in in_conflict)
@@ -298,6 +305,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                 idString = R.string.sync_skipping_attachments_server_row;
                 break;
               case SYNC:
+              case REDUCED_SYNC:
                 idString = R.string.sync_syncing_attachments_server_row;
                 break;
               case UPLOAD:

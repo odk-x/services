@@ -9,6 +9,7 @@
     <string name="action_sync">Sincronización</string>
     <!--<string name="action_logout">Logout</string>-->
     <string name="action_change_user">Cambiar usuario/Cerrar sesión</string>
+    <string name="action_redownload"></string>
     <string name="action_resolve_conflict">Resolver Conflictos</string>
     <string name="action_verify_server_settings">Actualizar permisos de usuario</string>
     <!-- Checkpoint and Conflict Resolution Stuff -->
@@ -165,6 +166,7 @@
     <string name="sync_defer_instance_files">Sincronizar archivos adjuntos de la instancia más tarde</string>
     <string name="sync_start">Sincronizar Ahora</string>
     <string name="sync_reset_server">Reinicializar servidor</string>
+    <string name="sync_redownload"> </string>
     <string name="sync_confirm_change_settings">Confirmar cambios de configuración</string>
     <string name="sync_change_settings_warning">Si cambia su configuración, tablas que han sincronizado ahora pueden ya no ser capaces de sincronizar en el futuro.</string>
     <string name="sync_save">Guardar</string>
@@ -199,7 +201,7 @@
     <string name="sync_notification_success_pending_attachments_text">\"Sincronización completado, pero %1$d tabulas tienen filas con archivos que no se han sincronizaido completamente.</string>
     <string name="sync_status_network_transport_error">Error de red.\nPor favor confirme que el dispotivo tiene acceso al servidor.</string>
     <string name="sync_status_device_internal_error">Error interno. \n Por favor, enviar un informe de error</string>
-    <string name="sync_status_authentication_error">Error de autenticación. \nPlease verificar su 
+    <string name="sync_status_authentication_error">Error de autenticación. \nPlease verificar su
         nombre de usuario/contraseña o su cuenta de acceso.</string>
     <string name="sync_status_internal_server_error">Error interno del servidor (500). \nPor favor notificar al administrador del servidor.</string>
     <string name="sync_status_bad_gateway_or_client_config">WiFi Gateway o Error de configuración. \nPor favor verificar la URL del servidor y que el navegador del dispositivo puede acceder a su servidor.</string>

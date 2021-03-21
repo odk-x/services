@@ -868,7 +868,9 @@ class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to send to server -- they are all synced");
       fullySyncedUploads = true;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
-        attachmentState.equals(SyncAttachmentState.UPLOAD)) {
+        attachmentState.equals(SyncAttachmentState.UPLOAD) ||
+        attachmentState.equals(SyncAttachmentState.REDUCED_SYNC) ||
+        attachmentState.equals(SyncAttachmentState.RE_DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
       for (CommonFileAttachmentTerms fileAttachment : filesToUpload) {
@@ -903,9 +905,13 @@ class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to fetch from server -- they are all synced");
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
-        attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
+            attachmentState.equals(SyncAttachmentState.UPLOAD) ||
+            attachmentState.equals(SyncAttachmentState.REDUCED_SYNC) ||
+            attachmentState.equals(SyncAttachmentState.RE_DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
+
+      boolean reduce = attachmentState.equals(SyncAttachmentState.REDUCED_SYNC);
 
       for (CommonFileAttachmentTerms fileAttachment : filesToDownloadSizes.keySet()) {
 
@@ -916,8 +922,8 @@ class ProcessManifestContentAndFileChanges {
         if (batchSize + filesToDownloadSizes.get(fileAttachment) > MAX_BATCH_SIZE &&
             !batch.isEmpty()) {
           log.i(LOGTAG, "syncRowLevelFileAttachments downloading batch for " + instanceId);
-          sc.getSynchronizer().downloadInstanceFileBatch(batch,
-              serverInstanceFileUri, instanceId, tableId);
+          HttpSynchronizer httpSynchronizer = (HttpSynchronizer) sc.getSynchronizer();
+          httpSynchronizer.downloadInstanceFileBatch(batch, serverInstanceFileUri, instanceId, tableId, reduce);
           batch.clear();
           batchSize = 0;
         }
@@ -929,8 +935,8 @@ class ProcessManifestContentAndFileChanges {
       if ( !batch.isEmpty() ) {
         // download the final batch
         log.i(LOGTAG, "syncRowLevelFileAttachments downloading batch for " + instanceId);
-        sc.getSynchronizer().downloadInstanceFileBatch(batch, serverInstanceFileUri,
-            instanceId, tableId);
+        HttpSynchronizer httpSynchronizer = (HttpSynchronizer) sc.getSynchronizer();
+        httpSynchronizer.downloadInstanceFileBatch(batch, serverInstanceFileUri, instanceId, tableId, reduce);
       }
 
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;

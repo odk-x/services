@@ -1053,14 +1053,20 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   @Override
   public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
       String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException {
-    // boolean downloadedAllFiles = true;
+    downloadInstanceFileBatch(filesToDownload, serverInstanceFileUri, instanceId, tableId, false);
+  }
 
+  @Override
+  public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
+      String serverInstanceFileUri, String instanceId, String tableId, boolean reduce) throws HttpClientWebException, IOException {
+    // boolean downloadedAllFiles = true;
     URI instanceFilesDownloadUri = wrapper.constructInstanceFileBulkDownloadUri(serverInstanceFileUri, instanceId);
 
     ArrayList<OdkTablesFileManifestEntry> entries = new ArrayList<OdkTablesFileManifestEntry>();
     for (CommonFileAttachmentTerms cat : filesToDownload) {
       OdkTablesFileManifestEntry entry = new OdkTablesFileManifestEntry();
       entry.filename = cat.rowPathUri;
+      entry.reduceFileSize = reduce ? "t" : "f";
       entries.add(entry);
     }
 
