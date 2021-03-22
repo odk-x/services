@@ -97,8 +97,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     int count = getSupportFragmentManager().getBackStackEntryCount();
     if (count == 1) {
       startActivity(new Intent(MainActivity.this,MainActivity.class));
-      startActivity(getIntent());
       overridePendingTransition(0, 0);
+      finish();
     }
     else
       super.onBackPressed();
