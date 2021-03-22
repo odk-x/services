@@ -295,7 +295,7 @@
     <string name="show_password_text">Show password</string>
 
     <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
-    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>
+    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admin)</string>
     <string name="general_settings">General Settings</string>
     <string name="admin_general_settings">Admin Access to Settings</string>
     <string name="opendatakit_website">Open Data Kit user documentation</string>
