@@ -325,7 +325,7 @@
     <string name="credential_type_prefix">Credentials: </string>
 
     <string name="testing_support">Non-Production (Test) Settings:</string>
-    <string name="non_secure_authentication">Allow unsafe/unsecure Authentication</string>
+    <string name="non_secure_authentication">Allow unsafe/unsecured Authentication</string>
     <string name="non_secure_summary">Authenticate over http: (testing support)</string>
 
     <string name="restrict_device_settings_summary">Limit non-Admin ability to change Device Settings</string>
