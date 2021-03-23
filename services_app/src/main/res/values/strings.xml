@@ -195,7 +195,8 @@
     <string name="sync_defer_instance_files">Defer Instance Attachments</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_reset_server">Reset App Server</string>
-
+    <string name="last_sync">Last Sync</string>
+    <string name="last_sync_not_available">Not Available</string>
     <string name="sync_confirm_change_settings">Confirm Change Settings</string>
     <string name="sync_change_settings_warning">If you change your settings, tables you have sync\'d now may no longer be able to be sync\'d.</string>
     <string name="sync_save">Save</string>
