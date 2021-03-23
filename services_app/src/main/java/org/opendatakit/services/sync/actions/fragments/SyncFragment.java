@@ -29,6 +29,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -44,6 +45,7 @@ import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -53,7 +55,10 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -84,8 +89,10 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private LinearLayout resetButtonPane;
 
-  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
+  private SyncAttachmentState syncAttachmentState;
   private SyncActions syncAction = SyncActions.IDLE;
+  private PropertiesSingleton properties;
+  private TextView lastSyncField;
 
   public SyncFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -130,6 +137,17 @@ public class SyncFragment extends AbsSyncUIFragment {
     populateTextViewMemberVariablesReferences(view);
 
     syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
+    lastSyncField = view.findViewById(R.id.last_sync_field);
+    displayLastSyncInfo();
+    properties = CommonToolProperties.get(this.getContext(),getAppName());
+    if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
+      String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
+      try {
+        syncAttachmentState = SyncAttachmentState.valueOf(state);
+      } catch (IllegalArgumentException e) {
+        syncAttachmentState = SyncAttachmentState.SYNC;
+      }
+    } else syncAttachmentState = SyncAttachmentState.SYNC;
 
     if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
       String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
@@ -157,17 +175,13 @@ public class SyncFragment extends AbsSyncUIFragment {
       @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
         syncAttachmentState = SyncAttachmentState.valueOf(syncAttachmentType[position]);
+        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
       }
 
       @Override public void onNothingSelected(AdapterView<?> parent) {
-        String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
         syncAttachmentState = SyncAttachmentState.SYNC;
-        for (int i = 0; i < syncAttachmentType.length; ++i) {
-          if (syncAttachmentType[i].equals(syncAttachmentState.name())) {
-            syncInstanceAttachmentsSpinner.setSelection(i);
-            break;
-          }
-        }
+        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
+        syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
       }
     });
 
@@ -197,13 +211,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   @Override public void onResume() {
     super.onResume();
-    String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
-    for (int i = 0; i < syncAttachmentValues.length; ++i) {
-      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
-        syncInstanceAttachmentsSpinner.setSelection(i);
-        break;
-      }
-    }
+    syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
   }
 
   private void disableButtons() {
@@ -408,6 +416,7 @@ public class SyncFragment extends AbsSyncUIFragment {
                   @Override public void run() {
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
+                      saveLastSyncInfo(status);
                     } else {
                       handler.postDelayed(new Runnable() {
                         @Override public void run() {
@@ -440,7 +449,31 @@ public class SyncFragment extends AbsSyncUIFragment {
     perhapsEnableButtons();
     updateInterface();
   }
-
+  private void saveLastSyncInfo(SyncStatus status){
+    if(status == SyncStatus.SYNC_COMPLETE || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS){
+      String timestamp = String.valueOf(System.currentTimeMillis());
+      properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_LAST_SYNC_INFO,timestamp));
+      displayLastSyncInfo();
+    }
+  }
+  private void displayLastSyncInfo() {
+    String timestamp = properties.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
+    if (timestamp != null) {
+      SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
+      String ts = sdf.format(new Date(Long.parseLong(timestamp)));
+      lastSyncField.setText(ts);
+    } else
+      lastSyncField.setText(getResources().getString(R.string.last_sync_not_available));
+  }
+  private int getSyncAttachmentStateIndex(){
+    String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
+    for (int i = 0; i < syncAttachmentValues.length; ++i) {
+      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+        return i;
+      }
+    }
+    return 0;
+  }
   /**
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
