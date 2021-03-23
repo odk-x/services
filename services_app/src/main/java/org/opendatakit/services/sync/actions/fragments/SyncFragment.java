@@ -54,6 +54,7 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -84,8 +85,9 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private LinearLayout resetButtonPane;
 
-  private SyncAttachmentState syncAttachmentState = SyncAttachmentState.SYNC;
+  private SyncAttachmentState syncAttachmentState;
   private SyncActions syncAction = SyncActions.IDLE;
+  private PropertiesSingleton properties;
 
   public SyncFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -130,6 +132,15 @@ public class SyncFragment extends AbsSyncUIFragment {
     populateTextViewMemberVariablesReferences(view);
 
     syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
+    properties = CommonToolProperties.get(this.getContext(),getAppName());
+    if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
+      String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
+      try {
+        syncAttachmentState = SyncAttachmentState.valueOf(state);
+      } catch (IllegalArgumentException e) {
+        syncAttachmentState = SyncAttachmentState.SYNC;
+      }
+    } else syncAttachmentState = SyncAttachmentState.SYNC;
 
     if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
       String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
@@ -157,17 +168,13 @@ public class SyncFragment extends AbsSyncUIFragment {
       @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
         syncAttachmentState = SyncAttachmentState.valueOf(syncAttachmentType[position]);
+        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
       }
 
       @Override public void onNothingSelected(AdapterView<?> parent) {
-        String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
         syncAttachmentState = SyncAttachmentState.SYNC;
-        for (int i = 0; i < syncAttachmentType.length; ++i) {
-          if (syncAttachmentType[i].equals(syncAttachmentState.name())) {
-            syncInstanceAttachmentsSpinner.setSelection(i);
-            break;
-          }
-        }
+        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
+        syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
       }
     });
 
@@ -197,13 +204,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   @Override public void onResume() {
     super.onResume();
-    String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
-    for (int i = 0; i < syncAttachmentValues.length; ++i) {
-      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
-        syncInstanceAttachmentsSpinner.setSelection(i);
-        break;
-      }
-    }
+    syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
   }
 
   private void disableButtons() {
@@ -441,6 +442,15 @@ public class SyncFragment extends AbsSyncUIFragment {
     updateInterface();
   }
 
+  private int getSyncAttachmentStateIndex(){
+    String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
+    for (int i = 0; i < syncAttachmentValues.length; ++i) {
+      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+        return i;
+      }
+    }
+    return 0;
+  }
   /**
    * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
    */
