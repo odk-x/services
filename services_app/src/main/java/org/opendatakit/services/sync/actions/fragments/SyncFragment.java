@@ -58,7 +58,10 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+
 import java.util.Date;
+
+
 
 /**
  * @author mitchellsundt@gmail.com
@@ -92,6 +95,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private SyncAttachmentState syncAttachmentState;
   private SyncActions syncAction = SyncActions.IDLE;
   private PropertiesSingleton properties;
+
   private TextView lastSyncField;
 
   public SyncFragment() {
@@ -139,6 +143,7 @@ public class SyncFragment extends AbsSyncUIFragment {
     syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
     lastSyncField = view.findViewById(R.id.last_sync_field);
     displayLastSyncInfo();
+
     properties = CommonToolProperties.get(this.getContext(),getAppName());
     if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
       String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
@@ -465,6 +470,7 @@ public class SyncFragment extends AbsSyncUIFragment {
     } else
       lastSyncField.setText(getResources().getString(R.string.last_sync_not_available));
   }
+
   private int getSyncAttachmentStateIndex(){
     String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
     for (int i = 0; i < syncAttachmentValues.length; ++i) {
