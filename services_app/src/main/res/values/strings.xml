@@ -296,7 +296,7 @@
     <string name="show_password_text">Show password</string>
 
     <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
-    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admim)</string>
+    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admin)</string>
     <string name="general_settings">General Settings</string>
     <string name="admin_general_settings">Admin Access to Settings</string>
     <string name="opendatakit_website">Open Data Kit user documentation</string>
@@ -326,7 +326,7 @@
     <string name="credential_type_prefix">Credentials: </string>
 
     <string name="testing_support">Non-Production (Test) Settings:</string>
-    <string name="non_secure_authentication">Allow unsafe/unsecure Authentication</string>
+    <string name="non_secure_authentication">Allow unsafe/unsecured Authentication</string>
     <string name="non_secure_summary">Authenticate over http: (testing support)</string>
 
     <string name="restrict_device_settings_summary">Limit non-Admin ability to change Device Settings</string>
