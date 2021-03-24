@@ -142,9 +142,10 @@ public class SyncFragment extends AbsSyncUIFragment {
 
     syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
     lastSyncField = view.findViewById(R.id.last_sync_field);
-    displayLastSyncInfo();
+
 
     properties = CommonToolProperties.get(this.getContext(),getAppName());
+    displayLastSyncInfo();
     if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
       String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
       try {
