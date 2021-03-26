@@ -108,6 +108,7 @@ public class AppPropertiesActivity extends AppCompatActivity implements
                 R.string.action_bar_general_settings;
 
         getSupportActionBar().setTitle(getString(titleResId, getAppName()));
+        mAdminMode = adminMode;
       }
     });
 
@@ -122,7 +123,7 @@ public class AppPropertiesActivity extends AppCompatActivity implements
   @Override
   protected void onSaveInstanceState(@NonNull Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE,preferenceViewModel.getAdminMode().getValue());
+    outState.putBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE,mAdminMode);
   }
 
   @Override
