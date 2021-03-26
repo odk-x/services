@@ -122,10 +122,10 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     serverAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_SYNC_SERVER);
 
-    PreferenceCategory serverCategory = (PreferenceCategory) findPreference(CommonToolProperties.GROUPING_SERVER_CATEGORY);
+    PreferenceCategory serverCategory = findPreference(CommonToolProperties.GROUPING_SERVER_CATEGORY);
 
     // Initialize the Server URL Text Preference
-    mServerUrlPreference = (EditTextPreference) findPreference(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    mServerUrlPreference = findPreference(CommonToolProperties.KEY_SYNC_SERVER_URL);
     if (props.containsKey(CommonToolProperties.KEY_SYNC_SERVER_URL)) {
       String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
       mServerUrlPreference.setSummary(url);
@@ -148,7 +148,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     credentialAvailable = !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_AUTHENTICATION_TYPE);
-    mSignOnCredentialPreference = (ListPreference) findPreference(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
+    mSignOnCredentialPreference = findPreference(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
     if (props.containsKey(CommonToolProperties.KEY_AUTHENTICATION_TYPE)) {
       String chosenFontSize = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
       CharSequence entryValues[] = mSignOnCredentialPreference.getEntryValues();
@@ -172,7 +172,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     mSignOnCredentialPreference.setEnabled(credentialAvailable || adminMode);
 
     //////////////////
-    mUsernamePreference = (EditTextPreference) findPreference(CommonToolProperties.KEY_USERNAME);
+    mUsernamePreference = findPreference(CommonToolProperties.KEY_USERNAME);
     if (props.containsKey(CommonToolProperties.KEY_USERNAME)) {
       String user = props.getProperty(CommonToolProperties.KEY_USERNAME);
       mUsernamePreference.setSummary(user);
@@ -254,7 +254,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   public boolean signOnPreferenceChanged(Preference preference, Object newValue){
     int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
     String entry = (String) ((ListPreference) preference).getEntries()[index];
-    ((ListPreference) preference).setSummary(entry);
+    preference.setSummary(entry);
     updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
 
     return true;
