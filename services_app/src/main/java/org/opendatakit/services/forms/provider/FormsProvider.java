@@ -27,7 +27,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.database.DatabaseConstants;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.TableMetaDataEntries;
@@ -94,6 +93,20 @@ public class FormsProvider extends ContentProvider {
     return true;
   }
 
+  private boolean isNumeric(final CharSequence charSequence) {
+    int size = charSequence.length();
+    if (size == 0) {
+      return false;
+    }
+
+    for (int i = 0; i < size; i++) {
+      if (!Character.isDigit(charSequence.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * Parse the URI for the form. This is either of the form:
    * <p>
@@ -141,7 +154,8 @@ public class FormsProvider extends ContentProvider {
     pf.numericFormId = null;
     // assume that we are not dealing with _ID values...
     pf.tableId = segments.size() >= 2 ? segments.get(1) : null;
-    pf.isNumericFormId = StringUtils.isNumeric(pf.tableId);
+
+    pf.isNumericFormId = isNumeric(pf.tableId);
     if (pf.isNumericFormId) {
       pf.numericFormId = pf.tableId;
       pf.tableId = null;
