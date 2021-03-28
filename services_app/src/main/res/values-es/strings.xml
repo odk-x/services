@@ -298,7 +298,9 @@
     <string name="admin_tool_tables_settings_summary">Limitar la capacidad de usuarios no administradores para cambiar la configuración de tablas especificas</string>
     <string name="change_custom_home_screen">Cambio a uso de la pantalla de inicio personalizada</string>
     <string name="clear_configuration_settings">Restablecer configuración</string>
+    <string name="exit_admin_mode">salir del modo de administrador</string>
     <string name="click_to_clear_settings">Haz clic para eliminar configuración</string>
+    <string name="click_to_exit_admin_settings">Haga clic para salir del modo de administrador</string>
     <string name="reset_settings">Restablecer configuración</string>
     <string name="confirm_reset_settings">Opciones especificos para este dispotivo y opciones de identificacion de usuario serán eliminadas, y todos los heramientas realizarán sus lógicas de reinicio. ¿Está usted seguro que quiere continuar?</string>
     <string name="write_external_storage_rationale">ODK-X Services necesita acceder a almacenamiento externo para almacenar recursos e interactuar con otras aplicaciones ODK</string>

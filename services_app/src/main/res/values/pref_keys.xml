@@ -8,6 +8,7 @@
     <string name="key_admin_tables_settings">key_admin_tables_settings</string>
     <string name="key_admin_general_settings">key_admin_general_settings</string>
     <string name="key_reset_config">key_reset_config</string>
+    <string name="key_exit_admin_settings">key_exit_admin_settings</string>
     <string name="key_verify_settings">key_verify_settings</string>
     <string name="key_documentation">key_documentation</string>
 </resources>

@@ -360,7 +360,9 @@
     <string name="change_custom_home_screen">Change use of custom home screen</string>
 
     <string name="clear_configuration_settings">Reset configuration</string>
+    <string name="exit_admin_mode">Exit admin mode</string>
     <string name="click_to_clear_settings">Click to clear settings</string>
+    <string name="click_to_exit_admin_settings">Click to exit admin settings</string>
 
     <string name="reset_settings">Configuration Reset</string>
     <string name="confirm_reset_settings">Device-specific and
