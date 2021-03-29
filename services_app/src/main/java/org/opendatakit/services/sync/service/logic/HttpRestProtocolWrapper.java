@@ -15,7 +15,6 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
@@ -77,6 +76,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -593,7 +593,7 @@ public class HttpRestProtocolWrapper {
     ContentType json = ContentType.create(ContentType.APPLICATION_JSON.getMimeType(), param1);
 
     // don't really want plaintext...
-    NameValuePair param2 = new BasicNameValuePair("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
+    NameValuePair param2 = new BasicNameValuePair("charset", (StandardCharsets.UTF_8.name()).toLowerCase(Locale.ENGLISH));
     NameValuePair param3 = new BasicNameValuePair("q", "0.4");
 
     ContentType tplainUtf8 = ContentType.create(ContentType.TEXT_PLAIN.getMimeType(), param2, param3);
@@ -604,7 +604,7 @@ public class HttpRestProtocolWrapper {
     request.addHeader("accept", tplainUtf8.toString());
 
     // set the response entity character set to CharEncoding.UTF_8
-    request.addHeader("Accept-Charset", CharEncoding.UTF_8);
+    request.addHeader("Accept-Charset", StandardCharsets.UTF_8.name());
   }
 
 

@@ -20,7 +20,7 @@ import android.database.Cursor;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.GrantPermissionRule;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.commons.lang3.CharEncoding;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -3155,7 +3156,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     try {
       file = new File(ODKFileUtils.getTableDefinitionCsvFile(getAppName(), tableId));
       in = new FileInputStream(file);
-      input = new InputStreamReader(in, CharEncoding.UTF_8);
+      input = new InputStreamReader(in, StandardCharsets.UTF_8);
       cr = new RFC4180CsvReader(input);
 
       String[] row;
@@ -3214,7 +3215,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
       file = new File(ODKFileUtils.getTablePropertiesCsvFile(getAppName(), tableId));
       in = new FileInputStream(file);
-      input = new InputStreamReader(in, CharEncoding.UTF_8);
+      input = new InputStreamReader(in, StandardCharsets.UTF_8);
       cr = new RFC4180CsvReader(input);
       // Read KeyValueStore
       // read the column headers
