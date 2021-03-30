@@ -75,6 +75,14 @@
             android:targetPackage="org.opendatakit.services"
             android:targetClass="org.opendatakit.services.preferences.activities.ClearAppPropertiesActivity" />
     </PreferenceScreen>
+    <PreferenceScreen
+        android:id="@+id/exit_admin_mode"
+        android:icon="@drawable/ic_exit_24dp"
+        android:title="@string/exit_admin_mode"
+        android:summary="@string/click_to_exit_admin_settings"
+        android:key="@string/key_exit_admin_settings" >
+
+    </PreferenceScreen>
 
     <PreferenceScreen
         android:id="@+id/verify_server_settingss"
