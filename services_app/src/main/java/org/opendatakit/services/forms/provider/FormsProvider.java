@@ -94,6 +94,10 @@ public class FormsProvider extends ContentProvider {
   }
 
   private boolean isNumeric(final CharSequence charSequence) {
+    if (charSequence == null) {
+      return false;
+    }
+
     int size = charSequence.length();
     if (size == 0) {
       return false;
