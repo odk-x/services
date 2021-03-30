@@ -283,10 +283,10 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     // remove whitespace
     String newStr = newValue.toString();
-    newStr = newStr.replaceAll("\\r\\n|\\n|\\r", newStr);
+    newStr = newStr.replaceAll("\\r\\n|\\n|\\r", "");
 
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    preference.setSummary((CharSequence) newValue);
+    preference.setSummary(newStr);
     if ( props.containsKey(preference.getKey())) {
       updatePropertiesSingleton(preference.getKey(), newStr);
     } else {
