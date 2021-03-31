@@ -155,7 +155,7 @@
     <!-- Sync User Interface stuff -->
     <string name="sync_details">Configuración de sincronizar:</string>
     <string name="sync_server_url">URL del servidor</string>
-    <string name="sync_default_server_url">https://opendatakit-2.appspot.com</string>
+    <string name="sync_default_server_url">https://tables-demo.odk-x.org</string>
     <string name="sync_account">Cuenta:</string>
     <string name="sync_progress_state_label">Estado de progreso de sincronización</string>
     <string name="sync_progress_message_label">Mensaje de progreso de sincronización</string>
