@@ -185,7 +185,7 @@
     <!-- Sync User Interface stuff -->
     <string name="sync_details">Sync Configuration:</string>
     <string name="sync_server_url">Server URL</string>
-    <string name="sync_default_server_url">https://tables-demo.odk-x.org/</string>
+    <string name="sync_default_server_url">https://tables-demo.odk-x.org</string>
     <string name="sync_account">Account:</string>
     <string name="sync_progress_state_label">Sync Progress State</string>
     <string name="sync_progress_message_label">Sync Progress Message</string>
