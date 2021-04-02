@@ -477,7 +477,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private int getSyncAttachmentStateIndex(){
     String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
     for (int i = 0; i < syncAttachmentValues.length; ++i) {
-      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+      if (syncAttachmentState!=null && syncAttachmentState.name().equals(syncAttachmentValues[i])) {
         return i;
       }
     }
