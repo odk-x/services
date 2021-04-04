@@ -144,6 +144,9 @@ public class SyncFragment extends AbsSyncUIFragment {
         syncAttachmentState = SyncAttachmentState.SYNC;
       }
     }
+    else{
+      syncAttachmentState=SyncAttachmentState.SYNC;
+    }
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
