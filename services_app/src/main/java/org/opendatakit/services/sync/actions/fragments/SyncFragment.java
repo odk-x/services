@@ -144,6 +144,9 @@ public class SyncFragment extends AbsSyncUIFragment {
         syncAttachmentState = SyncAttachmentState.SYNC;
       }
     }
+    else{
+      syncAttachmentState=SyncAttachmentState.SYNC;
+    }
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -477,7 +480,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private int getSyncAttachmentStateIndex(){
     String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
     for (int i = 0; i < syncAttachmentValues.length; ++i) {
-      if (syncAttachmentState!=null && syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
         return i;
       }
     }
