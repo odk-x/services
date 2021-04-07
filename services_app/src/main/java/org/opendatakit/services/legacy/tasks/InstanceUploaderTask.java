@@ -23,8 +23,7 @@ import android.os.AsyncTask;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import org.apache.commons.lang3.CharEncoding;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
@@ -74,6 +73,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,7 +133,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
     cv.put(InstanceColumns.SUBMISSION_INSTANCE_ID, submissionInstanceId);
     URI u = null;
     try {
-      URL url = new URL(URLDecoder.decode(urlString, CharEncoding.UTF_8));
+      URL url = new URL(URLDecoder.decode(urlString, StandardCharsets.UTF_8.name()));
       u = url.toURI();
     } catch (MalformedURLException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
@@ -187,7 +187,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
           WebUtils.get().discardEntityBytes(response);
           if (locations != null && locations.length == 1) {
             try {
-              URL url = new URL(URLDecoder.decode(locations[0].getValue(), CharEncoding.UTF_8));
+              URL url = new URL(URLDecoder.decode(locations[0].getValue(), StandardCharsets.UTF_8.name()));
               URI uNew = url.toURI();
               if (u.getHost().equalsIgnoreCase(uNew.getHost())) {
                 // trust the server to tell us a new location
@@ -309,7 +309,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
 
       // add the submission file first...
       builder.addBinaryBody("xml_submission_file", instanceFile,
-          ContentType.TEXT_XML.withCharset(Charset.forName(CharEncoding.UTF_8)), instanceFile.getName());
+          ContentType.TEXT_XML.withCharset(Charset.forName(StandardCharsets.UTF_8.name())), instanceFile.getName());
       WebLogger.getLogger(appName).i(TAG, "added xml_submission_file: " + instanceFile.getName());
       byteCount += instanceFile.length();
 
@@ -330,7 +330,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
             WebLogger.getLogger(appName).i(TAG, "Extremely long post is being split into multiple posts");
             try {
               builder.addTextBody("*isIncomplete*", "yes",
-                  ContentType.TEXT_PLAIN.withCharset(Charset.forName((CharEncoding.UTF_8))));
+                  ContentType.TEXT_PLAIN.withCharset(StandardCharsets.UTF_8));
             } catch (Exception e) {
               WebLogger.getLogger(appName).printStackTrace(e); // never happens...
             }
@@ -395,10 +395,10 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
       throws JsonParseException, JsonMappingException, IOException {
 
     Uri manifest = Uri.parse(ProviderConsts.XML_SUBMISSION_URL_PREFIX + "/"
-        + URLEncoder.encode(appName, CharEncoding.UTF_8) + "/"
-        + URLEncoder.encode(uploadTableId, CharEncoding.UTF_8) + "/"
-        + URLEncoder.encode(instanceId, CharEncoding.UTF_8) + "/"
-        + URLEncoder.encode(submissionInstanceId, CharEncoding.UTF_8));
+        + URLEncoder.encode(appName, StandardCharsets.UTF_8.name()) + "/"
+        + URLEncoder.encode(uploadTableId, StandardCharsets.UTF_8.name()) + "/"
+        + URLEncoder.encode(instanceId, StandardCharsets.UTF_8.name()) + "/"
+        + URLEncoder.encode(submissionInstanceId, StandardCharsets.UTF_8.name()));
 
     InputStream is = appContext.getContentResolver().openInputStream(manifest);
 
@@ -475,7 +475,7 @@ public class InstanceUploaderTask extends AsyncTask<String, Integer, InstanceUpl
     urlString = urlString + "/submission";
     URI u = null;
     try {
-      URL url = new URL(URLDecoder.decode(urlString, CharEncoding.UTF_8));
+      URL url = new URL(URLDecoder.decode(urlString, StandardCharsets.UTF_8.name()));
       u = url.toURI();
     } catch (MalformedURLException e) {
       WebLogger.getLogger(appName).printStackTrace(e);

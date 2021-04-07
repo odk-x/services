@@ -14,7 +14,6 @@
 
 package org.opendatakit.services.utilities;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.FileSet;
 import org.opendatakit.utilities.FileSet.MimeFile;
@@ -32,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -134,7 +134,7 @@ public class EncryptionUtils {
       // this is the md5 hash of the instanceID and the symmetric key
       try {
         MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(instanceId.getBytes(CharEncoding.UTF_8));
+        md.update(instanceId.getBytes(StandardCharsets.UTF_8));
         md.update(key);
         byte[] messageDigest = md.digest();
         ivSeedArray = new byte[IV_BYTE_LENGTH];
@@ -142,10 +142,6 @@ public class EncryptionUtils {
           ivSeedArray[i] = messageDigest[(i % messageDigest.length)];
         }
       } catch (NoSuchAlgorithmException e) {
-        WebLogger.getLogger(appName).e(t, e.toString());
-        WebLogger.getLogger(appName).printStackTrace(e);
-        throw new IllegalArgumentException(e.getMessage());
-      } catch (UnsupportedEncodingException e) {
         WebLogger.getLogger(appName).e(t, e.toString());
         WebLogger.getLogger(appName).printStackTrace(e);
         throw new IllegalArgumentException(e.getMessage());
@@ -225,13 +221,9 @@ public class EncryptionUtils {
       byte[] messageDigest;
       try {
         MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(elementSignatureSource.toString().getBytes(CharEncoding.UTF_8));
+        md.update(elementSignatureSource.toString().getBytes(StandardCharsets.UTF_8));
         messageDigest = md.digest();
       } catch (NoSuchAlgorithmException e) {
-        WebLogger.getLogger(appName).e(t, e.toString());
-        WebLogger.getLogger(appName).printStackTrace(e);
-        throw new IllegalArgumentException(e.getMessage());
-      } catch (UnsupportedEncodingException e) {
         WebLogger.getLogger(appName).e(t, e.toString());
         WebLogger.getLogger(appName).printStackTrace(e);
         throw new IllegalArgumentException(e.getMessage());
@@ -406,7 +398,7 @@ public class EncryptionUtils {
       fout = new FileOutputStream(encryptedFile);
       fout = new CipherOutputStream(fout, c);
       InputStream fin;
-      fin = new ByteArrayInputStream(contents.getBytes(CharEncoding.UTF_8));
+      fin = new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8));
       byte[] buffer = new byte[2048];
       int len = fin.read(buffer);
       while (len != -1) {

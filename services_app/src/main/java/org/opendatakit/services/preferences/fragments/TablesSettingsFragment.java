@@ -15,7 +15,10 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.os.Bundle;
+import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
@@ -44,7 +47,11 @@ public class TablesSettingsFragment extends PreferenceFragmentCompat {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+  }
 
+  @Override
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
 
     // not super safe, but we're just putting in this mode to help
@@ -52,20 +59,20 @@ public class TablesSettingsFragment extends PreferenceFragmentCompat {
     // would require code to access it
     boolean adminMode;
     adminMode = (this.getArguments() == null) ? false :
-        (this.getArguments().containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) ?
-            this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
+            (this.getArguments().containsKey(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) ?
+                    this.getArguments().getBoolean(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE) : false);
 
     String adminPwd = props.getProperty(CommonToolProperties.KEY_ADMIN_PW);
     boolean adminConfigured = (adminPwd != null && adminPwd.length() != 0);
 
-    PreferenceCategory deviceCategory = (PreferenceCategory) findPreference
-        (CommonToolProperties.GROUPING_TOOL_TABLES_CATEGORY);
+    PreferenceCategory deviceCategory = findPreference
+            (CommonToolProperties.GROUPING_TOOL_TABLES_CATEGORY);
 
     Boolean useHomeScreen = props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_USE_HOME_SCREEN);
     useHomeScreen = (useHomeScreen == null) ? false : useHomeScreen;
     boolean useHomeScreenAvailable = !adminConfigured || useHomeScreen;
 
-    mUseHomeScreenPreference = (CheckBoxPreference) findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
+    mUseHomeScreenPreference = findPreference(CommonToolProperties.KEY_USE_HOME_SCREEN);
     if (props.containsKey(CommonToolProperties.KEY_USE_HOME_SCREEN)) {
       boolean selection = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
       mUseHomeScreenPreference.setChecked(selection);
@@ -76,7 +83,7 @@ public class TablesSettingsFragment extends PreferenceFragmentCompat {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         PropertiesSingleton props = ((IOdkAppPropertiesActivity)
-            TablesSettingsFragment.this.getActivity()).getProps();
+                TablesSettingsFragment.this.getActivity()).getProps();
         props.setProperties(Collections.singletonMap(preference.getKey(), newValue.toString()));
         return true;
       }

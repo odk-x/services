@@ -132,18 +132,9 @@ public class SyncFragment extends AbsSyncUIFragment {
     disableButtons();
   }
 
-  @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
-
-    View view = inflater.inflate(ID, container, false);
-
-    infoPane = view.findViewById(R.id.sync_info_pane);
-    populateTextViewMemberVariablesReferences(view);
-
-    syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
-    lastSyncField = view.findViewById(R.id.last_sync_field);
-    displayLastSyncInfo();
-
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
     properties = CommonToolProperties.get(this.getContext(),getAppName());
     if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
       String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
@@ -152,7 +143,22 @@ public class SyncFragment extends AbsSyncUIFragment {
       } catch (IllegalArgumentException e) {
         syncAttachmentState = SyncAttachmentState.SYNC;
       }
-    } else syncAttachmentState = SyncAttachmentState.SYNC;
+    }
+    else{
+      syncAttachmentState=SyncAttachmentState.SYNC;
+    }
+  }
+
+  @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+
+    View view = inflater.inflate(ID, container, false);
+
+    infoPane = view.findViewById(R.id.sync_info_pane);
+    populateTextViewMemberVariablesReferences(view);
+    syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
+    lastSyncField = view.findViewById(R.id.last_sync_field);
+    displayLastSyncInfo();
 
     if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
       String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
