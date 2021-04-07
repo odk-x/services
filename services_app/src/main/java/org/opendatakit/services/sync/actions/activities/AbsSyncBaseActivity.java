@@ -282,7 +282,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
       if (id == R.id.action_about) {
 
          FragmentManager mgr = getSupportFragmentManager();
-         GoToAboutFragment.GotoAboutFragment(item,mgr,R.id.sync_activity_view);
+         GoToAboutFragment.GotoAboutFragment(mgr,R.id.sync_activity_view);
          return true;
       }
 

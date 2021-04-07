@@ -142,7 +142,7 @@ public class CheckpointResolutionActivity extends AppCompatActivity implements I
     if (id == R.id.action_about) {
 
       FragmentManager mgr = getSupportFragmentManager();
-      GoToAboutFragment.GotoAboutFragment(item,mgr,R.id.checkpoint_resolver_activity_view);
+      GoToAboutFragment.GotoAboutFragment(mgr,R.id.checkpoint_resolver_activity_view);
       return true;
     }
     return super.onOptionsItemSelected(item);

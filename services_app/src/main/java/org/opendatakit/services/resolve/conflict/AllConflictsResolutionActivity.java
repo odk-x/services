@@ -152,7 +152,7 @@ public class AllConflictsResolutionActivity extends AppCompatActivity implements
         if (id == R.id.action_about) {
 
             FragmentManager mgr = getSupportFragmentManager();
-            GoToAboutFragment.GotoAboutFragment(item,mgr,R.id.all_conflicts_activity_view);
+            GoToAboutFragment.GotoAboutFragment(mgr,R.id.all_conflicts_activity_view);
             return true;
         }
         return super.onOptionsItemSelected(item);
