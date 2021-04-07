@@ -47,6 +47,7 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.utilities.GoToAboutFragment;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -281,15 +282,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
       if (id == R.id.action_about) {
 
          FragmentManager mgr = getSupportFragmentManager();
-         Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
-         if ( newFragment == null ) {
-            newFragment = new AboutMenuFragment();
-         }
-         FragmentTransaction trans = mgr.beginTransaction();
-         trans.replace(R.id.sync_activity_view, newFragment, AboutMenuFragment.NAME);
-         trans.addToBackStack(AboutMenuFragment.NAME);
-         trans.commit();
-         item.setVisible(false);
+         GoToAboutFragment.GotoAboutFragment(item,mgr,R.id.sync_activity_view);
          return true;
       }
 
