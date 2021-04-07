@@ -13,10 +13,12 @@ public class GoToAboutFragment {
         if (newFragment == null) {
             newFragment = new AboutMenuFragment();
         }
-        FragmentTransaction trans = mgr.beginTransaction();
-        trans.replace(id, newFragment, AboutMenuFragment.NAME);
-        trans.addToBackStack(AboutMenuFragment.NAME);
-        trans.commit();
+        if (!newFragment.isAdded()) {
+            FragmentTransaction trans = mgr.beginTransaction();
+            trans.replace(id, newFragment, AboutMenuFragment.NAME);
+            trans.addToBackStack(AboutMenuFragment.NAME);
+            trans.commit();
+        }
 
 
     }
