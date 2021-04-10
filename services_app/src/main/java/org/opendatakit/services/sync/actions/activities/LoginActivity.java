@@ -87,6 +87,7 @@ public class LoginActivity extends AbsSyncBaseActivity {
 
    @Override
    public void onBackPressed() {
+      getProps();
       String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
       boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
           getString(R.string.credential_type_none).equals(authType);
