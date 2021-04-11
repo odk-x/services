@@ -27,7 +27,6 @@ import androidx.annotation.NonNull;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
@@ -62,6 +61,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -701,7 +701,7 @@ public class SubmissionProvider extends ContentProvider {
               out.flush();
               out.close();
 
-              b.append(out.toString(CharEncoding.UTF_8));
+              b.append(out.toString(StandardCharsets.UTF_8.name()));
 
               // OK we have the document in the builder (b).
               String doc = b.toString();
@@ -853,7 +853,7 @@ public class SubmissionProvider extends ContentProvider {
     OutputStreamWriter osw = null;
     try {
       os = new FileOutputStream(outputFilePath, false);
-      osw = new OutputStreamWriter(os, CharEncoding.UTF_8);
+      osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
       osw.write(payload);
       osw.flush();
       osw.close();

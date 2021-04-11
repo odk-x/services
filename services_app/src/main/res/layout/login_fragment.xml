@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical">
@@ -86,23 +87,24 @@
                 android:layout_marginTop="5dp"
                 android:textSize="14sp"/>
 
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/pwd_layout"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="5dp"
+            app:passwordToggleEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/pwd_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginTop="5dp"
-                android:inputType="textPassword"
-                android:textSize="17sp"/>
+                android:inputType="textPassword"/>
 
-        <CheckBox
-                android:text="@string/show_password_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/show_pwd"/>
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
 

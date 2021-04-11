@@ -27,17 +27,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.utilities.GoToAboutFragment;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
@@ -93,6 +91,17 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   }
 
   @Override
+  public void onBackPressed() {
+    int count = getSupportFragmentManager().getBackStackEntryCount();
+    if (count == 1) {
+      startActivity(new Intent(MainActivity.this,MainActivity.class));
+      overridePendingTransition(0, 0);
+      finish();
+    }
+    else
+      super.onBackPressed();
+  }
+  @Override
   protected void onResume() {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
@@ -144,15 +153,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     if (id == R.id.action_about) {
 
       FragmentManager mgr = getSupportFragmentManager();
-      Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
-      if (newFragment == null) {
-        newFragment = new AboutMenuFragment();
-      }
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.main_activity_view, newFragment, AboutMenuFragment.NAME);
-      trans.addToBackStack(AboutMenuFragment.NAME);
-      trans.commit();
-
+      GoToAboutFragment.GotoAboutFragment(mgr,R.id.main_activity_view);
+      item.setVisible(false);
       return true;
     }
 

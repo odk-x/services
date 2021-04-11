@@ -14,12 +14,12 @@
 
 package org.opendatakit.services.utilities;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.logging.WebLogger;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Wrapper class for accessing Base64 functionality. This allows API Level 7
@@ -47,7 +47,7 @@ public class Base64Wrapper {
       Object[] argList = new Object[] { ba, FLAGS };
       Object o = m.invoke(null, argList);
       byte[] outArray = (byte[]) o;
-      String s = new String(outArray, CharEncoding.UTF_8);
+      String s = new String(outArray, StandardCharsets.UTF_8);
       return s;
     } catch (SecurityException e) {
       e.printStackTrace();
@@ -59,9 +59,6 @@ public class Base64Wrapper {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     } catch (InvocationTargetException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-      throw new IllegalArgumentException(e.toString());
-    } catch (UnsupportedEncodingException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException(e.toString());
     }

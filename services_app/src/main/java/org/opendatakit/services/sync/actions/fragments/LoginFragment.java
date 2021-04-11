@@ -19,13 +19,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
+
+import com.google.android.material.textfield.TextInputEditText;
 
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
@@ -67,8 +67,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    private TableHealthValidator healthValidator;
 
    private EditText usernameEditText;
-   private EditText passwordEditText;
-   private CheckBox togglePasswordText;
+   private TextInputEditText passwordEditText;
    private Button authenticateNewUser;
    private Button logout;
    private Button cancel;
@@ -127,18 +126,6 @@ public class LoginFragment extends AbsSyncUIFragment {
       usernameEditText.setText(props.getProperty(CommonToolProperties.KEY_USERNAME));
 
       passwordEditText = view.findViewById(R.id.pwd_field);
-
-      togglePasswordText = view.findViewById(R.id.show_pwd);
-      togglePasswordText.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
-            if (togglePasswordText.isChecked()) {
-               passwordEditText.setTransformationMethod(null);
-            } else {
-               passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-            }
-         }
-      });
 
       authenticateNewUser = view.findViewById(R.id.change_user_button);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
