@@ -33,6 +33,7 @@ import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.services.R;
 import org.opendatakit.services.database.AndroidConnectFactory;
+import org.opendatakit.services.utilities.GoToAboutFragment;
 
 /**
  * An activity for handling server conflicts.
@@ -149,15 +150,7 @@ public class ConflictResolutionActivity extends AppCompatActivity implements IAp
     if (id == R.id.action_about) {
 
       FragmentManager mgr = getSupportFragmentManager();
-      Fragment newFragment = mgr.findFragmentByTag(AboutMenuFragment.NAME);
-      if ( newFragment == null ) {
-        newFragment = new AboutMenuFragment();
-      }
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.conflict_resolver_activity_view, newFragment, AboutMenuFragment.NAME);
-      trans.addToBackStack(AboutMenuFragment.NAME);
-      trans.commit();
-
+      GoToAboutFragment.GotoAboutFragment(mgr,R.id.conflict_resolver_activity_view);
       return true;
     }
     return super.onOptionsItemSelected(item);

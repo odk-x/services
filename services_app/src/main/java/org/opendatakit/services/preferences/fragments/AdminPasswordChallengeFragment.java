@@ -19,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+
+import com.google.android.material.textfield.TextInputEditText;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.properties.CommonToolProperties;
@@ -82,7 +83,7 @@ public class AdminPasswordChallengeFragment extends Fragment {
                 .get(requireContext(), mAppName)
                 .getProperty(CommonToolProperties.KEY_ADMIN_PW);
 
-            EditText passwordEditText = ViewCompat.requireViewById(view, R.id.pwd_field);
+            TextInputEditText passwordEditText = ViewCompat.requireViewById(view, R.id.pwd_field);
             String pw = passwordEditText.getText().toString();
 
             if (adminPwd.equals(pw)) {

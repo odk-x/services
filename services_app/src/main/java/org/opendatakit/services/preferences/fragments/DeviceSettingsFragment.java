@@ -160,7 +160,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
     boolean splashAvailable =  !adminConfigured ||
         props.getBooleanProperty(CommonToolProperties.KEY_CHANGE_SPLASH_SETTINGS);
 
-    mShowSplashPreference = (CheckBoxPreference) findPreference(CommonToolProperties.KEY_SHOW_SPLASH);
+    mShowSplashPreference = findPreference(CommonToolProperties.KEY_SHOW_SPLASH);
     if (props.containsKey(CommonToolProperties.KEY_SHOW_SPLASH)) {
       boolean checked = props.getBooleanProperty(CommonToolProperties.KEY_SHOW_SPLASH);
       mShowSplashPreference.setChecked(checked);
@@ -180,7 +180,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
     mShowSplashPreference.setEnabled(adminMode || splashAvailable);
 
 
-    mSplashPathPreference = (PreferenceScreen) findPreference(CommonToolProperties.KEY_SPLASH_PATH);
+    mSplashPathPreference = findPreference(CommonToolProperties.KEY_SPLASH_PATH);
     if (props.containsKey(CommonToolProperties.KEY_SPLASH_PATH)) {
       mSplashPathPreference.setSummary(props.getProperty(CommonToolProperties.KEY_SPLASH_PATH));
     }

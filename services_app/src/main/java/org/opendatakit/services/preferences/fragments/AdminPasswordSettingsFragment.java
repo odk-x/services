@@ -45,7 +45,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey)  {
     setPreferencesFromResource(R.xml.admin_password_preferences, rootKey);
 
-    PasswordPreferenceScreen passwordScreen = (PasswordPreferenceScreen) this.findPreference(CommonToolProperties
+    PasswordPreferenceScreen passwordScreen = this.findPreference(CommonToolProperties
         .GROUPING_PASSWORD_SCREEN);
     passwordScreen.setCallback(new PasswordPreferenceScreen.PasswordActionCallback() {
       @Override public void showPasswordDialog() {
@@ -87,7 +87,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
     PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
 
     PasswordPreferenceScreen passwordScreen =
-        (PasswordPreferenceScreen) this.findPreference(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
+            this.findPreference(CommonToolProperties.GROUPING_PASSWORD_SCREEN);
 
     String adminPwd = props.getProperty(CommonToolProperties.KEY_ADMIN_PW);
     if ( adminPwd == null || adminPwd.length() == 0 ) {
@@ -113,9 +113,8 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
     PropertiesSingleton props =
         ((IOdkAppPropertiesActivity) AdminPasswordSettingsFragment.this.getActivity()).getProps();
 
-    PasswordPreferenceScreen passwordScreen = (PasswordPreferenceScreen)
-        AdminPasswordSettingsFragment.this.findPreference(CommonToolProperties
-            .GROUPING_PASSWORD_SCREEN);
+    PasswordPreferenceScreen passwordScreen = AdminPasswordSettingsFragment.this.findPreference(CommonToolProperties
+        .GROUPING_PASSWORD_SCREEN);
 
     String adminPwd = props.getProperty(CommonToolProperties.KEY_ADMIN_PW);
     if ( adminPwd == null || adminPwd.length() == 0 ) {

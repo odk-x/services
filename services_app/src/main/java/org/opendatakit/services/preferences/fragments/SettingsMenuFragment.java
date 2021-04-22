@@ -46,6 +46,15 @@ public class SettingsMenuFragment extends PreferenceFragmentCompat {
             return true;
           }
         });
+
+    findPreference(getString(R.string.key_exit_admin_settings))
+            .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                preferenceViewModel.setAdminMode(false);
+                return true;
+              }
+            });
   }
 
   @Override
@@ -60,6 +69,7 @@ public class SettingsMenuFragment extends PreferenceFragmentCompat {
       @Override
       public void onChanged(Boolean adminMode) {
         findPreference(getString(R.string.key_admin_server_settings)).setVisible(adminMode);
+        findPreference(getString(R.string.key_exit_admin_settings)).setVisible(adminMode);
         findPreference(getString(R.string.key_admin_device_settings)).setVisible(adminMode);
         findPreference(getString(R.string.key_admin_tables_settings)).setVisible(adminMode);
 

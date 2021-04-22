@@ -1,7 +1,10 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.os.Bundle;
+import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.XmlRes;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
@@ -27,7 +30,11 @@ public abstract class AbsAdminConfigurableSettingsFragment extends PreferenceFra
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+  }
 
+  @Override
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
     initializeCheckBoxPreference(getPreferenceScreen());
   }
 

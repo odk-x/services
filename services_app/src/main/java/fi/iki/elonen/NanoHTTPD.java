@@ -35,7 +35,6 @@ package fi.iki.elonen;
 
 import androidx.annotation.NonNull;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -69,6 +68,7 @@ import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -197,7 +197,7 @@ public abstract class NanoHTTPD {
 
         CopyWriter(OutputStream outputStream, String appName) throws UnsupportedEncodingException {
             this.outputStream = outputStream;
-            this.writer = new OutputStreamWriter(this.outputStream, CharEncoding.UTF_8);
+            this.writer = new OutputStreamWriter(this.outputStream, StandardCharsets.UTF_8);
             this.pw = new PrintWriter(writer);
             Boolean enableLog = getEnableLog(appName);
             enableResponseLogging = enableLog.booleanValue();
@@ -245,7 +245,7 @@ public abstract class NanoHTTPD {
 
                 if ( enableResponseLogging ) {
                     // save off the builder bytes
-                    bao.write(b.toString().getBytes(CharEncoding.UTF_8));
+                    bao.write(b.toString().getBytes(StandardCharsets.UTF_8));
                     b.setLength(0);
                 }
 
