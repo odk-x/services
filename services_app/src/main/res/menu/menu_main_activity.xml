@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_sync"
+        android:title="Sync"
+        android:icon="@drawable/ic_sync"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_verify_server_settings"
+        android:title="Verify Server Details"
+        android:icon="@drawable/ic_verify"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="Settings"
+        android:icon="@drawable/ic_settings"
+        app:showAsAction="always"/>
+
+</menu>

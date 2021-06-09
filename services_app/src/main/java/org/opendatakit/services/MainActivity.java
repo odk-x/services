@@ -26,8 +26,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
+
+import com.google.android.material.appbar.MaterialToolbar;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
@@ -63,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   private String mAppName;
   private boolean permissionOnly;
 
+  private MaterialToolbar toolbar;
+
   @Override
   protected void onDestroy() {
     super.onDestroy();
@@ -73,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    toolbar=findViewById(R.id.toolbarMainActivity);
 
     // IMPORTANT NOTE: the Application object is not yet created!
 
@@ -88,6 +95,37 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
           EXT_STORAGE_REQ_CODE
       );
     }
+
+    toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+      @Override
+      public boolean onMenuItemClick(MenuItem item) {
+
+        int id = item.getItemId();
+        if (id == R.id.action_sync) {
+          Intent i = new Intent(MainActivity.this, SyncActivity.class);
+          i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+          startActivityForResult(i, SYNC_ACTIVITY_RESULT_CODE);
+          return true;
+        }
+
+        if (id == R.id.action_verify_server_settings) {
+          Intent i = new Intent(MainActivity.this, VerifyServerSettingsActivity.class);
+          i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+          startActivityForResult(i, VERIFY_SERVER_SETTINGS_ACTIVITY_RESULT_CODE);
+          return true;
+        }
+
+        if (id == R.id.action_settings) {
+
+          Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
+          intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+          startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
+          return true;
+        }
+
+        return false;
+      }
+    });
   }
 
   @Override
@@ -116,13 +154,13 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     }
   }
 
-  @Override
+/*  @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.main, menu);
     return true;
   }
-
+*/
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle action bar item clicks here. The action bar will
