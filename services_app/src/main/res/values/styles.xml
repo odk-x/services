@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="DrawerMenuTheme" parent="Theme.MaterialComponents.Light">
+        <item name="android:itemTextAppearance">@style/DrawerItemTextTheme</item>
+        <item name="android:dividerHeight">0dp</item>
+        <item name="android:dividerPadding">4dp</item>
+    </style>
+
+    <style name="DrawerItemTextTheme" parent="Widget.MaterialComponents.TextView">
+        <item name="android:fontFamily">@font/montserrat</item>
+        <item name="android:textColor">#474747</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+</resources>

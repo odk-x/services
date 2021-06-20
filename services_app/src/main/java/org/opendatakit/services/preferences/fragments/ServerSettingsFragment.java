@@ -256,6 +256,12 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     String entry = (String) ((ListPreference) preference).getEntries()[index];
     preference.setSummary(entry);
     updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+    if(newValue.toString().equals("none")){
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE,CommonToolProperties.USER_STATE_ANONYMOUS);
+    }
+    else {
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE,CommonToolProperties.USER_STATE_AUTHENTICATED_USER);
+    }
 
     return true;
   }

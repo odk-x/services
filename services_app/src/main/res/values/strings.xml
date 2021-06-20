@@ -383,4 +383,11 @@
     <string name="not_now">Not now</string>
     <string name="no">No</string>
     <string name="configure_server_settings">Do you want to configure the server settings now?</string>
+    <string name="drawer_sign_in_button_text">Sign-In </string>
+    <string name="drawer_sign_out_button_text">Sign-Out </string>
+    <string name="app_bar_label">SERVICES</string>
+    <string name="main_activity_server_url_label">Server URL:</string>
+    <string name="main_activity_current_user_state_label">Current User State:</string>
+    <string name="main_activity_username_label">Username of User :</string>
+    <string name="main_activity_last_synced_time_label">Last Synced Time</string>
 </resources>

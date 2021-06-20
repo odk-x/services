@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/menuGroupSettings">
+        <item
+            android:id="@+id/drawer_settings"
+            android:title="Settings"
+            android:icon="@drawable/ic_drawer_settings"/>
+    </group>
+
+    <group android:id="@+id/menuGroupResolveConflicts">
+        <item
+            android:id="@+id/drawer_resolve_conflict"
+            android:title="Resolve Conflicts"
+            android:icon="@drawable/ic_drawer_resolve_conflicts"/>
+    </group>
+
+    <group android:id="@+id/menuGroupUpdateCredentials">
+        <item
+            android:id="@+id/drawer_update_credentials"
+            android:title="Update Credentials"
+            android:icon="@drawable/ic_drawer_update_credentials"/>
+    </group>
+
+    <group android:id="@+id/menuGroupSwitchSignInType">
+        <item
+            android:id="@+id/drawer_switch_sign_in_type"
+            android:title="Switch Sign-In Type"
+            android:icon="@drawable/ic_drawer_switch_sign_in_type"/>
+    </group>
+
+    <group android:id="@+id/menuGroupAboutUs">
+        <item
+            android:id="@+id/drawer_about_us"
+            android:title="About Us"
+            android:icon="@drawable/ic_drawer_about_us"/>
+    </group>
+
+    <group android:id="@+id/menuGroupODKDocs">
+        <item
+            android:id="@+id/drawer_docs"
+            android:title="ODK-X Docs"
+            android:icon="@drawable/ic_drawer_odkx_docs"/>
+    </group>
+
+</menu>

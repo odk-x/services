@@ -38,6 +38,9 @@ public class ODKServicesPropertyUtils {
       properties.put(CommonToolProperties.KEY_USERNAME, "");
       properties.put(CommonToolProperties.KEY_PASSWORD, "");
 
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED,"false");
+      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE,CommonToolProperties.USER_STATE_LOGGED_OUT);
+
       props.setProperties(properties);
    }
 
