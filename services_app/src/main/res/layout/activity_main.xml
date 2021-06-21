@@ -1,11 +1,9 @@
-<androidx.drawerlayout.widget.DrawerLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayoutMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/drawerLayoutMain"
-    tools:openDrawer="start"
     tools:context="org.opendatakit.services.MainActivity">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -21,28 +19,35 @@
                 android:id="@+id/toolbarMainActivity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menu="@menu/menu_main_activity"
-                app:navigationIcon="@drawable/ic_drawer"/>
+                app:menu="@menu/menu_main_activity">
+
+                <ImageButton
+                    android:id="@+id/btnDrawerOpen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/zxing_transparent"
+                    app:srcCompat="@drawable/ic_drawer" />
+
+            </com.google.android.material.appbar.MaterialToolbar>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-
                 <ImageView
-                    android:id="@+id/imageView2"
+                    android:id="@+id/imgAppBarLogo"
                     android:layout_width="80dp"
                     android:layout_height="0dp"
                     android:layout_marginStart="24dp"
                     android:layout_marginEnd="8dp"
-                    app:layout_constraintBottom_toBottomOf="@+id/textView3"
-                    app:layout_constraintEnd_toStartOf="@+id/textView3"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvAppBarLabel"
+                    app:layout_constraintEnd_toStartOf="@+id/tvAppBarLabel"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/textView3"
+                    app:layout_constraintTop_toTopOf="@+id/tvAppBarLabel"
                     app:srcCompat="@drawable/logo" />
 
                 <TextView
-                    android:id="@+id/textView3"
+                    android:id="@+id/tvAppBarLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -56,7 +61,7 @@
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/imageView2"
+                    app:layout_constraintStart_toEndOf="@+id/imgAppBarLogo"
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -68,12 +73,12 @@
             app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
                 android:id="@+id/main_activity_view"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/materialCardView"
+                    android:id="@+id/mcvMainDetails"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
@@ -93,12 +98,12 @@
                         android:layout_height="match_parent">
 
                         <TextView
-                            android:id="@+id/textView2"
+                            android:id="@+id/tvServerUrlLabelMain"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="32dp"
-                            android:layout_marginTop="32dp"
-                            android:layout_marginEnd="32dp"
+                            android:layout_marginStart="24dp"
+                            android:layout_marginTop="24dp"
+                            android:layout_marginEnd="24dp"
                             android:fontFamily="@font/montserrat"
                             android:text="@string/main_activity_server_url_label"
                             android:textColor="#474747"
@@ -113,23 +118,24 @@
                             android:id="@+id/tvServerUrlMain"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="32dp"
+                            android:layout_marginStart="24dp"
                             android:layout_marginTop="8dp"
-                            android:layout_marginEnd="32dp"
+                            android:layout_marginEnd="24dp"
                             android:fontFamily="@font/montserrat"
+                            android:text="@string/default_sync_server_url"
                             android:textColor="#1A964E"
                             android:textSize="18sp"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+                            app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelMain" />
 
                         <TextView
-                            android:id="@+id/textView4"
+                            android:id="@+id/tvUserStateLabelMain"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="32dp"
+                            android:layout_marginStart="24dp"
                             android:layout_marginTop="24dp"
-                            android:layout_marginEnd="32dp"
+                            android:layout_marginEnd="24dp"
                             android:fontFamily="@font/montserrat"
                             android:text="@string/main_activity_current_user_state_label"
                             android:textColor="#474747"
@@ -144,17 +150,17 @@
                             android:id="@+id/tvUserStateMain"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="32dp"
+                            android:layout_marginStart="24dp"
                             android:layout_marginTop="8dp"
-                            android:layout_marginEnd="32dp"
-                            android:layout_marginBottom="32dp"
+                            android:layout_marginEnd="24dp"
+                            android:layout_marginBottom="24dp"
                             android:fontFamily="@font/montserrat"
                             android:textColor="#474747 "
                             android:textSize="18sp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/textView4" />
+                            app:layout_constraintTop_toBottomOf="@+id/tvUserStateLabelMain" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -176,7 +182,7 @@
                     app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeLabelMain"
                     app:layout_constraintEnd_toStartOf="@+id/tvUsernameMain"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/materialCardView" />
+                    app:layout_constraintTop_toBottomOf="@+id/mcvMainDetails" />
 
                 <TextView
                     android:id="@+id/tvUsernameMain"
@@ -255,16 +261,15 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navViewMain"
-        android:theme="@style/DrawerMenuTheme"
-        android:paddingVertical="16dp"
-        app:menu="@menu/drawer_menu"
-        app:headerLayout="@layout/drawer_header"
-        android:background="@color/white"
-        app:itemTextAppearance="@style/DrawerItemTextTheme"
-        app:elevation="4dp"
-        app:itemIconSize="20dp"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_gravity="start"/>
+        android:layout_gravity="start"
+        android:background="@color/white"
+        android:theme="@style/DrawerMenuTheme"
+        app:elevation="4dp"
+        app:headerLayout="@layout/drawer_header"
+        app:itemIconSize="20dp"
+        app:itemTextAppearance="@style/DrawerItemTextTheme"
+        app:menu="@menu/drawer_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

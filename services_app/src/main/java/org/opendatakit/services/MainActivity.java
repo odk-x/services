@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   private MaterialToolbar toolbar;
   private TextView tvServerUrl, tvUserState, tvUsernameLabel, tvUsername, tvLastSyncTimeLabel, tvLastSyncTime;
   private Button btnSignIn, btnDrawerSignIn;
-  private ImageButton btnDrawerClose;
+  private ImageButton btnDrawerClose, btnDrawerOpen;
   private NavigationView navView;
   private DrawerLayout drawerLayout;
 
@@ -163,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     tvLastSyncTime=findViewById(R.id.tvLastSyncTimeMain);
 
     btnSignIn=findViewById(R.id.btnSignInMain);
+    btnDrawerOpen=findViewById(R.id.btnDrawerOpen);
 
     navView=findViewById(R.id.navViewMain);
 
@@ -203,6 +204,14 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
       public void onClick(View v) {
         //Closing the Navigation Drawer
         drawerLayout.closeDrawer(GravityCompat.START);
+      }
+    });
+
+    btnDrawerOpen.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        //Opening the Navigation Drawer
+        drawerLayout.openDrawer(GravityCompat.START);
       }
     });
 
