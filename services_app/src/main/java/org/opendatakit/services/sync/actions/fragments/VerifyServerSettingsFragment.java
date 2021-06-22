@@ -17,12 +17,17 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
@@ -39,6 +44,10 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author mitchellsundt@gmail.com
  */
@@ -54,7 +63,12 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   private static final String PROGRESS_DIALOG_TAG = "progressDialogVerifySvr";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogVerifySvr";
 
-  private Button startVerifyServerSettings;
+  private TextView tvHeading ,tvServerUrl, tvServerVerifyStatus, tvServerAnonymousStatus, tvServerLastVerifyTime,
+          tvUsernameLabel, tvUsername, tvVerifyStatusLabel, tvVerifyStatus, tvLastSyncLabel, tvLastSync;
+
+  private Button btnVerifyServer, btnVerifyUser;
+  private PropertiesSingleton props;
+  private String userState;
 
   private VerifyServerSettingsActions verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
 
@@ -92,10 +106,8 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     super.onCreateView(inflater, container, savedInstanceState);
 
     View view = inflater.inflate(ID, container, false);
-    populateTextViewMemberVariablesReferences(view);
 
-    if (savedInstanceState != null && savedInstanceState
-        .containsKey(VERIFY_SERVER_SETTINGS_ACTION)) {
+    if (savedInstanceState != null && savedInstanceState.containsKey(VERIFY_SERVER_SETTINGS_ACTION)) {
       String action = savedInstanceState.getString(VERIFY_SERVER_SETTINGS_ACTION);
       try {
         verifyServerSettingsAction = VerifyServerSettingsActions.valueOf(action);
@@ -104,23 +116,147 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
     }
 
-    startVerifyServerSettings = view
-        .findViewById(R.id.verify_server_settings_start_button);
-    startVerifyServerSettings.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onClickVerifyServerSettings(v);
-      }
-    });
-
     return view;
   }
 
+  @Override
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    findViewsAndAttachListeners(view);
+  }
 
+  @Override
+  public void onResume() {
+    super.onResume();
+    updateUserInterface();
+  }
 
+  private void findViewsAndAttachListeners(View view){
+    tvHeading=view.findViewById(R.id.tvUserHeadingVerifySettings);
+    tvServerUrl=view.findViewById(R.id.tvServerUrlVerify);
+    tvServerVerifyStatus=view.findViewById(R.id.tvServerVerifyStatusVerify);
+    tvServerAnonymousStatus=view.findViewById(R.id.tvServerAnonymousAllowedVerify);
+    tvServerLastVerifyTime=view.findViewById(R.id.tvServerLastVerifyVerify);
+    tvUsernameLabel=view.findViewById(R.id.tvUsernameLabelVerify);
+    tvUsername=view.findViewById(R.id.tvUsernameVerify);
+    tvVerifyStatusLabel=view.findViewById(R.id.tvVerificationStatusLabelVerify);
+    tvVerifyStatus=view.findViewById(R.id.tvVerificationStatusVerify);
+    tvLastSyncLabel=view.findViewById(R.id.tvLastSyncTimeLabelVerify);
+    tvLastSync=view.findViewById(R.id.tvLastSyncTimeVerify);
+
+    btnVerifyServer=view.findViewById(R.id.btnStartVerifyServer);
+    btnVerifyUser=view.findViewById(R.id.btnStartVerifyUser);
+
+    btnVerifyServer.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        onStartVerifyServerClick();
+      }
+    });
+
+    btnVerifyUser.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        onStartVerifyUserClick();
+      }
+    });
+  }
+
+  private void onStartVerifyServerClick(){
+
+  }
+
+  private void onStartVerifyUserClick(){
+    WebLogger.getLogger(getAppName()).d(TAG,
+            "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
+    if (areCredentialsConfigured(true)) {
+      disableButtons();
+      verifyServerSettingsAction = VerifyServerSettingsActions.VERIFY;
+      prepareForSyncAction();
+    }
+  }
+
+  private void updateUserInterface(){
+    props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+
+    String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    tvServerUrl.setText(serverUrl);
+    tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+
+    userState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+
+    String isServerVerified=props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
+    if(isServerVerified==null || isServerVerified.equals("false")){
+      tvServerVerifyStatus.setText("Not Verified");
+    }
+    else {
+      tvServerVerifyStatus.setText("Verified");
+    }
+
+    String isAnonymousAllowed=props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
+    if(isAnonymousAllowed==null){
+      tvServerAnonymousStatus.setText("Not Known Yet");
+    }
+    else if(isAnonymousAllowed.equals("false")){
+      tvServerAnonymousStatus.setText("Not Allowed");
+    }
+    else {
+      tvServerAnonymousStatus.setText("Allowed");
+    }
+
+    String lastServerVerifyTime=props.getProperty(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME);
+    if(lastServerVerifyTime==null){
+      tvServerLastVerifyTime.setText("Not Available");
+    }
+
+    if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT) || userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+      tvHeading.setVisibility(View.VISIBLE);
+      tvHeading.setText("User is "+userState);
+
+      tvUsernameLabel.setVisibility(View.GONE);
+      tvUsername.setVisibility(View.GONE);
+      tvVerifyStatusLabel.setVisibility(View.GONE);
+      tvVerifyStatus.setVisibility(View.GONE);
+      tvLastSyncLabel.setVisibility(View.GONE);
+      tvLastSync.setVisibility(View.GONE);
+      btnVerifyUser.setVisibility(View.GONE);
+    }
+    else {
+      tvHeading.setVisibility(View.GONE);
+
+      tvUsernameLabel.setVisibility(View.VISIBLE);
+      tvUsername.setVisibility(View.VISIBLE);
+      tvVerifyStatusLabel.setVisibility(View.VISIBLE);
+      tvVerifyStatus.setVisibility(View.VISIBLE);
+      tvLastSyncLabel.setVisibility(View.VISIBLE);
+      tvLastSync.setVisibility(View.VISIBLE);
+      btnVerifyUser.setVisibility(View.VISIBLE);
+
+      String username=props.getProperty(CommonToolProperties.KEY_USERNAME);
+      tvUsername.setText(username);
+
+      String userVerifyStatus=props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
+      if(userVerifyStatus==null || userVerifyStatus.equals("false")){
+        tvVerifyStatus.setText("Not Verified");
+      }
+      else {
+        tvVerifyStatus.setText("Verified");
+      }
+
+      String lastSyncTime=props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
+      if(lastSyncTime==null){
+        tvLastSync.setText("Not Available");
+      }
+      else {
+        tvLastSync.setText(lastSyncTime);
+      }
+    }
+
+  }
 
   private void disableButtons() {
-    startVerifyServerSettings.setEnabled(false);
+    btnVerifyUser.setEnabled(false);
+    btnVerifyServer.setEnabled(false);
   }
 
   void perhapsEnableButtons() {
@@ -129,7 +265,8 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     if (url == null || url.length() == 0) {
       disableButtons();
     } else {
-      startVerifyServerSettings.setEnabled(true);
+      btnVerifyUser.setEnabled(true);
+      btnVerifyServer.setEnabled(true);
     }
   }
 
@@ -297,20 +434,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     getActivity().finish();
   }
 
-  /**
-   * Hooked to syncNowButton's onClick in aggregate_activity.xml
-   */
-  public void onClickVerifyServerSettings(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG,
-        "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
-    if (areCredentialsConfigured(true)) {
-      disableButtons();
-      verifyServerSettingsAction = VerifyServerSettingsActions.VERIFY;
-      prepareForSyncAction();
-    }
-  }
-
-
   private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message,
       int progressStep, int maxStep) {
     if (getActivity() == null) {
@@ -362,6 +485,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
           /** earlier sync ended with Authorization denied (authentication and/or access) error */ AUTHENTICATION_ERROR:
         id_title = R.string.sync_user_authorization_failure;
         message = getString(R.string.sync_status_authentication_error);
+        updatePropertiesOnVerifyComplete("Authentication Error");
         break;
       case
           /** earlier sync ended with a 500 error from server */ SERVER_INTERNAL_ERROR:
@@ -404,9 +528,26 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
           /** earlier sync ended successfully without conflicts and all row-level attachments sync'd */ SYNC_COMPLETE:
         id_title = R.string.verify_server_setttings_successful;
         message = getString(R.string.verify_server_setttings_successful_text);
+        updatePropertiesOnVerifyComplete("Successful");
         break;
       }
       createAlertDialog(getString(id_title), message);
     }
+  }
+
+  private void updatePropertiesOnVerifyComplete(String status){
+    Map<String,String> properties = new HashMap<String,String>();
+    if(status.equals("Authentication Error")){
+      properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,"true");
+      properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME,Long.toString(new Date().getTime()));
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED,"false");
+    }
+    else if(status.equals("Successful")) {
+      properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,"true");
+      properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME,Long.toString(new Date().getTime()));
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED,"true");
+    }
+    props.setProperties(properties);
+    updateUserInterface();
   }
 }

@@ -23,18 +23,28 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationView;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
@@ -45,9 +55,11 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
+import org.opendatakit.services.preferences.activities.DocumentationWebViewActivity;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.utilities.GoToAboutFragment;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -77,6 +89,15 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
    private IOdkSyncServiceInterface odkSyncInterfaceGuarded;
    private boolean mBoundGuarded = false;
    // end guarded access.
+
+   private MaterialToolbar toolbar;
+   private NavigationView navView;
+   private DrawerLayout drawerLayout;
+   private Button btnDrawerSignIn;
+   private ImageButton btnDrawerClose, btnDrawerOpen;
+
+   private PropertiesSingleton props;
+   private String userState;
 
    @Override public void onServiceConnected(ComponentName name, IBinder service) {
       if (!name.getClassName().equals(IntentConsts.Sync.SYNC_SERVICE_CLASS)) {
@@ -150,6 +171,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          }
       }
 
+      findViewAndAttachListeners();
    }
 
    @Override protected void onResume() {
@@ -175,6 +197,167 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          e.printStackTrace();
       }
 
+      updateInterface();
+   }
+
+   private void findViewAndAttachListeners(){
+
+      toolbar=findViewById(R.id.toolbarSyncActivity);
+      navView=findViewById(R.id.navViewSync);
+      drawerLayout=findViewById(R.id.drawerLayoutSync);
+
+      btnDrawerOpen=findViewById(R.id.btnDrawerOpen);
+
+      btnDrawerSignIn=navView.getHeaderView(0).findViewById(R.id.btnDrawerLogin);
+      btnDrawerClose=navView.getHeaderView(0).findViewById(R.id.btnDrawerClose);
+
+      btnDrawerSignIn.setOnClickListener(new View.OnClickListener() {
+         @Override
+         public void onClick(View v) {
+            if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+               onSignInButtonClicked();
+            }
+            else {
+               onSignOutButtonClicked();
+            }
+         }
+      });
+
+      btnDrawerClose.setOnClickListener(new View.OnClickListener() {
+         @Override
+         public void onClick(View v) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+         }
+      });
+
+      btnDrawerOpen.setOnClickListener(new View.OnClickListener() {
+         @Override
+         public void onClick(View v) {
+            drawerLayout.openDrawer(GravityCompat.START);
+         }
+      });
+
+      toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+         @Override
+         public boolean onMenuItemClick(MenuItem item) {
+            return onToolbarMenuItemClicked(item);
+         }
+      });
+
+      navView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+         @Override
+         public boolean onNavigationItemSelected(MenuItem item) {
+            return onDrawerMenuItemClicked(item);
+         }
+      });
+   }
+
+   // Action on Clicking the Toolbar Menu Item
+   private boolean onToolbarMenuItemClicked(MenuItem item){
+      int id = item.getItemId();
+
+      if (id == R.id.action_settings) {
+         Intent intent = new Intent(this, AppPropertiesActivity.class);
+         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+         startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
+         return true;
+      }
+
+      return false;
+   }
+
+   // Action on Clicking the Drawer Menu Item
+   private boolean onDrawerMenuItemClicked(MenuItem item){
+
+      drawerLayout.closeDrawer(GravityCompat.START);
+
+      if(item.getItemId()==R.id.drawer_resolve_conflict){
+         Intent i = new Intent(this, AllConflictsResolutionActivity.class);
+         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+         startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
+         return true;
+      }
+
+      if(item.getItemId()==R.id.drawer_about_us){
+         FragmentManager mgr = getSupportFragmentManager();
+         GoToAboutFragment.GotoAboutFragment(mgr,R.id.sync_activity_view);
+         return true;
+      }
+
+      if(item.getItemId()==R.id.drawer_settings){
+         Intent intent = new Intent(this, AppPropertiesActivity.class);
+         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+         startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
+         return true;
+      }
+
+      if(item.getItemId()==R.id.drawer_docs){
+         Intent browserIntent = new Intent(
+                 Intent.ACTION_VIEW,
+                 Uri.parse(getString(R.string.opendatakit_url))
+         );
+
+         if (browserIntent.resolveActivity(this.getApplicationContext().getPackageManager()) != null) {
+            startActivity(browserIntent);
+         } else {
+            Intent i = new Intent(this, DocumentationWebViewActivity.class);
+            startActivity(i);
+         }
+
+         return true;
+      }
+
+      return false;
+   }
+
+   // Starting the Login Activity
+   private void onSignInButtonClicked(){
+      Intent i = new Intent(this, LoginActivity.class);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+      startActivity(i);
+   }
+
+   // Signing Out the User
+   private void onSignOutButtonClicked(){
+      ODKServicesPropertyUtils.clearActiveUser(props);
+      drawerLayout.closeDrawer(GravityCompat.START);
+      this.onStart();
+   }
+
+   private void updateInterface(){
+      props=CommonToolProperties.get(this,mAppName);
+      userState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+
+      updateDrawerMenu();
+
+      if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+         btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
+      }
+      else {
+         btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+      }
+   }
+
+   private void updateDrawerMenu(){
+      Menu menu=navView.getMenu();
+      if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+         menu.findItem(R.id.drawer_resolve_conflict).setVisible(false);
+         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(false);
+         menu.findItem(R.id.drawer_update_credentials).setVisible(false);
+         btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
+      }
+      else if(userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+         menu.findItem(R.id.drawer_resolve_conflict).setVisible(true);
+         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(true);
+         menu.findItem(R.id.drawer_update_credentials).setVisible(false);
+         btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+      }
+      else {
+         menu.findItem(R.id.drawer_resolve_conflict).setVisible(true);
+         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(true);
+         menu.findItem(R.id.drawer_update_credentials).setVisible(true);
+         btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+      }
    }
 
    @Override public void onSaveInstanceState(Bundle outState) {
@@ -240,68 +423,6 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          Log.e(TAG, mAppName);
       }
       return mAppName;
-   }
-
-   @Override
-   public boolean onCreateOptionsMenu(Menu menu) {
-      // Inflate the menu; this adds items to the action bar if it is present.
-      getMenuInflater().inflate(R.menu.main, menu);
-      return true;
-   }
-
-   @Override
-   public boolean onPrepareOptionsMenu(Menu menu) {
-      menu.findItem(R.id.action_sync).setVisible(false);
-      menu.findItem(R.id.action_verify_server_settings).setVisible(false);
-      menu.findItem(R.id.action_change_user).setVisible(false);
-      // right?
-      return super.onPrepareOptionsMenu(menu);
-   }
-
-   @Override
-   public boolean onOptionsItemSelected(MenuItem item) {
-
-      // Handle action bar item clicks here. The action bar will
-      // automatically handle clicks on the Home/Up button, so long
-      // as you specify a parent activity in AndroidManifest.xml.
-      int id = item.getItemId();
-      if (id == R.id.action_sync) {
-         return true;
-      }
-      if (id == R.id.action_verify_server_settings) {
-         return true;
-      }
-
-      if (id == R.id.action_resolve_conflict) {
-         Intent i = new Intent(this, AllConflictsResolutionActivity.class);
-         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-         startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
-         return true;
-      }
-
-      if (id == R.id.action_about) {
-
-         FragmentManager mgr = getSupportFragmentManager();
-         GoToAboutFragment.GotoAboutFragment(mgr,R.id.sync_activity_view);
-         return true;
-      }
-
-      if (id == R.id.action_settings) {
-
-         Intent intent = new Intent(this, AppPropertiesActivity.class);
-         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-         startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
-         return true;
-      }
-
-      if (id == R.id.action_change_user) {
-
-         Intent i = new Intent(this, LoginActivity.class);
-         i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-         startActivity(i);
-         return true;
-      }
-      return super.onOptionsItemSelected(item);
    }
 
    @Override public PropertiesSingleton getProps() {
