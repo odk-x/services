@@ -16,10 +16,10 @@
 
             <ImageButton
                 android:id="@+id/btnDrawerClose"
-                android:background="@color/white"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_drawer_black"/>
+                android:background="@android:color/transparent"
+                app:srcCompat="@drawable/ic_drawer_black" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDrawerLogin"

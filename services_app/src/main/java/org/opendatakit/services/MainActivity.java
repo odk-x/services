@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   private DrawerLayout drawerLayout;
 
   PropertiesSingleton props;
-  private String UserState;
+  private String userState;
 
   @Override
   protected void onDestroy() {
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
       @Override
       public void onClick(View v) {
         //  This will open the Sign-In page if the User is Logged Out else would sign out the Current User
-        if(UserState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+        if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
           onSignInButtonClicked();
         }
         else {
@@ -228,16 +228,16 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     props= CommonToolProperties.get(this,mAppName);
 
     String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-    UserState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+    userState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
 
     updateDrawerMenu();
 
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-    tvUserState.setText(UserState);
+    tvUserState.setText(userState);
 
-    if(UserState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+    if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
       btnSignIn.setVisibility(View.VISIBLE);
 
       tvUsernameLabel.setVisibility(View.GONE);
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
       toolbar.getMenu().findItem(R.id.action_sync).setVisible(true);
 
-      if (UserState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)) {
+      if (userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)) {
         tvUsernameLabel.setVisibility(View.GONE);
         tvUsername.setVisibility(View.GONE);
       }
@@ -284,13 +284,13 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
   // Updating the Menu Options according to the Current User State
   private void updateDrawerMenu(){
     Menu menu=navView.getMenu();
-    if(UserState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+    if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
       menu.findItem(R.id.drawer_resolve_conflict).setVisible(false);
       menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(false);
       menu.findItem(R.id.drawer_update_credentials).setVisible(false);
       btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
     }
-    else if(UserState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+    else if(userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
       menu.findItem(R.id.drawer_resolve_conflict).setVisible(true);
       menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(true);
       menu.findItem(R.id.drawer_update_credentials).setVisible(false);

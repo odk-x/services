@@ -4,19 +4,19 @@
 
     <item
         android:id="@+id/action_sync"
-        android:title="Sync"
+        android:title="@string/toolbar_item_sync"
         android:icon="@drawable/ic_sync"
         app:showAsAction="always"/>
 
     <item
         android:id="@+id/action_verify_server_settings"
-        android:title="Verify Server Details"
+        android:title="@string/toolbar_item_verify"
         android:icon="@drawable/ic_verify"
         app:showAsAction="always"/>
 
     <item
         android:id="@+id/action_settings"
-        android:title="Settings"
+        android:title="@string/toolbar_item_settings"
         android:icon="@drawable/ic_settings"
         app:showAsAction="always"/>
 
