@@ -112,7 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="20dp"/>
     <Button
-            android:id="@+id/change_user_button"
+            android:id="@+id/btnSignInSync"
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:layout_marginLeft="20dp"
@@ -125,7 +125,7 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/change_user_button"
+            android:layout_below="@+id/btnSignInSync"
             android:layout_marginLeft="20dp"
             android:layout_marginStart="20dp"
             android:layout_marginRight="20dp"

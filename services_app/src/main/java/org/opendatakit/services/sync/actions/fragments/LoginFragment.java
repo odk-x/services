@@ -127,7 +127,7 @@ public class LoginFragment extends AbsSyncUIFragment {
 
       passwordEditText = view.findViewById(R.id.pwd_field);
 
-      authenticateNewUser = view.findViewById(R.id.change_user_button);
+      authenticateNewUser = view.findViewById(R.id.btnSignInSync);
       authenticateNewUser.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
