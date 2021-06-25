@@ -3,32 +3,32 @@
 
     <item
         android:id="@+id/drawer_settings"
-        android:title="@string/toolbar_item_settings"
-        android:icon="@drawable/ic_drawer_settings"/>
+        android:icon="@drawable/ic_drawer_settings"
+        android:title="@string/toolbar_item_settings" />
 
     <item
         android:id="@+id/drawer_resolve_conflict"
-        android:title="@string/drawer_item_resolve_conflicts"
-        android:icon="@drawable/ic_drawer_resolve_conflicts"/>
+        android:icon="@drawable/ic_drawer_resolve_conflicts"
+        android:title="@string/drawer_item_resolve_conflicts" />
 
     <item
         android:id="@+id/drawer_update_credentials"
-        android:title="@string/drawer_item_update_credentials"
-        android:icon="@drawable/ic_drawer_update_credentials"/>
+        android:icon="@drawable/ic_drawer_update_credentials"
+        android:title="@string/drawer_item_update_credentials" />
 
     <item
         android:id="@+id/drawer_switch_sign_in_type"
-        android:title="@string/drawer_item_switch_sign_in_type"
-        android:icon="@drawable/ic_drawer_switch_sign_in_type"/>
+        android:icon="@drawable/ic_drawer_switch_sign_in_type"
+        android:title="@string/drawer_item_switch_sign_in_type" />
 
     <item
         android:id="@+id/drawer_about_us"
-        android:title="@string/drawer_item_about_us"
-        android:icon="@drawable/ic_drawer_about_us"/>
+        android:icon="@drawable/ic_drawer_about_us"
+        android:title="@string/drawer_item_about_us" />
 
     <item
         android:id="@+id/drawer_docs"
-        android:title="@string/drawer_item_docs"
-        android:icon="@drawable/ic_drawer_odkx_docs"/>
+        android:icon="@drawable/ic_drawer_odkx_docs"
+        android:title="@string/drawer_item_docs" />
 
 </menu>

@@ -13,7 +13,7 @@
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#25BC64">
+            android:background="@color/colorPrimaryBackground">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbarMainActivity"
@@ -34,7 +34,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-
                 <ImageView
                     android:id="@+id/imgAppBarLogo"
                     android:layout_width="80dp"
@@ -53,7 +52,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:fontFamily="@font/montserrat"
                     android:text="@string/app_bar_label"
                     android:textColor="@color/white"
                     android:textSize="30sp"
@@ -78,15 +76,13 @@
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/mcvMainDetails"
+                    style="@style/CardTheme"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginEnd="24dp"
                     android:layout_marginBottom="8dp"
-                    app:cardBackgroundColor="#DBFBFF"
-                    app:cardCornerRadius="30dp"
-                    app:cardElevation="3dp"
                     app:layout_constraintBottom_toTopOf="@+id/tvUsernameLabelMain"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -96,32 +92,26 @@
                         android:layout_width="450dp"
                         android:layout_height="match_parent">
 
-
                         <TextView
                             android:id="@+id/tvServerUrlLabelMain"
+                            style="@style/HeadingStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:layout_marginTop="16dp"
                             android:layout_marginEnd="8dp"
-                            android:fontFamily="@font/montserrat"
                             android:text="@string/main_activity_server_url_label"
-                            android:textColor="#474747"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
                             app:layout_constraintEnd_toStartOf="@+id/tvServerUrlMain"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
                             android:id="@+id/tvServerUrlMain"
+                            style="@style/TextServerUrlStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginEnd="16dp"
-                            android:fontFamily="@font/montserrat"
-                            android:textColor="#1A964E"
-                            android:textSize="18sp"
                             app:layout_constraintBottom_toBottomOf="@+id/tvServerUrlLabelMain"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@+id/tvServerUrlLabelMain"
@@ -129,17 +119,14 @@
 
                         <TextView
                             android:id="@+id/tvUserStateLabelMain"
+                            style="@style/HeadingStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:layout_marginTop="16dp"
                             android:layout_marginEnd="8dp"
                             android:layout_marginBottom="16dp"
-                            android:fontFamily="@font/montserrat"
                             android:text="@string/main_activity_current_user_state_label"
-                            android:textColor="#474747"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@+id/tvUserStateMain"
                             app:layout_constraintStart_toStartOf="parent"
@@ -147,13 +134,11 @@
 
                         <TextView
                             android:id="@+id/tvUserStateMain"
+                            style="@style/TextViewStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginEnd="16dp"
-                            android:fontFamily="@font/montserrat"
-                            android:textColor="#474747 "
-                            android:textSize="18sp"
                             app:layout_constraintBottom_toBottomOf="@+id/tvUserStateLabelMain"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@+id/tvUserStateLabelMain"
@@ -165,6 +150,7 @@
 
                 <TextView
                     android:id="@+id/tvUsernameLabelMain"
+                    style="@style/SecondaryHeadingStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
@@ -174,9 +160,6 @@
                     android:fontFamily="@font/montserrat"
                     android:text="@string/main_activity_username_label"
                     android:textAlignment="viewEnd"
-                    android:textColor="#1A964E"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeLabelMain"
                     app:layout_constraintEnd_toStartOf="@+id/tvUsernameMain"
                     app:layout_constraintStart_toStartOf="parent"
@@ -184,13 +167,11 @@
 
                 <TextView
                     android:id="@+id/tvUsernameMain"
+                    style="@style/TextViewStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="24dp"
-                    android:fontFamily="@font/montserrat"
-                    android:textColor="#474747 "
-                    android:textSize="18sp"
                     app:layout_constraintBottom_toBottomOf="@+id/tvUsernameLabelMain"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/tvUsernameLabelMain"
@@ -198,18 +179,15 @@
 
                 <TextView
                     android:id="@+id/tvLastSyncTimeLabelMain"
+                    style="@style/HeadingStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
-                    android:fontFamily="@font/montserrat"
                     android:text="@string/main_activity_last_synced_time_label"
                     android:textAlignment="viewEnd"
-                    android:textColor="#474747"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/btnSignInMain"
                     app:layout_constraintEnd_toStartOf="@+id/tvLastSyncTimeMain"
                     app:layout_constraintStart_toStartOf="parent"
@@ -217,13 +195,11 @@
 
                 <TextView
                     android:id="@+id/tvLastSyncTimeMain"
+                    style="@style/TextViewStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="24dp"
-                    android:fontFamily="@font/montserrat"
-                    android:textColor="#474747"
-                    android:textSize="18sp"
                     app:layout_constraintBottom_toBottomOf="@+id/tvLastSyncTimeLabelMain"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelMain"
@@ -231,20 +207,14 @@
 
                 <Button
                     android:id="@+id/btnSignInMain"
-                    style="@style/Widget.MaterialComponents.Button"
+                    style="@style/ButtonStyle"
                     android:layout_width="360dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="32dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="32dp"
                     android:layout_marginBottom="16dp"
-                    android:fontFamily="@font/montserrat"
                     android:text="@string/drawer_sign_in_button_text"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="21sp"
-                    app:backgroundTint="#25BC64"
-                    app:cornerRadius="5dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -258,15 +228,8 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navViewMain"
+        style="@style/NavViewTheme"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/white"
-        android:theme="@style/DrawerMenuTheme"
-        app:elevation="4dp"
-        app:headerLayout="@layout/drawer_header"
-        app:itemIconSize="20dp"
-        app:itemTextAppearance="@style/DrawerItemTextTheme"
-        app:menu="@menu/drawer_menu" />
+        android:layout_height="match_parent" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

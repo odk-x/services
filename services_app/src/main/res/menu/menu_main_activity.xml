@@ -4,20 +4,20 @@
 
     <item
         android:id="@+id/action_sync"
-        android:title="@string/toolbar_item_sync"
         android:icon="@drawable/ic_sync"
-        app:showAsAction="always"/>
+        android:title="@string/toolbar_item_sync"
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_verify_server_settings"
-        android:title="@string/toolbar_item_verify"
         android:icon="@drawable/ic_verify"
-        app:showAsAction="always"/>
+        android:title="@string/toolbar_item_verify"
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_settings"
-        android:title="@string/toolbar_item_settings"
         android:icon="@drawable/ic_settings"
-        app:showAsAction="always"/>
+        android:title="@string/toolbar_item_settings"
+        app:showAsAction="always" />
 
 </menu>
