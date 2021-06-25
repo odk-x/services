@@ -42,6 +42,12 @@
         <item name="android:textColor">@color/colorPrimaryText</item>
     </style>
 
+    <style name="AppBarLabelStyle">
+        <item name="android:textSize">30sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
     <style name="SecondaryHeadingStyle" parent="HeadingStyle">
         <item name="android:textColor">@color/colorSecondaryText</item>
     </style>

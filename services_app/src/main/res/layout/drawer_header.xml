@@ -27,9 +27,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="@dimen/portrait_secondary_margin"
                 android:drawableEnd="@drawable/ic_arrow"
-                android:text="@string/drawer_sign_in_button_text"/>
+                android:text="@string/drawer_sign_in_button_text" />
 
         </com.google.android.material.appbar.MaterialToolbar>
 

@@ -66,6 +66,9 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity implements IAppAwareActivity,
         ActivityCompat.OnRequestPermissionsResultCallback {
 
+    /**
+     * Class handling actions corresponding to Button Clicks
+     */
     private class OnButtonClick implements View.OnClickListener {
 
         @Override
@@ -86,6 +89,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
+    /**
+     * Class handling actions corresponding to Toolbar-Menu Item Click
+     */
     private class OnToolbarMenuItemClick implements Toolbar.OnMenuItemClickListener {
 
         @Override
@@ -113,6 +119,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
+    /**
+     * Class handling actions corresponding to Drawer Menu Item Click
+     */
     private class OnDrawerMenuItemClick implements NavigationView.OnNavigationItemSelectedListener {
 
         @Override
@@ -154,7 +163,6 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
-    // Used for logging
     @SuppressWarnings("unused")
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -239,6 +247,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         updateInterface();
     }
 
+    /**
+     * Finding the different views required and attaching onClick Listeners to them
+     */
     private void findViewsAndAttachListeners() {
         toolbar = findViewById(R.id.toolbarMainActivity);
 
@@ -270,11 +281,14 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         btnDrawerClose.setOnClickListener(onButtonClick);
     }
 
+    /**
+     * Updating the Current User State and performing ui-updates corresponding to the User State
+     */
     private void updateInterface() {
         props = CommonToolProperties.get(this, mAppName);
         userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
-        updateBasicInfo();
+        updateCommonInfo();
 
         if (userState.equals(UserState.LOGGED_OUT)) {
             inLoggedOutState();
@@ -285,6 +299,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
+    /**
+     * Actions in the Logged-Out User State
+     */
     private void inLoggedOutState() {
         handleViewVisibility(View.VISIBLE, View.GONE, View.GONE, false);
         handleDrawerVisibility(false, false, false);
@@ -292,6 +309,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUserState.setText(R.string.logged_out);
     }
 
+    /**
+     * Actions in the Anonymous User State
+     */
     private void inAnonymousState() {
         handleViewVisibility(View.GONE, View.GONE, View.VISIBLE, true);
         handleDrawerVisibility(true, true, false);
@@ -300,6 +320,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUserState.setText(R.string.anonymous_user);
     }
 
+    /**
+     * Actions in the Authenticated User State
+     */
     private void inAuthenticatedState() {
         handleViewVisibility(View.GONE, View.VISIBLE, View.VISIBLE, true);
         handleDrawerVisibility(true, true, true);
@@ -311,6 +334,14 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUsername.setText(username);
     }
 
+    /**
+     * Handling the Visibility of Menu Items in the Navigation Drawer
+     * It also sets the Text of Sign-In button with respect to the User State
+     *
+     * @param resolve_visible        : The Visibility of Resolve Conflicts Item
+     * @param switch_sign_in_visible : The Visibility of Switch Sign-In Method Item
+     * @param update_cred_visible    : The Visibility of Update User Credentials Item
+     */
     private void handleDrawerVisibility(boolean resolve_visible, boolean switch_sign_in_visible, boolean update_cred_visible) {
         Menu menu = navView.getMenu();
         menu.findItem(R.id.drawer_resolve_conflict).setVisible(resolve_visible);
@@ -323,6 +354,14 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
+    /**
+     * Sets the Visibility of Different Views on the Main Screen
+     *
+     * @param btnSignInVisible    : The Visibility of the Sign-In Button
+     * @param usernameVisible     : The Visibility of the Username
+     * @param lastSyncTimeVisible : The Visibility of the Last Sync Time
+     * @param syncIconVisible     : The Visibility of the Sync Icon on Toolbar
+     */
     private void handleViewVisibility(int btnSignInVisible, int usernameVisible, int lastSyncTimeVisible, boolean syncIconVisible) {
         btnSignIn.setVisibility(btnSignInVisible);
         tvUsernameLabel.setVisibility(usernameVisible);
@@ -332,12 +371,18 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         toolbar.getMenu().findItem(R.id.action_sync).setVisible(syncIconVisible);
     }
 
-    private void updateBasicInfo() {
+    /**
+     * Updating the Common Information such as Server URL
+     */
+    private void updateCommonInfo() {
         String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
         tvServerUrl.setText(serverUrl);
         tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
     }
 
+    /**
+     * Displaying the Last Sync Time
+     */
     private void displayLastSyncTime() {
         String timestamp = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
         if (timestamp != null) {
@@ -349,12 +394,18 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
     }
 
+    /**
+     * Actions on Clicking on the Sign-In Button
+     */
     private void onSignInButtonClicked() {
         Intent signInIntent = new Intent(this, LoginActivity.class);
         signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
         startActivity(signInIntent);
     }
 
+    /**
+     * Actions on Clicking on thr Sign-Out Button
+     */
     private void onSignOutButtonClicked() {
         ODKServicesPropertyUtils.clearActiveUser(props);
         drawerLayout.closeDrawer(GravityCompat.START);
