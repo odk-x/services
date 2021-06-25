@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="DrawerMenuTheme" parent="Theme.MaterialComponents.Light">
-        <item name="android:itemTextAppearance">@style/DrawerItemTextTheme</item>
-        <item name="android:dividerHeight">0dp</item>
-        <item name="android:dividerPadding">4dp</item>
-    </style>
-
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:fontFamily">@font/montserrat</item>
     </style>
