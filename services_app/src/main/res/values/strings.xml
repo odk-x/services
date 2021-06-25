@@ -398,4 +398,7 @@
     <string name="drawer_item_switch_sign_in_type">Switch Sign-In Type</string>
     <string name="drawer_item_about_us">About Us</string>
     <string name="drawer_item_docs">ODK-X Docs</string>
+    <string name="authenticated_user">Authenticated User</string>
+    <string name="anonymous_user">Anonymous</string>
+    <string name="logged_out">Logged Out</string>
 </resources>
