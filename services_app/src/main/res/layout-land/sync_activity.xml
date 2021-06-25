@@ -92,13 +92,6 @@
         android:id="@+id/navViewSync"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/white"
-        android:theme="@style/DrawerMenuTheme"
-        app:elevation="4dp"
-        app:headerLayout="@layout/drawer_header"
-        app:itemIconSize="20dp"
-        app:itemTextAppearance="@style/DrawerItemTextTheme"
-        app:menu="@menu/drawer_menu" />
+        style="@style/NavViewTheme"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

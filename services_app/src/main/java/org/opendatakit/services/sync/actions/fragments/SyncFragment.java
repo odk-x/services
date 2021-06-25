@@ -51,6 +51,7 @@ import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceAct
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.utilities.Constants;
+import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -93,7 +94,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private MaterialAutoCompleteTextView acSyncType;
   private Button btnStartSync, btnSignIn, btnResetServer;
 
-  private String userState;
+  private UserState userState;
 
   public SyncFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -244,12 +245,12 @@ public class SyncFragment extends AbsSyncUIFragment {
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-    userState=properties.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+    userState=UserState.valueOf(properties.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
     String type=(String) acSyncType.getAdapter().getItem(getSyncAttachmentStateIndex());
     acSyncType.setText(type,false);
 
-    if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+    if(userState==UserState.LOGGED_OUT){
       tvSyncHeading.setVisibility(View.VISIBLE);
       tvSignInTypeLabel.setVisibility(View.GONE);
       tvSignInType.setVisibility(View.GONE);
@@ -275,7 +276,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
       btnSignIn.setVisibility(View.GONE);
 
-      tvSignInType.setText(userState);
+      tvSignInType.setText(userState.toString());
       acSyncType.setText(type,false);
 
       ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
@@ -283,7 +284,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
       displayLastSyncInfo();
 
-      if(userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+      if(userState==UserState.ANONYMOUS){
         tvUsernameLabel.setVisibility(View.GONE);
         tvUsername.setVisibility(View.GONE);
       }

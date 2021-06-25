@@ -38,6 +38,7 @@ import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.SyncProgressEvent;
@@ -68,7 +69,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   private Button btnVerifyServer, btnVerifyUser;
   private PropertiesSingleton props;
-  private String userState;
+  private UserState userState;
 
   private VerifyServerSettingsActions verifyServerSettingsAction = VerifyServerSettingsActions.IDLE;
 
@@ -183,7 +184,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-    userState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+    userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
     String isServerVerified=props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
     if(isServerVerified==null || isServerVerified.equals("false")){
@@ -209,7 +210,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       tvServerLastVerifyTime.setText("Not Available");
     }
 
-    if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT) || userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+    if(userState==UserState.LOGGED_OUT || userState==UserState.ANONYMOUS){
       tvHeading.setVisibility(View.VISIBLE);
       tvHeading.setText("User is "+userState);
 

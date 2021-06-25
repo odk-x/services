@@ -60,6 +60,7 @@ import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.utilities.GoToAboutFragment;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
+import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -97,7 +98,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
    private ImageButton btnDrawerClose, btnDrawerOpen;
 
    private PropertiesSingleton props;
-   private String userState;
+   private UserState userState;
 
    @Override public void onServiceConnected(ComponentName name, IBinder service) {
       if (!name.getClassName().equals(IntentConsts.Sync.SYNC_SERVICE_CLASS)) {
@@ -214,7 +215,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
       btnDrawerSignIn.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View v) {
-            if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+            if(userState==UserState.LOGGED_OUT){
                onSignInButtonClicked();
             }
             else {
@@ -326,11 +327,11 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
    private void updateInterface(){
       props=CommonToolProperties.get(this,mAppName);
-      userState=props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
+      userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
       updateDrawerMenu();
 
-      if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+      if(userState==UserState.LOGGED_OUT){
          btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
       }
       else {
@@ -340,13 +341,13 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
    private void updateDrawerMenu(){
       Menu menu=navView.getMenu();
-      if(userState.equals(CommonToolProperties.USER_STATE_LOGGED_OUT)){
+      if(userState==UserState.LOGGED_OUT){
          menu.findItem(R.id.drawer_resolve_conflict).setVisible(false);
          menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(false);
          menu.findItem(R.id.drawer_update_credentials).setVisible(false);
          btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
       }
-      else if(userState.equals(CommonToolProperties.USER_STATE_ANONYMOUS)){
+      else if(userState==UserState.ANONYMOUS){
          menu.findItem(R.id.drawer_resolve_conflict).setVisible(true);
          menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(true);
          menu.findItem(R.id.drawer_update_credentials).setVisible(false);
