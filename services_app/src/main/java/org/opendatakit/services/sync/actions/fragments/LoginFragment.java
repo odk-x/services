@@ -167,7 +167,7 @@ public class LoginFragment extends AbsSyncUIFragment {
       Map<String, String> properties = new HashMap<String, String>();
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
           getString(R.string.credential_type_username_password));
-      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.toString());
+      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
       properties.put(CommonToolProperties.KEY_USERNAME, username);
       properties.put(CommonToolProperties.KEY_PASSWORD, pw);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");

@@ -290,9 +290,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         updateCommonInfo();
 
-        if (userState.equals(UserState.LOGGED_OUT)) {
+        if (userState == UserState.LOGGED_OUT) {
             inLoggedOutState();
-        } else if (userState.equals(UserState.ANONYMOUS)) {
+        } else if (userState == UserState.ANONYMOUS) {
             inAnonymousState();
         } else {
             inAuthenticatedState();
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         menu.findItem(R.id.drawer_resolve_conflict).setVisible(resolve_visible);
         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(switch_sign_in_visible);
         menu.findItem(R.id.drawer_update_credentials).setVisible(update_cred_visible);
-        if (userState.equals(UserState.LOGGED_OUT)) {
+        if (userState == UserState.LOGGED_OUT) {
             btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
         } else {
             btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);

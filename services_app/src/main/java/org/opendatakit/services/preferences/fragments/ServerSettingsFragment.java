@@ -258,10 +258,10 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     preference.setSummary(entry);
     updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
     if(newValue.toString().equals("none")){
-      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.toString());
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
     }
     else {
-      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.toString());
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
     }
 
     return true;
