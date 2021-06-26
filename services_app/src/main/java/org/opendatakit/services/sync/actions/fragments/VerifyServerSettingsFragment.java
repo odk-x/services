@@ -54,6 +54,22 @@ import java.util.Map;
  */
 public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
+  /**
+   * Class handling actions corresponding to Button Clicks
+   */
+  private class OnButtonClick implements View.OnClickListener{
+
+    @Override
+    public void onClick(View v) {
+      if(v.getId()==R.id.btnStartVerifyServer){
+        onStartVerifyServerClick();
+      }
+      else if(v.getId()==R.id.btnStartVerifyUser) {
+        onStartVerifyUserClick();
+      }
+    }
+  }
+
   private static final String TAG = "VerifyServerSettingsFragment";
 
   public static final String NAME = "VerifyServerSettingsFragment";
@@ -76,7 +92,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   public VerifyServerSettingsFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
   }
-
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
@@ -132,6 +147,9 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     updateUserInterface();
   }
 
+  /**
+   * Finding the different views required and attaching onClick Listeners to them
+   */
   private void findViewsAndAttachListeners(View view){
     tvHeading=view.findViewById(R.id.tvUserHeadingVerifySettings);
     tvServerUrl=view.findViewById(R.id.tvServerUrlVerify);
@@ -148,19 +166,9 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     btnVerifyServer=view.findViewById(R.id.btnStartVerifyServer);
     btnVerifyUser=view.findViewById(R.id.btnStartVerifyUser);
 
-    btnVerifyServer.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onStartVerifyServerClick();
-      }
-    });
-
-    btnVerifyUser.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onStartVerifyUserClick();
-      }
-    });
+    OnButtonClick onButtonClick=new OnButtonClick();
+    btnVerifyUser.setOnClickListener(onButtonClick);
+    btnVerifyServer.setOnClickListener(onButtonClick);
   }
 
   private void onStartVerifyServerClick(){
@@ -179,12 +187,24 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   private void updateUserInterface(){
     props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
+    updateCommonInfo();
+
+    if (userState == UserState.LOGGED_OUT) {
+      inLoggedOutState();
+    } else if (userState == UserState.ANONYMOUS) {
+      inAnonymousState();
+    } else {
+      inAuthenticatedState();
+    }
+
+  }
+
+  private void updateCommonInfo(){
     String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-
-    userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
     String isServerVerified=props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
     if(isServerVerified==null || isServerVerified.equals("false")){
@@ -209,50 +229,53 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     if(lastServerVerifyTime==null){
       tvServerLastVerifyTime.setText("Not Available");
     }
+    else {
+      tvServerLastVerifyTime.setText(lastServerVerifyTime);
+    }
+  }
 
-    if(userState==UserState.LOGGED_OUT || userState==UserState.ANONYMOUS){
-      tvHeading.setVisibility(View.VISIBLE);
-      tvHeading.setText("User is "+userState);
+  private void inLoggedOutState(){
+    handleViewVisibility(View.VISIBLE,View.GONE);
+    tvHeading.setText("User is "+userState);
+  }
 
-      tvUsernameLabel.setVisibility(View.GONE);
-      tvUsername.setVisibility(View.GONE);
-      tvVerifyStatusLabel.setVisibility(View.GONE);
-      tvVerifyStatus.setVisibility(View.GONE);
-      tvLastSyncLabel.setVisibility(View.GONE);
-      tvLastSync.setVisibility(View.GONE);
-      btnVerifyUser.setVisibility(View.GONE);
+  private void inAnonymousState(){
+    handleViewVisibility(View.VISIBLE,View.GONE);
+    tvHeading.setText("User is "+userState);
+  }
+
+  private void inAuthenticatedState(){
+    handleViewVisibility(View.GONE,View.VISIBLE);
+    String username=props.getProperty(CommonToolProperties.KEY_USERNAME);
+    tvUsername.setText(username);
+
+    String userVerifyStatus=props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
+    if(userVerifyStatus==null || userVerifyStatus.equals("false")){
+      tvVerifyStatus.setText("Not Verified");
     }
     else {
-      tvHeading.setVisibility(View.GONE);
-
-      tvUsernameLabel.setVisibility(View.VISIBLE);
-      tvUsername.setVisibility(View.VISIBLE);
-      tvVerifyStatusLabel.setVisibility(View.VISIBLE);
-      tvVerifyStatus.setVisibility(View.VISIBLE);
-      tvLastSyncLabel.setVisibility(View.VISIBLE);
-      tvLastSync.setVisibility(View.VISIBLE);
-      btnVerifyUser.setVisibility(View.VISIBLE);
-
-      String username=props.getProperty(CommonToolProperties.KEY_USERNAME);
-      tvUsername.setText(username);
-
-      String userVerifyStatus=props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-      if(userVerifyStatus==null || userVerifyStatus.equals("false")){
-        tvVerifyStatus.setText("Not Verified");
-      }
-      else {
-        tvVerifyStatus.setText("Verified");
-      }
-
-      String lastSyncTime=props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
-      if(lastSyncTime==null){
-        tvLastSync.setText("Not Available");
-      }
-      else {
-        tvLastSync.setText(lastSyncTime);
-      }
+      tvVerifyStatus.setText("Verified");
     }
 
+    String lastSyncTime=props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
+    if(lastSyncTime==null){
+      tvLastSync.setText("Not Available");
+    }
+    else {
+      tvLastSync.setText(lastSyncTime);
+    }
+  }
+
+  private void handleViewVisibility(int headingVisible, int userDetailVisible){
+    tvHeading.setVisibility(headingVisible);
+
+    tvUsernameLabel.setVisibility(userDetailVisible);
+    tvUsername.setVisibility(userDetailVisible);
+    tvVerifyStatusLabel.setVisibility(userDetailVisible);
+    tvVerifyStatus.setVisibility(userDetailVisible);
+    tvLastSyncLabel.setVisibility(userDetailVisible);
+    tvLastSync.setVisibility(userDetailVisible);
+    btnVerifyUser.setVisibility(userDetailVisible);
   }
 
   private void disableButtons() {

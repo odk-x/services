@@ -368,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUsername.setVisibility(usernameVisible);
         tvLastSyncTimeLabel.setVisibility(lastSyncTimeVisible);
         tvLastSyncTime.setVisibility(lastSyncTimeVisible);
-        toolbar.getMenu().findItem(R.id.action_sync).setVisible(syncIconVisible);
+        toolbar.getMenu().findItem(R.id.action_sync).setVisible(true);
     }
 
     /**
@@ -404,7 +404,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
     }
 
     /**
-     * Actions on Clicking on thr Sign-Out Button
+     * Actions on Clicking on the Sign-Out Button
      */
     private void onSignOutButtonClicked() {
         ODKServicesPropertyUtils.clearActiveUser(props);

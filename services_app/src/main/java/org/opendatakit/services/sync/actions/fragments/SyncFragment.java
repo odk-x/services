@@ -72,6 +72,22 @@ import java.util.Date;
  */
 public class SyncFragment extends AbsSyncUIFragment {
 
+  private class OnButtonClick implements View.OnClickListener{
+
+    @Override
+    public void onClick(View v) {
+      if(v.getId()==R.id.btnStartSync){
+        onSyncStartBtnClick();
+      }
+      else if(v.getId()==R.id.btnSignInSync){
+        onSignInBtnClick();
+      }
+      else if(v.getId()==R.id.btnResetServerSync){
+        onResetServerBtnClick();
+      }
+    }
+  }
+
   private static final String TAG = "SyncFragment";
 
   public static final String NAME = "SyncFragment";
@@ -93,6 +109,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private TextView tvSyncHeading, tvSignInTypeLabel, tvSignInType, tvUsernameLabel, tvUsername, tvLastSyncTimeLabel, tvLastSyncTime, tvServerUrl;
   private MaterialAutoCompleteTextView acSyncType;
   private Button btnStartSync, btnSignIn, btnResetServer;
+  private TextInputLayout inputSyncType;
 
   private UserState userState;
 
@@ -185,7 +202,6 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   private void findViewsAndAttachListeners(View view){
-
     tvSyncHeading=view.findViewById(R.id.tvSignInWarnHeadingSync);
     tvSignInTypeLabel=view.findViewById(R.id.tvSignInMethodLabelSync);
     tvSignInType=view.findViewById(R.id.tvSignInMethodSync);
@@ -195,8 +211,8 @@ public class SyncFragment extends AbsSyncUIFragment {
     tvLastSyncTime=view.findViewById(R.id.tvLastSyncTimeSync);
     tvServerUrl=view.findViewById(R.id.tvServerUrlSync);
 
-    TextInputLayout inputLayout=view.findViewById(R.id.inputSyncType);
-    acSyncType=(MaterialAutoCompleteTextView) inputLayout.getEditText();
+    inputSyncType=view.findViewById(R.id.inputSyncType);
+    acSyncType=(MaterialAutoCompleteTextView) inputSyncType.getEditText();
 
     btnStartSync=view.findViewById(R.id.btnStartSync);
     btnSignIn=view.findViewById(R.id.btnSignInSync);
@@ -214,89 +230,74 @@ public class SyncFragment extends AbsSyncUIFragment {
       }
     });
 
-    btnStartSync.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onSyncStartBtnClick();
-      }
-    });
-
-    btnSignIn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onSignInBtnClick();
-      }
-    });
-
-    btnResetServer.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onResetServerBtnClick();
-      }
-    });
-
+    OnButtonClick onButtonClick=new OnButtonClick();
+    btnStartSync.setOnClickListener(onButtonClick);
+    btnSignIn.setOnClickListener(onButtonClick);
+    btnResetServer.setOnClickListener(onButtonClick);
   }
 
   private void updateUserInterface(){
-
     properties = CommonToolProperties.get(this.getContext(),getAppName());
+    userState=UserState.valueOf(properties.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
 
+    updateCommonInfo();
+
+    if (userState == UserState.LOGGED_OUT) {
+      inLoggedOutState();
+    } else if (userState == UserState.ANONYMOUS) {
+      inAnonymousState();
+    } else {
+      inAuthenticatedState();
+    }
+  }
+
+  private void inLoggedOutState(){
+    handleViewVisibility(View.VISIBLE,View.GONE,View.GONE,false);
+  }
+
+  private void inAnonymousState(){
+    handleViewVisibility(View.GONE,View.VISIBLE,View.GONE,true);
+
+    tvSignInType.setText(userState.toString());
+
+    displayLastSyncInfo();
+  }
+
+  private void inAuthenticatedState(){
+    handleViewVisibility(View.GONE, View.VISIBLE,View.VISIBLE,true);
+
+    tvSignInType.setText(userState.toString());
+
+    String username=properties.getProperty(CommonToolProperties.KEY_USERNAME);
+    tvUsername.setText(username);
+
+    displayLastSyncInfo();
+  }
+
+  private void updateCommonInfo(){
     String serverUrl=properties.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-    userState=UserState.valueOf(properties.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
     String type=(String) acSyncType.getAdapter().getItem(getSyncAttachmentStateIndex());
     acSyncType.setText(type,false);
+  }
 
-    if(userState==UserState.LOGGED_OUT){
-      tvSyncHeading.setVisibility(View.VISIBLE);
-      tvSignInTypeLabel.setVisibility(View.GONE);
-      tvSignInType.setVisibility(View.GONE);
-      tvUsernameLabel.setVisibility(View.GONE);
-      tvUsername.setVisibility(View.GONE);
-      tvLastSyncTimeLabel.setVisibility(View.GONE);
-      tvLastSyncTime.setVisibility(View.GONE);
+  private void handleViewVisibility(int headingVisible, int detailsVisible, int usernameVisible, boolean actionState){
+    tvSyncHeading.setVisibility(headingVisible);
+    btnSignIn.setVisibility(headingVisible);
 
-      acSyncType.setEnabled(false);
-      btnStartSync.setEnabled(false);
+    tvSignInTypeLabel.setVisibility(detailsVisible);
+    tvSignInType.setVisibility(detailsVisible);
+    tvLastSyncTimeLabel.setVisibility(detailsVisible);
+    tvLastSyncTime.setVisibility(detailsVisible);
 
-      btnSignIn.setVisibility(View.VISIBLE);
-    }
-    else {
-      tvSyncHeading.setVisibility(View.GONE);
-      tvSignInTypeLabel.setVisibility(View.VISIBLE);
-      tvSignInType.setVisibility(View.VISIBLE);
-      tvLastSyncTimeLabel.setVisibility(View.VISIBLE);
-      tvLastSyncTime.setVisibility(View.VISIBLE);
+    tvUsernameLabel.setVisibility(usernameVisible);
+    tvUsername.setVisibility(usernameVisible);
 
-      acSyncType.setEnabled(true);
-      btnStartSync.setEnabled(true);
-
-      btnSignIn.setVisibility(View.GONE);
-
-      tvSignInType.setText(userState.toString());
-      acSyncType.setText(type,false);
-
-      ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
-      acSyncType.setAdapter(instanceAttachmentsAdapter);
-
-      displayLastSyncInfo();
-
-      if(userState==UserState.ANONYMOUS){
-        tvUsernameLabel.setVisibility(View.GONE);
-        tvUsername.setVisibility(View.GONE);
-      }
-      else {
-        tvUsernameLabel.setVisibility(View.VISIBLE);
-        tvUsername.setVisibility(View.VISIBLE);
-
-        String username=properties.getProperty(CommonToolProperties.KEY_USERNAME);
-        tvUsername.setText(username);
-      }
-    }
-
+    inputSyncType.setEnabled(actionState);
+    acSyncType.setEnabled(actionState);
+    btnStartSync.setEnabled(actionState);
   }
 
   private void onSyncStartBtnClick(){

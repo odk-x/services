@@ -22,7 +22,7 @@
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#25BC64">
+            android:background="@color/colorPrimaryBackground">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbarSyncActivity"
@@ -47,8 +47,7 @@
                     android:id="@+id/imgAppBarLogo"
                     android:layout_width="80dp"
                     android:layout_height="0dp"
-                    android:layout_marginStart="24dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="@dimen/land_regular_margin"
                     app:layout_constraintBottom_toBottomOf="@+id/tvAppBarLabel"
                     app:layout_constraintEnd_toStartOf="@+id/tvAppBarLabel"
                     app:layout_constraintStart_toStartOf="parent"
@@ -57,15 +56,12 @@
 
                 <TextView
                     android:id="@+id/tvAppBarLabel"
+                    style="@style/AppBarLabelStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:fontFamily="@font/montserrat"
+                    android:layout_marginStart="@dimen/land_regular_margin"
+                    android:layout_marginEnd="@dimen/land_secondary_margin"
                     android:text="@string/app_bar_label"
-                    android:textColor="@color/white"
-                    android:textSize="30sp"
-                    android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/imgAppBarLogo"
