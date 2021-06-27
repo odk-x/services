@@ -3,6 +3,7 @@
 
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:fontFamily">@font/montserrat</item>
+        <item name="colorPrimary">@color/colorSecondaryText</item>
     </style>
 
     <style name="CardTheme" parent="AppTheme">
@@ -50,6 +51,10 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <style name="LargeHeadingStyle" parent="HeadingStyle">
+        <item name="android:textSize">32sp</item>
+    </style>
+
     <style name="TextViewStyle" parent="HeadingStyle">
         <item name="android:textStyle">normal</item>
     </style>
@@ -77,6 +82,16 @@
     <style name="DropdownMenuTheme" parent="Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu">
         <item name="boxBackgroundColor">@color/white</item>
         <item name="boxStrokeColor">@color/white</item>
+    </style>
+
+    <style name="TextInputTheme" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="backgroundColor">@color/white</item>
+        <item name="colorOnSurface">@color/colorSecondaryText</item>
+        <item name="boxStrokeColor">@color/colorSecondaryText</item>
+        <item name="hintTextColor">@color/colorSecondaryText</item>
+        <item name="hintEnabled">true</item>
+        <item name="hintAnimationEnabled">true</item>
+        <item name="strokeWidth">1dp</item>
     </style>
 
 </resources>
