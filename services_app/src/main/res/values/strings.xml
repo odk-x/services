@@ -12,32 +12,32 @@
     <string name="action_resolve_conflict">Resolve Conflicts</string>
     <string name="action_verify_server_settings">Update User Permissions</string>
 
-	<!-- Checkpoint and Conflict Resolution Stuff -->
+    <!-- Checkpoint and Conflict Resolution Stuff -->
     <string name="all_conflicts_notice">Please wait - scanning for conflicts&#8230;</string>
     <string name="all_tables_scanned_for_conflicts">All tables have been scanned for conflicts</string>
-	<string name="cancel">Cancel</string>
-	<string name="yes">Yes</string>
-	<string name="take_local">Take Local Version</string>
-	<string name="take_server">Take Server Version</string>
-	<string name="mark_resolved">Mark Resolved</string>
-	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
-	<string name="conflict_local_was_deleted_explanation">You have deleted a row someone else has edited.</string>
-	<string name="conflict_server_was_deleted_explanation">Another user has deleted a row you have edited.</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="take_local">Take Local Version</string>
+    <string name="take_server">Take Server Version</string>
+    <string name="mark_resolved">Mark Resolved</string>
+    <string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
+    <string name="conflict_local_was_deleted_explanation">You have deleted a row someone else has edited.</string>
+    <string name="conflict_server_was_deleted_explanation">Another user has deleted a row you have edited.</string>
     <string name="conflict_resolve_or_choose">Another user has edited the same row you have edited.</string>
-	<string name="radio_button_message_restore_local_deleted">Restore and resolve.</string>
-	<string name="radio_button_message_delete_local_deleted">Ignore changes, delete on server.</string>
-	<string name="radio_button_message_restore_server_deleted">Restore and resolve.</string>
-	<string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
+    <string name="radio_button_message_restore_local_deleted">Restore and resolve.</string>
+    <string name="radio_button_message_delete_local_deleted">Ignore changes, delete on server.</string>
+    <string name="radio_button_message_restore_server_deleted">Restore and resolve.</string>
+    <string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
 
     <string name="conflict_take_local_warning">Overwrite all server changes with the local changes?</string>
     <string name="conflict_take_server_warning">Overwrite all local changes with the server changes?</string>
     <string name="conflict_take_local_with_deltas_warning">Overwrite local and server changes with the selected values?</string>
-	<string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
-	<string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
+    <string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
+    <string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
 
-	<string name="checkpoint_restore_complete_or_take_newest">Restore to earlier Finalized state or Save checkpoint as Incomplete</string>
-	<string name="checkpoint_restore_incomplete_or_take_newest">Restore to previous Incomplete Save or Save checkpoint as Incomplete</string>
-	<string name="checkpoint_remove_or_take_newest">Discard or Save checkpoint as Incomplete</string>
+    <string name="checkpoint_restore_complete_or_take_newest">Restore to earlier Finalized state or Save checkpoint as Incomplete</string>
+    <string name="checkpoint_restore_incomplete_or_take_newest">Restore to previous Incomplete Save or Save checkpoint as Incomplete</string>
+    <string name="checkpoint_remove_or_take_newest">Discard or Save checkpoint as Incomplete</string>
 
     <string name="select_checkpoint_to_resolve">Select the row with checkpoints to resolve</string>
     <string name="no_items_display_checkpoints">Please wait&#8230;\nSearching for checkpoint rows to resolve.</string>
@@ -51,15 +51,15 @@
     <string name="checkpoint_radio_local">Apply:</string>
     <string name="checkpoint_radio_server">Restore:</string>
     <string name="checkpoint_take_oldest">Discard Checkpoint</string>
-	<string name="checkpoint_take_oldest_remove">Discard</string>
-	<string name="checkpoint_take_oldest_finalized">Restore to prior Finalized State</string>
-	<string name="checkpoint_take_oldest_incomplete">Restore to prior Incomplete State</string>
-	<string name="checkpoint_take_newest">Apply all changes and Save as Incomplete</string>
+    <string name="checkpoint_take_oldest_remove">Discard</string>
+    <string name="checkpoint_take_oldest_finalized">Restore to prior Finalized State</string>
+    <string name="checkpoint_take_oldest_incomplete">Restore to prior Incomplete State</string>
+    <string name="checkpoint_take_newest">Apply all changes and Save as Incomplete</string>
     <string name="checkpoint_take_newest_with_deltas">Apply Indicated Changes and Save as Incomplete</string>
 
-	<string name="checkpoint_delete_warning">Delete entirely?</string>
-	<string name="checkpoint_take_oldest_warning">Discard the Checkpoint and Proceed?</string>
-	<string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
+    <string name="checkpoint_delete_warning">Delete entirely?</string>
+    <string name="checkpoint_take_oldest_warning">Discard the Checkpoint and Proceed?</string>
+    <string name="checkpoint_take_newest_warning">Save all changes as Incomplete and Proceed?</string>
     <string name="checkpoint_take_newest_with_deltas_warning">Apply Indicated Changes, Save as Incomplete and Proceed?</string>
 
     <string name="checkpoint_auto_apply">No user-defined field differences &#8212; automatically discarding checkpoint.</string>
@@ -81,14 +81,14 @@
 
     <string name="conflict_radio_local">Local:</string>
     <string name="conflict_radio_server">Server:</string>
-	<string name="conflict_take_local_updates">Take Local Version</string>
-	<string name="conflict_take_server_updates">Take Server Version</string>
-	<string name="conflict_take_local_with_deltas">Merge Changes as Indicated Below</string>
+    <string name="conflict_take_local_updates">Take Local Version</string>
+    <string name="conflict_take_server_updates">Take Server Version</string>
+    <string name="conflict_take_local_with_deltas">Merge Changes as Indicated Below</string>
 
-	<string name="conflict_restore_with_server_changes">Restore local record with server updates</string>
-	<string name="conflict_restore_with_local_changes">Restore server record with local updates</string>
-	<string name="conflict_enforce_local_delete">Delete record on server</string>
-	<string name="conflict_apply_delete_from_server">Delete local record</string>
+    <string name="conflict_restore_with_server_changes">Restore local record with server updates</string>
+    <string name="conflict_restore_with_local_changes">Restore server record with local updates</string>
+    <string name="conflict_enforce_local_delete">Delete record on server</string>
+    <string name="conflict_apply_delete_from_server">Delete local record</string>
 
     <string name="conflict_auto_apply">No user-defined field differences &#8212; automatically taking server metadata revisions.</string>
     <string name="conflict_auto_apply_all">No user-defined field differences in any rows.\nAutomatically took server revisions.</string>
@@ -401,4 +401,6 @@
     <string name="authenticated_user">Authenticated User</string>
     <string name="anonymous_user">Anonymous</string>
     <string name="logged_out">Logged Out</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

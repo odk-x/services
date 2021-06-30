@@ -74,10 +74,6 @@ public class LoginFragment extends AbsSyncUIFragment {
       }
    }
 
-   private enum UiState{
-      CHOOSE_TYPE, SET_CREDENTIALS
-   }
-
    private static final String TAG = "LoginFragment";
 
    public static final String NAME = "LoginFragment";
@@ -98,7 +94,6 @@ public class LoginFragment extends AbsSyncUIFragment {
    private Button btnAnonymousSignIn, btnUserSignIn, btnAuthenticateCredentials;
 
    private UserState userState;
-   private UiState uiState;
 
    public LoginFragment() {
       super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -214,12 +209,10 @@ public class LoginFragment extends AbsSyncUIFragment {
    }
 
    private void inChooseSignInTypeState(){
-      uiState=UiState.CHOOSE_TYPE;
       handleViewVisibility(View.VISIBLE, View.VISIBLE, View.GONE);
    }
 
    private void inSetCredentialsState(){
-      uiState=UiState.SET_CREDENTIALS;
       handleViewVisibility(View.GONE, View.GONE, View.VISIBLE);
    }
 
@@ -236,6 +229,9 @@ public class LoginFragment extends AbsSyncUIFragment {
       Map<String,String> properties = new HashMap<String,String>();
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
       properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
+      properties.put(CommonToolProperties.KEY_USERNAME, "");
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, null);
+      properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO, null);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
@@ -252,6 +248,8 @@ public class LoginFragment extends AbsSyncUIFragment {
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
       properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
       properties.put(CommonToolProperties.KEY_USERNAME, username);
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+      properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO, null);
       properties.put(CommonToolProperties.KEY_PASSWORD, pw);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
@@ -280,7 +278,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    }
 
    void perhapsEnableButtons() {
-      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+//      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
       String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
       if (url == null || url.length() == 0) {
          disableButtons();
@@ -564,5 +562,9 @@ public class LoginFragment extends AbsSyncUIFragment {
 
          createAlertDialog(getString(id_title), message);
       }
+   }
+
+   private void updateProps(SyncStatus status){
+
    }
 }

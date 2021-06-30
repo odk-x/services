@@ -27,6 +27,14 @@
         <item name="cornerRadius">6dp</item>
     </style>
 
+    <style name="OutlinedButtonStyle" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/colorPrimaryText</item>
+        <item name="strokeColor">@color/btn_background</item>
+        <item name="cornerRadius">6dp</item>
+    </style>
+
     <style name="SmallButtonStyle" parent="ButtonStyle">
         <item name="android:textSize">14sp</item>
     </style>
@@ -88,6 +96,7 @@
         <item name="backgroundColor">@color/white</item>
         <item name="colorOnSurface">@color/colorSecondaryText</item>
         <item name="boxStrokeColor">@color/colorSecondaryText</item>
+        <item name="strokeColor">@color/btn_background</item>
         <item name="hintTextColor">@color/colorSecondaryText</item>
         <item name="hintEnabled">true</item>
         <item name="hintAnimationEnabled">true</item>
