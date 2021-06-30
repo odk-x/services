@@ -49,8 +49,10 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.CheckedOutputStream;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -230,8 +232,8 @@ public class LoginFragment extends AbsSyncUIFragment {
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
       properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
       properties.put(CommonToolProperties.KEY_USERNAME, "");
-      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, null);
-      properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO, null);
+      properties.remove(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
+      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
@@ -249,12 +251,11 @@ public class LoginFragment extends AbsSyncUIFragment {
       properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
       properties.put(CommonToolProperties.KEY_USERNAME, username);
       properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
-      properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO, null);
+      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
       properties.put(CommonToolProperties.KEY_PASSWORD, pw);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
       props.setProperties(properties);
    }
 
@@ -500,6 +501,7 @@ public class LoginFragment extends AbsSyncUIFragment {
       if (loginAction == LoginActions.IDLE) {
 
          disableButtons();
+         updateProps(status);
 
          String message;
          int id_title;
@@ -565,6 +567,44 @@ public class LoginFragment extends AbsSyncUIFragment {
    }
 
    private void updateProps(SyncStatus status){
+      Map<String ,String > properties=new HashMap<>();
+      switch (status){
+         case AUTHENTICATION_ERROR:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
 
+            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState==UserState.ANONYMOUS){
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
+            }
+            else {
+               properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+            }
+            break;
+         }
+         case SERVER_IS_NOT_ODK_SERVER:{
+
+            break;
+         }
+         case SYNC_COMPLETE:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
+
+            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState==UserState.ANONYMOUS){
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
+            }
+            else {
+               properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(true));
+            }
+
+            break;
+         }
+      }
+      props.setProperties(properties);
    }
 }

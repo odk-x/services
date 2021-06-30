@@ -36,7 +36,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
@@ -52,7 +51,6 @@ import org.opendatakit.services.preferences.activities.DocumentationWebViewActiv
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.activities.UpdateServerSettingsActivity;
 import org.opendatakit.services.utilities.Constants;
-import org.opendatakit.services.utilities.GoToAboutFragment;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
@@ -375,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUsername.setVisibility(usernameVisible);
         tvLastSyncTimeLabel.setVisibility(lastSyncTimeVisible);
         tvLastSyncTime.setVisibility(lastSyncTimeVisible);
-        toolbar.getMenu().findItem(R.id.action_sync).setVisible(true);
+        toolbar.getMenu().findItem(R.id.action_sync).setVisible(syncIconVisible);
     }
 
     /**

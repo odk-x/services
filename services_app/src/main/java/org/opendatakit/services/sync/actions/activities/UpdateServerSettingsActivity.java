@@ -112,11 +112,11 @@ public class UpdateServerSettingsActivity extends AppCompatActivity {
         properties.put(CommonToolProperties.KEY_USERNAME, "");
         properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, "LOGGED_OUT");
-        properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO,null);
+        properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
         properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(false));
         properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(false));
-        properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, null);
-        properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, null);
+        properties.remove(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
+        properties.remove(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME);
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
         properties.put(CommonToolProperties.KEY_USERS_LIST, "");

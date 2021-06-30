@@ -206,23 +206,26 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     tvServerUrl.setText(serverUrl);
     tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-    String isServerVerified=props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
-    if(isServerVerified==null || isServerVerified.equals("false")){
+    boolean isServerVerified=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED));
+    if(!isServerVerified){
       tvServerVerifyStatus.setText("Not Verified");
     }
     else {
       tvServerVerifyStatus.setText("Verified");
     }
 
-    String isAnonymousAllowed=props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
-    if(isAnonymousAllowed==null){
-      tvServerAnonymousStatus.setText("Not Known Yet");
-    }
-    else if(isAnonymousAllowed.equals("false")){
-      tvServerAnonymousStatus.setText("Not Allowed");
+    boolean isAnonymousLoginUsed=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
+    if(isAnonymousLoginUsed){
+      boolean isAnonymousAllowed=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
+      if(isAnonymousAllowed){
+        tvServerAnonymousStatus.setText("Allowed");
+      }
+      else {
+        tvServerAnonymousStatus.setText("Not Allowed");
+      }
     }
     else {
-      tvServerAnonymousStatus.setText("Allowed");
+      tvServerAnonymousStatus.setText("Not Known Yet");
     }
 
     String lastServerVerifyTime=props.getProperty(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME);
@@ -236,12 +239,12 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   private void inLoggedOutState(){
     handleViewVisibility(View.VISIBLE,View.GONE);
-    tvHeading.setText("User is "+userState);
+    tvHeading.setText("User is Logged Out");
   }
 
   private void inAnonymousState(){
     handleViewVisibility(View.VISIBLE,View.GONE);
-    tvHeading.setText("User is "+userState);
+    tvHeading.setText("User is Anonymous");
   }
 
   private void inAuthenticatedState(){
@@ -249,8 +252,8 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     String username=props.getProperty(CommonToolProperties.KEY_USERNAME);
     tvUsername.setText(username);
 
-    String userVerifyStatus=props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-    if(userVerifyStatus==null || userVerifyStatus.equals("false")){
+    boolean userVerifyStatus=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED));
+    if(!userVerifyStatus){
       tvVerifyStatus.setText("Not Verified");
     }
     else {
