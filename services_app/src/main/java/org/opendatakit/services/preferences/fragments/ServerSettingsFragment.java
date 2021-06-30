@@ -52,6 +52,7 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.utilities.TableHealthValidator;
+import org.opendatakit.services.utilities.UserState;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -256,6 +257,12 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     String entry = (String) ((ListPreference) preference).getEntries()[index];
     preference.setSummary(entry);
     updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+    if(newValue.toString().equals("none")){
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.toString());
+    }
+    else {
+      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.toString());
+    }
 
     return true;
   }

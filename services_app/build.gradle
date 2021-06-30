@@ -28,6 +28,7 @@ android {
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
         testInstrumentationRunner(instrumentationRunner)
+        android.defaultConfig.vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
     }
 
