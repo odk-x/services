@@ -88,7 +88,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/portrait_label_field_margin"
             android:layout_marginEnd="@dimen/portrait_regular_margin"
-            android:text="Choose Default Server"
+            android:text="Choose Demo Server"
             app:layout_constraintBottom_toBottomOf="@+id/btnUpdateServerUrl"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/btnUpdateServerUrl"
