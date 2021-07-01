@@ -80,7 +80,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   private static final String PROGRESS_DIALOG_TAG = "progressDialogVerifySvr";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogVerifySvr";
 
-  private TextView tvHeading ,tvServerUrl, tvServerVerifyStatus, tvServerAnonymousStatus, tvServerLastVerifyTime,
+  private TextView tvHeading ,tvServerUrl, tvServerVerifyStatus, tvServerAnonymousStatus,
           tvUsernameLabel, tvUsername, tvVerifyStatusLabel, tvVerifyStatus, tvLastSyncLabel, tvLastSync;
 
   private Button btnVerifyServer, btnVerifyUser;
@@ -155,7 +155,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     tvServerUrl=view.findViewById(R.id.tvServerUrlVerify);
     tvServerVerifyStatus=view.findViewById(R.id.tvServerVerifyStatusVerify);
     tvServerAnonymousStatus=view.findViewById(R.id.tvServerAnonymousAllowedVerify);
-    tvServerLastVerifyTime=view.findViewById(R.id.tvServerLastVerifyVerify);
     tvUsernameLabel=view.findViewById(R.id.tvUsernameLabelVerify);
     tvUsername=view.findViewById(R.id.tvUsernameVerify);
     tvVerifyStatusLabel=view.findViewById(R.id.tvVerificationStatusLabelVerify);
@@ -226,14 +225,6 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     }
     else {
       tvServerAnonymousStatus.setText("Not Known Yet");
-    }
-
-    String lastServerVerifyTime=props.getProperty(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME);
-    if(lastServerVerifyTime==null){
-      tvServerLastVerifyTime.setText("Not Available");
-    }
-    else {
-      tvServerLastVerifyTime.setText(lastServerVerifyTime);
     }
   }
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -115,39 +116,10 @@
                 android:layout_marginTop="@dimen/portrait_label_field_margin"
                 android:layout_marginEnd="@dimen/portrait_regular_margin"
                 android:text="Allowed"
-                app:layout_constraintBottom_toTopOf="@+id/tvServerLastVerifyLabelVerify"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
-
-            <TextView
-                android:id="@+id/tvServerLastVerifyLabelVerify"
-                style="@style/HeadingStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/portrait_regular_margin"
-                android:layout_marginTop="@dimen/portrait_secondary_margin"
-                android:layout_marginEnd="@dimen/portrait_regular_margin"
-                android:layout_marginBottom="@dimen/portrait_label_field_margin"
-                android:text="Server Last Verified Time:"
-                app:layout_constraintBottom_toTopOf="@+id/tvServerLastVerifyVerify"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedVerify" />
-
-            <TextView
-                android:id="@+id/tvServerLastVerifyVerify"
-                style="@style/TextViewStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/portrait_regular_margin"
-                android:layout_marginTop="@dimen/portrait_label_field_margin"
-                android:layout_marginEnd="@dimen/portrait_regular_margin"
-                android:text="03:00 pm, 31 March 2021"
                 app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyServer"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerLastVerifyLabelVerify" />
+                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
 
             <Button
                 android:id="@+id/btnStartVerifyServer"
@@ -159,7 +131,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerLastVerifyVerify" />
+                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedVerify" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
