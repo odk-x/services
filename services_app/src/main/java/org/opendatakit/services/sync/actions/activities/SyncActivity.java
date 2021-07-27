@@ -17,16 +17,23 @@ package org.opendatakit.services.sync.actions.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
 import org.opendatakit.services.sync.actions.fragments.SyncFragment;
+import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
+import org.opendatakit.services.sync.actions.viewModels.SyncViewModel;
 
 import java.util.Collections;
 
@@ -40,6 +47,12 @@ public class SyncActivity extends AbsSyncBaseActivity {
 
   private static final String TAG = SyncActivity.class.getSimpleName();
   private AlertDialog mDialog;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    absSyncViewModel=new ViewModelProvider(SyncActivity.this).get(SyncViewModel.class);
+    super.onCreate(savedInstanceState);
+  }
 
   @Override
   protected void onResume() {

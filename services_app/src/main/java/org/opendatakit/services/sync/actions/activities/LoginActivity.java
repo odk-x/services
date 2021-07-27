@@ -16,10 +16,9 @@
 
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -28,11 +27,15 @@ import android.widget.EditText;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.LoginFragment;
+import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
 
 /**
  * An activity to provide a simplified login user interface.
@@ -43,6 +46,12 @@ import org.opendatakit.services.sync.actions.fragments.LoginFragment;
 public class LoginActivity extends AbsSyncBaseActivity {
 
    private static final String TAG = LoginActivity.class.getSimpleName();
+
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+      absSyncViewModel=new ViewModelProvider(LoginActivity.this).get(LoginViewModel.class);
+      super.onCreate(savedInstanceState);
+   }
 
    @Override
    protected void onResume() {
@@ -83,41 +92,6 @@ public class LoginActivity extends AbsSyncBaseActivity {
          }
       }
       return super.dispatchTouchEvent( event );
-   }
-
-   @Override
-   public void onBackPressed() {
-      getProps();
-      String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-      boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
-          getString(R.string.credential_type_none).equals(authType);
-      if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
-          !isAnonymous ) {
-
-         promptToVerifyCredentials();
-         return;
-      }
-      super.onBackPressed();
-   }
-
-   private void promptToVerifyCredentials() {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setTitle(R.string.authenticate_credentials);
-      builder.setMessage(R.string.anonymous_warning);
-      builder.setPositiveButton(R.string.new_user, new DialogInterface.OnClickListener() {
-         public void onClick(DialogInterface dialog, int id) {
-            dialog.dismiss();
-            // Do nothing and stay here
-         }
-      });
-      builder.setNegativeButton(R.string.logout, new DialogInterface.OnClickListener() {
-         public void onClick(DialogInterface dialog, int id) {
-            finish();
-            dialog.dismiss();
-         }
-      });
-      AlertDialog dialog = builder.create();
-      dialog.show();
    }
 
 }

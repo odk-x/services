@@ -28,6 +28,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -36,11 +38,12 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.sync.actions.LoginActions;
+import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
+import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
@@ -49,10 +52,8 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.CheckedOutputStream;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -81,45 +82,24 @@ public class LoginFragment extends AbsSyncUIFragment {
    public static final String NAME = "LoginFragment";
    public static final int ID = R.layout.login_fragment;
 
-   private static final String LOGIN_ACTION = "loginAction";
-
    private static final String PROGRESS_DIALOG_TAG = "progressDialogLogin";
    private static final String OUTCOME_DIALOG_TAG = "outcomeDialogLogin";
 
-   private PropertiesSingleton props;
    private TableHealthValidator healthValidator;
-
-   private LoginActions loginAction = LoginActions.IDLE;
 
    private TextView tvServerUrl, tvTitle;
    private TextInputLayout inputUsername, inputPassword;
    private Button btnAnonymousSignIn, btnUserSignIn, btnAuthenticateCredentials;
 
-   private UserState userState;
+   private LoginViewModel loginViewModel;
 
    public LoginFragment() {
       super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
    }
 
    @Override
-   public void onSaveInstanceState(Bundle outState) {
-      super.onSaveInstanceState(outState);
-      outState.putString(LOGIN_ACTION, loginAction.name());
-   }
-
-   @Override
    public void onActivityCreated(Bundle savedInstanceState) {
       super.onActivityCreated(savedInstanceState);
-
-      Intent incomingIntent = getActivity().getIntent();
-      if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
-         String action = savedInstanceState.getString(LOGIN_ACTION);
-         try {
-            loginAction = LoginActions.valueOf(action);
-         } catch (IllegalArgumentException e) {
-            loginAction = LoginActions.IDLE;
-         }
-      }
       disableButtons();
 
       healthValidator = new TableHealthValidator(getAppName(), getActivity());
@@ -128,21 +108,7 @@ public class LoginFragment extends AbsSyncUIFragment {
    @Override
    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
       super.onCreateView(inflater, container, savedInstanceState);
-
-      View view = inflater.inflate(ID, container, false);
-
-      props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-
-      if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
-         String action = savedInstanceState.getString(LOGIN_ACTION);
-         try {
-            loginAction = LoginActions.valueOf(action);
-         } catch (IllegalArgumentException e) {
-            loginAction = LoginActions.IDLE;
-         }
-      }
-
-      return view;
+      return inflater.inflate(ID, container, false);
    }
 
    @Override
@@ -150,12 +116,6 @@ public class LoginFragment extends AbsSyncUIFragment {
       super.onViewCreated(view, savedInstanceState);
       findViewsAndAttachListeners(view);
       inChooseSignInTypeState();
-   }
-
-   @Override
-   public void onResume() {
-      super.onResume();
-      updateUserInterface();
    }
 
    private void findViewsAndAttachListeners(View view){
@@ -173,27 +133,45 @@ public class LoginFragment extends AbsSyncUIFragment {
       btnAnonymousSignIn.setOnClickListener(onButtonClick);
       btnUserSignIn.setOnClickListener(onButtonClick);
       btnAuthenticateCredentials.setOnClickListener(onButtonClick);
-   }
 
-   private void updateUserInterface(){
-      props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-      userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+      loginViewModel=new ViewModelProvider(requireActivity()).get(LoginViewModel.class);
 
-      updateCommonInfo();
+      loginViewModel.getServerUrl().observe(getViewLifecycleOwner(), new Observer<String>() {
+         @Override
+         public void onChanged(String s) {
+            tvServerUrl.setText(s);
+            tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+         }
+      });
 
-      if (userState == UserState.LOGGED_OUT) {
-         inLoggedOutState();
-      } else if (userState == UserState.ANONYMOUS) {
-         inAnonymousState();
-      } else {
-         inAuthenticatedState();
-      }
-   }
+      loginViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<UserState>() {
+         @Override
+         public void onChanged(UserState userState) {
+            if (userState == UserState.LOGGED_OUT) {
+               inLoggedOutState();
+            } else if (userState == UserState.ANONYMOUS) {
+               inAnonymousState();
+            } else {
+               inAuthenticatedState();
+            }
+         }
+      });
 
-   private void updateCommonInfo(){
-      String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-      tvServerUrl.setText(serverUrl);
-      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+      loginViewModel.checkIsAnonymousSignInUsed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+         @Override
+         public void onChanged(Boolean aBoolean) {
+            if(!aBoolean){
+               btnAnonymousSignIn.setEnabled(true);
+            }
+         }
+      });
+
+      loginViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+         @Override
+         public void onChanged(Boolean aBoolean) {
+            btnAnonymousSignIn.setEnabled(aBoolean);
+         }
+      });
    }
 
    private void inLoggedOutState(){
@@ -237,9 +215,14 @@ public class LoginFragment extends AbsSyncUIFragment {
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
 
-      verifyServerSettings();
+      updatePropertiesSingleton(properties);
+
+      if(!loginViewModel.isAnonymousMethodUsed()){
+         verifyServerSettings();
+      } else {
+         requireActivity().finish();
+      }
    }
 
    private void setNewCredentials() {
@@ -256,7 +239,8 @@ public class LoginFragment extends AbsSyncUIFragment {
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
+
+      updatePropertiesSingleton(properties);
    }
 
    /**
@@ -267,25 +251,22 @@ public class LoginFragment extends AbsSyncUIFragment {
               "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
       if (areCredentialsConfigured(true)) {
          disableButtons();
-         loginAction = LoginActions.VERIFY;
+         loginViewModel.updateLoginAction(LoginActions.VERIFY);
          prepareForSyncAction();
       }
    }
 
    private void disableButtons() {
       btnUserSignIn.setEnabled(false);
-      btnAnonymousSignIn.setEnabled(false);
       btnAuthenticateCredentials.setEnabled(false);
    }
 
    void perhapsEnableButtons() {
-//      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-      String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+      String url=loginViewModel.getUrl();
       if (url == null || url.length() == 0) {
          disableButtons();
       } else {
          btnUserSignIn.setEnabled(true);
-         btnAnonymousSignIn.setEnabled(true);
          btnAuthenticateCredentials.setEnabled(true);
       }
    }
@@ -295,7 +276,7 @@ public class LoginFragment extends AbsSyncUIFragment {
 
       if (requestCode == LoginActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
          if (resultCode == Activity.RESULT_CANCELED) {
-            loginAction = LoginActions.IDLE;
+            loginViewModel.updateLoginAction(LoginActions.IDLE);
          }
          postTaskToAccessSyncService();
       } else if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
@@ -331,9 +312,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
                    WebLogger.getLogger(getAppName()).e(TAG,
-                       "postTaskToAccessSyncService status " + status.name() + " login " + "action " + loginAction.name());
+                       "postTaskToAccessSyncService status " + status.name() + " login " + "action " + loginViewModel.getCurrentAction().name());
                    if (status == SyncStatus.SYNCING) {
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -344,10 +325,10 @@ public class LoginFragment extends AbsSyncUIFragment {
                       });
                       return;
                    }
-                   switch (loginAction) {
+                   switch (loginViewModel.getCurrentAction()) {
                    case VERIFY:
                       syncServiceInterface.verifyServerSettings(getAppName());
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -414,9 +395,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
                    WebLogger.getLogger(getAppName()).e(TAG,
-                       "updateInterface status " + status.name() + " login " + "action " + loginAction.name());
+                       "updateInterface status " + status.name() + " login " + "action " + loginViewModel.getCurrentAction().name());
                    if (status == SyncStatus.SYNCING) {
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -426,9 +407,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                          }
                       });
                       return;
-                   } else if (status != SyncStatus.NONE && loginAction != LoginActions.IDLE) {
+                   } else if (status != SyncStatus.NONE && loginViewModel.getCurrentAction() != LoginActions.IDLE) {
                       // request completed
-                      loginAction = LoginActions.IDLE;
+                      loginViewModel.updateLoginAction(LoginActions.IDLE);
                       final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                       // TODO: figure out if there is a syncStatus that is not covered
                       handler.post(new Runnable() {
@@ -471,7 +452,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          // we are tearing down or still initializing
          return;
       }
-      if (loginAction == LoginActions.MONITOR_VERIFYING) {
+      if (loginViewModel.getCurrentAction() == LoginActions.MONITOR_VERIFYING) {
 
          disableButtons();
 
@@ -498,7 +479,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          // we are tearing down or still initializing
          return;
       }
-      if (loginAction == LoginActions.IDLE) {
+      if (loginViewModel.getCurrentAction() == LoginActions.IDLE) {
 
          disableButtons();
          updateProps(status);
@@ -569,32 +550,27 @@ public class LoginFragment extends AbsSyncUIFragment {
    private void updateProps(SyncStatus status){
       Map<String ,String > properties=new HashMap<>();
       switch (status){
+         case SERVER_IS_NOT_ODK_SERVER:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,Boolean.toString(false));
+            break;
+         }
          case AUTHENTICATION_ERROR:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
 
-            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
-            if(userState==UserState.ANONYMOUS){
+            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
+               properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.LOGGED_OUT.name());
             }
             else {
                properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
             }
             break;
          }
-         case SERVER_IS_NOT_ODK_SERVER:{
-
-            break;
-         }
          case SYNC_COMPLETE:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
 
-            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
-            if(userState==UserState.ANONYMOUS){
+            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
             }
@@ -605,6 +581,12 @@ public class LoginFragment extends AbsSyncUIFragment {
             break;
          }
       }
+      updatePropertiesSingleton(properties);
+   }
+
+   private void updatePropertiesSingleton(Map<String, String> properties){
+      PropertiesSingleton props=((AbsSyncBaseActivity)requireActivity()).getProps();
       props.setProperties(properties);
+      ((AbsSyncBaseActivity)requireActivity()).updateViewModelWithProps();
    }
 }

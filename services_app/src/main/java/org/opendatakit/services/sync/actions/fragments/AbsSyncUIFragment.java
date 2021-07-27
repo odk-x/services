@@ -11,8 +11,13 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AlertDialogFragment;
@@ -89,32 +94,47 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     progressDialogTag, false, false);
         }
 
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
-
-        Intent incomingIntent = getActivity().getIntent();
-        String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-        if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
-            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
-                    + "either null or does not match the current appName of the activity so calling "
-                    + "finish");
-            getActivity().setResult(Activity.RESULT_CANCELED);
-            getActivity().finish();
-            return;
-        }
-
-        perhapsEnableButtons();
-        handler.postDelayed(new Runnable() {
+        getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
-            public void run() {
-                msgManager.restoreDialog(getParentFragmentManager(), getId());
-                updateInterface();
+            public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
+                switch (event){
+                    case ON_RESUME:{
+                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
+
+                        Intent incomingIntent = getActivity().getIntent();
+                        String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+                        if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
+                            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
+                                    + "either null or does not match the current appName of the activity so calling "
+                                    + "finish");
+                            getActivity().setResult(Activity.RESULT_CANCELED);
+                            getActivity().finish();
+                        }
+
+                        perhapsEnableButtons();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                msgManager.restoreDialog(getParentFragmentManager(), getId());
+                                updateInterface();
+                            }
+                        }, 100);
+                        break;
+                    }
+                    case ON_PAUSE:{
+                        msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
+                        break;
+                    }
+                    case ON_DESTROY:{
+                        handler.removeCallbacksAndMessages(null);
+                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
+                        break;
+                    }
+
+                }
             }
-        }, 100);
+        });
+
     }
 
     @Override
@@ -123,19 +143,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
         if (msgManager != null) {
             msgManager.addStateToSaveStateBundle(outState);
         }
-    }
-
-    @Override
-    public void onPause() {
-        msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
-        super.onPause();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacksAndMessages(null);
-        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
     }
 
     /**

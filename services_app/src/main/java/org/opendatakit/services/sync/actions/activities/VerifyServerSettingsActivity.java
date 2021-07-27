@@ -15,15 +15,24 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
+import android.os.Bundle;
+
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.NavigationUI;
 
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
+import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
 
 /**
  * An activity for verifying the server setings and
@@ -40,9 +49,14 @@ public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
   private static final String TAG = VerifyServerSettingsActivity.class.getSimpleName();
 
   @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    absSyncViewModel=new ViewModelProvider(VerifyServerSettingsActivity.this).get(VerifyViewModel.class);
+    super.onCreate(savedInstanceState);
+  }
+
+  @Override
   protected void onResume() {
     super.onResume();
-
     WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting VerifyServerSettingsFragment");
 
     FragmentManager mgr = getSupportFragmentManager();
@@ -55,26 +69,11 @@ public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
     if ( newFragment == null ) {
       newFragment = new VerifyServerSettingsFragment();
       WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new VerifyServerSettingsFragment");
-      
+
       FragmentTransaction trans = mgr.beginTransaction();
       trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
       WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
       trans.commit();
     }
   }
-
-  @Override public void onBackPressed() {
-    PropertiesSingleton props = getProps();
-    String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-    boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
-        getString(R.string.credential_type_none).equals(authType);
-    if ( props.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
-        !isAnonymous ) {
-
-      AbsSyncBaseActivity.showAuthenticationErrorDialog(this, getString(R.string.warning_no_user_roles));
-      return;
-    }
-    super.onBackPressed();
-  }
-
 }

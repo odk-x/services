@@ -2,13 +2,16 @@ package org.opendatakit.services.sync.actions.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.zxing.integration.android.IntentIntegrator;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
@@ -22,6 +25,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static androidx.core.content.ContextCompat.checkSelfPermission;
+
 public class UpdateServerSettingsActivity extends AppCompatActivity {
 
     private class OnButtonClick implements View.OnClickListener{
@@ -31,8 +36,12 @@ public class UpdateServerSettingsActivity extends AppCompatActivity {
                 String url=inputServerUrl.getEditText().getText().toString();
                 if(url.isEmpty()){
                     inputServerUrl.setError("Server URL cannot be empty!");
+                    return;
                 }
-                else if(!isValidUrl(url)){
+                if(!url.startsWith("https://")){
+                    url="https://"+url;
+                }
+                if(!isValidUrl(url)){
                     inputServerUrl.setError("Please enter a Valid URL");
                 }
                 else{
@@ -41,7 +50,7 @@ public class UpdateServerSettingsActivity extends AppCompatActivity {
                 }
             }
             else if(v.getId()==R.id.btnChooseDefaultServer){
-                updateServerUrl(getString(R.string.default_sync_server_url));
+                inputServerUrl.getEditText().setText(getString(R.string.default_sync_server_url));
             }
             else if(v.getId()==R.id.btnVerifyServerUpdateServerDetails){
                 Intent intent=new Intent(UpdateServerSettingsActivity.this,VerifyServerSettingsActivity.class);
@@ -103,7 +112,6 @@ public class UpdateServerSettingsActivity extends AppCompatActivity {
         String currUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
         if(currUrl.equals(url)){
             Toast.makeText(this, "No Change in the Server URL", Toast.LENGTH_SHORT).show();
-            this.finish();
             return;
         }
 
@@ -111,19 +119,17 @@ public class UpdateServerSettingsActivity extends AppCompatActivity {
         properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL,url);
         properties.put(CommonToolProperties.KEY_USERNAME, "");
         properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
-        properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, "LOGGED_OUT");
+        properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.LOGGED_OUT.name());
         properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
         properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(false));
         properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(false));
         properties.remove(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
-        properties.remove(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME);
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
         properties.put(CommonToolProperties.KEY_USERS_LIST, "");
         props.setProperties(properties);
         updateInterface();
         Toast.makeText(this, "Server URL Updated Successfully!", Toast.LENGTH_SHORT).show();
-        this.finish();
     }
 
     private boolean isValidUrl(String url){
