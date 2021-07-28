@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_verify"
+    app:startDestination="@id/verifyServerSettingsFragment">
+
+    <fragment
+        android:id="@+id/verifyServerSettingsFragment"
+        android:name="org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment"
+        android:label="VerifyServerSettingsFragment"
+        tools:layout="@layout/verify_server_settings_launch_fragment"/>
+</navigation>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_sync"
+    app:startDestination="@id/syncFragment">
+
+    <fragment
+        android:id="@+id/syncFragment"
+        android:name="org.opendatakit.services.sync.actions.fragments.SyncFragment"
+        tools:layout="@layout/sync_launch_fragment"
+        android:label="SyncFragment"/>
+</navigation>

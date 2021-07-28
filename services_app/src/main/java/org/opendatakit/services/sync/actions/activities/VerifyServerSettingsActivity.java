@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
@@ -52,28 +53,16 @@ public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
   protected void onCreate(Bundle savedInstanceState) {
     absSyncViewModel=new ViewModelProvider(VerifyServerSettingsActivity.this).get(VerifyViewModel.class);
     super.onCreate(savedInstanceState);
-  }
 
-  @Override
-  protected void onResume() {
-    super.onResume();
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting VerifyServerSettingsFragment");
+    navController=Navigation.findNavController(this, R.id.navHostSync);
+    navController.setGraph(R.navigation.nav_graph_verify);
 
-    FragmentManager mgr = getSupportFragmentManager();
-    String newFragmentName;
-    Fragment newFragment;
-
-    // we want the list fragment
-    newFragmentName = VerifyServerSettingsFragment.NAME;
-    newFragment = mgr.findFragmentByTag(newFragmentName);
-    if ( newFragment == null ) {
-      newFragment = new VerifyServerSettingsFragment();
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new VerifyServerSettingsFragment");
-
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-      trans.commit();
-    }
+    getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+      if(event.equals(Lifecycle.Event.ON_RESUME)){
+        if(navController.getCurrentDestination()==null){
+          navController.navigate(R.id.verifyServerSettingsFragment);
+        }
+      }
+    });
   }
 }

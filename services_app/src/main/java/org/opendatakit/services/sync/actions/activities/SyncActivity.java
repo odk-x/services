@@ -23,9 +23,11 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
@@ -52,6 +54,17 @@ public class SyncActivity extends AbsSyncBaseActivity {
   protected void onCreate(Bundle savedInstanceState) {
     absSyncViewModel=new ViewModelProvider(SyncActivity.this).get(SyncViewModel.class);
     super.onCreate(savedInstanceState);
+
+    navController= Navigation.findNavController(this, R.id.navHostSync);
+    navController.setGraph(R.navigation.nav_graph_sync);
+
+    getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+      if(event.equals(Lifecycle.Event.ON_RESUME)){
+        if(navController.getCurrentDestination()==null){
+          navController.navigate(R.id.syncFragment);
+        }
+      }
+    });
   }
 
   @Override
@@ -59,24 +72,6 @@ public class SyncActivity extends AbsSyncBaseActivity {
     super.onResume();
 
     firstLaunch();
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting SyncFragment");
-
-    FragmentManager mgr = getSupportFragmentManager();
-    String newFragmentName;
-    Fragment newFragment;
-
-    // we want the list fragment
-    newFragmentName = SyncFragment.NAME;
-    newFragment = mgr.findFragmentByTag(newFragmentName);
-    if ( newFragment == null ) {
-      newFragment = new SyncFragment();
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
-      
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-      trans.commit();
-    }
   }
 
   private void firstLaunch() {

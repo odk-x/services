@@ -44,6 +44,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.OnLifecycleEvent;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
@@ -133,9 +135,9 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                 startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
                 return true;
             } else if (item.getItemId() == R.id.drawer_about_us) {
-                FragmentManager mgr = getSupportFragmentManager();
-                GoToAboutFragment.GotoAboutFragment(mgr, R.id.sync_activity_view);
-                item.setVisible(false);
+//                FragmentManager mgr = getSupportFragmentManager();
+//                GoToAboutFragment.GotoAboutFragment(mgr, R.id.sync_activity_view);
+ //               item.setVisible(false);
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
                 Intent intent = new Intent(AbsSyncBaseActivity.this, AppPropertiesActivity.class);
@@ -181,6 +183,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     private DrawerLayout drawerLayout;
     private Button btnDrawerSignIn;
 
+    protected NavController navController;
     protected AbsSyncViewModel absSyncViewModel;
 
     @Override

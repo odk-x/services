@@ -47,17 +47,27 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="vertical"
             app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+
+            <fragment
+                android:id="@+id/navHostSync"
+                android:name="androidx.navigation.fragment.NavHostFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:defaultNavHost="true"
+                app:navGraph="@navigation/nav_graph_sync" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/sync_activity_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-        </ScrollView>
+        </LinearLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
