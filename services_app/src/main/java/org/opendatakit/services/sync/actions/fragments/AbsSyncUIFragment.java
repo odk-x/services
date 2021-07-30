@@ -44,21 +44,15 @@ abstract class AbsSyncUIFragment extends Fragment implements
     private String alertDialogTag;
     private String progressDialogTag;
 
-
     final Handler handler = new Handler();
-    TextView uriField;
-    TextView accountAuthType;
-    TextView accountIdentity;
 
     private AlertNProgessMsgFragmentMger msgManager;
-
 
     abstract void postTaskToAccessSyncService();
     abstract void perhapsEnableButtons();
     abstract void updateInterface();
     abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws
             RemoteException;
-
 
     AbsSyncUIFragment(String alertDialogTag, String progressDialogTag) {
         this.alertDialogTag = alertDialogTag;
@@ -95,18 +89,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     progressDialogTag, false, false);
         }
 
-    }
-
-    /**
-     * Obtains the references to the account info and populates the member variables with the
-     * references
-     *
-     * @param view
-     */
-    void populateTextViewMemberVariablesReferences(View view) {
-        uriField = view.findViewById(R.id.sync_uri_field);
-        accountAuthType = view.findViewById(R.id.sync_account_auth_label);
-        accountIdentity = view.findViewById(R.id.sync_account);
     }
 
     @Override
@@ -155,7 +137,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
         handler.removeCallbacksAndMessages(null);
         WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
     }
-
 
     /**
      * Invoke this at the start of the verify server settings action
@@ -218,40 +199,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     Toast.LENGTH_LONG).show();
         }
         return false;
-    }
-
-    void updateCredentialsUI() {
-        PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-        uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
-
-        String credentialToUse = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-        String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
-        String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
-
-        if ( credentialToUse == null ) {
-            credentialToUse = getString(R.string.credential_type_none);
-        }
-
-        for ( int i = 0 ; i < credentialValues.length ; ++i ) {
-            if ( credentialToUse.equals(credentialValues[i]) ) {
-                if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
-                    accountAuthType.setText(credentialEntries[i]);
-                }
-            }
-        }
-
-        String account = ODKServicesPropertyUtils.getActiveUser(props);
-        int indexOfColon = account.indexOf(':');
-        if (indexOfColon > 0) {
-            account = account.substring(indexOfColon + 1);
-        }
-        if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
-            accountIdentity.setText(getResources().getString(R.string.anonymous));
-        } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-            accountIdentity.setText(account);
-        } else {
-            accountIdentity.setText(getResources().getString(R.string.no_account));
-        }
     }
 
     public void onSyncCompleted() {
@@ -334,7 +281,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
                 .NOTIFICATION_SERVICE);
         nm.cancel(getAppName(), GlobalSyncNotificationManager.SYNC_NOTIFICATION_ID);
     }
-
 
     void createAlertDialog(String title, String message) {
         if(!msgManager.shutdownCalled()) {

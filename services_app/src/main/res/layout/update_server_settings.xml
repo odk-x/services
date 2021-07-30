@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".sync.actions.activities.UpdateServerSettingsActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:elevation="0dp"
+        android:background="@android:color/transparent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <ImageView
+                android:id="@+id/imgAppBarRectangle"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/rectangle_app_bar" />
+
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="32dp"
+                app:layout_constraintBottom_toBottomOf="@+id/imgAppBarRectangle"
+                app:layout_constraintEnd_toEndOf="@+id/imgAppBarRectangle"
+                app:layout_constraintStart_toStartOf="@+id/imgAppBarRectangle"
+                app:layout_constraintTop_toTopOf="@+id/imgAppBarRectangle"
+                app:srcCompat="@drawable/logo" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputServerUrl"
+            style="@style/TextInputTheme"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/portrait_regular_margin"
+            android:hint="Enter Server URL"
+            app:errorEnabled="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnUpdateServerUrl"
+            style="@style/SmallButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/portrait_regular_margin"
+            android:layout_marginTop="@dimen/portrait_regular_margin"
+            android:layout_marginEnd="@dimen/portrait_label_field_margin"
+            android:text="Update Url"
+            app:layout_constraintEnd_toStartOf="@+id/btnChooseDefaultServer"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/inputServerUrl" />
+
+        <Button
+            android:id="@+id/btnChooseDefaultServer"
+            style="@style/OutlinedButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/portrait_label_field_margin"
+            android:layout_marginEnd="@dimen/portrait_regular_margin"
+            android:text="Choose Demo Server"
+            app:layout_constraintBottom_toBottomOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintTop_toTopOf="@+id/btnUpdateServerUrl"
+            app:strokeColor="@color/btn_background" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mcvUpdateServerUrl"
+            style="@style/CardTheme"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/portrait_regular_margin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintVertical_bias="0.2">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                <Button
+                    android:id="@+id/btnVerifyServerUpdateServerDetails"
+                    style="@style/OutlinedButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/portrait_secondary_margin"
+                    android:text="Verify Server Details"
+                    app:layout_constraintBottom_toTopOf="@+id/btnScanQrUpdateServerDetails"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <Button
+                    android:id="@+id/btnScanQrUpdateServerDetails"
+                    style="@style/OutlinedButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/portrait_secondary_margin"
+                    android:layout_marginEnd="@dimen/portrait_secondary_margin"
+                    android:layout_marginBottom="@dimen/portrait_secondary_margin"
+                    android:text="Scan QR"
+                    app:icon="@drawable/ic_qr_code"
+                    app:iconTint="@color/colorPrimaryText"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/btnVerifyServerUpdateServerDetails" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

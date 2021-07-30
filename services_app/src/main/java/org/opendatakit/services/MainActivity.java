@@ -36,7 +36,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
@@ -50,8 +49,8 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.DocumentationWebViewActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
+import org.opendatakit.services.sync.actions.activities.UpdateServerSettingsActivity;
 import org.opendatakit.services.utilities.Constants;
-import org.opendatakit.services.utilities.GoToAboutFragment;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
@@ -134,9 +133,12 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                 startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
                 return true;
             } else if (item.getItemId() == R.id.drawer_about_us) {
-                FragmentManager mgr = getSupportFragmentManager();
-                GoToAboutFragment.GotoAboutFragment(mgr, R.id.main_activity_view);
-                item.setVisible(false);
+                Intent intent=new Intent(MainActivity.this, UpdateServerSettingsActivity.class);
+                intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+                startActivity(intent);
+//                FragmentManager mgr = getSupportFragmentManager();
+//                GoToAboutFragment.GotoAboutFragment(mgr, R.id.main_activity_view);
+//                item.setVisible(false);
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
                 Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
@@ -155,6 +157,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                     Intent i = new Intent(MainActivity.this, DocumentationWebViewActivity.class);
                     startActivity(i);
                 }
+
+                return true;
+            } else if (item.getItemId() == R.id.drawer_update_credentials){
 
                 return true;
             }
@@ -368,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         tvUsername.setVisibility(usernameVisible);
         tvLastSyncTimeLabel.setVisibility(lastSyncTimeVisible);
         tvLastSyncTime.setVisibility(lastSyncTimeVisible);
-        toolbar.getMenu().findItem(R.id.action_sync).setVisible(true);
+        toolbar.getMenu().findItem(R.id.action_sync).setVisible(syncIconVisible);
     }
 
     /**

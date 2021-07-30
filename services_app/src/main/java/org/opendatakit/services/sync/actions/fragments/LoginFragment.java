@@ -17,15 +17,19 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 
-import com.google.android.material.textfield.TextInputEditText;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
@@ -37,7 +41,6 @@ import org.opendatakit.services.sync.actions.LoginActions;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
@@ -46,13 +49,32 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.CheckedOutputStream;
 
 /**
  * @author mitchellsundt@gmail.com
  */
 public class LoginFragment extends AbsSyncUIFragment {
+
+   private class OnButtonClick implements View.OnClickListener{
+
+      @Override
+      public void onClick(View v) {
+         if(v.getId()==R.id.btnAnonymousSignInLogin){
+            signInAsAnonymousUser();
+         }
+         else if (v.getId()==R.id.btnUserSignInLogin){
+            inSetCredentialsState();
+         }
+         else if(v.getId()==R.id.btnAuthenticateUserLogin){
+            setNewCredentials();
+            verifyServerSettings();
+         }
+      }
+   }
 
    private static final String TAG = "LoginFragment";
 
@@ -67,13 +89,13 @@ public class LoginFragment extends AbsSyncUIFragment {
    private PropertiesSingleton props;
    private TableHealthValidator healthValidator;
 
-   private EditText usernameEditText;
-   private TextInputEditText passwordEditText;
-   private Button authenticateNewUser;
-   private Button logout;
-   private Button cancel;
-
    private LoginActions loginAction = LoginActions.IDLE;
+
+   private TextView tvServerUrl, tvTitle;
+   private TextInputLayout inputUsername, inputPassword;
+   private Button btnAnonymousSignIn, btnUserSignIn, btnAuthenticateCredentials;
+
+   private UserState userState;
 
    public LoginFragment() {
       super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -107,12 +129,9 @@ public class LoginFragment extends AbsSyncUIFragment {
    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
       super.onCreateView(inflater, container, savedInstanceState);
 
-
       View view = inflater.inflate(ID, container, false);
 
       props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-
-      populateTextViewMemberVariablesReferences(view);
 
       if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
          String action = savedInstanceState.getString(LOGIN_ACTION);
@@ -123,120 +142,153 @@ public class LoginFragment extends AbsSyncUIFragment {
          }
       }
 
-      usernameEditText = view.findViewById(R.id.username);
-      usernameEditText.setText(props.getProperty(CommonToolProperties.KEY_USERNAME));
-
-      passwordEditText = view.findViewById(R.id.pwd_field);
-
-      authenticateNewUser = view.findViewById(R.id.btnSignInSync);
-      authenticateNewUser.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
-            setNewCredentials();
-            refreshCredentialsDisplay();
-            verifyServerSettings(v);
-         }
-      });
-
-      logout = view.findViewById(R.id.logout_button);
-      logout.setOnClickListener(new View.OnClickListener() {
-         @Override
-         public void onClick(View v) {
-            logout();
-         }
-      });
-
-      cancel = view.findViewById(R.id.cancel_button);
-      cancel.setOnClickListener(new View.OnClickListener() {
-
-         @Override
-         public void onClick(View v) {
-            getActivity().finish();
-         }
-
-      });
-
       return view;
    }
 
+   @Override
+   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+      super.onViewCreated(view, savedInstanceState);
+      findViewsAndAttachListeners(view);
+      inChooseSignInTypeState();
+   }
+
+   @Override
+   public void onResume() {
+      super.onResume();
+      updateUserInterface();
+   }
+
+   private void findViewsAndAttachListeners(View view){
+      tvServerUrl=view.findViewById(R.id.tvServerUrlLogin);
+      tvTitle=view.findViewById(R.id.tvTitleLogin);
+
+      inputUsername=view.findViewById(R.id.inputUsernameLogin);
+      inputPassword=view.findViewById(R.id.inputPasswordLogin);
+
+      btnAnonymousSignIn=view.findViewById(R.id.btnAnonymousSignInLogin);
+      btnUserSignIn=view.findViewById(R.id.btnUserSignInLogin);
+      btnAuthenticateCredentials=view.findViewById(R.id.btnAuthenticateUserLogin);
+
+      OnButtonClick onButtonClick=new OnButtonClick();
+      btnAnonymousSignIn.setOnClickListener(onButtonClick);
+      btnUserSignIn.setOnClickListener(onButtonClick);
+      btnAuthenticateCredentials.setOnClickListener(onButtonClick);
+   }
+
+   private void updateUserInterface(){
+      props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+      userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+      updateCommonInfo();
+
+      if (userState == UserState.LOGGED_OUT) {
+         inLoggedOutState();
+      } else if (userState == UserState.ANONYMOUS) {
+         inAnonymousState();
+      } else {
+         inAuthenticatedState();
+      }
+   }
+
+   private void updateCommonInfo(){
+      String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+      tvServerUrl.setText(serverUrl);
+      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+   }
+
+   private void inLoggedOutState(){
+      tvTitle.setText("Sign In");
+      inChooseSignInTypeState();
+   }
+
+   private void inAnonymousState(){
+      tvTitle.setText("Sign In using Credentials");
+      inSetCredentialsState();
+   }
+
+   private void inAuthenticatedState(){
+      tvTitle.setText("Update Login Credentials");
+   }
+
+   private void inChooseSignInTypeState(){
+      handleViewVisibility(View.VISIBLE, View.VISIBLE, View.GONE);
+   }
+
+   private void inSetCredentialsState(){
+      handleViewVisibility(View.GONE, View.GONE, View.VISIBLE);
+   }
+
+   private void handleViewVisibility(int anonymousVisible, int authenticatedUserVisible, int setCredentialsVisible){
+      btnAnonymousSignIn.setVisibility(anonymousVisible);
+      btnUserSignIn.setVisibility(authenticatedUserVisible);
+
+      inputUsername.setVisibility(setCredentialsVisible);
+      inputPassword.setVisibility(setCredentialsVisible);
+      btnAuthenticateCredentials.setVisibility(setCredentialsVisible);
+   }
+
+   private void signInAsAnonymousUser(){
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
+      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
+      properties.put(CommonToolProperties.KEY_USERNAME, "");
+      properties.remove(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
+      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
+      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
+      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
+      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
+      props.setProperties(properties);
+
+      verifyServerSettings();
+   }
+
    private void setNewCredentials() {
+      String username = inputUsername.getEditText().getText().toString();
+      String pw = inputPassword.getEditText().getText().toString();
 
-      String username = usernameEditText.getText().toString();
-      String pw = passwordEditText.getText().toString();
-
-      Map<String, String> properties = new HashMap<String, String>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
-          getString(R.string.credential_type_username_password));
+      Map<String, String> properties = new HashMap<>();
+      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
       properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
       properties.put(CommonToolProperties.KEY_USERNAME, username);
+      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
       properties.put(CommonToolProperties.KEY_PASSWORD, pw);
       properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
       properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
       properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
       props.setProperties(properties);
    }
 
-   private void logout() {
-      ODKServicesPropertyUtils.clearActiveUser(props);
-      getActivity().finish();
+   /**
+    * Hooked to syncNowButton's onClick in aggregate_activity.xml
+    */
+   public void verifyServerSettings() {
+      WebLogger.getLogger(getAppName()).d(TAG,
+              "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
+      if (areCredentialsConfigured(true)) {
+         disableButtons();
+         loginAction = LoginActions.VERIFY;
+         prepareForSyncAction();
+      }
    }
-
-   protected void refreshCredentialsDisplay() {
-      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-      uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
-
-      String credentialToUse = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-      String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
-      String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
-
-      if (credentialToUse == null) {
-         credentialToUse = getString(R.string.credential_type_none);
-      }
-
-      for (int i = 0; i < credentialValues.length; ++i) {
-         if (credentialToUse.equals(credentialValues[i])) {
-            if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
-               accountAuthType.setText(credentialEntries[i]);
-            }
-         }
-      }
-
-      if (credentialToUse.equals(getString(R.string.credential_type_none))) {
-         accountIdentity.setText(getResources().getString(R.string.anonymous));
-      } else if (credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-         String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-         if (username == null || username.equals("")) {
-            accountIdentity.setText(getResources().getString(R.string.no_account));
-         } else {
-            accountIdentity.setText(username);
-         }
-      } else {
-         accountIdentity.setText(getResources().getString(R.string.no_account));
-      }
-
-      perhapsEnableButtons();
-   }
-
 
    private void disableButtons() {
-      authenticateNewUser.setEnabled(false);
-      logout.setEnabled(false);
-      cancel.setEnabled(false);
+      btnUserSignIn.setEnabled(false);
+      btnAnonymousSignIn.setEnabled(false);
+      btnAuthenticateCredentials.setEnabled(false);
    }
 
    void perhapsEnableButtons() {
-      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+//      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
       String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
       if (url == null || url.length() == 0) {
          disableButtons();
       } else {
-         authenticateNewUser.setEnabled(true);
-         logout.setEnabled(true);
-         cancel.setEnabled(true);
+         btnUserSignIn.setEnabled(true);
+         btnAnonymousSignIn.setEnabled(true);
+         btnAuthenticateCredentials.setEnabled(true);
       }
    }
-
 
    public void onActivityResult(int requestCode, int resultCode, Intent data) {
       super.onActivityResult(requestCode, resultCode, data);
@@ -409,22 +461,8 @@ public class LoginFragment extends AbsSyncUIFragment {
          throw new IllegalStateException(
              "Could not remove AppSynchronizer for " + getAppName());
       }
-      updateCredentialsUI();
       perhapsEnableButtons();
       updateInterface();
-   }
-
-   /**
-    * Hooked to syncNowButton's onClick in aggregate_activity.xml
-    */
-   public void verifyServerSettings(View v) {
-      WebLogger.getLogger(getAppName()).d(TAG,
-          "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
-      if (areCredentialsConfigured(true)) {
-         disableButtons();
-         loginAction = LoginActions.VERIFY;
-         prepareForSyncAction();
-      }
    }
 
    private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message,
@@ -463,6 +501,7 @@ public class LoginFragment extends AbsSyncUIFragment {
       if (loginAction == LoginActions.IDLE) {
 
          disableButtons();
+         updateProps(status);
 
          String message;
          int id_title;
@@ -525,5 +564,47 @@ public class LoginFragment extends AbsSyncUIFragment {
 
          createAlertDialog(getString(id_title), message);
       }
+   }
+
+   private void updateProps(SyncStatus status){
+      Map<String ,String > properties=new HashMap<>();
+      switch (status){
+         case AUTHENTICATION_ERROR:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
+
+            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState==UserState.ANONYMOUS){
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
+            }
+            else {
+               properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+            }
+            break;
+         }
+         case SERVER_IS_NOT_ODK_SERVER:{
+
+            break;
+         }
+         case SYNC_COMPLETE:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
+
+            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState==UserState.ANONYMOUS){
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+               properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
+            }
+            else {
+               properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(true));
+            }
+
+            break;
+         }
+      }
+      props.setProperties(properties);
    }
 }
