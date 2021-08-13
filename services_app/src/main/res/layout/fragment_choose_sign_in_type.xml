@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    tools:context=".sync.actions.fragments.ChooseSignInTypeFragment">
 
     <TextView
         android:id="@+id/tvServerUrlLabelLogin"
@@ -38,64 +38,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Sign In"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLogin" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/inputUsernameLogin"
-        style="@style/TextInputTheme"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/portrait_regular_margin"
-        android:hint="Username"
-        app:layout_constraintBottom_toTopOf="@+id/inputPasswordLogin"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitleLogin">
-
-        <com.google.android.material.textfield.TextInputEditText
-            style="@style/SmallTextViewStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/inputPasswordLogin"
-        style="@style/TextInputTheme"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/portrait_regular_margin"
-        android:layout_marginEnd="@dimen/portrait_regular_margin"
-        android:layout_marginBottom="@dimen/portrait_regular_margin"
-        android:hint="Password"
-        app:layout_constraintBottom_toTopOf="@+id/btnAuthenticateUserLogin"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/inputUsernameLogin"
-        app:passwordToggleEnabled="true">
-
-        <com.google.android.material.textfield.TextInputEditText
-            style="@style/SmallTextViewStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="textPassword" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <Button
-        android:id="@+id/btnAuthenticateUserLogin"
-        style="@style/ButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Sign In"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/inputPasswordLogin" />
 
     <Button
         android:id="@+id/btnAnonymousSignInLogin"
@@ -103,11 +48,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Anonymous"
+        android:text="@string/anonymous_user"
         app:layout_constraintBottom_toTopOf="@+id/btnUserSignInLogin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitleLogin" />
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleLogin"
+        tools:ignore="TextContrastCheck" />
 
     <Button
         android:id="@+id/btnUserSignInLogin"
@@ -115,10 +61,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Authenticated User"
+        android:text="@string/authenticated_user"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnAnonymousSignInLogin" />
+        app:layout_constraintTop_toBottomOf="@+id/btnAnonymousSignInLogin"
+        tools:ignore="TextContrastCheck" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
