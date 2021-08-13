@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/aggregate_activity_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -12,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Sign in to Sync"
+        android:text="@string/sign_in_to_sync"
         app:layout_constraintBottom_toTopOf="@+id/tvSignInMethodLabelSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,10 +24,10 @@
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/portrait_regular_margin"
         android:layout_marginStart="@dimen/portrait_regular_margin"
+        android:layout_marginTop="@dimen/portrait_regular_margin"
         android:layout_marginEnd="@dimen/portrait_label_field_margin"
-        android:text="Sign in Type :"
+        android:text="@string/sign_in_type"
         app:layout_constraintBottom_toTopOf="@+id/tvUsernameLabelSync"
         app:layout_constraintEnd_toStartOf="@+id/tvSignInMethodSync"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,7 +40,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_label_field_margin"
         android:layout_marginEnd="@dimen/portrait_regular_margin"
-        android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/tvSignInMethodLabelSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvSignInMethodLabelSync"
@@ -53,7 +53,7 @@
         android:layout_marginStart="@dimen/portrait_regular_margin"
         android:layout_marginTop="@dimen/portrait_secondary_margin"
         android:layout_marginEnd="@dimen/portrait_label_field_margin"
-        android:text="Username :"
+        android:text="@string/username_label"
         app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeLabelSync"
         app:layout_constraintEnd_toStartOf="@+id/tvUsernameSync"
         app:layout_constraintStart_toStartOf="parent"
@@ -66,7 +66,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_label_field_margin"
         android:layout_marginEnd="@dimen/portrait_regular_margin"
-        android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/tvUsernameLabelSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvUsernameLabelSync"
@@ -81,7 +80,7 @@
         android:layout_marginTop="@dimen/portrait_secondary_margin"
         android:layout_marginEnd="@dimen/portrait_label_field_margin"
         android:layout_marginBottom="@dimen/portrait_secondary_margin"
-        android:text="Last Synced Time :"
+        android:text="@string/last_synced_time"
         app:layout_constraintBottom_toTopOf="@+id/mcvSyncDetails"
         app:layout_constraintEnd_toStartOf="@+id/tvLastSyncTimeSync"
         app:layout_constraintStart_toStartOf="parent"
@@ -94,7 +93,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_label_field_margin"
         android:layout_marginEnd="@dimen/portrait_regular_margin"
-        android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/tvLastSyncTimeLabelSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelSync"
@@ -121,9 +119,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
-                android:layout_marginEnd="@dimen/portrait_regular_margin"
                 android:layout_marginTop="@dimen/portrait_regular_margin"
-                android:text="Server URL :"
+                android:layout_marginEnd="@dimen/portrait_regular_margin"
+                android:text="@string/server_url_label"
                 app:layout_constraintBottom_toTopOf="@+id/tvServerUrlSync"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -141,17 +139,18 @@
                 app:layout_constraintBottom_toTopOf="@+id/tvSyncTypeLabelSync"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelSync" />
+                app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelSync"
+                tools:ignore="TextContrastCheck" />
 
             <TextView
                 android:id="@+id/tvSyncTypeLabelSync"
                 style="@style/HeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/portrait_secondary_margin"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
+                android:layout_marginTop="@dimen/portrait_secondary_margin"
                 android:layout_marginEnd="@dimen/portrait_regular_margin"
-                android:text="Sync Type :"
+                android:text="@string/sync_type"
                 app:layout_constraintBottom_toTopOf="@+id/inputSyncType"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -163,8 +162,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
-                android:layout_marginEnd="@dimen/portrait_regular_margin"
                 android:layout_marginTop="@dimen/portrait_label_field_margin"
+                android:layout_marginEnd="@dimen/portrait_regular_margin"
                 app:layout_constraintBottom_toTopOf="@+id/btnStartSync"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -175,7 +174,8 @@
                     style="@style/SmallTextViewStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="none"
+                    tools:ignore="SpeakableTextPresentCheck" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -185,11 +185,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/portrait_regular_margin"
-                android:text="Sync"
+                android:text="@string/sync_button_label"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/inputSyncType" />
+                app:layout_constraintTop_toBottomOf="@+id/inputSyncType"
+                tools:ignore="TextContrastCheck" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -201,11 +202,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
-        android:text="Sign In"
+        android:text="@string/drawer_sign_in_button_text"
         app:layout_constraintBottom_toTopOf="@+id/btnResetServerSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mcvSyncDetails" />
+        app:layout_constraintTop_toBottomOf="@+id/mcvSyncDetails"
+        tools:ignore="TextContrastCheck" />
 
     <Button
         android:id="@+id/btnResetServerSync"
@@ -217,6 +219,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSignInSync" />
+        app:layout_constraintTop_toBottomOf="@+id/btnSignInSync"
+        tools:ignore="TextContrastCheck" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

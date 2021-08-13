@@ -12,7 +12,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/land_regular_margin"
-        android:text="User is Logged Out"
         app:layout_constraintBottom_toTopOf="@+id/mcvVerifyDetails"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -54,11 +53,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/land_regular_margin"
-                android:text="@string/default_sync_server_url"
                 app:layout_constraintBottom_toBottomOf="@+id/tvServerUrlLabelVerify"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/tvServerUrlLabelVerify"
-                app:layout_constraintTop_toTopOf="@+id/tvServerUrlLabelVerify" />
+                app:layout_constraintTop_toTopOf="@+id/tvServerUrlLabelVerify"
+                tools:ignore="TextContrastCheck" />
 
             <TextView
                 android:id="@+id/tvServerVerifyStatusLabelVerify"
@@ -68,7 +67,7 @@
                 android:layout_marginStart="@dimen/land_regular_margin"
                 android:layout_marginTop="@dimen/land_regular_margin"
                 android:layout_marginEnd="@dimen/land_label_field_margin"
-                android:text="Server Verification Status:"
+                android:text="@string/server_verification_status"
                 app:layout_constraintBottom_toTopOf="@+id/tvServerAnonymousAllowedLabelVerify"
                 app:layout_constraintEnd_toStartOf="@+id/tvServerVerifyStatusVerify"
                 app:layout_constraintStart_toStartOf="parent"
@@ -80,7 +79,6 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/land_regular_margin"
-                android:text="Verified"
                 app:layout_constraintBottom_toBottomOf="@+id/tvServerVerifyStatusLabelVerify"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/tvServerVerifyStatusLabelVerify"
@@ -94,7 +92,7 @@
                 android:layout_marginStart="@dimen/land_regular_margin"
                 android:layout_marginTop="@dimen/land_regular_margin"
                 android:layout_marginEnd="@dimen/land_label_field_margin"
-                android:text="Server Anonymous Access:"
+                android:text="@string/server_anonymous_access"
                 app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyServer"
                 app:layout_constraintEnd_toStartOf="@+id/tvServerAnonymousAllowedVerify"
                 app:layout_constraintStart_toStartOf="parent"
@@ -106,7 +104,6 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/land_regular_margin"
-                android:text="Allowed"
                 app:layout_constraintBottom_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/tvServerAnonymousAllowedLabelVerify"
@@ -118,11 +115,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/land_regular_margin"
-                android:text="Verify Server"
+                android:text="@string/verify_server_button_label"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
+                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify"
+                tools:ignore="TextContrastCheck" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -134,7 +132,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_label_field_margin"
-        android:text="Username of User :"
+        android:text="@string/username_of_user_label"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/tvUsernameVerify"
         app:layout_constraintEnd_toEndOf="@+id/btnStartVerifyUser"
@@ -147,7 +145,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_regular_margin"
-        android:text="demo_user1"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/tvVerificationStatusLabelVerify"
         app:layout_constraintEnd_toEndOf="@+id/tvUsernameLabelVerify"
@@ -160,7 +157,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_label_field_margin"
-        android:text="Verification Status :"
+        android:text="@string/verification_status_label"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/tvVerificationStatusVerify"
         app:layout_constraintEnd_toEndOf="@+id/tvUsernameVerify"
@@ -173,7 +170,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_regular_margin"
-        android:text="Verified"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeLabelVerify"
         app:layout_constraintEnd_toEndOf="@+id/tvVerificationStatusLabelVerify"
@@ -186,7 +182,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_label_field_margin"
-        android:text="Last Synced Time : "
+        android:text="@string/last_synced_time"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeVerify"
         app:layout_constraintEnd_toEndOf="@+id/tvVerificationStatusVerify"
@@ -199,7 +195,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_regular_margin"
-        android:text="01:35 pm, 28 March 2021"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyUser"
         app:layout_constraintEnd_toEndOf="@+id/tvLastSyncTimeLabelVerify"
@@ -212,11 +207,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/land_regular_margin"
-        android:text="Verify User"
+        android:text="@string/verify_user_button_label"
         app:layout_constraintBottom_toBottomOf="@+id/mcvVerifyDetails"
         app:layout_constraintEnd_toStartOf="@+id/mcvVerifyDetails"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvLastSyncTimeVerify" />
+        app:layout_constraintTop_toBottomOf="@+id/tvLastSyncTimeVerify"
+        tools:ignore="TextContrastCheck" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
