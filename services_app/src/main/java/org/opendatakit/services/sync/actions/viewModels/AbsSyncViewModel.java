@@ -4,15 +4,16 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import org.opendatakit.services.R;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.SyncAttachmentState;
 
-public abstract class AbsSyncViewModel extends ViewModel {
+public class AbsSyncViewModel extends ViewModel {
 
     private final MutableLiveData<String> appName;
+    private final MutableLiveData<Boolean> isFirstLaunch;
 
     private final MutableLiveData<Boolean> started;
+    private final MutableLiveData<SyncAttachmentState> syncAttachmentState;
 
     private final MutableLiveData<String> serverUrl;
     private final MutableLiveData<Boolean> isServerVerified;
@@ -24,112 +25,109 @@ public abstract class AbsSyncViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isUserVerified;
     private final MutableLiveData<Long> lastSyncTime;
 
-    private final MutableLiveData<SyncAttachmentState> syncAttachmentState;
-
     public AbsSyncViewModel() {
         super();
 
-        appName=new MutableLiveData<>();
+        appName = new MutableLiveData<>();
 
-        started=new MutableLiveData<>();
+        started = new MutableLiveData<>();
         started.setValue(false);
 
-        serverUrl=new MutableLiveData<>();
-        isServerVerified=new MutableLiveData<>();
-        isAnonymousSignInUsed=new MutableLiveData<>();
-        isAnonymousAllowed=new MutableLiveData<>();
+        serverUrl = new MutableLiveData<>();
+        isServerVerified = new MutableLiveData<>();
+        isAnonymousSignInUsed = new MutableLiveData<>();
+        isAnonymousAllowed = new MutableLiveData<>();
 
-        currentUserState=new MutableLiveData<>();
-        username=new MutableLiveData<>();
-        isUserVerified=new MutableLiveData<>();
-        lastSyncTime=new MutableLiveData<>();
+        currentUserState = new MutableLiveData<>();
+        username = new MutableLiveData<>();
+        isUserVerified = new MutableLiveData<>();
+        lastSyncTime = new MutableLiveData<>();
 
-        syncAttachmentState=new MutableLiveData<>();
+        isFirstLaunch = new MutableLiveData<>();
+
+        syncAttachmentState = new MutableLiveData<>();
         syncAttachmentState.setValue(SyncAttachmentState.SYNC);
     }
 
-    public String getAppName(){
+    public String getAppName() {
         return appName.getValue();
     }
 
-    public boolean getStarted(){
-        if(started.getValue()==null){
+    public boolean getStarted() {
+        if (started.getValue() == null) {
             started.setValue(false);
         }
         return started.getValue();
     }
 
-    public LiveData<String> getServerUrl(){
+    public LiveData<String> getServerUrl() {
         return serverUrl;
     }
 
-    public String getUrl(){
+    public String getUrl() {
         return serverUrl.getValue();
     }
 
-    public LiveData<Boolean> checkIsServerVerified(){
+    public LiveData<Boolean> checkIsServerVerified() {
         return isServerVerified;
     }
 
-    public LiveData<Boolean> checkIsAnonymousSignInUsed(){
+    public LiveData<Boolean> checkIsAnonymousSignInUsed() {
         return isAnonymousSignInUsed;
     }
 
-    public boolean isAnonymousMethodUsed(){
-        if(isAnonymousSignInUsed.getValue()!=null){
+    public boolean isAnonymousMethodUsed() {
+        if (isAnonymousSignInUsed.getValue() != null) {
             return isAnonymousSignInUsed.getValue();
         }
         return false;
     }
 
-    public boolean isAnonymousMethodAllowed(){
-        if(isAnonymousAllowed.getValue()!=null){
-            return isAnonymousAllowed.getValue();
-        }
-        return true;
-    }
-
-    public LiveData<Boolean> checkIsAnonymousAllowed(){
+    public LiveData<Boolean> checkIsAnonymousAllowed() {
         return isAnonymousAllowed;
     }
 
-    public LiveData<UserState> getCurrentUserState(){
+    public LiveData<UserState> getCurrentUserState() {
         return currentUserState;
     }
 
-    public UserState getUserState(){
+    public UserState getUserState() {
         return currentUserState.getValue();
     }
 
-    public LiveData<String> getUsername(){
+    public LiveData<String> getUsername() {
         return username;
     }
 
-    public LiveData<Boolean> checkIsUserVerified(){
+    public LiveData<Boolean> checkIsUserVerified() {
         return isUserVerified;
     }
 
-    public LiveData<Long> getLastSyncTime(){
+    public LiveData<Long> getLastSyncTime() {
         return lastSyncTime;
     }
 
-    public LiveData<SyncAttachmentState> getSyncAttachmentState(){
+    public LiveData<Boolean> checkIsFirstLaunch() {
+        return isFirstLaunch;
+    }
+
+    public LiveData<SyncAttachmentState> getSyncAttachmentState() {
         return syncAttachmentState;
     }
 
-    public SyncAttachmentState getCurrentSyncAttachmentState(){
+    public SyncAttachmentState getCurrentSyncAttachmentState() {
         return syncAttachmentState.getValue();
     }
 
-    public void setAppName(String appName){
+    public void setAppName(String appName) {
         this.appName.setValue(appName);
     }
 
-    public void setStarted(boolean start){
+    public void setStarted(boolean start) {
         started.setValue(start);
     }
 
-    public void setServerUrl(String serverUrl){
+    public void setServerUrl(String serverUrl) {
         this.serverUrl.setValue(serverUrl);
     }
 
@@ -161,7 +159,11 @@ public abstract class AbsSyncViewModel extends ViewModel {
         this.lastSyncTime.setValue(lastSyncTime);
     }
 
-    public void updateSyncAttachmentState(SyncAttachmentState attachmentState){
+    public void setIsFirstLaunch(boolean isFirstLaunch) {
+        this.isFirstLaunch.setValue(isFirstLaunch);
+    }
+
+    public void updateSyncAttachmentState(SyncAttachmentState attachmentState) {
         syncAttachmentState.setValue(attachmentState);
     }
 }

@@ -6,26 +6,19 @@ import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
 
 public class VerifyViewModel extends AbsSyncViewModel {
 
+    private final MutableLiveData<VerifyServerSettingsActions> verifyActions;
+
     public VerifyViewModel() {
         super();
-        verifyActions=new MutableLiveData<>();
+        verifyActions = new MutableLiveData<>();
         verifyActions.setValue(VerifyServerSettingsActions.IDLE);
     }
 
-    private MutableLiveData<VerifyServerSettingsActions> verifyActions;
-
-    public void updateVerifyAction(VerifyServerSettingsActions action){
-        if(verifyActions==null){
-            verifyActions=new MutableLiveData<>();
-        }
+    public void updateVerifyAction(VerifyServerSettingsActions action) {
         verifyActions.setValue(action);
     }
 
-    public VerifyServerSettingsActions getCurrentAction(){
-        if(verifyActions==null){
-            verifyActions=new MutableLiveData<>();
-            verifyActions.setValue(VerifyServerSettingsActions.IDLE);
-        }
+    public VerifyServerSettingsActions getCurrentAction() {
         return verifyActions.getValue();
     }
 }
