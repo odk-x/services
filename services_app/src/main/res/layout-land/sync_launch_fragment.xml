@@ -90,6 +90,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/land_label_field_margin"
         android:layout_marginEnd="@dimen/land_default_margin"
+        android:text="@string/last_sync_not_available"
         app:layout_constraintBottom_toBottomOf="@+id/tvLastSyncTimeLabelSync"
         app:layout_constraintEnd_toEndOf="@+id/mcvSyncDetails"
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelSync"

@@ -195,6 +195,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_regular_margin"
+        android:text="@string/last_sync_not_available"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyUser"
         app:layout_constraintEnd_toEndOf="@+id/tvLastSyncTimeLabelVerify"

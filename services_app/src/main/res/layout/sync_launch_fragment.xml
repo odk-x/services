@@ -93,6 +93,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_label_field_margin"
         android:layout_marginEnd="@dimen/portrait_regular_margin"
+        android:text="@string/last_sync_not_available"
         app:layout_constraintBottom_toBottomOf="@+id/tvLastSyncTimeLabelSync"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelSync"
