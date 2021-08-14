@@ -39,11 +39,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -62,12 +58,14 @@ import org.opendatakit.services.preferences.activities.DocumentationWebViewActiv
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
-import org.opendatakit.services.utilities.GoToAboutFragment;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.utilities.ODKFileUtils;
+
+import java.util.Collections;
 
 /**
  * An activity that lays the foundations of sync funcationality but can be extended to implement
@@ -92,7 +90,10 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                 drawerLayout.closeDrawer(GravityCompat.START);
             } else if (v.getId() == R.id.btnDrawerLogin) {
                 if (absSyncViewModel.getUserState() == UserState.LOGGED_OUT) {
-                    onSignInButtonClicked();
+                    if (isNotLoginActivity())
+                        onSignInButtonClicked();
+                    else
+                        drawerLayout.closeDrawer(GravityCompat.START);
                 } else {
                     onSignOutButtonClicked();
                 }
@@ -135,9 +136,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                 startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
                 return true;
             } else if (item.getItemId() == R.id.drawer_about_us) {
-//                FragmentManager mgr = getSupportFragmentManager();
-//                GoToAboutFragment.GotoAboutFragment(mgr, R.id.sync_activity_view);
- //               item.setVisible(false);
+                navigateToAboutFragment();
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
                 Intent intent = new Intent(AbsSyncBaseActivity.this, AppPropertiesActivity.class);
@@ -157,6 +156,22 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                     startActivity(i);
                 }
 
+                return true;
+            } else if (item.getItemId() == R.id.drawer_update_credentials) {
+                if (isNotLoginActivity()) {
+                    Intent signInIntent = new Intent(AbsSyncBaseActivity.this, LoginActivity.class);
+                    signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+                    signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_UPDATE_CREDENTIALS);
+                    startActivity(signInIntent);
+                }
+                return true;
+            } else if (item.getItemId() == R.id.drawer_switch_sign_in_type) {
+                if (isNotLoginActivity()) {
+                    Intent signInIntent = new Intent(AbsSyncBaseActivity.this, LoginActivity.class);
+                    signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+                    signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE);
+                    startActivity(signInIntent);
+                }
                 return true;
             }
 
@@ -185,6 +200,18 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
     protected NavController navController;
     protected AbsSyncViewModel absSyncViewModel;
+
+    abstract void initializeViewModelAndNavController();
+
+    abstract void navigateToHomeFragment();
+
+    abstract void navigateToAboutFragment();
+
+    abstract void navigateToUpdateServerSettings();
+
+    abstract boolean isNotLoginActivity();
+
+    abstract boolean isCurrentDestinationAboutFragment();
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
@@ -257,71 +284,8 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         }
 
         findViewsAndAttachListeners();
-        updateViewModelWithProps();
-
-        getLifecycle().addObserver(new LifecycleObserver() {
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
-            private void onCreated(){
-                WebLogger.getLogger(getAppName()).i(TAG, " [onCreate]");
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_START)
-            private void onStarted(){
-                WebLogger.getLogger(getAppName()).i(TAG, " [onStart]");
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-            private void onResumed(){
-                // Do this in on resume so that if we resolve a row it will be refreshed
-                // when we come back.
-                if (getAppName() == null) {
-                    Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " [onResume] not supplied on intent");
-                    setResult(Activity.RESULT_CANCELED);
-                    finish();
-                    return;
-                }
-
-                try {
-                    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] Attempting bind to sync service");
-                    Intent bind_intent = new Intent();
-                    bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
-                            IntentConsts.Sync.SYNC_SERVICE_CLASS);
-                    bindService(bind_intent, AbsSyncBaseActivity.this,
-                            Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            private void onPaused(){
-                boolean callUnbind = false;
-                synchronized (interfaceGuard) {
-                    callUnbind = mBoundGuarded;
-                    odkSyncInterfaceGuarded = null;
-                    mBoundGuarded = false;
-                }
-
-                if (callUnbind) {
-                    unbindService(AbsSyncBaseActivity.this);
-                    WebLogger.getLogger(getAppName()).i(TAG, " [onPause] Unbound to sync service");
-                }
-
-                WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-            private void onStopped(){
-                WebLogger.getLogger(getAppName()).i(TAG, " [onStop]");
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-            private void onDestroyed(){
-                WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy]");
-            }
-
-        });
+        setupViewModelAndNavController();
+        handleLifecycleEvents();
     }
 
     /**
@@ -345,19 +309,116 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
         toolbar.setOnMenuItemClickListener(new OnToolbarMenuItemClick());
         navView.setNavigationItemSelectedListener(new OnDrawerMenuItemClick());
+    }
 
-        absSyncViewModel.getCurrentUserState().observe(this, new Observer<UserState>() {
-            @Override
-            public void onChanged(UserState userState) {
-                if (userState == UserState.LOGGED_OUT) {
-                    inLoggedOutState();
-                } else if (userState == UserState.ANONYMOUS) {
-                    inAnonymousState();
-                } else {
-                    inAuthenticatedState();
+    private void setupViewModelAndNavController() {
+        navController = Navigation.findNavController(this, R.id.navHostSync);
+
+        initializeViewModelAndNavController();
+        updateViewModelWithProps();
+
+        absSyncViewModel.getCurrentUserState().observe(this, userState -> {
+            if (userState == UserState.LOGGED_OUT) {
+                inLoggedOutState();
+            } else if (userState == UserState.ANONYMOUS) {
+                inAnonymousState();
+            } else {
+                inAuthenticatedState();
+            }
+        });
+
+        absSyncViewModel.checkIsFirstLaunch().observe(this, aBoolean -> {
+            if (aBoolean)
+                onFirstLaunch();
+        });
+
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            navView.getMenu().findItem(R.id.drawer_about_us).setEnabled(!isCurrentDestinationAboutFragment());
+
+            if (mAppName != null)
+                updateViewModelWithProps();
+        });
+    }
+
+    private void handleLifecycleEvents() {
+        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            switch (event) {
+                case ON_CREATE: {
+                    WebLogger.getLogger(getAppName()).i(TAG, " [onCreate]");
+                    break;
+                }
+                case ON_START: {
+                    WebLogger.getLogger(getAppName()).i(TAG, " [onStart]");
+                    break;
+                }
+                case ON_RESUME: {
+                    // Do this in on resume so that if we resolve a row it will be refreshed
+                    // when we come back.
+                    if (getAppName() == null) {
+                        Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " [onResume] not supplied on intent");
+                        setResult(Activity.RESULT_CANCELED);
+                        finish();
+                        return;
+                    }
+
+                    try {
+                        WebLogger.getLogger(getAppName()).i(TAG, "[onResume] Attempting bind to sync service");
+                        Intent bind_intent = new Intent();
+                        bind_intent.setClassName(IntentConsts.Sync.APPLICATION_NAME,
+                                IntentConsts.Sync.SYNC_SERVICE_CLASS);
+                        bindService(bind_intent, AbsSyncBaseActivity.this,
+                                Context.BIND_AUTO_CREATE | Context.BIND_ADJUST_WITH_ACTIVITY);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (navController.getCurrentDestination() == null)
+                        navigateToHomeFragment();
+                    break;
+                }
+                case ON_PAUSE: {
+                    boolean callUnbind = false;
+                    synchronized (interfaceGuard) {
+                        callUnbind = mBoundGuarded;
+                        odkSyncInterfaceGuarded = null;
+                        mBoundGuarded = false;
+                    }
+
+                    if (callUnbind) {
+                        unbindService(AbsSyncBaseActivity.this);
+                        WebLogger.getLogger(getAppName()).i(TAG, " [onPause] Unbound to sync service");
+                    }
+
+                    WebLogger.getLogger(getAppName()).i(TAG, " [onPause]");
+                }
+                case ON_STOP: {
+                    WebLogger.getLogger(getAppName()).i(TAG, " [onStop]");
+                    break;
+                }
+                case ON_DESTROY: {
+                    WebLogger.getLogger(getAppName()).i(TAG, " [onDestroy]");
+                    break;
                 }
             }
         });
+    }
+
+    private void onFirstLaunch() {
+        PropertiesSingleton props = getProps();
+        props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, Boolean.toString(false)));
+
+        androidx.appcompat.app.AlertDialog alertDialog = new androidx.appcompat.app.AlertDialog
+                .Builder(this)
+                .setMessage(R.string.configure_server_settings)
+                .setCancelable(false)
+                .setPositiveButton(R.string.yes, (dialog, which) -> {
+                    dialog.dismiss();
+                    navigateToUpdateServerSettings();
+                })
+                .setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss()).create();
+
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 
     /**
@@ -365,6 +426,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
      */
     private void inLoggedOutState() {
         handleDrawerVisibility(false, false, false);
+        btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
     }
 
     /**
@@ -372,6 +434,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
      */
     private void inAnonymousState() {
         handleDrawerVisibility(true, true, false);
+        btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
     }
 
     /**
@@ -379,6 +442,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
      */
     private void inAuthenticatedState() {
         handleDrawerVisibility(true, true, true);
+        btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
     }
 
     /**
@@ -394,11 +458,6 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         menu.findItem(R.id.drawer_resolve_conflict).setVisible(resolve_visible);
         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(switch_sign_in_visible);
         menu.findItem(R.id.drawer_update_credentials).setVisible(update_cred_visible);
-        if (absSyncViewModel.getUserState() == UserState.LOGGED_OUT) {
-            btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
-        } else {
-            btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
-        }
     }
 
     /**
@@ -453,35 +512,37 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         dialog.show();
     }
 
-    public void updateViewModelWithProps(){
+    public void updateViewModelWithProps() {
         absSyncViewModel.setAppName(getAppName());
 
-        PropertiesSingleton props=getProps();
+        PropertiesSingleton props = getProps();
         absSyncViewModel.setServerUrl(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
         absSyncViewModel.setIsServerVerified(Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED)));
 
-        boolean isAnonymousSignInUsed=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
+        absSyncViewModel.setIsFirstLaunch(Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH)));
+
+        boolean isAnonymousSignInUsed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
         absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
 
-        if(isAnonymousSignInUsed){
-            boolean isAnonymousAllowed=Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
+        if (isAnonymousSignInUsed) {
+            boolean isAnonymousAllowed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
             absSyncViewModel.setIsAnonymousAllowed(isAnonymousAllowed);
         }
 
         absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
         absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
 
-        String userVerifiedStr=props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-        if(userVerifiedStr!=null){
+        String userVerifiedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
+        if (userVerifiedStr != null) {
             absSyncViewModel.setIsUserVerified(Boolean.parseBoolean(userVerifiedStr));
         }
 
-        String lastSyncStr=props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
-        if(lastSyncStr!=null){
+        String lastSyncStr = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
+        if (lastSyncStr != null) {
             absSyncViewModel.setLastSyncTime(Long.parseLong(lastSyncStr));
         }
 
-        if(props.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && props.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
+        if (props.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && props.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null) {
             String state = props.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
             try {
                 absSyncViewModel.updateSyncAttachmentState(SyncAttachmentState.valueOf(state));

@@ -15,24 +15,9 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
-import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.NavigationUI;
 
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
 import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
 
 /**
@@ -43,26 +28,38 @@ import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
  * the list resolution fragment.
  *
  * @author mitchellsundt@gmail.com
- *
  */
 public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
 
-  private static final String TAG = VerifyServerSettingsActivity.class.getSimpleName();
+    @Override
+    void initializeViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(VerifyServerSettingsActivity.this).get(VerifyViewModel.class);
+        navController.setGraph(R.navigation.nav_graph_verify);
+    }
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    absSyncViewModel=new ViewModelProvider(VerifyServerSettingsActivity.this).get(VerifyViewModel.class);
-    super.onCreate(savedInstanceState);
+    @Override
+    void navigateToHomeFragment() {
+        navController.navigate(R.id.verifyServerSettingsFragment);
+    }
 
-    navController=Navigation.findNavController(this, R.id.navHostSync);
-    navController.setGraph(R.navigation.nav_graph_verify);
+    @Override
+    void navigateToAboutFragment() {
+        navController.navigate(R.id.aboutMenuFragmentV);
+    }
 
-    getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-      if(event.equals(Lifecycle.Event.ON_RESUME)){
-        if(navController.getCurrentDestination()==null){
-          navController.navigate(R.id.verifyServerSettingsFragment);
-        }
-      }
-    });
-  }
+    @Override
+    void navigateToUpdateServerSettings() {
+        navController.navigate(R.id.updateServerSettingsFragmentV);
+    }
+
+    @Override
+    boolean isNotLoginActivity() {
+        return true;
+    }
+
+    @Override
+    boolean isCurrentDestinationAboutFragment() {
+        return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentV;
+    }
+
 }
