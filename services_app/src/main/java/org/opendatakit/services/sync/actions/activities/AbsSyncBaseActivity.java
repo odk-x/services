@@ -539,8 +539,10 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
         String lastSyncStr = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
         if (lastSyncStr != null) {
+            absSyncViewModel.setIsLastSyncTimeAvailable(true);
             absSyncViewModel.setLastSyncTime(Long.parseLong(lastSyncStr));
-        }
+        } else
+            absSyncViewModel.setIsLastSyncTimeAvailable(false);
 
         if (props.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && props.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null) {
             String state = props.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);

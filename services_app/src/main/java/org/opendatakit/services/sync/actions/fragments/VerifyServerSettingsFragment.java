@@ -180,14 +180,21 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
     });
 
+    verifyViewModel.checkIsLastSyncTimeAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(!aBoolean)
+        tvLastSync.setText(getString(R.string.last_sync_not_available));
+    });
+
     verifyViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), aLong -> tvLastSync.setText(DateTimeUtil.getDisplayDate(aLong)));
   }
 
   @Override
   void handleLifecycleEvents() {
     requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-      if(event == Lifecycle.Event.ON_CREATE)
-        disableButtons();
+      if(event == Lifecycle.Event.ON_CREATE){
+        if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))
+          disableButtons();
+      }
     });
   }
 

@@ -24,6 +24,7 @@ public class AbsSyncViewModel extends ViewModel {
     private final MutableLiveData<String> username;
     private final MutableLiveData<Boolean> isUserVerified;
     private final MutableLiveData<Long> lastSyncTime;
+    private final MutableLiveData<Boolean> isLastSyncTimeAvailable;
 
     public AbsSyncViewModel() {
         super();
@@ -42,6 +43,7 @@ public class AbsSyncViewModel extends ViewModel {
         username = new MutableLiveData<>();
         isUserVerified = new MutableLiveData<>();
         lastSyncTime = new MutableLiveData<>();
+        isLastSyncTimeAvailable = new MutableLiveData<>();
 
         isFirstLaunch = new MutableLiveData<>();
 
@@ -107,6 +109,10 @@ public class AbsSyncViewModel extends ViewModel {
         return lastSyncTime;
     }
 
+    public LiveData<Boolean> checkIsLastSyncTimeAvailable() {
+        return isLastSyncTimeAvailable;
+    }
+
     public LiveData<Boolean> checkIsFirstLaunch() {
         return isFirstLaunch;
     }
@@ -157,6 +163,10 @@ public class AbsSyncViewModel extends ViewModel {
 
     public void setLastSyncTime(long lastSyncTime) {
         this.lastSyncTime.setValue(lastSyncTime);
+    }
+
+    public void setIsLastSyncTimeAvailable(boolean isAvailable) {
+        this.isLastSyncTimeAvailable.setValue(isAvailable);
     }
 
     public void setIsFirstLaunch(boolean isFirstLaunch) {

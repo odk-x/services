@@ -72,6 +72,11 @@ public class MainFragment extends Fragment {
             }
         });
 
+        absSyncViewModel.checkIsLastSyncTimeAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
+            if (!aBoolean)
+                tvLastSyncTime.setText(getString(R.string.last_sync_not_available));
+        });
+
         absSyncViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), aLong -> tvLastSyncTime.setText(DateTimeUtil.getDisplayDate(aLong)));
 
         absSyncViewModel.getUsername().observe(getViewLifecycleOwner(), s -> tvUsername.setText(s));

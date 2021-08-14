@@ -35,7 +35,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -53,10 +52,10 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.DocumentationWebViewActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
 import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.UserState;
@@ -137,9 +136,11 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                 navController.navigate(R.id.aboutMenuFragment);
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
-                Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
+/*                Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
                 intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
                 startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
+ */
+                navController.navigate(R.id.updateServerSettingsFragment);
                 return true;
             } else if (item.getItemId() == R.id.drawer_docs) {
                 Intent browserIntent = new Intent(
@@ -292,10 +293,10 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         });
     }
 
-    private void handleLifecycleEvents(){
+    private void handleLifecycleEvents() {
         getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-            switch (event){
-                case ON_RESUME:{
+            switch (event) {
+                case ON_RESUME: {
                     // Do this in on resume so that if we resolve a row it will be refreshed
                     // when we come back.
                     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
@@ -305,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                     updateViewModelWithProps();
                     break;
                 }
-                case ON_DESTROY:{
+                case ON_DESTROY: {
                     WebLogger.closeAll();
                     break;
                 }
@@ -335,8 +336,10 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         String lastSyncStr = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
         if (lastSyncStr != null) {
+            absSyncViewModel.setIsLastSyncTimeAvailable(true);
             absSyncViewModel.setLastSyncTime(Long.parseLong(lastSyncStr));
-        }
+        } else
+            absSyncViewModel.setIsLastSyncTimeAvailable(false);
     }
 
     /**
