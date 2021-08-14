@@ -220,9 +220,10 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
 
         findViewsAndAttachListeners();
+        setupViewModelAndNavController();
 
         getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-            if(event==Lifecycle.Event.ON_RESUME){
+            if (event == Lifecycle.Event.ON_RESUME) {
                 // Do this in on resume so that if we resolve a row it will be refreshed
                 // when we come back.
                 mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
@@ -230,8 +231,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                     mAppName = ODKFileUtils.getOdkDefaultAppName();
                 }
                 updateViewModelWithProps();
-            }
-            else if(event== Lifecycle.Event.ON_DESTROY){
+            } else if (event == Lifecycle.Event.ON_DESTROY) {
                 WebLogger.closeAll();
             }
         });
@@ -241,9 +241,6 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
      * Finding the different views required and attaching onClick Listeners to them
      */
     private void findViewsAndAttachListeners() {
-        absSyncViewModel = new ViewModelProvider(this).get(AbsSyncViewModel.class);
-        navController = Navigation.findNavController(this, R.id.navHostMain);
-
         toolbar = findViewById(R.id.toolbarMainActivity);
         navView = findViewById(R.id.navViewMain);
         drawerLayout = findViewById(R.id.drawerLayoutMain);
@@ -262,6 +259,11 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         btnDrawerOpen.setOnClickListener(onButtonClick);
         btnDrawerClose.setOnClickListener(onButtonClick);
+    }
+
+    private void setupViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(this).get(AbsSyncViewModel.class);
+        navController = Navigation.findNavController(this, R.id.navHostMain);
 
         absSyncViewModel.getCurrentUserState().observe(this, userState -> {
             if (userState == UserState.LOGGED_OUT) {
@@ -280,10 +282,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         });
 
         absSyncViewModel.checkIsAnonymousAllowed().observe(this, aBoolean -> {
-            if(absSyncViewModel.getUserState()==UserState.AUTHENTICATED_USER){
+            if (absSyncViewModel.getUserState() == UserState.AUTHENTICATED_USER) {
                 setSwitchSignInEnabled(aBoolean);
-            }
-            else
+            } else
                 setSwitchSignInEnabled(true);
         });
 
@@ -390,11 +391,11 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         updateViewModelWithProps();
     }
 
-    private void setSwitchSignInEnabled(boolean enabled){
+    private void setSwitchSignInEnabled(boolean enabled) {
         navView.getMenu().findItem(R.id.drawer_switch_sign_in_type).setEnabled(enabled);
     }
 
-    private void setSyncItemVisible(boolean visible){
+    private void setSyncItemVisible(boolean visible) {
         toolbar.getMenu().findItem(R.id.action_sync).setVisible(visible);
     }
 

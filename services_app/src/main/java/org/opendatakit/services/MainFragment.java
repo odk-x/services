@@ -38,11 +38,10 @@ public class MainFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         findViewsAndAttachListeners(view);
+        setupViewModelAndNavController();
     }
 
-    private void findViewsAndAttachListeners(View view){
-        absSyncViewModel=new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
-
+    private void findViewsAndAttachListeners(View view) {
         tvServerUrl = view.findViewById(R.id.tvServerUrlMain);
         tvUserState = view.findViewById(R.id.tvUserStateMain);
         tvUsernameLabel = view.findViewById(R.id.tvUsernameLabelMain);
@@ -53,6 +52,10 @@ public class MainFragment extends Fragment {
         btnSignIn = view.findViewById(R.id.btnSignInMain);
 
         btnSignIn.setOnClickListener(v -> onSignInButtonClicked());
+    }
+
+    private void setupViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
 
         absSyncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> {
             tvServerUrl.setText(s);

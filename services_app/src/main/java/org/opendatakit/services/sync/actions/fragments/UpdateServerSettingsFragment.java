@@ -59,11 +59,10 @@ public class UpdateServerSettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         findViewsAndAttachListeners(view);
+        setupViewModelAndNavController();
     }
 
     private void findViewsAndAttachListeners(View view) {
-        absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
-
         inputServerUrl = view.findViewById(R.id.inputServerUrl);
         Button btnUpdateUrl = view.findViewById(R.id.btnUpdateServerUrl);
         Button btnSetDefault = view.findViewById(R.id.btnChooseDefaultServer);
@@ -75,6 +74,10 @@ public class UpdateServerSettingsFragment extends Fragment {
         btnSetDefault.setOnClickListener(onButtonClick);
         btnVerifyServerDetails.setOnClickListener(onButtonClick);
         btnScanQr.setOnClickListener(onButtonClick);
+    }
+
+    private void setupViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
 
         absSyncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> inputServerUrl.getEditText().setText(s));
     }
