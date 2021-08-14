@@ -30,23 +30,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
-import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
+import org.opendatakit.services.utilities.DateTimeUtil;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -54,6 +49,7 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,25 +94,16 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container,
-      Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     return inflater.inflate(ID, container, false);
   }
 
   @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
     findViewsAndAttachListeners(view);
-
-    requireActivity().getLifecycle().addObserver(new LifecycleObserver() {
-
-      @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
-      private void onCreated(){
-        disableButtons();
-      }
-
-    });
+    setupViewModelAndNavController();
   }
 
   /**
@@ -140,101 +127,74 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
     OnButtonClick onButtonClick=new OnButtonClick();
     btnVerifyUser.setOnClickListener(onButtonClick);
     btnVerifyServer.setOnClickListener(onButtonClick);
+  }
 
+  private void setupViewModelAndNavController(){
     verifyViewModel=new ViewModelProvider(requireActivity()).get(VerifyViewModel.class);
 
-    verifyViewModel.getServerUrl().observe(getViewLifecycleOwner(), new Observer<String>() {
-      @Override
-      public void onChanged(String s) {
-        tvServerUrl.setText(s);
-        tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+    verifyViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> {
+      tvServerUrl.setText(s);
+      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+    });
+
+    verifyViewModel.checkIsServerVerified().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(aBoolean){
+        tvServerVerifyStatus.setText(R.string.verified);
+      }
+      else {
+        tvServerVerifyStatus.setText(R.string.not_verified);
       }
     });
 
-    verifyViewModel.checkIsServerVerified().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean aBoolean) {
-        if(aBoolean){
-          tvServerVerifyStatus.setText("Verified");
-        }
-        else {
-          tvServerVerifyStatus.setText("Not Verified");
-        }
+    verifyViewModel.checkIsAnonymousSignInUsed().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(!aBoolean){
+        tvServerAnonymousStatus.setText(R.string.not_known_yet);
       }
     });
 
-    verifyViewModel.checkIsAnonymousSignInUsed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean aBoolean) {
-        if(!aBoolean){
-          tvServerAnonymousStatus.setText("Not Known Yet");
-        }
+    verifyViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(aBoolean){
+        tvServerAnonymousStatus.setText(R.string.allowed);
+      }else {
+        tvServerAnonymousStatus.setText(R.string.not_allowed);
       }
     });
 
-    verifyViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean aBoolean) {
-        if(aBoolean==null){
-          tvServerAnonymousStatus.setText("Not Known Yet");
-        } else {
-          if(aBoolean){
-            tvServerAnonymousStatus.setText("Allowed");
-          }else {
-            tvServerAnonymousStatus.setText("Not Allowed");
-          }
-        }
+    verifyViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), userState -> {
+      if (userState == UserState.LOGGED_OUT) {
+        inLoggedOutState();
+      } else if (userState == UserState.ANONYMOUS) {
+        inAnonymousState();
+      } else {
+        inAuthenticatedState();
       }
     });
 
-    verifyViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<UserState>() {
-      @Override
-      public void onChanged(UserState userState) {
-        if (userState == UserState.LOGGED_OUT) {
-          inLoggedOutState();
-        } else if (userState == UserState.ANONYMOUS) {
-          inAnonymousState();
-        } else {
-          inAuthenticatedState();
-        }
+    verifyViewModel.getUsername().observe(getViewLifecycleOwner(), s -> tvUsername.setText(s));
+
+    verifyViewModel.checkIsUserVerified().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(aBoolean){
+        tvVerifyStatus.setText(getString(R.string.verified));
+      }else {
+        tvVerifyStatus.setText(getString(R.string.not_verified));
       }
     });
 
-    verifyViewModel.getUsername().observe(getViewLifecycleOwner(), new Observer<String>() {
-      @Override
-      public void onChanged(String s) {
-        tvUsername.setText(s);
-      }
-    });
+    verifyViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), aLong -> tvLastSync.setText(DateTimeUtil.getDisplayDate(aLong)));
+  }
 
-    verifyViewModel.checkIsUserVerified().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean aBoolean) {
-        if(aBoolean){
-          tvVerifyStatus.setText("Verified");
-        }else {
-          tvVerifyStatus.setText("Not Verified");
-        }
-      }
-    });
-
-    verifyViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), new Observer<Long>() {
-      @Override
-      public void onChanged(Long aLong) {
-        if(aLong==null){
-          tvLastSync.setText("Not Available");
-        }else {
-          tvLastSync.setText(Long.toString(aLong));
-        }
-      }
+  @Override
+  void handleLifecycleEvents() {
+    requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+      if(event == Lifecycle.Event.ON_CREATE)
+        disableButtons();
     });
   }
 
   private void onStartVerifyServerClick(){
-    Map<String,String> properties=new HashMap<>();
-    properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,getString(R.string.credential_type_none));
-    PropertiesSingleton props=((AbsSyncBaseActivity)requireActivity()).getProps();
-    props.setProperties(properties);
+    getProps().setProperties(Collections.singletonMap(
+                    CommonToolProperties.KEY_AUTHENTICATION_TYPE,
+                    getString(R.string.credential_type_none)));
     onStartVerifyUserClick();
   }
 
@@ -250,12 +210,12 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
 
   private void inLoggedOutState(){
     handleViewVisibility(View.VISIBLE,View.GONE);
-    tvHeading.setText("User is Logged Out");
+    tvHeading.setText(R.string.user_logged_out_label);
   }
 
   private void inAnonymousState(){
     handleViewVisibility(View.VISIBLE,View.GONE);
-    tvHeading.setText("User is Anonymous");
+    tvHeading.setText(R.string.user_anonymous_label);
   }
 
   private void inAuthenticatedState(){
@@ -280,8 +240,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   }
 
   void perhapsEnableButtons() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-    String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    String url = verifyViewModel.getUrl();
     if (url == null || url.length() == 0) {
       disableButtons();
     } else {
@@ -554,8 +513,8 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   }
 
   private void updatePropertiesOnVerifyComplete(SyncStatus status){
+    PropertiesSingleton props=getProps();
     Map<String,String> properties=new HashMap<>();
-    PropertiesSingleton props=((AbsSyncBaseActivity)requireActivity()).getProps();
     switch (status){
       case SERVER_IS_NOT_ODK_SERVER:{
         properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,Boolean.toString(false));
@@ -593,7 +552,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
       }
     }
     props.setProperties(properties);
-    ((AbsSyncBaseActivity) requireActivity()).updateViewModelWithProps();
+    updateViewModelWithProps();
   }
 
 }

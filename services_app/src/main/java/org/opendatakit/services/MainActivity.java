@@ -221,20 +221,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         findViewsAndAttachListeners();
         setupViewModelAndNavController();
-
-        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-            if (event == Lifecycle.Event.ON_RESUME) {
-                // Do this in on resume so that if we resolve a row it will be refreshed
-                // when we come back.
-                mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-                if (mAppName == null) {
-                    mAppName = ODKFileUtils.getOdkDefaultAppName();
-                }
-                updateViewModelWithProps();
-            } else if (event == Lifecycle.Event.ON_DESTROY) {
-                WebLogger.closeAll();
-            }
-        });
+        handleLifecycleEvents();
     }
 
     /**
@@ -302,6 +289,27 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
             if (mAppName != null)
                 updateViewModelWithProps();
+        });
+    }
+
+    private void handleLifecycleEvents(){
+        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            switch (event){
+                case ON_RESUME:{
+                    // Do this in on resume so that if we resolve a row it will be refreshed
+                    // when we come back.
+                    mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+                    if (mAppName == null) {
+                        mAppName = ODKFileUtils.getOdkDefaultAppName();
+                    }
+                    updateViewModelWithProps();
+                    break;
+                }
+                case ON_DESTROY:{
+                    WebLogger.closeAll();
+                    break;
+                }
+            }
         });
     }
 

@@ -422,4 +422,11 @@
     <string name="username_of_user_label">Username of User :</string>
     <string name="verification_status_label">Verification Status :</string>
     <string name="verify_user_button_label">Verify User</string>
+    <string name="verified">Verified</string>
+    <string name="not_verified">Not Verified</string>
+    <string name="not_known_yet">Not Known Yet</string>
+    <string name="allowed">Allowed</string>
+    <string name="not_allowed">Not Allowed</string>
+    <string name="user_logged_out_label">User is Logged Out</string>
+    <string name="user_anonymous_label">User is Anonymous</string>
 </resources>
