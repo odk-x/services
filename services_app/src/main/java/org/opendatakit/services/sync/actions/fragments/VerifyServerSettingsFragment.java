@@ -189,7 +189,9 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   }
 
   @Override
-  void handleLifecycleEvents() {
+  protected void handleLifecycleEvents() {
+    super.handleLifecycleEvents();
+
     requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
       if(event == Lifecycle.Event.ON_CREATE){
         if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))

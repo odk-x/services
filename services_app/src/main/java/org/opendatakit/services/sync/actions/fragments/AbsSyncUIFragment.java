@@ -51,8 +51,6 @@ abstract class AbsSyncUIFragment extends Fragment implements AlertDialogFragment
     abstract void updateInterface();
     abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException;
 
-    abstract void handleLifecycleEvents();
-
     AbsSyncUIFragment(String alertDialogTag, String progressDialogTag) {
         this.alertDialogTag = alertDialogTag;
         this.progressDialogTag = progressDialogTag;
@@ -88,11 +86,10 @@ abstract class AbsSyncUIFragment extends Fragment implements AlertDialogFragment
                     progressDialogTag, false, false);
         }
 
-        handleAbsLifecycleEvents();
         handleLifecycleEvents();
     }
 
-    private void handleAbsLifecycleEvents(){
+    protected void handleLifecycleEvents(){
         getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
             switch (event){
                 case ON_RESUME:{
@@ -127,10 +124,10 @@ abstract class AbsSyncUIFragment extends Fragment implements AlertDialogFragment
                     WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
                     break;
                 }
-
             }
         });
-    }
+
+    };
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {

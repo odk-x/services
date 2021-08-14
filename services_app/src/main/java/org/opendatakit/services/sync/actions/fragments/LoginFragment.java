@@ -20,16 +20,26 @@ import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentContainerView;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
+import androidx.navigation.NavHostController;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -44,6 +54,7 @@ import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
@@ -58,189 +69,45 @@ import java.util.Map;
 /**
  * @author mitchellsundt@gmail.com
  */
-public class LoginFragment extends AbsSyncUIFragment {
-
-   private class OnButtonClick implements View.OnClickListener{
-
-      @Override
-      public void onClick(View v) {
-         if(v.getId()==R.id.btnAnonymousSignInLogin){
-            signInAsAnonymousUser();
-         }
-         else if (v.getId()==R.id.btnUserSignInLogin){
-            inSetCredentialsState();
-         }
-         else if(v.getId()==R.id.btnAuthenticateUserLogin){
-            setNewCredentials();
-            verifyServerSettings();
-         }
-      }
-   }
+public abstract class LoginFragment extends AbsSyncUIFragment {
 
    private static final String TAG = "LoginFragment";
 
    public static final String NAME = "LoginFragment";
-   public static final int ID = R.layout.login_fragment;
 
    private static final String PROGRESS_DIALOG_TAG = "progressDialogLogin";
    private static final String OUTCOME_DIALOG_TAG = "outcomeDialogLogin";
 
    private TableHealthValidator healthValidator;
 
-   private TextView tvServerUrl, tvTitle;
-   private TextInputLayout inputUsername, inputPassword;
-   private Button btnAnonymousSignIn, btnUserSignIn, btnAuthenticateCredentials;
-
-   private LoginViewModel loginViewModel;
+   protected LoginViewModel loginViewModel;
+   protected NavController navController;
 
    public LoginFragment() {
       super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
    }
 
-   @Override
-   public void onActivityCreated(Bundle savedInstanceState) {
-      super.onActivityCreated(savedInstanceState);
-      disableButtons();
-
-      healthValidator = new TableHealthValidator(getAppName(), getActivity());
-   }
-
-   @Override
-   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-      super.onCreateView(inflater, container, savedInstanceState);
-      return inflater.inflate(ID, container, false);
-   }
-
-   @Override
-   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-      super.onViewCreated(view, savedInstanceState);
-      findViewsAndAttachListeners(view);
-      inChooseSignInTypeState();
-   }
-
-   private void findViewsAndAttachListeners(View view){
-      tvServerUrl=view.findViewById(R.id.tvServerUrlLogin);
-      tvTitle=view.findViewById(R.id.tvTitleLogin);
-
-      inputUsername=view.findViewById(R.id.inputUsernameLogin);
-      inputPassword=view.findViewById(R.id.inputPasswordLogin);
-
-      btnAnonymousSignIn=view.findViewById(R.id.btnAnonymousSignInLogin);
-      btnUserSignIn=view.findViewById(R.id.btnUserSignInLogin);
-      btnAuthenticateCredentials=view.findViewById(R.id.btnAuthenticateUserLogin);
-
-      OnButtonClick onButtonClick=new OnButtonClick();
-      btnAnonymousSignIn.setOnClickListener(onButtonClick);
-      btnUserSignIn.setOnClickListener(onButtonClick);
-      btnAuthenticateCredentials.setOnClickListener(onButtonClick);
-
+   protected void setupViewModelAndNavController(){
       loginViewModel=new ViewModelProvider(requireActivity()).get(LoginViewModel.class);
+      navController= Navigation.findNavController(requireActivity(), R.id.navHostSync);
 
-      loginViewModel.getServerUrl().observe(getViewLifecycleOwner(), new Observer<String>() {
-         @Override
-         public void onChanged(String s) {
-            tvServerUrl.setText(s);
-            tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+      Intent intent=requireActivity().getIntent();
+      if(!intent.hasExtra(Constants.LOGIN_INTENT_TYPE_KEY))
+         loginViewModel.updateFunctionType(Constants.LOGIN_TYPE_SIGN_IN);
+      else
+         loginViewModel.updateFunctionType(intent.getStringExtra(Constants.LOGIN_INTENT_TYPE_KEY));
+   }
+
+   @Override
+   protected void handleLifecycleEvents() {
+      super.handleLifecycleEvents();
+
+      requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+         if(event== Lifecycle.Event.ON_CREATE){
+            disableButtons();
+            healthValidator = new TableHealthValidator(getAppName(), getActivity());
          }
       });
-
-      loginViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<UserState>() {
-         @Override
-         public void onChanged(UserState userState) {
-            if (userState == UserState.LOGGED_OUT) {
-               inLoggedOutState();
-            } else if (userState == UserState.ANONYMOUS) {
-               inAnonymousState();
-            } else {
-               inAuthenticatedState();
-            }
-         }
-      });
-
-      loginViewModel.checkIsAnonymousSignInUsed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-         @Override
-         public void onChanged(Boolean aBoolean) {
-            if(!aBoolean){
-               btnAnonymousSignIn.setEnabled(true);
-            }
-         }
-      });
-
-      loginViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-         @Override
-         public void onChanged(Boolean aBoolean) {
-            btnAnonymousSignIn.setEnabled(aBoolean);
-         }
-      });
-   }
-
-   private void inLoggedOutState(){
-      tvTitle.setText("Sign In");
-      inChooseSignInTypeState();
-   }
-
-   private void inAnonymousState(){
-      tvTitle.setText("Sign In using Credentials");
-      inSetCredentialsState();
-   }
-
-   private void inAuthenticatedState(){
-      tvTitle.setText("Update Login Credentials");
-   }
-
-   private void inChooseSignInTypeState(){
-      handleViewVisibility(View.VISIBLE, View.VISIBLE, View.GONE);
-   }
-
-   private void inSetCredentialsState(){
-      handleViewVisibility(View.GONE, View.GONE, View.VISIBLE);
-   }
-
-   private void handleViewVisibility(int anonymousVisible, int authenticatedUserVisible, int setCredentialsVisible){
-      btnAnonymousSignIn.setVisibility(anonymousVisible);
-      btnUserSignIn.setVisibility(authenticatedUserVisible);
-
-      inputUsername.setVisibility(setCredentialsVisible);
-      inputPassword.setVisibility(setCredentialsVisible);
-      btnAuthenticateCredentials.setVisibility(setCredentialsVisible);
-   }
-
-   private void signInAsAnonymousUser(){
-      Map<String,String> properties = new HashMap<String,String>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
-      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
-      properties.put(CommonToolProperties.KEY_USERNAME, "");
-      properties.remove(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
-      updatePropertiesSingleton(properties);
-
-      if(!loginViewModel.isAnonymousMethodUsed()){
-         verifyServerSettings();
-      } else {
-         requireActivity().finish();
-      }
-   }
-
-   private void setNewCredentials() {
-      String username = inputUsername.getEditText().getText().toString();
-      String pw = inputPassword.getEditText().getText().toString();
-
-      Map<String, String> properties = new HashMap<>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
-      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
-      properties.put(CommonToolProperties.KEY_USERNAME, username);
-      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
-      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
-      properties.put(CommonToolProperties.KEY_PASSWORD, pw);
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
-      updatePropertiesSingleton(properties);
    }
 
    /**
@@ -256,20 +123,9 @@ public class LoginFragment extends AbsSyncUIFragment {
       }
    }
 
-   private void disableButtons() {
-      btnUserSignIn.setEnabled(false);
-      btnAuthenticateCredentials.setEnabled(false);
-   }
+   abstract void disableButtons();
 
-   void perhapsEnableButtons() {
-      String url=loginViewModel.getUrl();
-      if (url == null || url.length() == 0) {
-         disableButtons();
-      } else {
-         btnUserSignIn.setEnabled(true);
-         btnAuthenticateCredentials.setEnabled(true);
-      }
-   }
+   abstract void perhapsEnableButtons();
 
    public void onActivityResult(int requestCode, int resultCode, Intent data) {
       super.onActivityResult(requestCode, resultCode, data);
@@ -584,9 +440,8 @@ public class LoginFragment extends AbsSyncUIFragment {
       updatePropertiesSingleton(properties);
    }
 
-   private void updatePropertiesSingleton(Map<String, String> properties){
-      PropertiesSingleton props=((AbsSyncBaseActivity)requireActivity()).getProps();
-      props.setProperties(properties);
-      ((AbsSyncBaseActivity)requireActivity()).updateViewModelWithProps();
+   protected void updatePropertiesSingleton(Map<String, String> properties){
+      getProps().setProperties(properties);
+      updateViewModelWithProps();
    }
 }

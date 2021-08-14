@@ -429,4 +429,5 @@
     <string name="not_allowed">Not Allowed</string>
     <string name="user_logged_out_label">User is Logged Out</string>
     <string name="user_anonymous_label">User is Anonymous</string>
+    <string name="switch_sign_in_type">Switch Sign In Type</string>
 </resources>

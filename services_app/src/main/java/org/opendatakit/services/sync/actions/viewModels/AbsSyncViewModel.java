@@ -85,6 +85,13 @@ public class AbsSyncViewModel extends ViewModel {
         return false;
     }
 
+    public boolean isAnonymousAllowed() {
+        if(isAnonymousAllowed.getValue()!=null){
+            return isAnonymousAllowed.getValue();
+        }
+        return true;
+    }
+
     public LiveData<Boolean> checkIsAnonymousAllowed() {
         return isAnonymousAllowed;
     }
