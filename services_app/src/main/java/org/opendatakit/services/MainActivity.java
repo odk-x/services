@@ -136,11 +136,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                 navController.navigate(R.id.aboutMenuFragment);
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
-/*                Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
+                Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
                 intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
                 startActivityForResult(intent, SETTINGS_ACTIVITY_RESULT_CODE);
- */
-                navController.navigate(R.id.updateServerSettingsFragment);
                 return true;
             } else if (item.getItemId() == R.id.drawer_docs) {
                 Intent browserIntent = new Intent(
