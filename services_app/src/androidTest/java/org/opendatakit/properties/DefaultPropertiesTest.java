@@ -8,8 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.utilities.StaticStateManipulator;
-
-import static org.junit.Assert.*;
+import static com.google.common.truth.Truth.*;
 
 public class DefaultPropertiesTest {
 
@@ -26,9 +25,9 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-        assertNotNull(serverUrl);
 
-        assertEquals(serverUrl, context.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url));
+        assertThat(serverUrl).isNotNull();
+        assertThat(serverUrl).isEqualTo(context.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url));
     }
 
     @Test
@@ -37,10 +36,10 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String isServerVerifiedStr = props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
-        assertNotNull(isServerVerifiedStr);
+        assertThat(isServerVerifiedStr).isNotNull();
 
         boolean isServerVerified = Boolean.parseBoolean(isServerVerifiedStr);
-        assertFalse(isServerVerified);
+        assertThat(isServerVerified).isFalse();
     }
 
     @Test
@@ -49,10 +48,10 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String isAnonymousUsedStr = props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED);
-        assertNotNull(isAnonymousUsedStr);
+        assertThat(isAnonymousUsedStr).isNotNull();
 
         boolean isAnonymousUsed = Boolean.parseBoolean(isAnonymousUsedStr);
-        assertFalse(isAnonymousUsed);
+        assertThat(isAnonymousUsed).isFalse();
     }
 
     @Test
@@ -61,7 +60,7 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String isAnonymousAllowed = props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
-        assertNull(isAnonymousAllowed);
+        assertThat(isAnonymousAllowed).isNull();
     }
 
     @Test
@@ -70,10 +69,10 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String currentUserStateStr = props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
-        assertNotNull(currentUserStateStr);
+        assertThat(currentUserStateStr).isNotNull();
 
         UserState userState = UserState.valueOf(currentUserStateStr);
-        assertEquals(userState, UserState.LOGGED_OUT);
+        assertThat(userState).isEqualTo(UserState.LOGGED_OUT);
     }
 
     @Test
@@ -82,9 +81,8 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-        assertNotNull(username);
-
-        assertEquals(username, "");
+        assertThat(username).isNotNull();
+        assertThat(username).isEmpty();
     }
 
     @Test
@@ -93,7 +91,7 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String isUserAuthenticatedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-        assertNull(isUserAuthenticatedStr);
+        assertThat(isUserAuthenticatedStr).isNull();
     }
 
     @Test
@@ -102,7 +100,7 @@ public class DefaultPropertiesTest {
         PropertiesSingleton props = getProps(context);
 
         String lastSyncInfo = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
-        assertNull(lastSyncInfo);
+        assertThat(lastSyncInfo).isNull();
     }
 
     private Context getContext() {
