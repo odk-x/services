@@ -15,99 +15,46 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.fragments.ServerSettingsFragment;
-import org.opendatakit.services.sync.actions.fragments.SyncFragment;
-import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
 import org.opendatakit.services.sync.actions.viewModels.SyncViewModel;
-
-import java.util.Collections;
 
 /**
  * An activity for syncing the local content with the server.
  *
  * @author mitchellsundt@gmail.com
- *
  */
 public class SyncActivity extends AbsSyncBaseActivity {
 
-  private static final String TAG = SyncActivity.class.getSimpleName();
-  private AlertDialog mDialog;
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    absSyncViewModel=new ViewModelProvider(SyncActivity.this).get(SyncViewModel.class);
-    super.onCreate(savedInstanceState);
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-
-    firstLaunch();
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting SyncFragment");
-
-    FragmentManager mgr = getSupportFragmentManager();
-    String newFragmentName;
-    Fragment newFragment;
-
-    // we want the list fragment
-    newFragmentName = SyncFragment.NAME;
-    newFragment = mgr.findFragmentByTag(newFragmentName);
-    if ( newFragment == null ) {
-      newFragment = new SyncFragment();
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new SyncFragment");
-      
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-      trans.commit();
+    @Override
+    void initializeViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(SyncActivity.this).get(SyncViewModel.class);
+        navController.setGraph(R.navigation.nav_graph_sync);
     }
-  }
 
-  private void firstLaunch() {
-    mProps = CommonToolProperties.get(this, mAppName);
-    boolean isFirstLaunch = mProps.getBooleanProperty(CommonToolProperties.KEY_FIRST_LAUNCH);
-    if (isFirstLaunch) {
-      // set first launch to false
-      mProps.setProperties(Collections.singletonMap(CommonToolProperties
-              .KEY_FIRST_LAUNCH, "false"));
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      mDialog = builder.setMessage(R.string.configure_server_settings)
-              .setCancelable(false)
-              .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                  mDialog.dismiss();
-
-                  getSupportFragmentManager()
-                      .beginTransaction()
-                      .replace(R.id.sync_activity_view, new ServerSettingsFragment())
-                      .addToBackStack(null)
-                      .commit();
-                }
-              })
-              .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                  dialog.dismiss();
-                }
-              }).create();
-      mDialog.setCanceledOnTouchOutside(false);
-      mDialog.show();
+    @Override
+    void navigateToHomeFragment() {
+        navController.navigate(R.id.syncFragment);
     }
-  }
 
+    @Override
+    void navigateToAboutFragment() {
+        navController.navigate(R.id.aboutMenuFragmentS);
+    }
+
+    @Override
+    void navigateToUpdateServerSettings() {
+        navController.navigate(R.id.updateServerSettingsFragmentS);
+    }
+
+    @Override
+    boolean isNotLoginActivity() {
+        return true;
+    }
+
+    @Override
+    boolean isCurrentDestinationAboutFragment() {
+        return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentS;
+    }
 }

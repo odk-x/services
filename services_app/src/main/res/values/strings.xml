@@ -403,4 +403,31 @@
     <string name="logged_out">Logged Out</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="enter_server_url">Enter Server URL</string>
+    <string name="update_url">Update Url</string>
+    <string name="choose_demo_server">Choose Demo Server</string>
+    <string name="verify_server_details">Verify Server Details</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="enter_password">Password</string>
+    <string name="sign_in_to_sync">Sign in to Sync</string>
+    <string name="sign_in_type">Sign in Type :</string>
+    <string name="username_label">Username :</string>
+    <string name="last_synced_time">Last Synced Time :</string>
+    <string name="server_url_label">Server URL :</string>
+    <string name="sync_type">Sync Type :</string>
+    <string name="sync_button_label">Sync</string>
+    <string name="server_verification_status">Server Verification Status:</string>
+    <string name="server_anonymous_access">Server Anonymous Access:</string>
+    <string name="verify_server_button_label">Verify Server</string>
+    <string name="username_of_user_label">Username of User :</string>
+    <string name="verification_status_label">Verification Status :</string>
+    <string name="verify_user_button_label">Verify User</string>
+    <string name="verified">Verified</string>
+    <string name="not_verified">Not Verified</string>
+    <string name="not_known_yet">Not Known Yet</string>
+    <string name="allowed">Allowed</string>
+    <string name="not_allowed">Not Allowed</string>
+    <string name="user_logged_out_label">User is Logged Out</string>
+    <string name="user_anonymous_label">User is Anonymous</string>
+    <string name="switch_sign_in_type">Switch Sign In Type</string>
 </resources>

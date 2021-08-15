@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_sync"
+    app:startDestination="@id/syncFragment">
+
+    <fragment
+        android:id="@+id/syncFragment"
+        android:name="org.opendatakit.services.sync.actions.fragments.SyncFragment"
+        android:label="SyncFragment"
+        tools:layout="@layout/sync_launch_fragment">
+        <action
+            android:id="@+id/action_syncFragment_to_aboutMenuFragment2"
+            app:destination="@id/aboutMenuFragmentS" />
+        <action
+            android:id="@+id/action_syncFragment_to_updateServerSettingsFragment2"
+            app:destination="@id/updateServerSettingsFragmentS" />
+    </fragment>
+    <fragment
+        android:id="@+id/aboutMenuFragmentS"
+        android:name="org.opendatakit.fragment.AboutMenuFragment"
+        android:label="AboutMenuFragment" />
+    <fragment
+        android:id="@+id/updateServerSettingsFragmentS"
+        android:name="org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment"
+        android:label="UpdateServerSettingsFragment" />
+</navigation>

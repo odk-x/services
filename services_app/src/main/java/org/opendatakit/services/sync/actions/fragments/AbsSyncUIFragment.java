@@ -7,17 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AlertDialogFragment;
@@ -31,7 +26,6 @@ import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.service.GlobalSyncNotificationManager;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.AppNameUtil;
@@ -40,8 +34,7 @@ import org.opendatakit.utilities.AppNameUtil;
  * Created by wrb on 2/5/2018.
  */
 
-abstract class AbsSyncUIFragment extends Fragment implements
-        AlertDialogFragment.ConfirmAlertDialog {
+abstract class AbsSyncUIFragment extends Fragment implements AlertDialogFragment.ConfirmAlertDialog {
 
     private static final String TAG = AbsSyncUIFragment.class.getSimpleName();
 
@@ -56,8 +49,7 @@ abstract class AbsSyncUIFragment extends Fragment implements
     abstract void postTaskToAccessSyncService();
     abstract void perhapsEnableButtons();
     abstract void updateInterface();
-    abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws
-            RemoteException;
+    abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException;
 
     AbsSyncUIFragment(String alertDialogTag, String progressDialogTag) {
         this.alertDialogTag = alertDialogTag;
@@ -94,51 +86,51 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     progressDialogTag, false, false);
         }
 
-        getLifecycle().addObserver(new LifecycleEventObserver() {
-            @Override
-            public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
-                switch (event){
-                    case ON_RESUME:{
-                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
+        handleLifecycleEvents();
+    }
 
-                        Intent incomingIntent = getActivity().getIntent();
-                        String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-                        if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
-                            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
-                                    + "either null or does not match the current appName of the activity so calling "
-                                    + "finish");
-                            getActivity().setResult(Activity.RESULT_CANCELED);
-                            getActivity().finish();
+    protected void handleLifecycleEvents(){
+        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            switch (event){
+                case ON_RESUME:{
+                    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
+
+                    Intent incomingIntent = getActivity().getIntent();
+                    String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+                    if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
+                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
+                                + "either null or does not match the current appName of the activity so calling "
+                                + "finish");
+                        getActivity().setResult(Activity.RESULT_CANCELED);
+                        getActivity().finish();
+                    }
+
+                    perhapsEnableButtons();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            msgManager.restoreDialog(getParentFragmentManager(), getId());
+                            updateInterface();
                         }
-
-                        perhapsEnableButtons();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                msgManager.restoreDialog(getParentFragmentManager(), getId());
-                                updateInterface();
-                            }
-                        }, 100);
-                        break;
-                    }
-                    case ON_PAUSE:{
-                        msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
-                        break;
-                    }
-                    case ON_DESTROY:{
-                        handler.removeCallbacksAndMessages(null);
-                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
-                        break;
-                    }
-
+                    }, 100);
+                    break;
+                }
+                case ON_PAUSE:{
+                    msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
+                    break;
+                }
+                case ON_DESTROY:{
+                    handler.removeCallbacksAndMessages(null);
+                    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
+                    break;
                 }
             }
         });
 
-    }
+    };
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (msgManager != null) {
             msgManager.addStateToSaveStateBundle(outState);
@@ -176,7 +168,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
      *
      * @return true if valid credentials exist, false otherwise
      */
-
     public boolean areCredentialsConfigured(boolean createError) {
         // verify that we have the necessary credentials
         PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
@@ -312,5 +303,13 @@ abstract class AbsSyncUIFragment extends Fragment implements
         FragmentManager fm = getParentFragmentManager();
         msgManager.dismissProgressDialog(fm);
         msgManager.dismissAlertDialog(fm);
+    }
+
+    protected PropertiesSingleton getProps(){
+        return ((AbsSyncBaseActivity)requireActivity()).getProps();
+    }
+
+    protected void updateViewModelWithProps(){
+        ((AbsSyncBaseActivity)requireActivity()).updateViewModelWithProps();
     }
 }

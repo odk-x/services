@@ -25,14 +25,14 @@ import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.Observer;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,15 +45,13 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.sync.actions.SyncActions;
-import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.viewModels.SyncViewModel;
-import org.opendatakit.services.utilities.Constants;
+import org.opendatakit.services.utilities.DateTimeUtil;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -64,11 +62,7 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,8 +95,6 @@ public class SyncFragment extends AbsSyncUIFragment {
   private static final String PROGRESS_DIALOG_TAG = "progressDialogSync";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogSync";
 
-  private boolean loggingIn = false;
-
   private TextView tvSyncHeading, tvSignInTypeLabel, tvSignInType, tvUsernameLabel, tvUsername, tvLastSyncTimeLabel, tvLastSyncTime, tvServerUrl;
   private MaterialAutoCompleteTextView acSyncType;
   private Button btnStartSync, btnSignIn, btnResetServer;
@@ -114,13 +106,7 @@ public class SyncFragment extends AbsSyncUIFragment {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
   }
 
-  @Override public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    disableButtons();
-  }
-
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
     return inflater.inflate(ID, container, false);
   }
 
@@ -128,6 +114,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     findViewsAndAttachListeners(view);
+    setupViewModelAndNavController();
   }
 
   private void findViewsAndAttachListeners(View view){
@@ -150,77 +137,72 @@ public class SyncFragment extends AbsSyncUIFragment {
     ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
     acSyncType.setAdapter(instanceAttachmentsAdapter);
 
-    acSyncType.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-      @Override
-      public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
-        syncViewModel.updateSyncAttachmentState(SyncAttachmentState.valueOf(syncAttachmentType[position]));
+    acSyncType.setOnItemClickListener((parent, view1, position, id) -> {
+      String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
+      syncViewModel.updateSyncAttachmentState(SyncAttachmentState.valueOf(syncAttachmentType[position]));
 
-        Map<String, String> properties=new HashMap<>();
-        properties.put(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncViewModel.getCurrentSyncAttachmentState().name());
-        updatePropertiesSingleton(properties);
-      }
+      Map<String, String> properties=new HashMap<>();
+      properties.put(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncViewModel.getCurrentSyncAttachmentState().name());
+      updatePropertiesSingleton(properties);
     });
 
     OnButtonClick onButtonClick=new OnButtonClick();
     btnStartSync.setOnClickListener(onButtonClick);
     btnSignIn.setOnClickListener(onButtonClick);
     btnResetServer.setOnClickListener(onButtonClick);
+  }
 
+  private void setupViewModelAndNavController(){
     syncViewModel=new ViewModelProvider(requireActivity()).get(SyncViewModel.class);
 
-    syncViewModel.getServerUrl().observe(getViewLifecycleOwner(), new Observer<String>() {
-      @Override
-      public void onChanged(String s) {
-        tvServerUrl.setText(s);
-        tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+    syncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> {
+      tvServerUrl.setText(s);
+      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+    });
+
+    syncViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), userState -> {
+      if (userState == UserState.LOGGED_OUT) {
+        inLoggedOutState();
+      } else if (userState == UserState.ANONYMOUS) {
+        inAnonymousState();
+      } else {
+        inAuthenticatedState();
       }
     });
 
-    syncViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<UserState>() {
-      @Override
-      public void onChanged(UserState userState) {
-        if (userState == UserState.LOGGED_OUT) {
-          inLoggedOutState();
-        } else if (userState == UserState.ANONYMOUS) {
-          inAnonymousState();
-        } else {
-          inAuthenticatedState();
+    syncViewModel.checkIsLastSyncTimeAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(!aBoolean)
+        tvLastSyncTime.setText(getString(R.string.last_sync_not_available));
+    });
+
+    syncViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), aLong -> tvLastSyncTime.setText(DateTimeUtil.getDisplayDate(aLong)));
+
+    syncViewModel.getUsername().observe(getViewLifecycleOwner(), s -> tvUsername.setText(s));
+
+    syncViewModel.getSyncAttachmentState().observe(getViewLifecycleOwner(), syncAttachmentState -> {
+      String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
+      int position=0;
+
+      for (int i = 0; i < syncAttachmentValues.length; ++i) {
+        if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+          position=i;
+          break;
         }
       }
+
+      String type=(String) acSyncType.getAdapter().getItem(position);
+      acSyncType.setText(type,false);
     });
+  }
 
-    syncViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), new Observer<Long>() {
-      @Override
-      public void onChanged(Long aLong) {
-        SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
-        String ts = sdf.format(new Date(aLong));
-        tvLastSyncTime.setText(ts);
-      }
-    });
+  @Override
+  protected void handleLifecycleEvents() {
+    super.handleLifecycleEvents();
 
-    syncViewModel.getUsername().observe(getViewLifecycleOwner(), new Observer<String>() {
-      @Override
-      public void onChanged(String s) {
-        tvUsername.setText(s);
-      }
-    });
-
-    syncViewModel.getSyncAttachmentState().observe(getViewLifecycleOwner(), new Observer<SyncAttachmentState>() {
-      @Override
-      public void onChanged(SyncAttachmentState syncAttachmentState) {
-        String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
-        int position=0;
-
-        for (int i = 0; i < syncAttachmentValues.length; ++i) {
-          if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
-            position=i;
-            break;
-          }
-        }
-
-        String type=(String) acSyncType.getAdapter().getItem(position);
-        acSyncType.setText(type,false);
+    requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+      if(event == Lifecycle.Event.ON_CREATE) {
+        if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))
+          disableButtons();
       }
     });
   }
@@ -231,12 +213,12 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private void inAnonymousState(){
     handleViewVisibility(View.GONE,View.VISIBLE,View.GONE,true);
-    tvSignInType.setText(syncViewModel.getUserState().name());
+    tvSignInType.setText(getString(R.string.anonymous_user));
   }
 
   private void inAuthenticatedState(){
     handleViewVisibility(View.GONE, View.VISIBLE,View.VISIBLE,true);
-    tvSignInType.setText(syncViewModel.getUserState().name());
+    tvSignInType.setText(getString(R.string.authenticated_user));
   }
 
   private void handleViewVisibility(int headingVisible, int detailsVisible, int usernameVisible, boolean actionState){
@@ -303,7 +285,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   void perhapsEnableButtons() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    PropertiesSingleton props = getProps();
     boolean isTablesAdmin;
     {
       String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
@@ -322,7 +304,7 @@ public class SyncFragment extends AbsSyncUIFragment {
       isTablesAdmin = (rolesArray != null) && rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
     }
 
-    String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    String url = syncViewModel.getUrl();
     if (url == null || url.length() == 0) {
       disableButtons();
     } else {
@@ -702,8 +684,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   private void updatePropertiesSingleton(Map<String, String> properties){
-    PropertiesSingleton props=((AbsSyncBaseActivity)requireActivity()).getProps();
-    props.setProperties(properties);
-    ((AbsSyncBaseActivity)requireActivity()).updateViewModelWithProps();
+    getProps().setProperties(properties);
+    updateViewModelWithProps();
   }
 }
