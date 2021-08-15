@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/imgAppBarRectangle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/portrait_app_bar_height"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"
+                app:srcCompat="@drawable/rectangle_app_bar"
+                tools:ignore="ImageContrastCheck" />
+
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/portrait_secondary_margin"
+                app:layout_constraintBottom_toBottomOf="@+id/imgAppBarRectangle"
+                app:layout_constraintEnd_toEndOf="@+id/imgAppBarRectangle"
+                app:layout_constraintStart_toStartOf="@+id/imgAppBarRectangle"
+                app:layout_constraintTop_toTopOf="@+id/imgAppBarRectangle"
+                app:srcCompat="@drawable/logo"
+                tools:ignore="ImageContrastCheck" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputServerUrl"
+            style="@style/TextInputTheme"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/portrait_regular_margin"
+            android:hint="@string/enter_server_url"
+            app:errorEnabled="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:ignore="TextContrastCheck" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnUpdateServerUrl"
+            style="@style/SmallButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/portrait_regular_margin"
+            android:layout_marginTop="@dimen/portrait_regular_margin"
+            android:layout_marginEnd="@dimen/portrait_label_field_margin"
+            android:text="@string/update_url"
+            app:layout_constraintEnd_toStartOf="@+id/btnChooseDefaultServer"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/inputServerUrl"
+            tools:ignore="TextContrastCheck" />
+
+        <Button
+            android:id="@+id/btnChooseDefaultServer"
+            style="@style/OutlinedButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/portrait_label_field_margin"
+            android:layout_marginEnd="@dimen/portrait_regular_margin"
+            android:text="@string/choose_demo_server"
+            app:layout_constraintBottom_toBottomOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintTop_toTopOf="@+id/btnUpdateServerUrl"
+            app:strokeColor="@color/btn_background"
+            tools:ignore="TextContrastCheck" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mcvUpdateServerUrl"
+            style="@style/CardTheme"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/portrait_regular_margin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnUpdateServerUrl"
+            app:layout_constraintVertical_bias="0.2">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <Button
+                    android:id="@+id/btnVerifyServerUpdateServerDetails"
+                    style="@style/OutlinedButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/portrait_secondary_margin"
+                    android:text="@string/verify_server_details"
+                    app:layout_constraintBottom_toTopOf="@+id/btnScanQrUpdateServerDetails"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="TextContrastCheck" />
+
+                <Button
+                    android:id="@+id/btnScanQrUpdateServerDetails"
+                    style="@style/OutlinedButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/portrait_secondary_margin"
+                    android:layout_marginEnd="@dimen/portrait_secondary_margin"
+                    android:layout_marginBottom="@dimen/portrait_secondary_margin"
+                    android:text="@string/scan_qr"
+                    app:icon="@drawable/ic_qr_code"
+                    app:iconTint="@color/colorPrimaryText"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/btnVerifyServerUpdateServerDetails"
+                    tools:ignore="TextContrastCheck" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
