@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvUserHeadingVerifySettings"
+        style="@style/SecondaryHeadingStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/land_regular_margin"
+        android:text="User is Logged Out"
+        app:layout_constraintBottom_toTopOf="@+id/mcvVerifyDetails"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/mcvVerifyDetails"
+        style="@style/CardTheme"
+        android:layout_width="@dimen/land_default_width"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/land_regular_margin"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="2.75"
+        app:layout_constraintStart_toEndOf="@+id/btnStartVerifyUser"
+        app:layout_constraintTop_toBottomOf="@+id/tvUserHeadingVerifySettings">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvServerUrlLabelVerify"
+                style="@style/HeadingStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/land_regular_margin"
+                android:layout_marginTop="@dimen/land_regular_margin"
+                android:layout_marginEnd="@dimen/land_label_field_margin"
+                android:text="@string/main_activity_server_url_label"
+                app:layout_constraintBottom_toTopOf="@+id/tvServerVerifyStatusLabelVerify"
+                app:layout_constraintEnd_toStartOf="@+id/tvServerUrlVerify"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvServerUrlVerify"
+                style="@style/TextServerUrlStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/land_regular_margin"
+                android:text="@string/default_sync_server_url"
+                app:layout_constraintBottom_toBottomOf="@+id/tvServerUrlLabelVerify"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tvServerUrlLabelVerify"
+                app:layout_constraintTop_toTopOf="@+id/tvServerUrlLabelVerify" />
+
+            <TextView
+                android:id="@+id/tvServerVerifyStatusLabelVerify"
+                style="@style/HeadingStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/land_regular_margin"
+                android:layout_marginTop="@dimen/land_regular_margin"
+                android:layout_marginEnd="@dimen/land_label_field_margin"
+                android:text="Server Verification Status:"
+                app:layout_constraintBottom_toTopOf="@+id/tvServerAnonymousAllowedLabelVerify"
+                app:layout_constraintEnd_toStartOf="@+id/tvServerVerifyStatusVerify"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelVerify" />
+
+            <TextView
+                android:id="@+id/tvServerVerifyStatusVerify"
+                style="@style/TextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/land_regular_margin"
+                android:text="Verified"
+                app:layout_constraintBottom_toBottomOf="@+id/tvServerVerifyStatusLabelVerify"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tvServerVerifyStatusLabelVerify"
+                app:layout_constraintTop_toTopOf="@+id/tvServerVerifyStatusLabelVerify" />
+
+            <TextView
+                android:id="@+id/tvServerAnonymousAllowedLabelVerify"
+                style="@style/HeadingStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/land_regular_margin"
+                android:layout_marginTop="@dimen/land_regular_margin"
+                android:layout_marginEnd="@dimen/land_label_field_margin"
+                android:text="Server Anonymous Access:"
+                app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyServer"
+                app:layout_constraintEnd_toStartOf="@+id/tvServerAnonymousAllowedVerify"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvServerVerifyStatusLabelVerify" />
+
+            <TextView
+                android:id="@+id/tvServerAnonymousAllowedVerify"
+                style="@style/TextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/land_regular_margin"
+                android:text="Allowed"
+                app:layout_constraintBottom_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tvServerAnonymousAllowedLabelVerify"
+                app:layout_constraintTop_toTopOf="@+id/tvServerAnonymousAllowedLabelVerify" />
+
+            <Button
+                android:id="@+id/btnStartVerifyServer"
+                style="@style/SmallButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/land_regular_margin"
+                android:text="Verify Server"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tvUsernameLabelVerify"
+        style="@style/SecondaryHeadingStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_label_field_margin"
+        android:text="Username of User :"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/tvUsernameVerify"
+        app:layout_constraintEnd_toEndOf="@+id/btnStartVerifyUser"
+        app:layout_constraintStart_toStartOf="@+id/btnStartVerifyUser"
+        app:layout_constraintTop_toTopOf="@+id/mcvVerifyDetails" />
+
+    <TextView
+        android:id="@+id/tvUsernameVerify"
+        style="@style/TextViewStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_regular_margin"
+        android:text="demo_user1"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/tvVerificationStatusLabelVerify"
+        app:layout_constraintEnd_toEndOf="@+id/tvUsernameLabelVerify"
+        app:layout_constraintStart_toStartOf="@+id/tvUsernameLabelVerify"
+        app:layout_constraintTop_toBottomOf="@+id/tvUsernameLabelVerify" />
+
+    <TextView
+        android:id="@+id/tvVerificationStatusLabelVerify"
+        style="@style/SecondaryHeadingStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_label_field_margin"
+        android:text="Verification Status :"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/tvVerificationStatusVerify"
+        app:layout_constraintEnd_toEndOf="@+id/tvUsernameVerify"
+        app:layout_constraintStart_toStartOf="@+id/tvUsernameVerify"
+        app:layout_constraintTop_toBottomOf="@+id/tvUsernameVerify" />
+
+    <TextView
+        android:id="@+id/tvVerificationStatusVerify"
+        style="@style/TextViewStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_regular_margin"
+        android:text="Verified"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeLabelVerify"
+        app:layout_constraintEnd_toEndOf="@+id/tvVerificationStatusLabelVerify"
+        app:layout_constraintStart_toStartOf="@+id/tvVerificationStatusLabelVerify"
+        app:layout_constraintTop_toBottomOf="@+id/tvVerificationStatusLabelVerify" />
+
+    <TextView
+        android:id="@+id/tvLastSyncTimeLabelVerify"
+        style="@style/SmallHeadingStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_label_field_margin"
+        android:text="Last Synced Time : "
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/tvLastSyncTimeVerify"
+        app:layout_constraintEnd_toEndOf="@+id/tvVerificationStatusVerify"
+        app:layout_constraintStart_toStartOf="@+id/tvVerificationStatusVerify"
+        app:layout_constraintTop_toBottomOf="@+id/tvVerificationStatusVerify" />
+
+    <TextView
+        android:id="@+id/tvLastSyncTimeVerify"
+        style="@style/SmallTextViewStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/land_regular_margin"
+        android:text="01:35 pm, 28 March 2021"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/btnStartVerifyUser"
+        app:layout_constraintEnd_toEndOf="@+id/tvLastSyncTimeLabelVerify"
+        app:layout_constraintStart_toStartOf="@+id/tvLastSyncTimeLabelVerify"
+        app:layout_constraintTop_toBottomOf="@+id/tvLastSyncTimeLabelVerify" />
+
+    <Button
+        android:id="@+id/btnStartVerifyUser"
+        style="@style/ButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/land_regular_margin"
+        android:text="Verify User"
+        app:layout_constraintBottom_toBottomOf="@+id/mcvVerifyDetails"
+        app:layout_constraintEnd_toStartOf="@+id/mcvVerifyDetails"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvLastSyncTimeVerify" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -28,36 +28,13 @@
                     android:background="@color/zxing_transparent"
                     app:srcCompat="@drawable/ic_drawer" />
 
-            </com.google.android.material.appbar.MaterialToolbar>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
                 <ImageView
                     android:id="@+id/imgAppBarLogo"
-                    android:layout_width="90dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="@dimen/land_regular_margin"
-                    app:layout_constraintBottom_toBottomOf="@+id/tvAppBarLabel"
-                    app:layout_constraintEnd_toStartOf="@+id/tvAppBarLabel"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/tvAppBarLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
                     app:srcCompat="@drawable/logo" />
 
-                <TextView
-                    android:id="@+id/tvAppBarLabel"
-                    style="@style/AppBarLabelStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/land_regular_margin"
-                    android:layout_marginEnd="@dimen/portrait_regular_margin"
-                    android:text="@string/app_bar_label"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/imgAppBarLogo"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.appbar.MaterialToolbar>
 
         </com.google.android.material.appbar.AppBarLayout>
 

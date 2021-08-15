@@ -6,4 +6,5 @@
     <color name="colorPrimaryBackground">#25BC64</color>
     <color name="colorCardBackground">#DBFBFF</color>
 
+    <color name="colorBtnDisabled">#731A964E</color>
 </resources>
