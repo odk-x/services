@@ -17,30 +17,24 @@ package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Paint;
-import android.os.Bundle;
 import android.os.RemoteException;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.google.android.material.textfield.TextInputLayout;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.sync.actions.LoginActions;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
+import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
@@ -49,214 +43,51 @@ import org.opendatakit.sync.service.SyncProgressEvent;
 import org.opendatakit.sync.service.SyncProgressState;
 import org.opendatakit.sync.service.SyncStatus;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.CheckedOutputStream;
 
 /**
  * @author mitchellsundt@gmail.com
  */
-public class LoginFragment extends AbsSyncUIFragment {
-
-   private class OnButtonClick implements View.OnClickListener{
-
-      @Override
-      public void onClick(View v) {
-         if(v.getId()==R.id.btnAnonymousSignInLogin){
-            signInAsAnonymousUser();
-         }
-         else if (v.getId()==R.id.btnUserSignInLogin){
-            inSetCredentialsState();
-         }
-         else if(v.getId()==R.id.btnAuthenticateUserLogin){
-            setNewCredentials();
-            verifyServerSettings();
-         }
-      }
-   }
+public abstract class LoginFragment extends AbsSyncUIFragment {
 
    private static final String TAG = "LoginFragment";
 
    public static final String NAME = "LoginFragment";
-   public static final int ID = R.layout.login_fragment;
-
-   private static final String LOGIN_ACTION = "loginAction";
 
    private static final String PROGRESS_DIALOG_TAG = "progressDialogLogin";
    private static final String OUTCOME_DIALOG_TAG = "outcomeDialogLogin";
 
-   private PropertiesSingleton props;
    private TableHealthValidator healthValidator;
 
-   private LoginActions loginAction = LoginActions.IDLE;
-
-   private TextView tvServerUrl, tvTitle;
-   private TextInputLayout inputUsername, inputPassword;
-   private Button btnAnonymousSignIn, btnUserSignIn, btnAuthenticateCredentials;
-
-   private UserState userState;
+   protected LoginViewModel loginViewModel;
+   protected NavController navController;
 
    public LoginFragment() {
       super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
    }
 
-   @Override
-   public void onSaveInstanceState(Bundle outState) {
-      super.onSaveInstanceState(outState);
-      outState.putString(LOGIN_ACTION, loginAction.name());
+   protected void setupViewModelAndNavController(){
+      loginViewModel=new ViewModelProvider(requireActivity()).get(LoginViewModel.class);
+      navController= Navigation.findNavController(requireActivity(), R.id.navHostSync);
+
+      Intent intent=requireActivity().getIntent();
+      if(!intent.hasExtra(Constants.LOGIN_INTENT_TYPE_KEY))
+         loginViewModel.updateFunctionType(Constants.LOGIN_TYPE_SIGN_IN);
+      else
+         loginViewModel.updateFunctionType(intent.getStringExtra(Constants.LOGIN_INTENT_TYPE_KEY));
    }
 
    @Override
-   public void onActivityCreated(Bundle savedInstanceState) {
-      super.onActivityCreated(savedInstanceState);
+   protected void handleLifecycleEvents() {
+      super.handleLifecycleEvents();
 
-      Intent incomingIntent = getActivity().getIntent();
-      if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
-         String action = savedInstanceState.getString(LOGIN_ACTION);
-         try {
-            loginAction = LoginActions.valueOf(action);
-         } catch (IllegalArgumentException e) {
-            loginAction = LoginActions.IDLE;
+      requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+         if(event== Lifecycle.Event.ON_CREATE){
+            disableButtons();
+            healthValidator = new TableHealthValidator(getAppName(), getActivity());
          }
-      }
-      disableButtons();
-
-      healthValidator = new TableHealthValidator(getAppName(), getActivity());
-   }
-
-   @Override
-   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-      super.onCreateView(inflater, container, savedInstanceState);
-
-      View view = inflater.inflate(ID, container, false);
-
-      props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-
-      if (savedInstanceState != null && savedInstanceState.containsKey(LOGIN_ACTION)) {
-         String action = savedInstanceState.getString(LOGIN_ACTION);
-         try {
-            loginAction = LoginActions.valueOf(action);
-         } catch (IllegalArgumentException e) {
-            loginAction = LoginActions.IDLE;
-         }
-      }
-
-      return view;
-   }
-
-   @Override
-   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-      super.onViewCreated(view, savedInstanceState);
-      findViewsAndAttachListeners(view);
-      inChooseSignInTypeState();
-   }
-
-   @Override
-   public void onResume() {
-      super.onResume();
-      updateUserInterface();
-   }
-
-   private void findViewsAndAttachListeners(View view){
-      tvServerUrl=view.findViewById(R.id.tvServerUrlLogin);
-      tvTitle=view.findViewById(R.id.tvTitleLogin);
-
-      inputUsername=view.findViewById(R.id.inputUsernameLogin);
-      inputPassword=view.findViewById(R.id.inputPasswordLogin);
-
-      btnAnonymousSignIn=view.findViewById(R.id.btnAnonymousSignInLogin);
-      btnUserSignIn=view.findViewById(R.id.btnUserSignInLogin);
-      btnAuthenticateCredentials=view.findViewById(R.id.btnAuthenticateUserLogin);
-
-      OnButtonClick onButtonClick=new OnButtonClick();
-      btnAnonymousSignIn.setOnClickListener(onButtonClick);
-      btnUserSignIn.setOnClickListener(onButtonClick);
-      btnAuthenticateCredentials.setOnClickListener(onButtonClick);
-   }
-
-   private void updateUserInterface(){
-      props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-      userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
-      updateCommonInfo();
-
-      if (userState == UserState.LOGGED_OUT) {
-         inLoggedOutState();
-      } else if (userState == UserState.ANONYMOUS) {
-         inAnonymousState();
-      } else {
-         inAuthenticatedState();
-      }
-   }
-
-   private void updateCommonInfo(){
-      String serverUrl=props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-      tvServerUrl.setText(serverUrl);
-      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-   }
-
-   private void inLoggedOutState(){
-      tvTitle.setText("Sign In");
-      inChooseSignInTypeState();
-   }
-
-   private void inAnonymousState(){
-      tvTitle.setText("Sign In using Credentials");
-      inSetCredentialsState();
-   }
-
-   private void inAuthenticatedState(){
-      tvTitle.setText("Update Login Credentials");
-   }
-
-   private void inChooseSignInTypeState(){
-      handleViewVisibility(View.VISIBLE, View.VISIBLE, View.GONE);
-   }
-
-   private void inSetCredentialsState(){
-      handleViewVisibility(View.GONE, View.GONE, View.VISIBLE);
-   }
-
-   private void handleViewVisibility(int anonymousVisible, int authenticatedUserVisible, int setCredentialsVisible){
-      btnAnonymousSignIn.setVisibility(anonymousVisible);
-      btnUserSignIn.setVisibility(authenticatedUserVisible);
-
-      inputUsername.setVisibility(setCredentialsVisible);
-      inputPassword.setVisibility(setCredentialsVisible);
-      btnAuthenticateCredentials.setVisibility(setCredentialsVisible);
-   }
-
-   private void signInAsAnonymousUser(){
-      Map<String,String> properties = new HashMap<String,String>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
-      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
-      properties.put(CommonToolProperties.KEY_USERNAME, "");
-      properties.remove(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
-      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
-
-      verifyServerSettings();
-   }
-
-   private void setNewCredentials() {
-      String username = inputUsername.getEditText().getText().toString();
-      String pw = inputPassword.getEditText().getText().toString();
-
-      Map<String, String> properties = new HashMap<>();
-      properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
-      properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
-      properties.put(CommonToolProperties.KEY_USERNAME, username);
-      properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
-      properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
-      properties.put(CommonToolProperties.KEY_PASSWORD, pw);
-      properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
-      properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
-      properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-      props.setProperties(properties);
+      });
    }
 
    /**
@@ -267,35 +98,21 @@ public class LoginFragment extends AbsSyncUIFragment {
               "[" + getId() + "] [onClickVerifyServerSettings] timestamp: " + System.currentTimeMillis());
       if (areCredentialsConfigured(true)) {
          disableButtons();
-         loginAction = LoginActions.VERIFY;
+         loginViewModel.updateLoginAction(LoginActions.VERIFY);
          prepareForSyncAction();
       }
    }
 
-   private void disableButtons() {
-      btnUserSignIn.setEnabled(false);
-      btnAnonymousSignIn.setEnabled(false);
-      btnAuthenticateCredentials.setEnabled(false);
-   }
+   abstract void disableButtons();
 
-   void perhapsEnableButtons() {
-//      PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-      String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-      if (url == null || url.length() == 0) {
-         disableButtons();
-      } else {
-         btnUserSignIn.setEnabled(true);
-         btnAnonymousSignIn.setEnabled(true);
-         btnAuthenticateCredentials.setEnabled(true);
-      }
-   }
+   abstract void perhapsEnableButtons();
 
    public void onActivityResult(int requestCode, int resultCode, Intent data) {
       super.onActivityResult(requestCode, resultCode, data);
 
       if (requestCode == LoginActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
          if (resultCode == Activity.RESULT_CANCELED) {
-            loginAction = LoginActions.IDLE;
+            loginViewModel.updateLoginAction(LoginActions.IDLE);
          }
          postTaskToAccessSyncService();
       } else if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER ||
@@ -331,9 +148,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
                    WebLogger.getLogger(getAppName()).e(TAG,
-                       "postTaskToAccessSyncService status " + status.name() + " login " + "action " + loginAction.name());
+                       "postTaskToAccessSyncService status " + status.name() + " login " + "action " + loginViewModel.getCurrentAction().name());
                    if (status == SyncStatus.SYNCING) {
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -344,10 +161,10 @@ public class LoginFragment extends AbsSyncUIFragment {
                       });
                       return;
                    }
-                   switch (loginAction) {
+                   switch (loginViewModel.getCurrentAction()) {
                    case VERIFY:
                       syncServiceInterface.verifyServerSettings(getAppName());
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -414,9 +231,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                    final SyncProgressEvent event = syncServiceInterface
                        .getSyncProgressEvent(getAppName());
                    WebLogger.getLogger(getAppName()).e(TAG,
-                       "updateInterface status " + status.name() + " login " + "action " + loginAction.name());
+                       "updateInterface status " + status.name() + " login " + "action " + loginViewModel.getCurrentAction().name());
                    if (status == SyncStatus.SYNCING) {
-                      loginAction = LoginActions.MONITOR_VERIFYING;
+                      loginViewModel.updateLoginAction(LoginActions.MONITOR_VERIFYING);
 
                       handler.post(new Runnable() {
                          @Override
@@ -426,9 +243,9 @@ public class LoginFragment extends AbsSyncUIFragment {
                          }
                       });
                       return;
-                   } else if (status != SyncStatus.NONE && loginAction != LoginActions.IDLE) {
+                   } else if (status != SyncStatus.NONE && loginViewModel.getCurrentAction() != LoginActions.IDLE) {
                       // request completed
-                      loginAction = LoginActions.IDLE;
+                      loginViewModel.updateLoginAction(LoginActions.IDLE);
                       final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                       // TODO: figure out if there is a syncStatus that is not covered
                       handler.post(new Runnable() {
@@ -471,7 +288,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          // we are tearing down or still initializing
          return;
       }
-      if (loginAction == LoginActions.MONITOR_VERIFYING) {
+      if (loginViewModel.getCurrentAction() == LoginActions.MONITOR_VERIFYING) {
 
          disableButtons();
 
@@ -498,7 +315,7 @@ public class LoginFragment extends AbsSyncUIFragment {
          // we are tearing down or still initializing
          return;
       }
-      if (loginAction == LoginActions.IDLE) {
+      if (loginViewModel.getCurrentAction() == LoginActions.IDLE) {
 
          disableButtons();
          updateProps(status);
@@ -569,32 +386,27 @@ public class LoginFragment extends AbsSyncUIFragment {
    private void updateProps(SyncStatus status){
       Map<String ,String > properties=new HashMap<>();
       switch (status){
+         case SERVER_IS_NOT_ODK_SERVER:{
+            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,Boolean.toString(false));
+            break;
+         }
          case AUTHENTICATION_ERROR:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
 
-            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
-            if(userState==UserState.ANONYMOUS){
+            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
+               properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.LOGGED_OUT.name());
             }
             else {
                properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
             }
             break;
          }
-         case SERVER_IS_NOT_ODK_SERVER:{
-
-            break;
-         }
          case SYNC_COMPLETE:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-            properties.put(CommonToolProperties.KEY_LAST_SERVER_VERIFIED_TIME, Long.toString(new Date().getTime()));
 
-            UserState userState=UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
-
-            if(userState==UserState.ANONYMOUS){
+            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
             }
@@ -605,6 +417,11 @@ public class LoginFragment extends AbsSyncUIFragment {
             break;
          }
       }
-      props.setProperties(properties);
+      updatePropertiesSingleton(properties);
+   }
+
+   protected void updatePropertiesSingleton(Map<String, String> properties){
+      getProps().setProperties(properties);
+      updateViewModelWithProps();
    }
 }

@@ -19,7 +19,6 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -27,15 +26,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
@@ -49,18 +52,17 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 import org.opendatakit.services.preferences.activities.DocumentationWebViewActivity;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
-import org.opendatakit.services.sync.actions.activities.UpdateServerSettingsActivity;
-import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
+import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements IAppAwareActivity,
         ActivityCompat.OnRequestPermissionsResultCallback {
@@ -72,14 +74,12 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         @Override
         public void onClick(View v) {
-            if (v.getId() == R.id.btnSignInMain) {
-                onSignInButtonClicked();
-            } else if (v.getId() == R.id.btnDrawerOpen) {
+            if (v.getId() == R.id.btnDrawerOpen) {
                 drawerLayout.openDrawer(GravityCompat.START);
             } else if (v.getId() == R.id.btnDrawerClose) {
                 drawerLayout.closeDrawer(GravityCompat.START);
             } else if (v.getId() == R.id.btnDrawerLogin) {
-                if (userState == UserState.LOGGED_OUT) {
+                if (absSyncViewModel.getUserState() == UserState.LOGGED_OUT) {
                     onSignInButtonClicked();
                 } else {
                     onSignOutButtonClicked();
@@ -133,12 +133,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                 startActivityForResult(i, RESOLVE_CONFLICT_ACTIVITY_RESULT_CODE);
                 return true;
             } else if (item.getItemId() == R.id.drawer_about_us) {
-                Intent intent=new Intent(MainActivity.this, UpdateServerSettingsActivity.class);
-                intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-                startActivity(intent);
-//                FragmentManager mgr = getSupportFragmentManager();
-//                GoToAboutFragment.GotoAboutFragment(mgr, R.id.main_activity_view);
-//                item.setVisible(false);
+                navController.navigate(R.id.aboutMenuFragment);
                 return true;
             } else if (item.getItemId() == R.id.drawer_settings) {
                 Intent intent = new Intent(MainActivity.this, AppPropertiesActivity.class);
@@ -157,10 +152,18 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                     Intent i = new Intent(MainActivity.this, DocumentationWebViewActivity.class);
                     startActivity(i);
                 }
-
                 return true;
-            } else if (item.getItemId() == R.id.drawer_update_credentials){
-
+            } else if (item.getItemId() == R.id.drawer_update_credentials) {
+                Intent signInIntent = new Intent(MainActivity.this, LoginActivity.class);
+                signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+                signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_UPDATE_CREDENTIALS);
+                startActivity(signInIntent);
+                return true;
+            } else if (item.getItemId() == R.id.drawer_switch_sign_in_type) {
+                Intent signInIntent = new Intent(MainActivity.this, LoginActivity.class);
+                signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
+                signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE);
+                startActivity(signInIntent);
                 return true;
             }
 
@@ -188,19 +191,12 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
     //Defining the Different Views added in the Layout
     private MaterialToolbar toolbar;
-    private TextView tvServerUrl, tvUserState, tvUsernameLabel, tvUsername, tvLastSyncTimeLabel, tvLastSyncTime;
-    private Button btnSignIn, btnDrawerSignIn;
+    private Button btnDrawerSignIn;
     private NavigationView navView;
     private DrawerLayout drawerLayout;
 
-    private PropertiesSingleton props;
-    private UserState userState;
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        WebLogger.closeAll();
-    }
+    private NavController navController;
+    private AbsSyncViewModel absSyncViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -223,33 +219,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         }
 
         findViewsAndAttachListeners();
-    }
-
-    @Override
-    public void onBackPressed() {
-        int count = getSupportFragmentManager().getBackStackEntryCount();
-        if (count == 1) {
-            startActivity(new Intent(MainActivity.this, MainActivity.class));
-            overridePendingTransition(0, 0);
-            finish();
-        } else
-            super.onBackPressed();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Do this in on resume so that if we resolve a row it will be refreshed
-        // when we come back.
-        mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-        if (mAppName == null) {
-            mAppName = ODKFileUtils.getOdkDefaultAppName();
-            //      Log.e(TAG, IntentConsts.INTENT_KEY_APP_NAME + " not supplied on intent");
-            //      setResult(Activity.RESULT_CANCELED);
-            //      finish();
-            //      return;
-        }
-        updateInterface();
+        setupViewModelAndNavController();
+        handleLifecycleEvents();
     }
 
     /**
@@ -257,18 +228,9 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
      */
     private void findViewsAndAttachListeners() {
         toolbar = findViewById(R.id.toolbarMainActivity);
-
-        tvServerUrl = findViewById(R.id.tvServerUrlMain);
-        tvUserState = findViewById(R.id.tvUserStateMain);
-        tvUsernameLabel = findViewById(R.id.tvUsernameLabelMain);
-        tvUsername = findViewById(R.id.tvUsernameMain);
-        tvLastSyncTimeLabel = findViewById(R.id.tvLastSyncTimeLabelMain);
-        tvLastSyncTime = findViewById(R.id.tvLastSyncTimeMain);
-
         navView = findViewById(R.id.navViewMain);
         drawerLayout = findViewById(R.id.drawerLayoutMain);
 
-        btnSignIn = findViewById(R.id.btnSignInMain);
         btnDrawerSignIn = navView.getHeaderView(0).findViewById(R.id.btnDrawerLogin);
 
         ImageButton btnDrawerOpen = findViewById(R.id.btnDrawerOpen);
@@ -279,64 +241,130 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         OnButtonClick onButtonClick = new OnButtonClick();
 
-        btnSignIn.setOnClickListener(onButtonClick);
         btnDrawerSignIn.setOnClickListener(onButtonClick);
 
         btnDrawerOpen.setOnClickListener(onButtonClick);
         btnDrawerClose.setOnClickListener(onButtonClick);
     }
 
-    /**
-     * Updating the Current User State and performing ui-updates corresponding to the User State
-     */
-    private void updateInterface() {
-        props = CommonToolProperties.get(this, mAppName);
-        userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+    private void setupViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(this).get(AbsSyncViewModel.class);
+        navController = Navigation.findNavController(this, R.id.navHostMain);
 
-        updateCommonInfo();
+        absSyncViewModel.getCurrentUserState().observe(this, userState -> {
+            if (userState == UserState.LOGGED_OUT) {
+                inLoggedOutState();
+            } else if (userState == UserState.ANONYMOUS) {
+                inAnonymousState();
+            } else {
+                inAuthenticatedState();
+            }
+        });
 
-        if (userState == UserState.LOGGED_OUT) {
-            inLoggedOutState();
-        } else if (userState == UserState.ANONYMOUS) {
-            inAnonymousState();
-        } else {
-            inAuthenticatedState();
+        absSyncViewModel.checkIsFirstLaunch().observe(this, aBoolean -> {
+            if (aBoolean) {
+                onFirstLaunch();
+            }
+        });
+
+        absSyncViewModel.checkIsAnonymousAllowed().observe(this, aBoolean -> {
+            if (absSyncViewModel.getUserState() == UserState.AUTHENTICATED_USER) {
+                setSwitchSignInEnabled(aBoolean);
+            } else
+                setSwitchSignInEnabled(true);
+        });
+
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            Menu menu = navView.getMenu();
+            menu.findItem(R.id.drawer_about_us).setEnabled(destination.getId() != R.id.aboutMenuFragment);
+
+            if (destination.getId() == R.id.updateServerSettingsFragment) {
+                toolbar.setVisibility(View.GONE);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            } else {
+                toolbar.setVisibility(View.VISIBLE);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            }
+
+            if (mAppName != null)
+                updateViewModelWithProps();
+        });
+    }
+
+    private void handleLifecycleEvents() {
+        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            switch (event) {
+                case ON_RESUME: {
+                    // Do this in on resume so that if we resolve a row it will be refreshed
+                    // when we come back.
+                    mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+                    if (mAppName == null) {
+                        mAppName = ODKFileUtils.getOdkDefaultAppName();
+                    }
+                    updateViewModelWithProps();
+                    break;
+                }
+                case ON_DESTROY: {
+                    WebLogger.closeAll();
+                    break;
+                }
+            }
+        });
+    }
+
+    public void updateViewModelWithProps() {
+        PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
+
+        absSyncViewModel.setAppName(getAppName());
+
+        absSyncViewModel.setIsFirstLaunch(Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH)));
+
+        absSyncViewModel.setServerUrl(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
+
+        boolean isAnonymousSignInUsed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
+        absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
+
+        if (isAnonymousSignInUsed) {
+            boolean isAnonymousAllowed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
+            absSyncViewModel.setIsAnonymousAllowed(isAnonymousAllowed);
         }
+
+        absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
+        absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
+
+        String lastSyncStr = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
+        if (lastSyncStr != null) {
+            absSyncViewModel.setIsLastSyncTimeAvailable(true);
+            absSyncViewModel.setLastSyncTime(Long.parseLong(lastSyncStr));
+        } else
+            absSyncViewModel.setIsLastSyncTimeAvailable(false);
     }
 
     /**
      * Actions in the Logged-Out User State
      */
     private void inLoggedOutState() {
-        handleViewVisibility(View.VISIBLE, View.GONE, View.GONE, false);
         handleDrawerVisibility(false, false, false);
-
-        tvUserState.setText(R.string.logged_out);
+        btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
+        setSyncItemVisible(false);
     }
 
     /**
      * Actions in the Anonymous User State
      */
     private void inAnonymousState() {
-        handleViewVisibility(View.GONE, View.GONE, View.VISIBLE, true);
         handleDrawerVisibility(true, true, false);
-        displayLastSyncTime();
-
-        tvUserState.setText(R.string.anonymous_user);
+        btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+        setSyncItemVisible(true);
     }
 
     /**
      * Actions in the Authenticated User State
      */
     private void inAuthenticatedState() {
-        handleViewVisibility(View.GONE, View.VISIBLE, View.VISIBLE, true);
         handleDrawerVisibility(true, true, true);
-        displayLastSyncTime();
-
-        tvUserState.setText(R.string.authenticated_user);
-
-        String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
-        tvUsername.setText(username);
+        btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+        setSyncItemVisible(true);
     }
 
     /**
@@ -352,51 +380,6 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         menu.findItem(R.id.drawer_resolve_conflict).setVisible(resolve_visible);
         menu.findItem(R.id.drawer_switch_sign_in_type).setVisible(switch_sign_in_visible);
         menu.findItem(R.id.drawer_update_credentials).setVisible(update_cred_visible);
-        if (userState == UserState.LOGGED_OUT) {
-            btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
-        } else {
-            btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
-        }
-    }
-
-    /**
-     * Sets the Visibility of Different Views on the Main Screen
-     *
-     * @param btnSignInVisible    : The Visibility of the Sign-In Button
-     * @param usernameVisible     : The Visibility of the Username
-     * @param lastSyncTimeVisible : The Visibility of the Last Sync Time
-     * @param syncIconVisible     : The Visibility of the Sync Icon on Toolbar
-     */
-    private void handleViewVisibility(int btnSignInVisible, int usernameVisible, int lastSyncTimeVisible, boolean syncIconVisible) {
-        btnSignIn.setVisibility(btnSignInVisible);
-        tvUsernameLabel.setVisibility(usernameVisible);
-        tvUsername.setVisibility(usernameVisible);
-        tvLastSyncTimeLabel.setVisibility(lastSyncTimeVisible);
-        tvLastSyncTime.setVisibility(lastSyncTimeVisible);
-        toolbar.getMenu().findItem(R.id.action_sync).setVisible(syncIconVisible);
-    }
-
-    /**
-     * Updating the Common Information such as Server URL
-     */
-    private void updateCommonInfo() {
-        String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-        tvServerUrl.setText(serverUrl);
-        tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-    }
-
-    /**
-     * Displaying the Last Sync Time
-     */
-    private void displayLastSyncTime() {
-        String timestamp = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
-        if (timestamp != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
-            String ts = sdf.format(new Date(Long.parseLong(timestamp)));
-            tvLastSyncTime.setText(ts);
-        } else {
-            tvLastSyncTime.setText(getResources().getString(R.string.last_sync_not_available));
-        }
     }
 
     /**
@@ -412,9 +395,35 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
      * Actions on Clicking on the Sign-Out Button
      */
     private void onSignOutButtonClicked() {
-        ODKServicesPropertyUtils.clearActiveUser(props);
+        ODKServicesPropertyUtils.clearActiveUser(CommonToolProperties.get(this, mAppName));
         drawerLayout.closeDrawer(GravityCompat.START);
-        updateInterface();
+        updateViewModelWithProps();
+    }
+
+    private void setSwitchSignInEnabled(boolean enabled) {
+        navView.getMenu().findItem(R.id.drawer_switch_sign_in_type).setEnabled(enabled);
+    }
+
+    private void setSyncItemVisible(boolean visible) {
+        toolbar.getMenu().findItem(R.id.action_sync).setVisible(visible);
+    }
+
+    private void onFirstLaunch() {
+        PropertiesSingleton props = CommonToolProperties.get(MainActivity.this, mAppName);
+        props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, Boolean.toString(false)));
+
+        AlertDialog alertDialog = new AlertDialog
+                .Builder(this)
+                .setMessage(R.string.configure_server_settings)
+                .setCancelable(false)
+                .setPositiveButton(R.string.yes, (dialog, which) -> {
+                    dialog.dismiss();
+                    navController.navigate(R.id.updateServerSettingsFragment);
+                })
+                .setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss()).create();
+
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 
     @Override
@@ -458,4 +467,5 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
             finish();
         }
     }
+
 }
