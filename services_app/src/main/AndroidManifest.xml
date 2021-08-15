@@ -167,15 +167,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".sync.actions.activities.UpdateServerSettingsActivity"
-            android:theme="@style/AppTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
         <activity android:name=".preferences.activities.AppPropertiesActivity">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT" />
