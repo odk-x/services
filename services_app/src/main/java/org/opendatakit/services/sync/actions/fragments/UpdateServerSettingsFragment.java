@@ -48,6 +48,7 @@ public class UpdateServerSettingsFragment extends Fragment {
 
     private TextInputLayout inputServerUrl;
     private AbsSyncViewModel absSyncViewModel;
+    private Button btnUpdateUrl, btnSetDefault, btnVerifyServerDetails, btnScanQr;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -64,10 +65,10 @@ public class UpdateServerSettingsFragment extends Fragment {
 
     private void findViewsAndAttachListeners(View view) {
         inputServerUrl = view.findViewById(R.id.inputServerUrl);
-        Button btnUpdateUrl = view.findViewById(R.id.btnUpdateServerUrl);
-        Button btnSetDefault = view.findViewById(R.id.btnChooseDefaultServer);
-        Button btnVerifyServerDetails = view.findViewById(R.id.btnVerifyServerUpdateServerDetails);
-        Button btnScanQr = view.findViewById(R.id.btnScanQrUpdateServerDetails);
+        btnUpdateUrl = view.findViewById(R.id.btnUpdateServerUrl);
+        btnSetDefault = view.findViewById(R.id.btnChooseDefaultServer);
+        btnVerifyServerDetails = view.findViewById(R.id.btnVerifyServerUpdateServerDetails);
+        btnScanQr = view.findViewById(R.id.btnScanQrUpdateServerDetails);
 
         OnButtonClick onButtonClick = new OnButtonClick();
         btnUpdateUrl.setOnClickListener(onButtonClick);
