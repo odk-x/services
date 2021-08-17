@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 
 import android.view.LayoutInflater;
@@ -97,7 +98,16 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         loginViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), aBoolean -> btnAnonymous.setEnabled(aBoolean));
     }
 
-    protected void signInAsAnonymousUser(){
+    private void signInAsAnonymousUser(){
+        updatePropertiesSingleton(getAnonymousProperties());
+        if(!loginViewModel.isAnonymousMethodUsed()){
+            promptToVerifyAnonymous();
+        } else {
+            requireActivity().finish();
+        }
+    }
+
+    public Map<String,String> getAnonymousProperties(){
         Map<String,String> properties = new HashMap<>();
         properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
@@ -107,14 +117,7 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
         properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
-        updatePropertiesSingleton(properties);
-
-        if(!loginViewModel.isAnonymousMethodUsed()){
-            verifyServerSettings();
-        } else {
-            requireActivity().finish();
-        }
+        return properties;
     }
 
     @Override
@@ -131,5 +134,18 @@ public class ChooseSignInTypeFragment extends LoginFragment {
             btnAuthenticated.setEnabled(true);
             btnAnonymous.setEnabled(loginViewModel.isAnonymousAllowed());
         }
+    }
+
+    private void promptToVerifyAnonymous(){
+        AlertDialog alertDialog = new AlertDialog
+                .Builder(requireActivity())
+                .setTitle("Signed in Successfully")
+                .setMessage("Would you like to verify the settings now?")
+                .setPositiveButton("Yes", (dialog, which) -> verifyServerSettings())
+                .setNegativeButton("No", (dialog, which) -> requireActivity().finish())
+                .setCancelable(false)
+                .create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 }

@@ -5,8 +5,11 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,6 +51,7 @@ public class UpdateServerSettingsFragment extends Fragment {
 
     private TextInputLayout inputServerUrl;
     private AbsSyncViewModel absSyncViewModel;
+    private NavController navController;
     private Button btnUpdateUrl, btnSetDefault, btnVerifyServerDetails, btnScanQr;
 
     @Override
@@ -79,7 +83,7 @@ public class UpdateServerSettingsFragment extends Fragment {
 
     private void setupViewModelAndNavController() {
         absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
-
+        navController = Navigation.findNavController(requireView());
         absSyncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> inputServerUrl.getEditText().setText(s));
     }
 
@@ -134,6 +138,11 @@ public class UpdateServerSettingsFragment extends Fragment {
             return;
         }
 
+        props.setProperties(getUpdateUrlProperties(url));
+        promptToVerifyServer();
+    }
+
+    public Map<String,String> getUpdateUrlProperties(String url){
         Map<String, String> properties = new HashMap<>();
         properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL, url);
         properties.put(CommonToolProperties.KEY_USERNAME, "");
@@ -146,8 +155,19 @@ public class UpdateServerSettingsFragment extends Fragment {
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
         properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-        props.setProperties(properties);
+        return properties;
+    }
 
-        Toast.makeText(requireActivity(), "Server URL Updated Successfully!", Toast.LENGTH_SHORT).show();
+    private void promptToVerifyServer(){
+        AlertDialog alertDialog = new AlertDialog
+                .Builder(requireActivity())
+                .setTitle("Server Settings Updated Successfully")
+                .setMessage("Would you like to verify the Server now?")
+                .setPositiveButton("Yes", (dialog, which) -> startVerifyActivity())
+                .setNegativeButton("No", (dialog, which) -> navController.popBackStack())
+                .setCancelable(false)
+                .create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 }
