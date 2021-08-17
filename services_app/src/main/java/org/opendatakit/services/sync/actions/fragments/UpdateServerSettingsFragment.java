@@ -1,7 +1,19 @@
 package org.opendatakit.services.sync.actions.fragments;
 
+import static androidx.core.content.ContextCompat.checkSelfPermission;
+
+import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,14 +23,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Toast;
-
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -44,10 +54,15 @@ public class UpdateServerSettingsFragment extends Fragment {
             } else if (v.getId() == R.id.btnVerifyServerUpdateServerDetails) {
                 startVerifyActivity();
             } else if (v.getId() == R.id.btnScanQrUpdateServerDetails) {
-                // TODO
+                startQrCodeScan();
             }
         }
     }
+
+    private final int PERMISSION_REQUEST_CAMERA_CODE = 1;
+    protected static final String[] CAMERA_PERMISSION = new String[] {
+            Manifest.permission.CAMERA
+    };
 
     private TextInputLayout inputServerUrl;
     private AbsSyncViewModel absSyncViewModel;
@@ -169,5 +184,134 @@ public class UpdateServerSettingsFragment extends Fragment {
                 .create();
         alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.show();
+    }
+
+    private void startQrCodeScan(){
+        // When Scan QR icon is clicked.
+        if (checkSelfPermission(requireActivity(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Permission is already available, start camera preview
+            openBarcodeScanner();
+        } else {
+            // Permission is missing and must be requested.
+            requestCameraPermission();
+        }
+    }
+
+    private void openBarcodeScanner() {
+        IntentIntegrator
+                .forSupportFragment(this)
+                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES)
+                .setPrompt(getString(R.string.qr_code_scanner_instruction))
+                .setCameraId(0)
+                .setBeepEnabled(true)
+                .setBarcodeImageEnabled(false)
+                .initiateScan();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                Toast.makeText(getActivity(), R.string.scanning_cancelled, Toast.LENGTH_SHORT).show();
+            } else {
+                parseQrCodeResult(result.getContents());
+                Log.i("QR code:",result.getContents());
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void parseQrCodeResult(String contents) {
+        String TAG =  "pasreQrCodeResult";
+        Map<String,String> properties=new HashMap<>();
+        try {
+            JSONObject mainObject = new JSONObject(contents);
+            try{
+                String url = (String)mainObject.get("url");
+                properties.putAll(getUpdateUrlProperties(url));
+            }
+            catch (Exception e) {
+                Log.i(TAG,"Url not found");
+            }
+            try{
+                String username = (String) mainObject.get("username");
+                //TODO - With Username
+            }
+            catch (Exception e) {
+                //TODO - With Anonymous
+                Log.i(TAG,"Username not found");
+            }
+
+            try{
+                String password = (String) mainObject.get("password");
+                //TODO - Password
+            }
+            catch (Exception e) {
+                Log.i(TAG,"Password not found");
+            }
+        } catch (JSONException e) {
+            Toast.makeText(getActivity(), R.string.invalid_qr_code, Toast.LENGTH_SHORT).show();
+            Log.i(TAG,"Invalid Qr code");
+        }
+
+        PropertiesSingleton props = CommonToolProperties.get(requireActivity(), absSyncViewModel.getAppName());
+        props.setProperties(properties);
+        promptToVerifyServer();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CAMERA_CODE) {
+
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission has been granted. Starting Barcode Scanner.
+                openBarcodeScanner();
+            }
+            else{
+
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getActivity());
+                builder.setMessage(R.string.camera_permission_rationale)
+                        .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
+                                    requestPermissions(
+                                            new String[]{Manifest.permission.CAMERA},
+                                            PERMISSION_REQUEST_CAMERA_CODE);
+                                }
+                            }
+                        })
+                        .setNegativeButton(R.string.not_now, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Toast.makeText(getActivity(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
+                        });
+                builder.create().show();
+            }
+        }
+    }
+    private void requestCameraPermission() {
+
+        if (checkSelfPermission(requireActivity(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
+                requestPermissions(
+                        CAMERA_PERMISSION,
+                        PERMISSION_REQUEST_CAMERA_CODE
+                );
+            }
+        }
+        else{
+            // Permission has been granted. Starting Barcode Scanner.
+            openBarcodeScanner();
+        }
     }
 }

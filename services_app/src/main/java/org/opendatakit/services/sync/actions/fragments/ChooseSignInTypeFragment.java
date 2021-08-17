@@ -107,7 +107,7 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         }
     }
 
-    public Map<String,String> getAnonymousProperties(){
+    public static Map<String,String> getAnonymousProperties(){
         Map<String,String> properties = new HashMap<>();
         properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());

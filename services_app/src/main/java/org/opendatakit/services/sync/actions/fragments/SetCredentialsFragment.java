@@ -120,9 +120,9 @@ public class SetCredentialsFragment extends LoginFragment {
         tvTitle.setText(getString(id));
     }
 
-    public Map<String, String> getCredentialsProperty(String username, String pw) {
+    public static Map<String, String> getCredentialsProperty(String username, String pw) {
         Map<String, String> properties = new HashMap<>();
-        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "username_password");
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
         properties.put(CommonToolProperties.KEY_USERNAME, username);
         properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
