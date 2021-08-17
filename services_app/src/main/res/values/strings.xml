@@ -383,6 +383,7 @@
     <string name="not_now">Not now</string>
     <string name="no">No</string>
     <string name="configure_server_settings">Do you want to configure the server settings now?</string>
+
     <string name="drawer_sign_in_button_text">Sign-In </string>
     <string name="drawer_sign_out_button_text">Sign-Out </string>
     <string name="app_bar_label">SERVICES</string>
@@ -401,8 +402,6 @@
     <string name="authenticated_user">Authenticated User</string>
     <string name="anonymous_user">Anonymous</string>
     <string name="logged_out">Logged Out</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="enter_server_url">Enter Server URL</string>
     <string name="update_url">Update Url</string>
     <string name="choose_demo_server">Choose Demo Server</string>

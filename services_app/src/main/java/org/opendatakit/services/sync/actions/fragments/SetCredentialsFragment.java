@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -110,8 +111,8 @@ public class SetCredentialsFragment extends LoginFragment {
         if(username.isEmpty() || password.isEmpty())
             Toast.makeText(requireActivity(), "Please Enter the Required Credentials", Toast.LENGTH_SHORT).show();
         else{
-            setNewCredentials(username,password);
-            verifyServerSettings();
+            updatePropertiesSingleton(getCredentialsProperty(username,password));
+            promptToVerifyUser();
         }
     }
 
@@ -119,9 +120,9 @@ public class SetCredentialsFragment extends LoginFragment {
         tvTitle.setText(getString(id));
     }
 
-    protected void setNewCredentials(String username, String pw) {
+    public static Map<String, String> getCredentialsProperty(String username, String pw) {
         Map<String, String> properties = new HashMap<>();
-        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, getString(R.string.credential_type_username_password));
+        properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "username_password");
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
         properties.put(CommonToolProperties.KEY_USERNAME, username);
         properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
@@ -130,8 +131,7 @@ public class SetCredentialsFragment extends LoginFragment {
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");
         properties.put(CommonToolProperties.KEY_USERS_LIST, "");
-
-        updatePropertiesSingleton(properties);
+        return properties;
     }
 
     @Override
@@ -145,4 +145,18 @@ public class SetCredentialsFragment extends LoginFragment {
         if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))
             btnSignIn.setEnabled(true);
     }
+
+    private void promptToVerifyUser() {
+        AlertDialog alertDialog = new AlertDialog
+                .Builder(requireActivity())
+                .setTitle("User Logged in Successfully")
+                .setMessage("Would you like to verify the User now?")
+                .setPositiveButton("Yes", (dialog, which) -> verifyServerSettings())
+                .setNegativeButton("No", (dialog, which) -> requireActivity().finish())
+                .setCancelable(false)
+                .create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
+    }
+
 }
