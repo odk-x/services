@@ -1,4 +1,4 @@
-package org.opendatakit.activites;
+package org.opendatakit.activites.MainActivity;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
@@ -9,28 +9,29 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 import android.content.Context;
 
+import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.intent.Intents;
+import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.MainActivity;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.utilities.StaticStateManipulator;
 
-@RunWith(AndroidJUnit4.class)
-public class MainActivityTest {
+public class LoggedOutStateTest {
 
     private static final String APP_NAME = "MainActivityTest";
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
+    public ActivityScenarioRule<MainActivity> mainActivityScenarioRule = new ActivityScenarioRule<>(MainActivity.class);
 
     @Before
     public void setUp() {
@@ -51,9 +52,8 @@ public class MainActivityTest {
     }
 
     @Test
-    public void verifyDefaultValues() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PropertiesSingleton props = CommonToolProperties.get(context, APP_NAME);
+    public void verifyValuesTest() {
+        PropertiesSingleton props = getProps();
 
         String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
 
@@ -61,7 +61,42 @@ public class MainActivityTest {
                 .check(matches(withText(serverUrl)));
 
         onView(withId(R.id.tvUserStateMain))
-                .check(matches(withText(context.getString(R.string.logged_out))));
+                .check(matches(withText(getContext().getString(R.string.logged_out))));
+
+        onView(withId(R.id.btnDrawerLogin))
+                .check(matches(withText(getContext().getString(R.string.drawer_sign_in_button_text))));
+    }
+
+    @Test
+    public void verifySignInButtonClickTest() {
+        Intents.init();
+
+        onView(withId(R.id.btnSignInMain))
+                .perform(ViewActions.click());
+
+        Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
+
+        Intents.release();
+    }
+
+    @Test
+    public void verifyDrawerSignInButtonClickTest() {
+        Intents.init();
+
+        onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
+        onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
+
+        Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
+
+        Intents.release();
+    }
+
+    private Context getContext(){
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private PropertiesSingleton getProps(){
+        return CommonToolProperties.get(getContext(), APP_NAME);
     }
 
 }

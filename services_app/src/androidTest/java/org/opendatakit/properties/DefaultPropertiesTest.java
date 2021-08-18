@@ -12,7 +12,7 @@ import static com.google.common.truth.Truth.*;
 
 public class DefaultPropertiesTest {
 
-    private static final String APP_NAME = "UnitTestProp";
+    public final String APP_NAME = "DefaultPropTest";
 
     @Before
     public void setUp() {
