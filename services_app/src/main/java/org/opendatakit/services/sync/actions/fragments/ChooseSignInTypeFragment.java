@@ -44,6 +44,9 @@ public class ChooseSignInTypeFragment extends LoginFragment {
     private Button btnAnonymous, btnAuthenticated;
     private TextView tvServerUrl, tvTitle;
 
+    private boolean btnAnonymousEnable=true;
+    private boolean btnAuthenticatedEnable=true;
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -87,15 +90,19 @@ public class ChooseSignInTypeFragment extends LoginFragment {
                     if (loginViewModel.getUserState() == UserState.ANONYMOUS) {
                         navController.navigate(R.id.action_chooseSignInTypeFragment_to_setCredentialsFragment);
                     } else {
-                        btnAnonymous.setEnabled(true);
-                        btnAuthenticated.setEnabled(false);
+                        btnAnonymousEnable = true;
+                        btnAuthenticatedEnable = false;
+                        perhapsEnableButtons();
                     }
                     break;
                 }
             }
         });
 
-        loginViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), aBoolean -> btnAnonymous.setEnabled(aBoolean));
+        loginViewModel.checkIsAnonymousAllowed().observe(getViewLifecycleOwner(), aBoolean -> {
+            btnAnonymousEnable = aBoolean;
+            perhapsEnableButtons();
+        });
     }
 
     private void signInAsAnonymousUser(){
@@ -131,8 +138,8 @@ public class ChooseSignInTypeFragment extends LoginFragment {
     @Override
     void perhapsEnableButtons() {
         if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED)){
-            btnAuthenticated.setEnabled(true);
-            btnAnonymous.setEnabled(loginViewModel.isAnonymousAllowed());
+            btnAuthenticated.setEnabled(btnAuthenticatedEnable);
+            btnAnonymous.setEnabled(btnAnonymousEnable);
         }
     }
 

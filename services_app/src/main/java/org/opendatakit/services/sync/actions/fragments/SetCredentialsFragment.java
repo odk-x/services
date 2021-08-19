@@ -89,7 +89,7 @@ public class SetCredentialsFragment extends LoginFragment {
                     setTitle(R.string.drawer_item_update_credentials);
                     break;
                 case (Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE):
-                    setTitle(R.string.switch_sign_in_type);
+                    setTitle(R.string.sign_in_using_credentials);
                     break;
             }
         });
