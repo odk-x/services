@@ -429,4 +429,5 @@
     <string name="user_logged_out_label">User is Logged Out</string>
     <string name="user_anonymous_label">User is Anonymous</string>
     <string name="switch_sign_in_type">Switch Sign In Type</string>
+    <string name="sign_in_using_credentials">Sign in using Credentials</string>
 </resources>
