@@ -6,6 +6,7 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.services.sync.actions.fragments.SetCredentialsFragment;
@@ -29,8 +30,7 @@ public class AuthenticatedUserStateTest {
 
     @Test
     public void verifyCurrentUserStateProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String currentUserStateStr = props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
         assertThat(currentUserStateStr).isNotNull();
@@ -41,8 +41,7 @@ public class AuthenticatedUserStateTest {
 
     @Test
     public void verifyUsernameProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
         assertThat(username).isNotNull();
@@ -51,8 +50,7 @@ public class AuthenticatedUserStateTest {
 
     @Test
     public void verifyIsUserAuthenticatedProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String isUserAuthenticatedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
         assertThat(isUserAuthenticatedStr).isNotNull();
@@ -60,6 +58,11 @@ public class AuthenticatedUserStateTest {
         boolean isUserAuthenticated;
         isUserAuthenticated = Boolean.parseBoolean(isUserAuthenticatedStr);
         assertThat(isUserAuthenticated).isFalse();
+    }
+
+    @After
+    public void clearProperties() {
+        StaticStateManipulator.get().reset();
     }
 
     private Context getContext() {

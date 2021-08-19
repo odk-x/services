@@ -6,6 +6,7 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
@@ -53,6 +54,11 @@ public class AnonymousStateTest {
 
         String isUserAuthenticatedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
         assertThat(isUserAuthenticatedStr).isNull();
+    }
+
+    @After
+    public void clearProperties() {
+        StaticStateManipulator.get().reset();
     }
 
     private Context getContext() {

@@ -4,10 +4,12 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.utilities.StaticStateManipulator;
+
 import static com.google.common.truth.Truth.*;
 
 public class DefaultPropertiesTest {
@@ -21,19 +23,17 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyServerUrlProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
 
         assertThat(serverUrl).isNotNull();
-        assertThat(serverUrl).isEqualTo(context.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url));
+        assertThat(serverUrl).isEqualTo(getContext().getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url));
     }
 
     @Test
     public void verifyIsServerVerifiedProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String isServerVerifiedStr = props.getProperty(CommonToolProperties.KEY_IS_SERVER_VERIFIED);
         assertThat(isServerVerifiedStr).isNotNull();
@@ -44,8 +44,7 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyIsAnonymousUsedProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String isAnonymousUsedStr = props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED);
         assertThat(isAnonymousUsedStr).isNotNull();
@@ -56,8 +55,7 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyIsAnonymousAllowedProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String isAnonymousAllowed = props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED);
         assertThat(isAnonymousAllowed).isNull();
@@ -65,8 +63,7 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyCurrentUserStateProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String currentUserStateStr = props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE);
         assertThat(currentUserStateStr).isNotNull();
@@ -77,8 +74,7 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyUsernameProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String username = props.getProperty(CommonToolProperties.KEY_USERNAME);
         assertThat(username).isNotNull();
@@ -87,8 +83,7 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyIsUserAuthenticatedProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String isUserAuthenticatedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
         assertThat(isUserAuthenticatedStr).isNull();
@@ -96,11 +91,15 @@ public class DefaultPropertiesTest {
 
     @Test
     public void verifyLastSyncInfoProperty() {
-        Context context = getContext();
-        PropertiesSingleton props = getProps(context);
+        PropertiesSingleton props = getProps(getContext());
 
         String lastSyncInfo = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
         assertThat(lastSyncInfo).isNull();
+    }
+
+    @After
+    public void clearProperties() {
+        StaticStateManipulator.get().reset();
     }
 
     private Context getContext() {

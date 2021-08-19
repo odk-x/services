@@ -6,6 +6,7 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 
@@ -16,6 +17,7 @@ import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,42 +26,57 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.MainActivity;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
-import org.opendatakit.utilities.StaticStateManipulator;
+import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
+
+import java.util.Collections;
+import java.util.Map;
 
 public class LoggedOutStateTest {
-
-    private static final String APP_NAME = "MainActivityTest";
 
     @Rule
     public ActivityScenarioRule<MainActivity> mainActivityScenarioRule = new ActivityScenarioRule<>(MainActivity.class);
 
     @Before
     public void setUp() {
-        StaticStateManipulator.get().reset();
+        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            assertThat(props).isNotNull();
+
+            boolean isFirstLaunch = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH));
+            assertThat(isFirstLaunch).isNotNull();
+
+            if (isFirstLaunch) {
+                props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+                activity.recreate();
+            }
+
+            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
+                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
+            );
+            assertThat(serverProperties).isNotNull();
+            props.setProperties(serverProperties);
+
+            activity.updateViewModelWithProps();
+        });
     }
 
     @Test
     public void verifyVisibilityTest() {
         onView(withId(R.id.action_sync)).check(doesNotExist());
 
-        onView(withId(R.id.drawer_resolve_conflict)).check(doesNotExist());
-        onView(withId(R.id.drawer_switch_sign_in_type)).check(doesNotExist());
-        onView(withId(R.id.drawer_update_credentials)).check(doesNotExist());
-
         onView(withId(R.id.tvUsernameMain)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
         onView(withId(R.id.tvLastSyncTimeMain)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
         onView(withId(R.id.btnSignInMain)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)));
+
+        onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
+
+        onView(withId(R.id.drawer_resolve_conflict)).check(doesNotExist());
+        onView(withId(R.id.drawer_switch_sign_in_type)).check(doesNotExist());
+        onView(withId(R.id.drawer_update_credentials)).check(doesNotExist());
     }
 
     @Test
     public void verifyValuesTest() {
-        PropertiesSingleton props = getProps();
-
-        String serverUrl = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
-
-        onView(withId(R.id.tvServerUrlMain))
-                .check(matches(withText(serverUrl)));
-
         onView(withId(R.id.tvUserStateMain))
                 .check(matches(withText(getContext().getString(R.string.logged_out))));
 
@@ -71,11 +88,9 @@ public class LoggedOutStateTest {
     public void verifySignInButtonClickTest() {
         Intents.init();
 
-        onView(withId(R.id.btnSignInMain))
-                .perform(ViewActions.click());
+        onView(withId(R.id.btnSignInMain)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-
         Intents.release();
     }
 
@@ -87,16 +102,25 @@ public class LoggedOutStateTest {
         onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-
         Intents.release();
     }
 
-    private Context getContext(){
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @After
+    public void clearTestEnvironment() {
+        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            assertThat(props).isNotNull();
+
+            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
+                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
+            );
+            assertThat(serverProperties).isNotNull();
+            props.setProperties(serverProperties);
+        });
     }
 
-    private PropertiesSingleton getProps(){
-        return CommonToolProperties.get(getContext(), APP_NAME);
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
 }

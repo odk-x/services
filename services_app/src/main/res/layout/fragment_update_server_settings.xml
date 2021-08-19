@@ -61,6 +61,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputTextServerUrl"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:ignore="TextContrastCheck" />

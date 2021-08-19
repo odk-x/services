@@ -157,7 +157,7 @@ public class UpdateServerSettingsFragment extends Fragment {
         promptToVerifyServer();
     }
 
-    public Map<String,String> getUpdateUrlProperties(String url){
+    public static Map<String,String> getUpdateUrlProperties(String url){
         Map<String, String> properties = new HashMap<>();
         properties.put(CommonToolProperties.KEY_SYNC_SERVER_URL, url);
         properties.put(CommonToolProperties.KEY_USERNAME, "");
