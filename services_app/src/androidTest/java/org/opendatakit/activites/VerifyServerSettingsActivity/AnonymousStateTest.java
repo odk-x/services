@@ -49,17 +49,10 @@ public class AnonymousStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
+        onView(withId(android.R.id.button2)).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
-
-            boolean isFirstLaunch = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH));
-            assertThat(isFirstLaunch).isNotNull();
-
-            if (isFirstLaunch) {
-                props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
-                activity.recreate();
-            }
 
             Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(TEST_SERVER_URL);
             assertThat(serverProperties).isNotNull();
@@ -98,10 +91,8 @@ public class AnonymousStateTest {
     @Test
     public void verifyDrawerResolveConflictsClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_resolve_conflict)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(AllConflictsResolutionActivity.class.getName()));
         Intents.release();
     }
@@ -109,16 +100,14 @@ public class AnonymousStateTest {
     @Test
     public void verifyDrawerSwitchSignInTypeClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_switch_sign_in_type)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
+        Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
         onView(withId(R.id.inputUsernameLogin)).check(matches(isDisplayed()));
-
-        Intents.release();
     }
 
     @Test
@@ -140,6 +129,7 @@ public class AnonymousStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
             props.setProperties(serverProperties);
         });
         activityScenario.close();

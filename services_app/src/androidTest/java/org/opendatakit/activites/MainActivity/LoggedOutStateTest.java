@@ -38,17 +38,10 @@ public class LoggedOutStateTest {
 
     @Before
     public void setUp() {
+        onView(withId(android.R.id.button2)).perform(ViewActions.click());
         mainActivityScenarioRule.getScenario().onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
-
-            boolean isFirstLaunch = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH));
-            assertThat(isFirstLaunch).isNotNull();
-
-            if (isFirstLaunch) {
-                props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
-                activity.recreate();
-            }
 
             Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
@@ -87,9 +80,7 @@ public class LoggedOutStateTest {
     @Test
     public void verifySignInButtonClickTest() {
         Intents.init();
-
         onView(withId(R.id.btnSignInMain)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
         Intents.release();
     }
@@ -97,10 +88,8 @@ public class LoggedOutStateTest {
     @Test
     public void verifyDrawerSignInButtonClickTest() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
         Intents.release();
     }
@@ -115,6 +104,7 @@ public class LoggedOutStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
             props.setProperties(serverProperties);
         });
     }

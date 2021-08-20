@@ -39,17 +39,10 @@ public class GeneralStateTest {
 
     @Before
     public void setUp() {
+        onView(withId(android.R.id.button2)).perform(ViewActions.click());
         mainActivityScenarioRule.getScenario().onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
-
-            boolean isFirstLaunch = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH));
-            assertThat(isFirstLaunch).isNotNull();
-
-            if (isFirstLaunch) {
-                props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
-                activity.recreate();
-            }
 
             Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(TEST_SERVER_URL);
             assertThat(serverProperties).isNotNull();
@@ -83,9 +76,7 @@ public class GeneralStateTest {
     @Test
     public void checkToolbarVerifyBtnClick() {
         Intents.init();
-
         onView(withId(R.id.action_verify_server_settings)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(VerifyServerSettingsActivity.class.getName()));
         Intents.release();
     }
@@ -93,9 +84,7 @@ public class GeneralStateTest {
     @Test
     public void checkToolbarSettingsBtnClick() {
         Intents.init();
-
         onView(withId(R.id.action_settings)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
         Intents.release();
     }
@@ -103,10 +92,8 @@ public class GeneralStateTest {
     @Test
     public void checkDrawerSettingsBtnClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_settings)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
         Intents.release();
     }
@@ -134,6 +121,7 @@ public class GeneralStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
             props.setProperties(serverProperties);
         });
     }

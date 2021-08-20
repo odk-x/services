@@ -32,8 +32,10 @@ import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.services.sync.actions.fragments.SetCredentialsFragment;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
+import org.opendatakit.services.utilities.DateTimeUtil;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,17 +56,10 @@ public class AuthenticatedUserStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
+        onView(withId(android.R.id.button2)).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
-
-            boolean isFirstLaunch = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH));
-            assertThat(isFirstLaunch).isNotNull();
-
-            if (isFirstLaunch) {
-                props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
-                activity.recreate();
-            }
 
             Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(TEST_SERVER_URL);
             assertThat(serverProperties).isNotNull();
@@ -97,17 +92,29 @@ public class AuthenticatedUserStateTest {
         onView(withId(R.id.tvUsernameVerify)).check(matches(withText(TEST_USERNAME)));
         onView(withId(R.id.tvVerificationStatusVerify)).check(matches(withText(getContext().getString(R.string.not_verified))));
 
+        onView(withId(R.id.tvLastSyncTimeVerify)).check(matches(withText(getContext().getString(R.string.last_sync_not_available))));
+
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.btnDrawerLogin)).check(matches(withText(getContext().getString(R.string.drawer_sign_out_button_text))));
     }
 
     @Test
+    public void verifyLastSyncTimeTest() {
+        onView(withId(R.id.tvLastSyncTimeVerify)).check(matches(withText(getContext().getString(R.string.last_sync_not_available))));
+        long currentTime = new Date().getTime();
+        activityScenario.onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_LAST_SYNC_INFO, Long.toString(currentTime)));
+            activity.updateViewModelWithProps();
+        });
+        onView(withId(R.id.tvLastSyncTimeVerify)).check(matches(withText(DateTimeUtil.getDisplayDate(currentTime))));
+    }
+
+    @Test
     public void verifyDrawerResolveConflictsClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_resolve_conflict)).perform(ViewActions.click());
-
         Intents.intended(IntentMatchers.hasComponent(AllConflictsResolutionActivity.class.getName()));
         Intents.release();
     }
@@ -115,7 +122,6 @@ public class AuthenticatedUserStateTest {
     @Test
     public void verifyDrawerSwitchSignInTypeClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_switch_sign_in_type)).perform(ViewActions.click());
 
@@ -148,7 +154,6 @@ public class AuthenticatedUserStateTest {
     @Test
     public void verifyDrawerUpdateCredentialsClick() {
         Intents.init();
-
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_update_credentials)).perform(ViewActions.click());
 
@@ -180,6 +185,7 @@ public class AuthenticatedUserStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
             props.setProperties(serverProperties);
         });
         activityScenario.close();
