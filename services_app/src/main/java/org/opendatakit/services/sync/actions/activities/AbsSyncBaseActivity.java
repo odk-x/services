@@ -90,10 +90,9 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                 drawerLayout.closeDrawer(GravityCompat.START);
             } else if (v.getId() == R.id.btnDrawerLogin) {
                 if (absSyncViewModel.getUserState() == UserState.LOGGED_OUT) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
                     if (isNotLoginActivity())
                         onSignInButtonClicked();
-                    else
-                        drawerLayout.closeDrawer(GravityCompat.START);
                 } else {
                     onSignOutButtonClicked();
                 }
@@ -436,22 +435,29 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     private void inLoggedOutState() {
         handleDrawerVisibility(false, false, false);
         btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
+        if(isNotLoginActivity())
+            btnDrawerSignIn.setVisibility(View.VISIBLE);
+        else
+            btnDrawerSignIn.setVisibility(View.GONE);
     }
 
     /**
      * Actions in the Anonymous User State
      */
     private void inAnonymousState() {
-        handleDrawerVisibility(true, true, false);
+        handleDrawerVisibility(true, isNotLoginActivity(), false);
         btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+        btnDrawerSignIn.setVisibility(View.VISIBLE);
     }
 
     /**
      * Actions in the Authenticated User State
      */
     private void inAuthenticatedState() {
-        handleDrawerVisibility(true, true, true);
+        handleDrawerVisibility(true, isNotLoginActivity(), isNotLoginActivity());
         btnDrawerSignIn.setText(R.string.drawer_sign_out_button_text);
+        btnDrawerSignIn.setEnabled(true);
+        btnDrawerSignIn.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -485,6 +491,8 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         ODKServicesPropertyUtils.clearActiveUser(getProps());
         drawerLayout.closeDrawer(GravityCompat.START);
         updateViewModelWithProps();
+        if(!isNotLoginActivity())
+            this.finish();
     }
 
     private void setSwitchSignInEnabled(boolean enabled) {
