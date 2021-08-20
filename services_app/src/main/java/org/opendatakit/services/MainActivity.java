@@ -165,6 +165,8 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
                 signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE);
                 startActivity(signInIntent);
                 return true;
+            } else if (item.getItemId() == R.id.drawer_server_login) {
+                navController.navigate(R.id.updateServerSettingsFragment);
             }
 
             return false;

@@ -172,6 +172,8 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                     startActivity(signInIntent);
                 }
                 return true;
+            } else if (item.getItemId() == R.id.drawer_server_login) {
+                navigateToUpdateServerSettings();
             }
 
             return false;
