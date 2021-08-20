@@ -1,5 +1,6 @@
 package org.opendatakit.activites.SyncActivity;
 
+import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -11,6 +12,13 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
@@ -18,6 +26,7 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
+import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -35,9 +44,12 @@ import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 import org.opendatakit.services.utilities.DateTimeUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Random;
 
 public class AnonymousStateTest {
 
@@ -110,6 +122,20 @@ public class AnonymousStateTest {
     }
 
     @Test
+    public void verifyChangeSyncTypeTest() {
+        String [] syncTypes = getContext().getResources().getStringArray(R.array.sync_attachment_option_names);
+        String type=syncTypes[new Random().nextInt(4)];
+
+        onView(withId(R.id.autoInputSyncType)).perform(ViewActions.click());
+        onData(allOf(is(instanceOf(String.class)), is(type)))
+                .inRoot(RootMatchers.withDecorView(not(is(getActivity().getWindow().getDecorView()))))
+                .perform(ViewActions.click());
+
+        activityScenario.recreate();
+        onView(withId(R.id.autoInputSyncType)).check(matches(withText(type)));
+    }
+
+    @Test
     public void verifyDrawerResolveConflictsClick() {
         Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
@@ -151,9 +177,18 @@ public class AnonymousStateTest {
             );
             assertThat(serverProperties).isNotNull();
             serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
+            serverProperties.put(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE, null);
             props.setProperties(serverProperties);
         });
         activityScenario.close();
+    }
+
+    private Activity getActivity() {
+        final Activity[] activity1 = new Activity[1];
+        activityScenario.onActivity(activity -> {
+            activity1[0] =activity;
+        });
+        return activity1[0];
     }
 
     private Context getContext() {
