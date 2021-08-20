@@ -374,6 +374,8 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
                     if (navController.getCurrentDestination() == null)
                         navigateToHomeFragment();
+
+                    updateViewModelWithProps();
                     break;
                 }
                 case ON_PAUSE: {
