@@ -46,6 +46,9 @@ public class SetCredentialsFragment extends LoginFragment {
     private TextInputLayout inputUsername, inputPassword;
     private Button btnSignIn;
 
+    private String btnSignInText, titleText;
+    private boolean btnSignInEnable;
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -63,6 +66,11 @@ public class SetCredentialsFragment extends LoginFragment {
         btnSignIn=view.findViewById(R.id.btnAuthenticateUserLogin);
 
         btnSignIn.setOnClickListener(new OnButtonClick());
+
+        titleText = getString(R.string.drawer_sign_in_button_text);
+        btnSignInText = getString(R.string.drawer_sign_in_button_text);
+        btnSignInEnable = true;
+        updateUserInterface();
     }
 
     @Override
@@ -82,16 +90,56 @@ public class SetCredentialsFragment extends LoginFragment {
         loginViewModel.getFunctionType().observe(getViewLifecycleOwner(), s -> {
             switch (s){
                 case (Constants.LOGIN_TYPE_SIGN_IN): {
-                    setTitle(R.string.drawer_sign_in_button_text);
+                    switch (loginViewModel.getUserState()){
+                        case LOGGED_OUT:{
+                            inTypeSignInStateLoggedOut();
+                            break;
+                        }
+                        case ANONYMOUS:{
+                            inTypeSignInStateAnonymous();
+                            break;
+                        }
+                        case AUTHENTICATED_USER:{
+                            inTypeSignInStateAuthenticated();
+                            break;
+                        }
+                    }
                     break;
                 }
                 case (Constants.LOGIN_TYPE_UPDATE_CREDENTIALS):
-                    setTitle(R.string.drawer_item_update_credentials);
+                    switch (loginViewModel.getUserState()){
+                        case LOGGED_OUT:{
+                            inTypeUpdateCredentialsStateLoggedOut();
+                            break;
+                        }
+                        case ANONYMOUS:{
+                            inTypeUpdateCredentialsStateAnonymous();
+                            break;
+                        }
+                        case AUTHENTICATED_USER:{
+                            inTypeUpdateCredentialsStateAuthenticated();
+                            break;
+                        }
+                    }
                     break;
                 case (Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE):
-                    setTitle(R.string.sign_in_using_credentials);
+                    switch (loginViewModel.getUserState()){
+                        case LOGGED_OUT:{
+                            inTypeSwitchMethodStateLoggedOut();
+                            break;
+                        }
+                        case ANONYMOUS:{
+                            inTypeSwitchMethodStateAnonymous();
+                            break;
+                        }
+                        case AUTHENTICATED_USER:{
+                            inTypeSwitchMethodStateAuthenticated();
+                            break;
+                        }
+                    }
                     break;
             }
+            updateUserInterface();
         });
     }
 
@@ -116,8 +164,67 @@ public class SetCredentialsFragment extends LoginFragment {
         }
     }
 
-    private void setTitle(int id){
-        tvTitle.setText(getString(id));
+    private void inTypeSignInStateLoggedOut(){
+        updateViewsProperties(getString(R.string.drawer_sign_in_button_text),
+                getString(R.string.drawer_sign_in_button_text), true);
+    }
+
+    private void inTypeSwitchMethodStateLoggedOut(){
+        showToast("User is Logged Out!");
+        updateViewsProperties(getString(R.string.switch_sign_in_type),
+                getString(R.string.drawer_sign_in_button_text), false);
+    }
+
+    private void inTypeUpdateCredentialsStateLoggedOut(){
+        showToast("User is Logged Out!");
+        updateViewsProperties(getString(R.string.drawer_item_update_credentials),
+                "Set Credentials", true);
+    }
+
+    private void inTypeSignInStateAnonymous(){
+        showToast("User is already Anonymous");
+        updateViewsProperties(getString(R.string.drawer_sign_in_button_text),
+                "Sign In using Credentials", true);
+    }
+
+    private void inTypeSwitchMethodStateAnonymous(){
+        updateViewsProperties(getString(R.string.switch_sign_in_type),
+                "Sign in using Credentials", true);
+    }
+
+    private void inTypeUpdateCredentialsStateAnonymous(){
+        showToast("User is already Anonymous");
+        updateViewsProperties(getString(R.string.drawer_item_update_credentials),
+                "Sign in using Credentials", true);
+    }
+
+    private void inTypeSignInStateAuthenticated(){
+        showToast("User is already signed-in as an Authenticated User");
+        updateViewsProperties(getString(R.string.drawer_sign_in_button_text),
+                "Update User Credentials", true);
+    }
+
+    private void inTypeSwitchMethodStateAuthenticated(){
+        showToast("User is already signed-in as an Authenticated User");
+        updateViewsProperties(getString(R.string.switch_sign_in_type),
+                "Set Credentials", false);
+    }
+
+    private void inTypeUpdateCredentialsStateAuthenticated(){
+        updateViewsProperties(getString(R.string.drawer_item_update_credentials),
+                "Update User Credentials", true);
+    }
+
+    private void updateViewsProperties(String title, String btnText, boolean btnEnable){
+        titleText = title;
+        btnSignInText = btnText;
+        btnSignInEnable = btnEnable;
+    }
+
+    private void updateUserInterface(){
+        tvTitle.setText(titleText);
+        btnSignIn.setText(btnSignInText);
+        perhapsEnableButtons();
     }
 
     public static Map<String, String> getCredentialsProperty(String username, String pw) {
@@ -143,7 +250,7 @@ public class SetCredentialsFragment extends LoginFragment {
     @Override
     void perhapsEnableButtons() {
         if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))
-            btnSignIn.setEnabled(true);
+            btnSignIn.setEnabled(btnSignInEnable);
     }
 
     private void promptToVerifyUser() {
@@ -157,6 +264,10 @@ public class SetCredentialsFragment extends LoginFragment {
                 .create();
         alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.show();
+    }
+
+    private void showToast(String message){
+        Toast.makeText(requireActivity(), message, Toast.LENGTH_LONG).show();
     }
 
 }

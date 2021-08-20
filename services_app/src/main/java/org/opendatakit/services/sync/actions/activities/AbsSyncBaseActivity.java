@@ -484,8 +484,10 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         ODKServicesPropertyUtils.clearActiveUser(getProps());
         drawerLayout.closeDrawer(GravityCompat.START);
         updateViewModelWithProps();
-        if(!isNotLoginActivity())
+        if(!isNotLoginActivity()){
+            onSignInButtonClicked();
             this.finish();
+        }
     }
 
     @Override
