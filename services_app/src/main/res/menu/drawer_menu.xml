@@ -7,6 +7,11 @@
         android:title="@string/toolbar_item_settings" />
 
     <item
+        android:id="@+id/drawer_server_login"
+        android:icon="@drawable/ic_server_setting"
+        android:title="Server Login"/>
+
+    <item
         android:id="@+id/drawer_resolve_conflict"
         android:icon="@drawable/ic_drawer_resolve_conflicts"
         android:title="@string/drawer_item_resolve_conflicts" />
