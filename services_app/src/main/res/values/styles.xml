@@ -94,10 +94,10 @@
 
     <style name="TextInputTheme" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="backgroundColor">@color/white</item>
-        <item name="colorOnSurface">@color/colorSecondaryText</item>
-        <item name="boxStrokeColor">@color/colorSecondaryText</item>
+        <item name="colorOnSurface">@color/colorPrimaryBackground</item>
+        <item name="boxStrokeColor">@color/colorPrimaryBackground</item>
         <item name="strokeColor">@color/btn_background</item>
-        <item name="hintTextColor">@color/colorSecondaryText</item>
+        <item name="hintTextColor">@color/colorPrimaryBackground</item>
         <item name="hintEnabled">true</item>
         <item name="hintAnimationEnabled">true</item>
         <item name="strokeWidth">1dp</item>

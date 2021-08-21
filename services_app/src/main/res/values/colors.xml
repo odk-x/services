@@ -2,9 +2,9 @@
 <resources>
     
     <color name="colorPrimaryText">#474747</color>
-    <color name="colorSecondaryText">#1A964E</color>
-    <color name="colorPrimaryBackground">#25BC64</color>
-    <color name="colorCardBackground">#DBFBFF</color>
+    <color name="colorSecondaryText">#0A711E</color>
+    <color name="colorPrimaryBackground">#3E77B4</color>
+    <color name="colorCardBackground">#F0F5FA</color>
 
-    <color name="colorBtnDisabled">#731A964E</color>
+    <color name="colorBtnDisabled">#90C9E8</color>
 </resources>
