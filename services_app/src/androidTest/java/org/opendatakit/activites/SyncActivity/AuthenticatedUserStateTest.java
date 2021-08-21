@@ -2,7 +2,6 @@ package org.opendatakit.activites.SyncActivity;
 
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
@@ -11,7 +10,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibilit
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -39,7 +37,6 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
-import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
 import org.opendatakit.services.sync.actions.fragments.SetCredentialsFragment;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 import org.opendatakit.services.utilities.DateTimeUtil;
@@ -157,8 +154,9 @@ public class AuthenticatedUserStateTest {
         Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
-        onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(isDisplayed()));
+        onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(withText(R.string.anonymous_user)));
         onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(isEnabled()));
+        onView(withId(R.id.btnUserSignInLogin)).check(matches(withText(R.string.drawer_item_update_credentials)));
         onView(withId(R.id.btnUserSignInLogin)).check(matches(isNotEnabled()));
     }
 
@@ -189,6 +187,7 @@ public class AuthenticatedUserStateTest {
         Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.drawer_item_update_credentials))));
+        onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(R.string.drawer_item_update_credentials)));
         onView(withId(R.id.inputUsernameLogin)).check(matches(isDisplayed()));
         onView(withId(R.id.inputTextUsername)).check(matches(withText(TEST_USERNAME)));
         onView(withId(R.id.inputTextPassword)).check(matches(withText("")));
@@ -222,9 +221,7 @@ public class AuthenticatedUserStateTest {
 
     private Activity getActivity() {
         final Activity[] activity1 = new Activity[1];
-        activityScenario.onActivity(activity -> {
-            activity1[0] =activity;
-        });
+        activityScenario.onActivity(activity -> activity1[0] =activity);
         return activity1[0];
     }
 

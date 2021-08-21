@@ -106,7 +106,8 @@ public class AnonymousStateTest {
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
         Intents.release();
 
-        onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
+        onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
+        onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
         onView(withId(R.id.inputUsernameLogin)).check(matches(isDisplayed()));
     }
 

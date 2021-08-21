@@ -59,7 +59,16 @@ public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
 
     @Override
     boolean isCurrentDestinationAboutFragment() {
+        if(navController.getCurrentDestination()==null)
+            return false;
         return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentV;
+    }
+
+    @Override
+    boolean isCurrentDestinationUpdateServerSettings() {
+        if(navController.getCurrentDestination()==null)
+            return false;
+        return navController.getCurrentDestination().getId() == R.id.updateServerSettingsFragmentV;
     }
 
 }

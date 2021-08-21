@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,12 +26,12 @@ import java.util.Map;
 
 public class ChooseSignInTypeFragment extends LoginFragment {
 
-    private class OnButtonClick implements View.OnClickListener{
+    private class OnButtonClick implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            if(v.getId()==R.id.btnAnonymousSignInLogin)
+            if (v.getId() == R.id.btnAnonymousSignInLogin)
                 signInAsAnonymousUser();
-            else if(v.getId()==R.id.btnUserSignInLogin)
+            else if (v.getId() == R.id.btnUserSignInLogin)
                 navController.navigate(R.id.setCredentialsFragment);
         }
     }
@@ -56,14 +57,14 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         setupViewModelAndNavController();
     }
 
-    private void findViewsAndAttachListeners(View view){
-        tvServerUrl=view.findViewById(R.id.tvServerUrlLogin);
-        tvTitle=view.findViewById(R.id.tvTitleLogin);
+    private void findViewsAndAttachListeners(View view) {
+        tvServerUrl = view.findViewById(R.id.tvServerUrlLogin);
+        tvTitle = view.findViewById(R.id.tvTitleLogin);
 
-        btnAnonymous=view.findViewById(R.id.btnAnonymousSignInLogin);
-        btnAuthenticated=view.findViewById(R.id.btnUserSignInLogin);
+        btnAnonymous = view.findViewById(R.id.btnAnonymousSignInLogin);
+        btnAuthenticated = view.findViewById(R.id.btnUserSignInLogin);
 
-        OnButtonClick onButtonClick=new OnButtonClick();
+        OnButtonClick onButtonClick = new OnButtonClick();
         btnAnonymous.setOnClickListener(onButtonClick);
         btnAuthenticated.setOnClickListener(onButtonClick);
 
@@ -86,18 +87,18 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         });
 
         loginViewModel.getFunctionType().observe(getViewLifecycleOwner(), s -> {
-            switch (s){
+            switch (s) {
                 case (Constants.LOGIN_TYPE_SIGN_IN): {
-                    switch (loginViewModel.getUserState()){
-                        case LOGGED_OUT:{
+                    switch (loginViewModel.getUserState()) {
+                        case LOGGED_OUT: {
                             inTypeSignInStateLoggedOut();
                             break;
                         }
-                        case ANONYMOUS:{
+                        case ANONYMOUS: {
                             inTypeSignInStateAnonymous();
                             break;
                         }
-                        case AUTHENTICATED_USER:{
+                        case AUTHENTICATED_USER: {
                             inTypeSignInStateAuthenticated();
                             break;
                         }
@@ -105,32 +106,32 @@ public class ChooseSignInTypeFragment extends LoginFragment {
                     break;
                 }
                 case (Constants.LOGIN_TYPE_UPDATE_CREDENTIALS):
-                    switch (loginViewModel.getUserState()){
-                        case LOGGED_OUT:{
+                    switch (loginViewModel.getUserState()) {
+                        case LOGGED_OUT: {
                             inTypeUpdateCredentialsStateLoggedOut();
                             break;
                         }
-                        case ANONYMOUS:{
+                        case ANONYMOUS: {
                             inTypeUpdateCredentialsStateAnonymous();
                             break;
                         }
-                        case AUTHENTICATED_USER:{
+                        case AUTHENTICATED_USER: {
                             inTypeUpdateCredentialsStateAuthenticated();
                             break;
                         }
                     }
                     break;
                 case (Constants.LOGIN_TYPE_SWITCH_SIGN_IN_TYPE):
-                    switch (loginViewModel.getUserState()){
-                        case LOGGED_OUT:{
+                    switch (loginViewModel.getUserState()) {
+                        case LOGGED_OUT: {
                             inTypeSwitchMethodStateLoggedOut();
                             break;
                         }
-                        case ANONYMOUS:{
+                        case ANONYMOUS: {
                             inTypeSwitchMethodStateAnonymous();
                             break;
                         }
-                        case AUTHENTICATED_USER:{
+                        case AUTHENTICATED_USER: {
                             inTypeSwitchMethodStateAuthenticated();
                             break;
                         }
@@ -146,68 +147,64 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         });
     }
 
-    private void signInAsAnonymousUser(){
+    private void signInAsAnonymousUser() {
         updatePropertiesSingleton(getAnonymousProperties());
-        if(!loginViewModel.isAnonymousMethodUsed()){
+        if (!loginViewModel.isAnonymousMethodUsed()) {
             promptToVerifyAnonymous();
         } else {
             requireActivity().finish();
         }
     }
 
-    private void inTypeSignInStateLoggedOut(){
-        updateViewProperties(getString(R.string.drawer_sign_in_button_text),getString(R.string.anonymous_user),
-                getString(R.string.authenticated_user),true,true);
+    private void inTypeSignInStateLoggedOut() {
+        updateViewProperties(getString(R.string.drawer_sign_in_button_text), getString(R.string.anonymous_user),
+                getString(R.string.authenticated_user), true, true);
     }
 
-    private void inTypeSwitchMethodStateLoggedOut(){
+    private void inTypeSwitchMethodStateLoggedOut() {
         showToast("User is Logged Out!");
-        updateViewProperties(getString(R.string.switch_sign_in_type),getString(R.string.anonymous_user),
-                getString(R.string.authenticated_user),false,false);
+        updateViewProperties(getString(R.string.switch_sign_in_type), getString(R.string.anonymous_user),
+                getString(R.string.authenticated_user), false, false);
     }
 
-    private void inTypeUpdateCredentialsStateLoggedOut(){
+    private void inTypeUpdateCredentialsStateLoggedOut() {
         showToast("User is Logged Out!");
-        updateViewProperties(getString(R.string.drawer_item_update_credentials),getString(R.string.anonymous_user),
-                getString(R.string.authenticated_user),false,false);
+        updateViewProperties(getString(R.string.drawer_item_update_credentials), getString(R.string.anonymous_user),
+                getString(R.string.authenticated_user), false, false);
     }
 
-    private void inTypeSignInStateAnonymous(){
+    private void inTypeSignInStateAnonymous() {
         showToast("User is already Anonymous!");
-        updateViewProperties(getString(R.string.drawer_sign_in_button_text),getString(R.string.anonymous_user),
-                "Sign in Using Credentials", false, true);
+        updateViewProperties(getString(R.string.drawer_sign_in_button_text), getString(R.string.anonymous_user),
+                getString(R.string.sign_in_using_credentials), false, true);
     }
 
-    private void inTypeSwitchMethodStateAnonymous(){
-        updateViewProperties(getString(R.string.switch_sign_in_type),getString(R.string.anonymous_user),
-                "Sign in Using Credentials", false, true);
+    private void inTypeSwitchMethodStateAnonymous() {
         navController.navigate(R.id.action_chooseSignInTypeFragment_to_setCredentialsFragment);
     }
 
-    private void inTypeUpdateCredentialsStateAnonymous(){
+    private void inTypeUpdateCredentialsStateAnonymous() {
         showToast("User is not signed in using Credentials");
-        updateViewProperties(getString(R.string.drawer_item_update_credentials),getString(R.string.anonymous_user),
-                "Sign in Using Credentials", false, true);
+        updateViewProperties(getString(R.string.drawer_item_update_credentials), getString(R.string.anonymous_user),
+                getString(R.string.sign_in_using_credentials), false, true);
     }
 
-    private void inTypeSignInStateAuthenticated(){
+    private void inTypeSignInStateAuthenticated() {
         showToast("User is signed in using Credentials");
-        updateViewProperties(getString(R.string.drawer_sign_in_button_text),"Sign in as Anonymous User",
-                "Update Credentials", true, true);
+        updateViewProperties(getString(R.string.drawer_sign_in_button_text), getString(R.string.sign_in_as_anonymous),
+                getString(R.string.drawer_item_update_credentials), true, true);
     }
 
-    private void inTypeSwitchMethodStateAuthenticated(){
+    private void inTypeSwitchMethodStateAuthenticated() {
         updateViewProperties(getString(R.string.switch_sign_in_type), getString(R.string.anonymous_user),
-                "Update User Credentials", true, false);
+                getString(R.string.drawer_item_update_credentials), true, false);
     }
 
-    private void inTypeUpdateCredentialsStateAuthenticated(){
-        updateViewProperties(getString(R.string.switch_sign_in_type), getString(R.string.anonymous_user),
-                "Update User Credentials", false, true);
+    private void inTypeUpdateCredentialsStateAuthenticated() {
         navController.navigate(R.id.action_chooseSignInTypeFragment_to_setCredentialsFragment);
     }
 
-    private void updateViewProperties(String titleText, String btnAnonymousText, String  btnAuthenticatedText, boolean btnAnonymousEnable, boolean btnAuthenticatedEnable){
+    private void updateViewProperties(String titleText, String btnAnonymousText, String btnAuthenticatedText, boolean btnAnonymousEnable, boolean btnAuthenticatedEnable) {
         this.titleText = titleText;
         this.btnAnonymousText = btnAnonymousText;
         this.btnAuthenticatedText = btnAuthenticatedText;
@@ -215,15 +212,15 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         this.btnAuthenticatedEnable = btnAuthenticatedEnable;
     }
 
-    private void updateUserInterface(){
+    private void updateUserInterface() {
         tvTitle.setText(titleText);
         btnAnonymous.setText(btnAnonymousText);
         btnAuthenticated.setText(btnAuthenticatedText);
         perhapsEnableButtons();
     }
 
-    public static Map<String,String> getAnonymousProperties(){
-        Map<String,String> properties = new HashMap<>();
+    public static Map<String, String> getAnonymousProperties() {
+        Map<String, String> properties = new HashMap<>();
         properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE, "none");
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
         properties.put(CommonToolProperties.KEY_USERNAME, "");
@@ -237,7 +234,7 @@ public class ChooseSignInTypeFragment extends LoginFragment {
 
     @Override
     void disableButtons() {
-        if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED)){
+        if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED)) {
             btnAnonymous.setEnabled(false);
             btnAuthenticated.setEnabled(false);
         }
@@ -245,13 +242,13 @@ public class ChooseSignInTypeFragment extends LoginFragment {
 
     @Override
     void perhapsEnableButtons() {
-        if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED)){
+        if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED)) {
             btnAuthenticated.setEnabled(btnAuthenticatedEnable);
             btnAnonymous.setEnabled(btnAnonymousEnable && isAnonymousAllowed);
         }
     }
 
-    private void promptToVerifyAnonymous(){
+    private void promptToVerifyAnonymous() {
         AlertDialog alertDialog = new AlertDialog
                 .Builder(requireActivity())
                 .setTitle("Signed in Successfully")
@@ -264,7 +261,7 @@ public class ChooseSignInTypeFragment extends LoginFragment {
         alertDialog.show();
     }
 
-    private void showToast(String message){
+    private void showToast(String message) {
         Toast.makeText(requireActivity(), message, Toast.LENGTH_LONG).show();
     }
 }

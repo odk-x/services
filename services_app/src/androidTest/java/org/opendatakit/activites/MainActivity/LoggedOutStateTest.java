@@ -9,18 +9,19 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.content.Intent;
 
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.MainActivity;
@@ -28,18 +29,22 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 
-import java.util.Collections;
 import java.util.Map;
 
 public class LoggedOutStateTest {
 
-    @Rule
-    public ActivityScenarioRule<MainActivity> mainActivityScenarioRule = new ActivityScenarioRule<>(MainActivity.class);
+    private ActivityScenario<MainActivity> activityScenario;
 
     @Before
     public void setUp() {
+        String APP_NAME = "testAppName";
+
+        Intent intent = new Intent(getContext(), MainActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+        activityScenario = ActivityScenario.launch(intent);
+
         onView(withId(android.R.id.button2)).perform(ViewActions.click());
-        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+        activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
 
@@ -96,7 +101,7 @@ public class LoggedOutStateTest {
 
     @After
     public void clearTestEnvironment() {
-        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+        activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
 
@@ -104,7 +109,7 @@ public class LoggedOutStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
             props.setProperties(serverProperties);
         });
     }

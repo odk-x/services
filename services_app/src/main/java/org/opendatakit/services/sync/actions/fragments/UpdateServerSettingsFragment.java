@@ -32,7 +32,9 @@ import org.json.JSONObject;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.services.MainActivity;
 import org.opendatakit.services.R;
+import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity;
 import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
 import org.opendatakit.services.utilities.UserState;
@@ -97,7 +99,10 @@ public class UpdateServerSettingsFragment extends Fragment {
     }
 
     private void setupViewModelAndNavController() {
-        absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
+        if(requireActivity().getClass().getName().equals(MainActivity.class.getName()))
+            absSyncViewModel = new ViewModelProvider(requireActivity()).get(AbsSyncViewModel.class);
+        else
+            absSyncViewModel = ((AbsSyncBaseActivity)requireActivity()).getViewModel();
         navController = Navigation.findNavController(requireView());
         absSyncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> inputServerUrl.getEditText().setText(s));
     }

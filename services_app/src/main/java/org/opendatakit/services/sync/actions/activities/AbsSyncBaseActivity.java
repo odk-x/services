@@ -195,6 +195,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     private boolean mBoundGuarded = false;
     // end guarded access.
 
+    private MaterialToolbar toolbar;
     private NavigationView navView;
     private DrawerLayout drawerLayout;
     private Button btnDrawerSignIn;
@@ -213,6 +214,8 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     abstract boolean isNotLoginActivity();
 
     abstract boolean isCurrentDestinationAboutFragment();
+
+    abstract boolean isCurrentDestinationUpdateServerSettings();
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
@@ -293,7 +296,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
      * Finding the different views required and attaching onClick Listeners to them
      */
     protected void findViewsAndAttachListeners() {
-        MaterialToolbar toolbar = findViewById(R.id.toolbarSyncActivity);
+        toolbar = findViewById(R.id.toolbarSyncActivity);
 
         navView = findViewById(R.id.navViewSync);
         drawerLayout = findViewById(R.id.drawerLayoutSync);
@@ -342,6 +345,14 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             navView.getMenu().findItem(R.id.drawer_about_us).setEnabled(!isCurrentDestinationAboutFragment());
+
+            if (isCurrentDestinationUpdateServerSettings()) {
+                toolbar.setVisibility(View.GONE);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            } else {
+                toolbar.setVisibility(View.VISIBLE);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            }
 
             if (mAppName != null)
                 updateViewModelWithProps();
@@ -437,7 +448,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     private void inLoggedOutState() {
         handleDrawerVisibility(false, false, false);
         btnDrawerSignIn.setText(R.string.drawer_sign_in_button_text);
-        if(isNotLoginActivity())
+        if (isNotLoginActivity())
             btnDrawerSignIn.setVisibility(View.VISIBLE);
         else
             btnDrawerSignIn.setVisibility(View.GONE);
@@ -493,7 +504,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         ODKServicesPropertyUtils.clearActiveUser(getProps());
         drawerLayout.closeDrawer(GravityCompat.START);
         updateViewModelWithProps();
-        if(!isNotLoginActivity()){
+        if (!isNotLoginActivity()) {
             onSignInButtonClicked();
             this.finish();
         }
@@ -535,6 +546,10 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    public AbsSyncViewModel getViewModel() {
+        return absSyncViewModel;
     }
 
     public void updateViewModelWithProps() {

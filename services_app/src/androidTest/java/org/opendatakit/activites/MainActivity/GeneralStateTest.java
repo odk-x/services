@@ -9,16 +9,20 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.Context;
+import android.content.Intent;
+
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.MainActivity;
@@ -32,15 +36,20 @@ import java.util.Map;
 
 public class GeneralStateTest {
 
-    @Rule
-    public ActivityScenarioRule<MainActivity> mainActivityScenarioRule = new ActivityScenarioRule<>(MainActivity.class);
+    private ActivityScenario<MainActivity> activityScenario;
 
     private final String TEST_SERVER_URL = "https://testUrl.com";
 
     @Before
     public void setUp() {
+        String APP_NAME = "testAppName";
+
+        Intent intent = new Intent(getContext(), MainActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+        activityScenario = ActivityScenario.launch(intent);
+
         onView(withId(android.R.id.button2)).perform(ViewActions.click());
-        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+        activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
 
@@ -54,7 +63,7 @@ public class GeneralStateTest {
 
     @Test
     public void checkFirstStartupTest() {
-        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+        activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
 
@@ -99,6 +108,15 @@ public class GeneralStateTest {
     }
 
     @Test
+    public void checkDrawerServerLoginTest() {
+        onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
+        onView(withId(R.id.drawer_server_login)).perform(ViewActions.click());
+
+        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
+        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
+    }
+
+    @Test
     public void checkDrawerAboutUsBtnClick() {
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
 
@@ -113,7 +131,7 @@ public class GeneralStateTest {
 
     @After
     public void clearTestEnvironment() {
-        mainActivityScenarioRule.getScenario().onActivity(activity -> {
+        activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
 
@@ -121,9 +139,13 @@ public class GeneralStateTest {
                     activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
             );
             assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
+            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
             props.setProperties(serverProperties);
         });
+    }
+
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
 }

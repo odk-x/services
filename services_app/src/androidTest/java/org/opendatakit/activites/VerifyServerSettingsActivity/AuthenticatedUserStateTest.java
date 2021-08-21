@@ -129,8 +129,9 @@ public class AuthenticatedUserStateTest {
         Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
-        onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(isDisplayed()));
+        onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(withText(R.string.anonymous_user)));
         onView(withId(R.id.btnAnonymousSignInLogin)).check(matches(isEnabled()));
+        onView(withId(R.id.btnUserSignInLogin)).check(matches(withText(R.string.drawer_item_update_credentials)));
         onView(withId(R.id.btnUserSignInLogin)).check(matches(isNotEnabled()));
     }
 
@@ -161,6 +162,7 @@ public class AuthenticatedUserStateTest {
         Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.drawer_item_update_credentials))));
+        onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(R.string.drawer_item_update_credentials)));
         onView(withId(R.id.inputUsernameLogin)).check(matches(isDisplayed()));
         onView(withId(R.id.inputTextUsername)).check(matches(withText(TEST_USERNAME)));
         onView(withId(R.id.inputTextPassword)).check(matches(withText("")));

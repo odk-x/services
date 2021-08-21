@@ -64,7 +64,16 @@ public class LoginActivity extends AbsSyncBaseActivity {
 
     @Override
     boolean isCurrentDestinationAboutFragment() {
+        if(navController.getCurrentDestination()==null)
+            return false;
         return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentL;
+    }
+
+    @Override
+    boolean isCurrentDestinationUpdateServerSettings() {
+        if(navController.getCurrentDestination()==null)
+            return false;
+        return navController.getCurrentDestination().getId() == R.id.updateServerSettingsFragmentL;
     }
 
     @Override

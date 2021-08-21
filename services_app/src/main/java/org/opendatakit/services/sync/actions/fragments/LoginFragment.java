@@ -69,7 +69,7 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
 
    protected void setupViewModelAndNavController(){
       loginViewModel=new ViewModelProvider(requireActivity()).get(LoginViewModel.class);
-      navController= Navigation.findNavController(requireActivity(), R.id.navHostSync);
+      navController= Navigation.findNavController(requireView());
 
       Intent intent=requireActivity().getIntent();
       if(!intent.hasExtra(Constants.LOGIN_INTENT_TYPE_KEY))

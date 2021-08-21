@@ -55,6 +55,15 @@ public class SyncActivity extends AbsSyncBaseActivity {
 
     @Override
     boolean isCurrentDestinationAboutFragment() {
+        if(navController.getCurrentDestination()==null)
+            return false;
         return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentS;
+    }
+
+    @Override
+    boolean isCurrentDestinationUpdateServerSettings() {
+        if(navController.getCurrentDestination()==null)
+            return false;
+        return navController.getCurrentDestination().getId() == R.id.updateServerSettingsFragmentS;
     }
 }

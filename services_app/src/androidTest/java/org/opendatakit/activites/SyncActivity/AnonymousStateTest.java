@@ -6,14 +6,11 @@ import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
-import static androidx.test.espresso.matcher.ViewMatchers.isNotEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -44,8 +41,6 @@ import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 import org.opendatakit.services.utilities.DateTimeUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -153,7 +148,8 @@ public class AnonymousStateTest {
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
         Intents.release();
 
-        onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
+        onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
+        onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
         onView(withId(R.id.inputUsernameLogin)).check(matches(isDisplayed()));
     }
 
@@ -185,9 +181,7 @@ public class AnonymousStateTest {
 
     private Activity getActivity() {
         final Activity[] activity1 = new Activity[1];
-        activityScenario.onActivity(activity -> {
-            activity1[0] =activity;
-        });
+        activityScenario.onActivity(activity -> activity1[0] =activity);
         return activity1[0];
     }
 

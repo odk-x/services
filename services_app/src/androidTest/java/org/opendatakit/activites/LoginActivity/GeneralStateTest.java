@@ -34,6 +34,7 @@ import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class GeneralStateTest {
@@ -77,6 +78,48 @@ public class GeneralStateTest {
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_update_credentials)).check(doesNotExist());
         onView(withId(R.id.drawer_switch_sign_in_type)).check(doesNotExist());
+    }
+
+    @Test
+    public void checkFirstStartupTest() {
+        activityScenario.onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            assertThat(props).isNotNull();
+
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "true"));
+            activity.recreate();
+        });
+
+        onView(withId(android.R.id.button1)).perform(ViewActions.click());
+
+        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
+        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
+    }
+
+    @Test
+    public void checkDrawerServerLoginTest() {
+        onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
+        onView(withId(R.id.drawer_server_login)).perform(ViewActions.click());
+
+        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
+        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
+    }
+
+    @Test
+    public void checkToolbarSettingsButtonClick() {
+        Intents.init();
+        onView(withId(R.id.action_settings)).perform(ViewActions.click());
+        Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
+        Intents.release();
+    }
+
+    @Test
+    public void checkDrawerSettingsClick() {
+        Intents.init();
+        onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
+        onView(withId(R.id.drawer_settings)).perform(ViewActions.click());
+        Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
+        Intents.release();
     }
 
     @After
