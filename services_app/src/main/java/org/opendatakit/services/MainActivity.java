@@ -323,16 +323,17 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
 
         absSyncViewModel.setServerUrl(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
 
+        absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
+        absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
+
         boolean isAnonymousSignInUsed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
-        absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
 
         if (isAnonymousSignInUsed) {
             boolean isAnonymousAllowed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
             absSyncViewModel.setIsAnonymousAllowed(isAnonymousAllowed);
         }
 
-        absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
-        absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
+        absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
 
         String lastSyncStr = props.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
         if (lastSyncStr != null) {

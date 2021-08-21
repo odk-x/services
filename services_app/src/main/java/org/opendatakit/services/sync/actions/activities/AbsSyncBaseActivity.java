@@ -561,16 +561,17 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
 
         absSyncViewModel.setIsFirstLaunch(Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_FIRST_LAUNCH)));
 
+        absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
+        absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
+
         boolean isAnonymousSignInUsed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED));
-        absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
 
         if (isAnonymousSignInUsed) {
             boolean isAnonymousAllowed = Boolean.parseBoolean(props.getProperty(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED));
             absSyncViewModel.setIsAnonymousAllowed(isAnonymousAllowed);
         }
 
-        absSyncViewModel.setCurrentUserState(UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE)));
-        absSyncViewModel.setUsername(props.getProperty(CommonToolProperties.KEY_USERNAME));
+        absSyncViewModel.setIsAnonymousSignInUsed(isAnonymousSignInUsed);
 
         String userVerifiedStr = props.getProperty(CommonToolProperties.KEY_IS_USER_AUTHENTICATED);
         if (userVerifiedStr != null) {

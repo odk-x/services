@@ -234,7 +234,7 @@ public class SetCredentialsFragment extends LoginFragment {
         properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
         properties.put(CommonToolProperties.KEY_USERNAME, username);
         properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
-        properties.remove(CommonToolProperties.KEY_LAST_SYNC_INFO);
+        properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO, null);
         properties.put(CommonToolProperties.KEY_PASSWORD, pw);
         properties.put(CommonToolProperties.KEY_DEFAULT_GROUP, "");
         properties.put(CommonToolProperties.KEY_ROLES_LIST, "");

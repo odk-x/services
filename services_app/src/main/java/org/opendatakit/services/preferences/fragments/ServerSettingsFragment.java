@@ -51,6 +51,8 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.PasswordPreferenceScreen;
 import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
+import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
+import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 
@@ -242,7 +244,8 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
     if (isValid) {
       preference.setSummary(newValue.toString());
-      updatePropertiesSingleton(CommonToolProperties.KEY_SYNC_SERVER_URL, newValue.toString());
+      PropertiesSingleton props = ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
+      props.setProperties(UpdateServerSettingsFragment.getUpdateUrlProperties(newValue.toString()));
       return true;
     } else {
       Toast.makeText(getActivity().getApplicationContext(),
@@ -257,8 +260,10 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
     String entry = (String) ((ListPreference) preference).getEntries()[index];
     preference.setSummary(entry);
     updatePropertiesSingleton(CommonToolProperties.KEY_AUTHENTICATION_TYPE, newValue.toString());
+
+    PropertiesSingleton props = ((IOdkAppPropertiesActivity) ServerSettingsFragment.this.getActivity()).getProps();
     if(newValue.toString().equals("none")){
-      updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.ANONYMOUS.name());
+      props.setProperties(ChooseSignInTypeFragment.getAnonymousProperties());
     }
     else {
       updatePropertiesSingleton(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.AUTHENTICATED_USER.name());
