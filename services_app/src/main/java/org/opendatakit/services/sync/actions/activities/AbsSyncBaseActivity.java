@@ -333,6 +333,13 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                 onFirstLaunch();
         });
 
+        absSyncViewModel.checkIsAnonymousAllowed().observe(this, aBoolean -> {
+            if (absSyncViewModel.getUserState() == UserState.AUTHENTICATED_USER) {
+                setSwitchSignInEnabled(aBoolean);
+            } else
+                setSwitchSignInEnabled(true);
+        });
+
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             navView.getMenu().findItem(R.id.drawer_about_us).setEnabled(!isCurrentDestinationAboutFragment());
 
@@ -490,6 +497,10 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
             onSignInButtonClicked();
             this.finish();
         }
+    }
+
+    private void setSwitchSignInEnabled(boolean enabled) {
+        navView.getMenu().findItem(R.id.drawer_switch_sign_in_type).setEnabled(enabled);
     }
 
     @Override
