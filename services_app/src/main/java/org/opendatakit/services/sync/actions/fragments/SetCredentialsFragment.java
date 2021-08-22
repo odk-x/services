@@ -160,7 +160,7 @@ public class SetCredentialsFragment extends LoginFragment {
         if (username.isEmpty() || password.isEmpty())
             Toast.makeText(requireActivity(), "Please Enter the Required Credentials", Toast.LENGTH_SHORT).show();
         else {
-            updatePropertiesSingleton(getCredentialsProperty(username, password));
+            getProps().setProperties(getCredentialsProperty(username, password));
             promptToVerifyUser();
         }
     }

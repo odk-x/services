@@ -34,6 +34,8 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
@@ -51,7 +53,9 @@ import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceAct
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
 import org.opendatakit.services.sync.actions.viewModels.SyncViewModel;
+import org.opendatakit.services.utilities.Constants;
 import org.opendatakit.services.utilities.DateTimeUtil;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -63,6 +67,7 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,6 +106,9 @@ public class SyncFragment extends AbsSyncUIFragment {
   private TextInputLayout inputSyncType;
 
   private SyncViewModel syncViewModel;
+  private NavController navController;
+
+  private boolean actionEnable = true;
 
   public SyncFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
@@ -134,16 +142,14 @@ public class SyncFragment extends AbsSyncUIFragment {
     btnSignIn=view.findViewById(R.id.btnSignInSync);
     btnResetServer=view.findViewById(R.id.btnResetServerSync);
 
-    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
+    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(requireActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
     acSyncType.setAdapter(instanceAttachmentsAdapter);
 
     acSyncType.setOnItemClickListener((parent, view1, position, id) -> {
       String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
       syncViewModel.updateSyncAttachmentState(SyncAttachmentState.valueOf(syncAttachmentType[position]));
 
-      Map<String, String> properties=new HashMap<>();
-      properties.put(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncViewModel.getCurrentSyncAttachmentState().name());
-      updatePropertiesSingleton(properties);
+      getProps().setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncViewModel.getCurrentSyncAttachmentState().name()));
     });
 
     OnButtonClick onButtonClick=new OnButtonClick();
@@ -154,6 +160,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private void setupViewModelAndNavController(){
     syncViewModel=new ViewModelProvider(requireActivity()).get(SyncViewModel.class);
+    navController = Navigation.findNavController(requireView());
 
     syncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> {
       tvServerUrl.setText(s);
@@ -180,18 +187,23 @@ public class SyncFragment extends AbsSyncUIFragment {
     syncViewModel.getUsername().observe(getViewLifecycleOwner(), s -> tvUsername.setText(s));
 
     syncViewModel.getSyncAttachmentState().observe(getViewLifecycleOwner(), syncAttachmentState -> {
-      String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
-      int position=0;
+      if(navController.getCurrentDestination()!=null && navController.getCurrentDestination().getId()==R.id.syncFragment){
+        String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
+        int position=0;
 
-      for (int i = 0; i < syncAttachmentValues.length; ++i) {
-        if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
-          position=i;
-          break;
+        for (int i = 0; i < syncAttachmentValues.length; ++i) {
+          if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+            position=i;
+            break;
+          }
         }
-      }
 
-      String type=(String) acSyncType.getAdapter().getItem(position);
-      acSyncType.setText(type,false);
+        ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(requireActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
+        acSyncType.setAdapter(instanceAttachmentsAdapter);
+
+        String type=(String) acSyncType.getAdapter().getItem(position);
+        acSyncType.setText(type,false);
+      }
     });
   }
 
@@ -233,9 +245,8 @@ public class SyncFragment extends AbsSyncUIFragment {
     tvUsernameLabel.setVisibility(usernameVisible);
     tvUsername.setVisibility(usernameVisible);
 
-    inputSyncType.setEnabled(actionState);
-    acSyncType.setEnabled(actionState);
-    btnStartSync.setEnabled(actionState);
+    actionEnable = actionState;
+    perhapsEnableButtons();
   }
 
   private void onSyncStartBtnClick(){
@@ -280,6 +291,8 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   private void disableButtons() {
+    inputSyncType.setEnabled(false);
+    acSyncType.setEnabled(false);
     btnStartSync.setEnabled(false);
     btnResetServer.setEnabled(false);
   }
@@ -308,7 +321,9 @@ public class SyncFragment extends AbsSyncUIFragment {
     if (url == null || url.length() == 0) {
       disableButtons();
     } else {
-      btnStartSync.setEnabled(true);
+      inputSyncType.setEnabled(actionEnable);
+      acSyncType.setEnabled(actionEnable);
+      btnStartSync.setEnabled(actionEnable);
       btnResetServer.setEnabled(isTablesAdmin);
     }
 
@@ -405,7 +420,6 @@ public class SyncFragment extends AbsSyncUIFragment {
                   handler.post(new Runnable() {
                     @Override public void run() {
                       showOutcomeDialog(status, result);
-                      updatePropsOnSyncComplete(status);
                     }
                   });
                 }
@@ -481,7 +495,6 @@ public class SyncFragment extends AbsSyncUIFragment {
                   @Override public void run() {
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
-                      updatePropsOnSyncComplete(status);
                     } else {
                       handler.postDelayed(new Runnable() {
                         @Override public void run() {
@@ -507,12 +520,14 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException {
     removeAnySyncNotification();
+    SyncStatus syncStatus =syncServiceInterface.getSyncStatus(getAppName());
     boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
     if (!completed) {
       throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
     }
     perhapsEnableButtons();
     updateInterface();
+    performActionOnSyncComplete(syncStatus);
   }
 
   private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message, int progressStep, int maxStep) {
@@ -641,31 +656,58 @@ public class SyncFragment extends AbsSyncUIFragment {
     }
   }
 
-  private void updatePropsOnSyncComplete(SyncStatus status){
-    Map<String, String> properties=new HashMap<>();
-    switch (status){
-      case SERVER_IS_NOT_ODK_SERVER:{
-        properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,Boolean.toString(false));
+  private void performActionOnSyncComplete(SyncStatus syncStatus){
+    PropertiesSingleton props = getProps();
+    Map<String, String> properties= new HashMap<>();
+    switch (syncStatus) {
+      case SERVER_IS_NOT_ODK_SERVER: {
+        properties.putAll(UpdateServerSettingsFragment.getUpdateUrlProperties(syncViewModel.getUrl()));
+        props.setProperties(properties);
+        updateViewModelWithProps();
+
+        DialogInterface.OnClickListener onClickListener = (dialog, which) -> navController.navigate(R.id.updateServerSettingsFragmentS);
+        showAlertDialog(
+                "Server is not an ODK Server",
+                "Would you like to change the Server URL?",
+                onClickListener);
         break;
       }
-
       case AUTHENTICATION_ERROR:{
         properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-
-        if(syncViewModel.getUserState()==UserState.ANONYMOUS){
+        if(syncViewModel.getUserState() == UserState.ANONYMOUS){
           properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
           properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
-        }
-        else {
+          props.setProperties(properties);
+          updateViewModelWithProps();
+
+          DialogInterface.OnClickListener onClickListener = (dialog, which) -> {
+            ODKServicesPropertyUtils.clearActiveUser(getProps());
+            updateViewModelWithProps();
+          };
+
+          showAlertDialog("Server Does Not Support Anonymous",
+                  "Would you like to logout as Anonymous now?",
+                  onClickListener);
+        } else {
           properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+          props.setProperties(properties);
+          updateViewModelWithProps();
+
+          DialogInterface.OnClickListener onClickListener = (dialog, which) -> {
+            Intent signInIntent = new Intent(requireActivity(), LoginActivity.class);
+            signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+            signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_UPDATE_CREDENTIALS);
+            startActivity(signInIntent);
+          };
+
+          showAlertDialog("Invalid User Credentials",
+                  "Would you like to update the User Credentials?", onClickListener);
         }
         break;
       }
-
-      case SYNC_COMPLETE:
-      case SYNC_COMPLETE_PENDING_ATTACHMENTS: {
+      case SYNC_COMPLETE_PENDING_ATTACHMENTS:
+      case SYNC_COMPLETE:{
         properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
-
         if(syncViewModel.getUserState()==UserState.ANONYMOUS){
           properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
           properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
@@ -677,14 +719,23 @@ public class SyncFragment extends AbsSyncUIFragment {
         String timestamp = String.valueOf(System.currentTimeMillis());
         properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO,timestamp);
 
+        props.setProperties(properties);
+        updateViewModelWithProps();
         break;
       }
     }
-    updatePropertiesSingleton(properties);
   }
 
-  private void updatePropertiesSingleton(Map<String, String> properties){
-    getProps().setProperties(properties);
-    updateViewModelWithProps();
+  public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
+    androidx.appcompat.app.AlertDialog alertDialog = new androidx.appcompat.app.AlertDialog
+            .Builder(requireActivity())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Yes",onPositiveButtonClick)
+            .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+            .setCancelable(true)
+            .create();
+    alertDialog.setCanceledOnTouchOutside(true);
+    alertDialog.show();
   }
 }

@@ -148,7 +148,7 @@ public class ChooseSignInTypeFragment extends LoginFragment {
     }
 
     private void signInAsAnonymousUser() {
-        updatePropertiesSingleton(getAnonymousProperties());
+        getProps().setProperties(getAnonymousProperties());
         if (!loginViewModel.isAnonymousMethodUsed()) {
             promptToVerifyAnonymous();
         } else {

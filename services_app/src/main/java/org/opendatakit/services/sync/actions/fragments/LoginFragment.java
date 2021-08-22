@@ -16,18 +16,22 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.RemoteException;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.LoginActions;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
@@ -35,6 +39,7 @@ import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceAct
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
 import org.opendatakit.services.utilities.Constants;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.services.utilities.TableHealthValidator;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
@@ -273,6 +278,7 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
 
    void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException {
       removeAnySyncNotification();
+      SyncStatus syncStatus = syncServiceInterface.getSyncStatus(getAppName());
       boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
       if (!completed) {
          throw new IllegalStateException(
@@ -280,6 +286,7 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
       }
       perhapsEnableButtons();
       updateInterface();
+      performActionOnSyncComplete(syncStatus);
    }
 
    private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message,
@@ -318,7 +325,6 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
       if (loginViewModel.getCurrentAction() == LoginActions.IDLE) {
 
          disableButtons();
-         updateProps(status);
 
          String message;
          int id_title;
@@ -383,30 +389,54 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
       }
    }
 
-   private void updateProps(SyncStatus status){
-      Map<String ,String > properties=new HashMap<>();
-      switch (status){
+   private void performActionOnSyncComplete(SyncStatus syncStatus){
+      PropertiesSingleton props = getProps();
+      Map<String, String> properties= new HashMap<>();
+      switch (syncStatus){
          case SERVER_IS_NOT_ODK_SERVER:{
-            properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED,Boolean.toString(false));
+            properties.putAll(UpdateServerSettingsFragment.getUpdateUrlProperties(loginViewModel.getUrl()));
+            props.setProperties(properties);
+            updateViewModelWithProps();
+
+            DialogInterface.OnClickListener onClickListener = (dialog, which) -> navController.navigate(R.id.updateServerSettingsFragmentL);
+            showAlertDialog(
+                    "Server is not an ODK Server",
+                    "Would you like to change the Server URL?",
+                    onClickListener);
             break;
          }
          case AUTHENTICATION_ERROR:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
 
-            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
+            UserState userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState == UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
-               properties.put(CommonToolProperties.KEY_CURRENT_USER_STATE, UserState.LOGGED_OUT.name());
-            }
-            else {
+               props.setProperties(properties);
+               updateViewModelWithProps();
+
+               DialogInterface.OnClickListener onClickListener = (dialog, which) -> {
+                  ODKServicesPropertyUtils.clearActiveUser(getProps());
+                  updateViewModelWithProps();
+               };
+
+               showAlertDialog("Server Does Not Support Anonymous",
+                       "Would you like to logout as Anonymous now?",
+                       onClickListener);
+            } else {
                properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+               props.setProperties(properties);
+               updateViewModelWithProps();
             }
             break;
          }
          case SYNC_COMPLETE:{
             properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
 
-            if(loginViewModel.getUserState()==UserState.ANONYMOUS){
+            UserState userState = UserState.valueOf(props.getProperty(CommonToolProperties.KEY_CURRENT_USER_STATE));
+
+            if(userState==UserState.ANONYMOUS){
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
                properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
             }
@@ -414,14 +444,24 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
                properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(true));
             }
 
+            props.setProperties(properties);
+            updateViewModelWithProps();
+            requireActivity().finish();
             break;
          }
       }
-      updatePropertiesSingleton(properties);
    }
 
-   protected void updatePropertiesSingleton(Map<String, String> properties){
-      getProps().setProperties(properties);
-      updateViewModelWithProps();
+   public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
+      AlertDialog alertDialog = new AlertDialog
+              .Builder(requireActivity())
+              .setTitle(title)
+              .setMessage(message)
+              .setPositiveButton("Yes",onPositiveButtonClick)
+              .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+              .setCancelable(true)
+              .create();
+      alertDialog.setCanceledOnTouchOutside(true);
+      alertDialog.show();
    }
 }
