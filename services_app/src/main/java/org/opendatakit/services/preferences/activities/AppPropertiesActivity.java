@@ -194,51 +194,6 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     return true;
   }
 
-  /**
-   * If we are exiting the non-privileged settings screen and the user roles are not
-   * set, then prompt the user to verify user permissions or lose their changes
-   *
-   * Otherwise, exit the settings screen.
-   */
-  @Override
-  public void onBackPressed() {
-    if ( !mAdminMode ) {
-      String authType = mProps.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-      boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
-              getString(R.string.credential_type_none).equals(authType);
-      if ( mProps.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
-              !isAnonymous ) {
-
-        promptToVerifyCredentials();
-        return;
-      }
-    }
-    super.onBackPressed();
-  }
-
-  private void promptToVerifyCredentials() {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle(R.string.authenticate_credentials);
-    builder.setMessage(R.string.anonymous_warning);
-    builder.setPositiveButton(R.string.new_user, new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        // this will swap to the new activity and close this one
-        Intent i = new Intent(mActivity, VerifyServerSettingsActivity.class);
-        i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, mAppName);
-        startActivity(i);
-        dialog.dismiss();
-      }
-    });
-    builder.setNegativeButton(R.string.logout, new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        finish();
-        dialog.dismiss();
-      }
-    });
-    AlertDialog dialog = builder.create();
-    dialog.show();
-  }
-
   public String getAppName() {
     return mAppName;
   }
