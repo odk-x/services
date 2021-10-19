@@ -15,22 +15,16 @@
 package org.opendatakit.services.application;
 
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.util.Log;
-
-import androidx.multidex.MultiDexApplication;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.opendatakit.application.IToolAware;
-import org.opendatakit.logging.WebLogger;
+import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.services.R;
 
 import java.lang.ref.WeakReference;
 
-public final class Services extends MultiDexApplication implements IToolAware {
+public final class Services extends ToolAwareApplication implements IToolAware {
 
   private static final String t = Services.class.getSimpleName();
 
@@ -48,64 +42,6 @@ public final class Services extends MultiDexApplication implements IToolAware {
 
     analytics = FirebaseAnalytics.getInstance(this);
     analytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
-  }
-
-  @Override
-  public void onConfigurationChanged(Configuration newConfig) {
-    super.onConfigurationChanged(newConfig);
-    Log.i(t, "onConfigurationChanged");
-  }
-
-  @Override
-  public void onTerminate() {
-    WebLogger.closeAll();
-    super.onTerminate();
-    Log.i(t, "onTerminate");
-  }
-
-  /**
-   * The tool name is the name of the package after the org.opendatakit. prefix.
-   *
-   * @return the tool name.
-   */
-  @Override
-  public String getToolName() {
-    String packageName = getPackageName();
-    String[] parts = packageName.split("\\.");
-    return parts[2];
-  }
-
-  @Override
-  public String getVersionCodeString() {
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
-      return Integer.toString(versionNumber);
-    } catch (PackageManager.NameNotFoundException e) {
-      e.printStackTrace();
-      return "";
-    }
-  }
-
-  @Override
-  public String getVersionDetail() {
-    String versionDetail = "";
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      String versionName = pinfo.versionName;
-      versionDetail = " " + versionName;
-    } catch (PackageManager.NameNotFoundException e) {
-      e.printStackTrace();
-    }
-    return versionDetail;
-  }
-
-  @Override
-  public String getVersionedToolName() {
-    String versionDetail = this.getVersionDetail();
-    return getString(getApkDisplayNameResourceId()) + versionDetail;
   }
 
   @Deprecated public static Context _please_dont_use_getInstance() {
