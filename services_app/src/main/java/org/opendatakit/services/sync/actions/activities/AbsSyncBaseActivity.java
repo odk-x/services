@@ -317,7 +317,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
       builder.setMessage(message);
       builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
          public void onClick(DialogInterface dialog, int id) {
-            activity.finish();
+//            activity.finish();
             dialog.dismiss();
          }
       });
