@@ -326,6 +326,41 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<TableResource>();
     }
 
+    // Fail if local table schemaETags don't match those on the server
+    if (!pushToServer) {
+      try {
+        db = sc.getDatabase();
+        for (TableResource table : tables) {
+          if (localTableIds.contains(table.getTableId())) {
+            TableDefinitionEntry entry = sc.getDatabaseService().getTableDefinitionEntry(
+                sc.getAppName(), db, table.getTableId());
+            if (!table.getSchemaETag().equals(entry.getSchemaETag())) {
+              sc.setAppLevelSyncOutcome(SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
+              log.e(TAG,
+                  "[synchronizeConfigurationAndContent] schemaETag on server does not match " +
+                      "local table");
+              return new ArrayList<TableResource>();
+            }
+          }
+        }
+      } catch (Exception e) {
+        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+        log.e(TAG,
+            "[synchronizeConfigurationAndContent] exception getting local table definition" +
+                " entry: " + e.toString());
+        return new ArrayList<TableResource>();
+      } finally {
+        if (db != null) {
+          try {
+            sc.releaseDatabase(db);
+          } finally {
+            db = null;
+          }
+        }
+      }
+    }
+
+
     // Figure out how many major steps there are to the sync
     {
       Set<String> uniqueTableIds = new HashSet<String>();
