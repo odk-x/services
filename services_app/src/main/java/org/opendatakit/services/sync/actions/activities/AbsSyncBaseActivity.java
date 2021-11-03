@@ -40,6 +40,7 @@ import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.logging.desktop.WebLoggerDesktopFactoryImpl;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
@@ -317,7 +318,9 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
       builder.setMessage(message);
       builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
          public void onClick(DialogInterface dialog, int id) {
-            activity.finish();
+            if (activity instanceof VerifyServerSettingsActivity){
+               activity.finish();
+            }
             dialog.dismiss();
          }
       });
