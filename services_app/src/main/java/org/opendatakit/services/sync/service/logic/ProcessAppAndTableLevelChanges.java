@@ -244,15 +244,6 @@ public class ProcessAppAndTableLevelChanges {
       return new ArrayList<>();
     }
 
-    // set device properties to cause all ODK tools to re-run their initialization tasks.
-    sc.setAllToolsToReInitialize();
-
-    // Everything was successful-enough to warrant deleting any sync
-    // ETags from syncing to a different server. This ensures that we
-    // only ever have the sync etags from the current server in case
-    // the user is switching servers for some reason.
-    manifestProcessor.deleteAllSyncETagsExceptForCurrentServer();
-
     sc.updateNotification(SyncProgressState.STARTING,
             R.string.sync_retrieving_tables_list_from_server, null, 0.0, false);
 
@@ -328,38 +319,29 @@ public class ProcessAppAndTableLevelChanges {
 
     // Fail if local table schemaETags don't match those on the server
     if (!pushToServer) {
-      try {
-        db = sc.getDatabase();
-        for (TableResource table : tables) {
-          if (localTableIds.contains(table.getTableId())) {
-            TableDefinitionEntry entry = sc.getDatabaseService().getTableDefinitionEntry(
-                sc.getAppName(), db, table.getTableId());
-            if (!table.getSchemaETag().equals(entry.getSchemaETag())) {
-              sc.setAppLevelSyncOutcome(SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
-              log.e(TAG,
-                  "[synchronizeConfigurationAndContent] schemaETag on server does not match " +
-                      "local table");
-              return new ArrayList<TableResource>();
-            }
-          }
-        }
-      } catch (Exception e) {
-        sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
-        log.e(TAG,
-            "[synchronizeConfigurationAndContent] exception getting local table definition" +
-                " entry: " + e.toString());
+      boolean matched = doDeviceTableSchemaETagsMatchServerETags(tables, localTableIds, db);
+      if (!matched) {
         return new ArrayList<TableResource>();
-      } finally {
-        if (db != null) {
-          try {
-            sc.releaseDatabase(db);
-          } finally {
-            db = null;
-          }
-        }
       }
     }
 
+    // Only initialize if app level file manifest or table level file manifest is different from
+    // server
+    boolean initializeTools = true;
+    if (!pushToServer) {
+      initializeTools = shouldInitializeAllTools(tableList, tables);
+    }
+
+    if (initializeTools) {
+      // set device properties to cause all ODK tools to re-run their initialization tasks.
+      sc.setAllToolsToReInitialize();
+
+      // Everything was successful-enough to warrant deleting any sync
+      // ETags from syncing to a different server. This ensures that we
+      // only ever have the sync etags from the current server in case
+      // the user is switching servers for some reason.
+      manifestProcessor.deleteAllSyncETagsExceptForCurrentServer();
+    }
 
     // Figure out how many major steps there are to the sync
     {
@@ -647,6 +629,63 @@ public class ProcessAppAndTableLevelChanges {
     // be sure we sort them alphabetically...
     Collections.sort(workingListOfTables);
     return workingListOfTables;
+  }
+
+  private boolean doDeviceTableSchemaETagsMatchServerETags(List<TableResource> tables,
+                                                           List<String> localTableIds, DbHandle db)
+      throws ServicesAvailabilityException {
+    try {
+      db = sc.getDatabase();
+      for (TableResource table : tables) {
+        if (localTableIds.contains(table.getTableId())) {
+          TableDefinitionEntry entry = sc.getDatabaseService().getTableDefinitionEntry(
+              sc.getAppName(), db, table.getTableId());
+          if (!table.getSchemaETag().equals(entry.getSchemaETag())) {
+            sc.setAppLevelSyncOutcome(SyncOutcome.TABLE_SCHEMA_COLUMN_DEFINITION_MISMATCH);
+            log.e(TAG,
+                "[synchronizeConfigurationAndContent] schemaETag on server does not match " +
+                    "local table");
+            return false;
+          }
+        }
+      }
+    } catch (Exception e) {
+      sc.setAppLevelSyncOutcome(sc.exceptionEquivalentOutcome(e));
+      log.e(TAG,
+          "[synchronizeConfigurationAndContent] exception getting local table definition" +
+              " entry: " + e.toString());
+      return false;
+    } finally {
+      if (db != null) {
+        sc.releaseDatabase(db);
+      }
+    }
+    return true;
+  }
+
+  private boolean shouldInitializeAllTools(TableResourceList tableList, List<TableResource> tables)
+      throws ServicesAvailabilityException {
+    String appLevelManifest = null;
+    if (tableList != null && tableList.getAppLevelManifestETag() != null) {
+      appLevelManifest = tableList.getAppLevelManifestETag();
+    }
+
+    if (appLevelManifest == null) {
+      return true;
+    } else if (!appLevelManifest.equals(manifestProcessor.getManifestSyncETag(null))) {
+      return true;
+    }
+
+    for (TableResource table : tables) {
+      String tableLevelManifest = table.getTableLevelManifestETag();
+      if (tableLevelManifest == null) {
+        return true;
+      } else if (!tableLevelManifest.equals(
+          manifestProcessor.getManifestSyncETag(table.getTableId()))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
