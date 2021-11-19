@@ -15,11 +15,15 @@
         <item>UPLOAD</item>
         <item>DOWNLOAD</item>
         <item>NONE</item>
+        <item>REDUCED_DOWNLOAD</item>
+        <item>SYNC_WITH_REDUCED_DOWNLOAD</item>
     </string-array>
     <string-array name="sync_attachment_option_names">
         <item>Sincronizar Todos</item>
         <item>Solo enviar archivos (imágenes, audio, video) al servidor</item>
         <item>Solo recibir archivos (imágenes, audio, video) del servidor</item>
         <item>No sincronizar archivos</item>
+        <item>Solo recibir archivos (imágenes, audio, video) del servidor, con los imagenes mas pequeno de normal</item>
+        <item>Sincronizar Todos, pero recibir imagenes mas pequeno de normal</item>
     </string-array>
 </resources>

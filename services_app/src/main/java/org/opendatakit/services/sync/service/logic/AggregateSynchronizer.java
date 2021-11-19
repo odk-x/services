@@ -715,6 +715,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
       String tableId, String instanceId, SyncAttachmentState attachmentState,
       String lastKnownLocalRowLevelManifestETag)
       throws HttpClientWebException, IOException {
+    android.os.Debug.waitForDebugger();
 
     URI instanceFileManifestUri =
         wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, instanceId);
@@ -1052,7 +1053,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
 
   @Override
   public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
-      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException {
+      String serverInstanceFileUri, String instanceId, String tableId, boolean reduceImageSize) throws HttpClientWebException, IOException {
     // boolean downloadedAllFiles = true;
 
     URI instanceFilesDownloadUri = wrapper.constructInstanceFileBulkDownloadUri(serverInstanceFileUri, instanceId);

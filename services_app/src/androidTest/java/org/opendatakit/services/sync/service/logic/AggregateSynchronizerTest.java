@@ -1375,7 +1375,7 @@ public class AggregateSynchronizerTest {
      synchronizer.uploadInstanceFile(destFile2, cat2.instanceFileDownloadUri);
 
       synchronizer.downloadInstanceFileBatch(listOfCats, testTableRes.getInstanceFilesUri(),
-          rowId, testTableId);
+          rowId, testTableId, false);
 
       synchronizer.deleteTable(testTableRes);
 

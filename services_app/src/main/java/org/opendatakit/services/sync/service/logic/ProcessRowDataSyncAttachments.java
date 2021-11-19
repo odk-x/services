@@ -111,9 +111,6 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
       try {
         db = sc.getDatabase();
 
-
-
-
         // We need to create a temporary table and fill it with all the IDs of
         // the rows that may have attachments that should be sync'd to the server.
         //
@@ -300,10 +297,16 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               case SYNC:
                 idString = R.string.sync_syncing_attachments_server_row;
                 break;
+              case SYNC_WITH_REDUCED_DOWNLOAD:
+                idString = R.string.sync_syncing_attachments_server_row;
+                break;
               case UPLOAD:
                 idString = R.string.sync_uploading_attachments_server_row;
                 break;
               case DOWNLOAD:
+                idString = R.string.sync_downloading_attachments_server_row;
+                break;
+              case REDUCED_DOWNLOAD:
                 idString = R.string.sync_downloading_attachments_server_row;
                 break;
               }
