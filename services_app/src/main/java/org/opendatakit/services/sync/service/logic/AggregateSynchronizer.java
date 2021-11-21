@@ -1062,6 +1062,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     for (CommonFileAttachmentTerms cat : filesToDownload) {
       OdkTablesFileManifestEntry entry = new OdkTablesFileManifestEntry();
       entry.filename = cat.rowPathUri;
+      entry.reduceImage = String.valueOf(reduceImageSize);
       entries.add(entry);
     }
 

@@ -797,7 +797,6 @@ class ProcessManifestContentAndFileChanges {
         // remove from the list -- anything left over is orphaned or needs to be
         // pushed up to the server because the server doesn't know about it.
         uriFragments.remove(entry.filename);
-
         CommonFileAttachmentTerms cat = sc.getSynchronizer().createCommonFileAttachmentTerms(
             serverInstanceFileUri, tableId, instanceId, entry.filename);
 
