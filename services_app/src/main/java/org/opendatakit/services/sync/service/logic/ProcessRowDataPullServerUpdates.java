@@ -98,7 +98,7 @@ class ProcessRowDataPullServerUpdates extends ProcessRowDataSharedBase {
       RowResourceList rows) throws IOException, ServicesAvailabilityException {
     String tableId = tableResource.getTableId();
     TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
-
+    //android.os.Debug.waitForDebugger();
     if (rows.getRows().isEmpty()) {
       // nothing here -- let caller determine whether we are done or
       // whether we need to issue another request to the server.

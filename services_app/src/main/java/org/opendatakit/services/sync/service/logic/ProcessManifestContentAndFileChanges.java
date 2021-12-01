@@ -871,6 +871,7 @@ class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to send to server -- they are all synced");
       fullySyncedUploads = true;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
+        attachmentState.equals(SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) ||
         attachmentState.equals(SyncAttachmentState.UPLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
@@ -906,6 +907,7 @@ class ProcessManifestContentAndFileChanges {
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to fetch from server -- they are all synced");
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
+        attachmentState.equals(SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) ||
         attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
@@ -963,7 +965,7 @@ class ProcessManifestContentAndFileChanges {
       }
     }
 
-    if ( fullySyncedUploads && fullySyncedDownloads ) {
+    if ( fullySyncedUploads && fullySyncedDownloads && attachmentState != SyncAttachmentState.REDUCED_DOWNLOAD && attachmentState != SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD ) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
       return true;
     } else {

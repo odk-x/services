@@ -88,7 +88,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
       TableDefinitionEntry te, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
-
+    //android.os.Debug.waitForDebugger();
     // Prepare the tableLevelResult.
     String tableId = te.getTableId();
     TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
