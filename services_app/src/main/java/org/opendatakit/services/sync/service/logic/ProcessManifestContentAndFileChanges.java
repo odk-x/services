@@ -965,8 +965,12 @@ class ProcessManifestContentAndFileChanges {
       }
     }
 
-    if ( fullySyncedUploads && fullySyncedDownloads && attachmentState != SyncAttachmentState.REDUCED_DOWNLOAD && attachmentState != SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD ) {
+    if (fullySyncedUploads && fullySyncedDownloads) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
+      if (attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) {
+        log.i(LOGTAG, "syncRowLevelFileAttachments Involved reduced download, returned false");
+        return false;
+      }
       return true;
     } else {
       // we are fully sync'd if we were able to fully sync both the uploads and the downloads
