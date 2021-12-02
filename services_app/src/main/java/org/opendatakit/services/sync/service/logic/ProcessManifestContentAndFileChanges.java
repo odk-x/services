@@ -904,6 +904,7 @@ class ProcessManifestContentAndFileChanges {
       fullySyncedUploads = true;
     }
     // 5) Download the files from the server
+    boolean atleast1Download = false;
     if (filesToDownloadSizes.isEmpty()){
       log.i(LOGTAG, "syncRowLevelFileAttachments no files to fetch from server -- they are all synced");
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
@@ -911,6 +912,7 @@ class ProcessManifestContentAndFileChanges {
         attachmentState.equals(SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) ||
         attachmentState.equals(SyncAttachmentState.DOWNLOAD) ||
         attachmentState.equals(SyncAttachmentState.REDUCED_DOWNLOAD)) {
+      atleast1Download = true;
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
 
@@ -970,7 +972,7 @@ class ProcessManifestContentAndFileChanges {
 
     if ( fullySyncedUploads && fullySyncedDownloads ) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
-      if ( attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD ) {
+      if ( attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD && atleast1Download ) {
         log.i(LOGTAG, "syncRowLevelFileAttachments Involved reduced download, returned false");
         return false;
       }
