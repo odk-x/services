@@ -717,7 +717,7 @@ class ProcessManifestContentAndFileChanges {
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws HttpClientWebException,
       IOException, ServicesAvailabilityException  {
-    android.os.Debug.waitForDebugger(); //TODO
+    //android.os.Debug.waitForDebugger(); //TODO
     // list of local non-null uriFragment field values
     ArrayList<String> uriFragments = new ArrayList<String>();
 
@@ -909,7 +909,8 @@ class ProcessManifestContentAndFileChanges {
       fullySyncedDownloads = !impossibleToFullySyncDownloadsServerMissingFileToDownload;
     } else if (attachmentState.equals(SyncAttachmentState.SYNC) ||
         attachmentState.equals(SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) ||
-        attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
+        attachmentState.equals(SyncAttachmentState.DOWNLOAD) ||
+        attachmentState.equals(SyncAttachmentState.REDUCED_DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
 
