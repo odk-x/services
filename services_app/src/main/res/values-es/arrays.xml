@@ -23,7 +23,7 @@
         <item>Solo enviar archivos (imágenes, audio, video) al servidor</item>
         <item>Solo recibir archivos (imágenes, audio, video) del servidor</item>
         <item>No sincronizar archivos</item>
-        <item>Solo recibir archivos (imágenes, audio, video) del servidor, con los imagenes mas pequeno de normal</item>
-        <item>Sincronizar Todos, pero recibir imagenes mas pequeno de normal</item>
+        <item>Solo recibir archivos (imágenes (pequeño), audio, video) al servidor</item>
+        <item>Sincronizar Todos, recibir imágenes pequeño</item>
     </string-array>
 </resources>
