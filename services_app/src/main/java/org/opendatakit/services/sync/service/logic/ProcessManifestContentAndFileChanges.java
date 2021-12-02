@@ -703,7 +703,7 @@ class ProcessManifestContentAndFileChanges {
    * the server. Based upon that and the attachmentState actions, it determines
    * whether the row can be transitioned into the synced state (from synced_pending_files).
    *
-   * @param serverInstanceFileUri does not identify a file on a server
+   * @param serverInstanceFileUri Note that this does not identify a file on a server
    * @param tableId
    * @param localRow
    * @param attachmentState
@@ -717,8 +717,7 @@ class ProcessManifestContentAndFileChanges {
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws HttpClientWebException,
       IOException, ServicesAvailabilityException  {
-    android.os.Debug.waitForDebugger();
-  //TODO (omkar) attachmentState always either synced_pending_files or none?
+    android.os.Debug.waitForDebugger(); //TODO
     // list of local non-null uriFragment field values
     ArrayList<String> uriFragments = new ArrayList<String>();
 
@@ -797,6 +796,7 @@ class ProcessManifestContentAndFileChanges {
         // remove from the list -- anything left over is orphaned or needs to be
         // pushed up to the server because the server doesn't know about it.
         uriFragments.remove(entry.filename);
+
         CommonFileAttachmentTerms cat = sc.getSynchronizer().createCommonFileAttachmentTerms(
             serverInstanceFileUri, tableId, instanceId, entry.filename);
 
@@ -814,6 +814,7 @@ class ProcessManifestContentAndFileChanges {
           if (cat.localFile.exists()) {
             // Check if the server and local versions match
             String localMd5 = ODKFileUtils.getMd5Hash(sc.getAppName(), cat.localFile);
+
             if (attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD
               || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) {
               if (!(localMd5.equals(entry.md5hash) || localMd5.equals(entry.reducedImageMd5Hash))) {
@@ -911,6 +912,7 @@ class ProcessManifestContentAndFileChanges {
         attachmentState.equals(SyncAttachmentState.DOWNLOAD)) {
       long batchSize = 0;
       List<CommonFileAttachmentTerms> batch = new LinkedList<CommonFileAttachmentTerms>();
+
       boolean reduceImageSize = attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD ||
               attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD;
       for (CommonFileAttachmentTerms fileAttachment : filesToDownloadSizes.keySet()) {
@@ -965,9 +967,9 @@ class ProcessManifestContentAndFileChanges {
       }
     }
 
-    if (fullySyncedUploads && fullySyncedDownloads) {
+    if ( fullySyncedUploads && fullySyncedDownloads ) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
-      if (attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) {
+      if ( attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD ) {
         log.i(LOGTAG, "syncRowLevelFileAttachments Involved reduced download, returned false");
         return false;
       }

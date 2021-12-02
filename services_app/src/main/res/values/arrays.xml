@@ -23,7 +23,7 @@
         <item>Upload Attachments Only</item>
         <item>Download Attachments Only</item>
         <item>Do Not Sync Attachments</item>
-        <item>Download All Attachments Only, Reducing Size of Images Before Download</item>
-        <item>Fully Sync Attachments, Reducing Size of Images Before Download</item>
+        <item>Download Attachments Only, Imgs Reduced Size</item>
+        <item>Fully Sync Attachments, Download Reduced Imgs</item>
     </string-array>
 </resources>
