@@ -717,7 +717,7 @@ class ProcessManifestContentAndFileChanges {
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws HttpClientWebException,
       IOException, ServicesAvailabilityException  {
-    //android.os.Debug.waitForDebugger(); //TODO
+    // android.os.Debug.waitForDebugger(); //TODO
     // list of local non-null uriFragment field values
     ArrayList<String> uriFragments = new ArrayList<String>();
 
@@ -972,7 +972,7 @@ class ProcessManifestContentAndFileChanges {
 
     if ( fullySyncedUploads && fullySyncedDownloads ) {
       log.i(LOGTAG, "syncRowLevelFileAttachments SUCCESS syncing file attachments for " + instanceId);
-      if ( attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD && atleast1Download ) {
+      if ( (attachmentState == SyncAttachmentState.REDUCED_DOWNLOAD || attachmentState == SyncAttachmentState.SYNC_WITH_REDUCED_DOWNLOAD) && atleast1Download ) {
         log.i(LOGTAG, "syncRowLevelFileAttachments Involved reduced download, returned false");
         return false;
       }
