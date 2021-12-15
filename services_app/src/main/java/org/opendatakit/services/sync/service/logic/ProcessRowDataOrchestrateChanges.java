@@ -140,7 +140,7 @@ public class ProcessRowDataOrchestrateChanges {
    * @throws ServicesAvailabilityException
    */
   public void synchronizeDataRowsAndAttachments(List<TableResource> workingListOfTables,
-      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
+      SyncAttachmentState attachmentState, SyncAttachmentState prevAttachmentState) throws ServicesAvailabilityException {
     log.i(TAG, "entered synchronizeDataRowsAndAttachments()");
 
     DbHandle db = null;
@@ -167,7 +167,7 @@ public class ProcessRowDataOrchestrateChanges {
       }
 
       synchronizeTableDataRowsAndAttachments(te, orderedDefns, displayName,
-          attachmentState);
+          attachmentState, prevAttachmentState);
 
       // report our table-level sync status up to the server.
       TableLevelResult tlr = sc.getTableLevelResult(tableId);
@@ -240,7 +240,7 @@ public class ProcessRowDataOrchestrateChanges {
    */
   private void synchronizeTableDataRowsAndAttachments(
       TableDefinitionEntry te, OrderedColumns orderedColumns, String displayName,
-      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
+      SyncAttachmentState attachmentState, SyncAttachmentState prevAttachmentState) throws ServicesAvailabilityException {
 
     ArrayList<ColumnDefinition> fileAttachmentColumns = new ArrayList<ColumnDefinition>();
     for (ColumnDefinition cd : orderedColumns.getColumnDefinitions()) {
@@ -335,7 +335,7 @@ public class ProcessRowDataOrchestrateChanges {
         if (!refreshFromServer) {
           try {
             syncAttachmentsProcessor
-                .syncAttachments(tableResource, te, orderedColumns, fileAttachmentColumns, attachmentState);
+                .syncAttachments(tableResource, te, orderedColumns, fileAttachmentColumns, attachmentState, prevAttachmentState);
           } catch (Exception e) {
             exception("synchronizeTableDataRowsAndAttachments -  syncing attachments with server", tableId, e,
                 tableLevelResult);

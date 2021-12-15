@@ -29,6 +29,8 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
@@ -52,12 +54,13 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
   private static final double minPercentage = 75.0;
   private static final double maxPercentage = 100.0;
-
+  private PropertiesSingleton properties;
   private final ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataSyncAttachments(SyncExecutionContext sharedContext) {
     super(sharedContext);
     this.manifestProcessor = new ProcessManifestContentAndFileChanges(sc);
+//    this.properties = CommonToolProperties.get(this.getContext(),getAppName());
     setUpdateNotificationBounds(minPercentage, maxPercentage, 1);
   }
 
@@ -87,7 +90,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
   public void syncAttachments(TableResource tableResource,
       TableDefinitionEntry te, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
-      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
+      SyncAttachmentState attachmentState, SyncAttachmentState prevAttachmentState) throws ServicesAvailabilityException {
 
     //android.os.Debug.waitForDebugger(); TODO
     // Prepare the tableLevelResult.
@@ -138,8 +141,14 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
 
         String sqlCommand;
-        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
-            SyncState.synced_pending_files.name() });
+        BindArgs bindArgs;
+        if (SyncAttachmentState.involvesReducedImgDownload(prevAttachmentState) && SyncAttachmentState.involvesFullSizeImgDownload(attachmentState)) {
+          bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+                  SyncState.synced_pending_files.name(), SyncState.synced.name() });
+        } else {
+          bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+                  SyncState.synced_pending_files.name(), SyncState.synced_pending_files.name() });
+        }
 
         {
           StringBuilder sqlCommandBuilder = new StringBuilder();
@@ -147,7 +156,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               .append(" (").append(ID_COLUMN).append(" ) SELECT DISTINCT ")
               .append(DataTableColumns.ID).append(" FROM ").append(tableId)
               .append(" WHERE ")
-              .append(DataTableColumns.SYNC_STATE).append(" IN (?, ?) AND ")
+              .append(DataTableColumns.SYNC_STATE).append(" IN (?, ?, ?) AND ")
               .append(DataTableColumns.ID).append(" NOT IN (SELECT DISTINCT ")
               .append(DataTableColumns.ID).append(" FROM ").append(tableId).append(" WHERE ")
               .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NULL)");
@@ -245,7 +254,9 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                 // anything and never update the state to synced (it must stay in in_conflict)
                 syncAttachments = true;
               }
-            } else if (state == SyncState.synced_pending_files) {
+            } else if (state == SyncState.synced_pending_files ||
+                    (state == SyncState.synced &&
+                            SyncAttachmentState.involvesReducedImgDownload(prevAttachmentState) && SyncAttachmentState.involvesFullSizeImgDownload(attachmentState))) { //
               // if we succeed in fetching and deleting the local files to match the server
               // then update the state to synced.
               syncAttachments = true;
@@ -255,7 +266,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               // And try to push the file attachments...
               try {
                 boolean outcome = true;
-
+                // filteredAttachmentState is never used. If
                 SyncAttachmentState filteredAttachmentState = (state == SyncState.in_conflict ?
                     SyncAttachmentState.DOWNLOAD :
                     attachmentState);
