@@ -1086,7 +1086,7 @@ class ProcessManifestContentAndFileChanges {
    * @return
    * @throws ServicesAvailabilityException
    */
-  private String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
+  public String getManifestSyncETag(String tableId) throws ServicesAvailabilityException {
 
     URI fileManifestUri;
 
