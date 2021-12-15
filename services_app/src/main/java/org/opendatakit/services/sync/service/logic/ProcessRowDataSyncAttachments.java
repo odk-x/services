@@ -54,13 +54,12 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
   private static final double minPercentage = 75.0;
   private static final double maxPercentage = 100.0;
-  private PropertiesSingleton properties;
+
   private final ProcessManifestContentAndFileChanges manifestProcessor;
 
   public ProcessRowDataSyncAttachments(SyncExecutionContext sharedContext) {
     super(sharedContext);
     this.manifestProcessor = new ProcessManifestContentAndFileChanges(sc);
-//    this.properties = CommonToolProperties.get(this.getContext(),getAppName());
     setUpdateNotificationBounds(minPercentage, maxPercentage, 1);
   }
 
@@ -92,7 +91,6 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState, SyncAttachmentState prevAttachmentState) throws ServicesAvailabilityException {
 
-    //android.os.Debug.waitForDebugger(); TODO
     // Prepare the tableLevelResult.
     String tableId = te.getTableId();
     TableLevelResult tableLevelResult = sc.getTableLevelResult(tableId);
@@ -143,9 +141,12 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
         String sqlCommand;
         BindArgs bindArgs;
         if (SyncAttachmentState.involvesReducedImgDownload(prevAttachmentState) && SyncAttachmentState.involvesFullSizeImgDownload(attachmentState)) {
+          // If the previous involved a reduced download and the curr involves a full download,
+          // we need to consider files that are in the "synced" state.
           bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
                   SyncState.synced_pending_files.name(), SyncState.synced.name() });
         } else {
+          // Add synced_pending_files twice to match sql query
           bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
                   SyncState.synced_pending_files.name(), SyncState.synced_pending_files.name() });
         }
@@ -266,7 +267,6 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               // And try to push the file attachments...
               try {
                 boolean outcome = true;
-                // filteredAttachmentState is never used. If
                 SyncAttachmentState filteredAttachmentState = (state == SyncState.in_conflict ?
                     SyncAttachmentState.DOWNLOAD :
                     attachmentState);

@@ -174,8 +174,7 @@ public class AppSynchronizer {
       this.onlyVerifySettings = true;
       this.push = false;
       this.attachmentState = SyncAttachmentState.NONE;
-      //android.os.Debug.waitForDebugger(); todo omkar
-      properties = CommonToolProperties.get(context,appName);
+      this.properties = CommonToolProperties.get(context, appName);
     }
 
     public SyncTask(Context context, String versionCodeString, boolean push, SyncAttachmentState attachmentState) {
@@ -184,9 +183,7 @@ public class AppSynchronizer {
       this.onlyVerifySettings = false;
       this.push = push;
       this.attachmentState = attachmentState;
-      //android.os.Debug.waitForDebugger(); todo omkar
-
-      properties = CommonToolProperties.get(context,appName);
+      this.properties = CommonToolProperties.get(context, appName);
     }
 
     @Override
@@ -324,7 +321,8 @@ public class AppSynchronizer {
           // and now sync the data rows. This does not proceed if there
           // was an app-level sync failure or if the particular tableId
           // experienced a table-level sync failure in the preceeding step.
-          android.os.Debug.waitForDebugger();
+
+          android.os.Debug.waitForDebugger(); //todo (omkar) remove this.
           String prevDownloadAttachmentStateStr = properties.getProperty(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE);
           SyncAttachmentState prevDownloadAttachmentState = SyncAttachmentState.valueOf(prevDownloadAttachmentStateStr);
           try {

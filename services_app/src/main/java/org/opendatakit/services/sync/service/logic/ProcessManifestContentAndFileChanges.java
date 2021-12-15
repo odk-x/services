@@ -717,7 +717,8 @@ class ProcessManifestContentAndFileChanges {
       ArrayList<ColumnDefinition> fileAttachmentColumns,
       SyncAttachmentState attachmentState) throws HttpClientWebException,
       IOException, ServicesAvailabilityException  {
-    // android.os.Debug.waitForDebugger(); //TODO
+
+
     // list of local non-null uriFragment field values
     ArrayList<String> uriFragments = new ArrayList<String>();
 

@@ -715,7 +715,6 @@ public class AggregateSynchronizer implements HttpSynchronizer {
       String tableId, String instanceId, SyncAttachmentState attachmentState,
       String lastKnownLocalRowLevelManifestETag)
       throws HttpClientWebException, IOException {
-    //android.os.Debug.waitForDebugger(); TODO
 
     URI instanceFileManifestUri =
         wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, instanceId);
