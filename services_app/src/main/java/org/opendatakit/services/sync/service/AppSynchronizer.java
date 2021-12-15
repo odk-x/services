@@ -326,16 +326,11 @@ public class AppSynchronizer {
           // experienced a table-level sync failure in the preceeding step.
           android.os.Debug.waitForDebugger();
           String prevDownloadAttachmentStateStr = properties.getProperty(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE);
-          SyncAttachmentState prevDownloadAttachmentState = SyncAttachmentState.NONE;
-          if (prevDownloadAttachmentStateStr != null) {
-            prevDownloadAttachmentState = SyncAttachmentState.valueOf(prevDownloadAttachmentStateStr);
-          }
-          boolean newPrevAttachmentStateSet = false;
+          SyncAttachmentState prevDownloadAttachmentState = SyncAttachmentState.valueOf(prevDownloadAttachmentStateStr);
           try {
             rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState, prevDownloadAttachmentState);
             if (SyncAttachmentState.involvesDownload(attachmentState)) {
               properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE, attachmentState.name()));
-              newPrevAttachmentStateSet = true;
             }
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
@@ -347,11 +342,7 @@ public class AppSynchronizer {
                 tlr.setSyncOutcome(SyncOutcome.FAILURE);
               }
             }
-            if (!newPrevAttachmentStateSet && SyncAttachmentState.involvesDownload()) {
-              properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE, SyncAttachmentState.NONE.name()));
-            }
           }
-
         }
       } catch (AccessDeniedException e) {
         syncResult.setAppLevelSyncOutcome(SyncOutcome.ACCESS_DENIED_REAUTH_EXCEPTION);
