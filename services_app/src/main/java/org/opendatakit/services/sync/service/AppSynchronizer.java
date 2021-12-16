@@ -322,7 +322,6 @@ public class AppSynchronizer {
           // was an app-level sync failure or if the particular tableId
           // experienced a table-level sync failure in the preceeding step.
 
-          android.os.Debug.waitForDebugger(); //todo (omkar) remove this.
           String prevDownloadAttachmentStateStr = properties.getProperty(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE);
           SyncAttachmentState prevDownloadAttachmentState = SyncAttachmentState.valueOf(prevDownloadAttachmentStateStr);
           try {
