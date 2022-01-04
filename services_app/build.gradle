@@ -129,6 +129,7 @@ dependencies {
 
     implementation group: 'com.google.zxing', name: 'core', version: '3.3.0'
     implementation group: 'com.journeyapps', name: 'zxing-android-embedded', version: '3.5.0'
+    implementation 'androidx.test:core:1.4.0'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
