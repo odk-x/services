@@ -63,6 +63,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Permissions tests in the database.
@@ -247,7 +248,7 @@ public class AbstractPermissionsTestCase {
   protected OrderedColumns assertEmptyTestTable(String tableId, boolean isLocked,
       boolean anonymousCanCreate, String defaultAccess) {
 
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     // arbitrary type derived from integer
     columns.add(new Column("col0", "col0", "myothertype:integer", "[]"));
     // primitive types
@@ -278,7 +279,7 @@ public class AbstractPermissionsTestCase {
 
     OrderedColumns orderedColumns;
     try {
-      List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+      List<KeyValueStoreEntry> metaData = new ArrayList<>();
       KeyValueStoreEntry entry;
 
       entry = KeyValueStoreUtils.buildEntry( tableId,
@@ -344,29 +345,35 @@ public class AbstractPermissionsTestCase {
         SyncState.deleted.name() : SyncState.changed.name()));
 
     RowFilterScope.Access localType;
-    if ( rowId.equals(rowIdFullNull) ) {
-      localType = RowFilterScope.Access.FULL;
-      cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-      cvValues.putNull(DataTableColumns.ROW_OWNER);
-    } else if ( rowId.equals(rowIdFullCommon) ) {
-      localType = RowFilterScope.Access.FULL;
-      cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-      cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-    } else if ( rowId.equals(rowIdHiddenCommon) ) {
-      localType = RowFilterScope.Access.HIDDEN;
-      cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-      cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-    } else if ( rowId.equals(rowIdReadOnlyCommon) ) {
-      localType = RowFilterScope.Access.READ_ONLY;
-      cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-      cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-    } else if ( rowId.equals(rowIdModifyCommon) ) {
-      localType = RowFilterScope.Access.MODIFY;
-      cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-      cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-    } else {
-      throw new IllegalArgumentException("unexpected rowId value");
-    }
+      switch (rowId) {
+          case rowIdFullNull:
+              localType = RowFilterScope.Access.FULL;
+              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+              cvValues.putNull(DataTableColumns.ROW_OWNER);
+              break;
+          case rowIdFullCommon:
+              localType = RowFilterScope.Access.FULL;
+              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+              break;
+          case rowIdHiddenCommon:
+              localType = RowFilterScope.Access.HIDDEN;
+              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+              break;
+          case rowIdReadOnlyCommon:
+              localType = RowFilterScope.Access.READ_ONLY;
+              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+              break;
+          case rowIdModifyCommon:
+              localType = RowFilterScope.Access.MODIFY;
+              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+              break;
+          default:
+              throw new IllegalArgumentException("unexpected rowId value");
+      }
 
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
     cvValues.putNull(DataTableColumns.GROUP_READ_ONLY);
@@ -600,7 +607,7 @@ public class AbstractPermissionsTestCase {
 
   protected void assertRowInSyncStateTestTable(String tableId,
       OrderedColumns orderedColumns,
-      String rowId, SyncState state) throws ActionNotAuthorizedException {
+      String rowId, SyncState state) {
 
     ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, adminUser);
 
@@ -680,8 +687,7 @@ public class AbstractPermissionsTestCase {
 
   protected void assertInConflictRowInSyncStateTestTable(String tableId,
       OrderedColumns orderedColumns,
-      String rowId, int localConflictType, int serverConflictType)
-      throws ActionNotAuthorizedException {
+      String rowId, int localConflictType, int serverConflictType) {
 
     ODKDatabaseImplUtils.get().privilegedDeleteRowWithId(db, tableId, rowId, adminUser);
 
@@ -1090,13 +1096,11 @@ public class AbstractPermissionsTestCase {
       // first entry should match expectation
       if ( (expectFirstRemainingType == FirstSavepointTimestampType.CHECKPOINT_NEW_ROW) &&
           !c.isNull(idxType) ) {
-        assertTrue("Expected first row to be a new-row checkpoint: " + identifyingDescription,
-            false);
+          fail("Expected first row to be a new-row checkpoint: " + identifyingDescription);
       }
       if ( (expectFirstRemainingType != FirstSavepointTimestampType.CHECKPOINT_NEW_ROW) &&
           c.isNull(idxType) ) {
-        assertTrue("Expected first row to not be a checkpoint: " + identifyingDescription,
-            false);
+          fail("Expected first row to not be a checkpoint: " + identifyingDescription);
       }
 
       if ( expectFirstRemainingType == FirstSavepointTimestampType.CHECKPOINT_NEW_ROW ||
@@ -1156,13 +1160,13 @@ public class AbstractPermissionsTestCase {
       // subsequent updates should all be checkpoints
       while ( c.moveToNext() ) {
         if ( !syncState.equals(SyncState.in_conflict.name()) && !c.isNull(idxType) ) {
-          assertTrue("Expected subsequent rows to be checkpoints: " + identifyingDescription,
-              false);
+
+
+            fail("Expected subsequent rows to be checkpoints: " + identifyingDescription);
           return false;
         }
         if ( syncState.equals(SyncState.in_conflict.name()) && c.isNull(idxType) ) {
-          assertTrue("Expected subsequent rows to not be checkpoints: " + identifyingDescription,
-              false);
+            fail("Expected subsequent rows to not be checkpoints: " + identifyingDescription);
           return false;
         }
         assertEquals("Expected subsequent rows to be " + syncState + " sync state: " +
@@ -1177,7 +1181,7 @@ public class AbstractPermissionsTestCase {
 
       return true;
     } catch (SQLiteException e) {
-      assertFalse("shouldn't get an error", true);
+        fail("shouldn't get an error");
       return false;
     } finally {
       if ( c != null && !c.isClosed() ) {
@@ -1275,7 +1279,7 @@ public class AbstractPermissionsTestCase {
       break;
     case LOCALLY_IN_CONFLICT:
       if ( baseTable.getNumberOfRows() != 2 ) {
-        assertTrue("expected 2 conflict rows -- found one", false);
+          fail("expected 2 conflict rows -- found one");
       }
       TypedRow localRow = null;
       TypedRow serverRow = null;
@@ -1387,7 +1391,7 @@ public class AbstractPermissionsTestCase {
     if ( privilegedUser ) {
       return true;
     }
-    RowFilterScope.Access localRowDefaultAccessValue = null;
+    RowFilterScope.Access localRowDefaultAccessValue;
     if ( rowId.startsWith(rowIdFullNull) ) {
       localRowDefaultAccessValue = RowFilterScope.Access.FULL;
     } else if ( rowId.startsWith(rowIdFullCommon) ) {
@@ -1410,13 +1414,9 @@ public class AbstractPermissionsTestCase {
         return false;
       }
 
-      if ( changeServerPrivilegedMetadata && localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
         // logic will have server change the owner on matching rowDefaultAccessValues
         // so we will no longer be the owner.
-        return false;
-      }
-
-      return true;
+        return !changeServerPrivilegedMetadata || localRowDefaultAccessValue != serverRowDefaultAccessValue;
     }
 
     // otherwise, we can modify the row as long as the server isn't changing anything
@@ -1427,12 +1427,9 @@ public class AbstractPermissionsTestCase {
       }
       // or we are the owner
       // TODO: perhaps more logic here if test coverage is more complete
-      if ( !rowId.startsWith(rowIdFullNull) ) {
         // we are the owner - can change it
-        return true;
-      }
+        return !rowId.startsWith(rowIdFullNull);
       // otherwise the row type is hidden or read-only and we can't modify it
-      return false;
     }
 
     // otherwise, the server is changing the permissions.
@@ -1446,12 +1443,9 @@ public class AbstractPermissionsTestCase {
       return false;
     }
 
-    if ( rowId.startsWith(rowIdFullNull) ) {
       // we are not the owner - can't change it
-      return false;
-    }
+      return !rowId.startsWith(rowIdFullNull);
     // owner the same -- we can change it
-    return true;
   }
 
 
@@ -1532,12 +1526,9 @@ public class AbstractPermissionsTestCase {
       return false;
     }
 
-    if ( rowId.startsWith(rowIdFullNull) ) {
       // we are not the owner - can't change it
-      return false;
-    }
+      return !rowId.startsWith(rowIdFullNull);
     // owner the same -- we can change it
-    return true;
   }
 
 
@@ -1607,7 +1598,7 @@ public class AbstractPermissionsTestCase {
       boolean changeServerRowPath, boolean changeServerFormIdMetadata,
       boolean changeServerPrivilegedMetadata) {
 
-    ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
+    ArrayList<SyncParamOutcome> cases = new ArrayList<>();
     String[] rowIds = { rowIdFullNull, rowIdFullCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
 
     for ( String rowId : rowIds ) {
@@ -1712,7 +1703,7 @@ public class AbstractPermissionsTestCase {
       boolean changeServerRowPath, boolean changeServerFormIdMetadata,
       boolean changeServerPrivilegedMetadata) {
 
-    ArrayList<SyncParamOutcome> cases = new ArrayList<SyncParamOutcome>();
+    ArrayList<SyncParamOutcome> cases = new ArrayList<>();
     String[] rowIds = { rowIdFullNull, rowIdFullCommon, rowIdHiddenCommon, rowIdReadOnlyCommon, rowIdModifyCommon };
 
     for ( String rowId : rowIds ) {
@@ -1789,7 +1780,7 @@ public class AbstractPermissionsTestCase {
 
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListResolveTakeServer(String tableId) {
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
 
     int localConflict;
     int serverConflict;
@@ -1869,7 +1860,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListResolveTakeLocal(String tableId,
       boolean isLocked) {
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
 
     int localConflict;
     int serverConflict;
@@ -1958,7 +1949,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateUnlockedNoAnonCreate() {
     String tableId = testTableUnlockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't modify hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2031,7 +2022,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListInsertUnlockedNoAnonCreate() {
     String tableId = testTableUnlockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't insert
     cases.add(new AuthParamAndOutcome(tableId, rowIdInserted,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2054,7 +2045,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListDeleteUnlockedNoAnonCreate() {
     String tableId = testTableUnlockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete, modify, hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2128,7 +2119,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteUnlockedNoAnonCreate() {
     String tableId = testTableUnlockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete, modify, hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2206,7 +2197,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateUnlockedYesAnonCreate() {
     String tableId = testTableUnlockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't modify hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2279,7 +2270,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListInsertUnlockedYesAnonCreate() {
     String tableId = testTableUnlockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can insert
     cases.add(new AuthParamAndOutcome(tableId, rowIdInserted,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2302,7 +2293,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListDeleteUnlockedYesAnonCreate() {
     String tableId = testTableUnlockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete modify, hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2375,7 +2366,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteUnlockedYesAnonCreate() {
     String tableId = testTableUnlockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete modify, hidden or read-only entries
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, false));
@@ -2452,7 +2443,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateLockedNoAnonCreate() {
     String tableId = testTableLockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't modify anything other than the new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2525,7 +2516,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListInsertLockedNoAnonCreate() {
     String tableId = testTableLockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't insert
     cases.add(new AuthParamAndOutcome(tableId, rowIdInserted,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2548,7 +2539,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListDeleteLockedNoAnonCreate() {
     String tableId = testTableLockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can only delete new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2621,7 +2612,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteLockedNoAnonCreate() {
     String tableId = testTableLockedNoAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can only delete new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2695,7 +2686,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListUpdateLockedYesAnonCreate() {
     String tableId = testTableLockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't modify anything other than the new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2768,7 +2759,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListInsertLockedYesAnonCreate() {
     String tableId = testTableLockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't insert -- locking trumps allowing to create
     cases.add(new AuthParamAndOutcome(tableId, rowIdInserted,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2791,7 +2782,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildOutcomesListDeleteLockedYesAnonCreate() {
     String tableId = testTableLockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete anything other than the new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
         anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
@@ -2864,7 +2855,7 @@ public class AbstractPermissionsTestCase {
   protected ArrayList<AuthParamAndOutcome> buildCheckpointOutcomesListDeleteLockedYesAnonCreate() {
     String tableId = testTableLockedYesAnonCreate;
 
-    ArrayList<AuthParamAndOutcome> cases = new ArrayList<AuthParamAndOutcome>();
+    ArrayList<AuthParamAndOutcome> cases = new ArrayList<>();
     // anon user can't delete anything other than the new row
     cases.add(new AuthParamAndOutcome(tableId, rowIdFullNull,
             anonymousUser, RoleConsts.ANONYMOUS_ROLES_LIST, true));
