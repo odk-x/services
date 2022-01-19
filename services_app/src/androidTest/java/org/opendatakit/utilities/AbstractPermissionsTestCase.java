@@ -345,34 +345,28 @@ public class AbstractPermissionsTestCase {
         SyncState.deleted.name() : SyncState.changed.name()));
 
     RowFilterScope.Access localType;
-      switch (rowId) {
-          case rowIdFullNull:
-              localType = RowFilterScope.Access.FULL;
-              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-              cvValues.putNull(DataTableColumns.ROW_OWNER);
-              break;
-          case rowIdFullCommon:
-              localType = RowFilterScope.Access.FULL;
-              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-              break;
-          case rowIdHiddenCommon:
-              localType = RowFilterScope.Access.HIDDEN;
-              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-              break;
-          case rowIdReadOnlyCommon:
-              localType = RowFilterScope.Access.READ_ONLY;
-              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-              break;
-          case rowIdModifyCommon:
-              localType = RowFilterScope.Access.MODIFY;
-              cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
-              cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
-              break;
-          default:
-              throw new IllegalArgumentException("unexpected rowId value");
+      if ( rowId.equals(rowIdFullNull) ) {
+          localType = RowFilterScope.Access.FULL;
+          cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+          cvValues.putNull(DataTableColumns.ROW_OWNER);
+      } else if ( rowId.equals(rowIdFullCommon) ) {
+          localType = RowFilterScope.Access.FULL;
+          cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+          cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+      } else if ( rowId.equals(rowIdHiddenCommon) ) {
+          localType = RowFilterScope.Access.HIDDEN;
+          cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+          cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+      } else if ( rowId.equals(rowIdReadOnlyCommon) ) {
+          localType = RowFilterScope.Access.READ_ONLY;
+          cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+          cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+      } else if ( rowId.equals(rowIdModifyCommon) ) {
+          localType = RowFilterScope.Access.MODIFY;
+          cvValues.put(DataTableColumns.DEFAULT_ACCESS, localType.name());
+          cvValues.put(DataTableColumns.ROW_OWNER, commonUser);
+      } else {
+          throw new IllegalArgumentException("unexpected rowId value");
       }
 
     cvValues.putNull(DataTableColumns.GROUP_MODIFY);
