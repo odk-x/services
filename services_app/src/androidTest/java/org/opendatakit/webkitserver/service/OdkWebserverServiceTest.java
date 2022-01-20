@@ -196,7 +196,7 @@ public class OdkWebserverServiceTest {
 
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
 
-        PrintWriter writer;
+        PrintWriter writer = null;
         try {
             if(!directoryLocation.isDirectory()) {
                 directoryLocation.mkdirs();

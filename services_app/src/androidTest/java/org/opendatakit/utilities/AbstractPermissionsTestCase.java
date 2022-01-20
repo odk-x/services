@@ -1385,7 +1385,7 @@ public class AbstractPermissionsTestCase {
     if ( privilegedUser ) {
       return true;
     }
-    RowFilterScope.Access localRowDefaultAccessValue;
+    RowFilterScope.Access localRowDefaultAccessValue = null;
     if ( rowId.startsWith(rowIdFullNull) ) {
       localRowDefaultAccessValue = RowFilterScope.Access.FULL;
     } else if ( rowId.startsWith(rowIdFullCommon) ) {
