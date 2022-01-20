@@ -1402,29 +1402,36 @@ public class AbstractPermissionsTestCase {
       throw new IllegalStateException("Expected all rows to be quantified at this point");
     }
 
-    if ( isTableLocked ) {
-      if ( rowId.startsWith(rowIdFullNull) ) {
-        // not owner of row, can't change it
-        return false;
-      }
+      if ( isTableLocked ) {
+          if ( rowId.startsWith(rowIdFullNull) ) {
+              // not owner of row, can't change it
+              return false;
+          }
 
-        // logic will have server change the owner on matching rowDefaultAccessValues
-        // so we will no longer be the owner.
-        return !changeServerPrivilegedMetadata || localRowDefaultAccessValue != serverRowDefaultAccessValue;
-    }
+          if ( changeServerPrivilegedMetadata && localRowDefaultAccessValue == serverRowDefaultAccessValue ) {
+              // logic will have server change the owner on matching rowDefaultAccessValues
+              // so we will no longer be the owner.
+              return false;
+          }
+
+          return true;
+      }
 
     // otherwise, we can modify the row as long as the server isn't changing anything
-    if ( !changeServerPrivilegedMetadata ) {
-      // and row type is FULL or MODIFY access
-      if ( localRowDefaultAccessValue == RowFilterScope.Access.FULL || localRowDefaultAccessValue == RowFilterScope.Access.MODIFY ) {
-        return true;
+      if ( !changeServerPrivilegedMetadata ) {
+          // and row type is FULL or MODIFY access
+          if ( localRowDefaultAccessValue == RowFilterScope.Access.FULL || localRowDefaultAccessValue == RowFilterScope.Access.MODIFY ) {
+              return true;
+          }
+          // or we are the owner
+          // TODO: perhaps more logic here if test coverage is more complete
+          if ( !rowId.startsWith(rowIdFullNull) ) {
+              // we are the owner - can change it
+              return true;
+          }
+          // otherwise the row type is hidden or read-only and we can't modify it
+          return false;
       }
-      // or we are the owner
-      // TODO: perhaps more logic here if test coverage is more complete
-        // we are the owner - can change it
-        return !rowId.startsWith(rowIdFullNull);
-      // otherwise the row type is hidden or read-only and we can't modify it
-    }
 
     // otherwise, the server is changing the permissions.
     if ( serverRowDefaultAccessValue == RowFilterScope.Access.FULL || serverRowDefaultAccessValue == RowFilterScope.Access.MODIFY ) {
@@ -1437,9 +1444,12 @@ public class AbstractPermissionsTestCase {
       return false;
     }
 
-      // we are not the owner - can't change it
-      return !rowId.startsWith(rowIdFullNull);
-    // owner the same -- we can change it
+      if ( rowId.startsWith(rowIdFullNull) ) {
+          // we are not the owner - can't change it
+          return false;
+      }
+      // owner the same -- we can change it
+      return true;
   }
 
 
@@ -1520,9 +1530,12 @@ public class AbstractPermissionsTestCase {
       return false;
     }
 
-      // we are not the owner - can't change it
-      return !rowId.startsWith(rowIdFullNull);
-    // owner the same -- we can change it
+      if ( rowId.startsWith(rowIdFullNull) ) {
+          // we are not the owner - can't change it
+          return false;
+      }
+      // owner the same -- we can change it
+      return true;
   }
 
 
