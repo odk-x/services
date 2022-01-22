@@ -17,7 +17,6 @@ package org.opendatakit.utilities;
 import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
-import androidx.test.filters.LargeTest;
 import androidx.test.rule.GrantPermissionRule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -129,7 +128,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
   public void verifyNoTablesExist() {
     List<String> tableIds = ODKDatabaseImplUtils.get().getAllTableIds(db);
-    assertTrue(tableIds.size() == 0);
+      assertEquals(0, tableIds.size());
   }
   /*
    * Check that the database is setup
@@ -151,7 +150,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableName= testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableName, columns);
@@ -203,7 +202,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testQueryWithData_ExpectPass() {
     String tableId = testTable;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -290,7 +289,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   public void testRawQueryWithData_ExpectPass() {
     String tableId = testTable;
     String query = "SELECT * FROM " + tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -352,7 +351,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -365,9 +364,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -379,8 +378,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
    * Test updating the data in a local table with valid values when the id already exists
    */
   @Test
-  public void testUpdateDataInExistingLocalTableWithIdWhenIdAlreadyExists_ExpectPass() throws
-      ActionNotAuthorizedException  {
+  public void testUpdateDataInExistingLocalTableWithIdWhenIdAlreadyExists_ExpectPass() {
 
 
     String tableId = localTestTable;
@@ -393,7 +391,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.integer.name();
     String testStrCol = "testStrColumn";
     String testStrColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     columns.add(new Column(testStrCol, testStrCol, testStrColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get().createLocalOnlyTableWithColumns
@@ -487,7 +485,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -502,9 +500,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -541,7 +539,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
    @Test
    public void testCreateOrOpenTableWithColumnWhenColumnIsEmpty_ExpectPass() {
       String tableId = testTable;
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       boolean thrown = false;
       OrderedColumns orderedColumns = null;
@@ -567,7 +565,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -580,9 +578,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -600,7 +598,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String itemsStr = "items";
     String testColItems = testCol + "_" + itemsStr;
     String testColType = ElementDataType.array.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColItems + "\"]"));
 
     boolean success = false;
@@ -627,7 +625,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.array.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
     boolean success = false;
@@ -656,7 +654,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String itemsStr = "items";
     String testColItems = testCol + "_" + itemsStr;
     String testColType = ElementDataType.array.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColItems + "\"]"));
     columns.add(new Column(testColItems, itemsStr, ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -672,13 +670,13 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String name = col.getElementName();
       String type = col.getElementType();
       if (key.equals(testCol)) {
-        assertTrue(key.equals(testCol));
-        assertTrue(name.equals(testCol));
-        assertTrue(type.equals(testColType));
+          assertEquals(key, testCol);
+          assertEquals(name, testCol);
+          assertEquals(type, testColType);
       } else {
-        assertTrue(key.equals(testColItems));
-        assertTrue(name.equals(itemsStr));
-        assertTrue(type.equals(ElementDataType.string.name()));
+          assertEquals(key, testColItems);
+          assertEquals(name, itemsStr);
+          assertEquals(type, ElementDataType.string.name());
       }
     }
 
@@ -724,7 +722,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.bool.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -737,9 +735,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -755,7 +753,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -768,9 +766,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -786,7 +784,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATE;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -799,9 +797,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -817,7 +815,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATETIME;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -830,9 +828,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -848,7 +846,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.TIME;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -861,9 +859,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String key = col.getElementKey();
       String name = col.getElementName();
       String type = col.getElementType();
-      assertTrue(key.equals(testCol));
-      assertTrue(name.equals(testCol));
-      assertTrue(type.equals(testColType));
+        assertEquals(key, testCol);
+        assertEquals(name, testCol);
+        assertEquals(type, testColType);
     }
 
     // Drop the table now that the test is done
@@ -888,7 +886,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
         + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
@@ -928,7 +926,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
         + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
@@ -968,7 +966,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
         + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
@@ -1013,7 +1011,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
     columns.add(new Column(testColLng, lng, testColResType, "[]"));
@@ -1048,7 +1046,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
         + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
@@ -1088,7 +1086,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
         + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLng, lng, testColResType, "[]"));
@@ -1128,7 +1126,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColAcc = testCol + "_" + acc;
     String testColType = ElementType.GEOPOINT;
     String testColResType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\"" + testColLng
             + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, lat, testColResType, "[]"));
@@ -1146,7 +1144,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(coldefs.getColumnDefinitions().get(3).getElementKey(), testColLat);
     assertEquals(coldefs.getColumnDefinitions().get(4).getElementKey(), testColLng);
 
-    List<String> cols = new ArrayList<String>();
+    List<String> cols = new ArrayList<>();
     cols.add(lat);
     cols.add(lng);
     cols.add(alt);
@@ -1157,13 +1155,13 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String name = col.getElementName();
       String type = col.getElementType();
       if (key.equals(testCol)) {
-        assertTrue(key.equals(testCol));
-        assertTrue(name.equals(testCol));
-        assertTrue(type.equals(testColType));
+          assertEquals(key, testCol);
+          assertEquals(name, testCol);
+          assertEquals(type, testColType);
       } else {
-        assertTrue(key.equals(testCol + "_" + name));
+          assertEquals(key, testCol + "_" + name);
         assertTrue(cols.contains(name));
-        assertTrue(type.equals(testColResType));
+          assertEquals(type, testColResType);
       }
     }
 
@@ -1185,7 +1183,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColContType = testCol + "_" + conType;
     String testColType = DataTypeNamesToRemove.MIMEURI;
 
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColUriFrag + "\",\""
         + testColContType + "\"]"));
     columns.add(new Column(testColUriFrag, "uriFragment", ElementDataType.rowpath.name(), "[]"));
@@ -1199,7 +1197,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(coldefs.getColumnDefinitions().get(1).getElementKey(), testColContType);
     assertEquals(coldefs.getColumnDefinitions().get(2).getElementKey(), testColUriFrag);
 
-    List<String> cols = new ArrayList<String>();
+    List<String> cols = new ArrayList<>();
     cols.add(uriFrag);
     cols.add(conType);
 
@@ -1208,16 +1206,16 @@ public abstract class AbstractODKDatabaseUtilsTest {
       String name = col.getElementName();
       String type = col.getElementType();
       if (key.equals(testCol)) {
-        assertTrue(key.equals(testCol));
-        assertTrue(name.equals(testCol));
-        assertTrue(type.equals(testColType));
+          assertEquals(key, testCol);
+          assertEquals(name, testCol);
+          assertEquals(type, testColType);
       } else {
-        assertTrue(key.equals(testCol + "_" + name));
+          assertEquals(key, testCol + "_" + name);
         assertTrue(cols.contains(name));
         if (name.equals(uriFrag)) {
-          assertTrue(type.equals(ElementDataType.rowpath.name()));
+            assertEquals(type, ElementDataType.rowpath.name());
         } else {
-          assertTrue(type.equals(ElementDataType.string.name()));
+            assertEquals(type, ElementDataType.string.name());
         }
       }
     }
@@ -1274,7 +1272,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testGetAllColumnNamesWhenColumnsExist_ExpectPass() {
     String tableId = testTable;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
 
@@ -1318,7 +1316,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   @Test
   public void testGetUserDefinedColumnNamesWhenColumnsExist_ExpectPass() {
     String tableId = testTable;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("testCol", "testCol", "string", "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1366,7 +1364,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
     boolean thrown = false;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1396,7 +1394,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1442,7 +1440,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1490,7 +1488,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1547,7 +1545,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       e.printStackTrace();
     }
 
-    assertEquals(thrown, true);
+      assertTrue(thrown);
 
      /**
       * NOTE: we expect the log to report a failure to close this cursor.
@@ -1586,7 +1584,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1634,7 +1632,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1708,7 +1706,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1744,7 +1742,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   public void testWriteDataAndMetadataIntoExistingTableWithValidValue_ExpectPass() throws ActionNotAuthorizedException  {
     String tableId = testTable;
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1803,7 +1801,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     boolean thrown = false;
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1852,7 +1850,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     boolean thrown = false;
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1902,7 +1900,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     boolean thrown = false;
 
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column("col1", "col1", testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -1953,7 +1951,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.array.name();
     String testVal = "item";
 
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testCol + "_items\"]"));
     columns.add(new Column(testCol + "_items", "items", ElementDataType.string.name(), "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -1997,7 +1995,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.bool.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2042,7 +2040,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATE;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2087,7 +2085,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.DATETIME;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2140,7 +2138,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     double pos_alt = 7.77;
     double pos_acc = 8.88;
     String testColType = ElementType.GEOPOINT;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColLat + "\",\""
         + testColLong + "\",\"" + testColAlt + "\",\"" + testColAcc + "\"]"));
     columns.add(new Column(testColLat, "latitude", ElementDataType.number.name(), "[]"));
@@ -2215,7 +2213,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2263,7 +2261,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColContentType = "testColumn_contentType";
     String testColType = DataTypeNamesToRemove.MIMEURI;
 
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[\"" + testColUriFragment + "\",\""
         + testColContentType + "\"]"));
     columns
@@ -2323,7 +2321,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.number.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2370,7 +2368,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2415,7 +2413,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementType.TIME;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2475,7 +2473,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testVal = "test";
     String testVal2 = "test2";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2565,7 +2563,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2617,7 +2615,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = null;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2678,7 +2676,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2715,7 +2713,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2752,7 +2750,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2789,7 +2787,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2825,7 +2823,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testVal = "test";
     String testVal2 = "test2";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -2950,7 +2948,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testVal = "test";
     String testVal2 = "test2";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -3075,7 +3073,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
             .createOrOpenTableWithColumns(db, tableId, columns);
@@ -3246,7 +3244,8 @@ public abstract class AbstractODKDatabaseUtilsTest {
             value = row[i];
           }
         }
-        KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition, aspect, key,
+          assertNotNull(type);
+          KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition, aspect, key,
             ElementDataType.valueOf(type), value);
         kvsEntries.add(kvsEntry);
         // get next row or blank to end...
@@ -3300,10 +3299,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, KeyValueStoreConstants.PARTITION_TABLE,
         KeyValueStoreConstants.ASPECT_DEFAULT, KeyValueStoreConstants.COLUMN_DISPLAY_NAME,
         ElementDataType.valueOf(ElementDataType.object.name()), tableId);
@@ -3348,7 +3347,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -3410,7 +3409,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String testColType = ElementDataType.string.name();
     String testVal = "test";
     String rowId = LocalizationUtils.genUUID();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -3488,10 +3487,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.object.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -3544,7 +3543,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -3584,7 +3583,8 @@ public abstract class AbstractODKDatabaseUtilsTest {
         val = cursor.getInt(ind);
       }
     } finally {
-      cursor.close();
+        assertNotNull(cursor);
+        cursor.close();
     }
 
     assertEquals(val, testVal);
@@ -3640,12 +3640,12 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     v = first.getRawStringByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
-    conflictTypeVal = Integer.valueOf(v);
+    conflictTypeVal = Integer.parseInt(v);
     assertEquals(conflictType, conflictTypeVal);
 
     v = second.getRawStringByKey(DataTableColumns.CONFLICT_TYPE);
     assertNotNull(v);
-    conflictTypeVal = Integer.valueOf(v);
+    conflictTypeVal = Integer.parseInt(v);
     assertEquals(ConflictType.SERVER_UPDATED_UPDATED_VALUES, conflictTypeVal);
 
     // Now delete the row
@@ -3874,10 +3874,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.integer.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -3942,9 +3942,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
    */
   @Test
   public void testGetChoiceList_ExpectPass() {
-    ArrayList<Object> values = new ArrayList<Object>();
-    Map<String,Object> myMap = new TreeMap<String,Object>();
-    Map<String, Object> displayText = new TreeMap<String, Object>();
+    ArrayList<Object> values = new ArrayList<>();
+    Map<String,Object> myMap = new TreeMap<>();
+    Map<String, Object> displayText = new TreeMap<>();
     displayText.put("text", "displayText");
     myMap.put("choice_list_name", "test_list");
     myMap.put("data_value", "test");
@@ -4003,10 +4003,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.object.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -4053,7 +4053,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -4135,7 +4135,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -4187,7 +4187,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -4211,10 +4211,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4229,20 +4228,18 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4251,30 +4248,27 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4285,30 +4279,27 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4319,30 +4310,27 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextPlainUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContextAnonymousUser);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4354,10 +4342,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4370,10 +4357,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4386,10 +4372,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
     c = ODKDatabaseImplUtils.get().rawQuery(db, sel, null, null,
         accessContext);
     if ( c.moveToFirst() ) {
-      assertTrue( "did not expect effective privileges column",
-          c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) == -1 );
+        assertEquals("did not expect effective privileges column", c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS), -1);
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4406,7 +4391,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4416,7 +4401,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4426,7 +4411,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
       assertTrue( "expected effective privileges column",
           c.getColumnIndex(DataTableColumns.EFFECTIVE_ACCESS) != -1 );
     } else {
-      assertTrue("should not get here", false);
+        fail("should not get here");
     }
     c.close();
 
@@ -4442,7 +4427,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -4765,7 +4750,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -4861,7 +4846,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
    * Test replace metadata with KVS
    */
   @Test
-  public void testReplaceTableMetadataWithKVS_ExpectPass() throws ActionNotAuthorizedException  {
+  public void testReplaceTableMetadataWithKVS_ExpectPass() {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.string.name();
@@ -4870,10 +4855,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.object.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -4907,7 +4892,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Replace the metadata
     String newKVSValue = "newTestTable";
-    List<KeyValueStoreEntry> newKVSEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> newKVSEntries = new ArrayList<>();
     KeyValueStoreEntry newKVSEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), newKVSValue);
     newKVSEntries.add(newKVSEntry);
@@ -4944,10 +4929,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.object.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -5016,10 +5001,10 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String key = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
     String type = ElementDataType.object.name();
     String kvsValue = tableId;
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
-    List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> kvsEntries = new ArrayList<>();
     KeyValueStoreEntry kvsEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), kvsValue);
     kvsEntries.add(kvsEntry);
@@ -5052,7 +5037,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     assertEquals(retKVSEntries.get(0), kvsEntries.get(0));
 
     // Replace the metadata
-    List<KeyValueStoreEntry> newKVSEntries = new ArrayList<KeyValueStoreEntry>();
+    List<KeyValueStoreEntry> newKVSEntries = new ArrayList<>();
     String newKVSValue = "newTestTable";
     KeyValueStoreEntry newKVSEntry = KeyValueStoreUtils.buildEntry(tableId, partition,
         aspect, key, ElementDataType.valueOf(type), newKVSValue);
@@ -5182,9 +5167,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
    */
   @Test
   public void testSetChoiceList() {
-    ArrayList<Object> values = new ArrayList<Object>();
-    Map<String,Object> myMap = new TreeMap<String,Object>();
-    Map<String, Object> displayText = new TreeMap<String, Object>();
+    ArrayList<Object> values = new ArrayList<>();
+    Map<String,Object> myMap = new TreeMap<>();
+    Map<String, Object> displayText = new TreeMap<>();
     displayText.put("text", "displayText");
     myMap.put("choice_list_name", "test_list");
     myMap.put("data_value", "test");
@@ -5230,7 +5215,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -5319,7 +5304,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -5404,7 +5389,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
     OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db, tableId, columns);
@@ -5535,7 +5520,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     List<Callable<Long>> tasks = Collections.nCopies(threadCount, task);
     ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
     List<Future<Long>> futures = executorService.invokeAll(tasks);
-    List<Long> resultList = new ArrayList<Long>(futures.size());
+    List<Long> resultList = new ArrayList<>(futures.size());
 
     // Check for exceptions
     for (Future<Long> future : futures) {
@@ -5544,7 +5529,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     }
     // Validate the IDs
     assertEquals(threadCount, futures.size());
-    List<Long> expectedList = new ArrayList<Long>(threadCount);
+    List<Long> expectedList = new ArrayList<>(threadCount);
     for (long i = 1; i <= threadCount; i++) {
       expectedList.add(i);
     }
@@ -5563,7 +5548,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -5644,7 +5629,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -5698,7 +5683,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Extra check to make sure that this has finished before
     // anything continues
-    List<Long> expectedList = new ArrayList<Long>(numOfThreads);
+    List<Long> expectedList = new ArrayList<>(numOfThreads);
     for (long i = 1; i <= numOfThreads; i++) {
       expectedList.add(i);
     }
@@ -5748,7 +5733,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -5808,7 +5793,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Extra check to make sure that this has finished before
     // anything continues
-    List<Long> expectedList = new ArrayList<Long>(numOfThreads);
+    List<Long> expectedList = new ArrayList<>(numOfThreads);
     for (long i = 1; i <= numOfThreads; i++) {
       expectedList.add(i);
     }
@@ -5858,7 +5843,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -5962,7 +5947,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -6062,7 +6047,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -6172,7 +6157,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -6283,7 +6268,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String colPrefix = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
 
     // Create table with the right number of columns
     for (int i = 0; i <= numOfThreads; i++) {
@@ -6383,7 +6368,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     String tableId = testTable;
     String testCol = "testColumn";
     String testColType = ElementDataType.integer.name();
-    List<Column> columns = new ArrayList<Column>();
+    List<Column> columns = new ArrayList<>();
     columns.add(new Column(testCol, testCol, testColType, "[]"));
 
     // Create two different db connections
@@ -6447,7 +6432,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
     // Create a table on db1
     String newTestCol = "testColumn0";
-    List<Column> newColumns = new ArrayList<Column>();
+    List<Column> newColumns = new ArrayList<>();
     newColumns.add(new Column(newTestCol, newTestCol, testColType, "[]"));
     orderedColumns = ODKDatabaseImplUtils.get()
         .createOrOpenTableWithColumns(db1, tableId, newColumns);
@@ -6511,7 +6496,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
   private void internalTestMemoryLeakCycling_ExpectPass(int maxIterations) throws
       ActionNotAuthorizedException  {
 
-    LinkedList<byte[]> byteQueue = new LinkedList<byte[]>();
+    LinkedList<byte[]> byteQueue = new LinkedList<>();
 
     String tableId = "memoryTest";
     int maxBytes = 32;
@@ -6524,9 +6509,9 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
       int maxCols = 10 + (j % 7);
       // construct table
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
       for (int i = 0; i < maxCols; ++i) {
-        String testCol = "testColumn_" + Integer.toString(i);
+        String testCol = "testColumn_" + i;
         columns.add(new Column(testCol, testCol, testColType, "[]"));
       }
       OrderedColumns orderedColumns = ODKDatabaseImplUtils.get()
@@ -6540,8 +6525,8 @@ public abstract class AbstractODKDatabaseUtilsTest {
 
       ContentValues cvValues = new ContentValues();
       for (int i = 0; i < maxCols; ++i) {
-        String testCol = "testColumn_" + Integer.toString(i);
-        String testVal = "testVal_" + Integer.toString(i);
+        String testCol = "testColumn_" + i;
+        String testVal = "testVal_" + i;
         cvValues.put(testCol, testVal);
       }
 
@@ -6550,8 +6535,8 @@ public abstract class AbstractODKDatabaseUtilsTest {
               activeUser, RoleConsts.ADMIN_ROLES_LIST, currentLocale);
 
       // Select everything out of the table
-      String queryCol = "testColumn_" + Integer.toString(j % maxCols);
-      String queryVal = "testVal_" + Integer.toString(j % maxCols);
+      String queryCol = "testColumn_" + (j % maxCols);
+      String queryVal = "testVal_" + (j % maxCols);
       String sel = "SELECT * FROM " + tableId + " WHERE " + queryCol + " = ?";
       String[] selArgs = { queryVal };
       Cursor cursor = ODKDatabaseImplUtils.get().rawQuery(db, sel, selArgs, null,
@@ -6619,7 +6604,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     internalTestMemoryLeakCycling_ExpectPass(maxIterations);
   }
 
-  @LargeTest
+  @Test
   public void testMemoryLeakCycling_ExpectPass() throws ActionNotAuthorizedException {
     int maxIterations = 1000;
 
