@@ -17,6 +17,8 @@ package org.opendatakit.utilities;
 import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
+
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.GrantPermissionRule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -6604,7 +6606,7 @@ public abstract class AbstractODKDatabaseUtilsTest {
     internalTestMemoryLeakCycling_ExpectPass(maxIterations);
   }
 
-  @Test
+  @LargeTest
   public void testMemoryLeakCycling_ExpectPass() throws ActionNotAuthorizedException {
     int maxIterations = 1000;
 
