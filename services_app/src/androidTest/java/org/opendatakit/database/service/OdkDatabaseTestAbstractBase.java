@@ -1,14 +1,20 @@
 package org.opendatakit.database.service;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
+
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
-import android.util.Log;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,9 +25,6 @@ import org.opendatakit.services.database.AndroidConnectFactory;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Created by wrb on 9/26/2017.
@@ -63,6 +66,7 @@ abstract class OdkDatabaseTestAbstractBase {
       tearDownBefore();
       UserDbInterface serviceInterface = bindToDbService();
       try {
+          assertNotNull(serviceInterface);
          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("OdkDatabaseServiceTest", "tearDown: " + db.getDatabaseHandle());
          verifyNoTablesExistNCleanAllTables(serviceInterface, db);
@@ -74,7 +78,7 @@ abstract class OdkDatabaseTestAbstractBase {
    }
 
    @Nullable protected UserDbInterfaceImpl bindToDbService() {
-      Context context = InstrumentationRegistry.getContext();
+      Context context = ApplicationProvider.getApplicationContext();
 
       ++bindToDbServiceCount;
       Intent bind_intent = new Intent();
