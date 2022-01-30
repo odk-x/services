@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -59,7 +60,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    private static final String TEST_STR_i = "TestBoolStr";
    private static final String TEST_ARRAY_i = "[\"Test1\",\"Test2\"]";
 
-   private static final ArrayList<String> TEST_ARRAY_i_CHECK = new ArrayList<String>();
+   private static final ArrayList<String> TEST_ARRAY_i_CHECK = new ArrayList<>();
 
    static {
       TEST_ARRAY_i_CHECK.addAll(Arrays.asList("Test1", "Test2"));
@@ -74,7 +75,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    }
 
    @NonNull private List<Column> createColumnList() {
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       columns
           .add(new Column(COL_INTEGER_ID, "column Integer", ElementDataType.integer.name(), null));
@@ -136,34 +137,34 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    }
 
    private void verifyRowTestSet1(TypedRow row) {
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
       assertNull(row.getDataByKey(COL_NUMBER_ID));
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
       assertNull(row.getDataByKey(COL_ROWPATH_ID));
       assertNull(row.getDataByKey(COL_CONFIGPATH_ID));
       assertNull(row.getDataByKey(COL_ARRAY_ID));
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
 
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), Double.valueOf(TEST_NUM_1));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), Double.valueOf(TEST_NUM_1));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), Double.valueOf(TEST_NUM_1));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_1));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), TEST_NUM_1);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), TEST_NUM_1);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), TEST_NUM_1);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), TEST_NUM_1);
 
    }
 
    private void verifyRowTestSeti(TypedRow row, int i) {
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_i + i));
-      assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf((i % 2 != 0)));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) (TEST_INT_i + i));
+      assertEquals(row.getDataByKey(COL_NUMBER_ID), TEST_NUM_i + i);
+      assertEquals(row.getDataByKey(COL_BOOL_ID), (i % 2 != 0));
       assertEquals(row.getDataByKey(COL_ROWPATH_ID), TEST_ROWPATH_i + i);
       assertEquals(row.getDataByKey(COL_CONFIGPATH_ID), TEST_CONFIGPATH_i + i);
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
 
       assertEquals(row.getDataByKey(COL_ARRAY_ID), TEST_ARRAY_i_CHECK);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), Double.valueOf(TEST_NUM_i + i));
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), TEST_NUM_i + i);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), TEST_NUM_i + i);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), TEST_NUM_i + i);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), TEST_NUM_i + i);
    }
 
    @Test public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
@@ -174,7 +175,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -227,7 +229,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -292,6 +295,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
+         assertNotNull(serviceInterface);
          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
@@ -334,7 +338,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
 
@@ -364,7 +369,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
             TypedRow row = new TypedRow(table.getRowAtIndex(0), columns);
             Object value = row.getDataByKey("Total");
             if (value instanceof String) {
-               int count = Integer.valueOf((String) value);
+               int count = Integer.parseInt((String) value);
                assertEquals(numRows, count);
             } else {
                fail("Should have returned a string because type of column was unknown");
