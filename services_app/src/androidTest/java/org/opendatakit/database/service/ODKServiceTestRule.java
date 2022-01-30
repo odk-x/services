@@ -28,7 +28,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import androidx.annotation.NonNull;
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.internal.util.Checks;
 import android.util.Log;
 import org.junit.rules.TestRule;
@@ -188,7 +188,7 @@ public class ODKServiceTestRule implements TestRule {
 
       for(int i=0; i < MAX_CONNECTION_ATTEMPTS; i++) {
 
-         boolean isBound = InstrumentationRegistry.getInstrumentation().getContext().bindService(intent, servConn, flags);
+         boolean isBound = ApplicationProvider.getApplicationContext().bindService(intent, servConn, flags);
 
          // block until service connection is established
          if (isBound) {
@@ -236,7 +236,7 @@ public class ODKServiceTestRule implements TestRule {
          }
           assert conn != null;
           if(!conn.binderIsNull()) {
-             InstrumentationRegistry.getInstrumentation().getContext().unbindService(conn);
+             ApplicationProvider.getApplicationContext().unbindService(conn);
             Log.e(TAG, "CALLED UNBIND");
          }
       }
