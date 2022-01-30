@@ -28,7 +28,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.internal.util.Checks;
 import android.util.Log;
 import org.junit.rules.TestRule;
@@ -69,7 +69,7 @@ public class ODKServiceTestRule implements TestRule {
    private ODKServiceTestRule(long timeout, TimeUnit timeUnit) {
       mTimeout = timeout;
       mTimeUnit = timeUnit;
-      mAttemptToBindConnections = new LinkedBlockingQueue<ProxyServiceConnection>();
+      mAttemptToBindConnections = new LinkedBlockingQueue<>();
    }
 
 
@@ -188,7 +188,7 @@ public class ODKServiceTestRule implements TestRule {
 
       for(int i=0; i < MAX_CONNECTION_ATTEMPTS; i++) {
 
-         boolean isBound = InstrumentationRegistry.getContext().bindService(intent, servConn, flags);
+         boolean isBound = InstrumentationRegistry.getInstrumentation().getContext().bindService(intent, servConn, flags);
 
          // block until service connection is established
          if (isBound) {
@@ -225,7 +225,7 @@ public class ODKServiceTestRule implements TestRule {
     * reliable way to guarantee successful disconnect without access to service lifecycle.
     */
    // Visible for testing
-   void shutdownService() throws TimeoutException {
+   void shutdownService() {
       Log.e(TAG, "READY TO UNBIND");
       while (!mAttemptToBindConnections.isEmpty()) {
          ProxyServiceConnection conn = null;
@@ -234,8 +234,9 @@ public class ODKServiceTestRule implements TestRule {
          } catch (InterruptedException e) {
             e.printStackTrace();
          }
-         if(!conn.binderIsNull()) {
-            InstrumentationRegistry.getContext().unbindService(conn);
+          assert conn != null;
+          if(!conn.binderIsNull()) {
+             InstrumentationRegistry.getInstrumentation().getContext().unbindService(conn);
             Log.e(TAG, "CALLED UNBIND");
          }
       }
