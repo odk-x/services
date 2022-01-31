@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -53,7 +54,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
    }
 
    @NonNull private List<Column> createColumnList() {
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       columns.add(new Column(COL_INTEGER_ID, "column Integer", "integer", null));
       columns.add(new Column(COL_BOOL_ID, "column Bool", "boolean", null));
@@ -94,29 +95,30 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
    private void verifyRowTestSet1(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
    }
 
    private void verifyRowTestSet2(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Long.valueOf(TEST_INT_2));
+              (long) TEST_INT_2);
       assertEquals(row.getDataByKey(COL_BOOL_ID),
-          Boolean.valueOf(TEST_BOOL_2));
+              Boolean.FALSE);
    }
 
    private void verifyRowTestSeti(TypedRow row, int i) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-          Long.valueOf(TEST_INT_i + i));
+              (long) (TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_BOOL_ID),
-          Boolean.valueOf((i%2 != 0)));
+              (i % 2 != 0));
    }
 
    @Test
    public void testBinding() {
       UserDbInterfaceImpl serviceInterface = bindToDbService();
+      assertNotNull(serviceInterface);
       assertNotNull( "bind did not succeed",
           ((InternalUserDbInterfaceAidlWrapperImpl) serviceInterface.getInternalUserDbInterface()).getDbInterface());
    }
@@ -129,7 +131,8 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -169,6 +172,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
+         assertNotNull(serviceInterface);
          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
@@ -192,9 +196,9 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          TypedRow row = table.getRowAtIndex(0);
 
          assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-         assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
+         assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
          Boolean value = (Boolean) row.getDataByKey(COL_BOOL_ID);
-         assertEquals(value, null);
+          assertNull(value);
 
          // clean up
          serviceInterface.deleteTableAndAllData(APPNAME, db, DB_TABLE_ID);
@@ -214,6 +218,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
       try {
          ColumnList columnListObj = new ColumnList(createColumnList());
 
+         assertNotNull(serviceInterface);
          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertTwoRowsIntoLocalOnlyTable: " + db.getDatabaseHandle());
          // TODO: why do we have a dbHandle and APPNAME?
@@ -253,6 +258,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          DbHandle db = null;
          try {
             ColumnList columnListObj = new ColumnList(createColumnList());
+            assertNotNull(serviceInterface);
             db = serviceInterface.openDatabase(APPNAME);
             Log.i("openDatabase", "testDbUpdateSingleValue: " + db.getDatabaseHandle());
             OrderedColumns columns = serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, columnListObj);
@@ -284,8 +290,8 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
             TypedRow row = new TypedRow(results.getRowAtIndex(0), columns);
             assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-            assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(changeValue));
-            assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
+            assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) changeValue);
+            assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
 
          } catch (ServicesAvailabilityException e) {
             e.printStackTrace();
