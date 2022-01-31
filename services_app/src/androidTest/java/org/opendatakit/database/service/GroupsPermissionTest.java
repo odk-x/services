@@ -9,7 +9,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.After;
@@ -45,6 +45,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -110,6 +111,7 @@ public class GroupsPermissionTest {
          UserDbInterface serviceInterface = bindToDbService();
          DbHandle dbHandle = null;
          try {
+             assertNotNull(serviceInterface);
             dbHandle = serviceInterface.openDatabase(APPNAME);
 
             verifyNoTablesExistNCleanAllTables(serviceInterface, dbHandle);
@@ -125,7 +127,8 @@ public class GroupsPermissionTest {
    public void tearDown() throws Exception {
       UserDbInterface serviceInterface = bindToDbService();
       try {
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("GroupPermisisonTest", "tearDown: " + db.getDatabaseHandle());
          verifyNoTablesExistNCleanAllTables(serviceInterface, db);
          serviceInterface.closeDatabase(APPNAME, db);
@@ -136,7 +139,7 @@ public class GroupsPermissionTest {
    }
 
    @Nullable private UserDbInterface bindToDbService() {
-      Context context = InstrumentationRegistry.getContext();
+      Context context = ApplicationProvider.getApplicationContext();
       Intent bind_intent = new Intent();
       bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
           IntentConsts.Database.DATABASE_SERVICE_CLASS);
@@ -159,7 +162,7 @@ public class GroupsPermissionTest {
    }
 
    @NonNull private List<Column> createColumnList() {
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       columns.add(new Column(COL_STRING_ID, "column String", "string", null));
       columns.add(new Column(COL_INTEGER_ID, "column Integer", "integer", null));
@@ -193,8 +196,8 @@ public class GroupsPermissionTest {
    private void verifyRowTestSeti(TypedRow row, int i, String groupReadOnly, String groupModify,
        String groupPrivileged) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_i + i));
-      assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) (TEST_INT_i + i));
+      assertEquals(row.getDataByKey(COL_NUMBER_ID), TEST_NUM_i + i);
       assertEquals(groupReadOnly, row.getDataByKey(DataTableColumns.GROUP_READ_ONLY));
       assertEquals(groupModify, row.getDataByKey(DataTableColumns.GROUP_MODIFY));
       assertEquals(groupPrivileged, row.getDataByKey(DataTableColumns.GROUP_PRIVILEGED));
@@ -217,8 +220,8 @@ public class GroupsPermissionTest {
 
    private void verifyRowTestSet1(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
-      assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.valueOf(TEST_NUM_1));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
+      assertEquals(row.getDataByKey(COL_NUMBER_ID), TEST_NUM_1);
       assertEquals(row.getRawStringByKey(DataTableColumns.DEFAULT_ACCESS),
               RowFilterScope.Access.FULL.name());
       assertEquals(TEST_GROUP_1, row.getRawStringByKey(DataTableColumns.GROUP_MODIFY));
@@ -272,7 +275,7 @@ public class GroupsPermissionTest {
 
    private void clearActiveUser(String appName) {
       PropertiesSingleton props = CommonToolProperties
-              .get(InstrumentationRegistry.getTargetContext(), appName);
+              .get(ApplicationProvider.getApplicationContext(), appName);
       ODKServicesPropertyUtils.clearActiveUser(props);
    }
 
@@ -281,11 +284,11 @@ public class GroupsPermissionTest {
        String defaultGroup) {
       Log.e("GroupsPermissionTest", "setActiveUser: Setting user to " + activeUser);
       PropertiesSingleton props = CommonToolProperties
-          .get(InstrumentationRegistry.getTargetContext(), appName);
+          .get(ApplicationProvider.getApplicationContext(), appName);
       // these are stored in devices
-      Map<String,String> properties = new HashMap<String,String>();
+      Map<String,String> properties = new HashMap<>();
       properties.put(CommonToolProperties.KEY_AUTHENTICATION_TYPE,
-          InstrumentationRegistry.getTargetContext()
+          ApplicationProvider.getApplicationContext()
           .getString(org.opendatakit.androidlibrary.R.string.credential_type_username_password));
       properties.put(CommonToolProperties.KEY_USERNAME, activeUser);
       properties.put(CommonToolProperties.KEY_AUTHENTICATED_USER_ID, "mailto:" + activeUser);
@@ -365,14 +368,15 @@ public class GroupsPermissionTest {
    }
 
    @Test
-   public void testDbInsertNDeleteSingleRowIntoTable() throws ActionNotAuthorizedException {
+   public void testDbInsertNDeleteSingleRowIntoTable() {
       UserDbInterface serviceInterface = bindToDbService();
       try {
 
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         DbHandle db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          DbHandle db = serviceInterface.openDatabase(APPNAME);
 
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -414,14 +418,15 @@ public class GroupsPermissionTest {
    }
 
    @Test
-   public void testSetUser() throws ActionNotAuthorizedException {
+   public void testSetUser() {
       UserDbInterface dbServiceInterface = bindToDbService();
       String testUserName = "test@gmail.com";
       setActiveUser(testUserName, "1235", APPNAME, FULL_PERMISSION_ROLES, null);
       String verifyName = null;
 
       try {
-         verifyName = dbServiceInterface.getActiveUser(APPNAME);
+          assertNotNull(dbServiceInterface);
+          verifyName = dbServiceInterface.getActiveUser(APPNAME);
       } catch (ServicesAvailabilityException e) {
         fail("Failed to verify user");
       }
@@ -460,11 +465,12 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -517,10 +523,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -544,7 +551,8 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          // insert row
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -593,7 +601,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -662,11 +670,12 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -718,7 +727,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -759,10 +768,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -784,7 +794,8 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          // insert row
          serviceInterface
                  .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -846,7 +857,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getRawStringByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getRawStringByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -897,10 +908,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -923,7 +935,8 @@ public class GroupsPermissionTest {
       }
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          // insert row
          serviceInterface
              .insertRowWithId(APPNAME, db, DB_TABLE_ID, columns, contentValuesTestSet1(),
@@ -973,7 +986,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1044,7 +1057,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(3),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(3L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1070,7 +1083,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          TypedRow row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(4), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(4L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1123,10 +1136,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser2(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser2(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
 
@@ -1183,7 +1197,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1225,13 +1239,14 @@ public class GroupsPermissionTest {
       // verify user 3 also fails
       try {
          // verify no changes
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          UserTable table = serviceInterface.getRowsWithId(APPNAME, db, DB_TABLE_ID, columns, rowId
              .toString());
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          TypedRow row = table.getRowAtIndex(0);
-         assertEquals(Long.valueOf(2), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1253,7 +1268,7 @@ public class GroupsPermissionTest {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
-         assertEquals(Long.valueOf(3), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(3L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1274,7 +1289,8 @@ public class GroupsPermissionTest {
 
       // clean up
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          // delete row
          serviceInterface.deleteRowWithId(APPNAME, db, DB_TABLE_ID, columns, rowId.toString());
 
@@ -1311,10 +1327,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -1376,7 +1393,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1417,10 +1434,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(lockTableProperty());
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
@@ -1466,7 +1484,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1501,7 +1519,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(3), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(3L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1533,7 +1551,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(4), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(4L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1545,7 +1563,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(4), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(4L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1598,11 +1616,12 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
 
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
 
@@ -1663,7 +1682,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1704,10 +1723,11 @@ public class GroupsPermissionTest {
       OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
 
       try {
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionReadOnlyProperty());
 
@@ -1752,7 +1772,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(2),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(2L,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1787,7 +1807,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(3), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(3L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1819,7 +1839,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(4), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(4L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1831,7 +1851,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(4), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(4L, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1884,17 +1904,18 @@ public class GroupsPermissionTest {
 
       try {
 
-         switchToUser1(serviceInterface);
+          assertNotNull(serviceInterface);
+          switchToUser1(serviceInterface);
          db = serviceInterface.openDatabase(APPNAME);
 
-         List<KeyValueStoreEntry> metaData = new ArrayList<KeyValueStoreEntry>();
+         List<KeyValueStoreEntry> metaData = new ArrayList<>();
          metaData.add(noAnonCreationProperty());
          metaData.add(defaultPermissionHiddenProperty());
 
          serviceInterface.createOrOpenTableWithColumnsAndProperties(APPNAME, db, DB_TABLE_ID,
              colList, metaData, false);
 
-         List<String> groups = new ArrayList<String>();
+         List<String> groups = new ArrayList<>();
          groups.add(TEST_GROUP_1);
          groups.add(TEST_GRP_2);
          groups.add(TEST_GRP_3);
@@ -1959,7 +1980,8 @@ public class GroupsPermissionTest {
       for(int i=0; i < table.getNumberOfRows(); i++) {
          TypedRow row = table.getRowAtIndex(i);
          Long longValue = (Long) row.getDataByKey(COL_INTEGER_ID);
-         int iValue = longValue.intValue();
+          assertNotNull(longValue);
+          int iValue = longValue.intValue();
          if(i % 3 == 0) {
             verifyRowTestSeti(row, iValue, null, null, groupName);
          } else if (i % 3 == 1) {
