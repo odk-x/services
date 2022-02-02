@@ -95,24 +95,24 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
    private void verifyRowTestSet1(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
    }
 
    private void verifyRowTestSet2(TypedRow row) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_2);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-              (long) TEST_INT_2);
+          Long.valueOf(TEST_INT_2));
       assertEquals(row.getDataByKey(COL_BOOL_ID),
-              Boolean.FALSE);
+          Boolean.valueOf(TEST_BOOL_2));
    }
 
    private void verifyRowTestSeti(TypedRow row, int i) {
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
       assertEquals(row.getDataByKey(COL_INTEGER_ID),
-              (long) (TEST_INT_i + i));
+          Long.valueOf(TEST_INT_i + i));
       assertEquals(row.getDataByKey(COL_BOOL_ID),
-              (i % 2 != 0));
+          Boolean.valueOf((i%2 != 0)));
    }
 
    @Test
@@ -196,7 +196,7 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
          TypedRow row = table.getRowAtIndex(0);
 
          assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-         assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
+         assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
          Boolean value = (Boolean) row.getDataByKey(COL_BOOL_ID);
           assertNull(value);
 
@@ -290,8 +290,8 @@ public class OdkDatabaseBoolTest extends OdkDatabaseTestAbstractBase {
 
             TypedRow row = new TypedRow(results.getRowAtIndex(0), columns);
             assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
-            assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) changeValue);
-            assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
+            assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(changeValue));
+            assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
 
          } catch (ServicesAvailabilityException e) {
             e.printStackTrace();
