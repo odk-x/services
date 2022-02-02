@@ -11,7 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
 
@@ -78,7 +78,7 @@ abstract class OdkDatabaseTestAbstractBase {
    }
 
    @Nullable protected UserDbInterfaceImpl bindToDbService() {
-      Context context = ApplicationProvider.getApplicationContext();
+      Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
       ++bindToDbServiceCount;
       Intent bind_intent = new Intent();
