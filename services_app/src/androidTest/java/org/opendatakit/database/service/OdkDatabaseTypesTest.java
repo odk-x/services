@@ -137,34 +137,34 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    }
 
    private void verifyRowTestSet1(TypedRow row) {
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) TEST_INT_1);
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_1));
       assertNull(row.getDataByKey(COL_NUMBER_ID));
-      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.TRUE);
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf(TEST_BOOL_1));
       assertNull(row.getDataByKey(COL_ROWPATH_ID));
       assertNull(row.getDataByKey(COL_CONFIGPATH_ID));
       assertNull(row.getDataByKey(COL_ARRAY_ID));
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_1);
 
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), TEST_NUM_1);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), TEST_NUM_1);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), TEST_NUM_1);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), TEST_NUM_1);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), Double.valueOf(TEST_NUM_1));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), Double.valueOf(TEST_NUM_1));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), Double.valueOf(TEST_NUM_1));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_1));
 
    }
 
    private void verifyRowTestSeti(TypedRow row, int i) {
-      assertEquals(row.getDataByKey(COL_INTEGER_ID), (long) (TEST_INT_i + i));
-      assertEquals(row.getDataByKey(COL_NUMBER_ID), TEST_NUM_i + i);
-      assertEquals(row.getDataByKey(COL_BOOL_ID), (i % 2 != 0));
+      assertEquals(row.getDataByKey(COL_INTEGER_ID), Long.valueOf(TEST_INT_i + i));
+      assertEquals(row.getDataByKey(COL_NUMBER_ID), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_BOOL_ID), Boolean.valueOf((i % 2 != 0)));
       assertEquals(row.getDataByKey(COL_ROWPATH_ID), TEST_ROWPATH_i + i);
       assertEquals(row.getDataByKey(COL_CONFIGPATH_ID), TEST_CONFIGPATH_i + i);
       assertEquals(row.getDataByKey(COL_STRING_ID), TEST_STR_i + i);
 
       assertEquals(row.getDataByKey(COL_ARRAY_ID), TEST_ARRAY_i_CHECK);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), TEST_NUM_i + i);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), TEST_NUM_i + i);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), TEST_NUM_i + i);
-      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), TEST_NUM_i + i);
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ACC), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_ALT), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LAT), Double.valueOf(TEST_NUM_i + i));
+      assertEquals(row.getDataByKey(COL_GEO_OBJ_ID_LONG), Double.valueOf(TEST_NUM_i + i));
    }
 
    @Test public void testDbInsertSingleRowIntoTable() throws ActionNotAuthorizedException {
@@ -369,7 +369,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
             TypedRow row = new TypedRow(table.getRowAtIndex(0), columns);
             Object value = row.getDataByKey("Total");
             if (value instanceof String) {
-               int count = Integer.parseInt((String) value);
+               int count = Integer.valueOf((String) value);
                assertEquals(numRows, count);
             } else {
                fail("Should have returned a string because type of column was unknown");
