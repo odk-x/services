@@ -64,9 +64,9 @@ public class GroupsPermissionTest {
    private static final String TEST_STR_i = "TestStri";
    private static final int TEST_INT_i = 0;
    private static final double TEST_NUM_i = 0.1;
-   public static final int COL_INTEGER_VALUE_TWO = 2;
-   public static final int COL_INTEGER_VALUE_THREE = 3;
-   public static final int COL_INTEGER_VALUE_FOUR = 4;
+   public static final Long COL_INTEGER_VALUE_TWO = 2L;
+   public static final Long COL_INTEGER_VALUE_THREE = 3L;
+   public static final Long COL_INTEGER_VALUE_FOUR = 4L;
 
    private static final String TEST_GROUP_1 = "GROUP_ONE";
    private static final String TEST_USER_1 = "testUsr1@gmail.com";
@@ -605,7 +605,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -731,7 +731,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -861,7 +861,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getRawStringByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getRawStringByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -990,7 +990,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1061,7 +1061,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_THREE),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_THREE,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1087,7 +1087,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          TypedRow row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_FOUR), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_FOUR, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1201,7 +1201,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1250,7 +1250,7 @@ public class GroupsPermissionTest {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          TypedRow row = table.getRowAtIndex(0);
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1272,7 +1272,7 @@ public class GroupsPermissionTest {
          assertEquals(DB_TABLE_ID, table.getTableId());
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_THREE), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_THREE, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_3, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1397,7 +1397,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1488,7 +1488,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1523,7 +1523,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_THREE), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_THREE, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1555,7 +1555,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_FOUR), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_FOUR, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1567,7 +1567,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_FOUR), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_FOUR, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1686,7 +1686,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.SAVEPOINT_CREATOR));
 
@@ -1776,7 +1776,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_TWO),row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_TWO,row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1811,7 +1811,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_THREE), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_THREE, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1843,7 +1843,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_FOUR), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_FOUR, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
@@ -1855,7 +1855,7 @@ public class GroupsPermissionTest {
          assertEquals(1, table.getNumberOfRows());
          row = table.getRowAtIndex(0);
 
-         assertEquals(Long.valueOf(COL_INTEGER_VALUE_FOUR), row.getDataByKey(COL_INTEGER_ID));
+         assertEquals(COL_INTEGER_VALUE_FOUR, row.getDataByKey(COL_INTEGER_ID));
          assertEquals("mailto:" + TEST_USER_2, row.getDataByKey(DataTableColumns.ROW_OWNER));
          assertEquals("mailto:" + TEST_USER_1, row.getDataByKey(DataTableColumns
              .SAVEPOINT_CREATOR));
