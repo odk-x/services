@@ -73,8 +73,9 @@ public class OdkDatabaseServiceImplTest
    public static final int TEST_INT_THREE = 18;
    public static final int TEST_INT_FOUR = 2;
    public static final String TEST_STRING_ONE = "test2";
-   public static final String TEST_STRING_TWO = "columnId = ?";
-   public static final String TEST_STRING_THREE = "a";
+   public static final String COLUMN_ID_WHERE_CLAUSE = "columnId = ?";
+    public static final String TEST_STRING_TWO = "test";
+    public static final String TEST_STRING_THREE = "a";
 
    public static final String CHOICE_LIST_JSON = "[{\"choice_list_name\":\"climate_types\","
        + "\"data_value\":\"moderate\",\"display\":{\"title\":{\"text\":{\"default\":\"Moderate\",\"es\":\"Moderate\"}}},\"_row_num\":41},{\"choice_list_name\":\"climate_types\",\"data_value\":\"temperate\",\"display\":{\"title\":{\"text\":{\"default\":\"Temperate\",\"es\":\"Templado\"}}},\"_row_num\":42},{\"choice_list_name\":\"climate_types\",\"data_value\":\"hot\",\"display\":{\"title\":{\"text\":{\"default\":\"Hot\",\"es\":\"Caliente\"}}},\"_row_num\":43}]";
@@ -257,13 +258,13 @@ public class OdkDatabaseServiceImplTest
              getLocalTableColumnList());
 
          serviceInterface
-             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_TWO, TEST_DECIMAL_ONE));
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_TWO, TEST_DECIMAL_ONE));
 
          BaseTable baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExistsInLocalTable(1, baseTable, TEST_USERNAME, TEST_INT_TWO, TEST_DECIMAL_ONE);
+         verifyRowExistsInLocalTable(1, baseTable, TEST_STRING_TWO, TEST_INT_TWO, TEST_DECIMAL_ONE);
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -302,17 +303,17 @@ public class OdkDatabaseServiceImplTest
          serviceInterface
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_ONE, TEST_INT_TWO, TEST_DECIMAL_ONE));
          serviceInterface
-             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_TWO, TEST_DECIMAL_ONE));
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_TWO, TEST_DECIMAL_ONE));
 
          serviceInterface
-             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_ONE),
-                     TEST_STRING_TWO, new BindArgs(new String[] { TEST_USERNAME }));
+             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_ONE),
+                     COLUMN_ID_WHERE_CLAUSE, new BindArgs(new String[] { TEST_STRING_TWO }));
 
          BaseTable baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExistsInLocalTable(2, baseTable, TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_ONE);
+         verifyRowExistsInLocalTable(2, baseTable, TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_ONE);
          verifyRowExistsInLocalTable(2, baseTable, TEST_STRING_ONE, TEST_INT_TWO, TEST_DECIMAL_ONE);
 
          ContentValues cv = new ContentValues();
@@ -324,7 +325,7 @@ public class OdkDatabaseServiceImplTest
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExistsInLocalTable(2, baseTable, TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_TWO);
+         verifyRowExistsInLocalTable(2, baseTable, TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_TWO);
          verifyRowExistsInLocalTable(2, baseTable, TEST_STRING_ONE, TEST_INT_TWO, TEST_DECIMAL_ONE);
 
          serviceInterface
@@ -333,19 +334,19 @@ public class OdkDatabaseServiceImplTest
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExistsInLocalTable(3, baseTable, TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_TWO);
+         verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_TWO);
          verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_ONE, TEST_INT_TWO, TEST_DECIMAL_ONE);
          verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_THREE, TEST_INT_FOUR, TEST_DECIMAL_ONE);
 
          serviceInterface
-             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_ONE),
-                     TEST_STRING_TWO, new BindArgs(new String[] { TEST_USERNAME }));
+             .updateLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_ONE),
+                     COLUMN_ID_WHERE_CLAUSE, new BindArgs(new String[] { TEST_STRING_TWO }));
 
          baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
                  null, null, null, null);
 
-         verifyRowExistsInLocalTable(3, baseTable, TEST_USERNAME, TEST_INT_ONE, TEST_DECIMAL_ONE);
+         verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_TWO, TEST_INT_ONE, TEST_DECIMAL_ONE);
          verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_ONE, TEST_INT_TWO, TEST_DECIMAL_ONE);
          verifyRowExistsInLocalTable(3, baseTable, TEST_STRING_THREE, TEST_INT_FOUR, TEST_DECIMAL_ONE);
 
@@ -368,9 +369,9 @@ public class OdkDatabaseServiceImplTest
              getLocalTableColumnList());
 
          serviceInterface
-             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_TWO, TEST_DECIMAL_ONE));
-         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, TEST_STRING_TWO,
-             new BindArgs(new String[] { TEST_USERNAME }));
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_TWO, TEST_DECIMAL_ONE));
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, COLUMN_ID_WHERE_CLAUSE,
+             new BindArgs(new String[] { TEST_STRING_TWO }));
 
          BaseTable baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
@@ -380,11 +381,11 @@ public class OdkDatabaseServiceImplTest
          assertEquals(0, rows.size());
 
          serviceInterface
-             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_USERNAME, TEST_INT_TWO, TEST_DECIMAL_ONE));
+             .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_TWO, TEST_INT_TWO, TEST_DECIMAL_ONE));
          serviceInterface
              .insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, makeTblCvs(TEST_STRING_ONE, TEST_INT_THREE, TEST_DECIMAL_THREE));
-         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, TEST_STRING_TWO,
-             new BindArgs(new String[] { TEST_USERNAME }));
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, COLUMN_ID_WHERE_CLAUSE,
+             new BindArgs(new String[] { TEST_STRING_TWO }));
 
          baseTable = serviceInterface
              .simpleQueryLocalOnlyTables(APPNAME, dbHandle, TABLE_LOCAL, null, null, null, null,
@@ -397,7 +398,7 @@ public class OdkDatabaseServiceImplTest
                  null, null, null, null);
          verifyRowExistsInLocalTable(1, baseTable, TEST_STRING_ONE, TEST_INT_THREE, TEST_DECIMAL_THREE);
 
-         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, TEST_STRING_TWO,
+         serviceInterface.deleteLocalOnlyRows(APPNAME, dbHandle, TABLE_LOCAL, COLUMN_ID_WHERE_CLAUSE,
              new BindArgs(new String[] { TEST_STRING_ONE }));
 
          baseTable = serviceInterface
