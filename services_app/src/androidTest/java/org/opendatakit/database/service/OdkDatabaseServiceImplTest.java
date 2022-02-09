@@ -63,6 +63,8 @@ public class OdkDatabaseServiceImplTest
    public static final String TABLE_NAME2 = "tb2";
    public static final String TABLE_LOCAL = "tablelocal";
    public static final String TEA_HOUSES_TBL_NAME = "tea_houses";
+   public static final String COLUMN_ID1_VALUE_ONE = "ayy lmao";
+   public static final int COLUMN_ID2_VALUE_ONE = 3;
 
    public static final String CHOICE_LIST_JSON = "[{\"choice_list_name\":\"climate_types\","
        + "\"data_value\":\"moderate\",\"display\":{\"title\":{\"text\":{\"default\":\"Moderate\",\"es\":\"Moderate\"}}},\"_row_num\":41},{\"choice_list_name\":\"climate_types\",\"data_value\":\"temperate\",\"display\":{\"title\":{\"text\":{\"default\":\"Temperate\",\"es\":\"Templado\"}}},\"_row_num\":42},{\"choice_list_name\":\"climate_types\",\"data_value\":\"hot\",\"display\":{\"title\":{\"text\":{\"default\":\"Hot\",\"es\":\"Caliente\"}}},\"_row_num\":43}]";
@@ -176,8 +178,8 @@ public class OdkDatabaseServiceImplTest
              getLocalTableColumnList());
 
          ContentValues cv = new ContentValues();
-         cv.put(COLUMN_ID1, "ayy lmao");
-         cv.put(COLUMN_ID2, 3);
+         cv.put(COLUMN_ID1, COLUMN_ID1_VALUE_ONE);
+         cv.put(COLUMN_ID2, COLUMN_ID2_VALUE_ONE);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, cv);
 
@@ -188,10 +190,10 @@ public class OdkDatabaseServiceImplTest
          List<Row> rows = baseTable.getRows();
          assertEquals(rows.size(), 1);
          for (Row row : rows) {
-            assertEquals(row.getRawStringByKey(COLUMN_ID1), "ayy lmao");
+            assertEquals(row.getRawStringByKey(COLUMN_ID1), COLUMN_ID1_VALUE_ONE);
             Long value = row.getDataType(COLUMN_ID2, Long.class);
              assertNotNull(value);
-             assertEquals(3, value.intValue());
+             assertEquals(COLUMN_ID2_VALUE_ONE, value.intValue());
          }
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID2, "INTEGER");
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID3, "REAL");
