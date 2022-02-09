@@ -3,7 +3,7 @@ package org.opendatakit.database.service;
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -47,6 +47,7 @@ import java.util.Map;
 import static android.text.TextUtils.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -62,6 +63,8 @@ public class OdkDatabaseServiceImplTest
    public static final String TABLE_NAME2 = "tb2";
    public static final String TABLE_LOCAL = "tablelocal";
    public static final String TEA_HOUSES_TBL_NAME = "tea_houses";
+   public static final String COLUMN_ID1_VALUE_ONE = "ayy lmao";
+   public static final int COLUMN_ID2_VALUE_ONE = 3;
 
    public static final String CHOICE_LIST_JSON = "[{\"choice_list_name\":\"climate_types\","
        + "\"data_value\":\"moderate\",\"display\":{\"title\":{\"text\":{\"default\":\"Moderate\",\"es\":\"Moderate\"}}},\"_row_num\":41},{\"choice_list_name\":\"climate_types\",\"data_value\":\"temperate\",\"display\":{\"title\":{\"text\":{\"default\":\"Temperate\",\"es\":\"Templado\"}}},\"_row_num\":42},{\"choice_list_name\":\"climate_types\",\"data_value\":\"hot\",\"display\":{\"title\":{\"text\":{\"default\":\"Hot\",\"es\":\"Caliente\"}}},\"_row_num\":43}]";
@@ -84,9 +87,10 @@ public class OdkDatabaseServiceImplTest
    protected void setUpBefore() {
       try {
          serviceInterface = bindToDbService();
-         dbHandle = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          dbHandle = serviceInterface.openDatabase(APPNAME);
 
-         props = CommonToolProperties.get(InstrumentationRegistry.getTargetContext(), APPNAME);
+         props = CommonToolProperties.get(ApplicationProvider.getApplicationContext(), APPNAME);
          props.clearSettings();
       } catch (Exception e) {
          e.printStackTrace();
@@ -174,8 +178,8 @@ public class OdkDatabaseServiceImplTest
              getLocalTableColumnList());
 
          ContentValues cv = new ContentValues();
-         cv.put(COLUMN_ID1, "ayy lmao");
-         cv.put(COLUMN_ID2, 3);
+         cv.put(COLUMN_ID1, COLUMN_ID1_VALUE_ONE);
+         cv.put(COLUMN_ID2, COLUMN_ID2_VALUE_ONE);
 
          serviceInterface.insertLocalOnlyRow(APPNAME, dbHandle, TABLE_LOCAL, cv);
 
@@ -186,9 +190,10 @@ public class OdkDatabaseServiceImplTest
          List<Row> rows = baseTable.getRows();
          assertEquals(rows.size(), 1);
          for (Row row : rows) {
-            assertEquals(row.getRawStringByKey(COLUMN_ID1), "ayy lmao");
+            assertEquals(row.getRawStringByKey(COLUMN_ID1), COLUMN_ID1_VALUE_ONE);
             Long value = row.getDataType(COLUMN_ID2, Long.class);
-            assertTrue(value.intValue() == 3);
+             assertNotNull(value);
+             assertEquals(COLUMN_ID2_VALUE_ONE, value.intValue());
          }
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID2, "INTEGER");
          assertColType("L_" + TABLE_LOCAL, COLUMN_ID3, "REAL");
@@ -272,7 +277,8 @@ public class OdkDatabaseServiceImplTest
          if (row.getRawStringByKey(COLUMN_ID1).equals(id)) {
             assertEquals(row.getRawStringByKey(COLUMN_ID1), id);
             Long value = row.getDataType(COLUMN_ID2, Long.class);
-            assertTrue(value.intValue() == intValue);
+             assertNotNull(value);
+             assertEquals(value.intValue(), intValue);
             Double val3 = row.getDataType(COLUMN_ID3, Double.class);
             assertEquals(val3, doubleValue, delta);
          }
@@ -1198,12 +1204,12 @@ public class OdkDatabaseServiceImplTest
    @Test public void testGetAllTableIds() {
       try {
          serviceInterface.createOrOpenTableWithColumns(APPNAME, dbHandle, "breathcounter",
-             new ColumnList(new ArrayList<Column>()));
+             new ColumnList(new ArrayList<>()));
          serviceInterface.createOrOpenTableWithColumns(APPNAME, dbHandle, "fields",
-             new ColumnList(new ArrayList<Column>()));
+             new ColumnList(new ArrayList<>()));
 
          List<String> tables = serviceInterface.getAllTableIds(APPNAME, dbHandle);
-         assertTrue(tables.size() == 2);
+          assertEquals(2, tables.size());
          // Test that it returns list in sorted order
          assertEquals(tables.get(0), "breathcounter");
          assertEquals(tables.get(1), "fields");
@@ -1401,7 +1407,7 @@ public class OdkDatabaseServiceImplTest
       }
    }
 
-   @Test public void testGetTableHealthStatus() throws Exception {
+   @Test public void testGetTableHealthStatus() {
       try {
          //_savepoint_type is null -> + 1 checkpoint
          //_conflict_type not is null -> + 1 conflict
@@ -1486,7 +1492,7 @@ public class OdkDatabaseServiceImplTest
       return c.getString(c.getColumnIndexOrThrow(col));
    }
 
-   private void assertColType(String table, String column, String expectedType) throws Exception {
+   private void assertColType(String table, String column, String expectedType) {
       OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(APPNAME, dbHandle);
 
@@ -1505,7 +1511,7 @@ public class OdkDatabaseServiceImplTest
       return c.getDouble(c.getColumnIndexOrThrow(col));
    }
 
-   private static int getInt(Cursor c, String col) throws Exception {
+   private static int getInt(Cursor c, String col) {
       return c.getInt(c.getColumnIndexOrThrow(col));
    }
 
@@ -1595,7 +1601,7 @@ public class OdkDatabaseServiceImplTest
       c.close();
    }
 
-   private void thSetRevid(String revId) throws Exception {
+   private void thSetRevid(String revId) {
       String cId = TableDefinitionsColumns.TABLE_ID;
       String cSchema = TableDefinitionsColumns.SCHEMA_ETAG;
       String cData = TableDefinitionsColumns.LAST_DATA_ETAG;
@@ -1612,7 +1618,7 @@ public class OdkDatabaseServiceImplTest
           new String[] { TEA_HOUSES_TBL_NAME, "schema etag", "data etag", "time", revId });
    }
 
-   private void thSet(String id, String col, Object val) throws Exception {
+   private void thSet(String id, String col, Object val) {
       OdkConnectionInterface db = OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()
           .getConnection(APPNAME, dbHandle);
       db.rawQuery("UPDATE Tea_houses SET " + col + " = " + (val == null ? "NULL" : "?") + " "
@@ -1644,7 +1650,7 @@ public class OdkDatabaseServiceImplTest
    }
 
    private void createTeaHouses() throws Exception {
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       columns.add(new Column("Customers", "Customers", "integer", null));
       columns.add(new Column("Date_Opened", "Date_Opened", ElementDataType.string.name(), null));
@@ -1680,7 +1686,7 @@ public class OdkDatabaseServiceImplTest
           .deleteTableMetadata(APPNAME, dbHandle, TEA_HOUSES_TBL_NAME, null, null, null);
    }
 
-   private void setProp(PropertiesSingleton props, String a, String b) throws Exception {
+   private void setProp(PropertiesSingleton props, String a, String b) {
       Map<String, String> m = new HashMap<>();
       m.put(a, b);
       props.setProperties(m);
