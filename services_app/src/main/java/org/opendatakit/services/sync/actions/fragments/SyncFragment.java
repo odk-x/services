@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -81,6 +82,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogSync";
 
   private boolean loggingIn = false;
+  private static boolean syncNow = true;
 
   private LinearLayout infoPane;
 
@@ -89,6 +91,7 @@ public class SyncFragment extends AbsSyncUIFragment {
   private Button startSync;
   private Button resetServer;
   private Button changeUser;
+  private Button cancelSync;
 
   private LinearLayout resetButtonPane;
 
@@ -199,7 +202,7 @@ public class SyncFragment extends AbsSyncUIFragment {
     startSync = view.findViewById(R.id.sync_start_button);
     startSync.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        onClickSyncNow(v);
+      showPrepareSyncDialog(v);
       }
     });
     resetServer = view.findViewById(R.id.sync_reset_server_button);
@@ -660,4 +663,35 @@ public class SyncFragment extends AbsSyncUIFragment {
       createAlertDialog(getString(id_title), message);
     }
   }
+  private void showPrepareSyncDialog(View v) {
+    final AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+    View mView = getLayoutInflater().inflate(R.layout.preparing_sync_dialog_layout, null);
+
+    cancelSync = (Button) mView.findViewById(R.id.cancel_sync_button);
+
+    alert.setView(mView);
+    final AlertDialog alertDialog = alert.create();
+    alertDialog.setCanceledOnTouchOutside(false);
+
+    cancelSync.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        syncNow = false;
+        alertDialog.dismiss();
+      }
+    });
+    handler.postDelayed(new Runnable() {
+      public void run() {
+        if (syncNow) {
+          alertDialog.dismiss();
+          onClickSyncNow(v);
+        }
+      }
+    }, 3000);
+    syncNow = true;
+    alertDialog.show();
+
+  }
+
+
 }
