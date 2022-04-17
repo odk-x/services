@@ -14,6 +14,7 @@ import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -43,7 +44,7 @@ public class LoggedOutStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
-        onView(withId(android.R.id.button2)).perform(ViewActions.click());
+        onView(withId(android.R.id.button2)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();

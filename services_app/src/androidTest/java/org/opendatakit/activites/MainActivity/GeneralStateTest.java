@@ -17,6 +17,7 @@ import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
+import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -48,7 +49,7 @@ public class GeneralStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
-        onView(withId(android.R.id.button2)).perform(ViewActions.click());
+        onView(withId(android.R.id.button2)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
@@ -71,7 +72,7 @@ public class GeneralStateTest {
             activity.recreate();
         });
 
-        onView(withId(android.R.id.button1)).perform(ViewActions.click());
+        onView(withId(android.R.id.button1)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
 
         onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
         onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
