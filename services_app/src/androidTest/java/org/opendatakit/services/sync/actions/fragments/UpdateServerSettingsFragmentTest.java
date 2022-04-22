@@ -46,7 +46,7 @@ public class UpdateServerSettingsFragmentTest {
     }
 
     @Test
-    public void whenUpdateServerUrlButtonClicked_doUpdateServerUrl_whenUrlIsEmpty() {
+    public void whenUpdateServerUrlButtonClicked_doUpdateServerUrl_checkIfUrlIsEmpty() {
         onView(withId(R.id.inputTextServerUrl)).perform(replaceText(""));
 
         onView(withId(R.id.btnUpdateServerUrl)).perform(ViewActions.click());
@@ -57,7 +57,7 @@ public class UpdateServerSettingsFragmentTest {
     }
 
     @Test
-    public void whenUpdateServerUrlButtonClicked_doUpdateServerUrl_whenUrlIsInvalid() {
+    public void whenUpdateServerUrlButtonClicked_doUpdateServerUrl_checkIfUrlIsInvalid() {
         onView(withId(R.id.inputTextServerUrl)).perform(replaceText(" "));
 
         onView(withId(R.id.btnUpdateServerUrl)).perform(ViewActions.click());
@@ -76,7 +76,7 @@ public class UpdateServerSettingsFragmentTest {
     }
 
     @Test
-    public void whenVerifyServerDetailsButtonClicked_doVerifyActivity() {
+    public void whenVerifyServerDetailsButtonClicked_doVerifyActivityLaunched() {
         onView(withId(R.id.btnVerifyServerUpdateServerDetails)).perform(ViewActions.click());
         intended(hasComponent(VerifyServerSettingsActivity.class.getName()));
 
