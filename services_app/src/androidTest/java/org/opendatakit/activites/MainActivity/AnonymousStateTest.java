@@ -9,7 +9,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
@@ -18,9 +17,7 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.consts.IntentConsts;
@@ -39,9 +36,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
-public class AnonymousStateTest {
-
-    private ActivityScenario<MainActivity> activityScenario;
+public class AnonymousStateTest extends BaseMainActivity {
 
     @Before
     public void setUp() {
@@ -150,24 +145,4 @@ public class AnonymousStateTest {
 
         onView(withId(R.id.btnSignInMain)).check(matches(isDisplayed()));
     }
-
-    @After
-    public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
-            props.setProperties(serverProperties);
-        });
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
-    }
-
 }
