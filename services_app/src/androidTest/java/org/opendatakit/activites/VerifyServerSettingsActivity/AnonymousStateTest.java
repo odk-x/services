@@ -9,7 +9,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
@@ -18,13 +17,10 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.resolve.conflict.AllConflictsResolutionActivity;
@@ -33,14 +29,9 @@ import org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActi
 import org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 
-import java.util.Collections;
 import java.util.Map;
 
-public class AnonymousStateTest {
-
-    private final String TEST_SERVER_URL = "https://testUrl.com";
-
-    private ActivityScenario<VerifyServerSettingsActivity> activityScenario;
+public class AnonymousStateTest extends BaseVerifyServerSettingActivity {
 
     @Before
     public void setUp() {
@@ -65,6 +56,7 @@ public class AnonymousStateTest {
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
     @Test
@@ -91,21 +83,17 @@ public class AnonymousStateTest {
 
     @Test
     public void verifyDrawerResolveConflictsClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_resolve_conflict)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AllConflictsResolutionActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerSwitchSignInTypeClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_switch_sign_in_type)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
         onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
@@ -120,25 +108,4 @@ public class AnonymousStateTest {
         onView(withId(R.id.tvUserHeadingVerifySettings)).check(matches(withText(getContext().getString(R.string.user_logged_out_label))));
         onView(withId(R.id.btnDrawerLogin)).check(matches(withText(getContext().getString(R.string.drawer_sign_in_button_text))));
     }
-
-    @After
-    public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = activity.getProps();
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
-            props.setProperties(serverProperties);
-        });
-        activityScenario.close();
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
-    }
-
 }
