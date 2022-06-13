@@ -53,6 +53,7 @@ public class GeneralStateTest extends BaseMainActivity {
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
     @Test
@@ -78,27 +79,21 @@ public class GeneralStateTest extends BaseMainActivity {
 
     @Test
     public void checkToolbarVerifyBtnClick() {
-        Intents.init();
         onView(withId(R.id.action_verify_server_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(VerifyServerSettingsActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void checkToolbarSettingsBtnClick() {
-        Intents.init();
         onView(withId(R.id.action_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void checkDrawerSettingsBtnClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 
     @Test

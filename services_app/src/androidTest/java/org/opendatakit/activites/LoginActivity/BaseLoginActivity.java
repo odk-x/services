@@ -9,6 +9,7 @@ import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -44,6 +45,7 @@ public  abstract class BaseLoginActivity{
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
     @After
     public void clearTestEnvironment() {
@@ -59,6 +61,7 @@ public  abstract class BaseLoginActivity{
             props.setProperties(serverProperties);
         });
         activityScenario.close();
+        Intents.release();
     }
 
     protected Context getContext() {

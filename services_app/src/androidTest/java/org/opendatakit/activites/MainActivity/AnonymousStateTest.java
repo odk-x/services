@@ -63,6 +63,7 @@ public class AnonymousStateTest extends BaseMainActivity {
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
     @Test
@@ -106,29 +107,23 @@ public class AnonymousStateTest extends BaseMainActivity {
 
     @Test
     public void verifyToolbarSyncItemClick() {
-        Intents.init();
         onView(withId(R.id.action_sync)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(SyncActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerResolveConflictsClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_resolve_conflict)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AllConflictsResolutionActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerSwitchSignInTypeClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_switch_sign_in_type)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
         onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));

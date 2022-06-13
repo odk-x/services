@@ -66,18 +66,14 @@ public class GeneralStateTest extends BaseLoginActivity {
 
     @Test
     public void checkToolbarSettingsButtonClick() {
-        Intents.init();
         onView(withId(R.id.action_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void checkDrawerSettingsClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 }

@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -32,6 +33,7 @@ public abstract class BaseMainActivity {
             serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
             props.setProperties(serverProperties);
         });
+        Intents.release();
     }
 
     protected Context getContext() {

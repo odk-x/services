@@ -52,6 +52,7 @@ public class LoggedOutStateTest extends BaseMainActivity {
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
     @Test
@@ -80,18 +81,14 @@ public class LoggedOutStateTest extends BaseMainActivity {
 
     @Test
     public void verifySignInButtonClickTest() {
-        Intents.init();
         onView(withId(R.id.btnSignInMain)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerSignInButtonClickTest() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
     }
 }

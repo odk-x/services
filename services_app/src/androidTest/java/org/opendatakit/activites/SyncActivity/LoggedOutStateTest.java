@@ -50,6 +50,7 @@ public class LoggedOutStateTest extends BaseSyncActivity {
 
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
     @Test
@@ -78,10 +79,8 @@ public class LoggedOutStateTest extends BaseSyncActivity {
 
     @Test
     public void verifyDrawerSignInButtonClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
     }
 }

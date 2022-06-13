@@ -4,8 +4,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -37,6 +39,7 @@ public abstract class BaseSyncActivity {
             props.setProperties(serverProperties);
         });
         activityScenario.close();
+        Intents.release();
     }
 
     protected Activity getActivity() {
