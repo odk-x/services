@@ -3,7 +3,7 @@ package org.opendatakit.logic;
 import android.Manifest;
 import android.content.Context;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.Before;
@@ -33,6 +33,8 @@ import static org.junit.Assert.assertNull;
 public class PropertiesTest {
 
     private static final String APPNAME = "unittestProp";
+    public static final String TEST_STRING_ONE = "29";
+    public static final String TEST_STRING_TWO = "asdf";
 
     @Rule
     public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -52,22 +54,22 @@ public class PropertiesTest {
     @Test
     public void testSimpleProperties() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = ApplicationProvider.getApplicationContext();
 
         PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
-        Map<String,String> properties = new HashMap<String,String>();
+        Map<String,String> properties = new HashMap<>();
 
         // non-default value for font size
-        properties.put(CommonToolProperties.KEY_FONT_SIZE, "29");
+        properties.put(CommonToolProperties.KEY_FONT_SIZE, TEST_STRING_ONE);
         // this is stored in SharedPreferences
-        properties.put(CommonToolProperties.KEY_PASSWORD, "asdf");
+        properties.put(CommonToolProperties.KEY_PASSWORD, TEST_STRING_TWO);
         props.setProperties(properties);
 
         StaticStateManipulator.get().reset();
 
         props = CommonToolProperties.get(context, APPNAME);
-        assertEquals(props.getProperty(CommonToolProperties.KEY_FONT_SIZE), "29");
-        assertEquals(props.getProperty(CommonToolProperties.KEY_PASSWORD), "asdf");
+        assertEquals(props.getProperty(CommonToolProperties.KEY_FONT_SIZE), TEST_STRING_ONE);
+        assertEquals(props.getProperty(CommonToolProperties.KEY_PASSWORD), TEST_STRING_TWO);
     }
 
 
@@ -78,7 +80,7 @@ public class PropertiesTest {
     @Test
     public void testSecureSetProperties() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = ApplicationProvider.getApplicationContext();
 
         StaticStateManipulator.get().reset();
 
@@ -94,8 +96,8 @@ public class PropertiesTest {
 
         for ( String secureKey : secureKeys ) {
             // this is stored in SharedPreferences
-            props.setProperties(Collections.singletonMap(secureKey, "asdf" + secureKey.hashCode()));
-            assertEquals(props.getProperty(secureKey), "asdf" + secureKey.hashCode());
+            props.setProperties(Collections.singletonMap(secureKey, TEST_STRING_TWO + secureKey.hashCode()));
+            assertEquals(props.getProperty(secureKey), TEST_STRING_TWO + secureKey.hashCode());
 
             // and verify remove works
             props.setProperties(Collections.singletonMap(secureKey, (String) null));

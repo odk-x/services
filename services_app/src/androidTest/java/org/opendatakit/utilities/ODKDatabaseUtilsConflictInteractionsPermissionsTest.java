@@ -29,6 +29,7 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Permissions tests in the database.
@@ -43,7 +44,7 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
   private static final String TAG = "ODKDatabaseUtilsConflictInteractionsPermissionsTest";
 
   private void base_Type_ResolveLocalRow_Table(boolean isLocked, boolean canAnonCreate,
-      RowFilterScope.Access access) throws ActionNotAuthorizedException {
+      RowFilterScope.Access access) {
 
     String tableId;
     if ( isLocked ) {
@@ -90,14 +91,13 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
         assertTrue("Expecting to not throw an error: " + ex.toString() +" for " + ap.toString(),
             ap.throwsAccessException);
       } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
+          fail("Unexpected exception: " + ex.toString() + " for " + ap.toString());
       }
     }
   }
 
   private void base_Type_ResolveLocalRowWithServerChanges_Table(boolean isLocked,
-      boolean canAnonCreate, RowFilterScope.Access access) throws ActionNotAuthorizedException {
+      boolean canAnonCreate, RowFilterScope.Access access) {
 
     String tableId;
     if ( isLocked ) {
@@ -157,14 +157,13 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
         assertTrue("Expecting to not throw an error: " + ex.toString() +" for " + ap.toString(),
             ap.throwsAccessException);
       } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
+          fail("Unexpected exception: " + ex.toString() + " for " + ap.toString());
       }
     }
   }
 
   private void base_Type_ResolveServerRow_Table(boolean isLocked, boolean canAnonCreate,
-      RowFilterScope.Access access) throws ActionNotAuthorizedException {
+      RowFilterScope.Access access) {
 
     String tableId;
     if ( isLocked ) {
@@ -210,32 +209,31 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
         }
 
       } catch ( Exception ex ) {
-        assertTrue("Unexpected exception: " + ex.toString() +" for " + ap.toString(),
-            false);
+          fail("Unexpected exception: " + ex.toString() + " for " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testResolveLocalRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowUnlockedNoAnonCreate() {
 
     base_Type_ResolveLocalRow_Table(false, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowUnlockedYesAnonCreate() {
 
     base_Type_ResolveLocalRow_Table(false, true, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowLockedNoAnonCreate() {
 
     base_Type_ResolveLocalRow_Table(true, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowLockedYesAnonCreate() {
 
     base_Type_ResolveLocalRow_Table(true, true, RowFilterScope.Access.FULL);
   }
@@ -243,26 +241,25 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
   ///////////////////
 
   @Test
-  public void testResolveLocalRowWithServerChangesUnlockedNoAnonCreate() throws
-      ActionNotAuthorizedException {
+  public void testResolveLocalRowWithServerChangesUnlockedNoAnonCreate() {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(false, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowWithServerChangesUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowWithServerChangesUnlockedYesAnonCreate() {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(false, true, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowWithServerChangesLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowWithServerChangesLockedNoAnonCreate() {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(true, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveLocalRowWithServerChangesLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveLocalRowWithServerChangesLockedYesAnonCreate() {
 
     base_Type_ResolveLocalRowWithServerChanges_Table(true, true, RowFilterScope.Access.FULL);
   }
@@ -270,25 +267,25 @@ public class ODKDatabaseUtilsConflictInteractionsPermissionsTest extends Abstrac
   ///////////////////
 
   @Test
-  public void testResolveServerRowUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveServerRowUnlockedNoAnonCreate() {
 
     base_Type_ResolveServerRow_Table(false, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveServerRowUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveServerRowUnlockedYesAnonCreate() {
 
     base_Type_ResolveServerRow_Table(false, true, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveServerRowLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveServerRowLockedNoAnonCreate() {
 
     base_Type_ResolveServerRow_Table(true, false, RowFilterScope.Access.FULL);
   }
 
   @Test
-  public void testResolveServerRowLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testResolveServerRowLockedYesAnonCreate() {
 
     base_Type_ResolveServerRow_Table(true, true, RowFilterScope.Access.FULL);
   }
