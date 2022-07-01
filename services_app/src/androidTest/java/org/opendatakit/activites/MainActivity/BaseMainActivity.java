@@ -22,18 +22,8 @@ public abstract class BaseMainActivity {
 
     @After
     public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
-            props.setProperties(serverProperties);
-        });
-        Intents.release();
+      activityScenario.close();
+      Intents.release();
     }
 
     protected Context getContext() {

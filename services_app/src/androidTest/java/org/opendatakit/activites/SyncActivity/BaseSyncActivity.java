@@ -26,18 +26,6 @@ public abstract class BaseSyncActivity {
 
     @After
     public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = activity.getProps();
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
-            serverProperties.put(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE, null);
-            props.setProperties(serverProperties);
-        });
         activityScenario.close();
         Intents.release();
     }
