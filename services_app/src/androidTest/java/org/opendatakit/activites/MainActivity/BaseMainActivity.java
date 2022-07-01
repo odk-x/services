@@ -19,6 +19,7 @@ import java.util.Map;
 public abstract class BaseMainActivity {
     protected static ActivityScenario<MainActivity> activityScenario;
     protected static final String TEST_SERVER_URL= "https://testUrl.com";
+    protected static final String SERVER_URL = "https://tables-demo.odk-x.org";
 
     @After
     public void clearTestEnvironment() {

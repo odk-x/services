@@ -57,22 +57,6 @@ public class GeneralStateTest extends BaseSyncActivity {
     }
 
     @Test
-    public void checkFirstStartupTest() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
-            assertThat(props).isNotNull();
-
-            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "true"));
-            activity.recreate();
-        });
-
-        onView(withId(android.R.id.button1)).perform(ViewActions.click());
-
-        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
-        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
-    }
-
-    @Test
     public void verifyValuesTest() {
         onView(withId(R.id.tvServerUrlSync)).check(matches(withText(TEST_SERVER_URL)));
     }

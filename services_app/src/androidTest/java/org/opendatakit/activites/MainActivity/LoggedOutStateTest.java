@@ -3,6 +3,7 @@ package org.opendatakit.activites.MainActivity;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -56,7 +57,21 @@ public class LoggedOutStateTest extends BaseMainActivity {
         });
         Intents.init();
     }
+    @Test
+    public void checkFirstStartupTest() {
+        activityScenario.onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            assertThat(props).isNotNull();
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "true"));
+            activity.recreate();
+        });
+
+        onView(withId(android.R.id.button1)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
+
+        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
+        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(SERVER_URL)));
+    }
     @Test
     public void verifyVisibilityTest() {
         onView(withId(R.id.action_sync)).check(doesNotExist());
