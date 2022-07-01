@@ -27,6 +27,7 @@ import org.opendatakit.services.R;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class LoggedOutStateTest extends BaseMainActivity {
@@ -48,6 +49,8 @@ public class LoggedOutStateTest extends BaseMainActivity {
             );
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
+
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
 
             activity.updateViewModelWithProps();
         });

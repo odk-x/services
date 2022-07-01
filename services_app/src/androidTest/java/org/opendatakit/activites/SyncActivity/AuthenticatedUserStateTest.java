@@ -68,6 +68,8 @@ public class AuthenticatedUserStateTest extends BaseSyncActivity {
             assertThat(userProperties).isNotNull();
             props.setProperties(userProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
         Intents.init();

@@ -49,6 +49,8 @@ public class GeneralStateTest extends BaseVerifyServerSettingActivity {
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
         Intents.init();

@@ -60,6 +60,8 @@ public class AnonymousStateTest extends BaseMainActivity {
             assertThat(anonymousProperties).isNotNull();
             props.setProperties(anonymousProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
         Intents.init();

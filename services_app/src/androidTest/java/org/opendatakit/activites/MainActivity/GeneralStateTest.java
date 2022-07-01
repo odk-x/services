@@ -50,6 +50,8 @@ public class GeneralStateTest extends BaseMainActivity {
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
         Intents.init();

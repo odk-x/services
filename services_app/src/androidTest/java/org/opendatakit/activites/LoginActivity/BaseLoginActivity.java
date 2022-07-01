@@ -21,6 +21,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment;
 
+import java.util.Collections;
 import java.util.Map;
 
 public  abstract class BaseLoginActivity{
@@ -41,6 +42,8 @@ public  abstract class BaseLoginActivity{
             Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(TEST_SERVER_URL);
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
+
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
 
             activity.updateViewModelWithProps();
         });
