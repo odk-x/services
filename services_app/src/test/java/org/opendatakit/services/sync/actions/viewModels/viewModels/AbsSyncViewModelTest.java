@@ -15,13 +15,17 @@ import org.opendatakit.sync.service.SyncAttachmentState;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import java.time.LocalTime;
+import java.sql.Timestamp;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
 public class AbsSyncViewModelTest {
 
     private AbsSyncViewModel absSyncViewModel;
+    private final String APP_NAME = "testAppName";
+    private final String USER_NAME = "testUser";
+    private final String TEST_SERVER_URL = "https://testUrl.com";
+    private final String LAST_SYNC_TIME = "2022-03-19 12:30:02";
 
     @Before
     public void setUp() throws Exception {
@@ -29,10 +33,9 @@ public class AbsSyncViewModelTest {
     }
 
     @Test
-    public void checkIfAppName_isAvailable() throws Exception {
-        String appName = "appName";
-        absSyncViewModel.setAppName(appName);
-        assertEquals(appName, absSyncViewModel.getAppName());
+    public void checkIfAppName_isAvailable() {
+        absSyncViewModel.setAppName(APP_NAME);
+        assertEquals(APP_NAME, absSyncViewModel.getAppName());
     }
 
     @Test
@@ -42,16 +45,15 @@ public class AbsSyncViewModelTest {
     }
 
     @Test
-    public void checkIfIsFirstLaunched_isAllowed() throws Exception {
+    public void checkIfIsFirstLaunched_isAllowed() {
         absSyncViewModel.setIsFirstLaunch(true);
         assertEquals(true, absSyncViewModel.checkIsFirstLaunch().getValue());
     }
 
     @Test
-    public void checkIfServerUrl_isAvailable() throws Exception {
-        String serverUrl = "https://odk-x.org/";
-        absSyncViewModel.setServerUrl(serverUrl);
-        assertEquals(serverUrl, absSyncViewModel.getServerUrl().getValue());
+    public void checkIfServerUrl_isAvailable() {
+        absSyncViewModel.setServerUrl(TEST_SERVER_URL);
+        assertEquals(TEST_SERVER_URL, absSyncViewModel.getServerUrl().getValue());
     }
 
     @Test
@@ -83,9 +85,8 @@ public class AbsSyncViewModelTest {
 
     @Test
     public void checkIfUserName_isAvailable() {
-        String userName = "john";
-        absSyncViewModel.setUsername(userName);
-        assertEquals(userName, absSyncViewModel.getUsername().getValue());
+        absSyncViewModel.setUsername(USER_NAME);
+        assertEquals(USER_NAME, absSyncViewModel.getUsername().getValue());
     }
 
     @Test
@@ -96,9 +97,9 @@ public class AbsSyncViewModelTest {
 
     @Test
     public void checkIfLastSyncTime_isVisible() {
-        long time = LocalTime.parse("12:30").getHour();
-        absSyncViewModel.setLastSyncTime(time);
-        assertEquals(String.valueOf(time), absSyncViewModel.getLastSyncTime().getValue().toString());
+        Timestamp time = Timestamp.valueOf(LAST_SYNC_TIME);
+        absSyncViewModel.setLastSyncTime(time.getTime());
+        assertEquals(String.valueOf(time.getTime()), absSyncViewModel.getLastSyncTime().getValue().toString());
     }
 
     @Test
@@ -111,7 +112,6 @@ public class AbsSyncViewModelTest {
     public void checkIfSyncAttachmentState_isAvailable() {
         absSyncViewModel.updateSyncAttachmentState(SyncAttachmentState.REDUCED_SYNC);
         assertEquals(SyncAttachmentState.REDUCED_SYNC, absSyncViewModel.getCurrentSyncAttachmentState());
-        absSyncViewModel.getSyncAttachmentState();
         assertNotNull(absSyncViewModel.getSyncAttachmentState().getValue());
     }
 }

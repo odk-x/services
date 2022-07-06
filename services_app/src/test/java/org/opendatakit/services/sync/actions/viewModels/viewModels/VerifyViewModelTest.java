@@ -17,6 +17,7 @@ import org.robolectric.annotation.Config;
 public class VerifyViewModelTest {
 
     private VerifyViewModel verifyViewModel;
+    private final String TEST_VERIFY_TYPE = "server";
 
     @Before
     public void setUp() throws Exception {
@@ -31,8 +32,7 @@ public class VerifyViewModelTest {
 
     @Test
     public void checkVerifyType_isVisible() {
-        String verifyType = "verified";
-        verifyViewModel.setVerifyType(verifyType);
-        assertEquals(verifyType, verifyViewModel.getVerifyType());
+        verifyViewModel.setVerifyType(TEST_VERIFY_TYPE);
+        assertEquals(TEST_VERIFY_TYPE, verifyViewModel.getVerifyType());
     }
 }

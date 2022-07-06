@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.services.sync.actions.LoginActions;
 import org.opendatakit.services.sync.actions.viewModels.LoginViewModel;
+import org.opendatakit.services.utilities.Constants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -31,7 +32,7 @@ public class LoginViewModelTest {
 
     @Test
     public void checkIfFunctionTypes_isAvailable() {
-        loginViewModel.updateFunctionType("function");
-        assertEquals("function", loginViewModel.getFunctionType().getValue());
+        loginViewModel.updateFunctionType(Constants.LOGIN_TYPE_SIGN_IN);
+        assertEquals(Constants.LOGIN_TYPE_SIGN_IN, loginViewModel.getFunctionType().getValue());
     }
 }
