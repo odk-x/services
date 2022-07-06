@@ -8,7 +8,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
@@ -17,9 +16,7 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.consts.IntentConsts;
@@ -33,11 +30,7 @@ import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragm
 import java.util.Collections;
 import java.util.Map;
 
-public class LoggedOutStateTest {
-
-    private final String TEST_SERVER_URL = "https://testUrl.com";
-
-    private ActivityScenario<VerifyServerSettingsActivity> activityScenario;
+public class LoggedOutStateTest extends BaseVerifyServerSettingActivity {
 
     @Before
     public void setUp() {
@@ -47,7 +40,6 @@ public class LoggedOutStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
-        onView(withId(android.R.id.button2)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
@@ -56,7 +48,11 @@ public class LoggedOutStateTest {
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
+            Intents.init();
+
         });
     }
 
@@ -82,31 +78,8 @@ public class LoggedOutStateTest {
 
     @Test
     public void verifyDrawerSignInButtonClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.btnDrawerLogin)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
     }
-
-    @After
-    public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = activity.getProps();
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
-            props.setProperties(serverProperties);
-        });
-        activityScenario.close();
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
-    }
-
 }

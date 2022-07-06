@@ -17,6 +17,11 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
     // The following are set in the common.gradle file
     compileSdkVersion(compileVersion)
     buildToolsVersion(buildTools)
@@ -162,6 +167,7 @@ dependencies {
     testImplementation 'androidx.test:core:1.4.0'
     testImplementation 'org.robolectric:robolectric:4.8.1'
     testImplementation 'android.arch.core:core-testing:1.1.1'
+
 }
 
 task grantPermissionForODKApp {

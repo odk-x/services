@@ -9,7 +9,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
@@ -18,9 +17,7 @@ import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.consts.IntentConsts;
@@ -34,11 +31,7 @@ import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragm
 import java.util.Collections;
 import java.util.Map;
 
-public class GeneralStateTest {
-
-    private final String TEST_SERVER_URL = "https://testUrl.com";
-
-    private ActivityScenario<VerifyServerSettingsActivity> activityScenario;
+public class GeneralStateTest extends BaseVerifyServerSettingActivity {
 
     @Before
     public void setUp() {
@@ -48,7 +41,6 @@ public class GeneralStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
-        onView(withId(android.R.id.button2)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
@@ -57,27 +49,14 @@ public class GeneralStateTest {
             assertThat(serverProperties).isNotNull();
             props.setProperties(serverProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
 
-    @Test
-    public void checkFirstStartupTest() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
-            assertThat(props).isNotNull();
-
-            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "true"));
-            activity.recreate();
-        });
-
-        onView(withId(android.R.id.button1)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
-
-        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
-        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(TEST_SERVER_URL)));
-    }
-
-    @Test
+   @Test
     public void verifyValuesTest() {
         onView(withId(R.id.tvServerUrlVerify)).check(matches(withText(TEST_SERVER_URL)));
         onView(withId(R.id.tvServerVerifyStatusVerify)).check(matches(withText(getContext().getString(R.string.not_verified))));
@@ -86,19 +65,15 @@ public class GeneralStateTest {
 
     @Test
     public void checkToolbarSettingsButtonClick() {
-        Intents.init();
         onView(withId(R.id.action_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void checkDrawerSettingsClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_settings)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AppPropertiesActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
@@ -122,25 +97,4 @@ public class GeneralStateTest {
         onView(withId(org.opendatakit.androidlibrary.R.id.versionText)).check(matches(isDisplayed()));
         btnAboutUs.check(matches(isNotEnabled()));
     }
-
-    @After
-    public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = activity.getProps();
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH,"true");
-            props.setProperties(serverProperties);
-        });
-        activityScenario.close();
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
-    }
-
 }
