@@ -9,7 +9,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
@@ -18,9 +17,7 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendatakit.consts.IntentConsts;
@@ -39,9 +36,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
-public class AnonymousStateTest {
-
-    private ActivityScenario<MainActivity> activityScenario;
+public class AnonymousStateTest extends BaseMainActivity {
 
     @Before
     public void setUp() {
@@ -51,7 +46,6 @@ public class AnonymousStateTest {
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
         activityScenario = ActivityScenario.launch(intent);
 
-        onView(withId(android.R.id.button2)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
@@ -66,10 +60,27 @@ public class AnonymousStateTest {
             assertThat(anonymousProperties).isNotNull();
             props.setProperties(anonymousProperties);
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
+
             activity.updateViewModelWithProps();
         });
+        Intents.init();
     }
+    @Test
+    public void checkFirstStartupTest() {
+        activityScenario.onActivity(activity -> {
+            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
+            assertThat(props).isNotNull();
 
+            props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "true"));
+            activity.recreate();
+        });
+
+        onView(withId(android.R.id.button1)).inRoot(RootMatchers.isDialog()).perform(ViewActions.click());
+
+        onView(withId(R.id.inputServerUrl)).check(matches(isDisplayed()));
+        onView(withId(R.id.inputTextServerUrl)).check(matches(withText(SERVER_URL)));
+    }
     @Test
     public void verifyVisibilityTest() {
         onView(withId(R.id.action_sync)).check(matches(isDisplayed()));
@@ -111,29 +122,23 @@ public class AnonymousStateTest {
 
     @Test
     public void verifyToolbarSyncItemClick() {
-        Intents.init();
         onView(withId(R.id.action_sync)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(SyncActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerResolveConflictsClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_resolve_conflict)).perform(ViewActions.click());
         Intents.intended(IntentMatchers.hasComponent(AllConflictsResolutionActivity.class.getName()));
-        Intents.release();
     }
 
     @Test
     public void verifyDrawerSwitchSignInTypeClick() {
-        Intents.init();
         onView(withId(R.id.btnDrawerOpen)).perform(ViewActions.click());
         onView(withId(R.id.drawer_switch_sign_in_type)).perform(ViewActions.click());
 
         Intents.intended(IntentMatchers.hasComponent(LoginActivity.class.getName()));
-        Intents.release();
 
         onView(withId(R.id.tvTitleLogin)).check(matches(withText(getContext().getString(R.string.switch_sign_in_type))));
         onView(withId(R.id.btnAuthenticateUserLogin)).check(matches(withText(getContext().getString(R.string.sign_in_using_credentials))));
@@ -150,24 +155,4 @@ public class AnonymousStateTest {
 
         onView(withId(R.id.btnSignInMain)).check(matches(isDisplayed()));
     }
-
-    @After
-    public void clearTestEnvironment() {
-        activityScenario.onActivity(activity -> {
-            PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
-            assertThat(props).isNotNull();
-
-            Map<String, String> serverProperties = UpdateServerSettingsFragment.getUpdateUrlProperties(
-                    activity.getString(org.opendatakit.androidlibrary.R.string.default_sync_server_url)
-            );
-            assertThat(serverProperties).isNotNull();
-            serverProperties.put(CommonToolProperties.KEY_FIRST_LAUNCH, "true");
-            props.setProperties(serverProperties);
-        });
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getTargetContext();
-    }
-
 }
