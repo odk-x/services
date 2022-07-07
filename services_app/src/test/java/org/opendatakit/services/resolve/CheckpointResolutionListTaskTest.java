@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +38,7 @@ public class CheckpointResolutionListTaskTest {
     public void setUp() {
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
         checkpointResolutionListTask = new CheckpointResolutionListTask(getContext(), true, APP_NAME);
+        checkpointResolutionListTask.execute();
         resolutionListener = mock(ResolutionListener.class);
         adapter = new ArrayAdapter<>(getContext(), 1);
     }
@@ -69,7 +71,10 @@ public class CheckpointResolutionListTaskTest {
         assertNotNull(resolutionListener);
         checkpointResolutionListTask.clearResolutionListener(resolutionListener);
     }
-
+    @After
+    public void tearDown() throws Exception {
+        checkpointResolutionListTask.cancel(true);
+    }
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }

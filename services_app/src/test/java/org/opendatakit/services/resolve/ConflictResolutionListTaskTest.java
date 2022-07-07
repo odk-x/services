@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +38,7 @@ public class ConflictResolutionListTaskTest {
     public void setUp() {
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
         conflictResolutionListTask = new ConflictResolutionListTask(getContext(), true, APP_NAME);
+        conflictResolutionListTask.execute();
         resolutionListener = mock(ResolutionListener.class);
         adapter = new ArrayAdapter<>(getContext(), 1);
     }
@@ -68,6 +70,10 @@ public class ConflictResolutionListTaskTest {
         conflictResolutionListTask.setResolutionListener(resolutionListener);
         assertNotNull(resolutionListener);
         conflictResolutionListTask.clearResolutionListener(resolutionListener);
+    }
+    @After
+    public void tearDown() throws Exception {
+        conflictResolutionListTask.cancel(true);
     }
 
     private Context getContext() {
