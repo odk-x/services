@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -15,12 +16,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.services.database.OdkConnectionFactoryInterface;
+import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
 import org.opendatakit.services.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowEnvironment;
+
+import java.util.concurrent.ExecutionException;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
@@ -35,10 +40,10 @@ public class ConflictResolutionListTaskTest {
     private String mProgress;
 
     @Before
-    public void setUp() {
+    public void setUp() throws ExecutionException, InterruptedException {
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
         conflictResolutionListTask = new ConflictResolutionListTask(getContext(), true, APP_NAME);
-        conflictResolutionListTask.execute();
+        conflictResolutionListTask.execute().get();
         resolutionListener = mock(ResolutionListener.class);
         adapter = new ArrayAdapter<>(getContext(), 1);
     }
@@ -73,6 +78,7 @@ public class ConflictResolutionListTaskTest {
     }
     @After
     public void tearDown() throws Exception {
+       // System.out.println(conflictResolutionListTask.getStatus());
         conflictResolutionListTask.cancel(true);
     }
 
