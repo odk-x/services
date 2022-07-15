@@ -22,6 +22,7 @@ import org.junit.Before;
 public abstract class BaseUITest<T extends Activity> {
     protected final static String APP_NAME = "testAppName";
     protected final static String TEST_SERVER_URL = "https://testUrl.com";
+    protected final static String TEST_PASSWORD = "testPassword";
     protected final static String USER_NAME = "testUser";
     protected ActivityScenario<T> activityScenario;
 
