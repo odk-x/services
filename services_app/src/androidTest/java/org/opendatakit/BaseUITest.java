@@ -68,15 +68,13 @@ public abstract class BaseUITest<T extends Activity> {
 
             @Override
             public String getDescription() {
-                return null;
+                return "Checkbox checked value: " + checked;
             }
 
             @Override
             public void perform(UiController uiController, View view) {
                 Checkable checkableView = (Checkable) view;
                 if (checkableView.isChecked() != checked) {
-                    checkableView.setChecked(checked);
-                } else if (checkableView.isChecked() == checked) {
                     checkableView.setChecked(checked);
                 }
             }

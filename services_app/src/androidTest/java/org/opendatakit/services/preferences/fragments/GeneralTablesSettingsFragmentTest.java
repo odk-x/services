@@ -44,13 +44,6 @@ public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesA
     public void whenTableSpecificSettingIsClicked_useCustomHomeScreen() {
         onView(withText(R.string.custom_home_screen)).check(matches(isDisplayed()));
         onView(withId(android.R.id.checkbox)).perform(click(), setChecked(true));
-        try {
-            onView(withId(android.R.id.checkbox)).check(matches(isChecked()));
-
-        } catch (AssertionFailedError e) {
-            onView(withId(android.R.id.checkbox)).check(matches(isNotChecked()));
-
-        }
     }
 
     @Override

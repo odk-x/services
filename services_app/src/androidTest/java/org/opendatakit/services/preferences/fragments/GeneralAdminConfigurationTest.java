@@ -45,7 +45,7 @@ protected void setUpPostLaunch(){
         }
 
         @Test
-        public void df(){
+        public void whenEnableUserRestrictionIsClicked_enterAdminPassword(){
             onView(withId(androidx.preference.R.id.recycler_view))
                     .perform(RecyclerViewActions.actionOnItemAtPosition(1,
                             click()));
