@@ -6,6 +6,7 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -40,9 +41,8 @@ public class VerifyUserPermissionTest extends BaseUITest<AppPropertiesActivity> 
     @Test
     public void whenVerifyUserPermissionScreenIsClicked_launchVerifyServerSettingsActivity() {
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItemAtPosition(6,
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_start)),
                         click()));
-
         intended(hasComponent(VerifyServerSettingsActivity.class.getName()));
     }
 
@@ -50,7 +50,7 @@ public class VerifyUserPermissionTest extends BaseUITest<AppPropertiesActivity> 
     public void whenVerifyUserPermissionIsClicked_configureServerUrl() {
         resetConfiguration();
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItemAtPosition(6,
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_start)),
                         click()));
         onView(withText(R.string.configure_server_settings))
                 .inRoot(isDialog())

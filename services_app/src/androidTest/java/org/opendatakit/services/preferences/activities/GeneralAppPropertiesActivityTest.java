@@ -113,12 +113,6 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 6),
                 isDisplayed())).check(matches(withText(R.string.click_to_verify_server_settings)));
-
-        onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItemAtPosition(6,
-                        click()));
-
-        intended(hasComponent(VerifyServerSettingsActivity.class.getName()));
     }
 
     @Override
