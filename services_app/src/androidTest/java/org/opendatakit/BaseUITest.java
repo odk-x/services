@@ -23,6 +23,12 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.File;
 
 public abstract class BaseUITest<T extends Activity> {
     protected final static String APP_NAME = "testAppName";
@@ -49,6 +55,18 @@ public abstract class BaseUITest<T extends Activity> {
 
     protected Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    public void resetConfiguration() {
+        PropertiesSingleton mProps = CommonToolProperties.get(getContext()
+                , APP_NAME);
+        mProps.clearSettings();
+        LocalizationUtils.clearTranslations();
+        File f = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(APP_NAME));
+        if (f.exists()) {
+            f.delete();
+        }
+        ODKFileUtils.clearConfiguredToolFiles(APP_NAME);
     }
 
     public static ViewAction setChecked(final boolean checked) {

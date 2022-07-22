@@ -28,7 +28,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 
-public class ServerSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
+public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
 
     @Override
     protected void setUpPostLaunch() {
