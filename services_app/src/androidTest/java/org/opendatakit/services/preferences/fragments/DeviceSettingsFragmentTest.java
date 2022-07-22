@@ -4,18 +4,16 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
-import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
+import static androidx.test.espresso.matcher.ViewMatchers.isClickable;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.isNotChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
+import static org.hamcrest.Matchers.not;
 
 import android.content.Intent;
 
 import androidx.test.espresso.contrib.RecyclerViewActions;
-
-import junit.framework.AssertionFailedError;
 
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
@@ -24,7 +22,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 
-public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
+public class DeviceSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
 
     @Override
     protected void setUpPostLaunch() {
@@ -35,15 +33,17 @@ public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesA
 
         onView(withId(R.id.app_properties_content)).check(matches(isDisplayed()));
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.tool_tables_settings)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.device)),
                         click()));
+
     }
 
-
     @Test
-    public void whenTableSpecificSettingIsClicked_useCustomHomeScreen() {
-        onView(withText(R.string.custom_home_screen)).check(matches(isDisplayed()));
+    public void whenShowSplashScreenIsClicked_selectSplashScreen() {
+        onView(withId(androidx.preference.R.id.recycler_view))
+                .check(matches(atPosition(3, hasDescendant(withText(R.string.show_splash)))));
         onView(withId(android.R.id.checkbox)).perform(click(), setChecked(true));
+        onView(withText(R.string.splash_path)).check(matches(not(isClickable())));
     }
 
     @Override

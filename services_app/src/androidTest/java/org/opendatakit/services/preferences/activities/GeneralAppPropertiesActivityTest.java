@@ -107,7 +107,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
     }
 
     @Test
-    public void whenVerifyUserPermissionScreenIsClicked_launchVerifyServerSettingsActivity() {
+    public void checkIfVerifyUserPermissionScreen_isVisible() {
         onView(withId(androidx.preference.R.id.recycler_view))
                 .check(matches(atPosition(6, hasDescendant(withText(R.string.verify_server_settings_start)))));
         onView(allOf(withId(android.R.id.summary),

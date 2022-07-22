@@ -129,7 +129,6 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
     protected Intent getLaunchIntent() {
         Intent intent = new Intent(getContext(), AppPropertiesActivity.class);
         intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        intent.putExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, true);
         return intent;
     }
 }
