@@ -103,12 +103,12 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
                 .inRoot(isDialog())
                 .check(matches(isDisplayed()));
 
-        onView(withId(android.R.id.edit)).perform(replaceText(USER_NAME));
+        onView(withId(android.R.id.edit)).perform(replaceText(TEST_USERNAME));
         onView(allOf(withId(android.R.id.button1), withText("OK"))).perform(click());
 
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 3),
-                isDisplayed())).check(matches(withText(USER_NAME)));
+                isDisplayed())).check(matches(withText(TEST_USERNAME)));
     }
 
 
@@ -120,7 +120,7 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
         onView(withText(R.string.change_server_password))
                 .inRoot(isDialog())
                 .check(matches(isDisplayed()));
-        onView(withId(R.id.pwd_field)).perform(replaceText(USER_NAME));
+        onView(withId(R.id.pwd_field)).perform(replaceText(TEST_USERNAME));
         onView(withId(R.id.positive_button)).perform(ViewActions.click());
 
     }
