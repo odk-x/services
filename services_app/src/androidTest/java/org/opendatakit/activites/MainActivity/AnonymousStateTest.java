@@ -11,15 +11,14 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -36,16 +35,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
-public class AnonymousStateTest extends BaseMainActivity {
-
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), MainActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
-
+public class AnonymousStateTest extends BaseUITest<MainActivity> {
+    @Override
+    protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
@@ -64,8 +56,8 @@ public class AnonymousStateTest extends BaseMainActivity {
 
             activity.updateViewModelWithProps();
         });
-        Intents.init();
     }
+
     @Test
     public void checkFirstStartupTest() {
         activityScenario.onActivity(activity -> {
@@ -154,5 +146,12 @@ public class AnonymousStateTest extends BaseMainActivity {
         onView(withId(R.id.btnDrawerLogin)).check(matches(withText(getContext().getString(R.string.drawer_sign_in_button_text))));
 
         onView(withId(R.id.btnSignInMain)).check(matches(isDisplayed()));
+    }
+
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), MainActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+        return intent;
     }
 }

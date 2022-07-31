@@ -26,6 +26,7 @@ import androidx.test.espresso.matcher.ViewMatchers;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -42,16 +43,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 
-public class AnonymousStateTest extends BaseSyncActivity {
+public class AnonymousStateTest extends BaseUITest<SyncActivity> {
 
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), SyncActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
-
+    @Override
+    protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
@@ -68,7 +63,14 @@ public class AnonymousStateTest extends BaseSyncActivity {
 
             activity.updateViewModelWithProps();
         });
-        Intents.init();
+    }
+
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), SyncActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+
+        return intent;
     }
 
     @Test

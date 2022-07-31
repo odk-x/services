@@ -26,6 +26,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.preference.CheckBoxPreference;
+import android.view.View;
+import android.widget.Checkable;
+
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.UiController;
@@ -40,6 +44,9 @@ import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.opendatakit.services.R;
+import androidx.test.espresso.intent.Intents;
+import androidx.test.espresso.matcher.BoundedMatcher;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -63,12 +70,18 @@ public abstract class BaseUITest<T extends Activity> {
 
     @Before
     public void setUp() throws RemoteException {
+
+    protected ActivityScenario<T> activityScenario;
+
+    @Before
+    public void setUp() {
         activityScenario = ActivityScenario.launch(getLaunchIntent());
         setUpPostLaunch();
         Intents.init();
     }
 
     protected abstract void setUpPostLaunch() throws RemoteException;
+    protected abstract void setUpPostLaunch();
     protected abstract Intent getLaunchIntent();
 
     @After
@@ -92,7 +105,6 @@ public abstract class BaseUITest<T extends Activity> {
         }
         ODKFileUtils.clearConfiguredToolFiles(APP_NAME);
     }
-
 
     public static ViewAction setChecked(final boolean checked) {
         return new ViewAction() {
@@ -128,6 +140,8 @@ public abstract class BaseUITest<T extends Activity> {
                 }
             }
 
+        };
+    }
 
         };
     }
@@ -180,6 +194,12 @@ public abstract class BaseUITest<T extends Activity> {
                 .check(matches(isDisplayed()));
         onView(withId(R.id.pwd_field)).perform(replaceText(TEST_PASSWORD));
         onView(withId(R.id.positive_button)).perform(ViewActions.click());
+    }
+
+    protected Activity getActivity() {
+        final Activity[] activity1 = new Activity[1];
+        activityScenario.onActivity(activity -> activity1[0] =activity);
+        return activity1[0];
     }
 
 }
