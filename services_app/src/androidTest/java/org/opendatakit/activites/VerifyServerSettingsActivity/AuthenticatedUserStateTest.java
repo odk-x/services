@@ -21,6 +21,7 @@ import androidx.test.espresso.matcher.ViewMatchers;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -37,19 +38,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AuthenticatedUserStateTest extends BaseVerifyServerSettingActivity {
+public class AuthenticatedUserStateTest extends BaseUITest<VerifyServerSettingsActivity> {
 
-    private final String TEST_USERNAME = "testUsername";
-    private final String TEST_PASSWORD = "testPassword";
-
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
-
+    @Override
+    protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
@@ -66,7 +58,14 @@ public class AuthenticatedUserStateTest extends BaseVerifyServerSettingActivity 
 
             activity.updateViewModelWithProps();
         });
-        Intents.init();
+    }
+
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+
+        return intent;
     }
 
     @Test
