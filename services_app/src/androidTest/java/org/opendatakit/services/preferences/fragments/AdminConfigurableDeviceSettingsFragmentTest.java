@@ -1,6 +1,5 @@
 package org.opendatakit.services.preferences.fragments;
 
-
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -29,7 +28,7 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.preferences.activities.AppPropertiesActivity;
 
-public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
+public class AdminConfigurableDeviceSettingsFragmentTest extends BaseUITest<AppPropertiesActivity> {
 
     @Override
     protected void setUpPostLaunch() {
@@ -42,38 +41,46 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
         Espresso.pressBack();
 
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.admin_tool_tables_settings)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.restrict_device)),
                         click()));
     }
 
     @Test
-    public void whenTableSpecificSettingsIsChangedInAdminMode_checkIfTableSettings_isDisabledInNonAdminMode() {
+    public void whenDeviceSpecificSettingsIsChangedInAdminMode_checkIfDeviceSettings_isDisabledInNonAdminMode() {
         setCheckboxValue(false);
         Espresso.pressBack();
-        launchTableServerSettingPreferenceScreen();
+        launchDeviceSettingPreferenceScreen();
 
         onView(allOf(withId(android.R.id.title),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 0)))
-                .check(matches(withText(R.string.tool_tables_restrictions_apply)));
+                .check(matches(withText(R.string.device_restrictions_apply)));
 
         onView(allOf(withId(android.R.id.title),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 1)))
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2)))
+                .check(matches(not(isClickable())));
+
+        onView(allOf(withId(android.R.id.title),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 3)))
                 .check(matches(not(isClickable())));
 
     }
 
     @Test
-    public void whenTableSpecificSettingsIsChangedInAdminMode_checkIfTableSettings_isEnabledInNonAdminMode() {
+    public void whenDeviceSpecificSettingsIsChangedInAdminMode_checkIfDeviceSettings_isEnabledInNonAdminMode() {
         setCheckboxValue(true);
         Espresso.pressBack();
-        launchTableServerSettingPreferenceScreen();
+        launchDeviceSettingPreferenceScreen();
 
         onView(allOf(withId(android.R.id.title),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 0)))
-                .check(matches(withText(R.string.tool_tables_settings)));
+                .check(matches(withText(R.string.device)));
 
         onView(allOf(withId(android.R.id.title),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 1)))
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2)))
+                .check(matches(isEnabled()));
+
+        onView(allOf(withId(android.R.id.title),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 3)))
                 .check(matches(isEnabled()));
     }
 
@@ -90,15 +97,14 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
         return intent;
     }
 
-    private void launchTableServerSettingPreferenceScreen() {
+    private void launchDeviceSettingPreferenceScreen() {
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.exit_admin_mode)),
                         click()));
-
         onView(isRoot()).perform(waitFor(1000));
 
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.tool_tables_settings)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.device)),
                         click()));
     }
 
@@ -106,7 +112,11 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
         onView(allOf(withId(android.R.id.checkbox),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 1),
                 isDisplayed())).perform(setChecked(checked));
+        onView(allOf(withId(android.R.id.checkbox),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
+                isDisplayed())).perform(setChecked(checked));
     }
 
 
 }
+
