@@ -125,5 +125,11 @@ public abstract class BaseUITest<T extends Activity> {
             }
         };
     }
+    protected Activity getActivity() {
+        final Activity[] activity1 = new Activity[1];
+        activityScenario.onActivity(activity -> activity1[0] =activity);
+        return activity1[0];
+    }
+
 }
 

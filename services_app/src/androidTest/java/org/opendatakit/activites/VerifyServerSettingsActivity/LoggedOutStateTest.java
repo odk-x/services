@@ -19,6 +19,7 @@ import androidx.test.espresso.matcher.ViewMatchers;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -30,16 +31,10 @@ import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragm
 import java.util.Collections;
 import java.util.Map;
 
-public class LoggedOutStateTest extends BaseVerifyServerSettingActivity {
+public class LoggedOutStateTest extends BaseUITest<VerifyServerSettingsActivity> {
 
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
-
+    @Override
+    protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
@@ -51,9 +46,15 @@ public class LoggedOutStateTest extends BaseVerifyServerSettingActivity {
             props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, "false"));
 
             activity.updateViewModelWithProps();
-            Intents.init();
-
         });
+    }
+
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+
+        return intent;
     }
 
     @Test
