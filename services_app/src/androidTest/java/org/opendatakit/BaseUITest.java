@@ -69,11 +69,6 @@ public abstract class BaseUITest<T extends Activity> {
     protected ActivityScenario<T> activityScenario;
 
     @Before
-    public void setUp() throws RemoteException {
-
-    protected ActivityScenario<T> activityScenario;
-
-    @Before
     public void setUp() {
         activityScenario = ActivityScenario.launch(getLaunchIntent());
         setUpPostLaunch();
