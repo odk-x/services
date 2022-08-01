@@ -67,8 +67,6 @@ public class GeneralAdminConfigurationTest extends BaseUITest<AppPropertiesActiv
     @After
     public void tearDown() throws Exception {
         resetConfiguration();
-        if (activityScenario != null) activityScenario.close();
-        Intents.release();
     }
 
 

@@ -68,30 +68,36 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
     }
 
     @Test
-    public void whenServerSignOnCredentialIsChanged_accessChangedToAnonymous() {
+    public void whenServerSignOnCredentialIsChanged_checkIfAccessChangedToAnonymous() {
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItemAtPosition(2,
                         click()));
         onView(withText(R.string.change_credential))
                 .inRoot(isDialog())
                 .check(matches(isDisplayed()));
-        try {
+        
+        onView(withText(R.string.anonymous)).check(matches(isDisplayed()));
+        onView(allOf(withId(android.R.id.text1), withText(R.string.anonymous))).perform(click());
 
-            onView(allOf(withId(android.R.id.text1), withText(R.string.username))).check(matches(isChecked()));
-            onView(withText(R.string.anonymous)).check(matches(isDisplayed()));
-            onView(withText(R.string.anonymous)).perform(click());
-            onView(allOf(withId(android.R.id.summary),
-                    childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
-                    isDisplayed())).check(matches(withText(R.string.anonymous)));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
+                isDisplayed())).check(matches(withText(R.string.anonymous)));
+    }
 
-        } catch (AssertionFailedError e) {
-            onView(withText(R.string.username)).check(matches(isDisplayed()));
-            onView(withText(R.string.username)).perform(click());
-            onView(allOf(withId(android.R.id.summary),
-                    childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
-                    isDisplayed())).check(matches(withText(R.string.username)));
+    @Test
+    public void whenServerSignOnCredentialIsChanged_chekIfAccessChangedToUser() {
+        onView(withId(androidx.preference.R.id.recycler_view))
+                .perform(RecyclerViewActions.actionOnItemAtPosition(2,
+                        click()));
+        onView(withText(R.string.change_credential))
+                .inRoot(isDialog())
+                .check(matches(isDisplayed()));
+        onView(withText(R.string.username)).check(matches(isDisplayed()));
+        onView(allOf(withId(android.R.id.text1), withText(R.string.username))).perform(click());
 
-        }
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
+                isDisplayed())).check(matches(withText(R.string.username)));
     }
 
     @Test

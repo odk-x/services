@@ -39,9 +39,6 @@ public class AdminConfigurableServerSettingsFragmentTest extends BaseUITest<AppP
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
         });
-        //resets the configuration before running tests
-        resetConfiguration();
-        // enable user restriction to get admin mode enabled
         enableAdminMode();
         Espresso.pressBack();
 
