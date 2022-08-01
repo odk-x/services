@@ -2,7 +2,9 @@ package org.opendatakit.services.preferences.activities;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition;
 import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
@@ -39,7 +41,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void whenOpenDocumentationScreenIsClicked_launchUrl() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(0, scrollTo()))
                 .check(matches(atPosition(0, hasDescendant(withText(R.string.opendatakit_website)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 0),
@@ -52,7 +54,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void checkIfServerSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(1, scrollTo()))
                 .check(matches(atPosition(1, hasDescendant(withText(R.string.server)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 1),
@@ -62,7 +64,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void checkIfDeviceSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(2, scrollTo()))
                 .check(matches(atPosition(2, hasDescendant(withText(R.string.device)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
@@ -71,7 +73,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void checkIfTableSpecificSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(3, scrollTo()))
                 .check(matches(atPosition(3, hasDescendant(withText(R.string.tool_tables_settings)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 3),
@@ -80,7 +82,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void checkIfEnableUserRestrictionScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(4, scrollTo()))
                 .check(matches(atPosition(4, hasDescendant(withText(R.string.enable_admin_password)))));
 
         onView(allOf(withId(android.R.id.summary),
@@ -90,7 +92,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void whenResetConfigurationScreenIsClicked_launchResetConfigurationDialog() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(5, scrollTo()))
                 .check(matches(atPosition(5, hasDescendant(withText(R.string.clear_configuration_settings)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 5),
@@ -108,7 +110,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     @Test
     public void checkIfVerifyUserPermissionScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view))
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))
                 .check(matches(atPosition(6, hasDescendant(withText(R.string.verify_server_settings_start)))));
         onView(allOf(withId(android.R.id.summary),
                 childAtPosition(withId(androidx.preference.R.id.recycler_view), 6),

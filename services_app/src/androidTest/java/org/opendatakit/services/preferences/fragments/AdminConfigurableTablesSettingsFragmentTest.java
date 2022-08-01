@@ -37,7 +37,6 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
         });
-        resetConfiguration();
         enableAdminMode();
         Espresso.pressBack();
 

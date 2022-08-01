@@ -65,6 +65,11 @@ public abstract class BaseUITest<T extends Activity> {
     protected final static String TEST_SERVER_URL = "https://testUrl.com";
     protected final static String TEST_PASSWORD = "testPassword";
     protected final static String TEST_USERNAME = "testUsername";
+    protected final static String FONT_SIZE_XL = "Extra Large";
+    protected final static String FONT_SIZE_L = "Large";
+    protected final static String FONT_SIZE_M = "Medium";
+    protected final static String FONT_SIZE_S = "Small";
+    protected final static String FONT_SIZE_XS = "Extra Small";
     protected static final String SERVER_URL = "https://tables-demo.odk-x.org";
     protected ActivityScenario<T> activityScenario;
 
@@ -75,7 +80,6 @@ public abstract class BaseUITest<T extends Activity> {
         Intents.init();
     }
 
-    protected abstract void setUpPostLaunch() throws RemoteException;
     protected abstract void setUpPostLaunch();
     protected abstract Intent getLaunchIntent();
 
@@ -134,9 +138,6 @@ public abstract class BaseUITest<T extends Activity> {
                     checkableView.setChecked(checked);
                 }
             }
-
-        };
-    }
 
         };
     }

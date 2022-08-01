@@ -11,6 +11,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.Matchers.not;
+
 import android.content.Intent;
 
 import androidx.test.espresso.contrib.RecyclerViewActions;
@@ -43,7 +45,12 @@ public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesA
     @Test
     public void whenTableSpecificSettingIsClicked_useCustomHomeScreen() {
         onView(withText(R.string.custom_home_screen)).check(matches(isDisplayed()));
+
         onView(withId(android.R.id.checkbox)).perform(click(), setChecked(true));
+        onView(withId(android.R.id.checkbox)).check(matches(isChecked()));
+
+        onView(withId(android.R.id.checkbox)).perform(click(), setChecked(false));
+        onView(withId(android.R.id.checkbox)).check(matches(not(isChecked())));
     }
 
     @Override
