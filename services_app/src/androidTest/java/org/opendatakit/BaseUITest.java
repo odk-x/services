@@ -1,11 +1,31 @@
 package org.opendatakit;
 
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.android.gms.common.internal.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.isA;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.RemoteException;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.Checkable;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.preference.CheckBoxPreference;
 import android.view.View;
 import android.widget.Checkable;
 
@@ -14,6 +34,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
+import androidx.test.espresso.action.GeneralClickAction;
+import androidx.test.espresso.action.Press;
+import androidx.test.espresso.action.Tap;
+import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.espresso.intent.Intents;
+import androidx.test.espresso.matcher.BoundedMatcher;
+import androidx.test.espresso.matcher.ViewMatchers;
+import androidx.test.platform.app.InstrumentationRegistry;
+import org.opendatakit.services.R;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -45,6 +75,7 @@ public abstract class BaseUITest<T extends Activity> {
         Intents.init();
     }
 
+    protected abstract void setUpPostLaunch() throws RemoteException;
     protected abstract void setUpPostLaunch();
     protected abstract Intent getLaunchIntent();
 
@@ -99,12 +130,17 @@ public abstract class BaseUITest<T extends Activity> {
             public void perform(UiController uiController, View view) {
                 Checkable checkableView = (Checkable) view;
                 if (checkableView.isChecked() != checked) {
+                    click().perform(uiController, view);
                     checkableView.setChecked(checked);
                 }
             }
 
         };
     }
+
+        };
+    }
+
     public static Matcher<View> atPosition(final int position, @NonNull final Matcher<View> itemMatcher) {
         checkNotNull(itemMatcher);
         return new BoundedMatcher<View, RecyclerView>(RecyclerView.class) {
@@ -125,6 +161,36 @@ public abstract class BaseUITest<T extends Activity> {
             }
         };
     }
+    public static ViewAction waitFor(long delay) {
+        return new ViewAction() {
+            @Override public Matcher<View> getConstraints() {
+                return ViewMatchers.isRoot();
+            }
+
+            @Override public String getDescription() {
+                return "wait for " + delay + "milliseconds";
+            }
+
+            @Override public void perform(UiController uiController, View view) {
+                uiController.loopMainThreadForAtLeast(delay);
+            }
+        };
+    }
+
+    public  static void enableAdminMode() {
+        onView(withId(androidx.preference.R.id.recycler_view))
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.enable_admin_password)),
+                        click()));
+        onView(withId(androidx.preference.R.id.recycler_view))
+                .perform(RecyclerViewActions.actionOnItemAtPosition(1,
+                        click()));
+        onView(withText(R.string.change_admin_password))
+                .inRoot(isDialog())
+                .check(matches(isDisplayed()));
+        onView(withId(R.id.pwd_field)).perform(replaceText(TEST_PASSWORD));
+        onView(withId(R.id.positive_button)).perform(ViewActions.click());
+    }
+
     protected Activity getActivity() {
         final Activity[] activity1 = new Activity[1];
         activityScenario.onActivity(activity -> activity1[0] =activity);
