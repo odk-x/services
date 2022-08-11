@@ -16,7 +16,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.services.database.OdkConnectionFactoryInterface;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
@@ -25,8 +24,6 @@ import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowEnvironment;
-
-import java.util.UUID;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
@@ -39,24 +36,20 @@ public class CheckpointResolutionListTaskTest {
     private ResolutionListener resolutionListener;
     private ArrayAdapter<ResolveRowEntry> adapter;
     private String mProgress;
-    DbHandle dbHandleName;
-    private  OdkConnectionFactorySingleton odkConnectionFactorySingleton;
 
     @Before
     public void setUp() {
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
-        OdkConnectionFactoryInterface odkConnectionFactoryInterface = mock(OdkConnectionFactoryInterface.class);
-        dbHandleName  = new DbHandle(UUID.randomUUID().toString());
 
-        odkConnectionFactoryInterface.getConnection(APP_NAME,dbHandleName);
-      //  odkConnectionFactorySingleton= mock(OdkConnectionFactorySingleton.class);
-    /*    OdkConnectionFactoryInterface odkConnectionFactoryInterface = mock(OdkConnectionFactoryInterface.class);
-        when(OdkConnectionFactorySingleton.getOdkConnectionFactoryInterface()).thenReturn(odkConnectionFactorySingleton);
-        when(OdkConnectionFactorySingleton.set(odkConnectionFactoryInterface)).thenReturn(odkConnectionFactoryInterface);*/
-        checkpointResolutionListTask = new CheckpointResolutionListTask(getContext(), true, APP_NAME);
-        checkpointResolutionListTask.execute();
-        resolutionListener = mock(ResolutionListener.class);
+        OdkConnectionFactoryInterface odkConnectionFactoryInterface =mock(OdkConnectionFactoryInterface.class);
+        OdkConnectionFactorySingleton.set(odkConnectionFactoryInterface);
         adapter = new ArrayAdapter<>(getContext(), 1);
+
+        checkpointResolutionListTask = new CheckpointResolutionListTask(getContext(), true, APP_NAME);
+        checkpointResolutionListTask.setResolveRowEntryAdapter(adapter);
+        checkpointResolutionListTask.execute();
+
+        resolutionListener =mock(ResolutionListener.class);
     }
 
     @Test
@@ -81,16 +74,10 @@ public class CheckpointResolutionListTaskTest {
 
     }
 
-    @Test
-    public void checkIfResolutionListener_isAvailable() {
-        checkpointResolutionListTask.setResolutionListener(resolutionListener);
-        assertNotNull(resolutionListener);
-        checkpointResolutionListTask.clearResolutionListener(resolutionListener);
-    }
     @After
     public void tearDown() throws Exception {
-        System.out.println(checkpointResolutionListTask.getStatus());
-        checkpointResolutionListTask.cancel(true);
+        checkpointResolutionListTask.cancel(false);
+
     }
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
