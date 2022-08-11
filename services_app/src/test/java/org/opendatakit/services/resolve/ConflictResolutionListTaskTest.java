@@ -3,11 +3,11 @@ package org.opendatakit.services.resolve;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -19,13 +19,12 @@ import org.junit.runner.RunWith;
 import org.opendatakit.services.database.OdkConnectionFactoryInterface;
 import org.opendatakit.services.database.OdkConnectionFactorySingleton;
 import org.opendatakit.services.resolve.listener.ResolutionListener;
+import org.opendatakit.services.resolve.task.CheckpointResolutionListTask;
 import org.opendatakit.services.resolve.task.ConflictResolutionListTask;
 import org.opendatakit.services.resolve.views.components.ResolveRowEntry;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowEnvironment;
-
-import java.util.concurrent.ExecutionException;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
@@ -40,12 +39,18 @@ public class ConflictResolutionListTaskTest {
     private String mProgress;
 
     @Before
-    public void setUp() throws ExecutionException, InterruptedException {
+    public void setUp() {
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
-        conflictResolutionListTask = new ConflictResolutionListTask(getContext(), true, APP_NAME);
-        conflictResolutionListTask.execute().get();
-        resolutionListener = mock(ResolutionListener.class);
+
+        OdkConnectionFactoryInterface odkConnectionFactoryInterface =mock(OdkConnectionFactoryInterface.class);
+        OdkConnectionFactorySingleton.set(odkConnectionFactoryInterface);
         adapter = new ArrayAdapter<>(getContext(), 1);
+
+        conflictResolutionListTask = new ConflictResolutionListTask(getContext(), true, APP_NAME);
+        conflictResolutionListTask.setResolveRowEntryAdapter(adapter);
+        conflictResolutionListTask.execute();
+
+        resolutionListener =mock(ResolutionListener.class);
     }
 
     @Test
@@ -67,21 +72,13 @@ public class ConflictResolutionListTaskTest {
         assertEquals(adapter.getCount(), conflictResolutionListTask.getResolveRowEntryAdapter().getCount());
         mProgress = String.format(RESOLVING_ROWS, 1, adapter.getCount());
         assertEquals(mProgress, conflictResolutionListTask.getProgress());
-
     }
 
-    @Test
-    public void checkIfResolutionListener_isAvailable() {
-        conflictResolutionListTask.setResolutionListener(resolutionListener);
-        assertNotNull(resolutionListener);
-        conflictResolutionListTask.clearResolutionListener(resolutionListener);
-    }
     @After
     public void tearDown() throws Exception {
-       // System.out.println(conflictResolutionListTask.getStatus());
-        conflictResolutionListTask.cancel(true);
-    }
+        conflictResolutionListTask.cancel(false);
 
+    }
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
