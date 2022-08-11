@@ -9,6 +9,7 @@ import android.os.Build;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.BaseTest;
 import org.opendatakit.services.sync.actions.viewModels.AbsSyncViewModel;
 import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.SyncAttachmentState;
@@ -19,13 +20,9 @@ import java.sql.Timestamp;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
-public class AbsSyncViewModelTest {
+public class AbsSyncViewModelTest extends BaseTest {
 
     private AbsSyncViewModel absSyncViewModel;
-    private final String APP_NAME = "testAppName";
-    private final String USER_NAME = "testUser";
-    private final String TEST_SERVER_URL = "https://testUrl.com";
-    private final String LAST_SYNC_TIME = "2022-03-19 12:30:02";
 
     @Before
     public void setUp() throws Exception {

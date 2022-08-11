@@ -7,6 +7,7 @@ import android.os.Build;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.BaseTest;
 import org.opendatakit.services.sync.actions.VerifyServerSettingsActions;
 import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
 import org.robolectric.RobolectricTestRunner;
@@ -14,10 +15,9 @@ import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
-public class VerifyViewModelTest {
+public class VerifyViewModelTest extends BaseTest {
 
     private VerifyViewModel verifyViewModel;
-    private final String TEST_VERIFY_TYPE = "server";
 
     @Before
     public void setUp() throws Exception {
