@@ -20,6 +20,7 @@ import androidx.test.espresso.matcher.RootMatchers;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -31,15 +32,10 @@ import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragm
 import java.util.Collections;
 import java.util.Map;
 
-public class GeneralStateTest extends BaseVerifyServerSettingActivity {
+public class GeneralStateTest extends BaseUITest<VerifyServerSettingsActivity> {
 
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
+    @Override
+    protected void setUpPostLaunch() {
 
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = activity.getProps();
@@ -53,10 +49,17 @@ public class GeneralStateTest extends BaseVerifyServerSettingActivity {
 
             activity.updateViewModelWithProps();
         });
-        Intents.init();
     }
 
-   @Test
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), VerifyServerSettingsActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+
+        return intent;
+    }
+
+    @Test
     public void verifyValuesTest() {
         onView(withId(R.id.tvServerUrlVerify)).check(matches(withText(TEST_SERVER_URL)));
         onView(withId(R.id.tvServerVerifyStatusVerify)).check(matches(withText(getContext().getString(R.string.not_verified))));

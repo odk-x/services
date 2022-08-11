@@ -20,6 +20,7 @@ import androidx.test.espresso.matcher.RootMatchers;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -32,16 +33,10 @@ import org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragm
 import java.util.Collections;
 import java.util.Map;
 
-public class GeneralStateTest extends BaseMainActivity {
+public class GeneralStateTest extends BaseUITest<MainActivity> {
 
-    @Before
-    public void setUp() {
-        String APP_NAME = "testAppName";
-
-        Intent intent = new Intent(getContext(), MainActivity.class);
-        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
-        activityScenario = ActivityScenario.launch(intent);
-
+    @Override
+    protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {
             PropertiesSingleton props = CommonToolProperties.get(activity, activity.getAppName());
             assertThat(props).isNotNull();
@@ -54,7 +49,15 @@ public class GeneralStateTest extends BaseMainActivity {
 
             activity.updateViewModelWithProps();
         });
-        Intents.init();
+
+    }
+
+    @Override
+    protected Intent getLaunchIntent() {
+        Intent intent = new Intent(getContext(), MainActivity.class);
+        intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, APP_NAME);
+
+        return intent;
     }
 
     @Test
