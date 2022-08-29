@@ -383,4 +383,5 @@
     <string name="not_now">Not now</string>
     <string name="no">No</string>
     <string name="configure_server_settings">Do you want to configure the server settings now?</string>
+    <string name="preparing_to_sync">Preparing to Sync</string>
 </resources>
