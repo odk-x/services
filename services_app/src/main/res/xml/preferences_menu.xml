@@ -21,7 +21,7 @@
 
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.TablesSettingsFragment"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_table_setting"
         android:title="@string/tool_tables_settings"
         android:summary="@string/tool_tables_settings_summary" />
 
