@@ -19,20 +19,28 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.RoleConsts;
@@ -40,13 +48,16 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.preferences.activities.IOdkAppPropertiesActivity;
 import org.opendatakit.services.sync.actions.SyncActions;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.actions.activities.LoginActivity;
 import org.opendatakit.services.sync.actions.activities.SyncActivity;
+import org.opendatakit.services.sync.actions.viewModels.SyncViewModel;
 import org.opendatakit.services.utilities.Constants;
+import org.opendatakit.services.utilities.DateTimeUtil;
+import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
+import org.opendatakit.services.utilities.UserState;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
@@ -56,185 +67,239 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import java.util.Date;
-
-
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author mitchellsundt@gmail.com
  */
 public class SyncFragment extends AbsSyncUIFragment {
 
+  private class OnButtonClick implements View.OnClickListener{
+
+    @Override
+    public void onClick(View v) {
+      if(v.getId()==R.id.btnStartSync){
+        onSyncStartBtnClick();
+      }
+      else if(v.getId()==R.id.btnSignInSync){
+        onSignInBtnClick();
+      }
+      else if(v.getId()==R.id.btnResetServerSync){
+        onResetServerBtnClick();
+      }
+    }
+  }
+
   private static final String TAG = "SyncFragment";
 
   public static final String NAME = "SyncFragment";
   public static final int ID = R.layout.sync_launch_fragment;
 
-  private static final String SYNC_ATTACHMENT_TREATMENT = "syncAttachmentState";
-
-  private static final String SYNC_ACTION = "syncAction";
-
   private static final String PROGRESS_DIALOG_TAG = "progressDialogSync";
   private static final String OUTCOME_DIALOG_TAG = "outcomeDialogSync";
 
-  private boolean loggingIn = false;
-  private static boolean syncNow = true;
+  private TextView tvSyncHeading, tvSignInTypeLabel, tvSignInType, tvUsernameLabel, tvUsername, tvLastSyncTimeLabel, tvLastSyncTime, tvServerUrl;
+  private MaterialAutoCompleteTextView acSyncType;
+  private Button btnStartSync, btnSignIn, btnResetServer;
+  private TextInputLayout inputSyncType;
 
-  private LinearLayout infoPane;
+  private SyncViewModel syncViewModel;
+  private NavController navController;
 
-  private Spinner syncInstanceAttachmentsSpinner;
-
-  private Button startSync;
-  private Button resetServer;
-  private Button changeUser;
-  private Button cancelSync;
-
-  private LinearLayout resetButtonPane;
-
-  private SyncAttachmentState syncAttachmentState;
-  private SyncActions syncAction = SyncActions.IDLE;
-  private PropertiesSingleton properties;
-
-  private TextView lastSyncField;
+  private boolean actionEnable = true;
 
   public SyncFragment() {
     super(OUTCOME_DIALOG_TAG, PROGRESS_DIALOG_TAG);
   }
 
-  @Override public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putString(SYNC_ATTACHMENT_TREATMENT, syncAttachmentState.name());
-    outState.putString(SYNC_ACTION, syncAction.name());
-  }
-
-  @Override public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-
-    Intent incomingIntent = getActivity().getIntent();
-    if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
-      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
-      try {
-        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
-      } catch (IllegalArgumentException e) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
-      }
-    }
-
-    if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION)) {
-      String action = savedInstanceState.getString(SYNC_ACTION);
-      try {
-        syncAction = SyncActions.valueOf(action);
-      } catch (IllegalArgumentException e) {
-        syncAction = SyncActions.IDLE;
-      }
-    }
-    disableButtons();
+  @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    return inflater.inflate(ID, container, false);
   }
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    properties = CommonToolProperties.get(this.getContext(),getAppName());
-    if(properties.containsKey(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) && properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE) != null){
-      String state = properties.getProperty(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE);
-      try {
-        syncAttachmentState = SyncAttachmentState.valueOf(state);
-      } catch (IllegalArgumentException e) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    findViewsAndAttachListeners(view);
+    setupViewModelAndNavController();
+  }
+
+  private void findViewsAndAttachListeners(View view){
+    tvSyncHeading=view.findViewById(R.id.tvSignInWarnHeadingSync);
+    tvSignInTypeLabel=view.findViewById(R.id.tvSignInMethodLabelSync);
+    tvSignInType=view.findViewById(R.id.tvSignInMethodSync);
+    tvUsernameLabel=view.findViewById(R.id.tvUsernameLabelSync);
+    tvUsername=view.findViewById(R.id.tvUsernameSync);
+    tvLastSyncTimeLabel=view.findViewById(R.id.tvLastSyncTimeLabelSync);
+    tvLastSyncTime=view.findViewById(R.id.tvLastSyncTimeSync);
+    tvServerUrl=view.findViewById(R.id.tvServerUrlSync);
+
+    inputSyncType=view.findViewById(R.id.inputSyncType);
+    acSyncType=(MaterialAutoCompleteTextView) inputSyncType.getEditText();
+
+    btnStartSync=view.findViewById(R.id.btnStartSync);
+    btnSignIn=view.findViewById(R.id.btnSignInSync);
+    btnResetServer=view.findViewById(R.id.btnResetServerSync);
+
+    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(requireActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
+    acSyncType.setAdapter(instanceAttachmentsAdapter);
+
+    acSyncType.setOnItemClickListener((parent, view1, position, id) -> {
+      String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
+      syncViewModel.updateSyncAttachmentState(SyncAttachmentState.valueOf(syncAttachmentType[position]));
+
+      getProps().setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncViewModel.getCurrentSyncAttachmentState().name()));
+    });
+
+    OnButtonClick onButtonClick=new OnButtonClick();
+    btnStartSync.setOnClickListener(onButtonClick);
+    btnSignIn.setOnClickListener(onButtonClick);
+    btnResetServer.setOnClickListener(onButtonClick);
+  }
+
+  private void setupViewModelAndNavController(){
+    syncViewModel=new ViewModelProvider(requireActivity()).get(SyncViewModel.class);
+    navController = Navigation.findNavController(requireView());
+
+    syncViewModel.getServerUrl().observe(getViewLifecycleOwner(), s -> {
+      tvServerUrl.setText(s);
+      tvServerUrl.setPaintFlags(tvServerUrl.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+    });
+
+    syncViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), userState -> {
+      if (userState == UserState.LOGGED_OUT) {
+        inLoggedOutState();
+      } else if (userState == UserState.ANONYMOUS) {
+        inAnonymousState();
+      } else {
+        inAuthenticatedState();
       }
-    }
-    else{
-      syncAttachmentState=SyncAttachmentState.SYNC;
+    });
+
+    syncViewModel.checkIsLastSyncTimeAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
+      if(!aBoolean)
+        tvLastSyncTime.setText(getString(R.string.last_sync_not_available));
+    });
+
+    syncViewModel.getLastSyncTime().observe(getViewLifecycleOwner(), aLong -> tvLastSyncTime.setText(DateTimeUtil.getDisplayDate(aLong)));
+
+    syncViewModel.getUsername().observe(getViewLifecycleOwner(), s -> tvUsername.setText(s));
+
+    syncViewModel.getSyncAttachmentState().observe(getViewLifecycleOwner(), syncAttachmentState -> {
+      if(navController.getCurrentDestination()!=null && navController.getCurrentDestination().getId()==R.id.syncFragment){
+        String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
+        int position=0;
+
+        for (int i = 0; i < syncAttachmentValues.length; ++i) {
+          if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
+            position=i;
+            break;
+          }
+        }
+
+        ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter.createFromResource(requireActivity(), R.array.sync_attachment_option_names, R.layout.dropdown_list_item);
+        acSyncType.setAdapter(instanceAttachmentsAdapter);
+
+        String type=(String) acSyncType.getAdapter().getItem(position);
+        acSyncType.setText(type,false);
+      }
+    });
+  }
+
+  @Override
+  protected void handleLifecycleEvents() {
+    super.handleLifecycleEvents();
+
+    requireActivity().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+      if(event == Lifecycle.Event.ON_CREATE) {
+        if(getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.CREATED))
+          disableButtons();
+      }
+    });
+  }
+
+  private void inLoggedOutState(){
+    handleViewVisibility(View.VISIBLE,View.GONE,View.GONE,false);
+  }
+
+  private void inAnonymousState(){
+    handleViewVisibility(View.GONE,View.VISIBLE,View.GONE,true);
+    tvSignInType.setText(getString(R.string.anonymous_user));
+  }
+
+  private void inAuthenticatedState(){
+    handleViewVisibility(View.GONE, View.VISIBLE,View.VISIBLE,true);
+    tvSignInType.setText(getString(R.string.authenticated_user));
+  }
+
+  private void handleViewVisibility(int headingVisible, int detailsVisible, int usernameVisible, boolean actionState){
+    tvSyncHeading.setVisibility(headingVisible);
+    btnSignIn.setVisibility(headingVisible);
+
+    tvSignInTypeLabel.setVisibility(detailsVisible);
+    tvSignInType.setVisibility(detailsVisible);
+    tvLastSyncTimeLabel.setVisibility(detailsVisible);
+    tvLastSyncTime.setVisibility(detailsVisible);
+
+    tvUsernameLabel.setVisibility(usernameVisible);
+    tvUsername.setVisibility(usernameVisible);
+
+    actionEnable = actionState;
+    perhapsEnableButtons();
+  }
+
+  private void onSyncStartBtnClick(){
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
+    if (areCredentialsConfigured(false)) {
+      disableButtons();
+      syncViewModel.updateSyncAction(SyncActions.SYNC);
+      prepareForSyncAction();
     }
   }
 
-  @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
+  private void onSignInBtnClick(){
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickChangeUser] timestamp: " + System.currentTimeMillis());
+    Intent i = new Intent(getActivity(), LoginActivity.class);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+    startActivity(i);
 
-    View view = inflater.inflate(ID, container, false);
-
-    infoPane = view.findViewById(R.id.sync_info_pane);
-    populateTextViewMemberVariablesReferences(view);
-    syncInstanceAttachmentsSpinner = view.findViewById(R.id.sync_instance_attachments);
-    lastSyncField = view.findViewById(R.id.last_sync_field);
-    displayLastSyncInfo();
-
-    if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ATTACHMENT_TREATMENT)) {
-      String treatment = savedInstanceState.getString(SYNC_ATTACHMENT_TREATMENT);
-      try {
-        syncAttachmentState = SyncAttachmentState.valueOf(treatment);
-      } catch (IllegalArgumentException e) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
-      }
-    }
-
-    if (savedInstanceState != null && savedInstanceState.containsKey(SYNC_ACTION)) {
-      String action = savedInstanceState.getString(SYNC_ACTION);
-      try {
-        syncAction = SyncActions.valueOf(action);
-      } catch (IllegalArgumentException e) {
-        syncAction = SyncActions.IDLE;
-      }
-    }
-
-    ArrayAdapter<CharSequence> instanceAttachmentsAdapter = ArrayAdapter
-        .createFromResource(getActivity(), R.array.sync_attachment_option_names, android.R.layout.select_dialog_item);
-    syncInstanceAttachmentsSpinner.setAdapter(instanceAttachmentsAdapter);
-
-    syncInstanceAttachmentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String[] syncAttachmentType = getResources().getStringArray(R.array.sync_attachment_option_values);
-        syncAttachmentState = SyncAttachmentState.valueOf(syncAttachmentType[position]);
-        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
-      }
-
-      @Override public void onNothingSelected(AdapterView<?> parent) {
-        syncAttachmentState = SyncAttachmentState.SYNC;
-        properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_SYNC_ATTACHMENT_STATE,syncAttachmentState.name()));
-        syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
-      }
-    });
-
-    startSync = view.findViewById(R.id.sync_start_button);
-    startSync.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-      showPrepareSyncDialog(v);
-      }
-    });
-    resetServer = view.findViewById(R.id.sync_reset_server_button);
-    resetServer.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-        onClickResetServer(v);
-      }
-    });
-    changeUser = view.findViewById(R.id.change_user_button);
-    changeUser.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
-        onClickChangeUser(v);
-      }
-    });
-
-    resetButtonPane = view.findViewById(R.id.sync_reset_button_pane);
-
-    return view;
   }
 
-  @Override public void onResume() {
-    super.onResume();
-    syncInstanceAttachmentsSpinner.setSelection(getSyncAttachmentStateIndex());
+  private void onResetServerBtnClick(){
+    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
+    // ask whether to sync app files and table-level files
+
+    if (areCredentialsConfigured(false)) {
+      // show warning message
+      AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
+              getString(R.string.sync_reset_app_server_warning));
+
+      msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
+        @Override public void onClick(DialogInterface dialog, int which) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+                  "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
+          disableButtons();
+          syncViewModel.updateSyncAction(SyncActions.RESET_SERVER);
+          prepareForSyncAction();
+        }
+      });
+
+      msg.setNegativeButton(getString(R.string.cancel), null);
+      msg.show();
+    }
   }
 
   private void disableButtons() {
-    startSync.setEnabled(false);
-    resetServer.setEnabled(false);
+    inputSyncType.setEnabled(false);
+    acSyncType.setEnabled(false);
+    btnStartSync.setEnabled(false);
+    btnResetServer.setEnabled(false);
   }
 
   void perhapsEnableButtons() {
-    PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
+    PropertiesSingleton props = getProps();
     boolean isTablesAdmin;
     {
       String rolesList = props.getProperty(CommonToolProperties.KEY_ROLES_LIST);
@@ -253,18 +318,19 @@ public class SyncFragment extends AbsSyncUIFragment {
       isTablesAdmin = (rolesArray != null) && rolesArray.contains(RoleConsts.ROLE_ADMINISTRATOR);
     }
 
-    String url = props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL);
+    String url = syncViewModel.getUrl();
     if (url == null || url.length() == 0) {
       disableButtons();
     } else {
-      startSync.setEnabled(true);
-      resetServer.setEnabled(isTablesAdmin);
+      inputSyncType.setEnabled(actionEnable);
+      acSyncType.setEnabled(actionEnable);
+      btnStartSync.setEnabled(actionEnable);
+      btnResetServer.setEnabled(isTablesAdmin);
     }
 
     // only show information screens if we are the tables admin
     int visibility = isTablesAdmin ? View.VISIBLE : View.GONE;
-    infoPane.setVisibility(View.VISIBLE); // TODO
-    resetButtonPane.setVisibility(visibility);
+    btnResetServer.setVisibility(visibility);
   }
 
   AlertDialog.Builder buildOkMessage(String title, String message) {
@@ -281,7 +347,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
     if (requestCode == SyncActivity.AUTHORIZE_ACCOUNT_RESULT_CODE) {
       if (resultCode == Activity.RESULT_CANCELED) {
-        syncAction = SyncActions.IDLE;
+        syncViewModel.updateSyncAction(SyncActions.IDLE);
       }
       postTaskToAccessSyncService();
     }
@@ -316,7 +382,7 @@ public class SyncFragment extends AbsSyncUIFragment {
               final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
               final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
               if (status == SyncStatus.SYNCING) {
-                syncAction = SyncActions.MONITOR_SYNCING;
+                syncViewModel.updateSyncAction(SyncActions.MONITOR_SYNCING);
 
                 handler.post(new Runnable() {
                   @Override public void run() {
@@ -326,10 +392,10 @@ public class SyncFragment extends AbsSyncUIFragment {
                 return;
               }
 
-              switch (syncAction) {
+              switch (syncViewModel.getCurrentAction()) {
               case SYNC:
-                syncServiceInterface.synchronizeWithServer(getAppName(), syncAttachmentState);
-                syncAction = SyncActions.MONITOR_SYNCING;
+                syncServiceInterface.synchronizeWithServer(getAppName(), syncViewModel.getCurrentSyncAttachmentState());
+                syncViewModel.updateSyncAction(SyncActions.MONITOR_SYNCING);
 
                 handler.post(new Runnable() {
                   @Override public void run() {
@@ -339,8 +405,8 @@ public class SyncFragment extends AbsSyncUIFragment {
                 });
                 break;
               case RESET_SERVER:
-                syncServiceInterface.resetServer(getAppName(), syncAttachmentState);
-                syncAction = SyncActions.MONITOR_SYNCING;
+                syncServiceInterface.resetServer(getAppName(), syncViewModel.getCurrentSyncAttachmentState());
+                syncViewModel.updateSyncAction(SyncActions.MONITOR_SYNCING);
 
                 handler.post(new Runnable() {
                   @Override public void run() {
@@ -400,7 +466,7 @@ public class SyncFragment extends AbsSyncUIFragment {
               final SyncStatus status = syncServiceInterface.getSyncStatus(getAppName());
               final SyncProgressEvent event = syncServiceInterface.getSyncProgressEvent(getAppName());
               if (status == SyncStatus.SYNCING) {
-                syncAction = SyncActions.MONITOR_SYNCING;
+                syncViewModel.updateSyncAction(SyncActions.MONITOR_SYNCING);
 
                 handler.post(new Runnable() {
                   @Override public void run() {
@@ -411,7 +477,7 @@ public class SyncFragment extends AbsSyncUIFragment {
                 return;
               } else if (status == SyncStatus.NONE) {
                 // request completed
-                syncAction = SyncActions.IDLE;
+                syncViewModel.updateSyncAction(SyncActions.IDLE);
                 final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                 handler.post(new Runnable() {
                   @Override public void run() {
@@ -424,13 +490,12 @@ public class SyncFragment extends AbsSyncUIFragment {
                 });
               } else {
                 // request completed
-                syncAction = SyncActions.IDLE;
+                syncViewModel.updateSyncAction(SyncActions.IDLE);
                 final SyncOverallResult result = syncServiceInterface.getSyncResult(getAppName());
                 handler.post(new Runnable() {
                   @Override public void run() {
                     if (event.progressState == SyncProgressState.FINISHED) {
                       showOutcomeDialog(status, result);
-                      saveLastSyncInfo(status);
                     } else {
                       handler.postDelayed(new Runnable() {
                         @Override public void run() {
@@ -456,94 +521,22 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException {
     removeAnySyncNotification();
+    SyncStatus syncStatus =syncServiceInterface.getSyncStatus(getAppName());
     boolean completed = syncServiceInterface.clearAppSynchronizer(getAppName());
     if (!completed) {
       throw new IllegalStateException("Could not remove AppSynchronizer for " + getAppName());
     }
     perhapsEnableButtons();
     updateInterface();
-  }
-  private void saveLastSyncInfo(SyncStatus status){
-    if(status == SyncStatus.SYNC_COMPLETE || status == SyncStatus.SYNC_COMPLETE_PENDING_ATTACHMENTS){
-      String timestamp = String.valueOf(System.currentTimeMillis());
-      properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_LAST_SYNC_INFO,timestamp));
-      displayLastSyncInfo();
-    }
-  }
-  private void displayLastSyncInfo() {
-    String timestamp = properties.getProperty(CommonToolProperties.KEY_LAST_SYNC_INFO);
-    if (timestamp != null) {
-      SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
-      String ts = sdf.format(new Date(Long.parseLong(timestamp)));
-      lastSyncField.setText(ts);
-    } else
-      lastSyncField.setText(getResources().getString(R.string.last_sync_not_available));
+    performActionOnSyncComplete(syncStatus);
   }
 
-  private int getSyncAttachmentStateIndex(){
-    String[] syncAttachmentValues = getResources().getStringArray(R.array.sync_attachment_option_values);
-    for (int i = 0; i < syncAttachmentValues.length; ++i) {
-      if (syncAttachmentState.name().equals(syncAttachmentValues[i])) {
-        return i;
-      }
-    }
-    return 0;
-  }
-  /**
-   * Hooked to sync_reset_server_button's onClick in sync_launch_fragment.xml
-   */
-  public void onClickResetServer(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickResetServer]");
-    // ask whether to sync app files and table-level files
-
-    if (areCredentialsConfigured(false)) {
-      // show warning message
-      AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
-          getString(R.string.sync_reset_app_server_warning));
-
-      msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
-        @Override public void onClick(DialogInterface dialog, int which) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[" + getId() + "] [onClickResetServer] timestamp: " + System.currentTimeMillis());
-          disableButtons();
-          syncAction = SyncActions.RESET_SERVER;
-          prepareForSyncAction();
-        }
-      });
-
-      msg.setNegativeButton(getString(R.string.cancel), null);
-      msg.show();
-    }
-  }
-
-  /**
-   * Hooked to syncNowButton's onClick in aggregate_activity.xml
-   */
-  public void onClickSyncNow(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickSyncNow] timestamp: " + System.currentTimeMillis());
-    if (areCredentialsConfigured(false)) {
-      disableButtons();
-      syncAction = SyncActions.SYNC;
-      prepareForSyncAction();
-    }
-  }
-
-  public void onClickChangeUser(View v) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickChangeUser] timestamp: " + System.currentTimeMillis());
-
-    Intent i = new Intent(getActivity(), LoginActivity.class);
-    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-    startActivity(i);
-    return;
-  }
-
-  private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message,
-      int progressStep, int maxStep) {
+  private void showProgressDialog(SyncStatus status, SyncProgressState progress, String message, int progressStep, int maxStep) {
     if (getActivity() == null) {
       // we are tearing down or still initializing
       return;
     }
-    if (syncAction == SyncActions.MONITOR_SYNCING) {
+    if (syncViewModel.getCurrentAction() == SyncActions.MONITOR_SYNCING) {
 
       disableButtons();
 
@@ -583,7 +576,7 @@ public class SyncFragment extends AbsSyncUIFragment {
       // we are tearing down or still initializing
       return;
     }
-    if (syncAction == SyncActions.IDLE) {
+    if (syncViewModel.getCurrentAction() == SyncActions.IDLE) {
 
       disableButtons();
 
@@ -663,35 +656,89 @@ public class SyncFragment extends AbsSyncUIFragment {
       createAlertDialog(getString(id_title), message);
     }
   }
-  private void showPrepareSyncDialog(View v) {
-    final AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-    View mView = getLayoutInflater().inflate(R.layout.preparing_sync_dialog_layout, null);
 
-    cancelSync = (Button) mView.findViewById(R.id.cancel_sync_button);
 
-    alert.setView(mView);
-    final AlertDialog alertDialog = alert.create();
-    alertDialog.setCanceledOnTouchOutside(false);
+  private void performActionOnSyncComplete(SyncStatus syncStatus){
+    PropertiesSingleton props = getProps();
+    Map<String, String> properties= new HashMap<>();
+    switch (syncStatus) {
+      case SERVER_IS_NOT_ODK_SERVER: {
+        properties.putAll(UpdateServerSettingsFragment.getUpdateUrlProperties(syncViewModel.getUrl()));
+        props.setProperties(properties);
+        updateViewModelWithProps();
 
-    cancelSync.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        syncNow = false;
-        alertDialog.dismiss();
+        DialogInterface.OnClickListener onClickListener = (dialog, which) -> navController.navigate(R.id.updateServerSettingsFragmentS);
+        showAlertDialog(
+                "Server is not an ODK Server",
+                "Would you like to change the Server URL?",
+                onClickListener);
+        break;
       }
-    });
-    handler.postDelayed(new Runnable() {
-      public void run() {
-        if (syncNow) {
-          alertDialog.dismiss();
-          onClickSyncNow(v);
+      case AUTHENTICATION_ERROR:{
+        properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+        if(syncViewModel.getUserState() == UserState.ANONYMOUS){
+          properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+          properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(false));
+          props.setProperties(properties);
+          updateViewModelWithProps();
+
+          DialogInterface.OnClickListener onClickListener = (dialog, which) -> {
+            ODKServicesPropertyUtils.clearActiveUser(getProps());
+            updateViewModelWithProps();
+          };
+
+          showAlertDialog("Server Does Not Support Anonymous",
+                  "Would you like to logout as Anonymous now?",
+                  onClickListener);
+        } else {
+          properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(false));
+          props.setProperties(properties);
+          updateViewModelWithProps();
+
+          DialogInterface.OnClickListener onClickListener = (dialog, which) -> {
+            Intent signInIntent = new Intent(requireActivity(), LoginActivity.class);
+            signInIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+            signInIntent.putExtra(Constants.LOGIN_INTENT_TYPE_KEY, Constants.LOGIN_TYPE_UPDATE_CREDENTIALS);
+            startActivity(signInIntent);
+          };
+
+          showAlertDialog("Invalid User Credentials",
+                  "Would you like to update the User Credentials?", onClickListener);
         }
+        break;
       }
-    }, 3000);
-    syncNow = true;
-    alertDialog.show();
+      case SYNC_COMPLETE_PENDING_ATTACHMENTS:
+      case SYNC_COMPLETE:{
+        properties.put(CommonToolProperties.KEY_IS_SERVER_VERIFIED, Boolean.toString(true));
+        if(syncViewModel.getUserState()==UserState.ANONYMOUS){
+          properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_SIGN_IN_USED, Boolean.toString(true));
+          properties.put(CommonToolProperties.KEY_IS_ANONYMOUS_ALLOWED, Boolean.toString(true));
+        }
+        else {
+          properties.put(CommonToolProperties.KEY_IS_USER_AUTHENTICATED, Boolean.toString(true));
+        }
 
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        properties.put(CommonToolProperties.KEY_LAST_SYNC_INFO,timestamp);
+
+        props.setProperties(properties);
+        updateViewModelWithProps();
+        break;
+      }
+    }
   }
 
+  public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
+    androidx.appcompat.app.AlertDialog alertDialog = new androidx.appcompat.app.AlertDialog
+            .Builder(requireActivity())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Yes",onPositiveButtonClick)
+            .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+            .setCancelable(true)
+            .create();
+    alertDialog.setCanceledOnTouchOutside(true);
+    alertDialog.show();
+  }
 
 }

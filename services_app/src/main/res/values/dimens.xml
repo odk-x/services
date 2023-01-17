@@ -4,4 +4,21 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
+    <dimen name="list_item_padding">16dp</dimen>
+
+    <dimen name="portrait_regular_margin">24dp</dimen>
+    <dimen name="portrait_secondary_margin">16dp</dimen>
+    <dimen name="portrait_label_field_card_margin">8dp</dimen>
+    <dimen name="portrait_label_field_margin">4dp</dimen>
+    <dimen name="portrait_app_bar_height">150dp</dimen>
+
+    <dimen name="land_default_width">500dp</dimen>
+    <dimen name="land_default_margin">48dp</dimen>
+    <dimen name="land_secondary_width">320dp</dimen>
+    <dimen name="land_regular_margin">16dp</dimen>
+    <dimen name="land_secondary_margin">24dp</dimen>
+    <dimen name="land_small_margin">8dp</dimen>
+    <dimen name="land_label_field_margin">8dp</dimen>
+    <dimen name="land_app_bar_label_height">50dp</dimen>
+
 </resources>

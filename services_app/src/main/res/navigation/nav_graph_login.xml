@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_login"
+    app:startDestination="@id/chooseSignInTypeFragment">
+
+    <fragment
+        android:id="@+id/aboutMenuFragmentL"
+        android:name="org.opendatakit.fragment.AboutMenuFragment"
+        android:label="AboutMenuFragment" />
+    <fragment
+        android:id="@+id/updateServerSettingsFragmentL"
+        android:name="org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment"
+        android:label="UpdateServerSettingsFragment" />
+    <fragment
+        android:id="@+id/chooseSignInTypeFragment"
+        android:name="org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment"
+        android:label="fragment_choose_sign_in_type"
+        tools:layout="@layout/fragment_choose_sign_in_type">
+        <action
+            android:id="@+id/action_chooseSignInTypeFragment_to_setCredentialsFragment"
+            app:destination="@id/setCredentialsFragment"
+            app:popUpTo="@id/chooseSignInTypeFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_chooseSignInTypeFragment_to_aboutMenuFragmentL"
+            app:destination="@id/aboutMenuFragmentL" />
+        <action
+            android:id="@+id/action_chooseSignInTypeFragment_to_updateServerSettingsFragmentL"
+            app:destination="@id/updateServerSettingsFragmentL" />
+    </fragment>
+    <fragment
+        android:id="@+id/setCredentialsFragment"
+        android:name="org.opendatakit.services.sync.actions.fragments.SetCredentialsFragment"
+        android:label="fragment_set_credentials"
+        tools:layout="@layout/fragment_set_credentials">
+        <action
+            android:id="@+id/action_setCredentialsFragment_to_aboutMenuFragmentL"
+            app:destination="@id/aboutMenuFragmentL" />
+        <action
+            android:id="@+id/action_setCredentialsFragment_to_updateServerSettingsFragmentL"
+            app:destination="@id/updateServerSettingsFragmentL" />
+    </fragment>
+</navigation>
