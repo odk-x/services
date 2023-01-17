@@ -21,6 +21,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -260,10 +261,10 @@ public class SyncFragment extends AbsSyncUIFragment {
 
   private void onSignInBtnClick(){
     WebLogger.getLogger(getAppName()).d(TAG, "[" + getId() + "] [onClickChangeUser] timestamp: " + System.currentTimeMillis());
-
     Intent i = new Intent(getActivity(), LoginActivity.class);
     i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     startActivity(i);
+
   }
 
   private void onResetServerBtnClick(){
@@ -656,6 +657,7 @@ public class SyncFragment extends AbsSyncUIFragment {
     }
   }
 
+
   private void performActionOnSyncComplete(SyncStatus syncStatus){
     PropertiesSingleton props = getProps();
     Map<String, String> properties= new HashMap<>();
@@ -738,4 +740,5 @@ public class SyncFragment extends AbsSyncUIFragment {
     alertDialog.setCanceledOnTouchOutside(true);
     alertDialog.show();
   }
+
 }

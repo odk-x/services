@@ -384,6 +384,8 @@
     <string name="no">No</string>
     <string name="configure_server_settings">Do you want to configure the server settings now?</string>
 
+    <string name="preparing_to_sync">Preparing to Sync</string>
+
     <string name="drawer_sign_in_button_text">Sign-In </string>
     <string name="drawer_sign_out_button_text">Sign-Out </string>
     <string name="app_bar_label">SERVICES</string>
@@ -432,4 +434,5 @@
     <string name="sign_in_using_credentials">Sign in using Credentials</string>
     <string name="set_credentials">Set Credentials</string>
     <string name="sign_in_as_anonymous">Sign in as Anonymous User</string>
+
 </resources>
