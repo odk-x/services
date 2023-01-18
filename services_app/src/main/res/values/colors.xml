@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+
     
-    <color name="colorPrimaryText">#474747</color>
-    <color name="colorSecondaryText">#0A711E</color>
-    <color name="colorPrimaryBackground">#3E77B4</color>
+    <color name="colorPrimaryText">#1D1D1D</color>
+    <color name="colorSecondaryText">#13932C</color>
+    <color name="colorPrimaryBackground">#5594d7</color>
+    <color name="colorSecondaryBackground">#E7EEF6</color>
     <color name="colorCardBackground">#F0F5FA</color>
 
-    <color name="colorBtnDisabled">#90C9E8</color>
+    <color name="colorBtnDisabled">#E7EEF6</color>
 </resources>

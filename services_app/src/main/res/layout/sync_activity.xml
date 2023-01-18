@@ -21,7 +21,8 @@
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimaryBackground">
+            style="@style/AppBarStyle"
+            >
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbarSyncActivity"

@@ -1,50 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+
+
+
 
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="android:fontFamily">@font/montserrat</item>
+         <item name="android:fontFamily">@font/montserrat</item>
         <item name="colorPrimary">@color/colorSecondaryText</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar" tools:ignore="NewApi">true</item>
     </style>
 
+
+<!--CardTheme Style-->
     <style name="CardTheme" parent="AppTheme">
         <item name="cardBackgroundColor">@color/colorCardBackground</item>
         <item name="cardCornerRadius">28dp</item>
-        <item name="cardElevation">4dp</item>
+        <item name="cardElevation">1dp</item>
     </style>
 
+    <!--TextButtonStyle-->
     <style name="TextButtonStyle" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textAllCaps">false</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
         <item name="android:textColor">@color/colorPrimaryText</item>
-        <item name="android:textSize">17sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!--Primary button -->
     <style name="ButtonStyle" parent="Widget.MaterialComponents.Button">
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">20sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">14sp</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
+         <item name="android:textColor">@color/btn_text_color</item>
+        <item name="backgroundTint">@color/btn_background</item>
+        <item name="cornerRadius">100dp</item>
+    </style>
+
+    <!--Primary button square -->
+    <style name="ButtonStyleSquare" parent="Widget.MaterialComponents.Button">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">14sp</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
         <item name="android:textColor">@color/btn_text_color</item>
         <item name="backgroundTint">@color/btn_background</item>
-        <item name="cornerRadius">6dp</item>
+        <item name="cornerRadius">50dp</item>
     </style>
 
-    <style name="OutlinedButtonStyle" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:textAllCaps">false</item>
+    <!--Secondary button round -->
+    <style name="ButtonStyleSecondary" parent="Widget.MaterialComponents.Button">
+        <item name="android:textAllCaps">true</item>
         <item name="android:textSize">14sp</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
+        <item name="android:textColor">@color/colorPrimaryText</item>
+        <item name="backgroundTint">@color/colorSecondaryBackground</item>
+        <item name="cornerRadius">100dp</item>
+    </style>
+
+<!--OutlinedButtonStyle-->
+    <style name="OutlinedButtonStyle" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">14sp</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
         <item name="android:textColor">@color/colorPrimaryText</item>
         <item name="strokeColor">@color/btn_background</item>
-        <item name="cornerRadius">6dp</item>
+        <item name="cornerRadius">100dp</item>
     </style>
 
+    <!--SmallButtonStyle-->
     <style name="SmallButtonStyle" parent="ButtonStyle">
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
         <item name="android:textSize">14sp</item>
+    </style>
+
+
+    <!--Appbar Style-->
+    <style name="AppBarStyle">
+        <item name="android:background">@color/colorPrimaryBackground</item>
     </style>
 
     <style name="AppBarLabelStyle">
         <item name="android:textSize">30sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@color/black</item>
     </style>
+    <!-- End -->
 
+
+    <!--HeadingStyles-->
     <style name="HeadingStyle">
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
@@ -63,6 +108,9 @@
         <item name="android:textSize">32sp</item>
     </style>
 
+    <!--End-->
+
+    <!--TextViewStyles-->
     <style name="TextViewStyle" parent="HeadingStyle">
         <item name="android:textStyle">normal</item>
     </style>
@@ -74,7 +122,9 @@
     <style name="SmallTextViewStyle" parent="TextViewStyle">
         <item name="android:textSize">14sp</item>
     </style>
+    <!--End-->
 
+    <!--NavViewTheme-->
     <style name="NavViewTheme">
         <item name="android:layout_gravity">start</item>
         <item name="android:background">@color/white</item>
@@ -83,15 +133,17 @@
         <item name="itemTextAppearance">@style/TextViewStyle</item>
         <item name="android:dividerHeight">0dp</item>
         <item name="android:dividerPadding">4dp</item>
-        <item name="headerLayout">@layout/drawer_header</item>
-        <item name="menu">@menu/drawer_menu</item>
+         <item name="headerLayout">@layout/drawer_header</item>
+         <item name="menu">@menu/drawer_menu</item>
     </style>
 
+    <!--DropdownMenuTheme-->
     <style name="DropdownMenuTheme" parent="Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu">
         <item name="boxBackgroundColor">@color/white</item>
         <item name="boxStrokeColor">@color/white</item>
     </style>
 
+    <!--TextInputTheme-->
     <style name="TextInputTheme" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="backgroundColor">@color/white</item>
         <item name="colorOnSurface">@color/colorPrimaryBackground</item>
