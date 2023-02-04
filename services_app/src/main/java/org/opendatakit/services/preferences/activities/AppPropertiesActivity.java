@@ -90,6 +90,13 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     setContentView(R.layout.activity_app_properties);
     appbar=findViewById(R.id.topAppBar);
 
+
+    //back button function
+    appbar.setNavigationOnClickListener(v ->{
+      onBackPressed();
+
+            });
+
     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null || mAppName.length() == 0) {
       mAppName = ODKFileUtils.getOdkDefaultAppName();
@@ -110,17 +117,15 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     preferenceViewModel.getAdminMode().setValue(mAdminMode);
 
     preferenceViewModel.getAdminMode().observe(this, new Observer<Boolean>() {
-      @SuppressLint("WrongConstant")
+
       @Override
       public void onChanged(Boolean adminMode) {
         int titleResId = adminMode ?
                 R.string.action_bar_general_settings_admin_mode :
                 R.string.action_bar_general_settings;
 
-
-        /*getSupportActionBar().setCustomView(R.layout.app_bar_settings);
-        View view=getSupportActionBar().getCustomView(); */
-        getSupportActionBar().setTitle(getString(titleResId, getAppName()));
+       // getSupportActionBar().setTitle(getString(titleResId, getAppName())); --> Not in use since we're dealing with custom appbar
+        appbar.setTitle(getString(titleResId,getAppName()));
         mAdminMode = adminMode;
       }
     });

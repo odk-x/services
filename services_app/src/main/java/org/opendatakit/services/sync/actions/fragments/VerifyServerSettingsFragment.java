@@ -37,6 +37,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
@@ -588,8 +590,15 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
                     "Would you like to logout as Anonymous now?",
                     onClickListenerA);
           } else {
-            AlertDialog alertDialog = new AlertDialog
-                    .Builder(requireActivity())
+
+            /**
+             * New dialog styling
+             * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+             * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+             * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+             */
+
+            AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
                     .setTitle("Server Verified")
                     .setMessage("Server does not support Anonymous Access")
                     .setPositiveButton("OK",(dialog, which) -> dialog.dismiss())
@@ -622,8 +631,15 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
   }
 
   public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
-    AlertDialog alertDialog = new AlertDialog
-            .Builder(requireActivity())
+
+    /**
+     * New dialog styling
+     * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+     * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+     * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+     */
+
+    AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes",onPositiveButtonClick)

@@ -1,38 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceScreen
-        android:icon="@drawable/ic_launch_black_24dp"
-        android:title="@string/opendatakit_website"
-        android:summary="@string/click_to_web"
-        android:id="@+id/open_documentation"
-        android:key="@string/key_documentation" />
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
+
+<PreferenceCategory
+    >
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.ServerSettingsFragment"
-        android:icon="@drawable/ic_cloud_black_24dp"
+        android:icon="@drawable/ic_server_settings"
         android:title="@string/server"
         android:summary="@string/server_settings_summary" />
 
-    <PreferenceScreen
-        android:fragment="org.opendatakit.services.preferences.fragments.DeviceSettingsFragment"
-        android:icon="@drawable/ic_settings_black_24dp"
-        android:title="@string/device"
-        android:summary="@string/device_settings_summary" />
 
     <PreferenceScreen
-        android:fragment="org.opendatakit.services.preferences.fragments.TablesSettingsFragment"
-        android:icon="@drawable/ic_settings_black_24dp"
-        android:title="@string/tool_tables_settings"
-        android:summary="@string/tool_tables_settings_summary" />
+        android:id="@+id/verify_server_settingss"
+        android:icon="@drawable/ic_perm_settings"
+        android:title="@string/verify_server_settings_header"
+        android:summary="@string/click_to_verify_server_settings"
+        android:key="@string/key_verify_settings">
+
+        <intent
+            android:action="android.intent.action.EDIT"
+            android:targetPackage="org.opendatakit.services"
+            android:targetClass="org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity" />
+    </PreferenceScreen>
+
 
     <!-- this is visible if admin mode is not enabled OR if in admin mode -->
     <PreferenceScreen
+        app:allowDividerBelow="true"
         android:id="@+id/admin_password_status"
         android:fragment="org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment"
-        android:icon="@drawable/ic_vpn_key_black_24dp"
+        android:icon="@drawable/ic_privacy_settings"
         android:title="@string/change_admin_password"
-        android:summary="@string/admin_password_disabled"
+        android:summary="@string/enable_user_restrictions"
         android:key="@string/key_admin_password" />
+    </PreferenceCategory>
+
+    <PreferenceScreen
+        app:allowDividerAbove="true"
+        android:fragment="org.opendatakit.services.preferences.fragments.DeviceSettingsFragment"
+        android:icon="@drawable/ic_pref_settings"
+        android:title="@string/preferences"
+        android:summary="@string/configure_device_settings" />
+
+    <PreferenceScreen
+        android:fragment="org.opendatakit.services.preferences.fragments.TablesSettingsFragment"
+        android:icon="@drawable/ic_tables_settings"
+        android:title="@string/odkx_tables"
+        android:summary="@string/tool_tables_settings_summary" />
+
+
+
+
+
+    <!-- Works in admin mode -->
+    <PreferenceScreen
+        app:allowDividerAbove="true"
+        android:id="@+id/clear_configuration_settingss"
+        android:icon="@drawable/ic_clear_settings"
+        android:title="@string/clear_settings"
+        android:summary="@string/reset_configuration"
+        android:key="@string/key_reset_config" >
+
+        <intent
+            android:action="android.intent.action.EDIT"
+            android:targetPackage="org.opendatakit.services"
+            android:targetClass="org.opendatakit.services.preferences.activities.ClearAppPropertiesActivity" />
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        app:allowDividerAbove="true"
+        android:icon="@drawable/ic_userdocs_settings"
+        android:title="@string/user_documentation"
+        android:summary="@string/visit_user_docs"
+        android:id="@+id/open_documentation"
+        android:key="@string/key_documentation" />
+
+
+
+
+
 
     <!-- these are visible if in admin mode -->
     <PreferenceScreen
@@ -58,23 +106,11 @@
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.AdminPasswordChallengeFragment"
         android:id="@+id/general_settings_in_admin_mode"
-        android:icon="@drawable/ic_vpn_key_black_24dp"
+        android:icon="@drawable/ic_privacy_settings"
         android:title="@string/admin_general_settings"
         android:summary="@string/admin_access_settings"
         android:key="@string/key_admin_general_settings" />
 
-    <PreferenceScreen
-        android:id="@+id/clear_configuration_settingss"
-        android:icon="@drawable/ic_delete_black_24dp"
-        android:title="@string/clear_configuration_settings"
-        android:summary="@string/click_to_clear_settings"
-        android:key="@string/key_reset_config" >
-
-        <intent
-            android:action="android.intent.action.EDIT"
-            android:targetPackage="org.opendatakit.services"
-            android:targetClass="org.opendatakit.services.preferences.activities.ClearAppPropertiesActivity" />
-    </PreferenceScreen>
     <PreferenceScreen
         android:id="@+id/exit_admin_mode"
         android:icon="@drawable/ic_exit_24dp"
@@ -84,16 +120,4 @@
 
     </PreferenceScreen>
 
-    <PreferenceScreen
-        android:id="@+id/verify_server_settingss"
-        android:icon="@drawable/ic_verified_user_black_24dp"
-        android:title="@string/verify_server_settings_header"
-        android:summary="@string/click_to_verify_server_settings"
-        android:key="@string/key_verify_settings">
-
-        <intent
-            android:action="android.intent.action.EDIT"
-            android:targetPackage="org.opendatakit.services"
-            android:targetClass="org.opendatakit.services.sync.actions.activities.VerifyServerSettingsActivity" />
-    </PreferenceScreen>
 </PreferenceScreen>

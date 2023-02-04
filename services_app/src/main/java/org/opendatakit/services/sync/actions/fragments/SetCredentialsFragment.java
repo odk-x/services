@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.opendatakit.properties.CommonToolProperties;
@@ -255,8 +256,14 @@ public class SetCredentialsFragment extends LoginFragment {
     }
 
     private void promptToVerifyUser() {
-        AlertDialog alertDialog = new AlertDialog
-                .Builder(requireActivity())
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+         */
+
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
                 .setTitle("User Logged in Successfully")
                 .setMessage("Would you like to verify the User now?")
                 .setPositiveButton("Yes", (dialog, which) -> verifyServerSettings())

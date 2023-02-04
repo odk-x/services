@@ -15,7 +15,6 @@
 package org.opendatakit.services.preferences.fragments;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,6 +22,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.loader.app.LoaderManager;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
@@ -31,6 +31,8 @@ import androidx.preference.Preference.OnPreferenceChangeListener;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
@@ -201,7 +203,15 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
           final CharSequence[] items = { getString(R.string.select_another_image),
               getString(R.string.use_odk_default) };
 
-          AlertDialog.Builder builder = new AlertDialog.Builder(DeviceSettingsFragment.this.getActivity());
+
+          /**
+           * New dialog styling
+           * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+           * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+           * @params change to **AlertDialogBuilder** in case of any error and remove R.style.... param!
+           */
+
+          MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(DeviceSettingsFragment.this.getActivity(),R.style.OdkAlertDialogStyle );
           builder.setTitle(getString(R.string.change_splash_path));
           builder.setNeutralButton(getString(R.string.cancel),
               new DialogInterface.OnClickListener() {

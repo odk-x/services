@@ -38,6 +38,7 @@ import androidx.preference.Preference.OnPreferenceChangeListener;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -430,7 +431,14 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
       }
       else{
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+         */
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
         builder.setMessage(R.string.camera_permission_rationale)
                 .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
                   @Override

@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +24,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -71,6 +74,8 @@ public class UpdateServerSettingsFragment extends Fragment {
     private NavController navController;
     private Button btnUpdateUrl, btnSetDefault, btnVerifyServerDetails, btnScanQr;
 
+    MaterialToolbar materialToolbar;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -80,8 +85,15 @@ public class UpdateServerSettingsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        materialToolbar=view.findViewById(R.id.topAppBar1);
+        materialToolbar.setNavigationOnClickListener(v -> {
+
+            //Back function will be used here!
+        });
         findViewsAndAttachListeners(view);
         setupViewModelAndNavController();
+
     }
 
     private void findViewsAndAttachListeners(View view) {
@@ -179,8 +191,14 @@ public class UpdateServerSettingsFragment extends Fragment {
     }
 
     private void promptToVerifyServer(){
-        AlertDialog alertDialog = new AlertDialog
-                .Builder(requireActivity())
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+         */
+
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
                 .setTitle("Server Settings Updated Successfully")
                 .setMessage("Would you like to verify the Server now?")
                 .setPositiveButton("Yes", (dialog, which) -> startVerifyActivity())
@@ -278,25 +296,26 @@ public class UpdateServerSettingsFragment extends Fragment {
             }
             else{
 
-                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getActivity());
+                /**
+                 * New dialog styling
+                 * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+                 * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+                 * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+                 */
+
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
                 builder.setMessage(R.string.camera_permission_rationale)
-                        .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
-                                    requestPermissions(
-                                            new String[]{Manifest.permission.CAMERA},
-                                            PERMISSION_REQUEST_CAMERA_CODE);
-                                }
+                        .setPositiveButton(R.string.allow, (dialog, which) -> {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                //For pre Marshmallow devices, this wouldn't be called as they don't need runtime permission.
+                                requestPermissions(
+                                        new String[]{Manifest.permission.CAMERA},
+                                        PERMISSION_REQUEST_CAMERA_CODE);
                             }
                         })
-                        .setNegativeButton(R.string.not_now, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Toast.makeText(getActivity(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            }
+                        .setNegativeButton(R.string.not_now, (dialog, which) -> {
+                            Toast.makeText(getActivity(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         });
                 builder.create().show();
             }

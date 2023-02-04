@@ -16,6 +16,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
+
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.services.R;
 import org.opendatakit.services.utilities.Constants;
@@ -249,8 +252,15 @@ public class ChooseSignInTypeFragment extends LoginFragment {
     }
 
     private void promptToVerifyAnonymous() {
-        AlertDialog alertDialog = new AlertDialog
-                .Builder(requireActivity())
+
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+         */
+
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
                 .setTitle("Signed in Successfully")
                 .setMessage("Would you like to verify the settings now?")
                 .setPositiveButton("Yes", (dialog, which) -> verifyServerSettings())

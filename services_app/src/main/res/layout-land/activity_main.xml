@@ -6,9 +6,11 @@
     android:layout_height="match_parent"
     tools:context="org.opendatakit.services.MainActivity">
 
+
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
@@ -42,6 +44,7 @@
             </com.google.android.material.appbar.MaterialToolbar>
 
         </com.google.android.material.appbar.AppBarLayout>
+
 
         <fragment
             android:id="@+id/navHostMain"

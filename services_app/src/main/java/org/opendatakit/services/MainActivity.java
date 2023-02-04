@@ -41,6 +41,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 
 import org.opendatakit.activities.IAppAwareActivity;
@@ -415,8 +416,19 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
         PropertiesSingleton props = CommonToolProperties.get(MainActivity.this, mAppName);
         props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, Boolean.toString(false)));
 
-        AlertDialog alertDialog = new AlertDialog
-                .Builder(this)
+        /**
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         */
+
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+         */
+
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkAlertDialogStyle)
                 .setMessage(R.string.configure_server_settings)
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes, (dialog, which) -> {

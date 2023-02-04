@@ -19,7 +19,7 @@
 
     <TextView
         android:id="@+id/tvServerUrlLogin"
-        style="@style/TextViewStyle"
+        style="@style/TextServerUrlStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_regular_margin"

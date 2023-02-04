@@ -221,8 +221,8 @@
     <string name="verifying_server_settings">Verifying User Permissions&#8230;</string>
     <string name="verify_server_setttings_successful">Verification successful</string>
     <string name="verify_server_setttings_successful_text">Success! User permissions have been updated.</string>
-    <string name="verify_server_settings_header">Verify User Permissions</string>
-    <string name="click_to_verify_server_settings">Click to Verify User Permissions</string>
+    <string name="verify_server_settings_header">Permissions</string>
+    <string name="click_to_verify_server_settings">Verify user permissions</string>
     <string name="warning_no_user_roles">Warning: User permissions have not been verified!\nRunning with reduced privileges.</string>
     <!-- sync service layer messages -->
     <string name="sync_notification_syncing">"ODK-X Sync In Progress %1$s</string>
@@ -258,7 +258,7 @@
     <string name="admin_password_disabled_click_to_set">No Admin password. Click to enable.</string>
     <string name="admin_password_settings">Admin Password</string>
     <string name="admin_password">Admin Password</string>
-    <string name="change_admin_password">Change admin password</string>
+    <string name="change_admin_password">Privacy</string>
     <string name="enable_admin_password">Enable user restrictions</string>
 
     <string name="enter_admin_password">Enter Admin password:</string>
@@ -291,20 +291,23 @@
     <string name="verify_new_password">Re-enter new password</string>
     <string name="password_changed">Password successfully changed</string>
     <string name="admin_password_disabled">Admin password disabled</string>
+    <string name="enable_user_restrictions">Enable user restrictions</string>
     <string name="admin_password_enabled">Admin password enabled</string>
     <string name="password_mismatch">Sorry, passwords do not match!</string>
     <string name="show_password_text">Show password</string>
 
-    <string name="action_bar_general_settings">%1$s &gt; General Settings</string>
-    <string name="action_bar_general_settings_admin_mode">%1$s &gt; General Settings (Admin)</string>
+    <string name="action_bar_general_settings">General Settings</string>
+    <string name="action_bar_general_settings_admin_mode">General Settings (Admin)</string>
     <string name="general_settings">General Settings</string>
     <string name="admin_general_settings">Admin Access to Settings</string>
     <string name="opendatakit_website">Open Data Kit user documentation</string>
+    <string name="user_documentation">User Documentation</string>
     <string name="click_to_web">Tap to visit https://docs.odk-x.org</string>
+    <string name="visit_user_docs">Read the Open Data Kit user documentation at https://docs.odk-x.org</string>
     <string name="opendatakit_url">https://docs.odk-x.org</string>
 
-    <string name="server_settings_summary">User Identity, Authentication and Server Configuration</string>
-    <string name="server">Server Settings</string>
+    <string name="server_settings_summary">User identity, authentication and server configuration</string>
+    <string name="server">Server</string>
     <string name="server_restrictions_apply">Server Settings (non-Admin restrictions apply)</string>
     <string name="server_url">Server URL</string>
     <string name="change_server_url">Server URL</string>
@@ -333,7 +336,9 @@
     <string name="restrict_device">Manage ability to change Device Settings</string>
 
     <string name="device_settings_summary">Device-specific Configuration</string>
+    <string name="configure_device_settings">Configure device settings</string>
     <string name="device">Device Settings</string>
+    <string name="preferences">Preferences</string>
     <string name="device_restrictions_apply">Device Settings (non-Admin restrictions apply)</string>
 
     <string name="default_locale">Default Locale</string>
@@ -353,16 +358,20 @@
     <string name="splash_media_save_failed">Unable to copy selected splash screen image</string>
 
     <string name="tool_tables_settings">Tables-specific Settings</string>
+    <string name="odkx_tables">ODK-X Tables</string>
     <string name="tool_tables_restrictions_apply">Tables-specific settings (non-Admin restrictions apply)</string>
     <string name="tool_tables_settings_summary">ODK-X Tables-specific settings</string>
+    <string name="settings_for_odkx_tables">Settings for ODK-X Tables</string>
     <string name="custom_home_screen">Use custom home screen</string>
     <string name="admin_tool_tables_settings">Manage ability to change Tables-specific Settings</string>
     <string name="admin_tool_tables_settings_summary">Limit non-Admin ability to change Tables-specific Settings</string>
     <string name="change_custom_home_screen">Change use of custom home screen</string>
 
     <string name="clear_configuration_settings">Reset configuration</string>
+    <string name="clear_settings">Clear Settings</string>
     <string name="exit_admin_mode">Exit admin mode</string>
     <string name="click_to_clear_settings">Click to clear settings</string>
+    <string name="reset_configuration">Reset configuration</string>
     <string name="click_to_exit_admin_settings">Click to exit admin settings</string>
 
     <string name="reset_settings">Configuration Reset</string>
