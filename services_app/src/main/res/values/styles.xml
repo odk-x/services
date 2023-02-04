@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+
+    <!--NavViewTheme-->
+    <style name="NavViewTheme" parent="Opendatakit">
+        <item name="android:layout_gravity">start</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="elevation">4dp</item>
+        <item name="itemIconSize">20dp</item>
+        <item name="itemTextAppearance">@style/TextViewStyle</item>
+        <item name="android:dividerHeight">0dp</item>
+        <item name="android:dividerPadding">4dp</item>
+        <item name="headerLayout">@layout/drawer_header</item>
+        <item name="menu">@menu/drawer_menu</item>
+    </style>
+
+</resources>
