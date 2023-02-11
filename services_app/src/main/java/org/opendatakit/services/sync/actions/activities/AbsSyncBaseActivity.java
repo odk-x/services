@@ -17,7 +17,6 @@
 package org.opendatakit.services.sync.actions.activities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -35,6 +34,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
@@ -44,6 +44,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 
 import org.opendatakit.activities.IAppAwareActivity;
@@ -428,8 +429,13 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         PropertiesSingleton props = getProps();
         props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FIRST_LAUNCH, Boolean.toString(false)));
 
-        androidx.appcompat.app.AlertDialog alertDialog = new androidx.appcompat.app.AlertDialog
-                .Builder(this)
+
+        /**
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         */
+
+        androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkXAlertDialogStyle)
                 .setMessage(R.string.configure_server_settings)
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes, (dialog, which) -> {
@@ -535,7 +541,11 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     }
 
     public static void showAuthenticationErrorDialog(final Activity activity, String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+
+        /**
+         *This is deprecated
+         */
+       /* AlertDialog.Builder builder = new AlertDialog.Builder(activity,R.style.OdkAlertDialogStyle);
         builder.setTitle(R.string.authentication_error);
         builder.setMessage(message);
         builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -548,7 +558,34 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+
+        */
+
+        /**
+         * New dialog styling
+         * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+         * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+         * @params
+         */
+
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(activity,R.style.OdkXAlertDialogStyle)
+                .setTitle(R.string.authentication_error)
+                .setMessage(message)
+                .setNeutralButton(R.string.ok, (dialog, id) -> {
+                    if (activity instanceof VerifyServerSettingsActivity) {
+                        activity.finish();
+                    }
+                    dialog.dismiss();
+
+                }).create();
+              //  .setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss()).create(); -->
+        alertDialog.show();
+
     }
+
+
+
+
 
     public AbsSyncViewModel getViewModel() {
         return absSyncViewModel;

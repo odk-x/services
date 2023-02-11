@@ -144,7 +144,7 @@
         android:id="@+id/btnSignInMain"
         style="@style/ButtonStyle"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_margin="@dimen/portrait_regular_margin"
         android:text="@string/drawer_sign_in_button_text"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -152,5 +152,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvLastSyncTimeMain"
         tools:ignore="TextContrastCheck" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

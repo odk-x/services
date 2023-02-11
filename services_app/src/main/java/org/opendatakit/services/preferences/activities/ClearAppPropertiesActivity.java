@@ -15,9 +15,13 @@
 package org.opendatakit.services.preferences.activities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.properties.CommonToolProperties;
@@ -46,8 +50,20 @@ public class ClearAppPropertiesActivity extends Activity {
          mAppName = appName;
       }
 
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      mDialog = builder.setTitle(R.string.reset_settings)
+      /**
+       * New dialog styling
+       * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+       * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+       * @params uncomment and comment the necessary codes if any error do occurs!
+       */
+
+      //TODO: Make Dialog her completely material design
+
+      // AlertDialog.Builder builder = new AlertDialog.Builder(this); //--> uncomment this if any error occurs
+
+      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkXAlertDialogStyle) //--> comment this if any error occurs
+      //mDialog = builder.setTitle(R.string.reset_settings) //--> uncomment this if any error occurs
+      .setTitle(R.string.reset_settings)
           .setMessage(R.string.confirm_reset_settings)
           .setCancelable(false)
           .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

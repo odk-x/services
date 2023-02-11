@@ -27,6 +27,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.logging.WebLogger;
@@ -453,8 +455,15 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
    }
 
    public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
-      AlertDialog alertDialog = new AlertDialog
-              .Builder(requireActivity())
+
+      /**
+       * New dialog styling
+       * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+       * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+       * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+       */
+
+      AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
               .setTitle(title)
               .setMessage(message)
               .setPositiveButton("Yes",onPositiveButtonClick)

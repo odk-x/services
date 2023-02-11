@@ -1,10 +1,14 @@
 package org.opendatakit.services.utilities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
@@ -114,7 +118,14 @@ public class TableHealthValidator {
   }
 
   private void promptToResolveChanges() {
-    AlertDialog.Builder builder = new AlertDialog.Builder(displayActivity);
+    /**
+     * New dialog styling
+     * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+     * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+     * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+     */
+
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkXAlertDialogStyle);
     builder.setTitle(R.string.sync_pending_changes);
     builder.setMessage(R.string.resolve_pending_changes);
     builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
@@ -135,12 +146,19 @@ public class TableHealthValidator {
         displayActivity.startActivity(i);
       }
     });
-    AlertDialog dialog = builder.create();
+    androidx.appcompat.app.AlertDialog dialog = builder.create();
     dialog.show();
   }
 
   private void promptToResolveCheckpointsAndConflicts() {
-    AlertDialog.Builder builder = new AlertDialog.Builder(displayActivity);
+    /**
+     * New dialog styling
+     * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+     * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+     * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+     */
+
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkXAlertDialogStyle);
     builder.setTitle(R.string.resolve_checkpoints_and_conflicts);
     builder.setMessage(R.string.resolve_pending_checkpoints_and_conflicts);
     builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

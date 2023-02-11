@@ -32,6 +32,8 @@ import androidx.fragment.app.ListFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
@@ -174,7 +176,15 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
     @Override
     public void onClick(View v) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+      /**
+       * New dialog styling
+       * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+       * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+       * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+       */
+
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.checkpoint_take_newest_with_deltas_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -261,7 +271,15 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
     @Override
     public void onClick(View v) {
       // We should do a popup.
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+      /**
+       * New dialog styling
+       * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+       * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+       * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+       */
+
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.checkpoint_delete_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -336,7 +354,15 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
 
     @Override
     public void onClick(View v) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+      /**
+       * New dialog styling
+       * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+       * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+       * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+       */
+
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity());
       builder.setMessage(getString(R.string.checkpoint_take_oldest_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 

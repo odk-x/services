@@ -24,7 +24,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dip"
-            android:layout_weight="50" />
+            android:layout_weight="50"
+            style="@style/ButtonStyle"
+            />
 
         <Button
             android:id="@+id/take_local"
@@ -32,7 +34,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dip"
-            android:layout_weight="50"  />
+            android:layout_weight="50"
+            style="@style/ButtonStyle"
+            />
 
         <Button
                 android:id="@+id/take_local_with_deltas"
@@ -40,7 +44,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dip"
-                android:layout_weight="50"  />
+                android:layout_weight="50"
+                style="@style/ButtonStyle"
+            />
      </LinearLayout>
 
     <ListView
