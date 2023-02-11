@@ -112,7 +112,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.conflict_delete_local_confirmation_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -195,7 +195,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.conflict_delete_on_server_confirmation_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -371,7 +371,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.conflict_take_local_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -452,7 +452,7 @@ public class ConflictResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.conflict_take_server_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 

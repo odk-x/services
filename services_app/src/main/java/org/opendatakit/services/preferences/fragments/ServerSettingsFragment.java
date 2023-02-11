@@ -438,7 +438,7 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
          * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
          */
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
         builder.setMessage(R.string.camera_permission_rationale)
                 .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
                   @Override

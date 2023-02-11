@@ -61,7 +61,7 @@ public class ClearAppPropertiesActivity extends Activity {
 
       // AlertDialog.Builder builder = new AlertDialog.Builder(this); //--> uncomment this if any error occurs
 
-      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkAlertDialogStyle) //--> comment this if any error occurs
+      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkXAlertDialogStyle) //--> comment this if any error occurs
       //mDialog = builder.setTitle(R.string.reset_settings) //--> uncomment this if any error occurs
       .setTitle(R.string.reset_settings)
           .setMessage(R.string.confirm_reset_settings)

@@ -28,8 +28,8 @@ android {
 
     defaultConfig {
         applicationId(groupId + servicesName)
-        minSdk 21
-        targetSdk 29
+        minSdkVersion(minVersion)
+        targetSdkVersion(targetVersion)
         versionCode releaseVersionCode
         versionName(versionCodeName)
         testInstrumentationRunner(instrumentationRunner)
@@ -84,7 +84,7 @@ android {
         }
         debug {
             debuggable(true)
-            //testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
     }
 

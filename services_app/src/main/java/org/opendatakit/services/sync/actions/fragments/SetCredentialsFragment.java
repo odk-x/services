@@ -263,7 +263,7 @@ public class SetCredentialsFragment extends LoginFragment {
          * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
          */
 
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
                 .setTitle("User Logged in Successfully")
                 .setMessage("Would you like to verify the User now?")
                 .setPositiveButton("Yes", (dialog, which) -> verifyServerSettings())

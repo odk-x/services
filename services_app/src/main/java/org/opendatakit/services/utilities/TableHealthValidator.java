@@ -125,7 +125,7 @@ public class TableHealthValidator {
      * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
      */
 
-    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkAlertDialogStyle);
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkXAlertDialogStyle);
     builder.setTitle(R.string.sync_pending_changes);
     builder.setMessage(R.string.resolve_pending_changes);
     builder.setPositiveButton(R.string.ignore_changes, new DialogInterface.OnClickListener() {
@@ -158,7 +158,7 @@ public class TableHealthValidator {
      * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
      */
 
-    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkAlertDialogStyle);
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(displayActivity,R.style.OdkXAlertDialogStyle);
     builder.setTitle(R.string.resolve_checkpoints_and_conflicts);
     builder.setMessage(R.string.resolve_pending_checkpoints_and_conflicts);
     builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

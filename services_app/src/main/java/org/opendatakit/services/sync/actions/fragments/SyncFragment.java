@@ -342,7 +342,7 @@ public class SyncFragment extends AbsSyncUIFragment {
    */
 
   MaterialAlertDialogBuilder buildOkMessage(String title, String message) {
-    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
     builder.setCancelable(false);
     builder.setPositiveButton(getString(R.string.ok), null);
     builder.setTitle(title);
@@ -745,7 +745,7 @@ public class SyncFragment extends AbsSyncUIFragment {
      * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
      */
 
-    androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+    androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes",onPositiveButtonClick)

@@ -198,7 +198,7 @@ public class UpdateServerSettingsFragment extends Fragment {
          * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
          */
 
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
                 .setTitle("Server Settings Updated Successfully")
                 .setMessage("Would you like to verify the Server now?")
                 .setPositiveButton("Yes", (dialog, which) -> startVerifyActivity())
@@ -303,7 +303,7 @@ public class UpdateServerSettingsFragment extends Fragment {
                  * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
                  */
 
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
                 builder.setMessage(R.string.camera_permission_rationale)
                         .setPositiveButton(R.string.allow, (dialog, which) -> {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements IAppAwareActivity
          * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
          */
 
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkAlertDialogStyle)
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkXAlertDialogStyle)
                 .setMessage(R.string.configure_server_settings)
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes, (dialog, which) -> {

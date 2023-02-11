@@ -42,5 +42,4 @@
     android:layout_marginTop="55dp"
     android:id="@+id/app_properties_content">
 </FrameLayout>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

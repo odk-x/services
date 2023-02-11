@@ -463,7 +463,7 @@ public abstract class LoginFragment extends AbsSyncUIFragment {
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+      AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
               .setTitle(title)
               .setMessage(message)
               .setPositiveButton("Yes",onPositiveButtonClick)

@@ -598,7 +598,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
              * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
              */
 
-            AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+            AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
                     .setTitle("Server Verified")
                     .setMessage("Server does not support Anonymous Access")
                     .setPositiveButton("OK",(dialog, which) -> dialog.dismiss())
@@ -639,7 +639,7 @@ public class VerifyServerSettingsFragment extends AbsSyncUIFragment {
      * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
      */
 
-    AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkAlertDialogStyle)
+    AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes",onPositiveButtonClick)

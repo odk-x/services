@@ -435,7 +435,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
          */
 
-        androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkAlertDialogStyle)
+        androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(getApplicationContext(),R.style.OdkXAlertDialogStyle)
                 .setMessage(R.string.configure_server_settings)
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes, (dialog, which) -> {
@@ -568,7 +568,7 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
          * @params
          */
 
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(activity,R.style.OdkAlertDialogStyle)
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(activity,R.style.OdkXAlertDialogStyle)
                 .setTitle(R.string.authentication_error)
                 .setMessage(message)
                 .setNeutralButton(R.string.ok, (dialog, id) -> {

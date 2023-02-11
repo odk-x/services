@@ -184,7 +184,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.checkpoint_take_newest_with_deltas_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
@@ -279,7 +279,7 @@ public class CheckpointResolutionRowFragment extends ListFragment implements
        * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
        */
 
-      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkAlertDialogStyle);
+      MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
       builder.setMessage(getString(R.string.checkpoint_delete_warning));
       builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 

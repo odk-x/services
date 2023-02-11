@@ -211,7 +211,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
            * @params change to **AlertDialogBuilder** in case of any error and remove R.style.... param!
            */
 
-          MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(DeviceSettingsFragment.this.getActivity(),R.style.OdkAlertDialogStyle );
+          MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(DeviceSettingsFragment.this.getActivity(),R.style.OdkXAlertDialogStyle );
           builder.setTitle(getString(R.string.change_splash_path));
           builder.setNeutralButton(getString(R.string.cancel),
               new DialogInterface.OnClickListener() {
