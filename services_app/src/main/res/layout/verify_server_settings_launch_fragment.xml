@@ -34,7 +34,7 @@
 
             <TextView
                 android:id="@+id/tvServerUrlLabelVerify"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -64,7 +64,7 @@
 
             <TextView
                 android:id="@+id/tvServerVerifyStatusLabelVerify"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -79,7 +79,7 @@
 
             <TextView
                 android:id="@+id/tvServerVerifyStatusVerify"
-                style="@style/TextViewStyle"
+                style="@style/CardViewSubHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -92,7 +92,7 @@
 
             <TextView
                 android:id="@+id/tvServerAnonymousAllowedLabelVerify"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -107,7 +107,7 @@
 
             <TextView
                 android:id="@+id/tvServerAnonymousAllowedVerify"
-                style="@style/TextViewStyle"
+                style="@style/CardViewSubHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"

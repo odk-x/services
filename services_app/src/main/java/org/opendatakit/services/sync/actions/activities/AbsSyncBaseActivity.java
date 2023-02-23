@@ -543,25 +543,6 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
     public static void showAuthenticationErrorDialog(final Activity activity, String message) {
 
         /**
-         *This is deprecated
-         */
-       /* AlertDialog.Builder builder = new AlertDialog.Builder(activity,R.style.OdkAlertDialogStyle);
-        builder.setTitle(R.string.authentication_error);
-        builder.setMessage(message);
-        builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                if (activity instanceof VerifyServerSettingsActivity) {
-                    activity.finish();
-                }
-                dialog.dismiss();
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        */
-
-        /**
          * New dialog styling
          * MaterialAlertDialogBuilder is standard for all ODK-X Apps
          * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
@@ -578,7 +559,6 @@ public abstract class AbsSyncBaseActivity extends AppCompatActivity
                     dialog.dismiss();
 
                 }).create();
-              //  .setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss()).create(); -->
         alertDialog.show();
 
     }

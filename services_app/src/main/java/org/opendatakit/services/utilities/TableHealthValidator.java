@@ -8,7 +8,6 @@ import android.content.Intent;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.dialog.MaterialDialogs;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;

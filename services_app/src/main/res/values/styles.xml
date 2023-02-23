@@ -3,7 +3,7 @@
 
 
     <!--NavViewTheme-->
-    <style name="NavViewTheme" parent="Opendatakit">
+    <style name="NavViewTheme" parent="ODKX">
         <item name="android:layout_gravity">start</item>
         <item name="colorSurface">@color/colorSurface</item>
         <item name="elevation">4dp</item>

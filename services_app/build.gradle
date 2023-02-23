@@ -33,8 +33,7 @@ android {
         versionCode releaseVersionCode
         versionName(versionCodeName)
         testInstrumentationRunner(instrumentationRunner)
-        signingConfig signingConfigs.debug
-        android.defaultConfig.vectorDrawables.useSupportLibrary = true
+
     }
 
     flavorDimensions "stage", "testing"

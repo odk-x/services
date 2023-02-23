@@ -57,12 +57,7 @@ public class ClearAppPropertiesActivity extends Activity {
        * @params uncomment and comment the necessary codes if any error do occurs!
        */
 
-      //TODO: Make Dialog her completely material design
-
-      // AlertDialog.Builder builder = new AlertDialog.Builder(this); //--> uncomment this if any error occurs
-
-      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkXAlertDialogStyle) //--> comment this if any error occurs
-      //mDialog = builder.setTitle(R.string.reset_settings) //--> uncomment this if any error occurs
+      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkXAlertDialogStyle)
       .setTitle(R.string.reset_settings)
           .setMessage(R.string.confirm_reset_settings)
           .setCancelable(false)

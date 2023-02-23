@@ -123,8 +123,6 @@ public class AppPropertiesActivity extends AppCompatActivity implements
         int titleResId = adminMode ?
                 R.string.action_bar_general_settings_admin_mode :
                 R.string.action_bar_general_settings;
-
-       // getSupportActionBar().setTitle(getString(titleResId, getAppName())); --> Not in use since we're dealing with custom appbar
         appbar.setTitle(getString(titleResId,getAppName()));
         mAdminMode = adminMode;
       }

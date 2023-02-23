@@ -22,7 +22,7 @@
 
             <TextView
                 android:id="@+id/tvServerUrlLabelMain"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -50,7 +50,7 @@
 
             <TextView
                 android:id="@+id/tvUserStateLabelMain"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -65,7 +65,7 @@
 
             <TextView
                 android:id="@+id/tvUserStateMain"
-                style="@style/TextViewStyle"
+                style="@style/CardViewSubHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
