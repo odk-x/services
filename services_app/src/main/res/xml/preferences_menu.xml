@@ -32,7 +32,7 @@
         android:id="@+id/admin_password_status"
         android:fragment="org.opendatakit.services.preferences.fragments.AdminPasswordSettingsFragment"
         android:icon="@drawable/ic_privacy_settings"
-        android:title="@string/change_admin_password"
+        android:title="@string/user_restrictions"
         android:summary="@string/enable_user_restrictions"
         android:key="@string/key_admin_password" />
     </PreferenceCategory>
@@ -85,19 +85,19 @@
     <!-- these are visible if in admin mode -->
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableServerSettingsFragment"
-        android:icon="@drawable/ic_cloud_black_24dp"
+        android:icon="@drawable/ic_server_settings"
         android:title="@string/restrict_server"
         android:summary="@string/restrict_server_settings_summary"
         android:key="@string/key_admin_server_settings" />
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableDeviceSettingsFragment"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_pref_settings"
         android:title="@string/restrict_device"
         android:summary="@string/restrict_device_settings_summary"
         android:key="@string/key_admin_device_settings" />
     <PreferenceScreen
         android:fragment="org.opendatakit.services.preferences.fragments.AdminConfigurableTablesSettingsFragment"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_tables_settings"
         android:title="@string/admin_tool_tables_settings"
         android:summary="@string/admin_tool_tables_settings_summary"
         android:key="@string/key_admin_tables_settings" />

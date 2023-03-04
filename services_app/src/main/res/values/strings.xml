@@ -258,8 +258,8 @@
     <string name="admin_password_disabled_click_to_set">No Admin password. Click to enable.</string>
     <string name="admin_password_settings">Admin Password</string>
     <string name="admin_password">Admin Password</string>
-    <string name="change_admin_password">Privacy</string>
-    <string name="enable_admin_password">Enable user restrictions</string>
+    <string name="user_restrictions">Restrictions</string>
+    <string name="enable_user_restriction">Enable user restrictions</string>
 
     <string name="enter_admin_password">Enter Admin password:</string>
 

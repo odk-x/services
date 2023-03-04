@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 
+
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -145,7 +146,7 @@ public class TableHealthValidator {
         displayActivity.startActivity(i);
       }
     });
-    androidx.appcompat.app.AlertDialog dialog = builder.create();
+    AlertDialog dialog = builder.create();
     dialog.show();
   }
 
