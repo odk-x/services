@@ -1,8 +1,8 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="36dp"
     android:height="36dp"
-    android:viewportWidth="36"
-    android:viewportHeight="36"
+    android:viewportWidth="48"
+    android:viewportHeight="48"
     android:tint="?attr/colorControlNormal"
     android:autoMirrored="true">
   <path
