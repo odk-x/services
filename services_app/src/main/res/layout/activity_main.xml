@@ -13,7 +13,9 @@
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimaryBackground">
+            app:elevation="0dp"
+            style="@style/AppBarStyle"
+            >
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbarMainActivity"
@@ -58,5 +60,4 @@
         style="@style/NavViewTheme"
         android:layout_width="wrap_content"
         android:layout_height="match_parent" />
-
 </androidx.drawerlayout.widget.DrawerLayout>

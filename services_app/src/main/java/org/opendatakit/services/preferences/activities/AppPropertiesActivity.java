@@ -14,11 +14,14 @@
 
 package org.opendatakit.services.preferences.activities;
 
+import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +30,8 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.google.android.material.appbar.MaterialToolbar;
 
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
@@ -75,11 +80,22 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     return mProps;
   }
 
+  //
+  MaterialToolbar appbar;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_app_properties);
+    appbar=findViewById(R.id.topAppBar);
+
+
+    //back button function
+    appbar.setNavigationOnClickListener(v ->{
+      onBackPressed();
+
+            });
 
     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (mAppName == null || mAppName.length() == 0) {
@@ -101,13 +117,13 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     preferenceViewModel.getAdminMode().setValue(mAdminMode);
 
     preferenceViewModel.getAdminMode().observe(this, new Observer<Boolean>() {
+
       @Override
       public void onChanged(Boolean adminMode) {
         int titleResId = adminMode ?
                 R.string.action_bar_general_settings_admin_mode :
                 R.string.action_bar_general_settings;
-
-        getSupportActionBar().setTitle(getString(titleResId, getAppName()));
+        appbar.setTitle(getString(titleResId,getAppName()));
         mAdminMode = adminMode;
       }
     });

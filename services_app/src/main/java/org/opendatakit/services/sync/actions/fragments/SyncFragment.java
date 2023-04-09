@@ -16,12 +16,10 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +30,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
@@ -39,6 +38,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -273,7 +273,7 @@ public class SyncFragment extends AbsSyncUIFragment {
 
     if (areCredentialsConfigured(false)) {
       // show warning message
-      AlertDialog.Builder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
+      MaterialAlertDialogBuilder msg = buildOkMessage(getString(R.string.sync_confirm_reset_app_server),
               getString(R.string.sync_reset_app_server_warning));
 
       msg.setPositiveButton(getString(R.string.sync_reset), new DialogInterface.OnClickListener() {
@@ -333,8 +333,16 @@ public class SyncFragment extends AbsSyncUIFragment {
     btnResetServer.setVisibility(visibility);
   }
 
-  AlertDialog.Builder buildOkMessage(String title, String message) {
-    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+  /**
+   * New dialog styling
+   * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+   * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+   * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+   */
+
+  MaterialAlertDialogBuilder buildOkMessage(String title, String message) {
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(),R.style.OdkXAlertDialogStyle);
     builder.setCancelable(false);
     builder.setPositiveButton(getString(R.string.ok), null);
     builder.setTitle(title);
@@ -729,8 +737,15 @@ public class SyncFragment extends AbsSyncUIFragment {
   }
 
   public void showAlertDialog(String title, String message, DialogInterface.OnClickListener onPositiveButtonClick){
-    androidx.appcompat.app.AlertDialog alertDialog = new androidx.appcompat.app.AlertDialog
-            .Builder(requireActivity())
+
+    /**
+     * New dialog styling
+     * MaterialAlertDialogBuilder is standard for all ODK-X Apps
+     * OdkAlertDialogStyle present in AndroidLibrary is used to style this dialog
+     * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
+     */
+
+    AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes",onPositiveButtonClick)
