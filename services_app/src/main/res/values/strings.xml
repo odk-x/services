@@ -260,7 +260,7 @@
     <string name="admin_password">Admin Password</string>
     <string name="user_restrictions">Restrictions</string>
     <string name="enable_user_restrictions">Enable user restrictions</string>
-    <string name="change_admin_password">Enable Admin Password</string>
+    <string name="change_admin_password">Change Admin Password</string>
     <string name="enable_admin_password">Enable Admin Password</string>
 
     <string name="enter_admin_password">Enter Admin password:</string>

@@ -97,8 +97,8 @@ public class SettingsMenuFragment extends PreferenceFragmentCompat {
           adminPwdPref.setTitle(R.string.change_admin_password);
           adminPwdPref.setSummary(R.string.admin_password_enabled);
         } else {
-          adminPwdPref.setTitle(R.string.enable_admin_password);
-          adminPwdPref.setSummary(R.string.admin_password_disabled);
+          adminPwdPref.setTitle(R.string.user_restrictions);
+          adminPwdPref.setSummary(R.string.enable_user_restrictions);
         }
 
         Boolean adminMode = preferenceViewModel.getAdminMode().getValue();

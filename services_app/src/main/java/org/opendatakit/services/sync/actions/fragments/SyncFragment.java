@@ -16,7 +16,6 @@
 package org.opendatakit.services.sync.actions.fragments;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Paint;
@@ -31,6 +30,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
@@ -745,7 +745,7 @@ public class SyncFragment extends AbsSyncUIFragment {
      * @params change MaterialAlertDialogBuilder to AlertDialog.Builder in case of any error and remove R.style... param!
      */
 
-    androidx.appcompat.app.AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
+    AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireActivity(),R.style.OdkXAlertDialogStyle)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes",onPositiveButtonClick)
