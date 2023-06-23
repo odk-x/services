@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -88,6 +89,10 @@ public class UpdateServerSettingsFragment extends Fragment {
 
         materialToolbar=view.findViewById(R.id.topAppBar1);
         materialToolbar.setNavigationOnClickListener(v -> {
+
+            FragmentManager fragmentManager=getActivity().getSupportFragmentManager();
+            fragmentManager.popBackStack();
+
 
             //Back function will be used here!
         });
