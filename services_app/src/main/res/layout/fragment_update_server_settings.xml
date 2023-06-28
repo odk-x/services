@@ -64,7 +64,7 @@
                 android:id="@+id/inputTextServerUrl"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:hint="Server URL"
+                android:hint="Enter Server URL"
                 tools:ignore="TextContrastCheck" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -150,8 +150,6 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </com.google.android.material.card.MaterialCardView>
-
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

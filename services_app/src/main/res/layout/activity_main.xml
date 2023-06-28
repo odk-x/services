@@ -30,7 +30,7 @@
                     android:background="@color/zxing_transparent"
                     android:minWidth="48dp"
                     android:minHeight="48dp"
-                    app:srcCompat="@drawable/ic_drawer"
+                    app:srcCompat="@drawable/ic_menu"
                     tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
 
                 <ImageView
@@ -55,9 +55,15 @@
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
+
+    <!-- Layout for navigation view drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navViewMain"
         style="@style/NavViewTheme"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_width="360dp"
+        android:layout_height="match_parent"
+        android:background="@color/navDrawerSurface"
+        app:shapeAppearanceOverlay="@style/NavCorners"
+
+        />
 </androidx.drawerlayout.widget.DrawerLayout>

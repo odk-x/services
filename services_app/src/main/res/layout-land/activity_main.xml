@@ -32,7 +32,7 @@
                     android:background="@color/zxing_transparent"
                     android:minWidth="48dp"
                     android:minHeight="48dp"
-                    app:srcCompat="@drawable/ic_drawer"
+                    app:srcCompat="@drawable/ic_menu"
                     tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
 
                 <ImageView
