@@ -90,11 +90,10 @@ public class UpdateServerSettingsFragment extends Fragment {
         materialToolbar=view.findViewById(R.id.topAppBar1);
         materialToolbar.setNavigationOnClickListener(v -> {
 
-            FragmentManager fragmentManager=getActivity().getSupportFragmentManager();
-            fragmentManager.popBackStack();
+            //Using nav controller to navigate back to the main fragment when back button clicked
+            //Checkout res >> navigation >> nav_graph_main.xml to understand the navigation graph better
+            Navigation.findNavController(view).navigate(R.id.mainFragment);
 
-
-            //Back function will be used here!
         });
         findViewsAndAttachListeners(view);
         setupViewModelAndNavController();
