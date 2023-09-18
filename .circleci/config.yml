@@ -1,0 +1,123 @@
+version: 2.1
+
+orbs:
+  android: circleci/android@2.3.0
+jobs:
+  test:
+    description: Runs unit tests and instrumented tests on the Services app
+    executor:
+      name: android/android-machine
+      resource-class: large
+      tag: 2021.10.1
+    parallelism: 4
+
+    steps:
+      - checkout
+      - run:
+          name: Install OpenJDK 8
+          command: |
+            sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            echo 'export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"' >> $BASH_ENV
+            java -version
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+
+      - run:
+          name: Update Package list
+          command: sudo apt-get update
+      - run:
+          name: Install the latest Android SDK
+          command: |
+            sdkmanager --update
+      - run:
+          name: show gradle tasks
+          command: ./gradlew tasks
+      - android/create-avd:
+          avd-name: customavd
+          install: true
+          system-image: system-images;android-28;default;x86_64
+          additional-args: --sdcard 2048M
+
+      - android/start-emulator:
+          avd-name: customavd
+          no-window: true
+          restore-gradle-cache-prefix: v1
+          post-emulator-launch-assemble-command: ./gradlew assemble
+      - run:
+          name: Check emulator status
+          command: |
+            adb devices
+            adb shell getprop sys.boot_completed
+            echo "if sys.boot_completed = 1 means emualtor has finished booting"
+      - run:
+          name: show installed packages
+          command: adb shell pm list packages
+      - run:
+          name: install the services app on the emulator
+          command: adb install ${CIRCLE_WORKING_DIRECTORY}/services_app/build/outputs/apk/demoBasic/debug/services_app-demo-basic-debug.apk
+      - run:
+          name: show installed packages
+          command: adb shell pm list packages
+
+      - android/run-tests:
+          test-command: ./gradlew test
+
+      - android/run-tests:
+          test-command: ./gradlew grantPermissionForODkApp connectedAndroidTest
+      - android/save-gradle-cache:
+          cache-prefix: v1
+      - store_artifacts:
+          name: Store Test Results
+          path: services_app/build/outputs/androidTest-results
+      - store_artifacts:
+          name: Store Test Reports
+          path: tables_app/build/reports
+
+  build:
+    docker:
+      - image: cimg/android:2023.06
+    steps:
+      - checkout
+      - run:
+          name: Install OpenJDK 8
+          command: |
+            sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            echo 'export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"' >> $BASH_ENV
+            java -version
+
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+      - android/restore-gradle-cache:
+          cache-prefix: v1
+
+      - run:
+          name: Echo Java home
+          command: |
+            echo $JAVA_HOME  
+
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      - android/save-gradle-cache:
+          cache-prefix: v1
+      - run:
+          name: Build Services
+          command: ./gradlew assemble
+      - store_artifacts:
+          name: Store Build Artifacts
+          path: services_app/build/outputs/apk
+
+
+workflows:
+  build-test-deploy-workflow:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
