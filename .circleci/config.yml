@@ -37,7 +37,7 @@ jobs:
       - android/create-avd:
           avd-name: customavd
           install: true
-          system-image: system-images;android-28;default;x86_64
+          system-image: system-images;android-29;default;x86_64
           additional-args: --sdcard 2048M
 
       - android/start-emulator:
@@ -50,7 +50,6 @@ jobs:
           name: install the services app on the emulator
           command: |
             ./gradlew clean installDemoBasicDebug
-          # adb install ${CIRCLE_WORKING_DIRECTORY}/services_app/build/outputs/apk/demoBasic/debug/services_app-demo-basic-debug.apk
 
       - run:
           name: show installed packages
@@ -114,7 +113,8 @@ jobs:
 workflows:
   build-test-workflow:
     jobs:
-      - build
-      - test:
-          requires:
-            - build
+      # - build
+      - test
+      # - test:
+      #     requires:
+      #       - build
