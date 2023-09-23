@@ -4,7 +4,7 @@ orbs:
   android: circleci/android@2.3.0
 jobs:
   test:
-    description: Runs unit tests and instrumented tests on the Services app
+    description: Runs Unit Tests and Instrumented Tests on the Services app
     executor:
       name: android/android-machine
       resource-class: large
@@ -24,14 +24,13 @@ jobs:
       - run:
           name: Chmod Permissions
           command: sudo chmod +x gradlew
-
-      - run:
-          name: Update Package list
-          command: sudo apt-get update
-      - run:
-          name: Install the latest Android SDK
-          command: |
-            sdkmanager --update
+#      - run:
+#          name: Update Package list
+#          command: sudo apt-get update
+#      - run:
+#          name: Install the latest Android SDK
+#          command: |
+#            sdkmanager --update
       - run:
           name: show gradle tasks
           command: ./gradlew tasks
@@ -45,19 +44,14 @@ jobs:
           avd-name: customavd
           no-window: true
           restore-gradle-cache-prefix: v1
-          post-emulator-launch-assemble-command: ./gradlew assemble
-      - run:
-          name: Check emulator status
-          command: |
-            adb devices
-            adb shell getprop sys.boot_completed
-            echo "if sys.boot_completed = 1 means emualtor has finished booting"
-      - run:
-          name: show installed packages
-          command: adb shell pm list packages
+          post-emulator-launch-assemble-command: ""
+
       - run:
           name: install the services app on the emulator
-          command: adb install ${CIRCLE_WORKING_DIRECTORY}/services_app/build/outputs/apk/demoBasic/debug/services_app-demo-basic-debug.apk
+          command: |
+            ./gradlew clean installDemoBasicDebug
+          # adb install ${CIRCLE_WORKING_DIRECTORY}/services_app/build/outputs/apk/demoBasic/debug/services_app-demo-basic-debug.apk
+
       - run:
           name: show installed packages
           command: adb shell pm list packages
@@ -67,7 +61,7 @@ jobs:
           max-tries: 1
 
       - android/run-tests:
-          test-command: ./gradlew grantPermissionForODkApp connectedAndroidTest
+          test-command: ./gradlew grantPermissionForODkApp connectedDemoBasicDebugAndroidTest
           max-tries: 1
           
       - android/save-gradle-cache:
