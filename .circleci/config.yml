@@ -64,9 +64,12 @@ jobs:
 
       - android/run-tests:
           test-command: ./gradlew test
+          max-tries: 1
 
       - android/run-tests:
           test-command: ./gradlew grantPermissionForODkApp connectedAndroidTest
+          max-tries: 1
+          
       - android/save-gradle-cache:
           cache-prefix: v1
       - store_artifacts:
@@ -115,7 +118,7 @@ jobs:
 
 
 workflows:
-  build-test-deploy-workflow:
+  build-test-workflow:
     jobs:
       - build
       - test:
