@@ -7,7 +7,7 @@ jobs:
     description: Runs Unit Tests and Instrumented Tests on the Services app
     executor:
       name: android/android-machine
-      resource-class: large
+      resource-class: xlarge
       tag: 2021.10.1
     parallelism: 4
 
