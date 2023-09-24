@@ -1,6 +1,11 @@
 /**************************************************************************************************
                                         GRADLE CONFIG
  *************************************************************************************************/
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+}
 
 if ((new File(gradle.local)).exists()) {
     apply from: gradle.local
@@ -11,10 +16,6 @@ if ((new File(gradle.local)).exists()) {
 applicationScripts.each {
     apply from: it
 }
-
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     // The following are set in the common.gradle file
@@ -133,12 +134,14 @@ dependencies {
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
     } else {
-        demoImplementation(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
-                version: latestVersion, ext: 'aar')
-        masterImplementation(group: groupId, name: libraryMasterArtifactName, classifier: masterRelease,
-                version: masterArtifactVersion, ext: 'aar')
-        snapshotImplementation(group: groupId, name: librarySnapshotArtifactName,
-                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+        ///Todo: properly specify all flavour implementations of the androidLibrary
+        implementation(group:'org.opendatakit', name: 'androidlibrary_lib', classifier: 'snapshotBasicRelease', version: '1.0.0-+', ext: 'aar')
+//        demoImplementation(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+//                version: latestVersion, ext: 'aar')
+//        masterImplementation(group: groupId, name: libraryMasterArtifactName, classifier: masterRelease,
+//                version: masterArtifactVersion, ext: 'aar')
+//        snapshotImplementation(group: groupId, name: librarySnapshotArtifactName,
+//                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
     // Testing-only dependencies
