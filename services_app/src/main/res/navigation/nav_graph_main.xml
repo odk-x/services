@@ -24,5 +24,33 @@
         android:id="@+id/updateServerSettingsFragment"
         android:name="org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment"
         android:label="UpdateServerSettingsFragment"
-        tools:layout="@layout/fragment_update_server_settings" />
+        tools:layout="@layout/fragment_update_server_settings" >
+        <action
+            android:id="@+id/action_updateServerSettingsFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+        <action
+            android:id="@+id/action_updateServerSettingsFragment_to_chooseSignInTypeFragment3"
+            app:destination="@id/chooseSignInTypeFragment3" />
+    </fragment>
+    <fragment
+        android:id="@+id/chooseSignInTypeFragment3"
+        android:name="org.opendatakit.services.sync.actions.fragments.ChooseSignInTypeFragment"
+        android:label="fragment_choose_sign_in_type"
+        tools:layout="@layout/fragment_choose_sign_in_type" >
+        <action
+            android:id="@+id/action_chooseSignInTypeFragment3_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/setCredentialsFragment2"
+        android:name="org.opendatakit.services.sync.actions.fragments.SetCredentialsFragment"
+        android:label="fragment_set_credentials"
+        tools:layout="@layout/fragment_set_credentials" >
+        <action
+            android:id="@+id/action_setCredentialsFragment2_to_mainFragment"
+            app:destination="@id/mainFragment" />
+        <action
+            android:id="@+id/action_setCredentialsFragment2_to_updateServerSettingsFragment"
+            app:destination="@id/updateServerSettingsFragment" />
+    </fragment>
 </navigation>
