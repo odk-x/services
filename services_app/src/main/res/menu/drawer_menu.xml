@@ -14,7 +14,7 @@
     <item
         android:id="@+id/drawer_resolve_conflict"
         android:icon="@drawable/ic_drawer_resolve_conflicts"
-        android:title="@string/drawer_item_resolve_conflicts" />
+        android:title="@string/drawer_item_merge_conflicts" />
 
     <item
         android:id="@+id/drawer_update_credentials"
