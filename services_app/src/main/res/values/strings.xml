@@ -408,7 +408,7 @@
 
     <string name="drawer_sign_in_button_text">Sign-In </string>
     <string name="drawer_sign_out_button_text">Sign-Out </string>
-    <string name="drawer_item_resolve_conflicts">Resolve Sync Conflicts</string>
+    <string name="drawer_item_merge_conflicts">Merge Conflicts</string>
     <string name="drawer_item_update_credentials">Verify Permissions</string> <!-- Previously " Update Credentials" -->
     <string name="drawer_item_switch_sign_in_type">Switch Sign In</string>
     <string name="drawer_item_sign_out">Sign out</string>
