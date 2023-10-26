@@ -187,64 +187,76 @@ public class OdkWebserverServiceTest {
 
     @Test
     public void testServingHelloWorldHtml() {
+        // Arrange
+        File directoryLocation = createTestDirectory();
+        File fileLocation = createTestFile(directoryLocation);
+        // Act
+        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
+        restartService(serviceInterface);
+        // Assert
+        assertResponseMatchesHelloWorldHtml(fileLocation);
+    }
+    private File createTestDirectory() {
         File directoryLocation = new File(ODKFileUtils.getConfigFolder(TestConsts.APPNAME), TEST_DIR);
+        if (!directoryLocation.isDirectory()) {
+            directoryLocation.mkdirs();
+        }
+        return directoryLocation;
+    }
+
+    private File createTestFile(File directoryLocation) {
         File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
 
-        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
-
-        PrintWriter writer = null;
-        try {
-            if(!directoryLocation.isDirectory()) {
-                directoryLocation.mkdirs();
-            }
-            writer = new PrintWriter(fileLocation, "UTF-8");
+        try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
             writer.println(HELLO_WORLD_HTML_TXT);
-            writer.flush();
-            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
-            fail(e.getMessage());
+            fail("Failed to create the test file: " + e.getMessage());
         }
 
+        return fileLocation;
+    }
+
+    private void restartService(IWebkitServerInterface serviceInterface) {
         try {
             serviceInterface.restart();
         } catch (RemoteException e) {
             e.printStackTrace();
-            fail("Problem with service restart");
+            fail("Problem with service restart: " + e.getMessage());
         }
+    }
 
-        HttpURLConnection connection = null;
+    private void assertResponseMatchesHelloWorldHtml(File fileLocation) {
         try {
-            String urlStr = "http://" + WebkitServerConsts.HOSTNAME + ":" +
-                Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/" +
-                ODKFileUtils.asUriFragment(TestConsts.APPNAME, fileLocation);
-
+            String urlStr = buildTestUrl(fileLocation);
             URL url = new URL(urlStr);
-            connection = (HttpURLConnection) url.openConnection();
-            if(connection.getResponseCode() != HttpStatus.SC_OK) {
+
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            if (connection.getResponseCode() != HttpStatus.SC_OK) {
                 fail("Response code was NOT HTTP_OK");
             }
-            BufferedReader br = new BufferedReader(new InputStreamReader(connection
-                .getInputStream(), "UTF-8"));
-            String responseStr = "";
-            String segment = br.readLine();
-            while (segment != null) {
-                responseStr = responseStr + segment;
-                segment = br.readLine();
+
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
+                StringBuilder responseStr = new StringBuilder();
+                String segment;
+                while ((segment = br.readLine()) != null) {
+                    responseStr.append(segment);
+                }
+                assertTrue("Received: " + responseStr, HELLO_WORLD_HTML_TXT.equals(responseStr.toString()));
             }
-            br.close();
-            assertTrue("RECEIVED:" + responseStr, HELLO_WORLD_HTML_TXT.equals(responseStr));
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-            fail("GOT an IOException when trying to use the web server:" + e.getMessage());
-        } catch(Exception e) {
+            fail("Got an IOException when trying to use the web server: " + e.getMessage());
+        } catch (Exception e) {
             e.printStackTrace();
-            fail("Got an Exception when trying to use the web server:" + e.getMessage());
-        } finally {
-            if(connection != null){
-                connection.disconnect();
-            }
+            fail("Got an Exception when trying to use the web server: " + e.getMessage());
         }
+    }
+
+    private String buildTestUrl(File fileLocation) {
+        return "http://" + WebkitServerConsts.HOSTNAME + ":" +
+                Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/" +
+                ODKFileUtils.asUriFragment(TestConsts.APPNAME, fileLocation);
     }
 
 }
