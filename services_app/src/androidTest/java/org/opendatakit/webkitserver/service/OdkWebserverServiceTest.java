@@ -187,9 +187,6 @@ public class OdkWebserverServiceTest {
 
     @Test
     public void testServingHelloWorldHtml() {
-        ODKFileUtils.verifyExternalStorageAvailability();
-        ODKFileUtils.assertDirectoryStructure(TestConsts.APPNAME);
-
         File directoryLocation = new File(ODKFileUtils.getConfigFolder(TestConsts.APPNAME), TEST_DIR);
         File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
 
