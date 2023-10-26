@@ -185,6 +185,7 @@ public class OdkWebserverServiceTest {
         }
     }
 
+
     @Test
     public void testServingHelloWorldHtml() {
         // Arrange
@@ -258,5 +259,56 @@ public class OdkWebserverServiceTest {
                 Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/" +
                 ODKFileUtils.asUriFragment(TestConsts.APPNAME, fileLocation);
     }
+    @Test
+    public void testServingEmptyFile() {
+        // Setup
+        File directoryLocation = createTestDirectory();
+        File fileLocation = createEmptyTestFile(directoryLocation);
 
+        // Act
+        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
+        restartService(serviceInterface);
+
+        // Assert
+        assertResponseIsNotEmpty(fileLocation);
+    }
+
+    private File createEmptyTestFile(File directoryLocation) {
+        File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
+
+        // Create an empty file
+        try {
+            fileLocation.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("Failed to create the empty test file: " + e.getMessage());
+        }
+
+        return fileLocation;
+    }
+
+    private void assertResponseIsNotEmpty(File fileLocation) {
+        try {
+            String urlStr = buildTestUrl(fileLocation);
+            URL url = new URL(urlStr);
+
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            if (connection.getResponseCode() != HttpStatus.SC_OK) {
+                fail("Response code was NOT HTTP_OK");
+            }
+
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
+                String responseStr = br.readLine();
+                if (responseStr == null) {
+                    fail("Response is empty, but it should not be.");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("Got an IOException when trying to use the web server: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Got an Exception when trying to use the web server: " + e.getMessage());
+        }
+    }
 }
