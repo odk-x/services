@@ -19,6 +19,7 @@ import java.util.Locale;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -44,7 +45,8 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
    protected void setUpBefore() {
       try {
          serviceInterface = bindToDbService();
-         dbHandle = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          dbHandle = serviceInterface.openDatabase(APPNAME);
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -380,7 +382,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    private void expectGone(String id, boolean isManifest) throws ServicesAvailabilityException {
       UserTable c = get(id, isManifest);
-      assertTrue(c.getNumberOfRows() == 0);
+       assertEquals(0, c.getNumberOfRows());
    }
 
    private void expectPresent(String id, boolean isManifest) throws ServicesAvailabilityException {
