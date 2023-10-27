@@ -210,6 +210,8 @@ public class OdkWebserverServiceTest {
 
         try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
             writer.println(HELLO_WORLD_HTML_TXT);
+            writer.flush();
+            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
             fail("Failed to create the test file: " + e.getMessage());
