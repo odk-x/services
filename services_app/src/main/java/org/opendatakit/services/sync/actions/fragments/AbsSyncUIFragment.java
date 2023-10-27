@@ -7,12 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.LifecycleEventObserver;
 
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AlertDialogFragment;
@@ -26,7 +26,6 @@ import org.opendatakit.services.sync.actions.activities.AbsSyncBaseActivity;
 import org.opendatakit.services.sync.actions.activities.DoSyncActionCallback;
 import org.opendatakit.services.sync.actions.activities.ISyncServiceInterfaceActivity;
 import org.opendatakit.services.sync.service.GlobalSyncNotificationManager;
-import org.opendatakit.services.utilities.ODKServicesPropertyUtils;
 import org.opendatakit.sync.service.IOdkSyncServiceInterface;
 import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.utilities.AppNameUtil;
@@ -35,8 +34,7 @@ import org.opendatakit.utilities.AppNameUtil;
  * Created by wrb on 2/5/2018.
  */
 
-abstract class AbsSyncUIFragment extends Fragment implements
-        AlertDialogFragment.ConfirmAlertDialog {
+abstract class AbsSyncUIFragment extends Fragment implements AlertDialogFragment.ConfirmAlertDialog {
 
     private static final String TAG = AbsSyncUIFragment.class.getSimpleName();
 
@@ -44,21 +42,14 @@ abstract class AbsSyncUIFragment extends Fragment implements
     private String alertDialogTag;
     private String progressDialogTag;
 
-
     final Handler handler = new Handler();
-    TextView uriField;
-    TextView accountAuthType;
-    TextView accountIdentity;
 
     private AlertNProgessMsgFragmentMger msgManager;
-
 
     abstract void postTaskToAccessSyncService();
     abstract void perhapsEnableButtons();
     abstract void updateInterface();
-    abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws
-            RemoteException;
-
+    abstract void syncCompletedAction(IOdkSyncServiceInterface syncServiceInterface) throws RemoteException;
 
     AbsSyncUIFragment(String alertDialogTag, String progressDialogTag) {
         this.alertDialogTag = alertDialogTag;
@@ -95,68 +86,56 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     progressDialogTag, false, false);
         }
 
+        handleLifecycleEvents();
     }
 
-    /**
-     * Obtains the references to the account info and populates the member variables with the
-     * references
-     *
-     * @param view
-     */
-    void populateTextViewMemberVariablesReferences(View view) {
-        uriField = view.findViewById(R.id.sync_uri_field);
-        accountAuthType = view.findViewById(R.id.sync_account_auth_label);
-        accountIdentity = view.findViewById(R.id.sync_account);
-    }
+    protected void handleLifecycleEvents(){
+        getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            switch (event){
+                case ON_RESUME:{
+                    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume]");
+                    Intent incomingIntent = getActivity().getIntent();
+                    String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
+                    if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
+                        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
+                                + "either null or does not match the current appName of the activity so calling "
+                                + "finish");
+                        getActivity().setResult(Activity.RESULT_CANCELED);
+                        getActivity().finish();
+                    }
 
-        Intent incomingIntent = getActivity().getIntent();
-        String tmpAppName = incomingIntent.getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-        if ( mAppName == null || mAppName.length() == 0 || !mAppName.equals(tmpAppName)) {
-            WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onResume] appName is "
-                    + "either null or does not match the current appName of the activity so calling "
-                    + "finish");
-            getActivity().setResult(Activity.RESULT_CANCELED);
-            getActivity().finish();
-            return;
-        }
-
-        updateCredentialsUI();
-        perhapsEnableButtons();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                msgManager.restoreDialog(getParentFragmentManager(), getId());
-                updateInterface();
+                    perhapsEnableButtons();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            msgManager.restoreDialog(getParentFragmentManager(), getId());
+                            updateInterface();
+                        }
+                    }, 100);
+                    break;
+                }
+                case ON_PAUSE:{
+                    msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
+                    break;
+                }
+                case ON_DESTROY:{
+                    handler.removeCallbacksAndMessages(null);
+                    WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
+                    break;
+                }
             }
-        }, 100);
-    }
+        });
+
+    };
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (msgManager != null) {
             msgManager.addStateToSaveStateBundle(outState);
         }
     }
-
-    @Override
-    public void onPause() {
-        msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
-        super.onPause();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacksAndMessages(null);
-        WebLogger.getLogger(getAppName()).i(TAG, "[" + getId() + "] [onDestroy]");
-    }
-
 
     /**
      * Invoke this at the start of the verify server settings action
@@ -189,7 +168,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
      *
      * @return true if valid credentials exist, false otherwise
      */
-
     public boolean areCredentialsConfigured(boolean createError) {
         // verify that we have the necessary credentials
         PropertiesSingleton props = CommonToolProperties.get(getActivity(), getAppName());
@@ -219,40 +197,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
                     Toast.LENGTH_LONG).show();
         }
         return false;
-    }
-
-    void updateCredentialsUI() {
-        PropertiesSingleton props = ((IOdkAppPropertiesActivity) this.getActivity()).getProps();
-        uriField.setText(props.getProperty(CommonToolProperties.KEY_SYNC_SERVER_URL));
-
-        String credentialToUse = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-        String[] credentialValues = getResources().getStringArray(R.array.credential_entry_values);
-        String[] credentialEntries = getResources().getStringArray(R.array.credential_entries);
-
-        if ( credentialToUse == null ) {
-            credentialToUse = getString(R.string.credential_type_none);
-        }
-
-        for ( int i = 0 ; i < credentialValues.length ; ++i ) {
-            if ( credentialToUse.equals(credentialValues[i]) ) {
-                if (!credentialToUse.equals(getString(R.string.credential_type_none))) {
-                    accountAuthType.setText(credentialEntries[i]);
-                }
-            }
-        }
-
-        String account = ODKServicesPropertyUtils.getActiveUser(props);
-        int indexOfColon = account.indexOf(':');
-        if (indexOfColon > 0) {
-            account = account.substring(indexOfColon + 1);
-        }
-        if ( credentialToUse.equals(getString(R.string.credential_type_none))) {
-            accountIdentity.setText(getResources().getString(R.string.anonymous));
-        } else if ( credentialToUse.equals(getString(R.string.credential_type_username_password))) {
-            accountIdentity.setText(account);
-        } else {
-            accountIdentity.setText(getResources().getString(R.string.no_account));
-        }
     }
 
     public void onSyncCompleted() {
@@ -336,7 +280,6 @@ abstract class AbsSyncUIFragment extends Fragment implements
         nm.cancel(getAppName(), GlobalSyncNotificationManager.SYNC_NOTIFICATION_ID);
     }
 
-
     void createAlertDialog(String title, String message) {
         if(!msgManager.shutdownCalled()) {
             msgManager.createAlertDialog(title, message, getParentFragmentManager(), getId());
@@ -360,5 +303,13 @@ abstract class AbsSyncUIFragment extends Fragment implements
         FragmentManager fm = getParentFragmentManager();
         msgManager.dismissProgressDialog(fm);
         msgManager.dismissAlertDialog(fm);
+    }
+
+    protected PropertiesSingleton getProps(){
+        return ((AbsSyncBaseActivity)requireActivity()).getProps();
+    }
+
+    protected void updateViewModelWithProps(){
+        ((AbsSyncBaseActivity)requireActivity()).updateViewModelWithProps();
     }
 }

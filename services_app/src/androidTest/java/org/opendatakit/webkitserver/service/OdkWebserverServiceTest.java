@@ -10,7 +10,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
 
@@ -34,8 +34,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -73,7 +74,7 @@ public class OdkWebserverServiceTest {
     @After
     public void tearDown() {
         IWebkitServerInterface webkitServer = getIWebkitServerInterface();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         context.unbindService(odkWebkitServiceConnection);
         // sleep to let this take effect
         try {
@@ -132,7 +133,7 @@ public class OdkWebserverServiceTest {
         synchronized (odkWebkitInterfaceBindComplete) {
             if ( !active ) {
                 active = true;
-                Context context = InstrumentationRegistry.getContext();
+                Context context = InstrumentationRegistry.getInstrumentation().getContext();
                 context.bindService(bind_intent, odkWebkitServiceConnection,
                     Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
                         Context.BIND_ADJUST_WITH_ACTIVITY :
@@ -230,7 +231,7 @@ public class OdkWebserverServiceTest {
     }
 
     private void assertResponseMatchesHelloWorldHtml(File fileLocation) {
-        try {
+        try { 
             String urlStr = buildTestUrl(fileLocation);
             URL url = new URL(urlStr);
 
@@ -258,7 +259,7 @@ public class OdkWebserverServiceTest {
 
     private String buildTestUrl(File fileLocation) {
         return "http://" + WebkitServerConsts.HOSTNAME + ":" +
-                Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/" +
+                Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/" + 
                 ODKFileUtils.asUriFragment(TestConsts.APPNAME, fileLocation);
     }
     @Test
@@ -297,7 +298,7 @@ public class OdkWebserverServiceTest {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             if (connection.getResponseCode() != HttpStatus.SC_OK) {
                 fail("Response code was NOT HTTP_OK");
-            }
+            } 
 
             try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
                 String responseStr = br.readLine();
@@ -306,6 +307,7 @@ public class OdkWebserverServiceTest {
                 }
             }
         } catch (IOException e) {
+ 
             e.printStackTrace();
             fail("Got an IOException when trying to use the web server: " + e.getMessage());
         } catch (Exception e) {

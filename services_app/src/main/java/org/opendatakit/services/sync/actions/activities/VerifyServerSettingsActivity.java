@@ -15,15 +15,10 @@
  */
 package org.opendatakit.services.sync.actions.activities;
 
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
-import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragment;
+import org.opendatakit.services.sync.actions.viewModels.VerifyViewModel;
 
 /**
  * An activity for verifying the server setings and
@@ -33,48 +28,47 @@ import org.opendatakit.services.sync.actions.fragments.VerifyServerSettingsFragm
  * the list resolution fragment.
  *
  * @author mitchellsundt@gmail.com
- *
  */
 public class VerifyServerSettingsActivity extends AbsSyncBaseActivity {
 
-  private static final String TAG = VerifyServerSettingsActivity.class.getSimpleName();
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume] getting VerifyServerSettingsFragment");
-
-    FragmentManager mgr = getSupportFragmentManager();
-    String newFragmentName;
-    Fragment newFragment;
-
-    // we want the list fragment
-    newFragmentName = VerifyServerSettingsFragment.NAME;
-    newFragment = mgr.findFragmentByTag(newFragmentName);
-    if ( newFragment == null ) {
-      newFragment = new VerifyServerSettingsFragment();
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] creating new VerifyServerSettingsFragment");
-      
-      FragmentTransaction trans = mgr.beginTransaction();
-      trans.replace(R.id.sync_activity_view, newFragment, newFragmentName);
-      WebLogger.getLogger(getAppName()).i(TAG, "[onResume] replacing fragment with id " + newFragment.getId());
-      trans.commit();
+    @Override
+    void initializeViewModelAndNavController() {
+        absSyncViewModel = new ViewModelProvider(VerifyServerSettingsActivity.this).get(VerifyViewModel.class);
+        navController.setGraph(R.navigation.nav_graph_verify);
     }
-  }
 
-  @Override public void onBackPressed() {
-    PropertiesSingleton props = getProps();
-    String authType = props.getProperty(CommonToolProperties.KEY_AUTHENTICATION_TYPE);
-    boolean isAnonymous = (authType == null) || (authType.length() == 0) ||
-        getString(R.string.credential_type_none).equals(authType);
-    if ( props.getProperty(CommonToolProperties.KEY_ROLES_LIST).length() == 0 &&
-        !isAnonymous ) {
-
-      AbsSyncBaseActivity.showAuthenticationErrorDialog(this, getString(R.string.warning_no_user_roles));
-      return;
+    @Override
+    void navigateToHomeFragment() {
+        navController.navigate(R.id.verifyServerSettingsFragment);
     }
-    super.onBackPressed();
-  }
+
+    @Override
+    void navigateToAboutFragment() {
+        navController.navigate(R.id.aboutMenuFragmentV);
+    }
+
+    @Override
+    void navigateToUpdateServerSettings() {
+        navController.navigate(R.id.updateServerSettingsFragmentV);
+    }
+
+    @Override
+    boolean isNotLoginActivity() {
+        return true;
+    }
+
+    @Override
+    boolean isCurrentDestinationAboutFragment() {
+        if (navController.getCurrentDestination() == null)
+            return false;
+        return navController.getCurrentDestination().getId() == R.id.aboutMenuFragmentV;
+    }
+
+    @Override
+    boolean isCurrentDestinationUpdateServerSettings() {
+        if (navController.getCurrentDestination() == null)
+            return false;
+        return navController.getCurrentDestination().getId() == R.id.updateServerSettingsFragmentV;
+    }
 
 }

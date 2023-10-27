@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -59,7 +60,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    private static final String TEST_STR_i = "TestBoolStr";
    private static final String TEST_ARRAY_i = "[\"Test1\",\"Test2\"]";
 
-   private static final ArrayList<String> TEST_ARRAY_i_CHECK = new ArrayList<String>();
+   private static final ArrayList<String> TEST_ARRAY_i_CHECK = new ArrayList<>();
 
    static {
       TEST_ARRAY_i_CHECK.addAll(Arrays.asList("Test1", "Test2"));
@@ -74,7 +75,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
    }
 
    @NonNull private List<Column> createColumnList() {
-      List<Column> columns = new ArrayList<Column>();
+      List<Column> columns = new ArrayList<>();
 
       columns
           .add(new Column(COL_INTEGER_ID, "column Integer", ElementDataType.integer.name(), null));
@@ -174,7 +175,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase", "testDbInsertSingleRowIntoTable: " + db.getDatabaseHandle());
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
@@ -227,7 +229,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          serviceInterface.createOrOpenTableWithColumns(APPNAME, db, DB_TABLE_ID, colList);
 
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
@@ -292,6 +295,7 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
 
+         assertNotNull(serviceInterface);
          DbHandle db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
@@ -334,7 +338,8 @@ public class OdkDatabaseTypesTest extends OdkDatabaseTestAbstractBase {
          List<Column> columnList = createColumnList();
          ColumnList colList = new ColumnList(columnList);
          OrderedColumns columns = new OrderedColumns(APPNAME, DB_TABLE_ID, columnList);
-         db = serviceInterface.openDatabase(APPNAME);
+          assertNotNull(serviceInterface);
+          db = serviceInterface.openDatabase(APPNAME);
          Log.i("openDatabase",
              "testDbInsertCheckpointRowWithBooleanIntoTable: " + db.getDatabaseHandle());
 

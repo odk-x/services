@@ -21,7 +21,7 @@ Install [Android Studio](http://developer.android.com/tools/studio/index.html) a
 This project depends on ODK-X's [androidlibrary](https://github.com/odk-x/androidlibrary) and [androidcommon](https://github.com/odk-x/androidcommon) projects; their binaries will be downloaded automatically from our maven repository during the build phase. If you wish to modify them yourself, you must clone them into the same parent directory as survey. You directory structure should resemble the following:
 
         |-- odk-x
-
+        
             |-- services
 
             |-- androidlibrary
