@@ -3,7 +3,7 @@ package org.opendatakit.logic;
 import android.Manifest;
 import android.content.Context;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class PropertiesTest {
     @Test
     public void testSimpleProperties() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
         Map<String,String> properties = new HashMap<String,String>();
@@ -61,6 +61,7 @@ public class PropertiesTest {
         properties.put(CommonToolProperties.KEY_FONT_SIZE, "29");
         // this is stored in SharedPreferences
         properties.put(CommonToolProperties.KEY_PASSWORD, "asdf");
+        properties.put(CommonToolProperties.KEY_USERNAME, "demo_user");
         props.setProperties(properties);
 
         StaticStateManipulator.get().reset();
@@ -68,6 +69,7 @@ public class PropertiesTest {
         props = CommonToolProperties.get(context, APPNAME);
         assertEquals(props.getProperty(CommonToolProperties.KEY_FONT_SIZE), "29");
         assertEquals(props.getProperty(CommonToolProperties.KEY_PASSWORD), "asdf");
+        assertEquals(props.getProperty(CommonToolProperties.KEY_USERNAME), "demo_user");
     }
 
 
@@ -78,7 +80,7 @@ public class PropertiesTest {
     @Test
     public void testSecureSetProperties() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         StaticStateManipulator.get().reset();
 
@@ -104,5 +106,4 @@ public class PropertiesTest {
 
         }
     }
-
 }
