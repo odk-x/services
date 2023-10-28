@@ -106,4 +106,32 @@ public class PropertiesTest {
 
         }
     }
+
+    @Test
+    public void testFontSizeEdgeCases() {
+
+        // Constant Minimum and Maximum font sizes represented as MIN_FONT_SIZE AND MAX_FONT_SIZE
+        final int MIN_FONT_SIZE = 8;
+        final int MAX_FONT_SIZE = 74;
+
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        PropertiesSingleton props = CommonToolProperties.get(context, APPNAME);
+
+        // Set the font size to the smallest value
+        props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FONT_SIZE, String.valueOf(MIN_FONT_SIZE)));
+
+        StaticStateManipulator.get().reset();
+
+        int minFontSize = Integer.parseInt(props.getProperty(CommonToolProperties.KEY_FONT_SIZE));
+        assertEquals(minFontSize, MIN_FONT_SIZE);
+
+        // Set the font size to the largest value
+        props.setProperties(Collections.singletonMap(CommonToolProperties.KEY_FONT_SIZE, String.valueOf(MAX_FONT_SIZE)));
+
+        StaticStateManipulator.get().reset();
+
+        int maxFontSize = Integer.parseInt(props.getProperty(CommonToolProperties.KEY_FONT_SIZE));
+        assertEquals(maxFontSize, MAX_FONT_SIZE);
+    }
 }
