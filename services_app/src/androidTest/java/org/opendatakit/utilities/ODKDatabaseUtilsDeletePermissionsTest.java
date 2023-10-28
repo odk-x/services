@@ -26,6 +26,7 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Permissions tests in the database.
@@ -37,7 +38,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   private static final String TAG = "ODKDatabaseUtilsDeletePermissionsTest";
 
   @Test
-  public void testDeleteUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testDeleteUnlockedNoAnonCreate() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
@@ -78,7 +79,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   }
 
   @Test
-  public void testDeleteUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testDeleteUnlockedYesAnonCreate() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
@@ -119,7 +120,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   }
 
   @Test
-  public void testDeleteLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testDeleteLockedNoAnonCreate() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
@@ -160,7 +161,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   }
 
   @Test
-  public void testDeleteLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testDeleteLockedYesAnonCreate() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
@@ -201,7 +202,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   }
 
   @Test
-  public void testDeleteUnlockedNoAnonCreate0() throws ActionNotAuthorizedException {
+  public void testDeleteUnlockedNoAnonCreate0() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
@@ -225,13 +226,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
                 ap.toString()));
 
       } catch ( ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteUnlockedYesAnonCreate0() throws ActionNotAuthorizedException {
+  public void testDeleteUnlockedYesAnonCreate0() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
@@ -255,13 +256,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
                 ap.toString()));
 
       } catch ( ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteLockedNoAnonCreate0() throws ActionNotAuthorizedException {
+  public void testDeleteLockedNoAnonCreate0() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
@@ -285,13 +286,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
                 ap.toString()));
 
       } catch ( ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteLockedYesAnonCreate0() throws ActionNotAuthorizedException {
+  public void testDeleteLockedYesAnonCreate0() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
@@ -315,7 +316,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
                 ap.toString()));
 
       } catch ( ActionNotAuthorizedException ex ) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
@@ -859,8 +860,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
   }
 
   @Test
-  public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate0()
-      throws  ActionNotAuthorizedException {
+  public void testDeleteAllCheckpointsAsUpdateUnlockedNoAnonCreate0() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
@@ -898,14 +898,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         }
 
       } catch (ActionNotAuthorizedException ex) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate0()
-      throws  ActionNotAuthorizedException {
+  public void testDeleteAllCheckpointsAsUpdateUnlockedYesAnonCreate0() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
@@ -944,14 +943,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         }
 
       } catch (ActionNotAuthorizedException ex) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate0()
-      throws  ActionNotAuthorizedException {
+  public void testDeleteAllCheckpointsAsUpdateLockedNoAnonCreate0() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
@@ -990,14 +988,13 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         }
 
       } catch (ActionNotAuthorizedException ex) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
 
   @Test
-  public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate0()
-      throws  ActionNotAuthorizedException {
+  public void testDeleteAllCheckpointsAsUpdateLockedYesAnonCreate0() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable
@@ -1036,7 +1033,7 @@ public class ODKDatabaseUtilsDeletePermissionsTest extends AbstractPermissionsTe
         }
 
       } catch (ActionNotAuthorizedException ex) {
-        assertTrue("Expecting to not throw an error: " + ap.toString(), false);
+          fail("Expecting to not throw an error: " + ap.toString());
       }
     }
   }
