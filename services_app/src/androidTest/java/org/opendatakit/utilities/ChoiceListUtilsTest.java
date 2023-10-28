@@ -21,7 +21,9 @@ import org.opendatakit.services.database.utilities.ChoiceListUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertEquals; 
+import static org.junit.Assert.assertNotNull; 
+import static org.junit.Assert.assertNull; 
 
 /**
  * Created by Niles on 6/29/17.
@@ -73,14 +75,14 @@ public class ChoiceListUtilsTest {
   }
 
   @Test
-  public void testSetChoiceList() throws Throwable {
+  public void testSetChoiceList() {
     ChoiceListUtils.setChoiceList(db, key, "my json");
     assertEquals(ChoiceListUtils.getChoiceList(db, key), "my json");
   }
 
   @Test
-  public void testGetChoiceListOnEmpty() throws Throwable {
-    assertEquals(ChoiceListUtils.getChoiceList(db, key), null);
+  public void testGetChoiceListOnEmpty() {
+      assertNull(ChoiceListUtils.getChoiceList(db, key));
   }
 
   @After
@@ -89,5 +91,18 @@ public class ChoiceListUtilsTest {
       db.releaseReference();
     }
   }
+  @Test
+  public void testUpdateChoiceList() throws Throwable {
+    // Test updating an existing choice list
+    String json = "original json";
+    ChoiceListUtils.setChoiceList(db, key, json);
 
+    // Update the choice list
+    String updatedJson = "updated json";
+    ChoiceListUtils.setChoiceList(db, key, updatedJson);
+
+    String retrievedJson = ChoiceListUtils.getChoiceList(db, key);
+    assertNotNull(retrievedJson);
+    assertEquals(updatedJson, retrievedJson);
+  }
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context=".sync.actions.fragments.ChooseSignInTypeFragment">
+
+    <TextView
+        android:id="@+id/tvServerUrlLabelLogin"
+        style="@style/HeadingStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/portrait_regular_margin"
+        android:text="@string/main_activity_server_url_label"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvServerUrlLogin"
+        style="@style/TextViewStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/portrait_regular_margin"
+        android:layout_marginTop="@dimen/portrait_label_field_margin"
+        android:layout_marginEnd="@dimen/portrait_regular_margin"
+        android:layout_marginBottom="@dimen/portrait_regular_margin"
+        android:text="@string/default_sync_server_url"
+        app:layout_constraintBottom_toTopOf="@+id/tvTitleLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelLogin" />
+
+    <TextView
+        android:id="@+id/tvTitleLogin"
+        style="@style/LargeHeadingStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/portrait_regular_margin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLogin" />
+
+    <Button
+        android:id="@+id/btnAnonymousSignInLogin"
+        style="@style/ButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/portrait_regular_margin"
+        android:text="@string/anonymous_user"
+        app:layout_constraintBottom_toTopOf="@+id/btnUserSignInLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleLogin"
+        tools:ignore="TextContrastCheck" />
+
+    <Button
+        android:id="@+id/btnUserSignInLogin"
+        style="@style/ButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/portrait_regular_margin"
+        android:text="@string/authenticated_user"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnAnonymousSignInLogin"
+        tools:ignore="TextContrastCheck" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

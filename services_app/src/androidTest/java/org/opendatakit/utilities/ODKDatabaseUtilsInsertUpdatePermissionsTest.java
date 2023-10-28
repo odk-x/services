@@ -39,7 +39,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   private static final String TAG = "ODKDatabaseUtilsInsertUpdatePermissionsTest";
 
   @Test
-  public void testUpdateUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testUpdateUnlockedNoAnonCreate() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
@@ -64,8 +64,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
 
   @Test
-  public void testInsertCheckpointAsUpdateUnlockedNoAnonCreate()
-      throws  ActionNotAuthorizedException {
+  public void testInsertCheckpointAsUpdateUnlockedNoAnonCreate() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedNoAnonCreate,
@@ -89,7 +88,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertUnlockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertUnlockedNoAnonCreate() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
@@ -112,8 +111,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsInsertUnlockedNoAnonCreate()
-      throws ActionNotAuthorizedException {
+  public void testInsertCheckpointAsInsertUnlockedNoAnonCreate() {
 
     String tableId = testTableUnlockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedNoAnonCreate,
@@ -136,7 +134,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testUpdateUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testUpdateUnlockedYesAnonCreate() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
@@ -160,8 +158,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsUpdateUnlockedYesAnonCreate()
-      throws  ActionNotAuthorizedException {
+  public void testInsertCheckpointAsUpdateUnlockedYesAnonCreate() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableUnlockedYesAnonCreate,
@@ -186,7 +183,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertUnlockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertUnlockedYesAnonCreate() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
@@ -209,8 +206,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsInsertUnlockedYesAnonCreate()
-      throws ActionNotAuthorizedException {
+  public void testInsertCheckpointAsInsertUnlockedYesAnonCreate() {
 
     String tableId = testTableUnlockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableUnlockedYesAnonCreate,
@@ -233,7 +229,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testUpdateLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testUpdateLockedNoAnonCreate() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
@@ -258,7 +254,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
 
 
   @Test
-  public void testInsertCheckpointAsUpdateLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertCheckpointAsUpdateLockedNoAnonCreate() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedNoAnonCreate,
@@ -282,7 +278,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertLockedNoAnonCreate() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
@@ -305,7 +301,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsInsertLockedNoAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertCheckpointAsInsertLockedNoAnonCreate() {
 
     String tableId = testTableLockedNoAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedNoAnonCreate,
@@ -328,7 +324,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testUpdateLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testUpdateLockedYesAnonCreate() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
@@ -352,8 +348,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsUpdateLockedYesAnonCreate() throws
-      ActionNotAuthorizedException {
+  public void testInsertCheckpointAsUpdateLockedYesAnonCreate() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertPopulatedTestTable(testTableLockedYesAnonCreate,
@@ -377,7 +372,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertLockedYesAnonCreate() throws ActionNotAuthorizedException {
+  public void testInsertLockedYesAnonCreate() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
@@ -400,8 +395,7 @@ public class ODKDatabaseUtilsInsertUpdatePermissionsTest extends AbstractPermiss
   }
 
   @Test
-  public void testInsertCheckpointAsInsertLockedYesAnonCreate()
-      throws ActionNotAuthorizedException {
+  public void testInsertCheckpointAsInsertLockedYesAnonCreate() {
 
     String tableId = testTableLockedYesAnonCreate;
     OrderedColumns oc = assertEmptyTestTable(testTableLockedYesAnonCreate,
