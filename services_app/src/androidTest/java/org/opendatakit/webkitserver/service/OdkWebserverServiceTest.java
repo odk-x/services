@@ -188,18 +188,6 @@ public class OdkWebserverServiceTest {
         }
     }
 
-
-    @Test
-    public void testServingHelloWorldHtml() {
-        // Arrange
-        File directoryLocation = createTestDirectory();
-        File fileLocation = createTestFile(directoryLocation);
-        // Act
-        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
-        restartService(serviceInterface);
-        // Assert
-        assertResponseMatchesHelloWorldHtml(fileLocation);
-    }
     private File createTestDirectory() {
         File directoryLocation = new File(ODKFileUtils.getConfigFolder(TestConsts.APPNAME), TEST_DIR);
         if (!directoryLocation.isDirectory()) {
@@ -232,33 +220,6 @@ public class OdkWebserverServiceTest {
         }
     }
 
-    private void assertResponseMatchesHelloWorldHtml(File fileLocation) {
-        try { 
-            String urlStr = buildTestUrl(fileLocation);
-            URL url = new URL(urlStr);
-
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            if (connection.getResponseCode() != HttpStatus.SC_OK) {
-                fail("Response code was NOT HTTP_OK");
-            }
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
-                StringBuilder responseStr = new StringBuilder();
-                String segment;
-                while ((segment = br.readLine()) != null) {
-                    responseStr.append(segment);
-                }
-                assertTrue("Received: " + responseStr, HELLO_WORLD_HTML_TXT.equals(responseStr.toString()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Got an IOException when trying to use the web server: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Got an Exception when trying to use the web server: " + e.getMessage());
-        }
-    }
-
     private String buildTestUrl(File fileLocation) {
         Uri baseUrl = Uri.parse("http://" + WebkitServerConsts.HOSTNAME + ":" +
                 Integer.toString(WebkitServerConsts.PORT) + "/" + TestConsts.APPNAME + "/");
@@ -266,20 +227,6 @@ public class OdkWebserverServiceTest {
                 .appendPath(ODKFileUtils.asUriFragment(TestConsts.APPNAME, fileLocation))
                 .build()
                 .toString();
-    }
-
-    @Test
-    public void testServingEmptyFile() {
-        // Setup
-        File directoryLocation = createTestDirectory();
-        File fileLocation = createEmptyTestFile(directoryLocation);
-
-        // Act
-        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
-        restartService(serviceInterface);
-
-        // Assert
-        assertResponseIsNotEmpty(fileLocation);
     }
 
     private File createEmptyTestFile(File directoryLocation) {
@@ -296,34 +243,8 @@ public class OdkWebserverServiceTest {
         return fileLocation;
     }
 
-    private void assertResponseIsNotEmpty(File fileLocation) {
-        try {
-            String urlStr = buildTestUrl(fileLocation);
-            URL url = new URL(urlStr);
-
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            if (connection.getResponseCode() != HttpStatus.SC_OK) {
-                fail("Response code was NOT HTTP_OK");
-            } 
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
-                String responseStr = br.readLine();
-                if (responseStr == null) {
-                    fail("Response is empty, but it should not be.");
-                }
-            }
-        } catch (IOException e) {
- 
-            e.printStackTrace();
-            fail("Got an IOException when trying to use the web server: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Got an Exception when trying to use the web server: " + e.getMessage());
-        }
-    }
-
     @Test
-    public void testServingHelloWorldHtmlWithUri() {
+    public void testServingHelloWorldHtml() {
         // Arrange
         File directoryLocation = createTestDirectory();
         File fileLocation = createTestFile(directoryLocation);
@@ -333,10 +254,10 @@ public class OdkWebserverServiceTest {
         restartService(serviceInterface);
 
         // Assert
-        assertResponseMatchesHelloWorldHtmlWithUri(fileLocation);
+        assertResponseMatchesHelloWorldHtml(fileLocation);
     }
 
-    private void assertResponseMatchesHelloWorldHtmlWithUri(File fileLocation) {
+    private void assertResponseMatchesHelloWorldHtml(File fileLocation) {
         try {
             Uri uri = Uri.parse(buildTestUrl(fileLocation));
 
@@ -364,7 +285,7 @@ public class OdkWebserverServiceTest {
 
 
     @Test
-    public void testServingEmptyFileWithUri() {
+    public void testServingEmptyFile() {
         // Setup
         File directoryLocation = createTestDirectory();
         File fileLocation = createEmptyTestFile(directoryLocation);
@@ -374,10 +295,10 @@ public class OdkWebserverServiceTest {
         restartService(serviceInterface);
 
         // Assert
-        assertResponseIsNotEmptyWithUri(fileLocation);
+        assertResponseIsNotEmpty(fileLocation);
     }
 
-    private void assertResponseIsNotEmptyWithUri(File fileLocation) {
+    private void assertResponseIsNotEmpty(File fileLocation) {
         try {
             Uri uri = Uri.parse(buildTestUrl(fileLocation));
 
@@ -402,7 +323,7 @@ public class OdkWebserverServiceTest {
     }
 
     @Test
-    public void testServingNonexistentFileWithUri() {
+    public void testServingNonexistentFile() {
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
         restartService(serviceInterface);
@@ -433,7 +354,7 @@ public class OdkWebserverServiceTest {
     }
 
     @Test
-    public void testServingLargeFileWithUri() {
+    public void testServingLargeFile() {
         // Arrange
         File directoryLocation = createTestDirectory();
         File largeFileLocation = createLargeTestFile(directoryLocation);
@@ -943,5 +864,4 @@ public class OdkWebserverServiceTest {
             fail("Got an Exception when trying to use the web server: " + e.getMessage());
         }
     }
-
 }
