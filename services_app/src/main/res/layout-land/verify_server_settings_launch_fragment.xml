@@ -178,7 +178,7 @@
 
     <TextView
         android:id="@+id/tvLastSyncTimeLabelVerify"
-        style="@style/SmallHeadingStyle"
+        style="@style/CardViewHeadingStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/land_label_field_margin"

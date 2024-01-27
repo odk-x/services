@@ -8,38 +8,26 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        style="@style/AppBarStyle"
+        app:elevation="0dp"
+        android:fitsSystemWindows="true"
+        >
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="?attr/actionBarSize"
+            style="@style/AppBarLabelStyle"
+            app:navigationIcon="@drawable/ic_arrow_back_36px">
 
             <ImageView
-                android:id="@+id/imgAppBarRectangle"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/portrait_app_bar_height"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                app:srcCompat="@drawable/rectangle_app_bar"
-                tools:ignore="ImageContrastCheck" />
+                android:layout_width="80dp"
+                android:layout_height="50dp"
+                android:src="@drawable/logo"
+                android:layout_gravity="center_horizontal"
+                />
 
-            <ImageView
-                android:id="@+id/imgLogo"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_margin="@dimen/portrait_secondary_margin"
-                app:layout_constraintBottom_toBottomOf="@+id/imgAppBarRectangle"
-                app:layout_constraintEnd_toEndOf="@+id/imgAppBarRectangle"
-                app:layout_constraintStart_toStartOf="@+id/imgAppBarRectangle"
-                app:layout_constraintTop_toTopOf="@+id/imgAppBarRectangle"
-                app:srcCompat="@drawable/logo"
-                tools:ignore="ImageContrastCheck" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.appbar.MaterialToolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -47,6 +35,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="17dp"
+            android:text="Server URL"
+            app:layout_constraintBottom_toTopOf="@+id/inputServerUrl"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.07"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            style="@style/InputFieldLabelStyle"
+            />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputServerUrl"
@@ -54,7 +55,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/portrait_regular_margin"
-            android:hint="@string/enter_server_url"
             app:errorEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -64,33 +64,37 @@
                 android:id="@+id/inputTextServerUrl"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:hint="Enter Server URL"
                 tools:ignore="TextContrastCheck" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUpdateServerUrl"
-            style="@style/SmallButtonStyle"
+            style="@style/ButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/portrait_regular_margin"
             android:layout_marginTop="@dimen/portrait_regular_margin"
             android:layout_marginEnd="@dimen/portrait_label_field_margin"
             android:text="@string/update_url"
+            app:elevation="0dp"
             app:layout_constraintEnd_toStartOf="@+id/btnChooseDefaultServer"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/inputServerUrl"
             tools:ignore="TextContrastCheck" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChooseDefaultServer"
-            style="@style/OutlinedButtonStyle"
+            style="@style/ButtonStyleSecondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/portrait_label_field_margin"
             android:layout_marginEnd="@dimen/portrait_regular_margin"
             android:text="@string/choose_demo_server"
+            app:elevation="0dp"
             app:layout_constraintBottom_toBottomOf="@+id/btnUpdateServerUrl"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/btnUpdateServerUrl"

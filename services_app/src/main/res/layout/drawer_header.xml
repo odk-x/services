@@ -13,16 +13,16 @@
             android:id="@+id/toolbarDrawerHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/white">
+            android:background="@color/navDrawerSurface">
 
             <ImageButton
                 android:id="@+id/btnDrawerClose"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
-                android:minWidth="48dp"
-                android:minHeight="48dp"
-                app:srcCompat="@drawable/ic_drawer_black"
+                android:minWidth="36dp"
+                android:minHeight="36dp"
+                app:srcCompat="@drawable/ic_menu"
                 tools:ignore="SpeakableTextPresentCheck" />
 
             <com.google.android.material.button.MaterialButton

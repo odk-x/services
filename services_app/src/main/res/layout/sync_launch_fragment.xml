@@ -73,7 +73,7 @@
 
     <TextView
         android:id="@+id/tvLastSyncTimeLabelSync"
-        style="@style/SmallHeadingStyle"
+        style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -116,7 +116,7 @@
 
             <TextView
                 android:id="@+id/tvServerUrlLabelSync"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
@@ -145,7 +145,7 @@
 
             <TextView
                 android:id="@+id/tvSyncTypeLabelSync"
-                style="@style/HeadingStyle"
+                style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/portrait_regular_margin"
