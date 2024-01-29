@@ -38,10 +38,8 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.database.AndroidConnectFactory;
-import org.opendatakit.services.sync.service.GlobalSyncNotificationManager;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
 import org.opendatakit.services.sync.service.SyncProgressTracker;
-import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
 import org.opendatakit.sync.service.SyncAttachmentState;
 import org.opendatakit.sync.service.SyncOverallResult;
 import org.opendatakit.sync.service.logic.CommonFileAttachmentTerms;
@@ -120,46 +118,6 @@ public class AggregateSynchronizerTest {
           InstrumentationRegistry.getTargetContext());
       // Used to ensure that the singleton has been initialized properly
       AndroidConnectFactory.configure();
-    }
-  }
-
-  private static final class GlobalSyncNotificationManagerStub implements
-      GlobalSyncNotificationManager {
-
-    @Override
-    public void startingSync(String appName) throws NoAppNameSpecifiedException {
-
-    }
-
-    @Override
-    public void stoppingSync(String appName) throws NoAppNameSpecifiedException {
-
-    }
-
-    @Override
-    public void updateNotification(String appName, String text, int maxProgress, int progress,
-                                   boolean indeterminateProgress) {
-
-    }
-
-    @Override
-    public void finalErrorNotification(String appName, String text) {
-
-    }
-
-    @Override
-    public void finalConflictNotification(String appName, String text) {
-
-    }
-
-    @Override
-    public void clearNotification(String appName, String title, String text) {
-
-    }
-
-    @Override
-    public void clearVerificationNotification(String appName, String title, String text) {
-
     }
   }
 

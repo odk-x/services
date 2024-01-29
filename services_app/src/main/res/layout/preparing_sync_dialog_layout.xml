@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/prepare_sync"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -16,7 +16,7 @@
         android:textColor="@color/black"
         android:text="@string/preparing_to_sync"
         android:textSize="20sp">
-    </TextView>
+    </androidx.appcompat.widget.AppCompatTextView>
 
     <ProgressBar
         android:id="@+id/spinning_bar"
@@ -36,7 +36,7 @@
         android:layout_marginTop="5dp"
         android:orientation="horizontal">
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/cancel_sync_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

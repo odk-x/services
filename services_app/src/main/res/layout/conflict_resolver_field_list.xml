@@ -6,7 +6,7 @@
     android:paddingLeft="8dp"
     android:paddingRight="8dp">
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/conflict_overview_message"
         android:layout_width="match_parent"
         android:lines="3"
@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/take_server"
             android:text="@string/conflict_take_server_updates"
             android:layout_width="match_parent"
@@ -28,7 +28,7 @@
             style="@style/ButtonStyle"
             />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/take_local"
             android:text="@string/conflict_take_local_updates"
             android:layout_width="match_parent"
@@ -38,7 +38,7 @@
             style="@style/ButtonStyle"
             />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/take_local_with_deltas"
                 android:text="@string/conflict_take_local_with_deltas"
                 android:layout_width="match_parent"

@@ -1576,7 +1576,7 @@ public class OdkDatabaseServiceImplTest
       return instanceFolder;
    }
 
-   private void insertMetadata(String table, String partition, String aspect, String key,
+   public void insertMetadata(String table, String partition, String aspect, String key,
        String value) throws ServicesAvailabilityException {
 
       KeyValueStoreEntry kvsEntry = new KeyValueStoreEntry();

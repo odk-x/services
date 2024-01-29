@@ -12,6 +12,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.android.gms.common.internal.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.isA;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -43,10 +44,13 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Rule;
 import org.opendatakit.services.R;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -72,6 +76,12 @@ public abstract class BaseUITest<T extends Activity> {
     protected final static String FONT_SIZE_XS = "Extra Small";
     protected static final String SERVER_URL = "https://tables-demo.odk-x.org";
     protected ActivityScenario<T> activityScenario;
+
+    @Rule
+    public GrantPermissionRule writeRuntimePermissionRule = GrantPermissionRule .grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+    @Rule
+    public GrantPermissionRule readtimePermissionRule = GrantPermissionRule .grant(Manifest.permission.READ_EXTERNAL_STORAGE);
 
     @Before
     public void setUp() {

@@ -389,22 +389,19 @@ public class ServerSettingsFragment extends PreferenceFragmentCompat implements
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case R.id.action_barcode:
-        // When Scan QR icon is clicked.
-        if (checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED) {
-          // Permission is already available, start camera preview
-           openBarcodeScanner();
-        } else {
-          // Permission is missing and must be requested.
-          requestCameraPermission();
-        }
-        return true;
-
-      default:
+    if(item.getItemId() == R.id.action_barcode) {
+      // When Scan QR icon is clicked.
+      if (checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+              == PackageManager.PERMISSION_GRANTED) {
+        // Permission is already available, start camera preview
+        openBarcodeScanner();
+      } else {
+        // Permission is missing and must be requested.
+        requestCameraPermission();
+      }
+      return true;
+    } else {
         return super.onOptionsItemSelected(item);
-
     }
   }
 

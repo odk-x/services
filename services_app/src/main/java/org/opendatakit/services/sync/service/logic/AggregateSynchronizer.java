@@ -16,6 +16,25 @@
 package org.opendatakit.services.sync.service.logic;
 
 import org.apache.commons.fileupload.MultipartStream;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.entity.GzipCompressingEntity;
+import org.apache.hc.client5.http.entity.mime.ByteArrayBody;
+import org.apache.hc.client5.http.entity.mime.FormBodyPartBuilder;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.AppNameList;
 import org.opendatakit.aggregate.odktables.rest.entity.ChangeSetList;
@@ -36,26 +55,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.UserInfoList;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.httpclientandroidlib.Header;
-import org.opendatakit.httpclientandroidlib.HeaderElement;
-import org.opendatakit.httpclientandroidlib.HttpEntity;
-import org.opendatakit.httpclientandroidlib.HttpHeaders;
-import org.opendatakit.httpclientandroidlib.HttpStatus;
-import org.opendatakit.httpclientandroidlib.NameValuePair;
-import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
-import org.opendatakit.httpclientandroidlib.client.methods.CloseableHttpResponse;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpDelete;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPut;
-import org.opendatakit.httpclientandroidlib.conn.ConnectTimeoutException;
-import org.opendatakit.httpclientandroidlib.entity.ContentType;
-import org.opendatakit.httpclientandroidlib.entity.StringEntity;
-import org.opendatakit.httpclientandroidlib.entity.mime.FormBodyPartBuilder;
-import org.opendatakit.httpclientandroidlib.entity.mime.MultipartEntityBuilder;
-import org.opendatakit.httpclientandroidlib.entity.mime.content.ByteArrayBody;
-import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.provider.DataTableColumns;
@@ -143,17 +142,16 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   public void verifyServerSupportsAppName() throws HttpClientWebException, IOException {
 
     AppNameList appNameList = null;
-    HttpGet request = new HttpGet();
-    CloseableHttpResponse response = null;
 
     URI uri = wrapper.constructListOfAppNamesUri();
-
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    HttpGet request = new HttpGet(uri);
+    CloseableHttpResponse response = null;
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
         throw new BadClientConfigException("server does not implement ODK 2.0 REST api",
                 request, response);
       }
@@ -185,17 +183,16 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   public PrivilegesInfo getUserRolesAndDefaultGroup() throws HttpClientWebException,
       IOException {
 
-    HttpGet request = new HttpGet();
+    URI uri = wrapper.constructListOfUserRolesAndDefaultGroupUri();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
 
-    URI uri = wrapper.constructListOfUserRolesAndDefaultGroupUri();
-
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
         // perhaps an older server (pre-v1.4.11) ?
         return null;
       }
@@ -230,17 +227,16 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   @Override
   public   UserInfoList getUsers() throws HttpClientWebException, IOException {
 
-    HttpGet request = new HttpGet();
+    URI uri = wrapper.constructListOfUsersUri();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
 
-    URI uri = wrapper.constructListOfUsersUri();
-
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_FOUND);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
         // perhaps an older server (pre-v1.4.11) ?
         return new UserInfoList();
       }
@@ -273,13 +269,12 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   public TableResourceList getTables(String webSafeResumeCursor) throws
       HttpClientWebException, IOException {
 
+    URI uri = wrapper.constructListOfTablesUri(webSafeResumeCursor);
     TableResourceList tableResources = null;
-    HttpGet request = new HttpGet();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
 
-    URI uri = wrapper.constructListOfTablesUri(webSafeResumeCursor);
-
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -301,13 +296,14 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   public TableResource getTable(String tableId) throws
       HttpClientWebException, IOException {
 
-    TableResource tableResource = null;
-    HttpGet request = new HttpGet();
-    CloseableHttpResponse response = null;
-
     URI uri = wrapper.constructTableIdUri(tableId);
 
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    TableResource tableResource = null;
+    HttpGet request = new HttpGet(uri);
+    CloseableHttpResponse response = null;
+
+
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -331,11 +327,11 @@ public class AggregateSynchronizer implements HttpSynchronizer {
 
     URI uri = URI.create(tableDefinitionUri).normalize();
 
-    HttpGet request = new HttpGet();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
     TableDefinitionResource definitionRes = null;
 
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -366,8 +362,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     TableResource resource;
 
     CloseableHttpResponse response = null;
-    HttpPut request = new HttpPut();
-    wrapper.buildJsonContentJsonResponseRequest(uri, request);
+    HttpPut request = new HttpPut(uri);
+    wrapper.buildJsonContentJsonResponseRequest(request);
 
     HttpEntity entity = new GzipCompressingEntity(new StringEntity(tableDefinitionJSON, Charset.forName("UTF-8")));
     request.setEntity(entity);
@@ -393,10 +389,10 @@ public class AggregateSynchronizer implements HttpSynchronizer {
           IOException {
     URI uri = URI.create(table.getDefinitionUri()).normalize();
 
-    HttpDelete request = new HttpDelete();
+    HttpDelete request = new HttpDelete(uri);
     CloseableHttpResponse response = null;
 
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       // TODO: CAL: response should be used?
@@ -418,10 +414,10 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     String effectiveDataETag = (table.getDataETag() != null) ? dataETag : null;
     URI uri = wrapper.constructTableDiffChangeSetsUri(table.getDiffUri(), effectiveDataETag);
 
-    HttpGet request = new HttpGet();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
 
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -451,9 +447,9 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     URI uri = wrapper.constructTableDiffChangeSetsForDataETagUri(table.getDiffUri(), dataETag,
         activeOnly, websafeResumeCursor);
 
-    HttpGet request = new HttpGet();
+    HttpGet request = new HttpGet(uri);
     CloseableHttpResponse response = null;
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -479,16 +475,16 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     String tableId = table.getTableId();
     URI uri;
 
-    HttpGet request = new HttpGet();
-    CloseableHttpResponse response = null;
-
     if ((table.getDataETag() == null) || dataETag == null) {
       uri = wrapper.constructTableDataUri(table.getDataUri(), websafeResumeCursor, fetchLimit);
     } else {
       uri = wrapper.constructTableDataDiffUri(table.getDiffUri(), dataETag, websafeResumeCursor, fetchLimit);
     }
 
-    wrapper.buildNoContentJsonResponseRequest(uri, request);
+    HttpGet request = new HttpGet(uri);
+    CloseableHttpResponse response = null;
+
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -542,22 +538,23 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     }
     RowList rlist = new RowList(rows, resource.getDataETag());
 
-    HttpPut request = new HttpPut();
+    URI uri = URI.create(resource.getDataUri());
+    HttpPut request = new HttpPut(uri);
     CloseableHttpResponse response = null;
 
     String rowListJSON = ODKFileUtils.mapper.writeValueAsString(rlist);
     HttpEntity entity = new GzipCompressingEntity(new StringEntity(rowListJSON,
         Charset.forName("UTF-8")));
 
-    URI uri = URI.create(resource.getDataUri());
-    wrapper.buildJsonContentJsonResponseRequest(uri, request);
+
+    wrapper.buildJsonContentJsonResponseRequest(request);
     request.setEntity(entity);
 
     RowOutcomeList outcomes;
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_CONFLICT);
-      if ( response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT ) {
+      if ( response.getCode() == HttpStatus.SC_CONFLICT ) {
         return null;
       }
       String res = wrapper.convertResponseToString(response);
@@ -579,8 +576,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
 
     URI fileManifestUri = wrapper.constructAppLevelFileManifestUri();
 
-    HttpGet request = new HttpGet();
-    wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
+    HttpGet request = new HttpGet(fileManifestUri);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     // don't short-circuit manifest if we are pushing local files,
     // as we need to know exactly what is on the server to minimize
@@ -600,7 +597,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+      if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
@@ -651,8 +648,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
 
     URI fileManifestUri = wrapper.constructTableLevelFileManifestUri(tableId);
 
-    HttpGet request = new HttpGet();
-    wrapper.buildNoContentJsonResponseRequest(fileManifestUri, request);
+    HttpGet request = new HttpGet(fileManifestUri);
+    wrapper.buildNoContentJsonResponseRequest(request);
     CloseableHttpResponse response = null;
 
     // don't short-circuit manifest if we are pushing local files,
@@ -670,7 +667,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+      if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
@@ -719,9 +716,9 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     URI instanceFileManifestUri =
         wrapper.constructInstanceFileManifestUri(serverInstanceFileUri, instanceId);
 
-    HttpGet request = new HttpGet();
+    HttpGet request = new HttpGet(instanceFileManifestUri);
     CloseableHttpResponse response = null;
-    wrapper.buildNoContentJsonResponseRequest(instanceFileManifestUri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     if ( lastKnownLocalRowLevelManifestETag != null ) {
       request.addHeader(HttpHeaders.IF_NONE_MATCH, lastKnownLocalRowLevelManifestETag);
@@ -732,7 +729,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
 
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+      if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
         // signal this by returning null;
         return null;
       }
@@ -785,9 +782,9 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     int attemptCount = 0;
     while (!success && attemptCount++ <= 2) {
 
-      HttpGet request = new HttpGet();
+      HttpGet request = new HttpGet(downloadUrl);
       // no body content-type and no response content-type requested
-      wrapper.buildBasicRequest(downloadUrl, request);
+      wrapper.buildBasicRequest(request);
       if ( destFile.exists() ) {
         String md5Hash = ODKFileUtils.getMd5Hash(sc.getAppName(), destFile);
         request.addHeader(HttpHeaders.IF_NONE_MATCH, md5Hash);
@@ -796,7 +793,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
       CloseableHttpResponse response = null;
       try {
         response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_SC_NOT_MODIFIED);
-        int statusCode = response.getStatusLine().getStatusCode();
+        int statusCode = response.getCode();
 
         if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
           log.i(LOGTAG, "downloading " + downloadUrl.toString() + " returns non-modified -- No-Op");
@@ -894,9 +891,9 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
     log.i(LOGTAG, "CLARICE:[deleteConfigFile] fileDeleteUri: " + filesUri.toString());
 
-    HttpDelete request = new HttpDelete();
+    HttpDelete request = new HttpDelete(filesUri);
     CloseableHttpResponse response = null;
-    wrapper.buildNoContentJsonResponseRequest(filesUri, request);
+    wrapper.buildNoContentJsonResponseRequest(request);
 
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
@@ -918,8 +915,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
-    HttpPost request = new HttpPost();
-    wrapper.buildSpecifiedContentJsonResponseRequest(filesUri, contentType, request);
+    HttpPost request = new HttpPost(filesUri);
+    wrapper.buildSpecifiedContentJsonResponseRequest(contentType, request);
 
     HttpEntity entity = wrapper.makeHttpEntity(localFile);
     request.setEntity(entity);
@@ -943,8 +940,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     ContentType contentType = ContentType.create(ct);
 
     CloseableHttpResponse response = null;
-    HttpPost request = new HttpPost();
-    wrapper.buildSpecifiedContentJsonResponseRequest(instanceFileUri, contentType, request);
+    HttpPost request = new HttpPost(instanceFileUri);
+    wrapper.buildSpecifiedContentJsonResponseRequest(contentType, request);
 
     HttpEntity entity = wrapper.makeHttpEntity(file);
     request.setEntity(entity);
@@ -990,9 +987,9 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     NameValuePair params = new BasicNameValuePair("boundary", boundary);
     ContentType mt = ContentType.create(ContentType.MULTIPART_FORM_DATA.getMimeType(), params);
 
-    HttpPost request = new HttpPost();
+    HttpPost request = new HttpPost(instanceFilesUploadUri);
     CloseableHttpResponse response = null;
-    wrapper.buildSpecifiedContentJsonResponseRequest(instanceFilesUploadUri, mt, request);
+    wrapper.buildSpecifiedContentJsonResponseRequest(mt, request);
 
     MultipartEntityBuilder mpEntBuilder = MultipartEntityBuilder.create();
 
@@ -1071,11 +1068,11 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     InputStream inStream = null;
     OutputStream os = null;
 
-    HttpPost request = new HttpPost();
+    HttpPost request = new HttpPost(instanceFilesDownloadUri);
     CloseableHttpResponse response = null;
 
     // no body content-type and no response content-type requested
-    wrapper.buildBasicRequest(instanceFilesDownloadUri, request);
+    wrapper.buildBasicRequest(request);
     request.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
     String fileManifestEntries = ODKFileUtils.mapper.writeValueAsString(manifest);
@@ -1088,15 +1085,15 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     try {
       response = wrapper.httpClientExecute(request, HttpRestProtocolWrapper.SC_OK_ONLY);
 
-      Header hdr = response.getEntity().getContentType();
-      hdr.getElements();
-      HeaderElement[] hdrElem = hdr.getElements();
-      for (HeaderElement elm : hdrElem) {
-        int cnt = elm.getParameterCount();
-        for (int i = 0; i < cnt; i++) {
-          NameValuePair nvp = elm.getParameter(i);
-          String nvp_name = nvp.getName();
-          String nvp_value = nvp.getValue();
+      HttpEntity et = response.getEntity();
+      String str = et.getContentType();
+
+      String [] keyValues= str.split(";");
+      for (String kvp : keyValues) {
+        if (kvp.contains(HttpRestProtocolWrapper.BOUNDARY + "=" + HttpRestProtocolWrapper.BOUNDARY)) {
+          String[] parts = kvp.split("=");
+          String nvp_name = parts[0].trim();
+          String nvp_value = parts[1].trim();
           if (nvp_name.equals(HttpRestProtocolWrapper.BOUNDARY)) {
             boundaryVal = nvp_value;
             break;
@@ -1165,8 +1162,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     URI uri = wrapper.constructRealizedTableIdSyncStatusUri(resource.getTableId(),
         resource.getSchemaETag());
     CloseableHttpResponse response = null;
-    HttpPost request = new HttpPost();
-    wrapper.buildJsonContentJsonResponseRequest(uri, request);
+    HttpPost request = new HttpPost(uri);
+    wrapper.buildJsonContentJsonResponseRequest(request);
 
     // and augment with info about the
     HttpEntity entity = new GzipCompressingEntity(
@@ -1190,8 +1187,8 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     // build request
     URI uri = wrapper.constructDeviceInformationUri();
     CloseableHttpResponse response = null;
-    HttpPost request = new HttpPost();
-    wrapper.buildJsonContentJsonResponseRequest(uri, request);
+    HttpPost request = new HttpPost(uri);
+    wrapper.buildJsonContentJsonResponseRequest(request);
 
     // and augment with info about the
     HttpEntity entity = new GzipCompressingEntity(

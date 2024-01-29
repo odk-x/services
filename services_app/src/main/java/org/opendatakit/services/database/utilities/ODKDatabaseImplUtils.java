@@ -162,7 +162,7 @@ public final class ODKDatabaseImplUtils {
         this.isUnverifiedUser = false;
 
         for(String role : rolesArray) {
-          if(role.startsWith("GROUP_"));
+          if(role.startsWith("GROUP_"))
             groupArray.add(role);
         }
       }

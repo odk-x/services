@@ -15,20 +15,21 @@
  */
 package org.opendatakit.services.sync.service.exceptions;
 
-import org.opendatakit.httpclientandroidlib.HttpRequest;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+
 
 public class ServerDetectedVersionMismatchedClientRequestException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
   public ServerDetectedVersionMismatchedClientRequestException(String message, Exception e,
-      HttpRequest request, HttpResponse response) {
+                                                               HttpUriRequestBase request, CloseableHttpResponse response) {
     super(message, e, request, response);
   }
 
   public ServerDetectedVersionMismatchedClientRequestException(String message,
-      HttpRequest request, HttpResponse response) {
+                                                               HttpUriRequestBase request, CloseableHttpResponse response) {
     super(message, request, response);
   }
 

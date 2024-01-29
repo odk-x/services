@@ -1,4 +1,4 @@
-gradle.ext.gradleConfigVersion = 156
+gradle.ext.gradleConfigVersion = 158
 
 if (!gradle.ext.has('workspacePath')) {
     logger.warn("rootDir: " + rootDir.getAbsolutePath());
@@ -19,8 +19,6 @@ if ((new File(gradle.ext.local)).exists()) {
     gradle.ext.useLocalPaths = false
     apply from: gradle.ext.remote
 }
-
-
 
 settingsScripts.each {
     apply from: it

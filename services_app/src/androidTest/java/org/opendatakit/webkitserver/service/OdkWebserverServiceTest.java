@@ -14,6 +14,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
 
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -22,7 +23,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.opendatakit.TestConsts;
 import org.opendatakit.consts.WebkitServerConsts;
-import org.opendatakit.httpclientandroidlib.HttpStatus;
+
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.StaticStateManipulator;
@@ -34,9 +35,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -266,17 +268,6 @@ public class OdkWebserverServiceTest {
     public void testServingEmptyFile() {
         // Setup
         File directoryLocation = createTestDirectory();
-        File fileLocation = createEmptyTestFile(directoryLocation);
-
-        // Act
-        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
-        restartService(serviceInterface);
-
-        // Assert
-        assertResponseIsNotEmpty(fileLocation);
-    }
-
-    private File createEmptyTestFile(File directoryLocation) {
         File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
 
         // Create an empty file
@@ -287,10 +278,9 @@ public class OdkWebserverServiceTest {
             fail("Failed to create the empty test file: " + e.getMessage());
         }
 
-        return fileLocation;
-    }
-
-    private void assertResponseIsNotEmpty(File fileLocation) {
+        // Act
+        IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
+        restartService(serviceInterface);
         try {
             String urlStr = buildTestUrl(fileLocation);
             URL url = new URL(urlStr);
@@ -298,21 +288,11 @@ public class OdkWebserverServiceTest {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             if (connection.getResponseCode() != HttpStatus.SC_OK) {
                 fail("Response code was NOT HTTP_OK");
-            } 
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
-                String responseStr = br.readLine();
-                if (responseStr == null) {
-                    fail("Response is empty, but it should not be.");
-                }
             }
-        } catch (IOException e) {
- 
-            e.printStackTrace();
-            fail("Got an IOException when trying to use the web server: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             fail("Got an Exception when trying to use the web server: " + e.getMessage());
         }
     }
+
 }

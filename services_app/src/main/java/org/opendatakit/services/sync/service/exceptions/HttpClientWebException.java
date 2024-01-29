@@ -14,36 +14,36 @@
 
 package org.opendatakit.services.sync.service.exceptions;
 
-import org.opendatakit.httpclientandroidlib.HttpRequest;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 /**
  * @author clarlars@gmail.com
  */
 public class HttpClientWebException extends RuntimeException {
   private static final long serialVersionUID = 1L;
-  private HttpRequest request;
-  private HttpResponse response;
+  private HttpUriRequestBase request;
+  private CloseableHttpResponse response;
 
   public HttpClientWebException(String message,
-      HttpRequest request, HttpResponse response) {
+                                HttpUriRequestBase request, CloseableHttpResponse response) {
     super(message);
     this.request = request;
     this.response = response;
   }
 
   public HttpClientWebException(String message, Throwable e,
-                                HttpRequest request, HttpResponse response) {
+                                HttpUriRequestBase request, CloseableHttpResponse response) {
     super(message, e);
     this.request = request;
     this.response = response;
   }
 
-  public HttpRequest getRequest() {
+  public HttpUriRequestBase getRequest() {
     return this.request;
   }
 
-  public HttpResponse getResponse() {
+  public CloseableHttpResponse getResponse() {
     return this.response;
   }
 }

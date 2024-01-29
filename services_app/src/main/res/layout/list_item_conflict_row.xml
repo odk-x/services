@@ -13,7 +13,8 @@
           android:layout_marginTop="4dip"
           android:layout_marginBottom="4dip"/>
 
-    <TextView android:layout_width="wrap_content"
+    <androidx.appcompat.widget.AppCompatTextView
+		android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:id="@+id/list_item_column_display_name"
               android:textStyle="bold"
@@ -33,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         
-	    <RadioButton
+	    <androidx.appcompat.widget.AppCompatRadioButton
 	        android:id="@+id/list_item_local_radio_button"
             android:clickable="false"
             android:longClickable="false"
@@ -49,7 +50,7 @@
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"/>
 	    
-	    <TextView
+	    <androidx.appcompat.widget.AppCompatTextView
 	        android:id="@+id/list_item_local_text"
             android:textAlignment="viewEnd"
 			android:layout_toEndOf="@id/list_item_local_radio_button"
@@ -75,7 +76,7 @@
 	 	android:layout_width="match_parent"
 	 	android:layout_height="wrap_content">
  	
-	    <RadioButton
+	    <androidx.appcompat.widget.AppCompatRadioButton
 	        android:id="@+id/list_item_server_radio_button"
             android:clickable="false"
             android:longClickable="false"
@@ -91,7 +92,7 @@
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"/>
 	    
-	    <TextView
+	    <androidx.appcompat.widget.AppCompatTextView
 	        android:id="@+id/list_item_server_text"
             android:textAlignment="viewEnd"
 			android:layout_toEndOf="@id/list_item_server_radio_button"

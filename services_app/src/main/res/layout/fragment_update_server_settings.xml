@@ -20,7 +20,7 @@
             style="@style/AppBarLabelStyle"
             app:navigationIcon="@drawable/ic_arrow_back_36px">
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:layout_width="80dp"
                 android:layout_height="50dp"
                 android:src="@drawable/logo"
@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
-        <TextView
+        <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -118,7 +118,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnVerifyServerUpdateServerDetails"
                     style="@style/OutlinedButtonStyle"
                     android:layout_width="wrap_content"
@@ -131,7 +131,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="TextContrastCheck" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnScanQrUpdateServerDetails"
                     style="@style/OutlinedButtonStyle"
                     android:layout_width="wrap_content"

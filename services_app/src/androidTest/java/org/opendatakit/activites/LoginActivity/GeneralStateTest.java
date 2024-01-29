@@ -9,13 +9,16 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
+import android.Manifest;
 import android.content.Intent;
 
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
+import androidx.test.rule.GrantPermissionRule;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
@@ -30,6 +33,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class GeneralStateTest extends BaseUITest<LoginActivity> {
+
     @Override
     protected void setUpPostLaunch() {
         activityScenario.onActivity(activity -> {

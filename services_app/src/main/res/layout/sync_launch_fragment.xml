@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:fillViewport="true">
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvSignInWarnHeadingSync"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -19,7 +19,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvSignInMethodLabelSync"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvSignInWarnHeadingSync" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvSignInMethodSync"
         style="@style/TextViewStyle"
         android:layout_width="0dp"
@@ -45,7 +45,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvSignInMethodLabelSync"
         app:layout_constraintTop_toTopOf="@+id/tvSignInMethodLabelSync" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvUsernameLabelSync"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -59,7 +59,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvSignInMethodLabelSync" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvUsernameSync"
         style="@style/TextViewStyle"
         android:layout_width="0dp"
@@ -71,7 +71,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvUsernameLabelSync"
         app:layout_constraintTop_toTopOf="@+id/tvUsernameLabelSync" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvLastSyncTimeLabelSync"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -86,7 +86,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvUsernameLabelSync" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvLastSyncTimeSync"
         style="@style/SmallTextViewStyle"
         android:layout_width="0dp"
@@ -114,7 +114,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerUrlLabelSync"
                 style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
@@ -128,7 +128,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerUrlSync"
                 style="@style/TextServerUrlStyle"
                 android:layout_width="0dp"
@@ -143,7 +143,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelSync"
                 tools:ignore="TextContrastCheck" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvSyncTypeLabelSync"
                 style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
@@ -180,7 +180,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnStartSync"
                 style="@style/SmallButtonStyle"
                 android:layout_width="wrap_content"
@@ -197,7 +197,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSignInSync"
         style="@style/ButtonStyle"
         android:layout_width="wrap_content"
@@ -210,7 +210,7 @@
         app:layout_constraintTop_toBottomOf="@+id/mcvSyncDetails"
         tools:ignore="TextContrastCheck" />
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnResetServerSync"
         style="@style/SmallButtonStyle"
         android:layout_width="wrap_content"

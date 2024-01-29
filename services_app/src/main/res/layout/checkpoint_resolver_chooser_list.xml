@@ -19,7 +19,7 @@ the License.
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/status_text"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -36,7 +36,7 @@ the License.
             android:layout_height="wrap_content"
             android:orientation="vertical" >
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/take_all_oldest"
                 android:text="@string/checkpoint_take_all_oldest_or_remove"
                 android:layout_width="match_parent"
@@ -46,7 +46,7 @@ the License.
                 style="@style/ButtonStyle"
             />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/take_all_newest"
                 android:text="@string/checkpoint_take_all_newest"
                 android:layout_width="match_parent"
@@ -64,7 +64,7 @@ the License.
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@android:id/empty"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

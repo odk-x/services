@@ -12,4 +12,5 @@ public class Base64WrapperTest {
     public void testWrapperCreation() throws ClassNotFoundException {
         Base64Wrapper wrapper = new Base64Wrapper("unittestTMP");
     }
+
 }

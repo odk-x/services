@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvUserHeadingVerifySettings"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerUrlLabelVerify"
                 style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
@@ -48,7 +48,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerUrlVerify"
                 style="@style/TextServerUrlStyle"
                 android:layout_width="0dp"
@@ -62,7 +62,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLabelVerify"
                 tools:ignore="TextContrastCheck" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerVerifyStatusLabelVerify"
                 style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
@@ -77,7 +77,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvServerUrlVerify" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerVerifyStatusVerify"
                 style="@style/CardViewSubHeadingStyle"
                 android:layout_width="0dp"
@@ -90,7 +90,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvServerVerifyStatusLabelVerify" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerAnonymousAllowedLabelVerify"
                 style="@style/CardViewHeadingStyle"
                 android:layout_width="0dp"
@@ -105,7 +105,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvServerVerifyStatusVerify" />
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvServerAnonymousAllowedVerify"
                 style="@style/CardViewSubHeadingStyle"
                 android:layout_width="0dp"
@@ -118,7 +118,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnStartVerifyServer"
                 style="@style/SmallButtonStyle"
                 android:layout_width="wrap_content"
@@ -135,7 +135,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvUsernameLabelVerify"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -150,7 +150,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mcvVerifyDetails" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvUsernameVerify"
         style="@style/TextViewStyle"
         android:layout_width="0dp"
@@ -162,7 +162,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvUsernameLabelVerify"
         app:layout_constraintTop_toTopOf="@+id/tvUsernameLabelVerify" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvVerificationStatusLabelVerify"
         style="@style/SecondaryHeadingStyle"
         android:layout_width="wrap_content"
@@ -176,7 +176,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvUsernameLabelVerify" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvVerificationStatusVerify"
         style="@style/TextViewStyle"
         android:layout_width="0dp"
@@ -188,7 +188,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvVerificationStatusLabelVerify"
         app:layout_constraintTop_toTopOf="@+id/tvVerificationStatusLabelVerify" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvLastSyncTimeLabelVerify"
         style="@style/CardViewHeadingStyle"
         android:layout_width="wrap_content"
@@ -202,7 +202,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvVerificationStatusLabelVerify" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvLastSyncTimeVerify"
         style="@style/SmallTextViewStyle"
         android:layout_width="0dp"
@@ -215,7 +215,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelVerify"
         app:layout_constraintTop_toTopOf="@+id/tvLastSyncTimeLabelVerify" />
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnStartVerifyUser"
         style="@style/ButtonStyle"
         android:layout_width="0dp"

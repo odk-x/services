@@ -15,39 +15,36 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.Credentials;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.cookie.BasicCookieStore;
+import org.apache.hc.client5.http.cookie.StandardCookieSpec;
+import org.apache.hc.client5.http.entity.GzipCompressingEntity;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.util.Timeout;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.httpclientandroidlib.Header;
-import org.opendatakit.httpclientandroidlib.HttpEntity;
-import org.opendatakit.httpclientandroidlib.HttpHeaders;
-import org.opendatakit.httpclientandroidlib.HttpStatus;
-import org.opendatakit.httpclientandroidlib.NameValuePair;
-import org.opendatakit.httpclientandroidlib.auth.AuthScope;
-import org.opendatakit.httpclientandroidlib.auth.Credentials;
-import org.opendatakit.httpclientandroidlib.auth.UsernamePasswordCredentials;
-import org.opendatakit.httpclientandroidlib.client.ClientProtocolException;
-import org.opendatakit.httpclientandroidlib.client.CookieStore;
-import org.opendatakit.httpclientandroidlib.client.CredentialsProvider;
-import org.opendatakit.httpclientandroidlib.client.config.AuthSchemes;
-import org.opendatakit.httpclientandroidlib.client.config.CookieSpecs;
-import org.opendatakit.httpclientandroidlib.client.config.RequestConfig;
-import org.opendatakit.httpclientandroidlib.client.entity.GzipCompressingEntity;
-import org.opendatakit.httpclientandroidlib.client.methods.CloseableHttpResponse;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpPut;
-import org.opendatakit.httpclientandroidlib.client.methods.HttpRequestBase;
-import org.opendatakit.httpclientandroidlib.client.protocol.HttpClientContext;
-import org.opendatakit.httpclientandroidlib.client.utils.URIBuilder;
-import org.opendatakit.httpclientandroidlib.config.SocketConfig;
-import org.opendatakit.httpclientandroidlib.entity.ByteArrayEntity;
-import org.opendatakit.httpclientandroidlib.entity.ContentType;
-import org.opendatakit.httpclientandroidlib.impl.client.BasicCookieStore;
-import org.opendatakit.httpclientandroidlib.impl.client.BasicCredentialsProvider;
-import org.opendatakit.httpclientandroidlib.impl.client.CloseableHttpClient;
-import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
-import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.httpclientandroidlib.protocol.BasicHttpContext;
-import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
-import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.logging.WebLoggerIf;
 import org.opendatakit.services.R;
@@ -95,7 +92,6 @@ import java.util.TimeZone;
 public class HttpRestProtocolWrapper {
 
   private static final String LOGTAG = HttpRestProtocolWrapper.class.getSimpleName();
-  private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
   public static final int CONNECTION_TIMEOUT = 60000;
 
   // parameters for queries that could return a lot of data...
@@ -121,12 +117,12 @@ public class HttpRestProtocolWrapper {
   private CloseableHttpClient httpClient = null;
   private CloseableHttpClient httpAuthClient = null;
 
-  private HttpContext localContext = null;
-  private HttpContext localAuthContext = null;
+  private HttpClientContext localContext = null;
+  private HttpClientContext localAuthContext = null;
 
-  private CookieStore cookieStore = null;
+  private BasicCookieStore cookieStore = null;
 
-  private CredentialsProvider credsProvider = null;
+  private BasicCredentialsProvider credsProvider = null;
 
   static Map<String, String> mimeMapping;
 
@@ -218,7 +214,7 @@ public class HttpRestProtocolWrapper {
   // cookie manager
   private final CookieManager cm;
 
-  private final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
+  public final URI normalizeUri(String aggregateUri, String additionalPathPortion) {
     URI uriBase = URI.create(aggregateUri).normalize();
     String term = uriBase.getPath();
     if (term.endsWith(FORWARD_SLASH)) {
@@ -232,6 +228,26 @@ public class HttpRestProtocolWrapper {
     URI uri = uriBase.resolve(term).normalize();
     log.d(LOGTAG, "normalizeUri: " + uri.toString());
     return uri;
+  }
+  private List<AuthScope> buildAuthScopes(SyncExecutionContext sc) {
+    List<AuthScope> asList = new ArrayList<AuthScope>();
+
+    URI destination = normalizeUri(sc.getAggregateUri(), "/");
+    String host = destination.getHost();
+
+    AuthScope a;
+    if ( destination.getScheme().equals("https")) {
+      // and allow basic auth on https connections...
+      a = new AuthScope(host,destination.getPort());
+      asList.add(a);
+    }
+    // this might be disabled in production builds...
+    if ( sc.getAllowUnsafeAuthentication() ) {
+      log.e(LOGTAG, "Enabling Unsafe Authentication!");
+      a = new AuthScope(host, -1);
+      asList.add(a);
+    }
+    return asList;
   }
 
   private static String escapeSegment(String segment) {
@@ -304,7 +320,8 @@ public class HttpRestProtocolWrapper {
   }
 
   public URI constructListOfAppNamesUri() {
-    URI uri = normalizeUri(sc.getAggregateUri(), "/odktables/");
+    String aggUri = sc.getAggregateUri();
+    URI uri = normalizeUri(aggUri, "/odktables/");
     return uri;
   }
 
@@ -544,24 +561,22 @@ public class HttpRestProtocolWrapper {
   /**
    * Simple Request for all server interactions.
    *
-   * @param uri
    * @param request
    * @return
    */
-  public void buildBasicRequest(URI uri, HttpRequestBase request) {
-
-    if (uri == null) {
-      throw new IllegalArgumentException("buildBasicRequest: URI cannot be null");
-    }
+  public void buildBasicRequest(HttpUriRequestBase request) {
 
     if (request == null) {
       throw new IllegalArgumentException("buildBasicRequest: HttpRequest cannot be null");
     }
 
-    String agg_uri = uri.toString();
-    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + agg_uri);
+    try {
+      URI uri = request.getUri();
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("buildBasicRequest: URI problem", e);
+    }
 
-    request.setURI(uri);
+    log.i(LOGTAG, "buildBasicRequest: agg_uri is " + request.getRequestUri());
 
     // report our locale... (not currently used by server)
     request.addHeader("Accept-Language", Locale.getDefault().getLanguage());
@@ -581,12 +596,11 @@ public class HttpRestProtocolWrapper {
   /**
    * Request to receive a JSON response. Unspecified content type
    *
-   * @param uri
    * @param request
    */
-  public void buildBasicJsonResponseRequest(URI uri, HttpRequestBase request) {
+  public void buildBasicJsonResponseRequest(HttpUriRequestBase request) {
 
-    buildBasicRequest(uri, request);
+    buildBasicRequest(request);
 
     // set our preferred response media type to json using quality parameters
     NameValuePair param1 = (new BasicNameValuePair("q", "1.0"));
@@ -611,14 +625,13 @@ public class HttpRestProtocolWrapper {
   /**
    * Request to send a specified content-type body and receive a JSON response
    *
-   * @param uri
    * @param contentType
    * @param request
    */
-  public void buildSpecifiedContentJsonResponseRequest(URI uri, ContentType contentType,
-      HttpRequestBase request) {
+  public void buildSpecifiedContentJsonResponseRequest(ContentType contentType,
+                                                       HttpUriRequestBase request) {
 
-    buildBasicJsonResponseRequest(uri, request);
+    buildBasicJsonResponseRequest(request);
 
     if ( contentType != null ) {
       request.addHeader("content-type", contentType.toString());
@@ -628,30 +641,28 @@ public class HttpRestProtocolWrapper {
   /**
    * Request to send a no-content-body and receive a JSON response
    *
-   * @param uri
    * @param request
    */
-  public void buildNoContentJsonResponseRequest(URI uri, HttpRequestBase request) {
+  public void buildNoContentJsonResponseRequest(HttpUriRequestBase request) {
 
     if ( request.getMethod().equals(HttpPost.METHOD_NAME) ||
         request.getMethod().equals(HttpPut.METHOD_NAME) ) {
       throw new IllegalArgumentException("No content type specified on a POST or PUT request!");
     }
-    buildBasicJsonResponseRequest(uri, request);
+    buildBasicJsonResponseRequest(request);
   }
 
   /**
    * Request to send a JSON content body and receive a JSON response
    *
-   * @param uri
    * @param request
    */
-  public void buildJsonContentJsonResponseRequest(URI uri, HttpRequestBase request) {
+  public void buildJsonContentJsonResponseRequest(HttpUriRequestBase request) {
 
     // select our preferred protocol...
     ContentType protocolType = ContentType.APPLICATION_JSON;
 
-    buildSpecifiedContentJsonResponseRequest(uri, protocolType, request);
+    buildSpecifiedContentJsonResponseRequest(protocolType, request);
   }
 
 
@@ -667,17 +678,18 @@ public class HttpRestProtocolWrapper {
     // running, we could forget other session cookies. But, by creating a 
     // new cookie manager here, we ensure that we don't have any stale 
     // session cookies at the start of each sync.
-    
     cm = new CookieManager();
     CookieHandler.setDefault(cm);
 
     // HttpClient for auth tokens
-    localAuthContext = new BasicHttpContext();
+    localAuthContext = HttpClientContext.create();;
+    SocketConfig socketAuthConfig = SocketConfig.copy(SocketConfig.DEFAULT).
+            setSoTimeout(Timeout.ofMilliseconds(2 * CONNECTION_TIMEOUT)).build();
 
-    SocketConfig socketAuthConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
-
+    BasicHttpClientConnectionManager connectionAuthManager = new BasicHttpClientConnectionManager();
+    connectionAuthManager.setSocketConfig(socketAuthConfig);
     RequestConfig requestAuthConfig = RequestConfig.copy(RequestConfig.DEFAULT)
-            .setConnectTimeout(CONNECTION_TIMEOUT)
+            .setConnectTimeout(Timeout.ofMilliseconds(CONNECTION_TIMEOUT))
             // support authenticating
             .setAuthenticationEnabled(true)
             // support redirecting to handle http: => https: transition
@@ -686,55 +698,33 @@ public class HttpRestProtocolWrapper {
             .setMaxRedirects(4)
             .setCircularRedirectsAllowed(true)
             //.setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
-            .setCookieSpec(CookieSpecs.DEFAULT)
+            .setCookieSpec(StandardCookieSpec.RELAXED)
             .build();
-
     httpAuthClient = HttpClientBuilder.create()
-            .setDefaultSocketConfig(socketAuthConfig)
+            .setConnectionManager(connectionAuthManager)
             .setDefaultRequestConfig(requestAuthConfig).build();
 
     // Context
     // context holds authentication state machine, so it cannot be
     // shared across independent activities.
-    localContext = new BasicHttpContext();
+    localContext = HttpClientContext.create();
 
     cookieStore = new BasicCookieStore();
     credsProvider = new BasicCredentialsProvider();
-
     URI destination = normalizeUri(sc.getAggregateUri(), "/");
     String host = destination.getHost();
     String authenticationType = sc.getAuthenticationType();
-
      if ( sc.getString(R.string.credential_type_username_password)
         .equals(authenticationType)) {
       String username = sc.getUsername();
       String password = sc.getPassword();
 
-      List<AuthScope> asList = new ArrayList<AuthScope>();
-      {
-        AuthScope a;
-        // allow digest auth on any port...
-        // TODO switch this to digest
-        a = new AuthScope(host, -1, null, AuthSchemes.DIGEST);
-        asList.add(a);
-        if ( destination.getScheme().equals("https")) {
-          // and allow basic auth on https connections...
-          a = new AuthScope(host, destination.getPort(), null, AuthSchemes.BASIC);
-          asList.add(a);
-        }
-        // this might be disabled in production builds...
-        if ( sc.getAllowUnsafeAuthentication() ) {
-          log.e(LOGTAG, "Enabling Unsafe Authentication!");
-          a = new AuthScope(host, -1, null, AuthSchemes.BASIC);
-          asList.add(a);
-        }
-
-      }
+      List<AuthScope> asList = buildAuthScopes(sc);
 
       // add username
       if (username != null && username.trim().length() != 0) {
         log.i(LOGTAG, "adding credential for host: " + host + " username:" + username);
-        Credentials c = new UsernamePasswordCredentials(username, password);
+        Credentials c = new UsernamePasswordCredentials(username, password.toCharArray());
 
         for (AuthScope a : asList) {
           credsProvider.setCredentials(a, c);
@@ -744,16 +734,14 @@ public class HttpRestProtocolWrapper {
 
     localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
     localContext.setAttribute(HttpClientContext.CREDS_PROVIDER, credsProvider);
+    SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT).
+            setSoTimeout(Timeout.ofMilliseconds(2 * CONNECTION_TIMEOUT)).build();
 
-    SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(2 * CONNECTION_TIMEOUT).build();
-
-    // if possible, bias toward digest auth (may not be in 4.0 beta 2)
-    List<String> targetPreferredAuthSchemes = new ArrayList<String>();
-    targetPreferredAuthSchemes.add(AuthSchemes.DIGEST);
-    targetPreferredAuthSchemes.add(AuthSchemes.BASIC);
+    BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager();
+    connectionManager.setSocketConfig(socketConfig);
 
     RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
-            .setConnectTimeout(CONNECTION_TIMEOUT)
+            .setConnectTimeout(Timeout.ofMilliseconds(CONNECTION_TIMEOUT))
             // support authenticating
             .setAuthenticationEnabled(true)
             // support redirecting to handle http: => https: transition
@@ -761,14 +749,11 @@ public class HttpRestProtocolWrapper {
             // max redirects is set to 4
             .setMaxRedirects(4)
             .setCircularRedirectsAllowed(true)
-            .setTargetPreferredAuthSchemes(targetPreferredAuthSchemes)
-            .setCookieSpec(CookieSpecs.DEFAULT)
             .build();
 
     httpClient = HttpClientBuilder.create()
-            .setDefaultSocketConfig(socketConfig)
+            .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig).build();
-
   }
 
   public static String convertResponseToString(CloseableHttpResponse response) throws IOException {
@@ -794,7 +779,7 @@ public class HttpRestProtocolWrapper {
     }
   }
 
-  public CloseableHttpResponse httpClientExecute(HttpRequestBase request, List<Integer>
+  public CloseableHttpResponse httpClientExecute(HttpUriRequestBase request, List<Integer>
       handledReturnCodes) throws HttpClientWebException {
 
     CloseableHttpResponse response = null;
@@ -844,7 +829,7 @@ public class HttpRestProtocolWrapper {
 
       // TODO: For now we have to check for 401 Unauthorized before we check the headers because
       // Spring will spit out a 401 with a bad username/password before it even touches our code
-      int statusCode = response.getStatusLine().getStatusCode();
+      int statusCode = response.getCode();
       String errorText = "Unexpected server response statusCode: " + Integer.toString(statusCode);
       if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
         log.e(LOGTAG, errorText);
@@ -946,7 +931,7 @@ public class HttpRestProtocolWrapper {
       throw ioe;
     }
 
-    return new GzipCompressingEntity(new ByteArrayEntity(bytes));
+    return new GzipCompressingEntity(new ByteArrayEntity(bytes, ContentType.DEFAULT_BINARY));
     //return new ByteArrayEntity(bytes);
   }
 

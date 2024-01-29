@@ -15,15 +15,15 @@
  */
 package org.opendatakit.services.sync.service.exceptions;
 
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.httpclientandroidlib.HttpRequest;
-import org.opendatakit.httpclientandroidlib.HttpResponse;
 
 public class NotOpenDataKitServerException extends HttpClientWebException {
 
   private static final long serialVersionUID = 1L;
 
-  public NotOpenDataKitServerException(HttpRequest request, HttpResponse response) {
+  public NotOpenDataKitServerException(HttpUriRequestBase request, CloseableHttpResponse response) {
     super("Response is missing required header: " + ApiConstants.OPEN_DATA_KIT_VERSION_HEADER,
         request, response);
   }
