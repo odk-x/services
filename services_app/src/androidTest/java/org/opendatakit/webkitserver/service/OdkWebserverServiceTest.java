@@ -50,10 +50,28 @@ public class OdkWebserverServiceTest {
 
     private static final String TAG = "OdkWebserverServiceTest";
 
+    private static final String TEST_DIR = "testfiles";
+    private static final String TEST_FILE_NAME_HELLO = "Hello.html";
+    private static final String TEST_FILE_NAME_EMPTY = "EmptyFile.html";
+    private static final String TEST_FILE_NAME_LARGE = "LargeFile.txt";
+    private static final String TEST_FILE_NAME_SPECIAL = "Special@File#Name.txt";
+    private static final String TEST_FILE_NAME_MULTIPLE_1 = "MultipleFiles1.html";
+    private static final String TEST_FILE_NAME_MULTIPLE_2 = "MultipleFiles2.html";
+    private static final String TEST_FILE_NAME_SPACES = "File with Spaces.txt";
+    private static final String TEST_FILE_NAME_UNICODE = "FileWithUnicodeContent.txt";
 
     private static final String HELLO_WORLD_HTML_TXT = "<HTML><BODY>Hello World!!!</BODY></HTML>";
-    private static final String TEST_FILE_NAME = "Hello.html";
-    private static final String TEST_DIR = "testfiles";
+    private static final String EMPTY_HTML_TXT = "";
+    private static final String LARGE_FILE_CONTENT = generateLargeFileContent();
+    private static final String SPECIAL_CHARACTERS_CONTENT = "Special characters in file name";
+    private static final String UNICODE_CONTENT = "Unicode characters: 你好, مرحبا, こんにちは";
+    private static final String TEST_FILE_NAME_INVALID_EXTENSION = "InvalidFile.xyz";
+    private static final String TEST_FILE_NAME_UPPERCASE_EXTENSION = "FileWithUpperCaseExtension.TXT";
+    private static final String TEST_FILE_NAME_BINARY = "BinaryFile.bin";
+    private static final String TEST_FILE_NAME_MULTIPLE_DOTS = "File.With.Multiple.Dots.txt";
+    private static final String TEST_FILE_NAME_NO_EXTENSION = "FileWithNoExtension";
+    private static final String TEST_FILE_NAME_DIFFERENT_EXTENSION = "FileWithDifferentExtension.docx";
+
 
     @Rule
     public final ServiceTestRule mServiceRule = new ServiceTestRule();
@@ -196,21 +214,6 @@ public class OdkWebserverServiceTest {
         return directoryLocation;
     }
 
-    private File createTestFile(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
-
-        try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
-            writer.println(HELLO_WORLD_HTML_TXT);
-            writer.flush();
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Failed to create the test file: " + e.getMessage());
-        }
-
-        return fileLocation;
-    }
-
     private void restartService(IWebkitServerInterface serviceInterface) {
         try {
             serviceInterface.restart();
@@ -229,25 +232,11 @@ public class OdkWebserverServiceTest {
                 .toString();
     }
 
-    private File createEmptyTestFile(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, TEST_FILE_NAME);
-
-        // Create an empty file
-        try {
-            fileLocation.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the empty test file: " + e.getMessage());
-        }
-
-        return fileLocation;
-    }
-
     @Test
     public void testServingHelloWorldHtml() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createTestFile(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_HELLO, HELLO_WORLD_HTML_TXT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -283,12 +272,11 @@ public class OdkWebserverServiceTest {
         }
     }
 
-
     @Test
     public void testServingEmptyFile() {
-        // Setup
+        // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createEmptyTestFile(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_EMPTY, EMPTY_HTML_TXT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -357,7 +345,7 @@ public class OdkWebserverServiceTest {
     public void testServingLargeFile() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File largeFileLocation = createLargeTestFile(directoryLocation);
+        File largeFileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_LARGE, LARGE_FILE_CONTENT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -365,23 +353,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertLargeFileResponse(largeFileLocation);
-    }
-
-    private File createLargeTestFile(File directoryLocation) {
-        File largeFileLocation = new File(directoryLocation, "LargeFile.txt");
-
-        try (PrintWriter writer = new PrintWriter(largeFileLocation, "UTF-8")) {
-            // Create a large file (e.g., 1 MB)
-            for (int i = 0; i < 1024; i++) {
-                writer.println("This is a line in the large file.");
-            }
-            writer.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Failed to create the large test file: " + e.getMessage());
-        }
-
-        return largeFileLocation;
     }
 
     private void assertLargeFileResponse(File fileLocation) {
@@ -407,7 +378,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithSpecialCharactersInName() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithSpecialCharacters(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_SPECIAL, SPECIAL_CHARACTERS_CONTENT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -415,20 +386,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseContainsSpecialCharacters(fileLocation);
-    }
-
-    private File createFileWithSpecialCharacters(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "Special@File#Name.txt");
-
-        try {
-            // Create a file with special characters in the name
-            Files.write(fileLocation.toPath(), "Special characters in file name".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with special characters: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseContainsSpecialCharacters(File fileLocation) {
@@ -454,10 +411,10 @@ public class OdkWebserverServiceTest {
     public void testServingMultipleFilesWithSameNameInDifferentDirectories() {
         // Arrange
         File directory1 = createTestDirectory();
-        File file1 = createTestFile(directory1);
+        File file1 = createTestFile(directory1, TEST_FILE_NAME_MULTIPLE_1, HELLO_WORLD_HTML_TXT);
 
         File directory2 = createTestDirectory();
-        File file2 = createTestFile(directory2);
+        File file2 = createTestFile(directory2, TEST_FILE_NAME_MULTIPLE_2, HELLO_WORLD_HTML_TXT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -492,7 +449,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithSpacesInName() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithSpaces(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_SPACES, "File with spaces in name");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -500,20 +457,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseContainsSpaces(fileLocation);
-    }
-
-    private File createFileWithSpaces(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "File with Spaces.txt");
-
-        try {
-            // Create a file with spaces in the name
-            Files.write(fileLocation.toPath(), "File with spaces in name".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with spaces: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseContainsSpaces(File fileLocation) {
@@ -539,7 +482,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithUnicodeCharactersInContent() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithUnicodeContent(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_UNICODE, UNICODE_CONTENT);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -547,20 +490,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseContainsUnicodeContent(fileLocation);
-    }
-
-    private File createFileWithUnicodeContent(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "FileWithUnicodeContent.txt");
-
-        try {
-            // Create a file with Unicode characters in the content
-            Files.write(fileLocation.toPath(), "Unicode characters: 你好, مرحبا, こんにちは".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with Unicode content: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseContainsUnicodeContent(File fileLocation) {
@@ -586,7 +515,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithInvalidExtension() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithInvalidExtension(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_INVALID_EXTENSION, "Content with an invalid extension");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -594,20 +523,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseForInvalidExtension(fileLocation);
-    }
-
-    private File createFileWithInvalidExtension(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "InvalidFile.xyz");
-
-        try {
-            // Create a file with an invalid extension
-            Files.write(fileLocation.toPath(), "Content with an invalid extension".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with an invalid extension: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseForInvalidExtension(File fileLocation) {
@@ -633,7 +548,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithUpperCaseExtension() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithUpperCaseExtension(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_UPPERCASE_EXTENSION, "Content with an uppercase extension");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -641,20 +556,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseForUpperCaseExtension(fileLocation);
-    }
-
-    private File createFileWithUpperCaseExtension(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "FileWithUpperCaseExtension.TXT");
-
-        try {
-            // Create a file with an uppercase extension
-            Files.write(fileLocation.toPath(), "Content with an uppercase extension".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with an uppercase extension: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseForUpperCaseExtension(File fileLocation) {
@@ -680,7 +581,7 @@ public class OdkWebserverServiceTest {
     public void testServingBinaryFile() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File binaryFileLocation = createBinaryFile(directoryLocation);
+        File binaryFileLocation = createBinaryFile(directoryLocation, TEST_FILE_NAME_BINARY);
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -688,21 +589,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertBinaryFileResponse(binaryFileLocation);
-    }
-
-    private File createBinaryFile(File directoryLocation) {
-        File binaryFileLocation = new File(directoryLocation, "BinaryFile.bin");
-
-        try {
-            // Create a binary file with random content
-            byte[] binaryContent = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC, (byte) 0xDE, (byte) 0xF0};
-            Files.write(binaryFileLocation.toPath(), binaryContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the binary test file: " + e.getMessage());
-        }
-
-        return binaryFileLocation;
     }
 
     private void assertBinaryFileResponse(File binaryFileLocation) {
@@ -728,7 +614,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithMultipleDotsInFilename() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithMultipleDots(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_MULTIPLE_DOTS, "Content with multiple dots in filename");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -736,20 +622,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseForMultipleDotsInFilename(fileLocation);
-    }
-
-    private File createFileWithMultipleDots(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "File.With.Multiple.Dots.txt");
-
-        try {
-            // Create a file with multiple dots in the filename
-            Files.write(fileLocation.toPath(), "Content with multiple dots in filename".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with multiple dots: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseForMultipleDotsInFilename(File fileLocation) {
@@ -775,7 +647,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithNoExtension() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithNoExtension(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_NO_EXTENSION, "Content with no extension");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -783,20 +655,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseForNoExtension(fileLocation);
-    }
-
-    private File createFileWithNoExtension(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "FileWithNoExtension");
-
-        try {
-            // Create a file with no extension
-            Files.write(fileLocation.toPath(), "Content with no extension".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with no extension: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseForNoExtension(File fileLocation) {
@@ -822,7 +680,7 @@ public class OdkWebserverServiceTest {
     public void testServingFileWithDifferentExtension() {
         // Arrange
         File directoryLocation = createTestDirectory();
-        File fileLocation = createFileWithDifferentExtension(directoryLocation);
+        File fileLocation = createTestFile(directoryLocation, TEST_FILE_NAME_DIFFERENT_EXTENSION, "Content with a different extension");
 
         // Act
         IWebkitServerInterface serviceInterface = getIWebkitServerInterface();
@@ -830,20 +688,6 @@ public class OdkWebserverServiceTest {
 
         // Assert
         assertResponseForDifferentExtension(fileLocation);
-    }
-
-    private File createFileWithDifferentExtension(File directoryLocation) {
-        File fileLocation = new File(directoryLocation, "FileWithDifferentExtension.docx");
-
-        try {
-            // Create a file with a different extension
-            Files.write(fileLocation.toPath(), "Content with a different extension".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to create the test file with a different extension: " + e.getMessage());
-        }
-
-        return fileLocation;
     }
 
     private void assertResponseForDifferentExtension(File fileLocation) {
@@ -863,5 +707,42 @@ public class OdkWebserverServiceTest {
             e.printStackTrace();
             fail("Got an Exception when trying to use the web server: " + e.getMessage());
         }
+    }
+
+    private File createTestFile(File directoryLocation, String fileName, String content) {
+        File fileLocation = new File(directoryLocation, fileName);
+
+        try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
+            writer.println(content);
+            writer.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Failed to create the test file: " + e.getMessage());
+        }
+
+        return fileLocation;
+    }
+
+    private static String generateLargeFileContent() {
+        StringBuilder content = new StringBuilder();
+        for (int i = 0; i < 1024; i++) {
+            content.append("This is a line in the large file.\n");
+        }
+        return content.toString();
+    }
+
+    private File createBinaryFile(File directoryLocation, String fileName) {
+        File binaryFileLocation = new File(directoryLocation, fileName);
+
+        try {
+            // Create a binary file with random content
+            byte[] binaryContent = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC, (byte) 0xDE, (byte) 0xF0};
+            Files.write(binaryFileLocation.toPath(), binaryContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("Failed to create the binary test file: " + e.getMessage());
+        }
+
+        return binaryFileLocation;
     }
 }
