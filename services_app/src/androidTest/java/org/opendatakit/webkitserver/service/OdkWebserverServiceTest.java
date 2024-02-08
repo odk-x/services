@@ -710,7 +710,8 @@ public class OdkWebserverServiceTest {
     }
 
     private File createTestFile(File directoryLocation, String fileName, String content) {
-        File fileLocation = new File(directoryLocation, fileName);
+        Uri fileUri = Uri.withAppendedPath(Uri.fromFile(directoryLocation), fileName);
+        File fileLocation = new File(fileUri.getPath());
 
         try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
             writer.println(content);
@@ -732,7 +733,8 @@ public class OdkWebserverServiceTest {
     }
 
     private File createBinaryFile(File directoryLocation, String fileName) {
-        File binaryFileLocation = new File(directoryLocation, fileName);
+        Uri fileUri = Uri.parse(directoryLocation.toURI() + fileName);
+        File binaryFileLocation = new File(fileUri.getPath());
 
         try {
             // Create a binary file with random content
