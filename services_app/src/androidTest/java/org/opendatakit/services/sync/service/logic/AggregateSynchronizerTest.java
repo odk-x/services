@@ -1,10 +1,14 @@
 package org.opendatakit.services.sync.service.logic;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.Suppress;
 import androidx.test.rule.GrantPermissionRule;
 
@@ -57,10 +61,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 /**
  * This set of tests relies on a propery configured test cloud endpoint.
  * Do not adorn this with RunWith unless that server is configured.
@@ -101,7 +101,6 @@ public class AggregateSynchronizerTest {
 
   @Before
   public void setUp() throws Exception {
-
     agg_url = "https://test.appspot.com";
     absolutePathOfTestFiles = "testfiles/test/";
     batchSize = 1000;
@@ -115,9 +114,8 @@ public class AggregateSynchronizerTest {
     boolean beganUninitialized = !initialized;
     if (beganUninitialized) {
       initialized = true;
-      application = InstrumentationRegistry.getInstrumentation().newApplication(this.getClass()
-          .getClassLoader(), "org.opendatakit.services.application.Services",
-          InstrumentationRegistry.getTargetContext());
+      Context context = ApplicationProvider.getApplicationContext();
+      application = ApplicationProvider.getApplicationContext();
       // Used to ensure that the singleton has been initialized properly
       AndroidConnectFactory.configure();
     }
@@ -164,7 +162,8 @@ public class AggregateSynchronizerTest {
   }
 
   private SyncExecutionContext getSyncExecutionContext() {
-    Context context = InstrumentationRegistry.getTargetContext();
+    //Context context = InstrumentationRegistry.getTargetContext();
+    Context context = ApplicationProvider.getApplicationContext();
     SyncProgressTracker syncProg = new SyncProgressTracker(context,
         new GlobalSyncNotificationManagerStub(), appName);
     SyncOverallResult syncRes = new SyncOverallResult();
