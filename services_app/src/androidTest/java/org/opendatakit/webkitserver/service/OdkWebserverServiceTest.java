@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
@@ -36,6 +37,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -709,42 +712,59 @@ public class OdkWebserverServiceTest {
         }
     }
 
-    private File createTestFile(File directoryLocation, String fileName, String content) {
-        Uri fileUri = Uri.withAppendedPath(Uri.fromFile(directoryLocation), fileName);
-        File fileLocation = new File(fileUri.getPath());
+    private File createTestFile(File directoryLocation, String fileName, String fileContent) {
+        File file = new File(directoryLocation, fileName);
 
-        try (PrintWriter writer = new PrintWriter(fileLocation, "UTF-8")) {
-            writer.println(content);
-            writer.flush();
-        } catch (Exception e) {
+        try {
+            DocumentFile docFile = DocumentFile.fromFile(file);
+            if (docFile != null) {
+                docFile.delete();
+            }
+            docFile = DocumentFile.fromFile(directoryLocation);
+            DocumentFile newFile = docFile.createFile(null, fileName);
+            if (newFile != null) {
+                OutputStream outputStream = InstrumentationRegistry.getInstrumentation().getContext().getContentResolver().openOutputStream(newFile.getUri());
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream));
+                writer.println(fileContent);
+                writer.close();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
-            fail("Failed to create the test file: " + e.getMessage());
+            fail("Failed to create test file: " + e.getMessage());
         }
 
-        return fileLocation;
+        return file;
     }
 
     private static String generateLargeFileContent() {
-        StringBuilder content = new StringBuilder();
-        for (int i = 0; i < 1024; i++) {
-            content.append("This is a line in the large file.\n");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 1000; i++) {
+            sb.append("This is a line in the large file.\n");
         }
-        return content.toString();
+        return sb.toString();
     }
 
+
     private File createBinaryFile(File directoryLocation, String fileName) {
-        Uri fileUri = Uri.parse(directoryLocation.toURI() + fileName);
-        File binaryFileLocation = new File(fileUri.getPath());
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+
+        Uri dirUri = Uri.fromFile(directoryLocation);
+        Uri fileUri = Uri.withAppendedPath(dirUri, fileName);
+        DocumentFile documentFile = DocumentFile.fromSingleUri(context, fileUri);
 
         try {
-            // Create a binary file with random content
-            byte[] binaryContent = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC, (byte) 0xDE, (byte) 0xF0};
-            Files.write(binaryFileLocation.toPath(), binaryContent);
+            OutputStream outputStream = context.getContentResolver().openOutputStream(documentFile.getUri());
+            if (outputStream != null) {
+                // Create a binary file with random content
+                byte[] binaryContent = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC, (byte) 0xDE, (byte) 0xF0};
+                outputStream.write(binaryContent);
+                outputStream.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
             fail("Failed to create the binary test file: " + e.getMessage());
         }
 
-        return binaryFileLocation;
+        return new File(directoryLocation, fileName);
     }
 }
