@@ -38,7 +38,7 @@
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="40dp"
             android:layout_marginStart="17dp"
             android:text="Server URL"
             app:layout_constraintBottom_toTopOf="@+id/inputServerUrl"
@@ -46,17 +46,20 @@
             app:layout_constraintHorizontal_bias="0.07"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            style="@style/InputFieldLabelStyle"
+            style="@style/HeadingStyle"
             />
+
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputServerUrl"
             style="@style/TextInputTheme"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/portrait_regular_margin"
+            android:layout_marginHorizontal="@dimen/portrait_regular_margin"
+            android:layout_marginTop="56dp"
             app:errorEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.208"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -64,11 +67,10 @@
                 android:id="@+id/inputTextServerUrl"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:hint="Enter Server URL"
+                android:hint="@string/enter_server_url"
                 tools:ignore="TextContrastCheck" />
 
         </com.google.android.material.textfield.TextInputLayout>
-
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUpdateServerUrl"
@@ -76,7 +78,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/portrait_regular_margin"
-            android:layout_marginTop="@dimen/portrait_regular_margin"
+            android:layout_marginTop="0dp"
             android:layout_marginEnd="@dimen/portrait_label_field_margin"
             android:text="@string/update_url"
             app:elevation="0dp"
@@ -92,6 +94,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/portrait_label_field_margin"
+            android:layout_marginTop="0dp"
             android:layout_marginEnd="@dimen/portrait_regular_margin"
             android:text="@string/choose_demo_server"
             app:elevation="0dp"
@@ -107,7 +110,7 @@
             style="@style/CardTheme"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/portrait_regular_margin"
+            android:layout_marginHorizontal="@dimen/portrait_regular_margin"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -118,7 +121,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.appcompat.widget.AppCompatButton
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnVerifyServerUpdateServerDetails"
                     style="@style/OutlinedButtonStyle"
                     android:layout_width="wrap_content"
@@ -131,9 +134,9 @@
                     app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="TextContrastCheck" />
 
-                <androidx.appcompat.widget.AppCompatButton
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnScanQrUpdateServerDetails"
-                    style="@style/OutlinedButtonStyle"
+                    style="@style/ButtonStyleDelete"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/portrait_secondary_margin"

@@ -127,7 +127,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelMain"
         app:layout_constraintTop_toTopOf="@+id/tvLastSyncTimeLabelMain" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSignInMain"
         style="@style/ButtonStyle"
         android:layout_width="@dimen/land_secondary_width"

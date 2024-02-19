@@ -20,9 +20,23 @@
     <fragment
         android:id="@+id/aboutMenuFragmentV"
         android:name="org.opendatakit.fragment.AboutMenuFragment"
-        android:label="AboutMenuFragment" />
+        android:label="AboutMenuFragment" >
+        <action
+            android:id="@+id/action_aboutMenuFragmentV_to_verifyServerSettingsFragment"
+            app:destination="@id/verifyServerSettingsFragment" />
+        <action
+            android:id="@+id/action_aboutMenuFragmentV_to_updateServerSettingsFragmentV"
+            app:destination="@id/updateServerSettingsFragmentV" />
+    </fragment>
     <fragment
         android:id="@+id/updateServerSettingsFragmentV"
         android:name="org.opendatakit.services.sync.actions.fragments.UpdateServerSettingsFragment"
-        android:label="UpdateServerSettingsFragment" />
+        android:label="UpdateServerSettingsFragment" >
+        <action
+            android:id="@+id/action_updateServerSettingsFragmentV_to_verifyServerSettingsFragment"
+            app:destination="@id/verifyServerSettingsFragment" />
+        <action
+            android:id="@+id/action_updateServerSettingsFragmentV_to_aboutMenuFragmentV"
+            app:destination="@id/aboutMenuFragmentV" />
+    </fragment>
 </navigation>
