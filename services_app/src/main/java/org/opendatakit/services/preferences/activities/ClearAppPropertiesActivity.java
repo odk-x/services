@@ -57,44 +57,43 @@ public class ClearAppPropertiesActivity extends Activity {
        * @params uncomment and comment the necessary codes if any error do occurs!
        */
 
-      mDialog = new MaterialAlertDialogBuilder(this.getApplicationContext(),R.style.OdkXAlertDialogStyle)
-      .setTitle(R.string.reset_settings)
-          .setMessage(R.string.confirm_reset_settings)
-          .setCancelable(false)
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-             @Override public void onClick(DialogInterface dialog, int which) {
-                mDialog.dismiss();
+      mDialog = new MaterialAlertDialogBuilder(ClearAppPropertiesActivity.this,R.style.OdkXAlertDialogStyle)
+              .setTitle(R.string.reset_settings)
+              .setMessage(R.string.confirm_reset_settings)
+              .setCancelable(false)
+              .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                 @Override public void onClick(DialogInterface dialog, int which) {
+                    // clear the device and secure properties for this appName
+                    PropertiesSingleton mProps = CommonToolProperties.get(
+                            ClearAppPropertiesActivity.this, mAppName);
+                    mProps.clearSettings();
 
-                // clear the device and secure properties for this appName
-                PropertiesSingleton mProps = CommonToolProperties.get(
-                    ClearAppPropertiesActivity.this, mAppName);
-                mProps.clearSettings();
+                    // clear the translations cache
+                    LocalizationUtils.clearTranslations();
 
-                // clear the translations cache
-                LocalizationUtils.clearTranslations();
+                    // clear the tables.init file that prevents re-reading and re-processing
+                    // the assets/tables.init file (that preloads data from csv files)
+                    File f = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
+                    if ( f.exists() ) {
+                       f.delete();
+                    }
 
-                // clear the tables.init file that prevents re-reading and re-processing
-                // the assets/tables.init file (that preloads data from csv files)
-                File f = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
-                if ( f.exists() ) {
-                   f.delete();
-                }
+                    // clear the initialization-complete marker files that prevent the
+                    // initialization task from being executed.
+                    ODKFileUtils.clearConfiguredToolFiles(mAppName);
 
-                // clear the initialization-complete marker files that prevent the
-                // initialization task from being executed.
-                ODKFileUtils.clearConfiguredToolFiles(mAppName);
-
-                setResult(RESULT_OK);
-                finish();
-             }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-             @Override public void onClick(DialogInterface dialog, int which) {
-                mDialog.dismiss();
-                setResult(RESULT_CANCELED);
-                finish();
-             }
-          }).create();
+                    setResult(RESULT_OK);
+                    finish();
+                    dialog.dismiss();
+                 }
+              })
+              .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                 @Override public void onClick(DialogInterface dialog, int which) {
+                    setResult(RESULT_CANCELED);
+                    finish();
+                    dialog.dismiss();
+                 }
+              }).create();
       mDialog.setCanceledOnTouchOutside(false);
       mDialog.show();
    }

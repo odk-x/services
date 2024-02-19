@@ -47,6 +47,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class UpdateServerSettingsFragment extends Fragment {
 
@@ -90,9 +91,9 @@ public class UpdateServerSettingsFragment extends Fragment {
         materialToolbar=view.findViewById(R.id.topAppBar1);
         materialToolbar.setNavigationOnClickListener(v -> {
 
-            //Using nav controller to navigate back to the main fragment when back button clicked
+            //Using nav controller to navigate back to previous stack
             //Checkout res >> navigation >> nav_graph_main.xml to understand the navigation graph better
-            Navigation.findNavController(view).navigate(R.id.mainFragment);
+            Navigation.findNavController(view).popBackStack();
 
         });
         findViewsAndAttachListeners(view);

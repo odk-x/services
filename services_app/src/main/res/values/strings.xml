@@ -290,6 +290,8 @@
 
     <string name="enter_new_user">Enter new username:</string>
     <string name="enter_new_password">Enter new password:</string>
+    <string name="enter_server_password">Server Password:</string>
+    <string name="new_server_password">Enter New Password</string>
     <string name="verify_new_password">Re-enter new password</string>
     <string name="password_changed">Password successfully changed</string>
     <string name="admin_password_disabled">Admin password disabled</string>

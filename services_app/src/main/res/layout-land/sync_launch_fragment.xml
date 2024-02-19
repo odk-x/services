@@ -172,7 +172,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStartSync"
                 style="@style/SmallButtonStyle"
                 android:layout_width="wrap_content"
@@ -191,7 +191,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSignInSync"
         style="@style/ButtonStyle"
         android:layout_width="wrap_content"
@@ -203,9 +203,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mcvSyncDetails" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnResetServerSync"
-        style="@style/SmallButtonStyle"
+        style="@style/ButtonStyleDelete"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/land_regular_margin"

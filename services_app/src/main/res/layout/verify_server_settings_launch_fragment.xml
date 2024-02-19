@@ -118,7 +118,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvServerAnonymousAllowedLabelVerify" />
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStartVerifyServer"
                 style="@style/SmallButtonStyle"
                 android:layout_width="wrap_content"
@@ -215,7 +215,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvLastSyncTimeLabelVerify"
         app:layout_constraintTop_toTopOf="@+id/tvLastSyncTimeLabelVerify" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnStartVerifyUser"
         style="@style/ButtonStyle"
         android:layout_width="0dp"

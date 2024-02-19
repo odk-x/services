@@ -11,7 +11,6 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginStart="2dp"
-        android:layout_marginLeft="2dp"
         android:layout_marginTop="5dp"
         android:textColor="@color/black"
         android:text="@string/preparing_to_sync"
@@ -25,7 +24,6 @@
         android:layout_below="@+id/prepare_sync"
         android:layout_centerHorizontal="true"
         android:layout_marginStart="2dp"
-        android:layout_marginLeft="2dp"
         android:layout_marginTop="5dp" />
 
     <LinearLayout
@@ -36,15 +34,15 @@
         android:layout_marginTop="5dp"
         android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/cancel_sync_button"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_marginHorizontal="24dp"
             android:layout_weight="1"
             android:text="@string/cancel"
             android:textSize="14sp"
-            style="@style/ButtonStyle"
+            style="@style/ButtonStyleDelete"
             />
 
     </LinearLayout>

@@ -42,9 +42,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvServerUrlLogin" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAnonymousSignInLogin"
-        style="@style/ButtonStyle"
+        style="@style/ButtonStyleAnonymous"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/portrait_regular_margin"
@@ -55,15 +55,17 @@
         app:layout_constraintTop_toBottomOf="@+id/tvTitleLogin"
         tools:ignore="TextContrastCheck" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnUserSignInLogin"
         style="@style/ButtonStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/portrait_regular_margin"
+        android:layout_marginHorizontal="@dimen/portrait_regular_margin"
+
         android:text="@string/authenticated_user"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.333"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnAnonymousSignInLogin"
         tools:ignore="TextContrastCheck" />
