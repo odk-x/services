@@ -440,7 +440,6 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     }
   }
 
-  
   @Override
   public RowResourceList getChangeSet(TableResource table, String dataETag, boolean activeOnly, String websafeResumeCursor)
       throws HttpClientWebException, IOException {

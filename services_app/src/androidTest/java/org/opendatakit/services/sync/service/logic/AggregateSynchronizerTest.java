@@ -375,37 +375,37 @@ public class AggregateSynchronizerTest {
   /*
    * Test upload config file
    */
-//  @Test
-//  public void testUploadConfigFileWithTextFile_ExpectPass() {
-//    SyncExecutionContext sharedContext = getSyncExecutionContext();
-//
-//    try {
-//      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
-//
-//      String fileName = "testFile.txt";
-//
-//      String destDir = ODKFileUtils.getConfigFolder(appName);
-//
-//      File destFile = new File(destDir, fileName);
-//
-//      // Now copy this file over to the correct place on the device
-//      FileUtils.writeStringToFile(destFile, "This is a test", CharsetConsts.UTF_8);
-//
-//      synchronizer.uploadConfigFile(destFile);
-//
-//      synchronizer.deleteConfigFile(destFile);
-//
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//      fail("testuploadConfigFileWithTextFile_ExpectPass: expected pass but got exception");
-//    }
-//  }
+  @Test
+  public void testUploadConfigFileWithTextFile_ExpectPass() {
+    SyncExecutionContext sharedContext = getSyncExecutionContext();
+
+    try {
+      AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
+
+      String fileName = "testFile.txt";
+
+      String destDir = ODKFileUtils.getConfigFolder(appName);
+
+      File destFile = new File(destDir, fileName);
+
+      // Now copy this file over to the correct place on the device
+      FileUtils.writeStringToFile(destFile, "This is a test", CharsetConsts.UTF_8);
+
+      synchronizer.uploadConfigFile(destFile);
+
+      synchronizer.deleteConfigFile(destFile);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("testuploadConfigFileWithTextFile_ExpectPass: expected pass but got exception");
+    }
+  }
 
   /*
    * Test delete config file
    */
   @Test
-  public void testUploadConfigFileWithTextFile_ExpectPass() {
+  public void testDeleteConfigFile_ExpectPass() {
     SyncExecutionContext sharedContext = getSyncExecutionContext();
 
     try {
@@ -428,9 +428,10 @@ public class AggregateSynchronizerTest {
 
     } catch (Exception e) {
       e.printStackTrace();
-      fail("testuploadConfigFileWithTextFile_ExpectPass: expected pass but got exception");
+      fail("testDeleteConfigFile_ExpectPass: expected pass but got exception");
     }
   }
+
   /*
    * Test create table with string
    */
