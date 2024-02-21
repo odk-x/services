@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import androidx.documentfile.provider.DocumentFile;
 import androidx.loader.app.LoaderManager;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
@@ -290,7 +291,7 @@ public class DeviceSettingsFragment extends PreferenceFragmentCompat implements
       }
 
       if (newMedia.exists()) {
-        String appRelativePath = ODKFileUtils.asRelativePath(props.getAppName(), newMedia);
+        String appRelativePath = ODKFileUtils.asRelativePath(props.getAppName(), DocumentFile.fromFile(newMedia));
 
         props.setProperties(Collections.singletonMap(CommonToolProperties
             .KEY_SPLASH_PATH, appRelativePath));

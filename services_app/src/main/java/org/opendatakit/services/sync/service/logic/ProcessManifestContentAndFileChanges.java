@@ -15,6 +15,8 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.service.DbHandle;
@@ -158,7 +160,7 @@ class ProcessManifestContentAndFileChanges {
           }
 
           // we'll add it to our list of files.
-          relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), f));
+          relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(f)));
         }
       }
     }
@@ -262,7 +264,7 @@ class ProcessManifestContentAndFileChanges {
     // we want the relative path, so drop the necessary bets.
     for (File f : nondirFiles) {
       // +1 to exclude the separator.
-      relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), f));
+      relativePaths.add(ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(f)));
     }
     return relativePaths;
   }
@@ -323,7 +325,7 @@ class ProcessManifestContentAndFileChanges {
           serverFilesToDelete.add(localFile);
         } else if (ODKFileUtils.getMd5Hash(sc.getAppName(), localFile).equals(entry.md5hash)) {
           // we are ok -- no need to upload or delete
-          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), localFile));
+          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile)));
         }
       }
 
@@ -345,7 +347,7 @@ class ProcessManifestContentAndFileChanges {
 
       for (File localFile : serverFilesToDelete) {
 
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
+        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile));
         syncStatus.updateNotification(SyncProgressState.APP_FILES,
             R.string.sync_deleting_file_on_server,
             new Object[] { relativePath }, stepCount * stepSize, false);
@@ -362,7 +364,7 @@ class ProcessManifestContentAndFileChanges {
 
       for (OdkTablesFileManifestEntry entry : manifestDocument.entries) {
         File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
+        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile));
 
         syncStatus.updateNotification(SyncProgressState.APP_FILES,
             R.string.sync_verifying_local_file,
@@ -455,7 +457,7 @@ class ProcessManifestContentAndFileChanges {
       return;
     }
     String tableIdPropertiesFile = ODKFileUtils.asRelativePath(sc.getAppName(),
-        new File(ODKFileUtils.getTablePropertiesCsvFile(sc.getAppName(), tableId)));
+            DocumentFile.fromFile(new File(ODKFileUtils.getTablePropertiesCsvFile(sc.getAppName(), tableId))));
 
     boolean tablePropertiesChanged = false;
 
@@ -491,7 +493,7 @@ class ProcessManifestContentAndFileChanges {
           serverFilesToDelete.add(localFile);
         } else if (ODKFileUtils.getMd5Hash(sc.getAppName(), localFile).equals(entry.md5hash)) {
           // we are ok -- no need to upload or delete
-          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), localFile));
+          relativePathsOnDevice.remove(ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile)));
         }
       }
 
@@ -512,7 +514,7 @@ class ProcessManifestContentAndFileChanges {
 
       for (File localFile : serverFilesToDelete) {
 
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
+        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile));
         syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
             R.string.sync_deleting_file_on_server,
             new Object[] { relativePath }, stepCount * stepSize, false);
@@ -529,7 +531,7 @@ class ProcessManifestContentAndFileChanges {
 
       for (OdkTablesFileManifestEntry entry : manifestDocument.entries) {
         File localFile = ODKFileUtils.asConfigFile(sc.getAppName(), entry.filename);
-        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), localFile);
+        String relativePath = ODKFileUtils.asRelativePath(sc.getAppName(), DocumentFile.fromFile(localFile));
 
         syncStatus.updateNotification(SyncProgressState.TABLE_FILES,
             R.string.sync_verifying_local_file,
