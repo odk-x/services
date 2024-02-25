@@ -15,6 +15,8 @@
  */
 package org.opendatakit.services.sync.service.logic;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import org.apache.commons.fileupload.MultipartStream;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.AppNameList;
@@ -438,7 +440,6 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     }
   }
 
-  
   @Override
   public RowResourceList getChangeSet(TableResource table, String dataETag, boolean activeOnly, String websafeResumeCursor)
       throws HttpClientWebException, IOException {
@@ -890,7 +891,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   @Override
   public void deleteConfigFile(File localFile) throws HttpClientWebException, IOException {
     String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
-        localFile);
+            DocumentFile.fromFile(localFile));
     URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
     log.i(LOGTAG, "CLARICE:[deleteConfigFile] fileDeleteUri: " + filesUri.toString());
 
@@ -911,7 +912,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
   @Override
   public void uploadConfigFile(File localFile) throws HttpClientWebException, IOException {
     String pathRelativeToConfigFolder = ODKFileUtils.asConfigRelativePath(sc.getAppName(),
-        localFile);
+            DocumentFile.fromFile(localFile));
     URI filesUri = wrapper.constructConfigFileUri(pathRelativeToConfigFolder);
     log.i(LOGTAG, "[uploadConfigFile] filePostUri: " + filesUri.toString());
     String ct = HttpRestProtocolWrapper.determineContentType(localFile.getName());

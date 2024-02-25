@@ -3,6 +3,7 @@ package org.opendatakit.database.service;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import androidx.documentfile.provider.DocumentFile;
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.FixMethodOrder;
@@ -999,7 +1000,7 @@ public class OdkDatabaseServiceImplTest
    @Test public void testDeleteAllCheckpointRowsWithId() {
       try {
 
-         File instanceFolder = makeTemp("t3");
+         DocumentFile instanceFolder = makeTemp("t3");
          createTeaHouses();
          setSuperuser();
          thInsert("t1", SavepointTypeManipulator.complete());
@@ -1029,7 +1030,7 @@ public class OdkDatabaseServiceImplTest
 
       try {
 
-         File instanceFolder = makeTemp("t3");
+         DocumentFile instanceFolder = makeTemp("t3");
          createTeaHouses();
          setSuperuser();
          thInsert("t3", SavepointTypeManipulator.incomplete());
@@ -1563,17 +1564,21 @@ public class OdkDatabaseServiceImplTest
       return l;
    }
 
-   private static File makeTemp(String id) throws Exception {
+   private static DocumentFile makeTemp(String id) throws Exception {
       File instanceFolder = new File(
-          ODKFileUtils.getInstanceFolder(APPNAME, TEA_HOUSES_TBL_NAME, id));
+              ODKFileUtils.getInstanceFolder(APPNAME, TEA_HOUSES_TBL_NAME, id));
       if (!instanceFolder.exists() && !instanceFolder.mkdirs()) {
          throw new Exception("Should have been able to create " + instanceFolder.getPath());
       }
       assertTrue(instanceFolder.exists());
-      FileOutputStream f = new FileOutputStream(new File(instanceFolder.getPath() + "/temp"));
-      f.write(new byte[] { 97, 98, 99 });
+      File tempFile = new File(instanceFolder, "temp");
+      FileOutputStream f = new FileOutputStream(tempFile);
+      f.write(new byte[]{97, 98, 99});
       f.close();
-      return instanceFolder;
+
+      // Convert the File object to a DocumentFile
+      DocumentFile documentFile = DocumentFile.fromFile(tempFile);
+      return documentFile;
    }
 
    private void insertMetadata(String table, String partition, String aspect, String key,
