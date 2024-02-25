@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 
+import androidx.documentfile.provider.DocumentFile;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.Suppress;
 import androidx.test.rule.GrantPermissionRule;
@@ -290,14 +291,16 @@ public class AggregateSynchronizerTest {
     try {
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(sharedContext);
 
+      DocumentFile[] nullFiles = null;
+
       FileManifestDocument tableManifestEntries =
-          synchronizer.getAppLevelFileManifest(null, null, true);
+              synchronizer.getAppLevelFileManifest(String.valueOf(nullFiles), null, true);
+
       assertEquals(0, tableManifestEntries.entries.size());
 
     } catch (Exception e) {
       fail("testGetAppLevelFileManifestWithNoFiles_ExpectPass: expected pass but got exception");
       e.printStackTrace();
-
     }
   }
 
@@ -416,6 +419,8 @@ public class AggregateSynchronizerTest {
 
       // Now copy this file over to the correct place on the device
       FileUtils.writeStringToFile(destFile, "This is a test", CharsetConsts.UTF_8);
+
+      DocumentFile documentFile = DocumentFile.fromFile(destFile);
 
       synchronizer.uploadConfigFile(destFile);
 
@@ -1099,13 +1104,16 @@ public class AggregateSynchronizerTest {
       }
 
       RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
-          listOfRowsToCreate);
+              listOfRowsToCreate);
 
       String destDir = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
 
       File destFile = new File(destDir, fileName);
 
       FileUtils.writeStringToFile(destFile, "This is a test", CharsetConsts.UTF_8);
+
+      // Convert destFile to DocumentFile
+      DocumentFile documentFile = DocumentFile.fromFile(destFile);
 
       CommonFileAttachmentTerms cat1 = synchronizer.createCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
               testTableId, rowId, ODKFileUtils.asRowpathUri(appName, testTableId, rowId, destFile));
@@ -1172,8 +1180,7 @@ public class AggregateSynchronizerTest {
         listOfRowsToCreate.add(new TypedRow(row, orderedColumns));
       }
 
-      RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns,
-          listOfRowsToCreate);
+      RowOutcomeList rowOutList = synchronizer.pushLocalRows(testTableRes, orderedColumns, listOfRowsToCreate);
 
       String fileName = "testFile.txt";
 
@@ -1184,7 +1191,7 @@ public class AggregateSynchronizerTest {
       FileUtils.writeStringToFile(destFile, "This is a test", CharsetConsts.UTF_8);
 
       CommonFileAttachmentTerms cat1 = synchronizer.createCommonFileAttachmentTerms(testTableRes.getInstanceFilesUri(),
-          testTableId, rowId, ODKFileUtils.asRowpathUri(appName, testTableId, rowId, destFile));
+              testTableId, rowId, ODKFileUtils.asRowpathUri(appName, testTableId, rowId, destFile));
 
       synchronizer.uploadInstanceFile(destFile, cat1.instanceFileDownloadUri);
 
@@ -1193,6 +1200,10 @@ public class AggregateSynchronizerTest {
       String destDir2 = ODKFileUtils.getInstanceFolder(appName, testTableId, rowId);
 
       File destFile2 = new File(destDir2, fileName2);
+
+      // Convert destFile2 to DocumentFile
+      DocumentFile documentFile = DocumentFile.fromFile(destFile2);
+
       synchronizer.downloadFile(destFile2, cat1.instanceFileDownloadUri);
 
       synchronizer.deleteTable(testTableRes);

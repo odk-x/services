@@ -17,6 +17,8 @@ package org.opendatakit.utilities;
 import android.Manifest;
 import android.content.ContentValues;
 import android.database.Cursor;
+
+import androidx.documentfile.provider.DocumentFile;
 import androidx.test.rule.GrantPermissionRule;
 import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -416,9 +418,9 @@ public class AbstractPermissionsTestCase {
     cvValues.put("col4", "this is a test"); // string
     // string with 500 varchars allocated to it
     cvValues.put("col5", "and a long string test"); // string(500)
-    File configFile = new File(
-        ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId, rowIdFullCommon),
-        "sample.jpg");
+    DocumentFile configFile = DocumentFile.fromFile(
+            new File(ODKFileUtils.getAssetsCsvInstanceFolder(getAppName(), tableId, rowIdFullCommon),
+                    "sample.jpg"));
     cvValues.put("col6", ODKFileUtils.asConfigRelativePath(getAppName(), configFile)); // configpath
     File rowFile = new File(ODKFileUtils.getInstanceFolder(getAppName(), tableId, rowIdFullCommon), "sample.jpg");
     try {
