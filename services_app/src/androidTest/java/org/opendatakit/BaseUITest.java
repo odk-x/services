@@ -85,9 +85,9 @@ public abstract class BaseUITest<T extends Activity> {
 
     @Before
     public void setUp() {
+        Intents.init();
         activityScenario = ActivityScenario.launch(getLaunchIntent());
         setUpPostLaunch();
-        Intents.init();
     }
 
     protected abstract void setUpPostLaunch();

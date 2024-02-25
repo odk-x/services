@@ -18,6 +18,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     testOptions {
+        animationsDisabled = true
         unitTests {
             includeAndroidResources = true
         }
@@ -134,12 +135,12 @@ dependencies {
 
     implementation group: 'com.google.zxing', name: 'core', version: '3.3.0'
     implementation group: 'com.journeyapps', name: 'zxing-android-embedded', version: '3.5.0'
-    
+
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
     } else {
-        mainImplementation(group: groupId, name: libraryPackageName, version: primaryVersion)
-        snapshotImplementation(group: groupId, name: libraryPackageName, version: snapshotVersion)
+        primaryImplementation(group: odkxGroupId, name: libraryPackageName, version: primaryVersion)
+        snapshotImplementation(group: odkxGroupId, name: libraryPackageName, version: snapshotVersion)
     }
 
     // Testing-only dependencies
