@@ -200,7 +200,6 @@ public class AbsSyncViewModelTest extends BaseTest {
                 }
             }).start();
         }
-
         latch.await();
         assertTrue("Some threads encountered errors while accessing last sync time", allThreadsSuccessful.get());
     }
