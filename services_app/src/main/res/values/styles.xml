@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
-
+<resources>
 
     <!--NavViewTheme-->
     <style name="NavViewTheme" parent="ODKX">
@@ -10,12 +9,23 @@
         <item name="itemIconSize">20dp</item>
         <item name="itemTextAppearance">@style/TextViewStyle</item>
         <item name="cornerRadius">@dimen/rounder_corners</item>
-       <!-- <item name="itemShapeFillColor">@color/navigation_item_background_color</item> -->
+        <!-- <item name="itemShapeFillColor">@color/navigation_item_background_color</item> -->
         <!-- <item name="itemTextColor">@color/navigation_item_color</item> -->
         <item name="android:dividerHeight">0dp</item>
         <item name="android:dividerPadding">4dp</item>
-       <item name="headerLayout">@layout/drawer_header</item>
+        <item name="headerLayout">@layout/drawer_header</item>
         <item name="menu">@menu/drawer_menu</item>
+    </style>
+
+    <style name="ButtonStyleAnonymous">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">14sp</item>
+        <item name="elevation">0dp</item>
+        <item name="backgroundTint">@color/btn_background</item>
+        <item name="fontFamily">@font/sourcesanspro_regular</item>
+        <item name="android:textColor">@color/colorPrimaryBackground</item>
+        <item name="cornerRadius">100dp</item>
+        <item name="android:background">@drawable/button_border</item>
     </style>
 
 </resources>
