@@ -1,0 +1,59 @@
+version: 2.1
+
+orbs:
+  android: circleci/android@2.4.0
+jobs:
+  test:
+    description: Runs unit tests and instrumented tests on the Android Common
+    executor:
+      name: android/android-machine
+      resource-class: xlarge
+      tag: 2024.01.1
+
+    steps:
+      - checkout
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+
+      - android/create-avd:
+          avd-name: avd
+          install: true
+          system-image: system-images;android-29;default;x86
+      - android/start-emulator:
+          avd-name: avd
+          no-window: true
+          restore-gradle-cache-prefix: v2
+          post-emulator-launch-assemble-command: ./gradlew assembleSnapshotDebug
+      - android/run-tests:
+          test-command: ./gradlew testSnapshotDebugUnitTest
+      - android/run-tests:
+          test-command: ./gradlew grantPermissionForODKXApp connectedSnapshotDebugAndroidTest
+      - android/save-gradle-cache:
+          cache-prefix: v1
+      - store_artifacts:
+          name: Store Test Results
+          path: services_app/build/outputs/androidTest-results
+      - store_artifacts:
+          name: Store Test Reports
+          path: services_app/build/reports
+
+  build:
+    docker:
+      - image: cimg/android:2024.01
+    steps:
+      - checkout
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+      - android/restore-gradle-cache:
+          cache-prefix: v1
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      - android/save-gradle-cache:
+          cache-prefix: v1
+      - run:
+          name: Build Common
+          command: ./gradlew assembleSnapshotDebug
+
