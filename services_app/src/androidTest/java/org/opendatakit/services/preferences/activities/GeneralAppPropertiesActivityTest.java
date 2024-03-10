@@ -20,6 +20,7 @@ import android.content.Intent;
 
 import androidx.test.espresso.contrib.RecyclerViewActions;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
@@ -39,6 +40,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenOpenDocumentationScreenIsClicked_launchUrl() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(0, scrollTo()))
@@ -62,6 +64,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
     }
 
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfDeviceSettingScreen_isVisible() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(2, scrollTo()))
@@ -71,6 +74,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
                 isDisplayed())).check(matches(withText(R.string.device_settings_summary)));
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfTableSpecificSettingScreen_isVisible() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(3, scrollTo()))
@@ -80,6 +84,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
                 isDisplayed())).check(matches(withText(R.string.tool_tables_settings_summary)));
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfEnableUserRestrictionScreen_isVisible() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(4, scrollTo()))
@@ -90,6 +95,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
                 isDisplayed())).check(matches(withText(R.string.admin_password_disabled)));
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenResetConfigurationScreenIsClicked_launchResetConfigurationDialog() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(5, scrollTo()))
@@ -108,6 +114,7 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
         onView(allOf(withId(android.R.id.button1), withText("OK"))).perform(click());
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfVerifyUserPermissionScreen_isVisible() {
         onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))

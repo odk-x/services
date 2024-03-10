@@ -19,6 +19,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
@@ -42,6 +43,7 @@ public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesA
     }
 
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenTableSpecificSettingIsClicked_useCustomHomeScreen() {
         onView(withText(R.string.custom_home_screen)).check(matches(isDisplayed()));

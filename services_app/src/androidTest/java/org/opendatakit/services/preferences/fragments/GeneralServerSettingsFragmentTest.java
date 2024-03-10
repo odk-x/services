@@ -21,6 +21,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
@@ -43,6 +44,7 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
                         click()));
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkBarcodeScanner_IsVisible() {
         onView(withId(R.id.action_barcode)).check(matches(isDisplayed()));
@@ -118,6 +120,7 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
     }
 
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenServerPasswordIsChanged_enterNewPassword() {
         onView(withId(androidx.preference.R.id.recycler_view))

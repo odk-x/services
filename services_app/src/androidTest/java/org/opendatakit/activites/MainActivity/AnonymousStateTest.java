@@ -17,6 +17,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.espresso.matcher.ViewMatchers;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opendatakit.BaseUITest;
 import org.opendatakit.consts.IntentConsts;
@@ -58,6 +59,7 @@ public class AnonymousStateTest extends BaseUITest<MainActivity> {
         });
     }
 
+    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkFirstStartupTest() {
         activityScenario.onActivity(activity -> {

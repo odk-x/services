@@ -24,7 +24,7 @@ jobs:
           avd-name: avd
           no-window: true
           restore-gradle-cache-prefix: v2
-          post-emulator-launch-assemble-command: ./gradlew assembleSnapshotDebug
+          post-emulator-launch-assemble-command: ./gradlew installSnapshotDebug 
       - android/run-tests:
           test-command: ./gradlew testSnapshotDebugUnitTest
       - android/run-tests:
