@@ -20,6 +20,8 @@ import android.content.Context;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.exceptions.AccessDeniedException;
 import org.opendatakit.services.sync.service.exceptions.NoAppNameSpecifiedException;
@@ -37,6 +39,7 @@ import org.opendatakit.sync.service.SyncStatus;
 import org.opendatakit.sync.service.TableLevelResult;
 import org.opendatakit.utilities.ODKFileUtils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -163,6 +166,7 @@ public class AppSynchronizer {
     private final boolean onlyVerifySettings;
     private final boolean push;
     private final SyncAttachmentState attachmentState;
+    private PropertiesSingleton properties;
 
     public SyncTask(Context context, String versionCodeString) {
       this.context = context;
@@ -170,6 +174,7 @@ public class AppSynchronizer {
       this.onlyVerifySettings = true;
       this.push = false;
       this.attachmentState = SyncAttachmentState.NONE;
+      this.properties = CommonToolProperties.get(context, appName);
     }
 
     public SyncTask(Context context, String versionCodeString, boolean push, SyncAttachmentState attachmentState) {
@@ -178,6 +183,7 @@ public class AppSynchronizer {
       this.onlyVerifySettings = false;
       this.push = push;
       this.attachmentState = attachmentState;
+      this.properties = CommonToolProperties.get(context, appName);
     }
 
     @Override
@@ -316,8 +322,13 @@ public class AppSynchronizer {
           // was an app-level sync failure or if the particular tableId
           // experienced a table-level sync failure in the preceeding step.
 
+          String prevDownloadAttachmentStateStr = properties.getProperty(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE);
+          SyncAttachmentState prevDownloadAttachmentState = SyncAttachmentState.valueOf(prevDownloadAttachmentStateStr);
           try {
-            rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState);
+            rowDataProcessor.synchronizeDataRowsAndAttachments(workingListOfTables, attachmentState, prevDownloadAttachmentState);
+            if (SyncAttachmentState.involvesDownload(attachmentState)) {
+              properties.setProperties(Collections.singletonMap(CommonToolProperties.KEY_PREV_SYNC_ATTACHMENT_STATE, attachmentState.name()));
+            }
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
           } finally {

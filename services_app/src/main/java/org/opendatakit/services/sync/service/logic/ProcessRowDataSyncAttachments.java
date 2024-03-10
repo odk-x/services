@@ -29,6 +29,8 @@ import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.services.R;
 import org.opendatakit.services.sync.service.SyncExecutionContext;
@@ -87,7 +89,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
   public void syncAttachments(TableResource tableResource,
       TableDefinitionEntry te, OrderedColumns orderedColumns,
       ArrayList<ColumnDefinition> fileAttachmentColumns,
-      SyncAttachmentState attachmentState) throws ServicesAvailabilityException {
+      SyncAttachmentState attachmentState, SyncAttachmentState prevAttachmentState) throws ServicesAvailabilityException {
 
     // Prepare the tableLevelResult.
     String tableId = te.getTableId();
@@ -137,8 +139,17 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
 
 
         String sqlCommand;
-        BindArgs bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
-            SyncState.synced_pending_files.name() });
+        BindArgs bindArgs;
+        if (SyncAttachmentState.involvesReducedImgDownload(prevAttachmentState) && SyncAttachmentState.involvesFullSizeImgDownload(attachmentState)) {
+          // If the previous involved a reduced download and the curr involves a full download,
+          // we need to consider files that are in the "synced" state.
+          bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+                  SyncState.synced_pending_files.name(), SyncState.synced.name() });
+        } else {
+          // Add synced_pending_files twice to match sql query
+          bindArgs = new BindArgs(new Object[]{ SyncState.in_conflict.name(),
+                  SyncState.synced_pending_files.name(), SyncState.synced_pending_files.name() });
+        }
 
         {
           StringBuilder sqlCommandBuilder = new StringBuilder();
@@ -146,7 +157,7 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               .append(" (").append(ID_COLUMN).append(" ) SELECT DISTINCT ")
               .append(DataTableColumns.ID).append(" FROM ").append(tableId)
               .append(" WHERE ")
-              .append(DataTableColumns.SYNC_STATE).append(" IN (?, ?) AND ")
+              .append(DataTableColumns.SYNC_STATE).append(" IN (?, ?, ?) AND ")
               .append(DataTableColumns.ID).append(" NOT IN (SELECT DISTINCT ")
               .append(DataTableColumns.ID).append(" FROM ").append(tableId).append(" WHERE ")
               .append(DataTableColumns.SAVEPOINT_TYPE).append(" IS NULL)");
@@ -244,7 +255,9 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
                 // anything and never update the state to synced (it must stay in in_conflict)
                 syncAttachments = true;
               }
-            } else if (state == SyncState.synced_pending_files) {
+            } else if (state == SyncState.synced_pending_files ||
+                    (state == SyncState.synced &&
+                            SyncAttachmentState.involvesReducedImgDownload(prevAttachmentState) && SyncAttachmentState.involvesFullSizeImgDownload(attachmentState))) { //
               // if we succeed in fetching and deleting the local files to match the server
               // then update the state to synced.
               syncAttachments = true;
@@ -254,7 +267,6 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               // And try to push the file attachments...
               try {
                 boolean outcome = true;
-
                 SyncAttachmentState filteredAttachmentState = (state == SyncState.in_conflict ?
                     SyncAttachmentState.DOWNLOAD :
                     attachmentState);
@@ -300,10 +312,16 @@ class ProcessRowDataSyncAttachments extends ProcessRowDataSharedBase {
               case SYNC:
                 idString = R.string.sync_syncing_attachments_server_row;
                 break;
+              case SYNC_WITH_REDUCED_DOWNLOAD:
+                idString = R.string.sync_syncing_attachments_server_row;
+                break;
               case UPLOAD:
                 idString = R.string.sync_uploading_attachments_server_row;
                 break;
               case DOWNLOAD:
+                idString = R.string.sync_downloading_attachments_server_row;
+                break;
+              case REDUCED_DOWNLOAD:
                 idString = R.string.sync_downloading_attachments_server_row;
                 break;
               }

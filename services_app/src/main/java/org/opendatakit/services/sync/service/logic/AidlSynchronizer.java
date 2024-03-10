@@ -337,9 +337,9 @@ class AidlSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload, String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException {
+  public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload, String serverInstanceFileUri, String instanceId, String tableId, boolean reduceImageSize) throws HttpClientWebException {
     try {
-      getRemoteInterface().downloadInstanceFileBatch(filesToDownload, serverInstanceFileUri, instanceId, tableId);
+      getRemoteInterface().downloadInstanceFileBatch(filesToDownload, serverInstanceFileUri, instanceId, tableId, reduceImageSize);
     } catch (RemoteException e) {
       rethrowException(e);
     }

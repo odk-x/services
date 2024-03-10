@@ -1052,7 +1052,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
 
   @Override
   public void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
-      String serverInstanceFileUri, String instanceId, String tableId) throws HttpClientWebException, IOException {
+      String serverInstanceFileUri, String instanceId, String tableId, boolean reduceImageSize) throws HttpClientWebException, IOException {
     // boolean downloadedAllFiles = true;
 
     URI instanceFilesDownloadUri = wrapper.constructInstanceFileBulkDownloadUri(serverInstanceFileUri, instanceId);
@@ -1061,6 +1061,7 @@ public class AggregateSynchronizer implements HttpSynchronizer {
     for (CommonFileAttachmentTerms cat : filesToDownload) {
       OdkTablesFileManifestEntry entry = new OdkTablesFileManifestEntry();
       entry.filename = cat.rowPathUri;
+      entry.reduceImage = String.valueOf(reduceImageSize);
       entries.add(entry);
     }
 

@@ -368,7 +368,7 @@ public interface HttpSynchronizer extends Synchronizer {
    */
   @Override
   void downloadInstanceFileBatch(List<CommonFileAttachmentTerms> filesToDownload,
-                                 String serverInstanceFileUri, String instanceId, String tableId)
+                                 String serverInstanceFileUri, String instanceId, String tableId, boolean reduceImageSize)
       throws HttpClientWebException, IOException;
 
   /**

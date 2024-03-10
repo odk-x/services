@@ -15,11 +15,15 @@
         <item>UPLOAD</item>
         <item>DOWNLOAD</item>
         <item>NONE</item>
+        <item>REDUCED_DOWNLOAD</item>
+        <item>SYNC_WITH_REDUCED_DOWNLOAD</item>
     </string-array>
     <string-array name="sync_attachment_option_names">
         <item>Fully Sync Attachments</item>
         <item>Upload Attachments Only</item>
         <item>Download Attachments Only</item>
         <item>Do Not Sync Attachments</item>
+        <item>Download Attachments Only, Reduce Img</item>
+        <item>Fully Sync Attachments, Reduce Img</item>
     </string-array>
 </resources>
