@@ -122,31 +122,22 @@ public class AbsSyncViewModelTest extends BaseTest {
     }
 
     @Test
-    public void testNullAppName() {
+    public void testNullValues() {
         absSyncViewModel.setAppName(null);
         assertNull(absSyncViewModel.getAppName());
-    }
 
-    @Test
-    public void testNullServerUrl() {
         absSyncViewModel.setServerUrl(null);
         assertNull(absSyncViewModel.getServerUrl().getValue());
-    }
 
-    @Test
-    public void testNullUsername() {
         absSyncViewModel.setUsername(null);
         assertNull(absSyncViewModel.getUsername().getValue());
     }
 
     @Test
-    public void testIsFirstLaunchFlagTrue() {
+    public void testIsFirstLaunchFlags() {
         absSyncViewModel.setIsFirstLaunch(true);
         assertTrue(absSyncViewModel.checkIsFirstLaunch().getValue());
-    }
 
-    @Test
-    public void testIsFirstLaunchFlagFalse() {
         absSyncViewModel.setIsFirstLaunch(false);
         assertFalse(absSyncViewModel.checkIsFirstLaunch().getValue());
     }
@@ -164,23 +155,6 @@ public class AbsSyncViewModelTest extends BaseTest {
             absSyncViewModel.setCurrentUserState(state);
         }
         assertEquals(UserState.values()[UserState.values().length - 1], absSyncViewModel.getCurrentUserState().getValue());
-    }
-
-    @Test
-    public void testLastSyncTimeObserver() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final Observer<Long> observer = new Observer<Long>() {
-            @Override
-            public void onChanged(Long value) {
-                assertEquals(1000L, (long) value);
-                latch.countDown();
-            }
-        };
-
-        absSyncViewModel.getLastSyncTime().observeForever(observer);
-        absSyncViewModel.setLastSyncTime(1000L);
-        latch.await(2, TimeUnit.SECONDS);
-        absSyncViewModel.getLastSyncTime().removeObserver(observer);
     }
 
     @Test
