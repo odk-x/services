@@ -1,10 +1,14 @@
 package org.opendatakit.services.sync.actions.viewModels.viewModels;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Build;
+
+import androidx.lifecycle.Observer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -17,6 +21,11 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1})
@@ -111,4 +120,91 @@ public class AbsSyncViewModelTest extends BaseTest {
         assertEquals(SyncAttachmentState.REDUCED_SYNC, absSyncViewModel.getCurrentSyncAttachmentState());
         assertNotNull(absSyncViewModel.getSyncAttachmentState().getValue());
     }
+
+    @Test
+    public void testNullValues() {
+        absSyncViewModel.setAppName(null);
+        assertNull(absSyncViewModel.getAppName());
+
+        absSyncViewModel.setServerUrl(null);
+        assertNull(absSyncViewModel.getServerUrl().getValue());
+
+        absSyncViewModel.setUsername(null);
+        assertNull(absSyncViewModel.getUsername().getValue());
+    }
+
+    @Test
+    public void testIsFirstLaunchFlags() {
+        absSyncViewModel.setIsFirstLaunch(true);
+        assertTrue(absSyncViewModel.checkIsFirstLaunch().getValue());
+
+        absSyncViewModel.setIsFirstLaunch(false);
+        assertFalse(absSyncViewModel.checkIsFirstLaunch().getValue());
+    }
+
+    @Test
+    public void testServerUrlExtremeValue() {
+        String longUrl = "http://" + String.join("", Collections.nCopies(100000, "a")) + ".com";
+        absSyncViewModel.setServerUrl(longUrl);
+        assertEquals(longUrl, absSyncViewModel.getServerUrl().getValue());
+    }
+
+    @Test
+    public void testUserState() {
+        for (UserState state : UserState.values()) {
+            absSyncViewModel.setCurrentUserState(state);
+        }
+        assertEquals(UserState.values()[UserState.values().length - 1], absSyncViewModel.getCurrentUserState().getValue());
+    }
+
+    @Test
+    public void testConcurrentAccessToLastSyncTime() throws InterruptedException {
+        final int numThreads = 10;
+        final CountDownLatch latch = new CountDownLatch(numThreads);
+        final AtomicBoolean allThreadsSuccessful = new AtomicBoolean(true);
+
+        for (int i = 0; i < numThreads; i++) {
+            new Thread(() -> {
+                try {
+                    Long currentLastSyncTime = absSyncViewModel.getLastSyncTime().getValue();
+                } catch (Exception e) {
+                    allThreadsSuccessful.set(false);
+                } finally {
+                    latch.countDown();
+                }
+            }).start();
+        }
+        latch.await();
+        assertTrue("Some threads encountered errors while accessing last sync time", allThreadsSuccessful.get());
+    }
+
+
+    @Test
+    public void testLastSyncTimeValueConsistencyAcrossThreads() throws InterruptedException {
+        final int numThreads = 10;
+        final CountDownLatch latch = new CountDownLatch(numThreads);
+        final AtomicLong initialLastSyncTime = new AtomicLong();
+
+        Long initialValue = absSyncViewModel.getLastSyncTime().getValue();
+        initialLastSyncTime.set(initialValue != null ? initialValue : 0);
+
+        for (int i = 0; i < numThreads; i++) {
+            new Thread(() -> {
+                try {
+                    Long currentLastSyncTime = absSyncViewModel.getLastSyncTime().getValue();
+                    if (currentLastSyncTime != null && currentLastSyncTime != initialLastSyncTime.get()) {
+                        initialLastSyncTime.set(-1);
+                    }
+                } catch (Exception e) {
+                    initialLastSyncTime.set(-1);
+                } finally {
+                    latch.countDown();
+                }
+            }).start();
+        }
+
+        latch.await();
+        assertEquals("Last sync time is consistent across threads", 0, initialLastSyncTime.get());
+    }
+
 }
