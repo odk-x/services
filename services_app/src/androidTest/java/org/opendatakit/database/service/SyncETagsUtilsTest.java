@@ -1,8 +1,13 @@
 package org.opendatakit.database.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.util.Log;
 
-import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -15,12 +20,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.SyncETagColumns;
 
 import java.util.Locale;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Created by Niles on 6/30/17.
@@ -45,8 +44,8 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
    protected void setUpBefore() {
       try {
          serviceInterface = bindToDbService();
-          assertNotNull(serviceInterface);
-          dbHandle = serviceInterface.openDatabase(APPNAME);
+         assertNotNull(serviceInterface);
+         dbHandle = serviceInterface.openDatabase(APPNAME);
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -57,13 +56,13 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
    protected void tearDownBefore() {
       try {
          UserTable result = serviceInterface
-             .simpleQuery(APPNAME, dbHandle, DatabaseConstants.SYNC_ETAGS_TABLE_NAME, null,
-                 null, null, null, null, null, null, null, null);
+                 .simpleQuery(APPNAME, dbHandle, DatabaseConstants.SYNC_ETAGS_TABLE_NAME, null,
+                         null, null, null, null, null, null, null, null);
 
          if (result == null)
             throw new IllegalStateException("Bad query");
 
-         if(result.getNumberOfRows() > 0) {
+         if (result.getNumberOfRows() > 0) {
             for (int i = 0; i < result.getNumberOfRows(); i++) {
                TypedRow row = result.getRowAtIndex(i);
                Log.e(LOGTAG, "Found Leftover Sync ETAG:");
@@ -85,7 +84,8 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test public void testDeleteAllSyncETagsForTableId() {
+   @Test
+   public void testDeleteAllSyncETagsForTableId() {
       String tid = "some table id";
       try {
          insertManifestSyncETag(TEA_HOUSES_TID);
@@ -96,7 +96,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, tid);
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, tid);
@@ -106,7 +106,8 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test public void testDeleteAppAndTableLevelManifestSyncETags() {
+   @Test
+   public void testDeleteAppAndTableLevelManifestSyncETags() {
       try {
          // If the bool is 1, it should be deleted
          insertManifestSyncETag(TEA_HOUSES_TID);
@@ -122,7 +123,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
          } catch (ServicesAvailabilityException e) {
@@ -131,7 +132,8 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test public void testDeleteAllSyncETagsExceptForServer() {
+   @Test
+   public void testDeleteAllSyncETagsExceptForServer() {
       try {
          // Null should delete everything
          insertManifestSyncETag(TEA_HOUSES_TID);
@@ -149,14 +151,14 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          insertManifestSyncETagWithUrl(TEA_HOUSES_TID, "http://url.here/abcd");
          insertManifestSyncETagWithUrl(TEST_ID, "https://new.url/efgh");
          serviceInterface
-             .deleteAllSyncETagsExceptForServer(APPNAME, dbHandle, "http://url.here/ijkl");
+                 .deleteAllSyncETagsExceptForServer(APPNAME, dbHandle, "http://url.here/ijkl");
 
          expectPresent(TEA_HOUSES_TID, true);
          expectGone(TEST_ID, true);
 
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEST_ID);
@@ -164,10 +166,10 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
             fail(EXPT_MSG + e.getMessage());
          }
       }
-
    }
 
-   @Test public void testDeleteAllSyncETagsUnderServer() {
+   @Test
+   public void testDeleteAllSyncETagsUnderServer() {
       try {
          insertManifestSyncETag(TEA_HOUSES_TID);
          insertManifestSyncETagWithUrl(TEST_ID, "https://new.url/abcdef");
@@ -183,7 +185,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          assertTrue(worked);
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEST_ID);
@@ -193,20 +195,21 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
       }
    }
 
-   @Test public void testGetManifestSyncETag() {
+   @Test
+   public void testGetManifestSyncETag() {
       try {
          insertManifestSyncETag(TEA_HOUSES_TID);
          String md5 = serviceInterface
-             .getManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID);
+                 .getManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID);
          assertEquals(md5, DEFAULT_MD5);
          assertNull(serviceInterface
-             .getManifestSyncETag(APPNAME, dbHandle, "http://other.url", TEA_HOUSES_TID));
+                 .getManifestSyncETag(APPNAME, dbHandle, "http://other.url", TEA_HOUSES_TID));
          ///
          insertFileSyncETag(TEST_ID);
          assertNull(serviceInterface.getManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID));
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEA_HOUSES_TID);
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEST_ID);
@@ -217,14 +220,15 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    }
 
-   @Test public void testUpdateManifestSyncETag() {
+   @Test
+   public void testUpdateManifestSyncETag() {
       try {
          String newEtag = "new etag";
 
          insertManifestSyncETag(TEA_HOUSES_TID);
 
          serviceInterface
-             .updateManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, newEtag);
+                 .updateManifestSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, newEtag);
          UserTable result = get(TEA_HOUSES_TID, true);
          TypedRow row = result.getRowAtIndex(0);
          assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), newEtag);
@@ -249,26 +253,27 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    }
 
-   @Test public void testGetFileSyncETag() {
+   @Test
+   public void testGetFileSyncETag() {
       try {
          insertManifestSyncETag(TEST_ID);
          insertFileSyncETag(TEST_ID);
 
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 5, DEFAULT_MD5);
-         Assert.assertEquals(
-             serviceInterface.getFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 5),
-             DEFAULT_MD5);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 5, DEFAULT_MD5);
+         assertEquals(
+                 serviceInterface.getFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 5),
+                 DEFAULT_MD5);
 
          // returns null if given a bad date or bad url
-         Assert.assertNull(
-             serviceInterface.getFileSyncETag(APPNAME, dbHandle, "http://wrong.url", TEST_ID, 5));
-         Assert.assertNull(
-             serviceInterface.getFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 9));
+         assertNull(
+                 serviceInterface.getFileSyncETag(APPNAME, dbHandle, "http://wrong.url", TEST_ID, 5));
+         assertNull(
+                 serviceInterface.getFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEST_ID, 9));
 
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
-      }  finally {
+      } finally {
          try {
             serviceInterface.deleteAllSyncETagsForTableId(APPNAME, dbHandle, TEST_ID);
          } catch (ServicesAvailabilityException e) {
@@ -278,14 +283,15 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    }
 
-   @Test public void testUpdateFileSyncETag() {
+   @Test
+   public void testUpdateFileSyncETag() {
       try {
          String revisedETag = "new etag";
 
          // should not set with manifest = 1
          insertManifestSyncETag(TEA_HOUSES_TID);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, revisedETag);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, revisedETag);
 
          UserTable result = get(TEA_HOUSES_TID, true);
          TypedRow row = result.getRowAtIndex(0);
@@ -296,9 +302,9 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          // should set with manifest = 0
          insertFileSyncETag(TEA_HOUSES_TID);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, revisedETag);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, revisedETag);
 
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
@@ -309,10 +315,10 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          // Should have no effect with wrong url
          insertFileSyncETag(TEA_HOUSES_TID);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, "http://wrong.url", TEA_HOUSES_TID, 6,
-                 revisedETag);
+                 .updateFileSyncETag(APPNAME, dbHandle, "http://wrong.url", TEA_HOUSES_TID, 6,
+                         revisedETag);
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
          assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), DEFAULT_MD5);
@@ -322,15 +328,15 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
          // Should update date
          insertFileSyncETag(TEA_HOUSES_TID);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 6, DEFAULT_MD5);
          serviceInterface
-             .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 7, revisedETag);
+                 .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, TEA_HOUSES_TID, 7, revisedETag);
 
          result = get(TEA_HOUSES_TID, false);
          row = result.getRowAtIndex(0);
          assertEquals(row.getRawStringByKey(SyncETagColumns.ETAG_MD5_HASH), revisedETag);
          assertEquals(row.getRawStringByKey(SyncETagColumns.LAST_MODIFIED_TIMESTAMP),
-             TableConstants.nanoSecondsFromMillis(7L, Locale.ROOT));
+                 TableConstants.nanoSecondsFromMillis(7L, Locale.ROOT));
 
       } catch (ServicesAvailabilityException e) {
          fail(EXPT_MSG + e.getMessage());
@@ -349,7 +355,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    private void insertFileSyncETag(String id) throws ServicesAvailabilityException {
       serviceInterface
-          .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, id, DEFAULT_TIMESTAMP, DEFAULT_MD5);
+              .updateFileSyncETag(APPNAME, dbHandle, DEFAULT_URL, id, DEFAULT_TIMESTAMP, DEFAULT_MD5);
    }
 
    private void insertManifestSyncETag(String id) throws ServicesAvailabilityException {
@@ -357,7 +363,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
    }
 
    private void insertManifestSyncETagWithUrl(String id, String url)
-       throws ServicesAvailabilityException {
+           throws ServicesAvailabilityException {
       serviceInterface.updateManifestSyncETag(APPNAME, dbHandle, url, id, DEFAULT_MD5);
    }
 
@@ -365,14 +371,14 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
       // OrderedColumns columns = new OrderedColumns(APPNAME, table, SyncETagColumns.getColumnList
       // ());
       String whereClause =
-          SyncETagColumns.TABLE_ID + " =? AND " + SyncETagColumns.IS_MANIFEST + " =?;";
+              SyncETagColumns.TABLE_ID + " =? AND " + SyncETagColumns.IS_MANIFEST + " =?;";
       Object[] bindArgs = new Object[2];
       bindArgs[0] = id;
       bindArgs[1] = isManifest;
       BindArgs args = new BindArgs(bindArgs);
       UserTable result = serviceInterface
-          .simpleQuery(APPNAME, dbHandle, DatabaseConstants.SYNC_ETAGS_TABLE_NAME, null,
-              whereClause, args, null, null, null, null, null, null);
+              .simpleQuery(APPNAME, dbHandle, DatabaseConstants.SYNC_ETAGS_TABLE_NAME, null,
+                      whereClause, args, null, null, null, null, null, null);
 
       if (result == null)
          throw new IllegalStateException("Bad query");
@@ -382,7 +388,7 @@ public class SyncETagsUtilsTest extends OdkDatabaseTestAbstractBase {
 
    private void expectGone(String id, boolean isManifest) throws ServicesAvailabilityException {
       UserTable c = get(id, isManifest);
-       assertEquals(0, c.getNumberOfRows());
+      assertEquals(0, c.getNumberOfRows());
    }
 
    private void expectPresent(String id, boolean isManifest) throws ServicesAvailabilityException {
