@@ -40,16 +40,16 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
 
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void whenOpenDocumentationScreenIsClicked_launchUrl() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(0, scrollTo()))
-                .check(matches(atPosition(0, hasDescendant(withText(R.string.opendatakit_website)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(7, scrollTo()))
+                .check(matches(atPosition(7, hasDescendant(withText(R.string.user_documentation)))));
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 0),
-                isDisplayed())).check(matches(withText(R.string.click_to_web)));
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 7),
+                isDisplayed())).check(matches(withText(R.string.visit_user_docs)));
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItemAtPosition(0,
+                .perform(RecyclerViewActions.actionOnItemAtPosition(7,
                         click()));
     }
 
@@ -64,48 +64,47 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
     }
 
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfDeviceSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(2, scrollTo()))
-                .check(matches(atPosition(2, hasDescendant(withText(R.string.device)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(4, scrollTo()))
+                .check(matches(atPosition(4, hasDescendant(withText(R.string.preferences)))));
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
-                isDisplayed())).check(matches(withText(R.string.device_settings_summary)));
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 4),
+                isDisplayed())).check(matches(withText(R.string.configure_device_settings)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void checkIfTableSpecificSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(3, scrollTo()))
-                .check(matches(atPosition(3, hasDescendant(withText(R.string.tool_tables_settings)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(5, scrollTo()))
+                .check(matches(atPosition(5, hasDescendant(withText(R.string.odkx_tables)))));
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 3),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 5),
                 isDisplayed())).check(matches(withText(R.string.tool_tables_settings_summary)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void checkIfEnableUserRestrictionScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(4, scrollTo()))
-                .check(matches(atPosition(4, hasDescendant(withText(R.string.enable_admin_password)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(3, scrollTo()))
+                .check(matches(atPosition(3, hasDescendant(withText(R.string.user_restrictions)))));
 
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 4),
-                isDisplayed())).check(matches(withText(R.string.admin_password_disabled)));
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 3),
+                isDisplayed())).check(matches(withText(R.string.enable_user_restrictions)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void whenResetConfigurationScreenIsClicked_launchResetConfigurationDialog() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(5, scrollTo()))
-                .check(matches(atPosition(5, hasDescendant(withText(R.string.clear_configuration_settings)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))
+                .check(matches(atPosition(6, hasDescendant(withText(R.string.clear_settings)))));
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 5),
-                isDisplayed())).check(matches(withText(R.string.click_to_clear_settings)));
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 6),
+                isDisplayed())).check(matches(withText(R.string.reset_configuration)));
 
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItemAtPosition(5,
+                .perform(RecyclerViewActions.actionOnItemAtPosition(6,
                         click()));
         onView(withText(R.string.reset_settings))
                 .inRoot(isDialog())
@@ -114,13 +113,13 @@ public class GeneralAppPropertiesActivityTest extends BaseUITest<AppPropertiesAc
         onView(allOf(withId(android.R.id.button1), withText("OK"))).perform(click());
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void checkIfVerifyUserPermissionScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))
-                .check(matches(atPosition(6, hasDescendant(withText(R.string.verify_server_settings_start)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(2, scrollTo()))
+                .check(matches(atPosition(2, hasDescendant(withText(R.string.verify_server_settings_header)))));
         onView(allOf(withId(android.R.id.summary),
-                childAtPosition(withId(androidx.preference.R.id.recycler_view), 6),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
                 isDisplayed())).check(matches(withText(R.string.click_to_verify_server_settings)));
     }
 
