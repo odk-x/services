@@ -46,7 +46,6 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
                         click()));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenTableSpecificSettingsIsChangedInAdminMode_checkIfTableSettings_isDisabledInNonAdminMode() {
         setCheckboxValue(false);
@@ -63,7 +62,6 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
 
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenTableSpecificSettingsIsChangedInAdminMode_checkIfTableSettings_isEnabledInNonAdminMode() {
         setCheckboxValue(true);
@@ -100,7 +98,7 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
         onView(isRoot()).perform(waitFor(1000));
 
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.tool_tables_settings)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.odkx_tables)),
                         click()));
     }
 

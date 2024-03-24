@@ -48,7 +48,6 @@ public class AdminConfigurableServerSettingsFragmentTest extends BaseUITest<AppP
                         click()));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenServerSettingsIsChangedInAdminMode_checkIfServerSettings_isEnabledInGeneralMode() {
         setCheckboxValue(true);
@@ -76,7 +75,6 @@ public class AdminConfigurableServerSettingsFragmentTest extends BaseUITest<AppP
                 .check(matches(isEnabled()));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenServerSettingsIsChangedInAdminMode_checkIfServerSettings_isDisabledInGeneralMode() {
         setCheckboxValue(false);
