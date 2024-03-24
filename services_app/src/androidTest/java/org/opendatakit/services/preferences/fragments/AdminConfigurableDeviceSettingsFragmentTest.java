@@ -45,7 +45,6 @@ public class AdminConfigurableDeviceSettingsFragmentTest extends BaseUITest<AppP
                         click()));
     }
 
-
     @Test
     public void whenDeviceSpecificSettingsIsChangedInAdminMode_checkIfDeviceSettings_isDisabledInNonAdminMode() {
         setCheckboxValue(false);

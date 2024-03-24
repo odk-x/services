@@ -195,6 +195,7 @@ public abstract class BaseUITest<T extends Activity> {
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItemAtPosition(1,
                         click()));
+
         onView(withId(R.id.pwd_field)).perform(click());
         onView(withId(R.id.pwd_field)).perform(replaceText(TEST_PASSWORD));
         onView(withId(R.id.positive_button)).perform(ViewActions.click());

@@ -47,7 +47,6 @@ public class AdminConfigurableServerSettingsFragmentTest extends BaseUITest<AppP
                 .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.restrict_server)),
                         click()));
     }
-
     @Test
     public void whenServerSettingsIsChangedInAdminMode_checkIfServerSettings_isEnabledInGeneralMode() {
         setCheckboxValue(true);
@@ -106,7 +105,6 @@ public class AdminConfigurableServerSettingsFragmentTest extends BaseUITest<AppP
     public void after() {
         resetConfiguration();
     }
-
     @Override
     protected Intent getLaunchIntent() {
         Intent intent = new Intent(getContext(), AppPropertiesActivity.class);

@@ -40,7 +40,6 @@ public class AdminConfigurableTablesSettingsFragmentTest extends BaseUITest<AppP
         });
         enableAdminMode();
         Espresso.pressBack();
-
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.admin_tool_tables_settings)),
                         click()));
