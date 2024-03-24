@@ -5,9 +5,13 @@ import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.hamcrest.Matchers.allOf;
+import static org.opendatakit.utilities.ViewMatchers.childAtPosition;
 
 import android.content.Intent;
 
@@ -29,58 +33,70 @@ public class AdminAppPropertiesActivityTest extends BaseUITest<AppPropertiesActi
             PropertiesSingleton props = activity.getProps();
             assertThat(props).isNotNull();
         });
+        onView(withId(R.id.app_properties_content)).check(matches(isDisplayed()));
         enableAdminMode();
         Espresso.pressBack();
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfChangeAdminPasswordScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(4, scrollTo()))
-                .check(matches(atPosition(4, hasDescendant(withText(R.string.change_admin_password)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(3, scrollTo()))
+                .check(matches(atPosition(3, hasDescendant(withText(R.string.change_admin_password)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 3),
+                isDisplayed())).check(matches(withText(R.string.admin_password_enabled)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfManageAbilityToChangeServerSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(5, scrollTo()))
-                .check(matches(atPosition(5, hasDescendant(withText(R.string.restrict_server)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(8, scrollTo()))
+                .check(matches(atPosition(8, hasDescendant(withText(R.string.restrict_server)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 8),
+                isDisplayed())).check(matches(withText(R.string.restrict_server_settings_summary)));
     }
 
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfManageAbilityToChangeDeviceSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))
-                .check(matches(atPosition(6, hasDescendant(withText(R.string.restrict_device)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(9, scrollTo()))
+                .check(matches(atPosition(9, hasDescendant(withText(R.string.restrict_device)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 9),
+                isDisplayed())).check(matches(withText(R.string.restrict_device_settings_summary)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfManageAbilityToChangeTableSpecificSettingScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(7, scrollTo()))
-                .check(matches(atPosition(7, hasDescendant(withText(R.string.admin_tool_tables_settings)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(10, scrollTo()))
+                .check(matches(atPosition(10, hasDescendant(withText(R.string.admin_tool_tables_settings)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 10),
+                isDisplayed())).check(matches(withText(R.string.admin_tool_tables_settings_summary)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfResetConfigurationScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(8, scrollTo()))
-                .check(matches(atPosition(8, hasDescendant(withText(R.string.clear_configuration_settings)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(6, scrollTo()))
+                .check(matches(atPosition(6, hasDescendant(withText(R.string.clear_settings)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 6),
+                isDisplayed())).check(matches(withText(R.string.clear_configuration_settings)));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfExitAdminModeScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(9, scrollTo()))
-                .check(matches(atPosition(9, hasDescendant(withText(R.string.exit_admin_mode)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(11, scrollTo()))
+                .check(matches(atPosition(11, hasDescendant(withText(R.string.exit_admin_mode)))));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void checkIfVerifyUserPermissionScreen_isVisible() {
-        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(10, scrollTo()))
-                .check(matches(atPosition(10, hasDescendant(withText(R.string.verify_server_settings_start)))));
+        onView(withId(androidx.preference.R.id.recycler_view)).perform(actionOnItemAtPosition(2, scrollTo()))
+                .check(matches(atPosition(2, hasDescendant(withText(R.string.verify_server_settings_header)))));
+        onView(allOf(withId(android.R.id.summary),
+                childAtPosition(withId(androidx.preference.R.id.recycler_view), 2),
+                isDisplayed())).check(matches(withText(R.string.click_to_verify_server_settings)));
     }
 
     @After
