@@ -47,18 +47,15 @@ public class GeneralAdminConfigurationTest extends BaseUITest<AppPropertiesActiv
 
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenEnableUserRestrictionIsClicked_enterAdminPassword() {
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.enable_admin_password)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.user_restrictions)),
                         click()));
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItemAtPosition(1,
                         click()));
-        onView(withText(R.string.change_admin_password))
-                .inRoot(isDialog())
-                .check(matches(isDisplayed()));
+        onView(withId(R.id.pwd_field)).perform(click());
         onView(withId(R.id.pwd_field)).perform(replaceText(TEST_PASSWORD));
         onView(withId(R.id.positive_button)).perform(ViewActions.click());
         onView(allOf(withId(android.R.id.summary),

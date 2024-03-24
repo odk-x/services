@@ -38,12 +38,10 @@ public class GeneralTablesSettingsFragmentTest extends BaseUITest<AppPropertiesA
 
         onView(withId(R.id.app_properties_content)).check(matches(isDisplayed()));
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.tool_tables_settings)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.odkx_tables)),
                         click()));
     }
 
-
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenTableSpecificSettingIsClicked_useCustomHomeScreen() {
         onView(withText(R.string.custom_home_screen)).check(matches(isDisplayed()));
