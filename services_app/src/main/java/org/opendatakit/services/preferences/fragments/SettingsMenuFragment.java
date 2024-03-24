@@ -5,7 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -61,8 +61,7 @@ public class SettingsMenuFragment extends PreferenceFragmentCompat {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    preferenceViewModel = ViewModelProviders
-        .of(requireActivity())
+    preferenceViewModel = new ViewModelProvider(requireActivity())
         .get(PreferenceViewModel.class);
 
     preferenceViewModel.getAdminMode().observe(this, new Observer<Boolean>() {

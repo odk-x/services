@@ -14,20 +14,17 @@
 
 package org.opendatakit.services.preferences.activities;
 
-import android.annotation.SuppressLint;
-import android.app.ActionBar;
+
+
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -63,15 +60,15 @@ public class AppPropertiesActivity extends AppCompatActivity implements
         IAppAwareActivity,
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
-  private static final String t = "AppPropertiesActivity";
+  //private static final String t = "AppPropertiesActivity";
 
   public static final int SPLASH_IMAGE_CHOOSER = 1;
 
-  private static final String SAVED_ADMIN_CONFIGURED = "savedAdminConfigured";
+  //private static final String SAVED_ADMIN_CONFIGURED = "savedAdminConfigured";
   private String mAppName;
   private boolean mAdminMode;
   private boolean mAdminConfigured;
-  private Activity mActivity = this;
+  //private Activity mActivity = this;
 
   private PropertiesSingleton mProps;
   private PreferenceViewModel preferenceViewModel;
@@ -98,19 +95,18 @@ public class AppPropertiesActivity extends AppCompatActivity implements
             });
 
     mAppName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-    if (mAppName == null || mAppName.length() == 0) {
+    if (mAppName == null || mAppName.isEmpty()) {
       mAppName = ODKFileUtils.getOdkDefaultAppName();
     }
 
     mProps = CommonToolProperties.get(this, mAppName);
     String adminPwd = mProps.getProperty(CommonToolProperties.KEY_ADMIN_PW);
-    mAdminConfigured = (adminPwd != null && adminPwd.length() != 0);
+    mAdminConfigured = (adminPwd != null && !adminPwd.isEmpty());
 
     mAdminMode =
             getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, false);
 
-    preferenceViewModel = ViewModelProviders
-            .of(this)
+    preferenceViewModel = new ViewModelProvider(this)
             .get(PreferenceViewModel.class);
 
     preferenceViewModel.getAdminConfigured().setValue(mAdminConfigured);
@@ -153,7 +149,7 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     super.onResume();
 
     mAppName = this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-    if (mAppName == null || mAppName.length() == 0) {
+    if (mAppName == null || mAppName.isEmpty()) {
       mAppName = ODKFileUtils.getOdkDefaultAppName();
     }
 
