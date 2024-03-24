@@ -25,7 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -57,8 +57,7 @@ public class AdminPasswordChallengeFragment extends Fragment {
          mAppName = appName;
       }
 
-      preferenceViewModel = ViewModelProviders
-          .of(requireActivity())
+      preferenceViewModel = new ViewModelProvider(requireActivity())
           .get(PreferenceViewModel.class);
    }
 

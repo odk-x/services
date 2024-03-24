@@ -19,7 +19,7 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.Preference.OnPreferenceChangeListener;
 import androidx.preference.PreferenceFragmentCompat;
@@ -76,8 +76,7 @@ public class AdminPasswordSettingsFragment extends PreferenceFragmentCompat impl
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    preferenceViewModel = ViewModelProviders
-        .of(requireActivity())
+    preferenceViewModel = new ViewModelProvider(requireActivity())
         .get(PreferenceViewModel.class);
   }
 

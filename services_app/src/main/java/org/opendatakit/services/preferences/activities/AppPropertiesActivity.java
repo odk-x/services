@@ -27,7 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -109,8 +109,7 @@ public class AppPropertiesActivity extends AppCompatActivity implements
     mAdminMode =
             getIntent().getBooleanExtra(IntentConsts.INTENT_KEY_SETTINGS_IN_ADMIN_MODE, false);
 
-    preferenceViewModel = ViewModelProviders
-            .of(this)
+    preferenceViewModel = new ViewModelProvider(this)
             .get(PreferenceViewModel.class);
 
     preferenceViewModel.getAdminConfigured().setValue(mAdminConfigured);
