@@ -120,16 +120,13 @@ public class GeneralServerSettingsFragmentTest extends BaseUITest<AppPropertiesA
     }
 
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenServerPasswordIsChanged_enterNewPassword() {
         onView(withId(androidx.preference.R.id.recycler_view))
                 .perform(RecyclerViewActions.actionOnItemAtPosition(4,
                         click()));
-        onView(withText(R.string.change_server_password))
-                .inRoot(isDialog())
-                .check(matches(isDisplayed()));
-        onView(withId(R.id.pwd_field)).perform(replaceText(TEST_USERNAME));
+        onView(withId(R.id.pwd_field)).perform(click());
+        onView(withId(R.id.pwd_field)).perform(replaceText(TEST_PASSWORD));
         onView(withId(R.id.positive_button)).perform(ViewActions.click());
 
     }
