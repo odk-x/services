@@ -45,7 +45,6 @@ public class AdminConfigurableDeviceSettingsFragmentTest extends BaseUITest<AppP
                         click()));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenDeviceSpecificSettingsIsChangedInAdminMode_checkIfDeviceSettings_isDisabledInNonAdminMode() {
         setCheckboxValue(false);
@@ -66,7 +65,7 @@ public class AdminConfigurableDeviceSettingsFragmentTest extends BaseUITest<AppP
 
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
+
     @Test
     public void whenDeviceSpecificSettingsIsChangedInAdminMode_checkIfDeviceSettings_isEnabledInNonAdminMode() {
         setCheckboxValue(true);
@@ -106,7 +105,7 @@ public class AdminConfigurableDeviceSettingsFragmentTest extends BaseUITest<AppP
         onView(isRoot()).perform(waitFor(1000));
 
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.device)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.preferences)),
                         click()));
     }
 

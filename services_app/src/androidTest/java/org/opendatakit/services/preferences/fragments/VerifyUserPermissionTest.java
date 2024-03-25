@@ -39,21 +39,19 @@ public class VerifyUserPermissionTest extends BaseUITest<AppPropertiesActivity> 
 
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenVerifyUserPermissionScreenIsClicked_launchVerifyServerSettingsActivity() {
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_start)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_header)),
                         click()));
         intended(hasComponent(VerifyServerSettingsActivity.class.getName()));
     }
 
-    @Ignore // OUTREACHY-BROKEN-TEST
     @Test
     public void whenVerifyUserPermissionIsClicked_configureServerUrl() {
         resetConfiguration();
         onView(withId(androidx.preference.R.id.recycler_view))
-                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_start)),
+                .perform(RecyclerViewActions.actionOnItem(hasDescendant(withText(R.string.verify_server_settings_header)),
                         click()));
         onView(withText(R.string.configure_server_settings))
                 .inRoot(isDialog())
