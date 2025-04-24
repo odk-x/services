@@ -121,6 +121,7 @@ dependencies {
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'org.opendatakit:odkx-rest-interface:2.2.0-SNAPSHOT'
 
+    implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.annotation:annotation:1.7.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
