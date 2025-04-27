@@ -450,5 +450,6 @@
     <string name="sign_in_using_credentials">Sign in using Credentials</string>
     <string name="set_credentials">Set Credentials</string>
     <string name="sign_in_as_anonymous">Sign in as Anonymous User</string>
+    <string name="services_gif">Service GIF</string>
 
 </resources>
